@@ -179,6 +179,24 @@ describe('shooting', () => {
     expect(sim.state.phase).not.toBe('ended');
   });
 
+  it.each([1, 2, 3, 4, 5, 6, 7, 8])('placement matters: hard shots 2 yd off centre score, central ones do not (seed %i)', (seed) => {
+    const shootAt = (offset: number): string | null => {
+      const sim = new AttackSim({ seed });
+      goLive(sim);
+      passToRunner(sim);
+      run(sim, 4, (s) => s.state.controlledId !== 'A1' || s.state.phase === 'ended');
+      const shooter = sim.player(sim.state.controlledId);
+      run(sim, 1.5, () => shooter.pos.x >= 58);
+      sim.command({ type: 'setAction', action: 'shoot' });
+      const far = shooter.pos.y < 25 ? 1 : -1;
+      aimAndRelease(sim, { x: 75, y: 25 + far * offset }, 0.85);
+      run(sim, 3, (s) => s.state.phase === 'ended' || eventTypes(s).includes('parried'));
+      return sim.state.outcome;
+    };
+    expect(shootAt(2)).toBe('goal');
+    expect(shootAt(0)).not.toBe('goal');
+  });
+
   it('a shot wide of the post goes out', () => {
     const sim = new AttackSim();
     goLive(sim);

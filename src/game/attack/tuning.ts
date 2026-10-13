@@ -103,10 +103,11 @@ export const ATTACK_TUNING = {
 
   keeper: {
     speed: 3.6,
-    diveSpeed: 4.2,
+    /** Dive speed and reach leave roughly the outer 1.5 yd of each post beatable by a hard shot. */
+    diveSpeed: 3.4,
     accel: 30,
-    reach: 1.1,
-    diveReach: 1.6,
+    reach: 0.9,
+    diveReach: 1.25,
     /** Slower balls in reach are caught (attempt ends); faster ones are parried. */
     catchSpeed: 15,
     reactionSeconds: 0.25,
