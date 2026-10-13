@@ -184,7 +184,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.game.events.on(Phaser.Core.Events.HIDDEN, this.onHidden, this);
     this.game.canvas.addEventListener('pointercancel', this.onDomCancel);
     this.game.canvas.addEventListener('touchcancel', this.onDomCancel);
-    this.game.canvas.addEventListener('lostpointercapture', this.onDomCancel);
+    this.game.canvas.addEventListener('pointerdown', this.onDomPointerDown);
+    this.game.canvas.addEventListener('pointerup', this.onDomPointerUp);
+    this.game.canvas.addEventListener('lostpointercapture', this.onLostCapture);
     window.addEventListener('blur', this.onWindowBlur);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleShutdown, this);
 
@@ -320,6 +322,22 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   }
 
   private readonly onWindowBlur = (): void => this.cancelInput('window blur');
+
+  /**
+   * Chrome releases a touch's implicit capture right after pointerup, before Phaser sees touchend,
+   * so only a capture lost while the finger is still down is an interruption.
+   */
+  private readonly releasedPointers = new Set<number>();
+  private readonly onDomPointerDown = (e: PointerEvent): void => {
+    if (this.releasedPointers.size > 32) this.releasedPointers.clear();
+    this.releasedPointers.delete(e.pointerId);
+  };
+  private readonly onDomPointerUp = (e: PointerEvent): void => {
+    this.releasedPointers.add(e.pointerId);
+  };
+  private readonly onLostCapture = (e: PointerEvent): void => {
+    if (!this.releasedPointers.has(e.pointerId)) this.cancelInput('lost pointer capture');
+  };
 
   private readonly onDomCancel = (): void => this.cancelInput('pointer cancelled');
 
@@ -568,7 +586,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.game.events.off(Phaser.Core.Events.HIDDEN, this.onHidden, this);
     this.game.canvas.removeEventListener('pointercancel', this.onDomCancel);
     this.game.canvas.removeEventListener('touchcancel', this.onDomCancel);
-    this.game.canvas.removeEventListener('lostpointercapture', this.onDomCancel);
+    this.game.canvas.removeEventListener('pointerdown', this.onDomPointerDown);
+    this.game.canvas.removeEventListener('pointerup', this.onDomPointerUp);
+    this.game.canvas.removeEventListener('lostpointercapture', this.onLostCapture);
     window.removeEventListener('blur', this.onWindowBlur);
   }
 
