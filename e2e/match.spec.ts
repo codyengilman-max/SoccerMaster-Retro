@@ -30,7 +30,7 @@ async function waitFor(page: Page, predicate: (r: MatchReport) => boolean, timeo
   for (;;) {
     const r = await report(page);
     if (predicate(r)) return r;
-    if (Date.now() - start > timeout) throw new Error(`timed out; phase=${r.phase} owner=${r.owner} events=${r.events.map((e) => e.type).join(',')}`);
+    if (Date.now() - start > timeout) throw new Error(`timed out; phase=${r.phase} owner=${r.owner} events=${r.events.map((e) => (e.detail ? `${e.type}(${e.detail})` : e.type)).join(',')}`);
     await page.waitForTimeout(30);
   }
 }
@@ -136,15 +136,17 @@ test('aimed pass from the user carrier is released, slows time while aiming, and
   const start: Point = { x: carrier.sx, y: carrier.sy - 8 };
   // Target: the most forward teammate in range.
   const mates = Object.entries(r.players).filter(([id, p]) => id.startsWith('H') && !p.keeper && id !== r.controlledId);
-  const [, mate] = mates
-    .map(([id, p]) => [id, p, Math.hypot(p.x - r.ball.x, p.y - r.ball.y)] as const)
-    .filter(([, , dist]) => dist > 7 && dist < 22)
-    .sort((a, b) => b[1].x - a[1].x)[0] ?? mates.map(([id, p]) => [id, p, 0] as const)[0]!;
+  // Fallback (positions vary with runner speed): the nearest teammate who is not right beside the ball.
+  const ranked = mates.map(([id, p]) => [id, p, Math.hypot(p.x - r.ball.x, p.y - r.ball.y)] as const);
+  const [, mate] =
+    ranked.filter(([, , dist]) => dist > 7 && dist < 22).sort((a, b) => b[1].x - a[1].x)[0] ??
+    ranked.filter(([, , dist]) => dist > 7).sort((a, b) => a[2] - b[2])[0]!;
   await finger.down(start);
   await waitFor(page, (x) => x.phase === 'aiming', 5000);
   const dir = pitchVectorToScreen(r.layout, { x: mate.x - r.ball.x, y: mate.y - r.ball.y });
   const len = Math.hypot(dir.x, dir.y);
-  const power = Math.min(1, Math.max(0, (Math.hypot(mate.x - r.ball.x, mate.y - r.ball.y) - r.pass.minDistance) / (r.pass.maxDistance - r.pass.minDistance)));
+  // Never exactly at the minimum drag: integer touch coordinates could round it into a cancelled 'short drag'.
+  const power = Math.min(1, Math.max(0.1, (Math.hypot(mate.x - r.ball.x, mate.y - r.ball.y) - r.pass.minDistance) / (r.pass.maxDistance - r.pass.minDistance)));
   const drag = GESTURE_TUNING.aimMinDragPx + power * (GESTURE_TUNING.aimMaxDragPx - GESTURE_TUNING.aimMinDragPx);
   const end = { x: start.x - (dir.x / len) * drag, y: start.y - (dir.y / len) * drag };
   await finger.move({ x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 });
