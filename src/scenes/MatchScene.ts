@@ -676,7 +676,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const L = this.pitchLayout;
     const m = this.markings;
     const P = U11_9V9_PITCH;
-    const key = `${width}x${height}:${L.originX.toFixed(2)},${L.originY.toFixed(2)},${L.scale.toFixed(4)}`;
+    const key = `${width}x${height}:${L.orientation}:${L.originX.toFixed(2)},${L.originY.toFixed(2)},${L.scale.toFixed(4)},${L.crossScale.toFixed(4)},${L.pitchLength.toFixed(3)},${L.pitchWidth.toFixed(3)}`;
     if (key === this.fieldKey) return;
     this.fieldKey = key;
     g.clear();
