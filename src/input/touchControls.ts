@@ -213,10 +213,8 @@ export class TouchControls {
   update(t: number): ControlAction[] {
     if (this.current !== 'pending' || !finite(t) || t - this.t0 < this.tuning.holdMs) return [];
     this.lastTap = null;
-    if (!this.nearCarrier) {
-      this.current = 'spent';
-      return [];
-    }
+    // Away from the carrier a hold never aims; the press stays pending so a slow drag still dribbles.
+    if (!this.nearCarrier) return [];
     this.current = 'aiming';
     return [{ type: 'aimStart', originX: this.ox, originY: this.oy }];
   }
