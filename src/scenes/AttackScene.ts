@@ -20,6 +20,7 @@ import {
   type Insets,
   type PitchLayout,
 } from '../render/layout';
+import { shouldExposeDebug } from '../debug/diagnostics';
 import { BALL_TEXTURE_SIZE, PLAYER_TEXTURE_SIZE, TEXTURES, ensurePlaceholderTextures } from '../render/textures';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { AttackReport } from './attackReport';
@@ -110,8 +111,22 @@ export class AttackScene extends Phaser.Scene implements InspectableScene {
     this.ballTrail = [];
     this.toastMessage = '';
     this.toastUntil = 0;
-    const seed = Number(new URLSearchParams(window.location.search).get('seed') ?? '1') || 1;
+    const params = new URLSearchParams(window.location.search);
+    const seed = Number(params.get('seed') ?? '1') || 1;
     this.sim = new AttackSim({ seed });
+    // Debug-only test fixture: start attempt 1 with a teammate already through on goal.
+    if (params.get('setup') === 'shooting' && shouldExposeDebug(window.location)) {
+      this.sim.arrange((s) => {
+        s.players.A2.pos = { x: 60, y: 14 };
+        s.players.A2.vel = { x: 4, y: 0 };
+        s.players.D1.pos = { x: 40, y: 18 };
+        s.players.D2.pos = { x: 40, y: 30 };
+        s.ball.owner = 'A2';
+        s.ball.pos = { x: 60.8, y: 14 };
+        s.controlledId = 'A2';
+        s.laneY = 14;
+      });
+    }
     this.lastSeq = 0;
     this.recognizer = new GestureRecognizer(GESTURE_TUNING);
     this.markings = pitchMarkings(U11_9V9_PITCH);
