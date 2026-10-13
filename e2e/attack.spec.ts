@@ -1,19 +1,21 @@
-import { expect, test, type CDPSession, type Page, type TestInfo } from '@playwright/test';
+import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { pitchVectorToScreen } from '../src/render/layout';
 import type { AttackReport } from '../src/scenes/attackReport';
 import {
   diagnostics,
   expectInside,
+  Finger,
   linger,
   pressElement,
   trackConsoleErrors,
   trackDomListeners,
   waitForScene,
   type DomListenerSummary,
+  type Point,
+  type PointerMode,
 } from './helpers';
 
-type Mode = 'touch' | 'mouse';
-type Point = { x: number; y: number };
+type Mode = PointerMode;
 
 declare global {
   interface Window {
@@ -34,52 +36,6 @@ async function waitFor(page: Page, predicate: (r: AttackReport) => boolean, time
     if (predicate(r)) return r;
     if (Date.now() - start > timeout) throw new Error(`timed out; phase=${r.phase} events=${r.events.map((e) => e.type).join(',')}`);
     await page.waitForTimeout(30);
-  }
-}
-
-/** One pointer, driven either as a real touch (CDP) or a mouse. */
-class Finger {
-  private cdp: CDPSession | null = null;
-  private cachedOrigin: Point | null = null;
-  constructor(
-    private readonly page: Page,
-    readonly mode: Mode,
-  ) {}
-  private async origin(): Promise<Point> {
-    if (this.cachedOrigin) return this.cachedOrigin;
-    const box = await this.page.locator('canvas').boundingBox();
-    if (!box) throw new Error('canvas not visible');
-    this.cachedOrigin = { x: box.x, y: box.y };
-    return this.cachedOrigin;
-  }
-  private async touch(type: 'touchStart' | 'touchMove' | 'touchEnd' | 'touchCancel', p?: Point): Promise<void> {
-    this.cdp ??= await this.page.context().newCDPSession(this.page);
-    const o = await this.origin();
-    const touchPoints = p ? [{ x: o.x + p.x, y: o.y + p.y, id: 1 }] : [];
-    await this.cdp.send('Input.dispatchTouchEvent', { type, touchPoints });
-  }
-  async down(p: Point): Promise<void> {
-    if (this.mode === 'touch') return this.touch('touchStart', p);
-    const o = await this.origin();
-    await this.page.mouse.move(o.x + p.x, o.y + p.y);
-    await this.page.mouse.down();
-  }
-  async move(p: Point): Promise<void> {
-    if (this.mode === 'touch') return this.touch('touchMove', p);
-    const o = await this.origin();
-    await this.page.mouse.move(o.x + p.x, o.y + p.y);
-  }
-  async up(p: Point): Promise<void> {
-    if (this.mode === 'touch') {
-      await this.touch('touchMove', p);
-      return this.touch('touchEnd');
-    }
-    const o = await this.origin();
-    await this.page.mouse.move(o.x + p.x, o.y + p.y);
-    await this.page.mouse.up();
-  }
-  async cancel(): Promise<void> {
-    await this.touch('touchCancel');
   }
 }
 

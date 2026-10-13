@@ -1,6 +1,28 @@
 # Status
 
-## Current milestone: M2 — Retro Bowl-inspired playable attack (complete, in review)
+## Current milestone: M3 — 9v9 team behaviour and formations (complete, in review)
+
+A **9v9 team-play sandbox**: two teams of eight outfield players plus a keeper (H1–H9 attack right, A1–A9 attack left) on a 75×50 yd pitch with two goals. It is a sandbox for team behaviour, **not** a rules-complete match.
+
+### Playable now (Start → "9v9 Team Sandbox" → pick a formation → Kick Off)
+- **Formations:** `1-3-2-3` (default), `1-3-3-2`, `1-2-4-2`. Pick before kick-off; change while paused (Pause → formation buttons, or keys 1/2/3). Players keep their positions, the ball and possession stay as they were, and players walk to their new roles after Resume.
+- **Your controls are M2's:** auto-dribble, swipe cut/push/check, hold-drag-release to pass or shoot with bounded slow motion, Pass/Shoot toggle, control moves to whoever receives your pass. When the opponent has the ball, the nearest home player is highlighted; your team defends automatically.
+- **In possession (AI teammates):** width and depth from the formation, support beside/ahead/behind the ball, lane-aware support spots that do not stack, timed forward runs, give-and-go after a pass, weak-side outlet, narrowing in the final third, players kept back for balance.
+- **Out of possession (both teams):** one presser chosen by arrival time and role, one cover, the rest shift toward the ball and protect the centre, track runners and recover; assignments are held for a short commitment spell so they do not flicker.
+- **Opponent possession:** carries into space, passes, plays back when forward lanes are blocked, shoots when in range, with seeded reaction delay and aim noise. AI never sees your unreleased aim.
+- **Keepers:** both position between ball and goal, dive within reach limits, catch or parry, then distribute.
+- **Stoppages (sandbox, not match rules):** a goal or ball out of play stops play for a moment with a "sandbox restart" label, then the other team restarts in place. Normal possession changes never reset anyone.
+- **Controls:** Pause/Resume, Reset, Menu; dev overlay (off by default; pause panel or `O`) shows IDs, roles, intents, movement targets, formation anchors, presser/cover rings, ball owner. Desktop: arrows/WASD swipes, hold Space to aim, Tab toggle, P/Esc pause, R reset, O overlay, M menu.
+
+### Not implemented / simplified
+- No offside, fouls, cards, throw-ins, corners or goal kicks (restarts are simplified sandbox restarts), no match clock or halves, no substitutions, no ball height.
+- Only the home formation is selectable; the opponent plays `1-3-2-3`.
+- Not tested on a physical iPhone; Chromium emulation only. Tuning is a first pass.
+
+### Verification
+See the PR for exact counts. `tests/match.test.ts` covers the 18-player roster, formation data, paused-only formation changes that preserve identity/ball/possession/positions, movement without teleporting, passes and control transfer, stale-aim cancellation, presser/cover without swarming, width/depth, give-and-go, opponent passes and shots, both keepers saving and distributing, pause/resume/reset, goal and touchline stoppages, frame-rate consistency (30/60/144 fps, ball within 1.5 yd) and long seeded invariant runs. `e2e/match.spec.ts` covers picker → sandbox, HUD fit, hidden overlay, pause + formation change + resume without teleporting, a touch/mouse aimed pass (staged `?setup=pass`), desktop keyboard controls, and repeated navigation with one canvas and stable listeners.
+
+## M2 — Retro Bowl-inspired playable attack (still playable, in review)
 
 One repeatable **training attack** is playable: 3 attackers vs 2 outfield defenders and a goalkeeper in the attacking half. This is a control prototype, **not** a full 9v9 match and not the full soccer-intelligence engine.
 
@@ -29,5 +51,5 @@ See the PR for exact counts. Unit tests cover swipe-vs-aim recognition, single p
 - No ball height (chips/headers), no offside, no fouls, no sound. AI is deliberately small: press/cover/keeper rules only.
 - Tuning is a first pass and should be adjusted after playtesting on a phone.
 
-### Next task
-**Cloudflare Pages deployment** (unchanged in this task): connect the repo with build `npm ci && npm run build`, output `dist/`, enable PR previews, verify the footer build SHA, then smoke-test the drill on a real iPhone in both orientations.
+## Next task
+**Cloudflare Pages preview + real-iPhone playtest** of M2 and M3 (hosting unchanged in this task), then M4 match flow.

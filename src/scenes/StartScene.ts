@@ -15,6 +15,7 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
   private footer!: Phaser.GameObjects.Text;
   private enterButton!: Button;
   private playButton!: Button;
+  private sandboxButton!: Button;
   private navigating = false;
 
   constructor() {
@@ -63,6 +64,14 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
       fontSize: 24,
       onClick: () => this.playAttackDrill(),
     });
+    this.sandboxButton = new Button(this, 0, 0, {
+      name: 'sandbox-button',
+      label: '9v9 Team Sandbox',
+      width: 280,
+      height: 72,
+      fontSize: 24,
+      onClick: () => this.openSandbox(),
+    });
     this.enterButton = new Button(this, 0, 0, {
       name: 'enter-button',
       label: 'Enter Training Ground',
@@ -76,6 +85,7 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
     this.input.keyboard?.on('keydown-ENTER', this.enterTrainingGround, this);
     this.input.keyboard?.on('keydown-SPACE', this.enterTrainingGround, this);
     this.input.keyboard?.on('keydown-P', this.playAttackDrill, this);
+    this.input.keyboard?.on('keydown-T', this.openSandbox, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleShutdown, this);
 
     this.layout(this.scale.width, this.scale.height);
@@ -92,6 +102,7 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
         footer: boundsOf(this.footer),
         'enter-button': this.enterButton.getButtonBounds(),
         'play-button': this.playButton.getButtonBounds(),
+        'sandbox-button': this.sandboxButton.getButtonBounds(),
       },
     };
   }
@@ -108,6 +119,12 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
     this.scene.start(SceneKeys.Attack);
   }
 
+  private openSandbox(): void {
+    if (this.navigating) return;
+    this.navigating = true;
+    this.scene.start(SceneKeys.Formation);
+  }
+
   private handleResize(gameSize: Phaser.Structs.Size): void {
     this.layout(gameSize.width, gameSize.height);
   }
@@ -117,6 +134,7 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
     this.input.keyboard?.off('keydown-ENTER', this.enterTrainingGround, this);
     this.input.keyboard?.off('keydown-SPACE', this.enterTrainingGround, this);
     this.input.keyboard?.off('keydown-P', this.playAttackDrill, this);
+    this.input.keyboard?.off('keydown-T', this.openSandbox, this);
   }
 
   private layout(width: number, height: number): void {
@@ -138,21 +156,20 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
       .setFontSize(subtitleSize)
       .setPosition(width / 2, this.title.y + this.title.displayHeight / 2 + subtitleSize * 1.1);
 
-    // Portrait stacks the two buttons; landscape puts them side by side.
-    const buttonWidth = Math.round(portrait ? Math.min(width * 0.84, 460) : Math.min(width * 0.4, 360));
-    const buttonHeight = Math.round(Math.max(60, Math.min(height * (portrait ? 0.09 : 0.2), 92)));
-    const buttonFont = Math.round(Math.max(17, Math.min(buttonWidth * 0.075, buttonHeight * 0.34, 30)));
-    this.playButton.resize(buttonWidth, buttonHeight, buttonFont);
-    this.enterButton.resize(buttonWidth, buttonHeight, buttonFont);
+    // Portrait stacks the three buttons; landscape puts them side by side.
+    const buttons = [this.sandboxButton, this.playButton, this.enterButton];
+    const buttonWidth = Math.round(portrait ? Math.min(width * 0.84, 460) : Math.min((width - 48) / 3, 300));
+    const buttonHeight = Math.round(Math.max(56, Math.min(height * (portrait ? 0.085 : 0.2), 88)));
+    const buttonFont = Math.round(Math.max(portrait ? 17 : 13, Math.min(buttonWidth * (portrait ? 0.075 : 0.085), buttonHeight * 0.34, 28)));
+    for (const b of buttons) b.resize(buttonWidth, buttonHeight, buttonFont);
     if (portrait) {
-      const gap = Math.max(12, height * 0.02);
-      this.playButton.setPosition(width / 2, height * 0.58);
-      this.enterButton.setPosition(width / 2, height * 0.58 + buttonHeight + gap);
+      const gap = Math.max(10, height * 0.018);
+      const top = Math.min(height * 0.55, height - 40 - buttonHeight * 3 - gap * 2);
+      buttons.forEach((b, i) => b.setPosition(width / 2, top + buttonHeight / 2 + i * (buttonHeight + gap)));
     } else {
-      const gap = Math.max(16, width * 0.025);
+      const gap = 12;
       const y = height * 0.66;
-      this.playButton.setPosition(width / 2 - (buttonWidth + gap) / 2, y);
-      this.enterButton.setPosition(width / 2 + (buttonWidth + gap) / 2, y);
+      buttons.forEach((b, i) => b.setPosition(width / 2 + (i - 1) * (buttonWidth + gap), y));
     }
 
     this.footer.setFontSize(Math.max(11, Math.round(Math.min(width, height) * 0.032))).setPosition(width / 2, height - 10);
