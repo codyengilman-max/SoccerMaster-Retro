@@ -21,12 +21,17 @@ export const PALETTE = {
   skin: 0xf2c29b,
   hair: 0x7a4a22,
   shadow: 0x3b2314,
+  blue: 0x3d6fb6,
+  blueDark: 0x284a7e,
+  purple: 0x7d4e9f,
 } as const;
 
 export const CSS = {
   ink: '#3b2314',
   cream: '#fff4dc',
   tomato: '#e4572e',
+  blue: '#3d6fb6',
+  mustard: '#f2a541',
 } as const;
 
 export const FONT_FAMILY = '"Trebuchet MS", "Verdana", "Segoe UI", sans-serif';

@@ -1,5 +1,5 @@
 import type Phaser from 'phaser';
-import { isInspectable, type SceneLayoutReport } from '../scenes/inspectable';
+import { hasGameplay, isInspectable, type SceneLayoutReport } from '../scenes/inspectable';
 
 export interface Diagnostics {
   readonly canvases: number;
@@ -12,6 +12,8 @@ export interface Diagnostics {
   /** Total listener count per Phaser emitter; must be stable across navigation. */
   readonly listeners: Readonly<Record<string, number>>;
   readonly layout: SceneLayoutReport | null;
+  /** Gameplay snapshot of the top scene, if it has one (see AttackReport). */
+  readonly gameplay: unknown;
 }
 
 export interface DebugHandle {
@@ -62,6 +64,7 @@ export function collectDiagnostics(game: Phaser.Game): Diagnostics {
     textureCount: textureKeys.length,
     listeners,
     layout: top && isInspectable(top) ? top.describeLayout() : null,
+    gameplay: top && hasGameplay(top) ? top.describeGameplay() : null,
   };
 }
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { U11_9V9_PITCH, pitchMarkings } from '../src/game';
 import { arcPoints, fitPitch, orientationOf, rectToScreen, rectWithin, toScreen } from '../src/render/layout';
+import { fitRegion, fromScreen, pitchVectorToScreen, screenVectorToPitch } from '../src/render/layout';
 
 const PHONES = [
   { name: 'iPhone SE portrait', width: 375, height: 667 },
@@ -55,4 +56,38 @@ describe('pitch layout', () => {
     expect(points).toHaveLength(5);
     for (const p of points) expect(Math.hypot(p.x, p.y)).toBeCloseTo(2);
   });
+});
+
+describe('fitRegion (attack drill view)', () => {
+  const region = { x: 33, y: 0, width: 44, height: 50 };
+  for (const viewport of [
+    { width: 844, height: 390 },
+    { width: 568, height: 320 },
+    { width: 390, height: 844 },
+    { width: 320, height: 568 },
+    { width: 1280, height: 720 },
+  ]) {
+    it(`fits and round-trips in ${viewport.width}x${viewport.height}`, () => {
+      const layout = fitRegion(viewport, region, { top: 10, right: 10, bottom: 10, left: 10 }, 2, 0.55);
+      const r = rectToScreen(layout, region);
+      expect(r.x).toBeGreaterThanOrEqual(9.5);
+      expect(r.y).toBeGreaterThanOrEqual(9.5);
+      expect(r.x + r.width).toBeLessThanOrEqual(viewport.width - 9.5);
+      expect(r.y + r.height).toBeLessThanOrEqual(viewport.height - 9.5);
+      const p = { x: 61.5, y: 12.25 };
+      const back = fromScreen(layout, toScreen(layout, p));
+      expect(back.x).toBeCloseTo(p.x, 6);
+      expect(back.y).toBeCloseTo(p.y, 6);
+      const v = { x: 3, y: -2 };
+      const vBack = screenVectorToPitch(layout, pitchVectorToScreen(layout, v));
+      expect(vBack.x).toBeCloseTo(v.x, 6);
+      expect(vBack.y).toBeCloseTo(v.y, 6);
+      if (layout.orientation === 'landscape') {
+        expect(layout.crossScale).toBeLessThan(layout.scale);
+        expect(toScreen(layout, { x: 75, y: 25 }).x).toBeGreaterThan(toScreen(layout, { x: 40, y: 25 }).x);
+      } else {
+        expect(toScreen(layout, { x: 75, y: 25 }).y).toBeLessThan(toScreen(layout, { x: 40, y: 25 }).y);
+      }
+    });
+  }
 });

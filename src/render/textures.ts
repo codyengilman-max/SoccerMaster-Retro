@@ -4,18 +4,37 @@ import { PALETTE } from './theme';
 export const TEXTURES = {
   player: 'placeholder-player',
   ball: 'placeholder-ball',
+  attacker: 'kit-attack',
+  defender: 'kit-defense',
+  keeper: 'kit-keeper',
 } as const;
+
+interface Kit {
+  readonly shirt: number;
+  readonly stripe: number;
+  readonly shorts: number;
+  readonly socks: number;
+}
+
+const KITS: Readonly<Record<'player' | 'attacker' | 'defender' | 'keeper', Kit>> = {
+  player: { shirt: PALETTE.tomato, stripe: PALETTE.mustard, shorts: PALETTE.sand, socks: PALETTE.tomato },
+  attacker: { shirt: PALETTE.tomato, stripe: PALETTE.mustard, shorts: PALETTE.sand, socks: PALETTE.tomato },
+  defender: { shirt: PALETTE.blue, stripe: PALETTE.cream, shorts: PALETTE.blueDark, socks: PALETTE.blue },
+  keeper: { shirt: PALETTE.purple, stripe: PALETTE.sun, shorts: PALETTE.ink, socks: PALETTE.purple },
+};
 
 export const PLAYER_TEXTURE_SIZE = { width: 48, height: 72 } as const;
 export const BALL_TEXTURE_SIZE = { width: 28, height: 28 } as const;
 
 /** Original placeholder art drawn with vector shapes. Generated once per game. */
 export function ensurePlaceholderTextures(scene: Phaser.Scene): void {
-  if (!scene.textures.exists(TEXTURES.player)) drawPlayer(scene);
+  for (const kit of ['player', 'attacker', 'defender', 'keeper'] as const) {
+    if (!scene.textures.exists(TEXTURES[kit])) drawPlayer(scene, TEXTURES[kit], KITS[kit]);
+  }
   if (!scene.textures.exists(TEXTURES.ball)) drawBall(scene);
 }
 
-function drawPlayer(scene: Phaser.Scene): void {
+function drawPlayer(scene: Phaser.Scene, key: string, kit: Kit): void {
   const { width, height } = PLAYER_TEXTURE_SIZE;
   const g = scene.make.graphics({ x: 0, y: 0 }, false);
   const outline = 3;
@@ -26,13 +45,13 @@ function drawPlayer(scene: Phaser.Scene): void {
   g.fillRoundedRect(11, 64, 11, 6, 2);
   g.fillRoundedRect(26, 64, 11, 6, 2);
   // Socks
-  g.fillStyle(PALETTE.tomato, 1);
+  g.fillStyle(kit.socks, 1);
   g.fillRect(14, 52, 7, 13);
   g.fillRect(27, 52, 7, 13);
   g.strokeRect(14, 52, 7, 13);
   g.strokeRect(27, 52, 7, 13);
   // Shorts
-  g.fillStyle(PALETTE.sand, 1);
+  g.fillStyle(kit.shorts, 1);
   g.fillRoundedRect(12, 42, 24, 12, 3);
   g.strokeRoundedRect(12, 42, 24, 12, 3);
   // Arms
@@ -42,11 +61,11 @@ function drawPlayer(scene: Phaser.Scene): void {
   g.strokeRoundedRect(4, 26, 7, 16, 3);
   g.strokeRoundedRect(37, 26, 7, 16, 3);
   // Shirt
-  g.fillStyle(PALETTE.tomato, 1);
+  g.fillStyle(kit.shirt, 1);
   g.fillRoundedRect(9, 22, 30, 23, 6);
   g.strokeRoundedRect(9, 22, 30, 23, 6);
   // Shirt stripe + number badge
-  g.fillStyle(PALETTE.mustard, 1);
+  g.fillStyle(kit.stripe, 1);
   g.fillRect(11, 30, 26, 4);
   g.fillStyle(PALETTE.cream, 1);
   g.fillCircle(24, 38, 4);
@@ -66,7 +85,7 @@ function drawPlayer(scene: Phaser.Scene): void {
   g.fillCircle(20, 15, 1.5);
   g.fillCircle(28, 15, 1.5);
 
-  g.generateTexture(TEXTURES.player, width, height);
+  g.generateTexture(key, width, height);
   g.destroy();
 }
 

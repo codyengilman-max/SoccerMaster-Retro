@@ -15,3 +15,12 @@ export interface InspectableScene {
 export function isInspectable(scene: unknown): scene is InspectableScene {
   return typeof (scene as Partial<InspectableScene> | null)?.describeLayout === 'function';
 }
+
+/** Scenes with live gameplay also report a plain-data snapshot of it (debug builds only). */
+export interface GameplayScene {
+  describeGameplay(): unknown;
+}
+
+export function hasGameplay(scene: unknown): scene is GameplayScene {
+  return typeof (scene as Partial<GameplayScene> | null)?.describeGameplay === 'function';
+}

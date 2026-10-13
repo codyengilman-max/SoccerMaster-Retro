@@ -20,8 +20,8 @@ export class Button extends Phaser.GameObjects.Container {
   private readonly bg: Phaser.GameObjects.Graphics;
   private readonly label: Phaser.GameObjects.Text;
   private readonly onClick: () => void;
-  private readonly fill: number;
-  private readonly fillPressed: number;
+  private fill: number;
+  private fillPressed: number;
   private buttonWidth: number;
   private buttonHeight: number;
   private pressed = false;
@@ -79,6 +79,30 @@ export class Button extends Phaser.GameObjects.Container {
     hitArea?.setTo(0, 0, width, height);
     this.label.setFontSize(fontSize);
     this.redraw();
+    return this;
+  }
+
+  setFill(fill: number, fillPressed: number): this {
+    this.fill = fill;
+    this.fillPressed = fillPressed;
+    this.redraw();
+    return this;
+  }
+
+  setLabel(text: string): this {
+    this.label.setText(text);
+    return this;
+  }
+
+  /** Hidden buttons must also stop taking input. */
+  setEnabled(enabled: boolean): this {
+    this.setVisible(enabled);
+    if (this.input) this.input.enabled = enabled;
+    if (!enabled) {
+      this.pressed = false;
+      this.hovered = false;
+      this.redraw();
+    }
     return this;
   }
 

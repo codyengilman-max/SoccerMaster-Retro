@@ -23,7 +23,10 @@ export const NO_INSETS: Insets = { top: 0, right: 0, bottom: 0, left: 0 };
  */
 export interface PitchLayout {
   readonly orientation: Orientation;
+  /** Pixels per yard along the pitch length. */
   readonly scale: number;
+  /** Pixels per yard across the pitch; smaller than `scale` for the elevated sideline view. */
+  readonly crossScale: number;
   readonly originX: number;
   readonly originY: number;
   readonly pitchLength: number;
@@ -62,15 +65,57 @@ export function fitPitch(
   const originX = regionX + (regionW - drawnW) / 2 + marginYards * scale;
   const originY = regionY + (regionH - drawnH) / 2 + marginYards * scale;
 
-  return { orientation, scale, originX, originY, pitchLength, pitchWidth };
+  return { orientation, scale, crossScale: scale, originX, originY, pitchLength, pitchWidth };
+}
+
+/**
+ * Fits a pitch region (e.g. the attacking half) with `marginYards` around it. In landscape the
+ * across-pitch axis is compressed by `squash` to suggest an elevated sideline camera.
+ * Portrait keeps the top-down mapping with the region's far end (x = region.x + width) at the top.
+ */
+export function fitRegion(viewport: Viewport, region: Rect, insets: Insets = NO_INSETS, marginYards = 2, squash = 1): PitchLayout {
+  const orientation = orientationOf(viewport);
+  const regionW = Math.max(1, viewport.width - insets.left - insets.right);
+  const regionH = Math.max(1, viewport.height - insets.top - insets.bottom);
+  const longExtent = region.width + marginYards * 2;
+  const shortExtent = region.height + marginYards * 2;
+  const pitchLength = region.x + region.width;
+  if (orientation === 'landscape') {
+    const scale = Math.min(regionW / longExtent, regionH / (shortExtent * squash));
+    const crossScale = scale * squash;
+    const originX = insets.left + (regionW - longExtent * scale) / 2 + (marginYards - region.x) * scale;
+    const originY = insets.top + (regionH - shortExtent * crossScale) / 2 + (marginYards - region.y) * crossScale;
+    return { orientation, scale, crossScale, originX, originY, pitchLength, pitchWidth: region.height };
+  }
+  const scale = Math.min(regionW / shortExtent, regionH / longExtent);
+  const originX = insets.left + (regionW - shortExtent * scale) / 2 + (marginYards - region.y) * scale;
+  const originY = insets.top + (regionH - longExtent * scale) / 2 + marginYards * scale;
+  return { orientation, scale, crossScale: scale, originX, originY, pitchLength, pitchWidth: region.height };
 }
 
 export function toScreen(layout: PitchLayout, point: Vec2): Vec2 {
-  const s = layout.scale;
   if (layout.orientation === 'landscape') {
-    return { x: layout.originX + point.x * s, y: layout.originY + point.y * s };
+    return { x: layout.originX + point.x * layout.scale, y: layout.originY + point.y * layout.crossScale };
   }
-  return { x: layout.originX + point.y * s, y: layout.originY + (layout.pitchLength - point.x) * s };
+  return { x: layout.originX + point.y * layout.crossScale, y: layout.originY + (layout.pitchLength - point.x) * layout.scale };
+}
+
+export function fromScreen(layout: PitchLayout, point: Vec2): Vec2 {
+  if (layout.orientation === 'landscape') {
+    return { x: (point.x - layout.originX) / layout.scale, y: (point.y - layout.originY) / layout.crossScale };
+  }
+  return { x: layout.pitchLength - (point.y - layout.originY) / layout.scale, y: (point.x - layout.originX) / layout.crossScale };
+}
+
+/** Converts a screen-space direction/offset (pixels) into pitch yards. */
+export function screenVectorToPitch(layout: PitchLayout, v: Vec2): Vec2 {
+  if (layout.orientation === 'landscape') return { x: v.x / layout.scale, y: v.y / layout.crossScale };
+  return { x: -v.y / layout.scale, y: v.x / layout.crossScale };
+}
+
+export function pitchVectorToScreen(layout: PitchLayout, v: Vec2): Vec2 {
+  if (layout.orientation === 'landscape') return { x: v.x * layout.scale, y: v.y * layout.crossScale };
+  return { x: v.y * layout.crossScale, y: -v.x * layout.scale };
 }
 
 export function rectToScreen(layout: PitchLayout, rect: Rect): Rect {

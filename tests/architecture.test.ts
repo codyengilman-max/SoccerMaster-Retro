@@ -16,8 +16,8 @@ function imports(file: string): string[] {
   return [...text.matchAll(/from\s+['"]([^'"]+)['"]/g)].map((m) => m[1] ?? '');
 }
 
-describe('simulation / rendering separation', () => {
-  const simFiles = sourceFiles(join(root, 'src/game'));
+describe('simulation + input / rendering separation', () => {
+  const simFiles = [...sourceFiles(join(root, 'src/game')), ...sourceFiles(join(root, 'src/input'))];
 
   it('has simulation modules to check', () => {
     expect(simFiles.length).toBeGreaterThan(0);

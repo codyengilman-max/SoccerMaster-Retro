@@ -1,7 +1,7 @@
 {
   "name": "soccermaster-retro",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "SoccerMaster Retro: U11 9v9 browser soccer for iPhone (Milestone 1 foundation).",
   "type": "module",
   "engines": {
