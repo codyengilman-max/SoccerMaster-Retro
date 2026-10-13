@@ -32,7 +32,7 @@ function giveBall(sim: Sim, id: Id, pos: { x: number; y: number }): void {
     s.protectUntil = s.simTime + T.tackle.protectSeconds;
     if (p.team === 'home' && !p.isKeeper) {
       s.controlledId = id;
-      s.laneY = pos.y;
+      s.dribbleDir = { x: 1, y: 0 };
       s.controlEpoch += 1;
     }
   });
@@ -44,8 +44,9 @@ function aimAt(sim: Sim, target: { x: number; y: number }, power: number): boole
   sim.command({ type: 'aimUpdate', direction: { x: target.x - b.x, y: target.y - b.y }, power });
   return sim.command({ type: 'aimRelease' });
 }
+/** Unified kick: the power whose ground ball slows to a receivable pace at the target. */
 const passPower = (sim: Sim, target: { x: number; y: number }): number =>
-  (Math.hypot(target.x - sim.state.ball.pos.x, target.y - sim.state.ball.pos.y) - T.pass.minDistance) / (T.pass.maxDistance - T.pass.minDistance);
+  match.powerForSpeed(Math.sqrt(T.pass.arriveSpeed ** 2 + 2 * T.ball.friction * Math.hypot(target.x - sim.state.ball.pos.x, target.y - sim.state.ball.pos.y)), T);
 
 describe('9v9 sandbox roster', () => {
   it('has exactly 18 unique players, nine per team, one keeper each', () => {
@@ -371,7 +372,6 @@ describe('opponent possession and keepers', () => {
           s.players.A1.pos = { x: 75 - T.keeper.depth, y: 25 + (19 - 25) * T.keeper.shade };
           s.players.A1.vel = { x: 0, y: 0 };
         });
-        sim.command({ type: 'setAction', action: 'shoot' });
         aimAt(sim, { x: 75, y: 25 + off }, 1);
         run(sim, 3, (s) => s.state.phase === 'stopped');
         const goal = sim.state.stoppage?.reason === 'goal' && sim.state.stoppage.scorer === 'home';
