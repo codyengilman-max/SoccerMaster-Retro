@@ -83,6 +83,9 @@ class Finger {
   }
 }
 
+// CI runners are several times slower than local machines; drill tests wait on real game time.
+test.describe.configure({ timeout: 60_000 });
+
 const modeFor = (info: TestInfo): Mode => (info.project.use.hasTouch ? 'touch' : 'mouse');
 
 async function openDrill(page: Page, mode: Mode, query = ''): Promise<AttackReport> {
@@ -127,6 +130,11 @@ function segmentDistance(p: Point, a: Point, b: Point): number {
 /** Pass to the runner (leading them) if that lane is clear of defenders, else to the clearest teammate. */
 async function passToRunner(page: Page, finger: Finger): Promise<string> {
   let receiver = '';
+  // Like a player, wait until the run is visibly under way so there is something to lead.
+  await waitFor(page, (r) => {
+    const p = r.runnerId ? r.players[r.runnerId as 'A1' | 'A2' | 'A3'] : undefined;
+    return r.phase === 'ended' || (r.phase === 'live' && p !== undefined && Math.hypot(p.vx, p.vy) > 3);
+  }, 5000);
   await aimAndKick(page, finger, (r) => {
     const mates = (['A1', 'A2', 'A3'] as const).filter((id) => id !== r.controlledId);
     const ordered = [...mates].sort((a, b) => (a === r.runnerId ? -1 : b === r.runnerId ? 1 : 0));
@@ -228,17 +236,22 @@ test('a far-post shot from a through-ball position scores a goal', async ({ page
 
 test('a soft shot at the keeper is saved', async ({ page }, info) => {
   test.skip(info.project.name.includes('portrait'), 'scenario covered in landscape and desktop');
+  const errors = trackConsoleErrors(page);
   const mode = modeFor(info);
   const finger = new Finger(page, mode);
-  await openDrill(page, mode);
-  await passToRunner(page, finger);
-  await waitFor(page, (r) => r.controlledId !== 'A1');
+  // The drill runs in real time, so in open play a slow headless browser decides whether the shot or the press comes first.
+  // The same debug through-ball setup as the goal test keeps this deterministic; the open-play save is covered in tests/attack.test.ts.
+  await openDrill(page, mode, '&setup=shooting');
+  expect((await report(page)).controlledId).toBe('A2');
   await pressElement(page, 'shoot-toggle', mode);
-  await aimAndKick(page, finger, () => ({ target: { x: 75, y: 25 }, power: 0.25 }));
+  expect((await report(page)).action).toBe('shoot');
+  await aimAndKick(page, finger, (r) => ({ target: r.players.GK, power: 0.25 }));
   const ended = await waitFor(page, (r) => r.phase === 'ended');
-  expect(ended.outcome).toBe('saved');
+  expect(ended.outcome, ended.events.map((e) => `${e.type}:${e.by ?? ''}:${e.detail}`).join(' ')).toBe('saved');
   expect(ended.owner).toBe('GK');
+  expect(ended.resolutions).toBe(1);
   await linger(page);
+  expect(errors).toEqual([]);
 });
 
 test('pointer cancel and rotation drop an active aim safely', async ({ page }, info) => {

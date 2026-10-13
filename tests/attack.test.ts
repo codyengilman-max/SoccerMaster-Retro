@@ -105,6 +105,7 @@ describe('ball ownership and control transfer', () => {
     const sim = new AttackSim({ seed: 3 });
     goLive(sim);
     const runner = passToRunner(sim);
+    const passerX = sim.player('A1').pos.x;
     expect(sim.state.ball.owner).toBeNull();
     expect(sim.state.controlledId).toBe('A1');
     run(sim, 4, (s) => s.state.ball.owner !== null || s.state.phase === 'ended');
@@ -113,8 +114,9 @@ describe('ball ownership and control transfer', () => {
     const received = sim.state.events.find((e) => e.type === 'received');
     expect(received?.by).toBe(runner);
     expect(Number(received?.detail)).toBeGreaterThan(1);
-    // Nobody went back to their kick-off spot.
-    expect(sim.player('A1').pos.x).toBeGreaterThan(42);
+    // Nobody went back to their kick-off spot (A1 starts at x = 38).
+    expect(passerX).toBeGreaterThan(38.5);
+    expect(sim.player('A1').pos.x).toBeGreaterThanOrEqual(passerX - 0.5);
   });
 
   it('a pass straight at a defender is intercepted and ends the attempt once', () => {
@@ -139,6 +141,20 @@ describe('ball ownership and control transfer', () => {
   });
 });
 
+describe('opening pass window', () => {
+  it.each([1, 2, 3, 4, 5, 6, 7, 8])('a lead pass to the runner up to 0.9 s after the run starts is received (seed %i)', (seed) => {
+    const sim = new AttackSim({ seed });
+    goLive(sim);
+    run(sim, 3, (s) => s.state.runnerId !== null);
+    run(sim, 0.9);
+    expect(sim.state.phase).toBe('live');
+    passToRunner(sim);
+    run(sim, 4, (s) => s.state.controlledId !== 'A1' || s.state.phase === 'ended');
+    expect(sim.state.phase, sim.state.outcomeDetail).not.toBe('ended');
+    expect(sim.state.controlledId).not.toBe('A1');
+  });
+});
+
 describe('shooting', () => {
   it.each([1, 2, 3, 4])('receive -> dribble -> hard far-post shot scores (seed %i)', (seed) => {
     const sim = new AttackSim({ seed });
@@ -160,6 +176,8 @@ describe('shooting', () => {
     goLive(sim);
     passToRunner(sim);
     run(sim, 4, (s) => s.state.controlledId !== 'A1');
+    const shooter = sim.player(sim.state.controlledId);
+    run(sim, 1.5, () => shooter.pos.x >= 58);
     sim.command({ type: 'setAction', action: 'shoot' });
     aimAndRelease(sim, { x: 75, y: 25 }, 0.25);
     run(sim, 4, (s) => s.state.phase === 'ended');

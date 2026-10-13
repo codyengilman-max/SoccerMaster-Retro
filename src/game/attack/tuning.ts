@@ -73,6 +73,9 @@ export const ATTACK_TUNING = {
     deflectSpeedFactor: 0.45,
     deflectAngle: 0.6,
     ignoreSeconds: 0.3,
+    /** A defender needs this long after a pass to react; until then only a ball hitting him (within blockRadius) is stopped. */
+    reactionSeconds: 0.2,
+    blockRadius: 0.5,
   },
   tackle: { radius: 1.2, contactSeconds: 0.3 },
 
@@ -81,7 +84,8 @@ export const ATTACK_TUNING = {
     speed: 6.6,
     seconds: 2.4,
     cooldownSeconds: 2.5,
-    firstDelaySeconds: 0.5,
+    /** The first run starts as play goes live so there is about 1 s to make the opening pass before the press arrives. */
+    firstDelaySeconds: 0,
     /** Run target sits this far beyond the deepest outfield defender. */
     beyondDefence: 7,
     maxX: 66,

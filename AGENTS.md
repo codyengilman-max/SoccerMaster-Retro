@@ -25,7 +25,7 @@ CI (`.github/workflows/ci.yml`) runs `npm ci`, typecheck, unit tests, build, and
 - `src/game/attack/` — M2 attack drill rules (`AttackSim`, `tuning.ts` holds every gameplay number).
 - `src/input/` — pure gesture recognizer + keyboard bindings → the same sim `Command`s (also framework-free).
 - `src/scenes/` — Phaser scenes (`StartScene`, `PitchScene`, `AttackScene`) and UI (`ui/Button.ts`). Scenes read simulation state and draw it; they never own soccer rules.
-- `src/debug/diagnostics.ts` — `window.__SMR__` (dev, or `?debug` in the URL): canvas count, active scenes, listener totals, layout bounds, and the attack drill's gameplay snapshot. `?debug&setup=shooting` is a debug-only fixture used by the goal browser test.
+- `src/debug/diagnostics.ts` — `window.__SMR__` (dev, or `?debug` in the URL): canvas count, active scenes, listener totals, layout bounds, and the attack drill's gameplay snapshot. `?debug&setup=shooting` is a debug-only fixture used by the goal and save browser tests.
 - `docs/` — `VISION.md`, `DECISIONS.md`, `ROADMAP.md`, `STATUS.md`. Update `STATUS.md` at the end of every milestone.
 
 ## Rules

@@ -740,6 +740,8 @@ export class AttackSim {
       }
       return;
     }
+    const kick = ball.kick;
+    if (kick?.kind === 'pass' && s.simTime - kick.at < T.intercept.reactionSeconds && d > T.intercept.blockRadius) return;
     if (speed <= T.intercept.maxSpeed) {
       ball.owner = p.id;
       ball.vel = vec(0, 0);

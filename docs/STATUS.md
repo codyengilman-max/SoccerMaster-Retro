@@ -10,7 +10,7 @@ One repeatable **training attack** is playable: 3 attackers vs 2 outfield defend
 - **Aimed kicks**: hold your player ~0.16 s, drag back (slingshot), release. The guide shows direction and power. Aiming slows the whole simulation to ×0.3 for at most 1.6 s of real time (refills only while not aiming). A short drag or a quick swipe never kicks.
 - **Pass/Shoot selector** (top right, Pass by default, resets to Pass after every shot and retry).
 - **Receiving**: an attacker who controls the ball becomes your player; nobody is repositioned. Passes can be intercepted (ball ≤ 13 yd/s within 1.1 yd of a defender), deflected (faster balls), missed, or roll out.
-- **Shots** travel as real ball trajectories; the keeper shades toward the ball, reacts after 0.25 s, and catches slow shots (≤ 15 yd/s) or parries hard ones. Parries/deflections do not end the attempt. Placement matters: from around the penalty spot, a hard shot aimed 2 yd or more off centre toward the far post (the outer 1.5 yd) beats the keeper, while shots near the centre are saved (seeded unit test).
+- **Shots** travel as real ball trajectories; the keeper shades toward the ball, reacts after 0.25 s, and catches slow shots (≤ 15 yd/s) or parries hard ones. Parries/deflections do not end the attempt. The first support run starts as play goes live and a defender needs 0.2 s to react to a pass that is not hit straight at him, so the opening pass to the runner has about 1 s before the press arrives. Placement matters: from around the penalty spot, a hard shot aimed 2 yd or more off centre toward the far post (the outer 1.5 yd) beats the keeper, while shots near the centre are saved (seeded unit test).
 - **Team behaviour**: supporting attackers hold width and come inside when crowded; one makes a timed run into space when its lane is clear; the nearest defender presses goal-side, the other covers the most dangerous passing lane (they never chase the same point).
 - **Attempt ends** on a goal, ball out of the training area, or a defender/keeper securing the ball; the outcome panel explains why and **Retry** fully resets without reloading.
 - **Desktop**: arrows/WASD = swipes, hold Space to aim (←/→ turn, ↑/↓ power, release kicks), Tab/Q toggle, 1/2 pick Pass/Shoot, R/Enter retry, Esc back (or cancel aim). Mouse drag works like touch.
@@ -24,7 +24,7 @@ See the PR for exact counts. Unit tests cover swipe-vs-aim recognition, single p
 
 ### Known limitations
 - Not tested on a physical iPhone; Chromium emulation only.
-- The browser goal test starts from a debug-only fixture (`?debug&setup=shooting`); the full receive → dribble → shoot → goal loop is verified in seeded unit tests. Headless browser timing makes long scripted moves unreliable.
+- The browser goal and save tests start from a debug-only fixture (`?debug&setup=shooting`); the full receive → dribble → shoot → goal/save loop is verified in seeded unit tests. Headless browser timing makes long scripted moves unreliable.
 - A browser-level swipe-vs-hold test was dropped because CDP touch latency in headless Chromium exceeds the 160 ms hold threshold; swipe-vs-hold is covered by unit tests and the keyboard cut test.
 - No ball height (chips/headers), no offside, no fouls, no sound. AI is deliberately small: press/cover/keeper rules only.
 - Tuning is a first pass and should be adjusted after playtesting on a phone.
