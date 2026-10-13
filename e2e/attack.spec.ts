@@ -302,7 +302,10 @@ test('repeated retries and navigation keep one canvas and stable listeners', asy
   const listeners = async () => ({ phaser: (await diagnostics(page)).listeners, dom: await page.evaluate(() => window.__domListeners?.()) });
   const baseline = await listeners();
   for (let attempt = 1; attempt <= 4; attempt++) {
-    await aimAndKick(page, finger, (r) => ({ target: r.players.D1, power: passPower(r, r.players.D1) }));
+    // Any outcome ends the attempt; a defender may win the ball before the hold registers on a slow runner.
+    await aimAndKick(page, finger, (r) => ({ target: r.players.D1, power: passPower(r, r.players.D1) })).catch((e: unknown) => {
+      if (!String(e).includes('attempt ended before aiming')) throw e;
+    });
     await waitFor(page, (r) => r.phase === 'ended');
     await pressElement(page, 'retry-button', mode);
     await waitFor(page, (r) => r.attempt === attempt + 1 && r.phase === 'live');
