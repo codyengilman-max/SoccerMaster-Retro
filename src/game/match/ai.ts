@@ -56,10 +56,16 @@ export function computeAnchor(role: RoleDef, ballT: Vec2, inPossession: boolean,
   return vec(clamp(x, B.minX, B.maxX), clamp(y, B.minY, B.maxY));
 }
 
-/** Closest blocker to the lane. A presser right on the ball (within 2 yd of `from`) is beside the kick, not in its lane. */
+/** Closest blocker to the lane. A presser right on the ball (within 2 yd) and level with or behind the kick is beside it, not in its lane. */
 function laneClearance(from: Vec2, to: Vec2, blockers: readonly Vec2[]): number {
+  const len = distance(from, to);
+  const dir = len > 1e-6 ? scale(sub(to, from), 1 / len) : vec(1, 0);
   let best = Infinity;
-  for (const o of blockers) if (distance(o, from) > 2) best = Math.min(best, distanceToSegment(o, from, to));
+  for (const o of blockers) {
+    const rel = sub(o, from);
+    if (Math.hypot(rel.x, rel.y) <= 2 && rel.x * dir.x + rel.y * dir.y < 0.5) continue;
+    best = Math.min(best, distanceToSegment(o, from, to));
+  }
   return best;
 }
 

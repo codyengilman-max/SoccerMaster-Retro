@@ -169,6 +169,8 @@ export interface MatchState {
   contact: Record<MatchPlayerId, number>;
   /** A player who just lost a tackle cannot tackle back until this sim time. */
   tackleBan: Partial<Record<MatchPlayerId, number>>;
+  /** A player who just lost a tackle is off balance: no interceptions or loose-ball pickups until this sim time. */
+  beatenUntil: Partial<Record<MatchPlayerId, number>>;
   defense: Record<TeamId, DefenseAssignment>;
   chaser: Record<TeamId, { id: MatchPlayerId | null; until: number }>;
   runs: Record<TeamId, TeamRun>;

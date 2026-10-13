@@ -528,6 +528,7 @@ export class MatchSim {
       s.contact[id] += h;
       if (s.contact[id] >= T.tackle.contactSeconds) {
         s.tackleBan[owner.id] = s.simTime + T.tackle.loserBanSeconds;
+        s.beatenUntil[owner.id] = s.simTime + T.tackle.beatenSeconds;
         this.take(d, d.isKeeper ? 'saved' : 'tackle', d.isKeeper ? 'keeper smothered the ball' : `won the ball from ${owner.id}`);
         if (d.isKeeper) s.stats.saves[d.team] += 1;
         return;
@@ -603,7 +604,7 @@ export class MatchSim {
     let best: { p: MatchPlayer; d: number; friendly: boolean } | null = null;
     for (const id of MATCH_PLAYER_IDS) {
       const p = s.players[id];
-      if (p.isKeeper || this.ignored(id)) continue;
+      if (p.isKeeper || this.ignored(id) || (s.beatenUntil[id] ?? 0) > s.simTime) continue;
       const friendly = !kick || kick.team === p.team;
       const d = distanceToSegment(p.pos, prev, ball.pos);
       if (d <= (friendly ? T.receive.radius : T.intercept.radius) && (!best || d < best.d)) best = { p, d, friendly };
@@ -842,6 +843,7 @@ export class MatchSim {
       ownedSince: 0,
       contact,
       tackleBan: {},
+      beatenUntil: {},
       defense: { home: { presserId: null, coverId: null, until: 0 }, away: { presserId: null, coverId: null, until: 0 } },
       chaser: { home: { id: null, until: 0 }, away: { id: null, until: 0 } },
       runs: { home: { runnerId: null, until: 0, cooldownUntil: 0 }, away: { runnerId: null, until: 0, cooldownUntil: 0 } },

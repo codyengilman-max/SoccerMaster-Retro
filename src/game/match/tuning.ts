@@ -42,6 +42,8 @@ export const MATCH_TUNING = {
     protectSeconds: 0.7,
     /** ...and the player who lost it cannot tackle straight back for this long. */
     loserBanSeconds: 1.5,
+    /** ...and is off balance (cannot intercept or pick up the loose ball) for this long. */
+    beatenSeconds: 0.9,
   },
   keeper: {
     ...D.keeper,

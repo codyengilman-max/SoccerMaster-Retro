@@ -485,3 +485,50 @@ describe('sandbox flow', () => {
     }
   });
 });
+
+describe('possession stability', () => {
+  it('possession does not ping-pong: at most 4 changes in any 3 s and under 40 per 90 s, per seed', () => {
+    for (let seed = 1; seed <= 6; seed++) {
+      const sim = new MatchSim({ seed });
+      let last = sim.state.possession;
+      const flips: number[] = [];
+      for (let i = 0; i < 90 / F; i++) {
+        sim.step(F);
+        if (sim.state.possession !== last) {
+          flips.push(sim.state.simTime);
+          last = sim.state.possession;
+        }
+      }
+      let burst = 0;
+      for (let a = 0; a < flips.length; a++) {
+        let n = 0;
+        for (let b = a; b < flips.length && flips[b]! - flips[a]! < 3; b++) n++;
+        burst = Math.max(burst, n);
+      }
+      expect(burst, `seed ${seed}`).toBeLessThanOrEqual(4);
+      expect(flips.length, `seed ${seed}`).toBeLessThan(40);
+    }
+  });
+
+  it('a player who just lost a tackle cannot intercept or pick up the ball while off balance', () => {
+    const sim = new MatchSim({ seed: 3 });
+    live(sim);
+    let tackleAt = -1;
+    let loser: Id | null = null;
+    let seen = lastSeq(sim);
+    run(sim, 60, (s) => {
+      const t = newEvents(s, seen).find((e) => e.type === 'tackle');
+      seen = lastSeq(s);
+      if (!t) return false;
+      tackleAt = s.state.simTime;
+      loser = (t.detail.split(' ').at(-1) ?? null) as Id | null;
+      return true;
+    });
+    expect(loser).not.toBeNull();
+    expect(sim.state.beatenUntil[loser!]).toBeCloseTo(tackleAt + T.tackle.beatenSeconds, 1);
+    seen = lastSeq(sim);
+    run(sim, T.tackle.beatenSeconds - 2 * F);
+    const regained = newEvents(sim, seen).filter((e) => (e.type === 'intercepted' || e.type === 'received') && e.by === loser);
+    expect(regained).toEqual([]);
+  });
+});

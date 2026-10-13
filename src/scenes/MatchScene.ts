@@ -571,7 +571,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const portrait = orientationOf({ width, height }) === 'portrait';
     const insets = this.insets(width, height);
     const available = portrait ? height - insets.top - insets.bottom : width - insets.left - insets.right;
-    let len: number = VIEW_LENGTH[portrait ? 'portrait' : 'landscape'];
+    // Landscape always shows the whole pitch (both goals); portrait grows the view to fill the screen.
+    let len: number = portrait ? VIEW_LENGTH.portrait : U11_9V9_PITCH.length + 6;
     for (let pass = 0; pass < 3; pass++) {
       this.viewLen = len;
       const lo = len / 2 - 3;
@@ -581,7 +582,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       const r = this.viewRect(cx);
       const shown = portrait ? r.height : r.width;
       const next = Phaser.Math.Clamp(len * (available / Math.max(1, shown)), 24, U11_9V9_PITCH.length + 6);
-      if (Math.abs(next - len) < 0.05) break;
+      if (!portrait || Math.abs(next - len) < 0.05) break;
       len = next;
     }
   }
