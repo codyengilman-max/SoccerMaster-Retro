@@ -327,3 +327,26 @@ describe('retry', () => {
     goLive(sim);
   });
 });
+
+describe('through-ball shooting fixture (matches the browser ?setup=shooting fixture)', () => {
+  it('a hard far-post shot after the keeper shades to the near post scores', () => {
+    const sim = new AttackSim();
+    sim.arrange((s) => {
+      s.players.A2.pos = { x: 66, y: 25 };
+      s.players.A2.vel = { x: 4, y: 0 };
+      s.players.D1.pos = { x: 40, y: 18 };
+      s.players.D2.pos = { x: 40, y: 30 };
+      s.ball.owner = 'A2';
+      s.ball.pos = { x: 66.8, y: 25 };
+      s.controlledId = 'A2';
+      s.laneY = 25;
+    });
+    goLive(sim);
+    run(sim, 2, (x) => x.player('GK').pos.y < 26);
+    sim.command({ type: 'setAction', action: 'shoot' });
+    aimAndRelease(sim, { x: 75, y: 28.2 }, 1);
+    run(sim, 3, (x) => x.state.phase === 'ended');
+    const log = sim.state.events.map((e) => `${e.type}:${e.detail}`).join(' ');
+    expect(sim.state.outcome, `${log} gk=${JSON.stringify(sim.player('GK').pos)} ball=${JSON.stringify(sim.state.ball.pos)}`).toBe('goal');
+  });
+});

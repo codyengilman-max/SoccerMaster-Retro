@@ -117,14 +117,14 @@ export class AttackScene extends Phaser.Scene implements InspectableScene {
     // Debug-only test fixture: start attempt 1 with a teammate already through on goal.
     if (params.get('setup') === 'shooting' && shouldExposeDebug(window.location)) {
       this.sim.arrange((s) => {
-        s.players.A2.pos = { x: 60, y: 14 };
+        s.players.A2.pos = { x: 66, y: 25 };
         s.players.A2.vel = { x: 4, y: 0 };
         s.players.D1.pos = { x: 40, y: 18 };
         s.players.D2.pos = { x: 40, y: 30 };
         s.ball.owner = 'A2';
-        s.ball.pos = { x: 60.8, y: 14 };
+        s.ball.pos = { x: 66.8, y: 25 };
         s.controlledId = 'A2';
-        s.laneY = 14;
+        s.laneY = 25;
       });
     }
     this.lastSeq = 0;

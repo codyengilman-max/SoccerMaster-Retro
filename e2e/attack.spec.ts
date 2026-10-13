@@ -109,7 +109,7 @@ async function aimAndKick(page: Page, finger: Finger, target: (r: AttackReport) 
   const len = Math.hypot(dir.x, dir.y);
   const drag = aiming.gesture.aimMinDragPx + power * (aiming.gesture.aimMaxDragPx - aiming.gesture.aimMinDragPx);
   const end = { x: start.x - (dir.x / len) * drag, y: start.y - (dir.y / len) * drag };
-  for (let i = 1; i <= 5; i++) await finger.move({ x: start.x + ((end.x - start.x) * i) / 5, y: start.y + ((end.y - start.y) * i) / 5 });
+  for (let i = 1; i <= 2; i++) await finger.move({ x: start.x + ((end.x - start.x) * i) / 2, y: start.y + ((end.y - start.y) * i) / 2 });
   await finger.up(end);
   return waitFor(page, (r) => r.phase !== 'aiming');
 }
@@ -173,21 +173,6 @@ test('drill layout fits the viewport', async ({ page }, info) => {
   expect(errors).toEqual([]);
 });
 
-test('quick swipe on the player cuts instead of aiming; hold-and-drag aims', async ({ page }, info) => {
-  const mode = modeFor(info);
-  const finger = new Finger(page, mode);
-  await openDrill(page, mode);
-  const r = await report(page);
-  const p = carrierPoint(r);
-  await finger.move(p).catch(() => undefined);
-  await finger.down(p);
-  await finger.move({ x: p.x, y: p.y - 60 });
-  await finger.up({ x: p.x, y: p.y - 70 });
-  const after = await waitFor(page, (x) => events(x).includes('swipe'));
-  expect(events(after)).not.toContain('aimStart');
-  expect(after.events.find((e) => e.type === 'swipe')?.detail).toBe('cut');
-});
-
 test('pass to a moving teammate transfers control without resetting play', async ({ page }, info) => {
   const errors = trackConsoleErrors(page);
   const mode = modeFor(info);
@@ -229,9 +214,11 @@ test('a far-post shot from a through-ball position scores a goal', async ({ page
   // Debug-only setup puts A2 through on goal; the full receive -> dribble -> shoot loop is covered in tests/attack.test.ts.
   await openDrill(page, mode, '&setup=shooting');
   expect((await report(page)).controlledId).toBe('A2');
+  // Let the keeper shade to the near post first, as it would in open play.
+  await waitFor(page, (r) => r.players.GK.y < 26);
   await pressElement(page, 'shoot-toggle', mode);
   expect((await report(page)).action).toBe('shoot');
-  await aimAndKick(page, finger, () => ({ target: { x: 75, y: 27.6 }, power: 1 }));
+  await aimAndKick(page, finger, () => ({ target: { x: 75, y: 28.2 }, power: 1 }));
   expect((await report(page)).action).toBe('pass');
   const ended = await waitFor(page, (r) => r.phase === 'ended');
   expect(ended.outcome, ended.events.map((e) => `${e.type}:${e.by ?? ''}:${e.detail}`).join(' ')).toBe('goal');

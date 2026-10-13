@@ -1,28 +1,33 @@
 # Status
 
-## Current milestone: M1 — Project foundation (complete, in review)
+## Current milestone: M2 — Retro Bowl-inspired playable attack (complete, in review)
 
-**This is a project foundation, not a playable soccer match.** There is no player movement, ball physics, opponents, rules, or scoring yet.
+One repeatable **training attack** is playable: 3 attackers vs 2 outfield defenders and a goalkeeper in the attacking half. This is a control prototype, **not** a full 9v9 match and not the full soccer-intelligence engine.
 
-### Completed
-- Toolchain: TypeScript 5.9 (strict), Vite 6.4, Phaser 3.90, npm with committed `package-lock.json`, Node 20 (`.node-version`).
-- Start screen (`src/scenes/StartScene.ts`): "SoccerMaster Retro" title, large "Enter Training Ground" button (tap, click, Enter or Space).
-- Pitch scene (`src/scenes/PitchScene.ts`): U11 9v9 placeholder pitch (75 × 50 yd) with boundary, halfway line, centre circle and spot, penalty areas and marks, goal areas, corner arcs, and goals; one static placeholder player and a ball; Back button (tap, click, Esc or Backspace) returns to the start screen.
-- Responsive layout: Scale Manager `RESIZE`; pitch runs vertically in portrait and horizontally in landscape; scenes re-layout on resize/orientation change; iOS safe-area insets respected. `src/render/resizeGuard.ts` works around a Phaser 3.90 race where a quick rotation during a scene change left the canvas at the previous orientation's size (found in real Chrome device emulation; covered by a browser test).
-- Leak-free navigation: one canvas; scenes remove their scale and keyboard listeners on shutdown. Browser tests check canvas count, Phaser emitter listener totals, and live DOM listener counts across 5 round trips.
-- Architecture: framework-free simulation in `src/game/`, rendering helpers in `src/render/`, Phaser scenes in `src/scenes/`. A unit test fails if `src/game/` imports Phaser, the DOM, or rendering code.
-- Original placeholder art drawn in code; system fonts; no third-party assets.
-- Tests: Vitest unit tests (`tests/`) and Playwright browser tests (`e2e/`, Chromium emulating a 390 × 844 phone in portrait and landscape).
-- CI: `.github/workflows/ci.yml` runs type check, unit tests, production build, and browser tests on push and pull request.
+### Playable now (Start → "Play Attack Drill")
+- **Auto-dribble**: your player (yellow ring + marker) dribbles toward goal; the ball moves out and back with each touch.
+- **Swipes** (anywhere): up/down = lateral cut, toward goal = heavier push (ball goes loose briefly), away = check back. Cooldown 0.5 s and a ball-control meter (cut 0.3, push 0.4, check 0.15; refills 0.35/s) stop unlimited speed.
+- **Aimed kicks**: hold your player ~0.16 s, drag back (slingshot), release. The guide shows direction and power. Aiming slows the whole simulation to ×0.3 for at most 1.6 s of real time (refills only while not aiming). A short drag or a quick swipe never kicks.
+- **Pass/Shoot selector** (top right, Pass by default, resets to Pass after every shot and retry).
+- **Receiving**: an attacker who controls the ball becomes your player; nobody is repositioned. Passes can be intercepted (ball ≤ 13 yd/s within 1.1 yd of a defender), deflected (faster balls), missed, or roll out.
+- **Shots** travel as real ball trajectories; the keeper shades toward the ball, reacts after 0.25 s, and catches slow shots (≤ 15 yd/s) or parries hard ones. Parries/deflections do not end the attempt.
+- **Team behaviour**: supporting attackers hold width and come inside when crowded; one makes a timed run into space when its lane is clear; the nearest defender presses goal-side, the other covers the most dangerous passing lane (they never chase the same point).
+- **Attempt ends** on a goal, ball out of the training area, or a defender/keeper securing the ball; the outcome panel explains why and **Retry** fully resets without reloading.
+- **Desktop**: arrows/WASD = swipes, hold Space to aim (←/→ turn, ↑/↓ power, release kicks), Tab/Q toggle, 1/2 pick Pass/Shoot, R/Enter retry, Esc back (or cancel aim). Mouse drag works like touch.
+- Portrait works (top-down view) with a "rotate to landscape" suggestion.
+
+### Tuning
+All numbers are in `src/game/attack/tuning.ts` (speeds, cooldowns, control costs, aim slow-motion, pass/shot power, receive/intercept/tackle ranges, keeper) and `src/input/gestures.ts` (`GESTURE_TUNING`: swipe 30 px within 300 ms, hold 160 ms within 12 px, hold radius 80 px, drag 18–150 px).
+
+### Verification
+See the PR for exact counts. Unit tests cover swipe-vs-aim recognition, single possession and control transfer, aim time limit and cooldowns on sim time, single goal/out resolution, retry reset, and input cancellation. Browser tests (Playwright Chromium: 390×844 and 320×568 portrait, 844×390 and 568×320 landscape, 1280×720 desktop mouse/keyboard) cover a completed pass to a moving teammate, an interception, a goal, a keeper save, pointer-cancel and rotation during an aim, keyboard controls, layout fit, and repeated retries/navigation with one canvas and stable listener counts.
 
 ### Known limitations
-- Not a game yet: everything on the pitch is static.
-- Browser tests use Chromium phone emulation. Real iPhone Safari has not been tested yet (planned for M2 once a hosted build exists).
-- The canvas renders at CSS-pixel resolution; text is rendered at device-pixel resolution, but shapes can look slightly soft on Retina screens.
-- Pitch dimensions and markings are placeholders, not an approved rules decision.
-- Phaser is a ~1.5 MB (≈340 KB gzip) chunk; no loading screen yet.
-- Headless Chromium logs software-WebGL fallback warnings (environment only, not app errors); browser tests fail on console errors, not these warnings.
-- No hosting configured; the app only runs locally or in CI.
+- Not tested on a physical iPhone; Chromium emulation only.
+- The browser goal test starts from a debug-only fixture (`?debug&setup=shooting`); the full receive → dribble → shoot → goal loop is verified in seeded unit tests. Headless browser timing makes long scripted moves unreliable.
+- A browser-level swipe-vs-hold test was dropped because CDP touch latency in headless Chromium exceeds the 160 ms hold threshold; swipe-vs-hold is covered by unit tests and the keyboard cut test.
+- No ball height (chips/headers), no offside, no fouls, no sound. AI is deliberately small: press/cover/keeper rules only.
+- Tuning is a first pass and should be adjusted after playtesting on a phone.
 
 ### Next task
-**M2 — Cloudflare Pages deployment setup** (not changed in this task): connect the repository to Cloudflare Pages with build command `npm ci && npm run build` and output directory `dist/`, enable PR previews, then verify the deployed footer build SHA and smoke-test Start → pitch → Back on a real iPhone in both orientations.
+**Cloudflare Pages deployment** (unchanged in this task): connect the repo with build `npm ci && npm run build`, output `dist/`, enable PR previews, verify the footer build SHA, then smoke-test the drill on a real iPhone in both orientations.

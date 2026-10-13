@@ -17,3 +17,9 @@ Approved technical choices. Add a new entry rather than silently changing an old
 | D11 | **Build stamp:** `__APP_VERSION__` and `__BUILD_SHA__` are injected at build time (from `CF_PAGES_COMMIT_SHA`, `GITHUB_SHA`, or `git rev-parse HEAD`) and shown in the start-screen footer. | Lets a future deploy prove which commit is being served. |
 | D12 | **GitHub Actions CI** (`.github/workflows/ci.yml`) runs type check, unit tests, production build, and browser tests on every push and pull request. | Every change is verified the same way. |
 | D13 | **Hosting: Cloudflare Pages (planned, not configured yet).** | Static hosting with per-commit preview deploys. |
+| D14 | **M2 attack drill rules live in `src/game/attack/`** (`AttackSim`): fixed 1/120 s steps, explicit phases `reset → live ⇄ aiming → ended`, one `ball.owner` field (single possession), every number in `tuning.ts`, seeded RNG only for small start-position jitter. | Deterministic, unit-testable soccer rules with no Phaser dependency. |
+| D15 | **Input layer `src/input/`** is pure: `GestureRecognizer` (swipe vs hold-to-aim thresholds) and keyboard bindings both map to the same `Command`s the sim accepts. | Touch, mouse and keyboard cannot drift apart; gestures are unit-tested. |
+| D16 | **Aiming slows sim time (×0.3) for a bounded 1.6 s real-time budget** that refills only while not aiming; cooldowns, players and ball all use sim time. | Gives time to aim without an unlimited freeze. |
+| D17 | **Landscape-first elevated sideline view**: `fitRegion` compresses the across-pitch axis (squash 0.55); portrait keeps a top-down view plus a rotate suggestion. | Readable on phones; portrait stays playable. |
+| D18 | **Debug-only `?debug&setup=shooting` fixture** starts attempt 1 with a teammate through on goal, used by the browser goal test. The full receive → dribble → shoot loop is covered by seeded unit tests. | Browser timing in headless CI is too variable to script a whole move reliably. |
+

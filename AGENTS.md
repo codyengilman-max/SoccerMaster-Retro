@@ -22,8 +22,10 @@ CI (`.github/workflows/ci.yml`) runs `npm ci`, typecheck, unit tests, build, and
 
 - `src/game/` — simulation layer. Framework-free: **no Phaser, DOM, or `src/render`/`src/scenes` imports** (enforced by `tests/architecture.test.ts`). Positions are in pitch yards.
 - `src/render/` — drawing helpers: `layout.ts` (pure pitch→screen math, unit tested), `textures.ts` (code-drawn placeholder art), `theme.ts` (palette, fonts).
-- `src/scenes/` — Phaser scenes (`StartScene`, `PitchScene`) and UI (`ui/Button.ts`). Scenes read simulation state and draw it; they never own soccer rules.
-- `src/debug/diagnostics.ts` — `window.__SMR__` (dev, or `?debug` in the URL): canvas count, active scenes, listener totals, layout bounds.
+- `src/game/attack/` — M2 attack drill rules (`AttackSim`, `tuning.ts` holds every gameplay number).
+- `src/input/` — pure gesture recognizer + keyboard bindings → the same sim `Command`s (also framework-free).
+- `src/scenes/` — Phaser scenes (`StartScene`, `PitchScene`, `AttackScene`) and UI (`ui/Button.ts`). Scenes read simulation state and draw it; they never own soccer rules.
+- `src/debug/diagnostics.ts` — `window.__SMR__` (dev, or `?debug` in the URL): canvas count, active scenes, listener totals, layout bounds, and the attack drill's gameplay snapshot. `?debug&setup=shooting` is a debug-only fixture used by the goal browser test.
 - `docs/` — `VISION.md`, `DECISIONS.md`, `ROADMAP.md`, `STATUS.md`. Update `STATUS.md` at the end of every milestone.
 
 ## Rules
