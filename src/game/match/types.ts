@@ -1,6 +1,5 @@
 import type { Vec2 } from '../vec';
 import type { MutableVec2 } from '../attack/math';
-import type { ActionMode, SwipeKind } from '../attack/sim';
 import type { FormationId, RoleId } from './formations';
 
 export type TeamId = 'home' | 'away';
@@ -97,10 +96,14 @@ export interface TeamRun {
   cooldownUntil: number;
 }
 
-export interface CarrierMoveState {
-  kind: SwipeKind;
-  remaining: number;
-  sign: number;
+export interface FeintState {
+  readonly by: MatchPlayerId;
+  readonly start: number;
+  readonly until: number;
+  /** Side of the shoulder drop (+1/-1 across the carrier's heading). */
+  readonly side: number;
+  /** Exit direction chosen by a swipe during the feint (world unit vector). */
+  exitDir: Vec2 | null;
 }
 
 export type MatchEventType =
@@ -120,7 +123,9 @@ export type MatchEventType =
   | 'goal'
   | 'out'
   | 'restart'
-  | 'swipe'
+  | 'dribble'
+  | 'feint'
+  | 'rejected'
   | 'swipeRejected'
   | 'aimStart'
   | 'aimCancel'
@@ -154,13 +159,20 @@ export interface MatchState {
   controlledId: MatchPlayerId;
   /** Bumped whenever user control changes hands; an aim started under an older epoch is void. */
   controlEpoch: number;
-  action: ActionMode;
   aim: { direction: Vec2 | null; power: number; epoch: number } | null;
-  slowMoBudget: number;
+  /** Real seconds of aiming slow motion left for each team's current possession spell. */
+  aimAllowance: Record<TeamId, number>;
+  /** Set when the opponent secured the ball; the next recovery refills this team's aim allowance. */
+  allowanceRefillPending: Record<TeamId, boolean>;
   control: number;
   swipeCooldown: number;
-  move: CarrierMoveState | null;
-  laneY: number;
+  /** Direction (world unit vector) the user's carrier keeps dribbling in until redirected. */
+  dribbleDir: MutableVec2;
+  feint: FeintState | null;
+  /** Sim time a new feint may start. */
+  feintReadyAt: number;
+  /** A defender who bit on the feint drifts the wrong way until `until`. */
+  feintBought: { id: MatchPlayerId; until: number; dir: Vec2 } | null;
   touchPhase: number;
   /** New carrier is safe from tackles until this sim time. */
   protectUntil: number;

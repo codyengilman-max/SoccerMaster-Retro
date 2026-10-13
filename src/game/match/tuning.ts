@@ -22,6 +22,36 @@ export const MATCH_TUNING = {
     laneMargin: D.area.laneMargin,
   },
   kickoff: { countdownSeconds: 0.8 },
+  /** User carrier directional dribbling: swipes set a direction; speed, acceleration and turning are bounded. */
+  carrier: {
+    speed: D.dribble.speed,
+    /** Dribbling back toward the user's own goal is slower. */
+    backSpeedFactor: 0.75,
+    accel: 9,
+    /** Max heading change (rad/s); a reversal slows the carrier before it turns. */
+    turnRate: 5,
+    /** Speed fraction kept while the heading is still far from the requested direction. */
+    minTurnSpeedFactor: 0.3,
+    /** Minimum sim time between accepted redirects (spam guard; redirects never add speed). */
+    redirectSeconds: 0.12,
+  },
+  /** One ground kick for passes and shots (user and AI): speed = lerp(minSpeed, maxSpeed, power). */
+  kick: { minSpeed: 8, maxSpeed: D.shot.maxSpeed },
+  /** Aiming slow motion: real seconds per team possession spell; refills only after the opponent had the ball. */
+  aimAllowance: { seconds: 2.4 },
+  feint: {
+    seconds: 0.45,
+    cooldownSeconds: 1.6,
+    /** Carrier speed fraction during the shoulder drop. */
+    speedFactor: 0.45,
+    /** Exit burst after a chosen exit direction: speed multiplier for exitSeconds (bounded by carrier.speed * this). */
+    exitSpeedFactor: 1.25,
+    exitSeconds: 0.4,
+    /** Defender within this range may bite (seeded chance), drifting the wrong way for biteSeconds. */
+    biteRange: 4.5,
+    biteChance: 0.55,
+    biteSeconds: 0.35,
+  },
   /** Temporary sandbox resets (not formal restarts). */
   stoppage: { goalSeconds: 1.6, outSeconds: 1.2 },
   dribble: D.dribble,
