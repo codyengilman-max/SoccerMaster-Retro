@@ -50,6 +50,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private camX = 37.5;
   /** Visible pitch length in yards; grown until the view fills the screen along the pitch axis. */
   private viewLen = 0;
+  /** Field graphics are rebuilt only when the camera/layout changes. */
+  private fieldKey = '';
   private fps = 0;
   private toastMessage = '';
   private toastUntil = 0;
@@ -88,6 +90,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   create(data: MatchSceneData = {}): void {
     this.navigating = false;
     this.overlayOn = false;
+    this.fieldKey = '';
+    this.viewLen = 0;
     this.keyAim = null;
     this.aimSource = null;
     this.held = { left: false, right: false, up: false, down: false };
@@ -671,6 +675,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const L = this.pitchLayout;
     const m = this.markings;
     const P = U11_9V9_PITCH;
+    const key = `${width}x${height}:${L.originX.toFixed(2)},${L.originY.toFixed(2)},${L.scale.toFixed(4)}`;
+    if (key === this.fieldKey) return;
+    this.fieldKey = key;
     g.clear();
     g.fillStyle(PALETTE.track, 1);
     g.fillRect(0, 0, width, height);
