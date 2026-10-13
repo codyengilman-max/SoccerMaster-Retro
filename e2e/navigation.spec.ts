@@ -199,6 +199,41 @@ test('pitch re-lays out on orientation change and Back still works', async ({ pa
   expect(errors).toEqual([]);
 });
 
+test('canvas recovers when Phaser refreshes with a stale parent size (rotation race)', async ({ page }) => {
+  const errors = trackConsoleErrors(page);
+  await page.goto('/?debug=1');
+  await waitForScene(page, 'start');
+  await pressElement(page, 'enter-button', 'touch');
+  const before = await waitForScene(page, 'pitch');
+  const viewport = page.viewportSize();
+  if (!viewport) throw new Error('no viewport');
+
+  // Replays what Phaser's orientation handler does when it runs before a game step:
+  // refresh() with the previous orientation's parentSize, after which the cached size is current again.
+  await page.evaluate(({ width, height }) => {
+    const scale = window.__SMR__?.game.scale;
+    if (!scale) throw new Error('debug handle missing');
+    scale.parentSize.setSize(height, width);
+    scale.refresh();
+  }, viewport);
+
+  await page.waitForFunction(
+    ({ width, height }) => {
+      const rect = document.querySelector('canvas')?.getBoundingClientRect();
+      return rect !== undefined && rect.width === width && rect.height === height;
+    },
+    viewport,
+    { timeout: 3000 },
+  );
+  const after = await diagnostics(page);
+  expect(after.layout?.viewport).toEqual(viewport);
+  expect(after.layout?.orientation).toBe(before.layout?.orientation);
+  for (const name of ['pitch', 'goalA', 'goalB', 'player', 'ball', 'back-button']) {
+    expectInside(name, after.layout?.elements[name], viewport);
+  }
+  expect(errors).toEqual([]);
+});
+
 test('keyboard shortcuts navigate without stacking scenes', async ({ page }) => {
   const errors = trackConsoleErrors(page);
   await page.goto('/?debug=1');

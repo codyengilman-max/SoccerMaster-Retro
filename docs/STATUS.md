@@ -8,7 +8,7 @@
 - Toolchain: TypeScript 5.9 (strict), Vite 6.4, Phaser 3.90, npm with committed `package-lock.json`, Node 20 (`.node-version`).
 - Start screen (`src/scenes/StartScene.ts`): "SoccerMaster Retro" title, large "Enter Training Ground" button (tap, click, Enter or Space).
 - Pitch scene (`src/scenes/PitchScene.ts`): U11 9v9 placeholder pitch (75 × 50 yd) with boundary, halfway line, centre circle and spot, penalty areas and marks, goal areas, corner arcs, and goals; one static placeholder player and a ball; Back button (tap, click, Esc or Backspace) returns to the start screen.
-- Responsive layout: Scale Manager `RESIZE`; pitch runs vertically in portrait and horizontally in landscape; scenes re-layout on resize/orientation change; iOS safe-area insets respected.
+- Responsive layout: Scale Manager `RESIZE`; pitch runs vertically in portrait and horizontally in landscape; scenes re-layout on resize/orientation change; iOS safe-area insets respected. `src/render/resizeGuard.ts` works around a Phaser 3.90 race where a quick rotation during a scene change left the canvas at the previous orientation's size (found in real Chrome device emulation; covered by a browser test).
 - Leak-free navigation: one canvas; scenes remove their scale and keyboard listeners on shutdown. Browser tests check canvas count, Phaser emitter listener totals, and live DOM listener counts across 5 round trips.
 - Architecture: framework-free simulation in `src/game/`, rendering helpers in `src/render/`, Phaser scenes in `src/scenes/`. A unit test fails if `src/game/` imports Phaser, the DOM, or rendering code.
 - Original placeholder art drawn in code; system fonts; no third-party assets.
