@@ -30,6 +30,8 @@ export default defineConfig({
     {
       name: 'desktop',
       testMatch: /(attack|match)\.spec/,
+      // A 1280x720 software-rendered WebGL canvas saturates a CI core; two at once starve each other's frame loop.
+      workers: 1,
       use: { browserName: 'chromium', viewport: { width: 1280, height: 720 }, hasTouch: false, isMobile: false },
     },
   ],
