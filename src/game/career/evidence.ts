@@ -31,7 +31,7 @@ type Pending = { kind: AttributeId; at: number; situation: string; extra?: strin
 
 /**
  * Reads the real sandbox state and its event log and turns the career player's own actions into
- * evidence. Read-only: it never changes the sim. Tracks `seq` so the 40-event rolling window is safe
+ * evidence. Read-only: it never changes the sim. Tracks `seq` so the 40-event rolling log is safe
  * as long as it is called at least once per 40 events (every frame in practice).
  */
 export class EvidenceCollector {
@@ -40,7 +40,7 @@ export class EvidenceCollector {
   private pass: Pending | null = null;
   private carry: Pending | null = null;
   private duel: Pending | null = null;
-  /** Events that left the window before being read; reported, never guessed. */
+  /** Events that left the log before being read; reported, never guessed. */
   missed = 0;
 
   constructor(
