@@ -19,7 +19,9 @@ import type { InspectableScene, SceneLayoutReport } from './inspectable';
 import type { MatchReport } from './matchReport';
 import { SceneKeys } from './keys';
 import { Button } from './ui/Button';
-import { CoachOverlay } from './ui/CoachOverlay';
+import { COACH_OVERLAY_DEPTH, CoachOverlay } from './ui/CoachOverlay';
+
+const COACH_HUD_DEPTH = COACH_OVERLAY_DEPTH + 10;
 
 const { MatchSim, MATCH_PLAYER_IDS, HOME_IDS, FORMATION_IDS, DEFAULT_FORMATION } = match;
 type Id = match.MatchPlayerId;
@@ -170,6 +172,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.menuButton = hudButton('menu-button', '‹ Menu', () => this.goToMenu(), true);
     this.pauseButton = hudButton('pause-button', 'Pause', () => this.togglePause(), true);
     this.helpButton = hudButton('help-button', '? Help', () => this.restartTutorial(), true);
+    // Menu and Pause stay usable above the Coach Moment touch blocker (the card never covers the top-left HUD row).
+    this.menuButton.setDepth(COACH_HUD_DEPTH);
+    this.pauseButton.setDepth(COACH_HUD_DEPTH);
 
     this.panel = this.add.graphics().setDepth(7000);
     this.panelTitle = text(26).setOrigin(0.5, 0.5).setDepth(7001);

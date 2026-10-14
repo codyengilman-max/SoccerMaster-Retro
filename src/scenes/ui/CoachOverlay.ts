@@ -13,6 +13,9 @@ export interface CoachOverlayHandlers {
 const GRADE_LABEL: Record<coach.Grade, string> = { strong: 'Strong choice', reasonable: 'Reasonable choice', risky: 'Risky choice' };
 const MAX_OPTIONS = 4;
 const DEPTH = 7400;
+/** A tap that arrives this soon after the card changes belongs to the previous card (e.g. a double tap on an answer landing on Continue). */
+const ARM_MS = 350;
+export const COACH_OVERLAY_DEPTH = DEPTH;
 
 type Mode = 'hidden' | 'question' | 'feedback' | 'summary';
 
@@ -31,6 +34,7 @@ export class CoachOverlay {
   private readonly againButton: Button;
   private readonly menuButton: Button;
   private mode: Mode = 'hidden';
+  private armedAt = 0;
   private suspended = false;
   private optionIds: string[] = [];
   private cardRect: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -49,12 +53,12 @@ export class CoachOverlay {
     this.options = Array.from({ length: MAX_OPTIONS }, (_, i) =>
       btn(`coach-option-${i}`, '', () => {
         const id = this.optionIds[i];
-        if (this.mode === 'question' && id) handlers.onAnswer(id);
+        if (this.mode === 'question' && id && this.armed()) handlers.onAnswer(id);
       }),
     );
-    this.continueButton = btn('coach-continue', 'Continue ▶', () => this.mode === 'feedback' && handlers.onContinue(), false);
-    this.againButton = btn('coach-again', 'Play again', () => this.mode === 'summary' && handlers.onAgain(), false);
-    this.menuButton = btn('coach-menu', 'Menu', () => this.mode === 'summary' && handlers.onMenu());
+    this.continueButton = btn('coach-continue', 'Continue ▶', () => this.mode === 'feedback' && this.armed() && handlers.onContinue(), false);
+    this.againButton = btn('coach-again', 'Play again', () => this.mode === 'summary' && this.armed() && handlers.onAgain(), false);
+    this.menuButton = btn('coach-menu', 'Menu', () => this.mode === 'summary' && this.armed() && handlers.onMenu());
     this.apply();
   }
 
@@ -67,6 +71,10 @@ export class CoachOverlay {
   }
 
   /** The user pause panel replaces the card while it is open; the moment itself stays frozen. */
+  private armed(): boolean {
+    return performance.now() - this.armedAt >= ARM_MS;
+  }
+
   setSuspended(suspended: boolean): void {
     this.suspended = suspended;
     this.apply();
@@ -74,6 +82,7 @@ export class CoachOverlay {
 
   showQuestion(view: coach.MomentView, index: number, total: number): void {
     this.mode = 'question';
+    this.armedAt = performance.now();
     this.optionIds = view.options.map((o) => o.id);
     this.title.setText(`Coach Moment ${index}/${total}`);
     this.body.setText(view.question);
@@ -83,6 +92,7 @@ export class CoachOverlay {
 
   showFeedback(view: coach.MomentView, selected: coach.EvaluatedOption): void {
     this.mode = 'feedback';
+    this.armedAt = performance.now();
     const others = view.options.filter((o) => o.id !== selected.id && o.grade === 'strong').map((o) => `“${o.text}”`);
     const also = others.length > 0 ? `\nAlso a strong choice: ${others.join(', ')}.` : '';
     const doIt = selected.intention.kind === 'onBall' ? '\nNow you do it: play resumes and the ball is yours.' : selected.intention.kind === 'offBall' ? '\nWatch your teammate act on it when play resumes.' : '';
@@ -93,6 +103,7 @@ export class CoachOverlay {
 
   showSummary(s: coach.CoachSummary): void {
     this.mode = 'summary';
+    this.armedAt = performance.now();
     const lines = [`Moments completed: ${s.completed} of ${s.target}`];
     if (s.shortfall > 0) lines.push(`Only ${s.completed} real coaching situations came up this session.`);
     lines.push(...(s.strengths.length > 0 ? s.strengths : ['Keep practising: every moment teaches something.']));

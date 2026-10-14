@@ -23,6 +23,19 @@ async function waitFor(page: Page, predicate: (r: MatchReport) => boolean, timeo
   }
 }
 
+async function doubleTap(page: Page, name: string, mode: PointerMode): Promise<void> {
+  const rect = (await diagnostics(page)).layout?.elements[name];
+  if (!rect) throw new Error(`no element ${name}`);
+  const canvas = (await page.locator('canvas').boundingBox())!;
+  const x = canvas.x + rect.x + rect.width / 2;
+  const y = canvas.y + rect.y + rect.height / 2;
+  for (let i = 0; i < 2; i++) {
+    if (mode === 'touch') await page.touchscreen.tap(x, y);
+    else await page.mouse.click(x, y);
+    await page.waitForTimeout(60);
+  }
+}
+
 async function openCoached(page: Page, mode: PointerMode, query = ''): Promise<MatchReport> {
   await page.goto(`/?debug=1&coach&coachSeconds=40${query}`);
   await waitForScene(page, 'start');
@@ -83,19 +96,21 @@ test('coached session: freeze, answer, feedback, Continue once, through to the s
     const afterTap = await report(page);
     expect(afterTap.inputLog.at(-2) ?? afterTap.inputLog.at(-1)).toMatch(/down:ui/);
     expect(afterTap.coach!.overlay).toBe('question');
-    // Answer with a double tap: only one answer counts.
+    // Answer with a double tap on the same spot: one answer counts and the second tap must not hit
+    // the Continue button that replaces the choices (feedback stays up).
     const pick = done % v.options.length;
-    await pressElement(page, `coach-option-${pick}`, mode);
-    await pressElement(page, `coach-option-${pick}`, mode).catch(() => undefined);
+    await doubleTap(page, `coach-option-${pick}`, mode);
     const fb = await waitFor(page, (r) => r.coach!.overlay === 'feedback');
+    await page.waitForTimeout(200);
+    expect((await report(page)).coach!.overlay).toBe('feedback');
     expect(fb.coach!.selected).toBe(v.options[pick]!.id);
     expect(fb.paused).toBe(true);
     await expectCardFits(page);
     if (done === 0) await page.screenshot({ path: info.outputPath('coach-feedback.png') });
     await linger(page);
     // Continue twice quickly: resumes exactly once.
-    await pressElement(page, 'coach-continue', mode);
-    await pressElement(page, 'coach-continue', mode).catch(() => undefined);
+    await page.waitForTimeout(400);
+    await doubleTap(page, 'coach-continue', mode);
     const resumed = await waitFor(page, (r) => r.coach!.overlay === 'hidden' || r.coach!.overlay === 'summary');
     expect(resumed.events.filter((e) => e.type === 'coachRelease').length).toBeLessThanOrEqual(resumed.events.filter((e) => e.type === 'coachHold').length);
     expect(resumed.input).toBe('idle');
@@ -125,6 +140,13 @@ test('backgrounding and rotation during a Coach Moment keep the pause and the mo
   const mode = modeFor(info);
   await openCoached(page, mode);
   const q = await waitFor(page, (r) => r.coach!.overlay === 'question', 45_000);
+  // The HUD Pause button still works above the Coach blocker, and Resume brings the same question back.
+  await pressElement(page, 'pause-button', mode);
+  const paused = await waitFor(page, (r) => r.pauseReasons.user);
+  expect(paused.pauseReasons).toEqual({ user: true, coach: true });
+  expect(paused.coach!.overlay).toBe('hidden');
+  await pressElement(page, 'resume-button', mode);
+  await waitFor(page, (r) => !r.pauseReasons.user && r.coach!.overlay === 'question');
   // App goes to the background while the question is up.
   await page.evaluate(() => window.__SMR__!.game.events.emit('hidden'));
   const bg = await report(page);
