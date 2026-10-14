@@ -111,13 +111,17 @@ test('coached session: freeze, answer, feedback, Continue once, through to the s
     // Continue twice quickly: resumes exactly once.
     await page.waitForTimeout(400);
     await doubleTap(page, 'coach-continue', mode);
-    const resumed = await waitFor(page, (r) => r.coach!.overlay === 'hidden' || r.coach!.overlay === 'summary');
+    // Any state other than feedback means play resumed. Under load the next moment can already be
+    // open by the first poll, so 'hidden' alone is not a reliable signal.
+    const resumed = await waitFor(page, (r) => r.coach!.overlay !== 'feedback');
     expect(resumed.events.filter((e) => e.type === 'coachRelease').length).toBeLessThanOrEqual(resumed.events.filter((e) => e.type === 'coachHold').length);
     expect(resumed.input).toBe('idle');
     done++;
     const entry = resumed.coach!.entries[done - 1]!;
     expect(entry.selectedOptionId).toBe(v.options[pick]!.id);
     expect(entry.intentionStatus).not.toBe('pending');
+    // The second Continue tap must not answer a moment that opened straight away.
+    expect(resumed.coach!.entries.slice(done).every((e) => e.selectedOptionId === null)).toBe(true);
   }
   const end = await report(page);
   const s = end.coach!.summary!;
