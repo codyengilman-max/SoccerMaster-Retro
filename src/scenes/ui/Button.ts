@@ -25,6 +25,7 @@ export class Button extends Phaser.GameObjects.Container {
   private buttonWidth: number;
   private buttonHeight: number;
   private pressed = false;
+  private fontSize: number;
   private hovered = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: ButtonOptions) {
@@ -48,6 +49,8 @@ export class Button extends Phaser.GameObjects.Container {
       .setOrigin(0.5)
       .setResolution(textResolution());
     this.add([this.bg, this.label]);
+    this.fontSize = options.fontSize;
+    this.fitLabel();
 
     this.setSize(this.buttonWidth, this.buttonHeight);
     this.setInteractive({ useHandCursor: true });
@@ -77,9 +80,29 @@ export class Button extends Phaser.GameObjects.Container {
     this.setSize(width, height);
     const hitArea = this.input?.hitArea as Phaser.Geom.Rectangle | undefined;
     hitArea?.setTo(0, 0, width, height);
-    this.label.setFontSize(fontSize);
+    this.fontSize = fontSize;
+    this.fitLabel();
     this.redraw();
     return this;
+  }
+
+  /** Shrinks (down to 10 px), then wraps, a label so it never spills past its button. */
+  private fitLabel(): void {
+    const maxW = Math.max(1, this.buttonWidth - 14);
+    const maxH = Math.max(1, this.buttonHeight - 6);
+    let size = this.fontSize;
+    this.label.setWordWrapWidth(null).setFontSize(size);
+    while (size > 10 && this.label.width > maxW) this.label.setFontSize(--size);
+    if (this.label.width > maxW) {
+      size = this.fontSize;
+      this.label.setWordWrapWidth(maxW).setFontSize(size);
+      while (size > 10 && (this.label.width > maxW || this.label.height > maxH)) this.label.setFontSize(--size);
+    }
+  }
+
+  /** True when the label fits inside the button (browser tests check this). */
+  labelFits(): boolean {
+    return this.label.width <= this.buttonWidth - 4 && this.label.height <= this.buttonHeight;
   }
 
   setFill(fill: number, fillPressed: number): this {
@@ -91,6 +114,7 @@ export class Button extends Phaser.GameObjects.Container {
 
   setLabel(text: string): this {
     this.label.setText(text);
+    this.fitLabel();
     return this;
   }
 

@@ -1,6 +1,25 @@
 # Status
 
-## Current milestone: M5 — Contextual Coach Moments (in review, development flag)
+## Current milestone: M6 — Individual Home Training and Player Progression (in review)
+
+Start → **Home Training**. Full rules and worked examples: `docs/TRAINING.md`.
+
+### Playable now
+- Create one career player (name, position, six attributes; potential 70, start 40).
+- Weekly Focus, setup (ball only / optional items, small / medium, indoors / outdoors, safe striking area), three optional home sessions per career week, substitutions, Training Library (84 core activities + 8-step juggling ladder) with steps, cues, limits, sources and an original programmatic demo.
+- Practice Journal: completion, learning / improving / comfortable, foot, easier version, personal best, short reflection; export / import of the save.
+- Play Sandbox from Home Training: the career player's slot (DEF H3, MID H5, FWD H8) is recorded as game evidence; with `?coach`, Coach answers also count (capped).
+- Weekly Review keeps self-reported practice, demonstrated gameplay and character changes (with reasons) apart, and suggests a next focus. Character Development shows each attribute and what grows it.
+- Saves in IndexedDB with one-transaction writes, validation, migration and recovery.
+
+### Known limits
+- Home practice gives participation credit only; it never changes attributes. Physical skill is not assessed.
+- Evidence comes from the sandbox (no full match, M4 not built). Coach evidence needs `?coach` (M5, PR #5, unmerged).
+- Growth numbers are provisional and need play-testing. All activities await qualified coaching review.
+- Name, personal best and reflection use the browser's text prompt.
+- Tested in Chromium phone emulation only, not on a physical iPhone.
+
+## Previous milestone: M5 — Contextual Coach Moments (in review, development flag)
 
 Turn on with `?coach` (or `?coach=4`…`6`) on the 9v9 sandbox: Start → "9v9 Team Sandbox" → pick a formation → Kick Off. Details and authoring rules: `docs/COACH.md`.
 

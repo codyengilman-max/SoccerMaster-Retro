@@ -19,6 +19,7 @@ const BLURB: Record<FormationId, string> = {
 export class FormationScene extends Phaser.Scene implements InspectableScene {
   private selected: FormationId = DEFAULT_FORMATION;
   private navigating = false;
+  private career = false;
   private background!: Phaser.GameObjects.Graphics;
   private diagram!: Phaser.GameObjects.Graphics;
   private title!: Phaser.GameObjects.Text;
@@ -32,8 +33,9 @@ export class FormationScene extends Phaser.Scene implements InspectableScene {
     super(SceneKeys.Formation);
   }
 
-  create(): void {
+  create(data: { career?: boolean } = {}): void {
     this.navigating = false;
+    this.career = data.career === true;
     this.selected = DEFAULT_FORMATION;
     const resolution = textResolution();
     this.background = this.add.graphics();
@@ -101,7 +103,7 @@ export class FormationScene extends Phaser.Scene implements InspectableScene {
   private kickOff(): void {
     if (this.navigating) return;
     this.navigating = true;
-    this.scene.start(SceneKeys.Match, { formation: this.selected });
+    this.scene.start(SceneKeys.Match, { formation: this.selected, career: this.career });
   }
 
   private goBack(): void {

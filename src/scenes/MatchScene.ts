@@ -17,6 +17,15 @@ import { BALL_TEXTURE_SIZE, PLAYER_TEXTURE_SIZE, TEXTURES, ensurePlaceholderText
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { InspectableScene, SceneLayoutReport } from './inspectable';
 import type { MatchReport } from './matchReport';
+import { EvidenceCollector, coachEvidence } from '../game/career/evidence';
+import type { EvidenceItem } from '../game/career/progression';
+import { CareerStore } from '../game/career/store';
+import type { Position } from '../game/career/types';
+import { MATCH_TUNING } from '../game/match/tuning';
+
+/** Sandbox slot the career player occupies (shown in the HUD). */
+const CAREER_SLOT: Readonly<Record<Position, 'H3' | 'H5' | 'H8'>> = { DEF: 'H3', MID: 'H5', FWD: 'H8' };
+const CAREER_FLUSH_SECONDS = 30;
 import { SceneKeys } from './keys';
 import { Button } from './ui/Button';
 import { COACH_OVERLAY_DEPTH, CoachOverlay } from './ui/CoachOverlay';
@@ -43,6 +52,8 @@ const TUTORIAL = [
 
 export interface MatchSceneData {
   readonly formation?: FormationId;
+  /** M6: record the career player's actions as game evidence. */
+  readonly career?: boolean;
 }
 
 /** 9v9 team-play sandbox. Reads `MatchSim` state and draws it; owns no soccer rules. */
@@ -98,6 +109,15 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private panelRect: Rect = { x: 0, y: 0, width: 0, height: 0 };
   /** Coach Moments (`?coach`, M5 development flag). Null when the flag is off. */
   private coachDirector: coach.CoachDirector | null = null;
+  private careerStore: CareerStore | null = null;
+  private collector: EvidenceCollector | null = null;
+  private careerItems: EvidenceItem[] = [];
+  private careerSession = '';
+  private careerBatch = 0;
+  private careerRecorded = 0;
+  private careerMissedSent = 0;
+  private careerFlushAt = 0;
+  private careerCoachSent = false;
   private coachConfig: coach.CoachConfig | null = null;
   private coachOverlay!: CoachOverlay;
   private coachRun = 0;
@@ -126,6 +146,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.coachRun = 0;
     this.coachDirector = this.coachConfig ? new coach.CoachDirector(this.coachConfig) : null;
     this.lastSeq = 0;
+    this.startCareer(data.career === true);
     this.camX = this.sim.state.ball.pos.x;
     this.controls = new TouchControls(Math.min(this.scale.width, this.scale.height));
     this.lastPull = null;
@@ -234,6 +255,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     }
     this.sim.step(dt);
     this.consumeEvents();
+    this.observeCareer();
     this.updateCoach();
     this.renderFrame(dt);
   }
@@ -459,6 +481,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       pauseReasons: { ...s.pauseReasons },
       coachIntent: s.coachIntent ? { ...s.coachIntent, target: { ...s.coachIntent.target } } : null,
       coach: this.coachReport(),
+      career: this.collector ? { slot: this.collector.careerId, pending: this.careerItems.length, batches: this.careerBatch, recorded: this.careerRecorded, missed: this.collector.missed } : null,
     };
   }
 
@@ -784,7 +807,66 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.renderFrame(0);
   }
 
+  private startCareer(on: boolean): void {
+    this.collector = null;
+    this.careerItems = [];
+    this.careerBatch = 0;
+    this.careerRecorded = 0;
+    this.careerMissedSent = 0;
+    this.careerCoachSent = false;
+    this.careerStore = null;
+    if (!on) return;
+    this.careerSession = `m-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e9).toString(36)}`;
+    void CareerStore.open().then(async (store) => {
+      if (!this.sys.isActive()) {
+        store.close();
+        return;
+      }
+      const save = await store.load();
+      if (!save.player || !this.sys.isActive()) {
+        store.close();
+        return;
+      }
+      this.careerStore = store;
+      this.collector = new EvidenceCollector(CAREER_SLOT[save.player.position], MATCH_TUNING.pitch);
+      this.careerFlushAt = this.sim.state.simTime + CAREER_FLUSH_SECONDS;
+    });
+  }
+
+  private observeCareer(): void {
+    const c = this.collector;
+    if (!c) return;
+    const s = this.sim.state;
+    this.careerItems.push(...c.observe(s, s.events));
+    if (s.simTime >= this.careerFlushAt) {
+      this.careerFlushAt = s.simTime + CAREER_FLUSH_SECONDS;
+      void this.flushCareer(false);
+    }
+  }
+
+  /** Sends pending evidence as one idempotent batch. On leaving, adds the Coach answers once. */
+  private flushCareer(final: boolean): Promise<void> {
+    const store = this.careerStore;
+    const c = this.collector;
+    if (!store || !c) return Promise.resolve();
+    const items = this.careerItems;
+    this.careerItems = [];
+    if (final && !this.careerCoachSent && this.coachDirector) {
+      this.careerCoachSent = true;
+      items.push(...coachEvidence(this.coachDirector.entries));
+    }
+    const missed = c.missed - this.careerMissedSent;
+    this.careerMissedSent = c.missed;
+    if (items.length === 0 && missed === 0) return Promise.resolve();
+    this.careerRecorded += items.length;
+    return store.dispatch({ type: 'evidence', batchId: `${this.careerSession}-${++this.careerBatch}`, items, missed }).then(() => undefined);
+  }
+
   private handleShutdown(): void {
+    const store = this.careerStore;
+    void this.flushCareer(true).finally(() => store?.close());
+    this.careerStore = null;
+    this.collector = null;
     this.cancelInput('navigation');
     this.input.off(Phaser.Input.Events.POINTER_DOWN, this.onPointerDown, this);
     this.input.off(Phaser.Input.Events.POINTER_MOVE, this.onPointerMove, this);
@@ -1222,7 +1304,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const d = this.coachDirector;
     const left = d ? Math.ceil(d.timeLeft(s)) : 0;
     // Coach mode puts its counter on a second line so the HUD never runs into the buttons.
-    const coachTag = d ? `\nCOACH ${d.entries.length}/${d.target} · ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}` : ' · SANDBOX';
+    const careerTag = this.collector ? ` · YOU ${this.collector.careerId}` : '';
+    const coachTag = d ? `${careerTag}\nCOACH ${d.entries.length}/${d.target} · ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}` : `${careerTag || ' · SANDBOX'}`;
     this.scoreText.setAlign(this.scoreText.originX === 1 ? 'right' : 'center');
     this.scoreText.setText(`Home ${s.score.home} – ${s.score.away} Away${coachTag}`);
     if (s.timeScale < 1 && s.timeScale > 0) {

@@ -1,0 +1,34 @@
+import { CAREER_CONFIG } from './config';
+import { ATTRIBUTES, type AttributeId, type Position } from './types';
+
+export interface CareerPlayer {
+  readonly id: string;
+  readonly name: string;
+  readonly position: Position;
+  readonly attributes: Readonly<Record<AttributeId, number>>;
+  readonly potential: Readonly<Record<AttributeId, number>>;
+}
+
+const CONTROL = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2066-\u2069]/g;
+
+/** Plain text: control and bidi characters removed, whitespace collapsed, length bounded. */
+export function cleanText(raw: unknown, max: number): string {
+  if (typeof raw !== 'string') return '';
+  return Array.from(raw.replace(CONTROL, ' ').replace(/\s+/g, ' ').trim()).slice(0, max).join('');
+}
+
+export function cleanName(raw: unknown): string {
+  return cleanText(raw, CAREER_CONFIG.limits.nameMax);
+}
+
+function filled(value: number): Record<AttributeId, number> {
+  return Object.fromEntries(ATTRIBUTES.map((a) => [a, value])) as Record<AttributeId, number>;
+}
+
+export function createPlayer(id: string, name: string, position: Position): CareerPlayer {
+  const A = CAREER_CONFIG.attributes;
+  return { id, name: cleanName(name) || 'Player', position, attributes: filled(A.start), potential: filled(A.potential) };
+}
+
+/** Home slot the career player occupies in the sandbox (1-3-2-3 numbering: H2-H4 defence, H5-H6 midfield, H7-H9 attack). */
+export const POSITION_SLOT: Readonly<Record<Position, string>> = { DEF: 'H3', MID: 'H5', FWD: 'H8' };
