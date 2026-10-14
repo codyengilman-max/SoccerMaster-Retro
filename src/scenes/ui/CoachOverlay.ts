@@ -35,6 +35,7 @@ export class CoachOverlay {
   private readonly menuButton: Button;
   private mode: Mode = 'hidden';
   private armedAt = 0;
+  private topInset = 8;
   private suspended = false;
   private optionIds: string[] = [];
   private cardRect: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -73,6 +74,13 @@ export class CoachOverlay {
   /** The user pause panel replaces the card while it is open; the moment itself stays frozen. */
   private armed(): boolean {
     return performance.now() - this.armedAt >= ARM_MS;
+  }
+
+  /** Landscape cards start below this y so the HUD (score and Coach counter) stays visible. */
+  setTopInset(y: number): void {
+    if (y === this.topInset) return;
+    this.topInset = y;
+    if (this.mode !== 'hidden') this.layout(this.scene.scale.width, this.scene.scale.height);
   }
 
   setSuspended(suspended: boolean): void {
@@ -135,15 +143,26 @@ export class CoachOverlay {
     const portrait = height > width;
     const compact = Math.min(width, height) < 420;
     const pad = 12;
-    const w = portrait ? width - 16 : Math.min(420, Math.max(300, width * 0.44));
-    const bh = compact ? 34 : 40;
-    const font = compact ? 13 : 15;
-    this.title.setFontSize(compact ? 15 : 18).setWordWrapWidth(w - pad * 2, true);
-    this.body.setFontSize(compact ? 12 : 14).setWordWrapWidth(w - pad * 2, true);
+    const top = Math.max(8, this.topInset);
+    const room = height - top - 8;
     const buttons = this.activeButtons();
-    const h = pad + this.title.height + 6 + this.body.height + 10 + buttons.length * (bh + 8) + pad;
+    // Shrink step by step (tighter buttons, then a wider card) until the card fits below the HUD.
+    let w = 0;
+    let bh = 0;
+    let gap = 8;
+    let h = 0;
+    for (const [bhStep, gapStep, widen] of [[compact ? 34 : 40, 8, 0], [30, 5, 0], [28, 4, 0.14]] as const) {
+      w = portrait ? width - 16 : Math.min(420 + widen * width, Math.max(300, width * (0.44 + widen)));
+      bh = bhStep;
+      gap = gapStep;
+      this.title.setFontSize(compact ? 15 : 18).setWordWrapWidth(w - pad * 2, true);
+      this.body.setFontSize(compact ? 12 : 14).setWordWrapWidth(w - pad * 2, true);
+      h = pad + this.title.height + 6 + this.body.height + 10 + buttons.length * (bh + gap) + pad - gap;
+      if (h <= (portrait ? height - 16 : room)) break;
+    }
+    const font = bh < 34 ? 12 : compact ? 13 : 15;
     const x = portrait ? 8 : width - w - 8;
-    const y = portrait ? Math.max(8, height - h - 8) : Math.max(8, Math.min((height - h) / 2, height - h - 8));
+    const y = portrait ? Math.max(8, height - h - 8) : Math.max(top, Math.min((height - h) / 2, height - h - 8));
     this.cardRect = { x, y, width: w, height: h };
     const g = this.card;
     g.clear();
@@ -158,7 +177,7 @@ export class CoachOverlay {
     let by = this.body.y + this.body.height + 10 + bh / 2;
     for (const b of buttons) {
       b.resize(w - pad * 2, bh, font).setPosition(x + w / 2, by);
-      by += bh + 8;
+      by += bh + gap;
     }
   }
 

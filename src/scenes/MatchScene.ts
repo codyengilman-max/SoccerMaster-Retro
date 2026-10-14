@@ -910,6 +910,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.menuButton.resize(bw, HUD_HEIGHT, font).setPosition(EDGE + bw / 2, y1);
     this.pauseButton.resize(bw, HUD_HEIGHT, font).setPosition(EDGE + bw * 1.5 + 6, y1);
     this.helpButton.resize(bw, HUD_HEIGHT, font).setPosition(width - EDGE - bw / 2, portrait ? y1 + HUD_HEIGHT + 8 : y1);
+    // Two-line score + Coach counter is centred on the HUD row; keep landscape Coach cards below it.
+    this.coachOverlay?.setTopInset(Math.ceil(y1 + Math.max(HUD_HEIGHT / 2, 20) + 6));
     this.scoreText.setFontSize(compact ? 13 : 15).setPosition(portrait ? width - EDGE - (width - EDGE * 2 - bw * 2 - 6) / 2 + 0 : width / 2, y1);
     if (portrait) this.scoreText.setOrigin(1, 0.5).setPosition(width - EDGE, y1);
     else this.scoreText.setOrigin(0.5, 0.5);

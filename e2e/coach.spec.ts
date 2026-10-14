@@ -56,7 +56,7 @@ async function expectCardFits(page: Page): Promise<void> {
   const el = d.layout!.elements;
   const score = el['score']!;
   expectInside('score', score, vp);
-  for (const b of ['menu-button', 'pause-button', 'help-button']) {
+  for (const b of ['menu-button', 'pause-button', 'help-button', 'coach-card']) {
     const r = el[b];
     if (!r) continue;
     const overlap = score.x < r.x + r.width && r.x < score.x + score.width && score.y < r.y + r.height && r.y < score.y + score.height;
