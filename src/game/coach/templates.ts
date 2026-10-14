@@ -64,7 +64,7 @@ export const CATALOG: readonly TemplateDef[] = [
     highlights: (f) => [focus(carrierId(f)), { kind: 'space', at: W(f, { x: f.carrier!.pos.x + Math.min(8, f.carrier!.spaceAhead / 2), y: f.carrier!.pos.y }), radius: 4 }],
     options: [
       opt({ id: 'carry', text: () => 'Carry it forward into the space', grade: (f) => (f.carrier!.spaceAhead >= 12 ? 'strong' : 'reasonable'), feedback: (f) => `Nobody was within ${yd(f.carrier!.pressureDistance)}, so carrying forward gains ground and pulls defenders toward you.`, intention: () => onBall('carry') }),
-      opt({ id: 'pass', available: (f) => !!f.bestOpenMate, text: (f, n) => `Pass now to ${n(f.bestOpenMate!.id)}`, grade: fixed('reasonable'), feedback: (f, n) => `${n(f.bestOpenMate!.id)} was open, so the pass is fine, but you gave away the free space you had.`, intention: (f) => onBall('pass', f.bestOpenMate!.id) }),
+      opt({ id: 'pass', available: (f) => !!f.bestOpenMate, text: (f, n) => `Pass now to ${n(f.bestOpenMate!.id)}`, grade: (f) => (f.carrier!.spaceAhead >= 12 ? 'reasonable' : 'strong'), feedback: (f, n, g) => (g === 'strong' ? `The space ahead was short, and ${n(f.bestOpenMate!.id)} was open: passing now is a great choice.` : `${n(f.bestOpenMate!.id)} was open, so the pass is fine, but you gave away the free space you had.`), intention: (f) => onBall('pass', f.bestOpenMate!.id) }),
       opt({ id: 'wait', text: () => 'Stop and wait for help', grade: fixed('risky'), feedback: () => 'Stopping gives the defenders time to close the space you had.', intention: () => onBall('protect') }),
     ],
   },
@@ -103,6 +103,7 @@ export const CATALOG: readonly TemplateDef[] = [
     options: [
       opt({ id: 'one-two', text: (f, n) => `Pass to ${n(nearOpen(f)!.id)} and move for the return`, grade: fixed('strong'), feedback: () => 'A short pass and a move takes the defender out of the game.', intention: (f) => onBall('pass', nearOpen(f)!.id) }),
       opt({ id: 'long', available: (f) => !!openForward(f) && openForward(f)!.distance > 15, text: (f, n) => `Play a long pass to ${n(openForward(f)!.id)}`, grade: fixed('reasonable'), feedback: (f, n) => `${n(openForward(f)!.id)} was open, so the long pass is possible, but long passes are harder to control.`, intention: (f) => onBall('pass', openForward(f)!.id) }),
+      opt({ id: 'hold', text: () => 'Stop and hold the ball', grade: fixed('risky'), feedback: () => 'Holding still lets the defender close you down.', intention: () => onBall('protect') }),
       opt({ id: 'solo', text: () => 'Dribble on your own', grade: (f) => (f.carrier!.spaceAhead >= C.spaceAhead ? 'reasonable' : 'risky'), feedback: (f) => (f.carrier!.spaceAhead >= C.spaceAhead ? 'There was some space ahead, so a dribble is an option.' : `Only ${yd(f.carrier!.spaceAhead)} ahead before a defender: dribbling alone is risky.`), intention: () => onBall('carry') }),
     ],
   },
@@ -122,6 +123,7 @@ export const CATALOG: readonly TemplateDef[] = [
     options: [
       opt({ id: 'switch', text: (f, n) => `Switch the ball to ${n(f.openSwitch!.id)}`, grade: fixed('strong'), feedback: (f, n) => `Most defenders were on your side, so ${n(f.openSwitch!.id)} had time on the ball.`, intention: (f) => onBall('switch', f.openSwitch!.id) }),
       opt({ id: 'back', available: (f) => !!openUnderneath(f), text: (f, n) => `Play back to ${n(openUnderneath(f)!.id)} first`, grade: fixed('reasonable'), feedback: () => 'Going back keeps the ball and can still switch, but it is slower.', intention: (f) => onBall('recycle', openUnderneath(f)!.id) }),
+      opt({ id: 'hold', text: () => 'Hold the ball and wait', grade: fixed('risky'), feedback: () => 'Waiting lets the crowd of defenders close in.', intention: () => onBall('protect') }),
       opt({ id: 'force', text: () => 'Keep attacking down this side', grade: fixed('risky'), feedback: (f) => `${f.carrier!.oppNearCarrier} defenders were waiting on this side.`, intention: () => onBall('carry') }),
     ],
   },
@@ -179,6 +181,7 @@ export const CATALOG: readonly TemplateDef[] = [
     options: [
       opt({ id: 'shoot', text: () => 'Shoot, aiming away from the keeper', grade: fixed('strong'), feedback: (f) => `The path to goal was clear by ${yd(f.shot!.laneClearance)}. A good chance to shoot; the keeper may still save it.`, intention: () => onBall('shoot') }),
       opt({ id: 'pass', available: (f) => !!betterChance(f), text: (f, n) => `Pass to ${n(betterChance(f)!.id)}, who is closer`, grade: fixed('reasonable'), feedback: (f, n) => `${n(betterChance(f)!.id)} was open nearer goal, so the pass is also good.`, intention: (f) => onBall('pass', betterChance(f)!.id) }),
+      opt({ id: 'wait', text: () => 'Wait for teammates to arrive', grade: fixed('risky'), feedback: () => 'Waiting gives defenders time to block the chance.', intention: () => onBall('protect') }),
       opt({ id: 'closer', text: () => 'Take more touches to get closer', grade: (f) => (f.carrier!.pressureDistance >= 6 ? 'reasonable' : 'risky'), feedback: (f) => (f.carrier!.pressureDistance >= 6 ? 'You had a little time, but the chance was already good.' : 'A defender was close; waiting usually lets them block the shot.'), intention: () => onBall('carry') }),
     ],
   },
@@ -235,7 +238,8 @@ export const CATALOG: readonly TemplateDef[] = [
     highlights: (f) => [focus(carrierId(f)), ...(f.bestOpenMate ? [mateHi(f.bestOpenMate.id), lane(f, f.bestOpenMate)] : [])],
     options: [
       opt({ id: 'safe-pass', available: (f) => !!f.bestOpenMate, text: (f, n) => `Safe pass to ${n(f.bestOpenMate!.id)}`, grade: fixed('strong'), feedback: () => 'A safe pass moves the ball away from your goal and keeps it.', intention: (f) => onBall('pass', f.bestOpenMate!.id) }),
-      opt({ id: 'clear', text: () => 'Kick it long up the pitch', grade: fixed('reasonable'), feedback: () => 'Clearing removes the danger, but you may give the ball back.', intention: () => onBall('pass') }),
+      opt({ id: 'clear', text: () => 'Kick it long up the pitch', grade: (f) => (f.bestOpenMate ? 'reasonable' : 'strong'), feedback: (f) => (f.bestOpenMate ? 'Clearing removes the danger, but you may give the ball back.' : 'With no open teammate, clearing the danger is the smart choice.'), intention: () => onBall('pass') }),
+      opt({ id: 'wide', text: () => 'Carry it out to the side, away from goal', grade: fixed('reasonable'), feedback: () => 'Moving away from the middle lowers the danger if you lose it.', intention: () => onBall('carry') }),
       opt({ id: 'dribble', text: () => 'Dribble past them near your goal', grade: fixed('risky'), feedback: () => 'Losing the ball here could give away a goal while you are ahead.', intention: () => onBall('carry') }),
     ],
   },
@@ -255,6 +259,7 @@ export const CATALOG: readonly TemplateDef[] = [
     options: [
       opt({ id: 'attack', text: () => 'Carry forward and attack', grade: fixed('strong'), feedback: () => 'You need a goal, and there was space ahead to attack.', intention: () => onBall('carry') }),
       opt({ id: 'forward-pass', available: (f) => !!openForward(f), text: (f, n) => `Pass forward to ${n(openForward(f)!.id)}`, grade: fixed('strong'), feedback: (f, n) => `${n(openForward(f)!.id)} was open ahead, which also moves the attack on.`, intention: (f) => onBall('pass', openForward(f)!.id) }),
+      opt({ id: 'long', text: () => 'Kick it long toward their goal', grade: fixed('risky'), feedback: () => 'A hopeful long ball usually gives the ball away.', intention: () => onBall('pass') }),
       opt({ id: 'slow', text: () => 'Slow down and keep the ball', grade: fixed('reasonable'), feedback: () => 'Keeping the ball is fine, but when behind you need to go forward.', intention: () => onBall('protect') }),
     ],
   },
@@ -369,6 +374,7 @@ export const CATALOG: readonly TemplateDef[] = [
     options: [
       opt({ id: 'cover', text: (f, n) => `Cover behind ${n(f.defend!.presserId!)}`, grade: fixed('strong'), feedback: () => 'If the attacker beats the presser, the cover player is there.', intention: (f) => ({ kind: 'offBall', intent: 'cover', playerId: f.defend!.coverId!, target: f.defend!.coverSpotWorld }) }),
       opt({ id: 'mark', available: (f) => !!f.defend!.unmarkedRunner, text: (f, n) => `Mark ${n(f.defend!.unmarkedRunner!.id)}`, grade: fixed('reasonable'), feedback: () => 'Marking an open attacker helps, but the presser has no cover.', intention: (f) => ({ kind: 'offBall', intent: 'cover', playerId: f.defend!.coverId!, target: f.defend!.unmarkedRunner!.world }) }),
+      opt({ id: 'stay', text: () => 'Stay where they are', grade: fixed('risky'), feedback: (f) => `${yd(f.defend!.coverGap)} away is too far to help if the presser is beaten.`, intention: () => none('no change') }),
       opt({ id: 'double', text: () => 'Also press the ball', grade: fixed('risky'), feedback: () => 'Two players on the ball leave space behind them.', intention: (f) => ({ kind: 'offBall', intent: 'press', playerId: f.defend!.coverId!, target: f.ballWorld }) }),
     ],
   },
@@ -388,6 +394,7 @@ export const CATALOG: readonly TemplateDef[] = [
     options: [
       opt({ id: 'protect', text: () => 'Protect the middle in front of goal', grade: fixed('strong'), feedback: () => 'The middle is where most goals come from; guarding it forces them wide.', intention: (f) => ({ kind: 'offBall', intent: 'protect', playerId: f.defend!.presserId === f.defend!.nearestId && f.defend!.coverId ? f.defend!.coverId : f.defend!.nearestId, target: W(f, { x: Math.max(4, f.ballT.x * 0.5), y: f.pitch.width / 2 }) }) }),
       opt({ id: 'mark', available: (f) => !!f.defend!.unmarkedRunner, text: (f, n) => `Mark ${n(f.defend!.unmarkedRunner!.id)}`, grade: fixed('reasonable'), feedback: () => 'Marking an open attacker is useful, but the middle stays open.', intention: (f) => ({ kind: 'offBall', intent: 'cover', playerId: f.defend!.unmarkedRunner!.nearestOwnId, target: f.defend!.unmarkedRunner!.world }) }),
+      opt({ id: 'stay', text: () => 'Stay where they are', grade: fixed('risky'), feedback: () => 'Staying put leaves the middle open.', intention: () => none('no change') }),
       opt({ id: 'chase', text: () => 'Chase the ball too', grade: fixed('risky'), feedback: () => 'Chasing the ball pulls you out of the middle.', intention: (f) => ({ kind: 'offBall', intent: 'press', playerId: f.defend!.nearestId, target: f.ballWorld }) }),
     ],
   },
