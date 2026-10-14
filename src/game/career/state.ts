@@ -1,6 +1,6 @@
 import { CAREER_CONFIG } from './config';
 import { FOCUSES, activityById, focusById } from './catalog';
-import { DEFAULT_INPUT, planWeek, substitute, workableFocuses, type PlannerInput, type WeekPlan } from './planner';
+import { DEFAULT_INPUT, normalizeInput, planWeek, substitute, workableFocuses, type PlannerInput, type WeekPlan } from './planner';
 import { cleanText, createPlayer, type CareerPlayer } from './player';
 import { applyGrowth, computeGrowth, type AttributeOutcome, type EvidenceItem } from './progression';
 import { SKILL_FAMILIES, type AttributeId, type Foot, type Level, type Position, type Rating, type SkillFamilyId } from './types';
@@ -133,7 +133,7 @@ export function reduce(save: CareerSave, action: Action): Outcome {
       return ok({ ...save, player: p }, `Welcome, ${p.name}.`);
     }
     case 'setInput': {
-      const input = { ...action.input };
+      const input = normalizeInput(action.input);
       const next = { ...save, input };
       if (!save.focusId) return ok(next, 'Setup saved.');
       const r = replan(next, save.focusId);

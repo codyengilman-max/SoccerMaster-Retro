@@ -94,7 +94,7 @@ export class CareerStore {
   /** Atomic: read, validate, reduce and write in one transaction. Resolves after the commit. */
   dispatch(action: Action): Promise<Outcome> {
     if (!this.db) {
-      const r = reduce(this.memory, action);
+      const r = checked(reduce(this.memory, action));
       if (r.ok) this.memory = r.save;
       if (r.ok && r.changed) this.notify(r.save);
       return Promise.resolve(r);
@@ -117,7 +117,7 @@ export class CareerStore {
           t.abort();
           return;
         }
-        const r = reduce(parsed.value, action);
+        const r = checked(reduce(parsed.value, action));
         result = r;
         if (r.ok && r.changed) st.put(r.save, KEY);
       };
@@ -160,4 +160,11 @@ export class CareerStore {
     this.listeners.clear();
     this.db?.close();
   }
+}
+
+/** Never write a save that would fail validation on the next read. */
+function checked(r: Outcome): Outcome {
+  if (!r.ok || !r.changed) return r;
+  const v = parseSave(JSON.parse(JSON.stringify(r.save)));
+  return v.ok ? r : { ok: false, error: `That change was refused because it would make the save invalid (${v.error}). Nothing was changed.` };
 }

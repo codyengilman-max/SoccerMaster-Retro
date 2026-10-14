@@ -84,6 +84,18 @@ function clampMinutes(m: number): number {
   return Number.isFinite(m) ? Math.min(H.minutesMax, Math.max(H.minutesMin, Math.round(m))) : H.minutesDefault;
 }
 
+/** The setup as the save stores it: known values only, minutes clamped, striking only outdoors. */
+export function normalizeInput(raw: PlannerInput): PlannerInput {
+  const setting = raw.setting === 'outdoor' ? 'outdoor' : 'indoor';
+  return {
+    equipment: raw.equipment === 'optional' ? 'optional' : 'ballOnly',
+    space: raw.space === 'medium' ? 'medium' : 'small',
+    setting,
+    striking: raw.striking === true && setting === 'outdoor',
+    minutes: clampMinutes(raw.minutes),
+  };
+}
+
 function item(a: Activity, role: ItemRole, level: Level, input: PlannerInput, minutes: number, variantTurn: number): PlannedItem {
   const variants = a.variants.filter((v) => v.level <= Math.min(5, level + 1));
   const variantId = role === 'variation' && variants.length > 0 ? variants[variantTurn % variants.length]!.id : null;

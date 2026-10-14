@@ -3,6 +3,7 @@ import { CAREER_CONFIG } from '../src/game/career/config';
 import { activityById } from '../src/game/career/catalog';
 import { cleanName } from '../src/game/career/player';
 import { substitutes } from '../src/game/career/planner';
+import { parseSave } from '../src/game/career/saveio';
 import { emptySave, levelSuggestion, reduce, type Action, type CareerSave, type JournalEntry } from '../src/game/career/state';
 
 function run(save: CareerSave, ...actions: Action[]): CareerSave {
@@ -115,5 +116,20 @@ describe('M6 journal, credit and weeks', () => {
     const r = reduce(run(emptySave(), { type: 'createPlayer', id: 'p', name: 'A', position: 'FWD' }), { type: 'chooseFocus', focusId: 'fn-angles' });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toMatch(/can't be practised honestly/);
+  });
+
+  it('setup changes always leave a save that validates (minutes clamped, striking only outdoors)', () => {
+    const H = CAREER_CONFIG.home;
+    let save = start();
+    for (const minutes of [10, 8, 6, 4, 2, 0, -50, Number.NaN, Infinity, 21, 999]) {
+      for (const setting of ['indoor', 'outdoor'] as const) {
+        save = run(save, { type: 'setInput', input: { equipment: 'ballOnly', space: 'small', setting, striking: true, minutes } });
+        expect(save.input.minutes).toBeGreaterThanOrEqual(H.minutesMin);
+        expect(save.input.minutes).toBeLessThanOrEqual(H.minutesMax);
+        expect(save.input.striking).toBe(setting === 'outdoor');
+        const parsed = parseSave(JSON.parse(JSON.stringify(save)));
+        expect(parsed.ok, parsed.ok ? '' : parsed.error).toBe(true);
+      }
+    }
   });
 });
