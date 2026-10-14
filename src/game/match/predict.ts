@@ -33,8 +33,11 @@ export interface GroundKickPrediction {
 
 export function predictGroundKick(from: Vec2, dir: Vec2, speed: number, T: MatchTuning): GroundKickPrediction {
   const f = T.ball.friction;
-  const d = rollDistance(speed, 0, f);
-  return { stop: { x: from.x + dir.x * d, y: from.y + dir.y * d }, stopDistance: d, stopSeconds: speed / f };
+  // Same integrator as MatchSim.moveBall: move by the current speed for one fixed tick, then slow.
+  const h = T.stepSeconds;
+  const n = speed > 0 ? Math.ceil(speed / (f * h) - 1e-9) : 0;
+  const d = h * (n * speed - (f * h * n * (n - 1)) / 2);
+  return { stop: { x: from.x + dir.x * d, y: from.y + dir.y * d }, stopDistance: d, stopSeconds: n * h };
 }
 
 export interface ReachableReceiver {

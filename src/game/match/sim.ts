@@ -67,7 +67,15 @@ export interface MatchSimOptions {
   readonly awayFormation?: FormationId;
   /** Sim seconds per half for a timed match. Omitted or null: the open-ended sandbox (no clock). */
   readonly halfSeconds?: number | null;
+  /**
+   * Aim assistance, fixed for the life of the sim (a match locks it at kickoff):
+   * 'slow' = short slow motion while aiming (aimAllowance real seconds per established possession);
+   * 'normal' = aiming at full speed, no allowance spent.
+   */
+  readonly aimAssist?: AimAssistMode;
 }
+
+export type AimAssistMode = 'slow' | 'normal';
 
 const MAX_EVENTS = 40;
 
@@ -85,8 +93,11 @@ export class MatchSim {
   private seq = 0;
   private readonly halfSeconds: number | null;
 
+  readonly aimAssist: AimAssistMode;
+
   constructor(options: MatchSimOptions = {}) {
     this.tuning = options.tuning ?? MATCH_TUNING;
+    this.aimAssist = options.aimAssist === 'normal' ? 'normal' : 'slow';
     this.seed = options.seed ?? 1;
     this.rng = createRng(this.seed);
     const hs = options.halfSeconds;
@@ -219,7 +230,7 @@ export class MatchSim {
     }
     if (s.phase === 'kickoff' || s.phase === 'stopped') {
       s.timeScale = 1;
-    } else if (s.phase === 'aiming' && s.aimAllowance.home > 0) {
+    } else if (s.phase === 'aiming' && this.aimAssist === 'slow' && s.aimAllowance.home > 0) {
       // The allowance is spent in real time and never refills from releasing, cancelling or passing.
       s.timeScale = T.aim.slowMoScale;
       s.aimAllowance.home = Math.max(0, s.aimAllowance.home - dt);
