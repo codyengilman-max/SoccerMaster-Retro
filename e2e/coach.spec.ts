@@ -40,6 +40,15 @@ async function expectCardFits(page: Page): Promise<void> {
   const names = Object.keys(d.layout?.elements ?? {}).filter((n) => n.startsWith('coach-'));
   expect(names).toContain('coach-card');
   for (const n of names) expectInside(n, d.layout!.elements[n], vp);
+  const el = d.layout!.elements;
+  const score = el['score']!;
+  expectInside('score', score, vp);
+  for (const b of ['menu-button', 'pause-button', 'help-button']) {
+    const r = el[b];
+    if (!r) continue;
+    const overlap = score.x < r.x + r.width && r.x < score.x + score.width && score.y < r.y + r.height && r.y < score.y + score.height;
+    expect(overlap, `score overlaps ${b}`).toBe(false);
+  }
 }
 
 test.beforeEach(async ({ page }) => {

@@ -1213,7 +1213,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     g.clear();
     const d = this.coachDirector;
     const left = d ? Math.ceil(d.timeLeft(s)) : 0;
-    const coachTag = d ? ` · COACH ${d.entries.length}/${d.target} · ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}` : ' · SANDBOX';
+    // Coach mode puts its counter on a second line so the HUD never runs into the buttons.
+    const coachTag = d ? `\nCOACH ${d.entries.length}/${d.target} · ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}` : ' · SANDBOX';
+    this.scoreText.setAlign(this.scoreText.originX === 1 ? 'right' : 'center');
     this.scoreText.setText(`Home ${s.score.home} – ${s.score.away} Away${coachTag}`);
     if (s.timeScale < 1 && s.timeScale > 0) {
       g.lineStyle(8, PALETTE.cream, 0.55);
