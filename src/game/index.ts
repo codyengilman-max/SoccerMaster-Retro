@@ -5,3 +5,4 @@ export * from './pitch';
 export * from './trainingGround';
 export * as attack from './attack';
 export * as match from './match';
+export * as coach from './coach';

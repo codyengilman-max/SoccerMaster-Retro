@@ -27,6 +27,7 @@ import {
   MATCH_PLAYER_IDS,
   TEAM_PLAYER_IDS,
   otherTeam,
+  type CoachIntentKind,
   type MatchEventType,
   type MatchKick,
   type MatchPlayer,
@@ -46,7 +47,12 @@ export type MatchCommand =
   | { readonly type: 'pause' }
   | { readonly type: 'resume' }
   | { readonly type: 'reset' }
-  | { readonly type: 'setFormation'; readonly team: TeamId; readonly formation: FormationId };
+  | { readonly type: 'setFormation'; readonly team: TeamId; readonly formation: FormationId }
+  /** Coach Moment freeze. Independent of the user's pause: releasing it never resumes a user/background pause. */
+  | { readonly type: 'coachHold' }
+  | { readonly type: 'coachRelease' }
+  | { readonly type: 'coachIntent'; readonly playerId: MatchPlayerId; readonly kind: CoachIntentKind; readonly target: Vec2; readonly seconds: number; readonly source: string }
+  | { readonly type: 'coachIntentClear'; readonly reason: string };
 
 export interface MatchSimOptions {
   readonly seed?: number;
@@ -104,15 +110,38 @@ export class MatchSim {
     const s = this.s;
     switch (cmd.type) {
       case 'pause':
-        if (s.paused) return false;
+        if (s.pauseReasons.user) return false;
         if (s.phase === 'aiming') this.cancelAim('paused');
+        s.pauseReasons.user = true;
         s.paused = true;
         this.emit('paused', null, '');
         return true;
       case 'resume':
-        if (!s.paused) return false;
-        s.paused = false;
-        this.emit('resumed', null, '');
+        if (!s.pauseReasons.user) return false;
+        s.pauseReasons.user = false;
+        s.paused = s.pauseReasons.coach;
+        this.emit('resumed', null, s.paused ? 'coach hold remains' : '');
+        return true;
+      case 'coachHold':
+        if (s.pauseReasons.coach) return false;
+        if (s.phase === 'aiming') this.cancelAim('coach moment');
+        s.pauseReasons.coach = true;
+        s.paused = true;
+        this.emit('coachHold', null, '');
+        return true;
+      case 'coachRelease':
+        if (!s.pauseReasons.coach) return false;
+        s.pauseReasons.coach = false;
+        s.paused = s.pauseReasons.user;
+        // No frame time carries over a freeze: play restarts from exactly the frozen state.
+        this.accumulator = 0;
+        this.emit('coachRelease', null, s.paused ? 'user pause remains' : '');
+        return true;
+      case 'coachIntent':
+        return this.setCoachIntent(cmd);
+      case 'coachIntentClear':
+        if (!s.coachIntent) return false;
+        this.clearCoachIntent(cmd.reason);
         return true;
       case 'reset':
         this.s = this.createState({ ...s.formations });
@@ -211,7 +240,7 @@ export class MatchSim {
 
   private setFormation(team: TeamId, formation: FormationId): boolean {
     const s = this.s;
-    if (!s.paused || !FORMATIONS[formation]) return false;
+    if (!s.pauseReasons.user || !FORMATIONS[formation]) return false;
     if (s.formations[team] === formation) return false;
     const from = s.formations[team];
     s.formations[team] = formation;
@@ -275,6 +304,35 @@ export class MatchSim {
     return true;
   }
 
+  private setCoachIntent(cmd: Extract<MatchCommand, { type: 'coachIntent' }>): boolean {
+    const T = this.tuning;
+    const s = this.s;
+    const p = s.players[cmd.playerId];
+    if (!p || p.team !== 'home' || p.isKeeper) return this.reject('coachIntent', 'not a home outfielder');
+    if (!finiteVec(cmd.target) || !Number.isFinite(cmd.seconds) || cmd.seconds <= 0) return this.reject('coachIntent', 'invalid');
+    if (s.phase === 'stopped' || s.phase === 'kickoff') return this.reject('coachIntent', 'play not live');
+    const target = vec(clamp(cmd.target.x, 0.5, T.pitch.length - 0.5), clamp(cmd.target.y, 0.5, T.pitch.width - 0.5));
+    s.coachIntent = { playerId: p.id, kind: cmd.kind, target, until: s.simTime + Math.min(cmd.seconds, T.coach.maxIntentSeconds), possession: s.possession, source: cmd.source };
+    this.emit('coachIntent', p.id, `${cmd.kind} ${cmd.source}`);
+    return true;
+  }
+
+  private expireCoachIntent(): void {
+    const s = this.s;
+    const ci = s.coachIntent;
+    if (!ci) return;
+    if (s.simTime >= ci.until) this.clearCoachIntent('expired');
+    else if (s.possession !== ci.possession) this.clearCoachIntent('possession changed');
+    else if (s.ball.owner === ci.playerId) this.clearCoachIntent('player has the ball');
+  }
+
+  private clearCoachIntent(reason: string): void {
+    const ci = this.s.coachIntent;
+    if (!ci) return;
+    this.s.coachIntent = null;
+    this.emit('coachIntentEnd', ci.playerId, reason);
+  }
+
   private reject(command: string, reason: string): boolean {
     this.emit('rejected', this.s.controlledId, `${command}: ${reason}`);
     return false;
@@ -333,6 +391,7 @@ export class MatchSim {
     if (s.feintBought && s.simTime >= s.feintBought.until) s.feintBought = null;
     s.ball.ignore = s.ball.ignore.filter((e) => e.until > s.simTime);
 
+    this.expireCoachIntent();
     planTeams(this.ctx());
     this.aiCarrier();
     for (const id of MATCH_PLAYER_IDS) this.movePlayer(s.players[id], h);
@@ -771,6 +830,7 @@ export class MatchSim {
     s.timeScale = 1;
     s.stoppage = { reason, scorer, detail, restartTeam, spot: copy(spot), until: reason === 'goal' ? T.stoppage.goalSeconds : T.stoppage.outSeconds };
     s.ball.vel = vec(0, 0);
+    if (s.coachIntent) this.clearCoachIntent('play stopped');
     this.emit(reason, s.ball.kick?.by ?? null, detail);
   }
 
@@ -883,6 +943,8 @@ export class MatchSim {
     const state: MatchState = {
       phase: 'kickoff',
       paused: false,
+      pauseReasons: { user: false, coach: false },
+      coachIntent: null,
       simTime: 0,
       realTime: 0,
       phaseTime: 0,

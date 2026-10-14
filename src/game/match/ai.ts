@@ -114,12 +114,24 @@ function planTeam(ctx: AiContext, team: TeamId): void {
     const p = s.players[chaser];
     set(p, 'chase', toTeam(team, chasePoint(s, T), T), M.chaseSpeed, T, team);
   }
+  applyCoachIntent(ctx, team, receiverId);
   if (receiverId) {
     const p = s.players[receiverId];
     const target = ownKick?.target ?? ball.pos;
     const meet = distance(p.pos, target) < T.receive.meetDistance || distance(p.pos, ball.pos) < 4;
     set(p, 'receive', toTeam(team, meet ? ball.pos : target, T), meet ? M.supportSpeed : M.runSpeed, T, team);
   }
+}
+
+/** A Coach Moment intention steers one player with normal speed caps; the ball owner and the pass receiver are never overridden. */
+function applyCoachIntent(ctx: AiContext, team: TeamId, receiverId: MatchPlayerId | null): void {
+  const { s, T } = ctx;
+  const ci = s.coachIntent;
+  if (!ci || s.players[ci.playerId].team !== team || ci.playerId === s.ball.owner || ci.playerId === receiverId) return;
+  const M = T.movement;
+  const speed = { support: M.supportSpeed, run: M.runSpeed, width: M.supportSpeed, press: M.pressSpeed, cover: M.coverSpeed, protect: M.shapeSpeed }[ci.kind];
+  const intent: Intent = ci.kind === 'width' ? 'width' : ci.kind === 'protect' ? 'protect' : ci.kind;
+  set(s.players[ci.playerId], intent, toTeam(team, ci.target, T), speed, T, team);
 }
 
 export function chasePoint(s: MatchState, T: MatchTuning): MutableVec2 {

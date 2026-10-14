@@ -133,7 +133,25 @@ export type MatchEventType =
   | 'resumed'
   | 'formation'
   | 'reset'
-  | 'slowMoSpent';
+  | 'slowMoSpent'
+  | 'coachHold'
+  | 'coachRelease'
+  | 'coachIntent'
+  | 'coachIntentEnd';
+
+export type CoachIntentKind = 'support' | 'run' | 'width' | 'press' | 'cover' | 'protect';
+
+/** A bounded, temporary instruction for one home outfield player, applied through the normal AI movement. */
+export interface CoachIntent {
+  readonly playerId: MatchPlayerId;
+  readonly kind: CoachIntentKind;
+  /** World yards. Players still move with their normal speed caps and acceleration. */
+  readonly target: Vec2;
+  readonly until: number;
+  /** Team in possession when issued; any change of possession ends the intent. */
+  readonly possession: TeamId;
+  readonly source: string;
+}
 
 export interface MatchEvent {
   readonly seq: number;
@@ -145,7 +163,11 @@ export interface MatchEvent {
 
 export interface MatchState {
   phase: MatchPhase;
+  /** True while any pause reason holds. */
   paused: boolean;
+  /** Independent pause reasons: the user's pause (also used for backgrounding) and a Coach Moment hold. */
+  pauseReasons: { user: boolean; coach: boolean };
+  coachIntent: CoachIntent | null;
   simTime: number;
   realTime: number;
   phaseTime: number;

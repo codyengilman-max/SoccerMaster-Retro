@@ -81,6 +81,10 @@ export const MATCH_TUNING = {
     holdSeconds: 1.1,
     maxHoldSeconds: 2.4,
   },
+  coach: {
+    /** Longest a Coach Moment intention may steer a player (sim seconds). */
+    maxIntentSeconds: 6,
+  },
   movement: {
     shapeSpeed: 4.6,
     supportSpeed: 5.6,
