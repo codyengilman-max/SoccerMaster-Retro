@@ -1,4 +1,4 @@
-import type { match } from '../game';
+import type { coach, match } from '../game';
 import type { ControlState } from '../input';
 import type { PitchLayout } from '../render/layout';
 
@@ -55,4 +55,27 @@ export interface MatchReport {
   readonly banner: string;
   readonly toast: string;
   readonly fps: number;
+  readonly pauseReasons: { readonly user: boolean; readonly coach: boolean };
+  readonly coachIntent: match.CoachIntent | null;
+  readonly coach: CoachReport | null;
+}
+
+export interface CoachReport {
+  readonly sessionId: string;
+  readonly phase: coach.CoachPhase;
+  readonly overlay: 'hidden' | 'question' | 'feedback' | 'summary';
+  readonly target: number;
+  readonly sessionSeconds: number;
+  readonly view: {
+    readonly momentId: string;
+    readonly templateId: string;
+    readonly topic: coach.Topic;
+    readonly question: string;
+    readonly options: readonly { readonly id: string; readonly text: string; readonly grade: coach.Grade; readonly intention: coach.Intention['kind'] }[];
+    readonly highlights: readonly coach.Highlight['kind'][];
+  } | null;
+  readonly selected: string | null;
+  readonly cue: coach.CoachCue | null;
+  readonly entries: readonly Omit<coach.LearningEntry, 'sessionId' | 'facts' | 'options' | 'intention'>[];
+  readonly summary: coach.CoachSummary | null;
 }

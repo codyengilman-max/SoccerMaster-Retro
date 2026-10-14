@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { match, pitchMarkings, U11_9V9_PITCH, type PitchMarkings, type Rect, type Vec2 } from '../game';
+import { coach, match, pitchMarkings, U11_9V9_PITCH, type PitchMarkings, type Rect, type Vec2 } from '../game';
 import { KEY_BINDINGS, KeyboardAim, TouchControls, type ControlAction, type Pull } from '../input';
 import {
   arcPoints,
@@ -19,6 +19,7 @@ import type { InspectableScene, SceneLayoutReport } from './inspectable';
 import type { MatchReport } from './matchReport';
 import { SceneKeys } from './keys';
 import { Button } from './ui/Button';
+import { CoachOverlay } from './ui/CoachOverlay';
 
 const { MatchSim, MATCH_PLAYER_IDS, HOME_IDS, FORMATION_IDS, DEFAULT_FORMATION } = match;
 type Id = match.MatchPlayerId;
@@ -93,6 +94,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private overlayButton!: Button;
   private formationButtons!: Record<FormationId, Button>;
   private panelRect: Rect = { x: 0, y: 0, width: 0, height: 0 };
+  /** Coach Moments (`?coach`, M5 development flag). Null when the flag is off. */
+  private coachDirector: coach.CoachDirector | null = null;
+  private coachConfig: coach.CoachConfig | null = null;
+  private coachOverlay!: CoachOverlay;
+  private coachRun = 0;
 
   constructor() {
     super(SceneKeys.Match);
@@ -114,6 +120,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const formation = data.formation ?? (fromUrl && FORMATION_IDS.includes(fromUrl) ? fromUrl : DEFAULT_FORMATION);
     this.sim = new MatchSim({ seed, homeFormation: formation });
     if (shouldExposeDebug(window.location)) this.applyDebugSetup(params.get('setup'));
+    this.coachConfig = this.readCoachConfig(params, seed);
+    this.coachRun = 0;
+    this.coachDirector = this.coachConfig ? new coach.CoachDirector(this.coachConfig) : null;
     this.lastSeq = 0;
     this.camX = this.sim.state.ball.pos.x;
     this.controls = new TouchControls(Math.min(this.scale.width, this.scale.height));
@@ -174,6 +183,12 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.formationButtons = Object.fromEntries(
       FORMATION_IDS.map((id) => [id, panelButton(`formation-${id}`, id, () => this.changeFormation(id), true)]),
     ) as Record<FormationId, Button>;
+    this.coachOverlay = new CoachOverlay(this, {
+      onAnswer: (id) => this.coachAnswer(id),
+      onContinue: () => this.coachContinue(),
+      onAgain: () => this.coachAgain(),
+      onMenu: () => this.goToMenu(),
+    });
 
     this.input.on(Phaser.Input.Events.POINTER_DOWN, this.onPointerDown, this);
     this.input.on(Phaser.Input.Events.POINTER_MOVE, this.onPointerMove, this);
@@ -214,7 +229,151 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     }
     this.sim.step(dt);
     this.consumeEvents();
+    this.updateCoach();
     this.renderFrame(dt);
+  }
+
+  // ---- Coach Moments ---------------------------------------------------------------------------
+
+  /** `?coach` (5 moments) or `?coach=4..6`. Debug builds may shorten the session with `coachSeconds`. */
+  private readCoachConfig(params: URLSearchParams, seed: number): coach.CoachConfig | null {
+    if (!params.has('coach')) return null;
+    const raw = params.get('coach');
+    const moments = raw ? Number(raw) : undefined;
+    const names: Partial<Record<Id, string>> = {};
+    for (const pair of (params.get('names') ?? '').split(',').slice(0, MATCH_PLAYER_IDS.length)) {
+      const [id, ...rest] = pair.split(':');
+      if (id && (HOME_IDS as readonly string[]).includes(id)) names[id as Id] = rest.join(':');
+    }
+    const secs = Number(params.get('coachSeconds'));
+    const debugShort = shouldExposeDebug(window.location) && Number.isFinite(secs) && secs >= 20 && secs < coach.COACH_TUNING.sessionSeconds;
+    const base = { sessionId: `s${seed}-${Date.now().toString(36)}`, seed, names, ...(moments !== undefined && Number.isFinite(moments) ? { moments } : {}) };
+    if (!debugShort) return base;
+    const target = Math.min(6, Math.max(4, Math.round(moments ?? 5)));
+    return { ...base, sessionSeconds: secs, tuning: { ...coach.COACH_TUNING, minGapSeconds: Math.min(coach.COACH_TUNING.minGapSeconds, (secs / target) * 0.5) } };
+  }
+
+  private updateCoach(): void {
+    const d = this.coachDirector;
+    if (!d) return;
+    const view = d.update(this.sim, { gestureActive: this.controls.state !== 'idle' || this.keyAim !== null, overlayOpen: this.sim.state.pauseReasons.user || this.navigating });
+    if (view) {
+      // Frozen: nothing half-done may act when play resumes.
+      this.cancelInput('coach moment');
+      this.coachOverlay.showQuestion(view, d.entries.length, d.target);
+    }
+    if (d.phase === 'summary' && this.coachOverlay.state !== 'summary') {
+      this.cancelInput('coach summary');
+      this.coachOverlay.showSummary(d.summary());
+    }
+  }
+
+  private coachAnswer(id: string): void {
+    const d = this.coachDirector;
+    if (!d || this.sim.state.pauseReasons.user || !d.answer(id) || !d.view || !d.selected) return;
+    this.coachOverlay.showFeedback(d.view, d.selected);
+  }
+
+  private coachContinue(): void {
+    const d = this.coachDirector;
+    if (!d || this.sim.state.pauseReasons.user) return;
+    const picked = d.selected;
+    if (!d.continueMoment(this.sim)) return;
+    this.cancelInput('coach continue');
+    this.coachOverlay.hide();
+    if (picked?.intention.kind === 'onBall' && this.sim.userHasBall()) this.toast(`Your move: ${picked.text.toLowerCase()}`);
+  }
+
+  private coachAgain(): void {
+    if (this.navigating) return;
+    this.navigating = true;
+    this.cancelInput('navigation');
+    this.scene.restart({ formation: this.sim.state.formations.home });
+  }
+
+  private newCoachSession(): void {
+    if (!this.coachConfig) return;
+    this.coachDirector?.abandon(null);
+    this.coachRun += 1;
+    this.coachDirector = new coach.CoachDirector({ ...this.coachConfig, sessionId: `${this.coachConfig.sessionId}.${this.coachRun}` });
+    this.coachOverlay.hide();
+  }
+
+  private coachKey(event: KeyboardEvent): boolean {
+    const d = this.coachDirector;
+    if (!d || !this.coachOverlay.visible || event.code === 'KeyP' || event.code === 'Escape' || event.code === 'KeyM') return false;
+    event.preventDefault();
+    if (event.repeat) return true;
+    const n = /^(?:Digit|Numpad)([1-4])$/.exec(event.code);
+    if (n && d.phase === 'question' && d.view) {
+      const o = d.view.options[Number(n[1]) - 1];
+      if (o) this.coachAnswer(o.id);
+    } else if ((event.code === 'Enter' || event.code === 'Space') && d.phase === 'feedback') this.coachContinue();
+    return true;
+  }
+
+  private drawCoach(playerH: number): void {
+    const d = this.coachDirector;
+    if (!d) return;
+    const s = this.sim.state;
+    const L = this.pitchLayout;
+    const o = this.over;
+    const ring = (id: Id, color: number): void => {
+      const p = s.players[id];
+      if (!p) return;
+      const sp = toScreen(L, p.pos);
+      const v = pitchVectorToScreen(L, { x: 1.9, y: 1.9 });
+      o.lineStyle(4, PALETTE.ink, 0.9);
+      o.strokeEllipse(sp.x, sp.y, Math.abs(v.x) * 2, Math.abs(v.y) * 2);
+      o.lineStyle(3, color, 1);
+      o.strokeEllipse(sp.x, sp.y, Math.abs(v.x) * 2, Math.abs(v.y) * 2);
+    };
+    const showing = d.view && !s.pauseReasons.user;
+    if (showing) {
+      for (const h of d.view!.highlights) {
+        if (h.kind === 'player') ring(h.id, h.tone === 'focus' ? PALETTE.mustard : h.tone === 'mate' ? PALETTE.cream : PALETTE.tomato);
+        else if (h.kind === 'lane') {
+          const a = toScreen(L, s.players[h.from].pos);
+          const b = toScreen(L, s.players[h.to].pos);
+          o.lineStyle(5, PALETTE.ink, 0.6);
+          o.lineBetween(a.x, a.y, b.x, b.y);
+          o.lineStyle(3, h.open ? PALETTE.cream : PALETTE.tomato, 0.95);
+          o.lineBetween(a.x, a.y, b.x, b.y);
+        } else if (h.kind === 'space') {
+          const c = toScreen(L, h.at);
+          const v = pitchVectorToScreen(L, { x: h.radius, y: h.radius });
+          o.fillStyle(PALETTE.sun, 0.22);
+          o.fillEllipse(c.x, c.y, Math.abs(v.x) * 2, Math.abs(v.y) * 2);
+          o.lineStyle(2, PALETTE.sun, 0.9);
+          o.strokeEllipse(c.x, c.y, Math.abs(v.x) * 2, Math.abs(v.y) * 2);
+        } else {
+          const P = U11_9V9_PITCH;
+          const r = rectToScreen(L, { x: P.length - 1.5, y: P.width / 2 - P.goalWidth / 2 - 1, width: 3, height: P.goalWidth + 2 });
+          o.lineStyle(4, PALETTE.sun, 1);
+          o.strokeRect(r.x, r.y, r.width, r.height);
+        }
+      }
+    }
+    // After Continue: the on-ball cue points at the choice; the user still has to make the play.
+    const cue = d.cue;
+    if (cue && cue.carrierId && !s.paused) {
+      ring(cue.carrierId, PALETTE.mustard);
+      if (cue.targetId) {
+        const a = toScreen(L, s.players[cue.carrierId].pos);
+        const b = toScreen(L, s.players[cue.targetId].pos);
+        o.lineStyle(3, PALETTE.cream, 0.8);
+        o.lineBetween(a.x, a.y - playerH * 0.2, b.x, b.y - playerH * 0.2);
+      }
+    }
+    const it = s.coachIntent;
+    if (it) {
+      const t = toScreen(L, it.target);
+      o.fillStyle(PALETTE.cream, 0.9);
+      o.lineStyle(2, PALETTE.ink, 1);
+      o.fillCircle(t.x, t.y, 5);
+      o.strokeCircle(t.x, t.y, 5);
+      ring(it.playerId, PALETTE.cream);
+    }
   }
 
   describeLayout(): SceneLayoutReport {
@@ -227,7 +386,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       score: boundsOf(this.scoreText),
       help: boundsOf(this.helpText),
     };
-    if (this.sim.state.paused) {
+    Object.assign(elements, this.coachOverlay.bounds());
+    if (this.sim.state.pauseReasons.user) {
       elements['pause-panel'] = this.panelRect;
       elements['resume-button'] = this.resumeButton.getButtonBounds();
       elements['reset-button'] = this.resetButton.getButtonBounds();
@@ -290,6 +450,27 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       banner: this.bannerText.visible ? this.bannerMessage : '',
       toast: this.toastUntil > performance.now() ? this.toastMessage : '',
       fps: Math.round(this.fps),
+      pauseReasons: { ...s.pauseReasons },
+      coachIntent: s.coachIntent ? { ...s.coachIntent, target: { ...s.coachIntent.target } } : null,
+      coach: this.coachReport(),
+    };
+  }
+
+  private coachReport(): MatchReport['coach'] {
+    const d = this.coachDirector;
+    if (!d) return null;
+    const v = d.view;
+    return {
+      sessionId: d.id,
+      phase: d.phase,
+      overlay: this.coachOverlay.visible ? this.coachOverlay.state : 'hidden',
+      target: d.target,
+      sessionSeconds: d.sessionSeconds,
+      view: v ? { momentId: v.momentId, templateId: v.templateId, topic: v.topic, question: v.question, options: v.options.map((o) => ({ id: o.id, text: o.text, grade: o.grade, intention: o.intention.kind })), highlights: v.highlights.map((h) => h.kind) } : null,
+      selected: d.selected?.id ?? null,
+      cue: d.cue ? { ...d.cue } : null,
+      entries: d.entries.map((e) => ({ momentId: e.momentId, templateId: e.templateId, templateVersion: e.templateVersion, topic: e.topic, openedAt: e.openedAt, selectedOptionId: e.selectedOptionId, selectedGrade: e.selectedGrade, intentionStatus: e.intentionStatus, observed: e.observed ? { ...e.observed } : null })),
+      summary: d.phase === 'summary' ? { ...d.summary(), entries: [] } : null,
     };
   }
 
@@ -358,7 +539,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
 
   private onHidden(): void {
     this.cancelInput('app in background');
-    if (!this.sim.state.paused) this.togglePause();
+    // A background pause is the user's pause reason, kept even if a Coach Moment is also holding play.
+    if (!this.sim.state.pauseReasons.user) this.togglePause();
   }
 
   private logInput(entry: string): void {
@@ -423,6 +605,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
 
   private onKeyDown(event: KeyboardEvent): void {
     const s = this.sim.state;
+    if (this.coachKey(event)) return;
     if (event.code === 'KeyP' || event.code === 'KeyO' || event.code === 'KeyM' || event.code === 'KeyF' || (s.paused && event.code === 'Digit3')) {
       event.preventDefault();
       if (event.repeat) return;
@@ -548,17 +731,19 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
 
   private togglePause(): void {
     if (this.navigating) return;
-    if (this.sim.state.paused) {
+    if (this.sim.state.pauseReasons.user) {
       this.sim.command({ type: 'resume' });
     } else {
       this.cancelInput('paused');
       this.sim.command({ type: 'pause' });
     }
-    this.showPanel(this.sim.state.paused);
+    const user = this.sim.state.pauseReasons.user;
+    this.coachOverlay.setSuspended(user);
+    this.showPanel(user);
   }
 
   private changeFormation(id: FormationId): void {
-    if (!this.sim.state.paused) return;
+    if (!this.sim.state.pauseReasons.user) return;
     if (this.sim.command({ type: 'setFormation', team: 'home', formation: id })) this.toast(`Formation ${id}: players walk to their new roles on resume`);
     this.showPanel(true);
   }
@@ -567,6 +752,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.cancelInput('reset');
     this.sim.command({ type: 'reset' });
     this.lastSeq = 0;
+    this.newCoachSession();
+    this.coachOverlay.setSuspended(false);
     this.showPanel(false);
     this.toast('Sandbox reset');
   }
@@ -580,6 +767,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     if (this.navigating) return;
     this.navigating = true;
     this.cancelInput('navigation');
+    this.coachDirector?.abandon(this.sim);
     this.scene.start(SceneKeys.Start);
   }
 
@@ -726,7 +914,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.bannerText.setFontSize(compact ? 18 : 24).setWordWrapWidth(width - 40, true);
     this.panelNote.setWordWrapWidth(Math.min(380, width - 60), true);
     this.computeLayout();
-    this.showPanel(this.sim.state.paused);
+    this.showPanel(this.sim.state.pauseReasons.user);
+    this.coachOverlay.setSuspended(this.sim.state.pauseReasons.user);
   }
 
   private showPanel(visible: boolean): void {
@@ -899,6 +1088,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.ball.setScale(ballSize / BALL_TEXTURE_SIZE.width).setPosition(bp.x, bp.y - ballSize * 0.45).setDepth(100 + bp.y + 0.5);
 
     this.drawAimGuide(playerH);
+    this.drawCoach(playerH);
     this.drawDevOverlay(playerH);
     this.drawHud();
   }
@@ -1021,7 +1211,10 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const { width, height } = this.scale;
     const g = this.hud;
     g.clear();
-    this.scoreText.setText(`Home ${s.score.home} – ${s.score.away} Away · SANDBOX`);
+    const d = this.coachDirector;
+    const left = d ? Math.ceil(d.timeLeft(s)) : 0;
+    const coachTag = d ? ` · COACH ${d.entries.length}/${d.target} · ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}` : ' · SANDBOX';
+    this.scoreText.setText(`Home ${s.score.home} – ${s.score.away} Away${coachTag}`);
     if (s.timeScale < 1 && s.timeScale > 0) {
       g.lineStyle(8, PALETTE.cream, 0.55);
       g.strokeRect(4, 4, width - 8, height - 8);

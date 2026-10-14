@@ -30,4 +30,5 @@ export const COACH_TUNING = {
   intentSeconds: 4,
 } as const;
 
-export type CoachTuning = typeof COACH_TUNING;
+type Widen<T> = { readonly [K in keyof T]: T[K] extends number ? number : Widen<T[K]> };
+export type CoachTuning = Widen<typeof COACH_TUNING>;
