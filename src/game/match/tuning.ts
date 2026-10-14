@@ -43,7 +43,20 @@ export const MATCH_TUNING = {
   /** One ground kick for passes and shots (user and AI): speed = lerp(minSpeed, maxSpeed, power). */
   kick: { minSpeed: 8, maxSpeed: D.shot.maxSpeed },
   /** Aiming slow motion: real seconds per team possession spell; refills only after the opponent had the ball. */
-  aimAllowance: { seconds: 2.4 },
+  aimAllowance: {
+    seconds: 2.4,
+    /** The opponent must hold the ball this long (sim seconds) before it counts as their possession spell (refill). */
+    establishSeconds: 0.6,
+  },
+  /**
+   * Off the ball the user controls one home outfielder: the presser when the opponent has it, the
+   * loose-ball chaser otherwise (stable during a friendly pass). A swipe steers him for steerSeconds.
+   */
+  offBall: {
+    steerSeconds: 1.1,
+    /** Steered speed is the normal chase speed: no boost for being user-controlled. */
+    minHoldSeconds: 0.6,
+  },
   feint: {
     seconds: 0.45,
     cooldownSeconds: 1.6,

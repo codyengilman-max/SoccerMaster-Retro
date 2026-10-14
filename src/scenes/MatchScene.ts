@@ -995,7 +995,6 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       switch (e.type) {
         case 'rejected':
           if (e.detail === 'feint: cooldown') this.toast('Feint not ready yet');
-          else if (e.detail.endsWith('no ball')) this.toast('You need the ball for that');
           break;
         case 'feint':
           this.toast(e.detail.startsWith('bit') ? 'Feint — he bit!' : 'Feint!');

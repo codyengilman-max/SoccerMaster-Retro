@@ -189,8 +189,16 @@ export interface MatchState {
   formations: Record<TeamId, FormationId>;
   /** Team with controlled possession, or the team that played the loose ball last. */
   possession: TeamId;
-  /** Home player the user controls. Only meaningful while a home outfield player owns the ball. */
+  /** Home outfielder the user controls: the carrier in possession, otherwise the selected defender/chaser. */
   controlledId: MatchPlayerId;
+  /** Sim time control last moved to another player (off-ball selection hysteresis). */
+  controlSince: number;
+  /** Off-ball steer from a swipe (world unit vector) until sim time `until`; null = AI movement. */
+  userSteer: { dir: Vec2; until: number; epoch: number } | null;
+  /** Stable team-possession sequence: bumps only when a team establishes possession. */
+  possessionSeq: number;
+  /** Team whose current spell is established (see aimAllowance.establishSeconds), or null. */
+  establishedTeam: TeamId | null;
   /** Bumped whenever user control changes hands; an aim started under an older epoch is void. */
   controlEpoch: number;
   aim: { direction: Vec2 | null; power: number; epoch: number } | null;

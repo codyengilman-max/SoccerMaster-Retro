@@ -328,8 +328,8 @@ export class MatchSim {
     const s = this.s;
     if (s.paused || s.phase !== 'live') return false;
     if (!finiteVec(direction) || length(direction) < 1e-6) return this.reject('dribble', 'invalid direction');
-    if (!this.userHasBall()) return this.reject('dribble', 'no ball');
     if (s.swipeCooldown > 0) return this.reject('dribble', 'cooldown');
+    if (!this.userHasBall()) return this.steerOffBall(direction);
     s.swipeCooldown = T.carrier.redirectSeconds;
     const dir = normalize(direction);
     // Only the direction changes; speed stays bounded by carrier.speed, acceleration and turn rate.
@@ -338,6 +338,51 @@ export class MatchSim {
     if (f && f.by === s.controlledId && s.simTime < f.until && !f.exitDir) f.exitDir = copy(dir);
     this.emit('dribble', s.controlledId, `${dir.x.toFixed(2)},${dir.y.toFixed(2)}`);
     return true;
+  }
+
+  /** Off the ball a swipe steers the controlled home outfielder for a short spell (normal speed caps, no boost). */
+  private steerOffBall(direction: Vec2): boolean {
+    const T = this.tuning;
+    const s = this.s;
+    const p = s.players[s.controlledId];
+    if (!p || p.team !== 'home' || p.isKeeper || s.ball.owner === p.id) return this.reject('dribble', 'no ball');
+    const owner = s.ball.owner ? s.players[s.ball.owner] : null;
+    if (owner && owner.team === 'home') return this.reject('dribble', 'teammate has the ball');
+    s.swipeCooldown = T.carrier.redirectSeconds;
+    const dir = normalize(direction);
+    s.userSteer = { dir: vec(dir.x, dir.y), until: s.simTime + T.offBall.steerSeconds, epoch: s.controlEpoch };
+    this.emit('dribble', p.id, `steer ${dir.x.toFixed(2)},${dir.y.toFixed(2)}`);
+    return true;
+  }
+
+  /**
+   * Off-ball control policy. Opponent ball: the home presser. Loose ball: the home chaser, except
+   * that a friendly pass in flight keeps the current player until someone receives it. Both picks
+   * come from the AI's committed assignments (with their own hysteresis); control additionally stays
+   * put for offBall.minHoldSeconds so it never flickers frame to frame.
+   */
+  private updateUserControl(): void {
+    const T = this.tuning;
+    const s = this.s;
+    const owner = s.ball.owner ? s.players[s.ball.owner] : null;
+    if (owner && owner.team === 'home') return;
+    if (s.phase !== 'live' && s.phase !== 'aiming') return;
+    const kick = s.ball.kick;
+    if (!owner && kick && kick.team === 'home' && kick.kind !== 'touch') return;
+    const pick = owner ? s.defense.home.presserId : s.chaser.home.id;
+    if (!pick || pick === s.controlledId || s.players[pick].isKeeper) return;
+    if (s.simTime - s.controlSince < T.offBall.minHoldSeconds) return;
+    this.setControl(pick, owner ? 'defend' : 'loose ball');
+  }
+
+  private setControl(id: MatchPlayerId, why: string): void {
+    const s = this.s;
+    s.controlEpoch += 1;
+    if (s.phase === 'aiming') this.cancelAim('control changed');
+    s.controlledId = id;
+    s.controlSince = s.simTime;
+    s.userSteer = null;
+    this.emit('control', id, why);
   }
 
   private feint(): boolean {
@@ -462,12 +507,37 @@ export class MatchSim {
     s.ball.ignore = s.ball.ignore.filter((e) => e.until > s.simTime);
 
     this.expireCoachIntent();
+    this.establishPossession();
     planTeams(this.ctx());
+    this.updateUserControl();
+    if (s.userSteer && (s.simTime >= s.userSteer.until || s.userSteer.epoch !== s.controlEpoch)) s.userSteer = null;
     this.aiCarrier();
     for (const id of MATCH_PLAYER_IDS) this.movePlayer(s.players[id], h);
     const prev = copy(s.ball.pos);
     this.moveBall(h);
     this.resolveContacts(prev, h);
+  }
+
+  /**
+   * A possession spell is established once a team has held the ball for aimAllowance.establishSeconds.
+   * Only then does the other team's aim allowance become refillable, so deflections, ownership
+   * flicker and instant steals never refill it.
+   */
+  private establishPossession(): void {
+    const T = this.tuning;
+    const s = this.s;
+    const o = s.ball.owner;
+    if (!o) return;
+    const team = s.players[o].team;
+    if (s.establishedTeam === team || s.simTime - s.ownedSince < T.aimAllowance.establishSeconds - 1e-9) return;
+    s.establishedTeam = team;
+    s.possessionSeq += 1;
+    s.allowanceRefillPending[otherTeam(team)] = true;
+    if (s.allowanceRefillPending[team]) {
+      s.allowanceRefillPending[team] = false;
+      s.aimAllowance[team] = T.aimAllowance.seconds;
+    }
+    this.emit('possession', o, `established ${team} #${s.possessionSeq}`);
   }
 
   private ctx(): AiContext {
@@ -555,6 +625,9 @@ export class MatchSim {
       const k = this.keeperTarget(p);
       desired = seek(p.pos, k.target, k.speed, 0.4);
       accel = T.keeper.accel;
+    } else if (s.userSteer && p.id === s.controlledId && p.team === 'home') {
+      desired = scale(s.userSteer.dir, M.chaseSpeed);
+      accel = M.sprintAccel;
     } else {
       desired = seek(p.pos, p.target, p.speed, p.intent === 'chase' || p.intent === 'receive' ? 0.4 : 1.5);
       if (p.intent === 'chase' || p.intent === 'press' || p.intent === 'run' || p.intent === 'recover') accel = M.sprintAccel;
@@ -862,16 +935,13 @@ export class MatchSim {
     }
     if (userControl) {
       s.controlledId = p.id;
+      s.controlSince = s.simTime;
+      s.userSteer = null;
       s.dribbleDir = length(p.vel) > 0.3 && p.vel.x >= 0 ? normalize(p.vel) : vec(1, 0);
       this.emit('control', p.id, '');
     }
     if (changed) {
-      // Aim slow motion refills only after the opponent genuinely had the ball and this team won it back.
-      s.allowanceRefillPending[otherTeam(p.team)] = true;
-      if (s.allowanceRefillPending[p.team]) {
-        s.allowanceRefillPending[p.team] = false;
-        s.aimAllowance[p.team] = T.aimAllowance.seconds;
-      }
+      // Aim allowance accounting happens in establishPossession(), not on first touch.
       s.stats.turnovers += 1;
       this.emit('possession', p.id, p.team);
     }
@@ -1024,6 +1094,10 @@ export class MatchSim {
       formations: { ...formations },
       possession: 'home',
       controlledId: 'H8',
+      controlSince: 0,
+      userSteer: null,
+      possessionSeq: 0,
+      establishedTeam: null,
       controlEpoch: 0,
       aim: null,
       aimAllowance: { home: T.aimAllowance.seconds, away: T.aimAllowance.seconds },

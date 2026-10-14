@@ -84,6 +84,7 @@ describe('directional dribbling', () => {
     const sim = staged(6);
     const dirs = [{ x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 1 }, { x: -1, y: 1 }, { x: 1, y: -1 }];
     let max = 0;
+    let offMax = 0;
     let accepted = 0;
     for (let i = 0; i < 600; i++) {
       const before = { ...sim.state.players.H8.pos };
@@ -91,9 +92,12 @@ describe('directional dribbling', () => {
       sim.step(H);
       const p = sim.state.players.H8.pos;
       expect(Math.hypot(p.x - before.x, p.y - before.y)).toBeLessThanOrEqual(T.carrier.speed * T.feint.exitSpeedFactor * H + 1e-9);
-      max = Math.max(max, speed(sim));
+      // The carrier's cap applies while he has the ball; off the ball the swipe steers a defender at the normal AI chase cap.
+      if (sim.userHasBall()) max = Math.max(max, speed(sim));
+      else offMax = Math.max(offMax, Math.hypot(sim.state.players[sim.state.controlledId].vel.x, sim.state.players[sim.state.controlledId].vel.y));
     }
     expect(max).toBeLessThanOrEqual(T.carrier.speed + 1e-6);
+    expect(offMax).toBeLessThanOrEqual(T.movement.chaseSpeed + 1e-6);
     expect(accepted).toBeLessThan(600 * H / T.carrier.redirectSeconds + 2);
   });
 
@@ -195,7 +199,7 @@ describe('aim slow-motion allowance', () => {
     expect(sim.state.aimAllowance.home).toBe(full);
   });
 
-  it('over long seeded play it refills only when home wins the ball back after the opponent had it', () => {
+  it('over long seeded play it refills only when home establishes possession after the opponent established it', () => {
     for (const seed of [1, 2, 3]) {
       const sim = new MatchSim({ seed });
       live(sim);
@@ -209,12 +213,13 @@ describe('aim slow-motion allowance', () => {
         sim.step(1 / 60);
         const evs = newEvents(sim, seq);
         seq = lastSeq(sim);
-        const homeWon = evs.some((e) => e.type === 'possession' && e.detail === 'home');
-        if (evs.some((e) => e.type === 'possession' && e.detail === 'away')) awayHadIt = true;
+        const est = (team: string) => (e: { type: string; detail: string }) => e.type === 'possession' && e.detail.startsWith(`established ${team} `);
+        const homeWon = evs.some(est('home'));
+        if (evs.some(est('away'))) awayHadIt = true;
         const now = sim.state.aimAllowance.home;
         if (now > prev + 1e-9) {
           expect(homeWon && awayHadIt).toBe(true);
-          awayHadIt = evs.some((e) => e.type === 'possession' && e.detail === 'away' && e.seq > (evs.find((x) => x.type === 'possession' && x.detail === 'home')?.seq ?? 0));
+          awayHadIt = evs.some((e) => est('away')(e) && e.seq > (evs.find(est('home'))?.seq ?? 0));
           refills++;
         }
         prev = now;
@@ -250,7 +255,7 @@ describe('command validation', () => {
     expect(sim.state.ball.owner).toBe('H8');
   });
 
-  it('feint and dribble need the ball and live play', () => {
+  it('feint needs the ball; off the ball a swipe only steers the controlled home outfielder, never in a pause', () => {
     const sim = staged();
     sim.command({ type: 'pause' });
     expect(sim.command({ type: 'feint' })).toBe(false);
@@ -261,7 +266,15 @@ describe('command validation', () => {
       s.possession = 'away';
     });
     expect(sim.command({ type: 'feint' })).toBe(false);
-    expect(sim.command({ type: 'dribble', direction: { x: 0, y: 1 } })).toBe(false);
+    expect(sim.command({ type: 'aimStart' })).toBe(false);
+    const id = sim.state.controlledId;
+    expect(sim.command({ type: 'dribble', direction: { x: 0, y: 1 } })).toBe(true);
+    expect(sim.state.userSteer?.dir).toEqual({ x: 0, y: 1 });
+    expect(sim.state.players[id].team).toBe('home');
+    expect(sim.state.players[id].isKeeper).toBe(false);
+    expect(sim.state.ball.owner).toBe('A5');
+    sim.command({ type: 'pause' });
+    expect(sim.command({ type: 'dribble', direction: { x: 1, y: 0 } })).toBe(false);
   });
 });
 
