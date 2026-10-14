@@ -24,7 +24,7 @@ export const COACH_TUNING = {
   moments: { default: 5, min: 4, max: 6 },
   sessionSeconds: 300,
   minGapSeconds: 22,
-  /** Observation window after Continue for the actual action and outcome. */
+  /** Observation period after Continue for the actual action and outcome. */
   observeSeconds: 6,
   cueSeconds: 3,
   intentSeconds: 4,
