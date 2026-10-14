@@ -25,8 +25,9 @@ CI (`.github/workflows/ci.yml`) runs `npm ci`, typecheck, unit tests, build, and
 - `src/game/attack/` — M2 attack drill rules (`AttackSim`, `tuning.ts` holds every gameplay number).
 - `src/game/match/` — M3 9v9 sandbox (`MatchSim`, `formations.ts`, team AI in `ai.ts`, every number in `tuning.ts`). Reuses M2 commands and tuning.
 - `src/game/coach/` — M5 Coach Moments (facts, templates, validation, `CoachDirector`), framework-free; turned on in the sandbox with `?coach`. See `docs/COACH.md`. `?debug&coach&coachSeconds=40` shortens the session for browser tests.
+- `src/game/career/` — M6 career player, activity catalog, planner, journal reducer, game evidence, growth and IndexedDB save (framework-free). UI in `src/scenes/CareerScene.ts`. See `docs/TRAINING.md`.
 - `src/input/` — pure gesture recognizer + keyboard bindings → the same sim `Command`s (also framework-free).
-- `src/scenes/` — Phaser scenes (`StartScene`, `PitchScene`, `AttackScene`, `FormationScene`, `MatchScene`) and UI (`ui/Button.ts`). Scenes read simulation state and draw it; they never own soccer rules.
+- `src/scenes/` — Phaser scenes (`StartScene`, `PitchScene`, `AttackScene`, `FormationScene`, `MatchScene`, `CareerScene`) and UI (`ui/Button.ts`). Scenes read simulation state and draw it; they never own soccer rules.
 - `src/debug/diagnostics.ts` — `window.__SMR__` (dev, or `?debug` in the URL): canvas count, active scenes, listener totals, layout bounds, and the attack drill's gameplay snapshot. `?debug&setup=shooting` is a debug-only fixture used by the goal and save browser tests; `?debug&setup=pass` stages the 9v9 sandbox pass test and `?debug&setup=space` gives the carrier room for the swipe, cancel and feint tests.
 - `docs/` — `VISION.md`, `DECISIONS.md`, `ROADMAP.md`, `STATUS.md`. Update `STATUS.md` at the end of every milestone.
 

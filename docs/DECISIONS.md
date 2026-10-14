@@ -37,3 +37,15 @@ Approved technical choices. Add a new entry rather than silently changing an old
 | D31 | **Templates are authored data with functions** (23 templates), validated at load time; options use `available()` so no choice invents an open teammate or lane; grades are strong / reasonable / risky and several can be strong. No runtime AI. | Deterministic, reviewable, age-appropriate questions. |
 | D32 | **Consequences are bounded:** on-ball choices show a cue and the player must execute; off-ball choices set one temporary `coachIntent` (≤ 6 s, ends on possession change, receiving, restart or reset) that feeds normal AI movement. | Choices change real play without automatic goals, teleports or stat boosts. |
 | D33 | **Decision quality and execution are recorded separately** (selected grade vs observed action and outcome in the 6 s after Continue). | A good idea that is badly executed is still a good idea, and vice versa. |
+
+## M6 — Home training and progression
+
+- **Self-report never changes attributes.** Journal entries earn bounded participation credit and level suggestions only; attributes grow from the career player's own sandbox actions (and capped Coach answers). Keeps typing from beating playing.
+- **IndexedDB, one readwrite transaction per change.** read → validate → pure reducer → write in the same transaction, so completion and credit can't split and tabs serialise. localStorage rejected (no transactional read-then-write). `fake-indexeddb` (dev only) tests it.
+- **Pure reducer (`src/game/career/state.ts`).** Every career change is one `Action`; unit-testable, and the store is a thin wrapper.
+- **Completion ids created when the form opens** make Complete idempotent across double taps, retries and tabs.
+- **Career weeks advance by an in-game action, never by device time.**
+- **Evidence collector reads `seq`** so the 40-event rolling log is safe; gaps are counted as missed, never guessed.
+- **All numbers in `CAREER_CONFIG` / `EVIDENCE_RULES`**, provisional until play-tested.
+- **Plain-text rendering only** (Phaser Text); names/notes are cleaned of control and bidi characters and length-bounded.
+

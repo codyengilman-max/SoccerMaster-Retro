@@ -1,3 +1,4 @@
+import { CareerScene } from './scenes/CareerScene';
 import Phaser from 'phaser';
 import { AttackScene } from './scenes/AttackScene';
 import { FormationScene } from './scenes/FormationScene';
@@ -25,6 +26,6 @@ export function createGameConfig(parent: HTMLElement): Phaser.Types.Core.GameCon
       activePointers: 2,
     },
     // First scene auto-starts; the rest wait for scene.start().
-    scene: [StartScene, PitchScene, AttackScene, FormationScene, MatchScene],
+    scene: [StartScene, PitchScene, AttackScene, FormationScene, MatchScene, CareerScene],
   };
 }

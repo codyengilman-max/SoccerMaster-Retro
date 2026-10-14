@@ -14,6 +14,7 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
   private subtitle!: Phaser.GameObjects.Text;
   private footer!: Phaser.GameObjects.Text;
   private enterButton!: Button;
+  private careerButton!: Button;
   private playButton!: Button;
   private sandboxButton!: Button;
   private navigating = false;
@@ -72,6 +73,14 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
       fontSize: 24,
       onClick: () => this.openSandbox(),
     });
+    this.careerButton = new Button(this, 0, 0, {
+      name: 'career-button',
+      label: 'Home Training',
+      width: 280,
+      height: 72,
+      fontSize: 24,
+      onClick: () => this.openCareer(),
+    });
     this.enterButton = new Button(this, 0, 0, {
       name: 'enter-button',
       label: 'Enter Training Ground',
@@ -101,6 +110,7 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
         subtitle: boundsOf(this.subtitle),
         footer: boundsOf(this.footer),
         'enter-button': this.enterButton.getButtonBounds(),
+        'career-button': this.careerButton.getButtonBounds(),
         'play-button': this.playButton.getButtonBounds(),
         'sandbox-button': this.sandboxButton.getButtonBounds(),
       },
@@ -117,6 +127,12 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
     if (this.navigating) return;
     this.navigating = true;
     this.scene.start(SceneKeys.Attack);
+  }
+
+  private openCareer(): void {
+    if (this.navigating) return;
+    this.navigating = true;
+    this.scene.start(SceneKeys.Career);
   }
 
   private openSandbox(): void {
@@ -156,20 +172,21 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
       .setFontSize(subtitleSize)
       .setPosition(width / 2, this.title.y + this.title.displayHeight / 2 + subtitleSize * 1.1);
 
-    // Portrait stacks the three buttons; landscape puts them side by side.
-    const buttons = [this.sandboxButton, this.playButton, this.enterButton];
-    const buttonWidth = Math.round(portrait ? Math.min(width * 0.84, 460) : Math.min((width - 48) / 3, 300));
+    // Portrait stacks the buttons; landscape puts them side by side.
+    const buttons = [this.sandboxButton, this.careerButton, this.playButton, this.enterButton];
+    const n = buttons.length;
+    const buttonWidth = Math.round(portrait ? Math.min(width * 0.84, 460) : Math.min((width - 24 - 12 * n) / n, 300));
     const buttonHeight = Math.round(Math.max(56, Math.min(height * (portrait ? 0.085 : 0.2), 88)));
     const buttonFont = Math.round(Math.max(portrait ? 17 : 13, Math.min(buttonWidth * (portrait ? 0.075 : 0.085), buttonHeight * 0.34, 28)));
     for (const b of buttons) b.resize(buttonWidth, buttonHeight, buttonFont);
     if (portrait) {
       const gap = Math.max(10, height * 0.018);
-      const top = Math.min(height * 0.55, height - 40 - buttonHeight * 3 - gap * 2);
+      const top = Math.min(height * 0.5, height - 40 - buttonHeight * n - gap * (n - 1));
       buttons.forEach((b, i) => b.setPosition(width / 2, top + buttonHeight / 2 + i * (buttonHeight + gap)));
     } else {
       const gap = 12;
       const y = height * 0.66;
-      buttons.forEach((b, i) => b.setPosition(width / 2 + (i - 1) * (buttonWidth + gap), y));
+      buttons.forEach((b, i) => b.setPosition(width / 2 + (i - (n - 1) / 2) * (buttonWidth + gap), y));
     }
 
     this.footer.setFontSize(Math.max(11, Math.round(Math.min(width, height) * 0.032))).setPosition(width / 2, height - 10);
