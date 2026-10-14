@@ -18,12 +18,13 @@ async function waitFor(page: Page, predicate: (r: MatchReport) => boolean, timeo
   for (;;) {
     const r = await report(page);
     if (predicate(r)) return r;
-    if (Date.now() - start > timeout) throw new Error(`timed out; phase=${r.phase} coach=${JSON.stringify({ phase: r.coach?.phase, overlay: r.coach?.overlay, n: r.coach?.entries.length, t: r.simTime })}`);
+    if (Date.now() - start > timeout) throw new Error(`timed out; phase=${r.phase} coach=${JSON.stringify({ phase: r.coach?.phase, overlay: r.coach?.overlay, n: r.coach?.entries.length, t: r.simTime, selected: r.coach?.selected, input: r.inputLog.slice(-8) })}`);
     await page.waitForTimeout(50);
   }
 }
 
-async function doubleTap(page: Page, name: string, mode: PointerMode): Promise<void> {
+/** Taps twice on the element; returns the gap between the two pointerdowns as the page saw them. */
+async function doubleTap(page: Page, name: string, mode: PointerMode): Promise<number> {
   const rect = (await diagnostics(page)).layout?.elements[name];
   if (!rect) throw new Error(`no element ${name}`);
   const canvas = (await page.locator('canvas').boundingBox())!;
@@ -34,7 +35,12 @@ async function doubleTap(page: Page, name: string, mode: PointerMode): Promise<v
     else await page.mouse.click(x, y);
     await page.waitForTimeout(60);
   }
+  const downs = await page.evaluate(() => (window as unknown as { __downs: number[] }).__downs.slice(-2));
+  return (downs[1] ?? 0) - (downs[0] ?? 0);
 }
+
+/** CoachOverlay ignores taps for this long after a card changes (src/scenes/ui/CoachOverlay.ts). */
+const ARM_MS = 350;
 
 async function openCoached(page: Page, mode: PointerMode, query = ''): Promise<MatchReport> {
   await page.goto(`/?debug=1&coach&coachSeconds=40${query}`);
@@ -66,6 +72,11 @@ async function expectCardFits(page: Page): Promise<void> {
 
 test.beforeEach(async ({ page }) => {
   await trackDomListeners(page);
+  await page.addInitScript(() => {
+    const w = window as unknown as { __downs: number[] };
+    w.__downs = [];
+    window.addEventListener('pointerdown', () => w.__downs.push(performance.now()), true);
+  });
 });
 
 test('coached session: freeze, answer, feedback, Continue once, through to the summary', async ({ page }, info) => {
@@ -99,22 +110,35 @@ test('coached session: freeze, answer, feedback, Continue once, through to the s
     // Answer with a double tap on the same spot: one answer counts and the second tap must not hit
     // the Continue button that replaces the choices (feedback stays up).
     const pick = done % v.options.length;
-    await doubleTap(page, `coach-option-${pick}`, mode);
-    const fb = await waitFor(page, (r) => r.coach!.overlay === 'feedback');
+    const answerGap = await doubleTap(page, `coach-option-${pick}`, mode);
+    const answered = await waitFor(page, (r) => r.coach!.entries[done]?.selectedOptionId != null);
+    expect(answered.coach!.entries[done]!.selectedOptionId).toBe(v.options[pick]!.id);
     await page.waitForTimeout(200);
-    expect((await report(page)).coach!.overlay).toBe('feedback');
-    expect(fb.coach!.selected).toBe(v.options[pick]!.id);
-    expect(fb.paused).toBe(true);
-    await expectCardFits(page);
-    if (done === 0) await page.screenshot({ path: info.outputPath('coach-feedback.png') });
-    await linger(page);
-    // Continue twice quickly: resumes exactly once.
-    await page.waitForTimeout(400);
-    await doubleTap(page, 'coach-continue', mode);
+    const fb = await report(page);
+    // A quick second tap is swallowed and feedback stays up. Under heavy load the browser can see the
+    // second tap later than the arming delay; then it is a deliberate Continue, which is correct.
+    if (answerGap < ARM_MS) expect(fb.coach!.overlay).toBe('feedback');
+    if (fb.coach!.overlay === 'feedback') {
+      expect(fb.coach!.selected).toBe(v.options[pick]!.id);
+      expect(fb.paused).toBe(true);
+      await expectCardFits(page);
+      if (done === 0) await page.screenshot({ path: info.outputPath('coach-feedback.png') });
+      await linger(page);
+      // Continue twice quickly: resumes exactly once.
+      await page.waitForTimeout(400);
+      await doubleTap(page, 'coach-continue', mode);
+    } else {
+      test.info().annotations.push({ type: 'slow second tap', description: `moment ${done + 1}: ${Math.round(answerGap)} ms apart` });
+    }
     // Any state other than feedback means play resumed. Under load the next moment can already be
     // open by the first poll, so 'hidden' alone is not a reliable signal.
     const resumed = await waitFor(page, (r) => r.coach!.overlay !== 'feedback');
-    expect(resumed.events.filter((e) => e.type === 'coachRelease').length).toBeLessThanOrEqual(resumed.events.filter((e) => e.type === 'coachHold').length);
+    // The sim keeps a rolling window of events, so a hold can scroll out while its release stays.
+    // Holds and releases must still strictly alternate: one Continue releases exactly once.
+    const coachEvents = resumed.events.filter((e) => e.type === 'coachHold' || e.type === 'coachRelease').map((e) => e.type);
+    expect(coachEvents.length).toBeGreaterThan(0);
+    coachEvents.forEach((t, i) => i > 0 && expect(t, `coach events ${coachEvents.join(',')}`).not.toBe(coachEvents[i - 1]));
+    expect(coachEvents.at(-1)).toBe(resumed.coach!.overlay === 'hidden' ? 'coachRelease' : 'coachHold');
     expect(resumed.input).toBe('idle');
     done++;
     const entry = resumed.coach!.entries[done - 1]!;

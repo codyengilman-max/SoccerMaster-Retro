@@ -500,7 +500,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private onPointerDown(pointer: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]): void {
     // UI presses never reach gameplay.
     if (over.length > 0 || this.navigating || this.sim.state.paused || this.keyAim) {
-      this.logInput(over.length > 0 ? 'down:ui' : 'down:ignored');
+      this.logInput(over.length > 0 ? `down:ui(${over.map((o) => o.name || o.type).join('+')})` : 'down:ignored');
       return;
     }
     const s = this.sim.state;
