@@ -7,6 +7,16 @@ test('Gameplay Lab: ?lab opens the picker, a scenario stages the real match with
   const errors = trackConsoleErrors(page);
   await page.goto('/?debug=1&lab');
   await waitForScene(page, 'lab');
+  // No scenario row may overlap the aim toggle or another row, at any viewport.
+  const els = Object.entries((await diagnostics(page)).layout?.elements ?? {}).filter(([k]) => k.startsWith('lab-'));
+  expect(els.length).toBe(11);
+  for (let i = 0; i < els.length; i++)
+    for (let j = i + 1; j < els.length; j++) {
+      const [na, a] = els[i]!;
+      const [nb, b] = els[j]!;
+      const overlap = a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+      expect(overlap, `${na} overlaps ${nb}`).toBe(false);
+    }
   await pressElement(page, 'lab-aim', modeFor(info));
   expect(((await diagnostics(page)).gameplay as { aim: string }).aim).toBe('normal');
   await pressElement(page, 'lab-turnover', modeFor(info));
