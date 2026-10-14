@@ -476,9 +476,18 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     const bodySize = Math.round(base * 0.82);
     this.body.setFontSize(bodySize).setPosition(bodyX, bodyY).setWordWrapWidth(contentW).setText(c.body);
     if (portrait) colY = Math.min(this.body.y + this.body.displayHeight + 10, height * 0.62);
-    // Crop overly long text in portrait so buttons stay reachable.
+    // Shorten overly long text so buttons stay reachable. (setCrop on a high-resolution Text crops in
+    // texture pixels and draws it magnified, so whole wrapped lines are dropped instead.)
     const maxBodyBottom = portrait ? colY - 6 : height - navH - 20;
-    this.body.setCrop(0, 0, contentW + 20, Math.max(0, maxBodyBottom - this.body.y));
+    const maxBodyH = Math.max(0, maxBodyBottom - this.body.y);
+    if (this.body.displayHeight > maxBodyH) {
+      const lines = this.body.getWrappedText(c.body);
+      let n = lines.length - 1;
+      do {
+        this.body.setText([...lines.slice(0, n), '…'].join('\n'));
+        n--;
+      } while (n > 0 && this.body.displayHeight > maxBodyH);
+    }
 
     for (const b of this.buttons) b.destroy();
     this.buttons = [];

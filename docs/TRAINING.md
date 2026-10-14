@@ -32,7 +32,7 @@ Setup inputs: ball only / optional items, small / medium space, indoors / outdoo
 
 - Three **optional** sessions per numbered career week, each with a familiar activity, a variation, a manageable challenge and, where the focus supports it, an application activity.
 - Only a ball is ever required. Wall, cones, targets, goals, yards, helpers and audio are optional; activities that use them have a ball-only version, and the plan uses it when the item isn't available.
-- Indoor striking is never planned (validator rejects it). Finishing activities need an outdoor, declared-safe striking area. If a focus can't be practised honestly, the planner refuses with a reason and lists focuses that *can* be planned with that setup.
+- Indoor striking is never planned (validator rejects it). Striking activities (`strikingArea: true`: roll/set strikes, angles, finishes after a dribble or turn, rebounds and the like) need an outdoor, declared-safe striking area. The low-power *Placement* focus (gentle side-foot rolls along the ground, like a pass) is allowed indoors; every other finishing focus is refused indoors with alternatives. If a focus can't be practised honestly, the planner refuses with a reason and lists focuses that *can* be planned with that setup.
 - No two consecutive sessions use the same configuration. Equivalent activities share a `variantGroupId` and count as one.
 - Substitutions stay inside the scheduled session; the session still earns exactly one credit.
 - Career weeks advance only when the player taps **Finish Week** on Weekly Review. Device date, clock and time zone are never read.
