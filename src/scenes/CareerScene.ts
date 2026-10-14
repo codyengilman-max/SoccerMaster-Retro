@@ -49,6 +49,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private screen: Screen = { kind: 'home' };
   private history: Screen[] = [];
   private page = 0;
+  private textPage = 0;
+  private textPages = 1;
   private draft: Draft | null = null;
   private toast = '';
   private busy = false;
@@ -72,6 +74,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.screen = { kind: 'home' };
     this.history = [];
     this.page = 0;
+    this.textPage = 0;
     this.toast = 'Loading your career…';
     const res = textResolution();
     this.bg = this.add.graphics();
@@ -117,7 +120,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   /** Debug snapshot for browser tests. */
-  describeGameplay(): { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string } {
+  describeGameplay(): { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; text: string; textPage: string } {
     return {
       screen: this.screen.kind,
       week: this.save.week,
@@ -128,6 +131,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       plan: this.save.plan?.sessions.map((s) => s.id) ?? [],
       status: this.store?.status.kind ?? 'loading',
       toast: this.toast,
+      text: this.body?.text ?? '',
+      textPage: `${this.textPage + 1}/${this.textPages}`,
     };
   }
 
@@ -144,6 +149,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.history.push(this.screen);
     this.screen = s;
     this.page = 0;
+    this.textPage = 0;
     this.toast = '';
     this.render();
   }
@@ -151,6 +157,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private back(): void {
     this.screen = this.history.pop() ?? { kind: 'home' };
     this.page = 0;
+    this.textPage = 0;
     this.toast = '';
     this.render();
   }
@@ -174,6 +181,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         this.history.push(this.screen);
         this.screen = then;
         this.page = 0;
+    this.textPage = 0;
       }
     } else this.toast = r.error;
     this.render();
@@ -480,14 +488,23 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     // texture pixels and draws it magnified, so whole wrapped lines are dropped instead.)
     const maxBodyBottom = portrait ? colY - 6 : height - navH - 20;
     const maxBodyH = Math.max(0, maxBodyBottom - this.body.y);
+    this.textPages = 1;
     if (this.body.displayHeight > maxBodyH) {
+      // Long text is split into whole-line pages with a "More text" button, so every field stays reachable.
       const lines = this.body.getWrappedText(c.body);
-      let n = lines.length - 1;
-      do {
-        this.body.setText([...lines.slice(0, n), '…'].join('\n'));
-        n--;
-      } while (n > 0 && this.body.displayHeight > maxBodyH);
+      let per = Math.max(1, Math.floor(maxBodyH / (this.body.displayHeight / Math.max(1, lines.length))));
+      for (;;) {
+        this.textPages = Math.ceil(lines.length / per);
+        this.textPage = Math.min(this.textPage, this.textPages - 1);
+        this.body.setText(lines.slice(this.textPage * per, this.textPage * per + per).join('\n'));
+        if (per === 1 || this.body.displayHeight <= maxBodyH) break;
+        per--;
+      }
     }
+    const actions: Action[] =
+      this.textPages > 1
+        ? [{ name: 'text-more', label: `More text (${this.textPage + 1}/${this.textPages})`, onClick: () => ((this.textPage = (this.textPage + 1) % this.textPages), this.render()) }, ...c.actions]
+        : c.actions;
 
     for (const b of this.buttons) b.destroy();
     this.buttons = [];
@@ -495,11 +512,11 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     const gap = 8;
     const areaH = height - navH - 24 - colY;
     const perCol = Math.max(1, Math.floor((areaH + gap) / (btnH + gap)));
-    const cols = portrait ? (contentW > 420 ? 2 : 1) : c.actions.length > perCol && contentW >= 340 ? 2 : 1;
-    const perPage = Math.max(1, perCol * cols - (c.actions.length > perCol * cols ? 1 : 0));
-    const pages = Math.max(1, Math.ceil(c.actions.length / perPage));
+    const cols = portrait ? (contentW > 420 ? 2 : 1) : actions.length > perCol && contentW >= 340 ? 2 : 1;
+    const perPage = Math.max(1, perCol * cols - (actions.length > perCol * cols ? 1 : 0));
+    const pages = Math.max(1, Math.ceil(actions.length / perPage));
     this.page = Math.min(this.page, pages - 1);
-    const shown = c.actions.slice(this.page * perPage, this.page * perPage + perPage);
+    const shown = actions.slice(this.page * perPage, this.page * perPage + perPage);
     if (pages > 1) shown.push({ name: 'more', label: `More (${this.page + 1}/${pages})`, onClick: () => ((this.page = (this.page + 1) % pages), this.render()) });
     const bw = (contentW - gap * (cols - 1)) / cols;
     const font = Math.round(Math.max(13, Math.min(base * 0.85, 18)));

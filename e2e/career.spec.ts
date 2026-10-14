@@ -13,7 +13,7 @@ async function pressElement(page: Page, name: string, mode: 'touch' | 'mouse'): 
   return pressAny(page, name, mode);
 }
 
-type Career = { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string };
+type Career = { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; text: string; textPage: string };
 
 test.describe.configure({ timeout: 90_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
@@ -73,6 +73,15 @@ test('home training: create player, plan a ball-only indoor week, log once, pers
   await pressElement(page, 'open-w1-s1-0', mode);
   await until(page, (x) => x.screen === 'activity', 'activity');
   await fits(page);
+  // Every guidance field must be reachable, paging the text if it doesn't fit.
+  const seen: string[] = [(await career(page)).text];
+  for (let i = 0; i < 10 && (await career(page)).textPage.split('/')[0] !== (await career(page)).textPage.split('/')[1]; i++) {
+    const before = (await career(page)).textPage;
+    await pressElement(page, 'text-more', mode);
+    seen.push((await until(page, (x) => x.textPage !== before, 'text page')).text);
+  }
+  const all = seen.join('\n');
+  for (const field of ['Easier:', 'Harder:', 'Limits', 'Source', 'Review: coaching pending']) expect(all, all).toContain(field);
   await pressElement(page, 'log-open', mode);
   await until(page, (x) => x.screen === 'log', 'log');
   await fits(page);
