@@ -13,7 +13,7 @@ async function pressElement(page: Page, name: string, mode: 'touch' | 'mouse'): 
   return pressAny(page, name, mode);
 }
 
-type Career = { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; text: string; textPage: string };
+type Career = { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; text: string; textPage: string; overflow: string[] };
 
 // The main flow walks every career screen; CI runners are several times slower than local machines.
 test.describe.configure({ timeout: 240_000 });
@@ -35,6 +35,7 @@ async function until(page: Page, pred: (c: Career) => boolean, what: string): Pr
 async function fits(page: Page): Promise<void> {
   const d = await diagnostics(page);
   for (const [name, rect] of Object.entries(d.layout!.elements)) if (name !== 'body') expectInside(name, rect, d.layout!.viewport);
+  expect((d.gameplay as Career).overflow, 'button labels spill past their buttons').toEqual([]);
 }
 async function openCareer(page: Page, mode: 'touch' | 'mouse'): Promise<Career> {
   await page.goto('/?debug=1');
