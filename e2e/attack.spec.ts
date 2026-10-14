@@ -49,7 +49,8 @@ async function openDrill(page: Page, mode: Mode, query = ''): Promise<AttackRepo
   await waitForScene(page, 'start');
   await pressElement(page, 'play-button', mode);
   await waitForScene(page, 'attack');
-  return waitFor(page, (r) => r.phase === 'live');
+  // Sim time is capped per frame (maxFrameSeconds), so on a starved CI runner the 0.8 s countdown can take many wall seconds.
+  return waitFor(page, (r) => r.phase === 'live', 25_000);
 }
 
 function carrierPoint(r: AttackReport): Point {

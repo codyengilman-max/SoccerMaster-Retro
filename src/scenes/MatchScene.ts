@@ -295,14 +295,16 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
 
   /** Debug-only staged scenarios for browser tests (`?debug&setup=...`). Clearly not normal play. */
   private applyDebugSetup(setup: string | null): void {
-    if (setup !== 'pass' && setup !== 'final-third') return;
-    const carrierX = setup === 'pass' ? 30 : 52;
+    if (setup !== 'pass' && setup !== 'final-third' && setup !== 'space') return;
+    // 'space': H8 in their own half with every away outfielder 45+ yd upfield, for control tests that need seconds on the ball.
+    const carrierX = setup === 'pass' ? 30 : setup === 'space' ? 10 : 52;
+    const gap = setup === 'space' ? 45 : 16;
     this.sim.arrange((s) => {
       const c = s.players.H8;
       c.pos = { x: carrierX, y: 25 };
       s.ball.owner = 'H8';
       s.ball.pos = { x: carrierX + 0.6, y: 25 };
-      for (const id of match.AWAY_IDS) if (id !== 'A1') s.players[id].pos = { x: Math.max(s.players[id].pos.x, carrierX + 16), y: s.players[id].pos.y };
+      for (const id of match.AWAY_IDS) if (id !== 'A1') s.players[id].pos = { x: Math.max(s.players[id].pos.x, carrierX + gap), y: s.players[id].pos.y };
     });
   }
 

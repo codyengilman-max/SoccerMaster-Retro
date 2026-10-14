@@ -187,11 +187,11 @@ async function swipe(page: Page, finger: Finger, pitch: { x: number; y: number }
 }
 
 async function stagedCarrier(page: Page, finger: Finger): Promise<MatchReport> {
-  await openSandbox(page, finger.mode, '1-3-2-3', '&setup=pass');
+  await openSandbox(page, finger.mode, '1-3-2-3', '&setup=space');
   return waitFor(page, (x) => x.phase === 'live' && x.userHasBall);
 }
 
-test('swipes dribble backward and sideways, and the carrier keeps that direction (staged: ?setup=pass)', async ({ page }, info) => {
+test('swipes dribble backward and sideways, and the carrier keeps that direction (staged: ?setup=space)', async ({ page }, info) => {
   const errors = trackConsoleErrors(page);
   const finger = new Finger(page, modeFor(info));
   let r = await stagedCarrier(page, finger);
@@ -213,7 +213,7 @@ test('swipes dribble backward and sideways, and the carrier keeps that direction
   expect(errors).toEqual([]);
 });
 
-test('hold to aim, pull out, slide back into the circle and release: cancelled with no kick; UI taps never reach play (staged: ?setup=pass)', async ({ page }, info) => {
+test('hold to aim, pull out, slide back into the circle and release: cancelled with no kick; UI taps never reach play (staged: ?setup=space)', async ({ page }, info) => {
   const errors = trackConsoleErrors(page);
   const finger = new Finger(page, modeFor(info));
   let r = await stagedCarrier(page, finger);
@@ -239,7 +239,7 @@ test('hold to aim, pull out, slide back into the circle and release: cancelled w
   expect(errors).toEqual([]);
 });
 
-test('double-tapping the carrier gives exactly one feint (staged: ?setup=pass)', async ({ page }, info) => {
+test('double-tapping the carrier gives exactly one feint (staged: ?setup=space)', async ({ page }, info) => {
   const errors = trackConsoleErrors(page);
   const finger = new Finger(page, modeFor(info));
   let r = await stagedCarrier(page, finger);
