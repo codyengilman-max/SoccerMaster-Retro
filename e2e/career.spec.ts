@@ -15,7 +15,8 @@ async function pressElement(page: Page, name: string, mode: 'touch' | 'mouse'): 
 
 type Career = { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; text: string; textPage: string };
 
-test.describe.configure({ timeout: 90_000 });
+// The main flow walks every career screen; CI runners are several times slower than local machines.
+test.describe.configure({ timeout: 240_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 
 async function career(page: Page): Promise<Career> {
