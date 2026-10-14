@@ -12,12 +12,22 @@ function resolveBuildSha(): string {
   }
 }
 
+/** Gameplay Lab: on for the dev server and branch previews, off for the production (main) build. */
+export function labEnabled(command: 'serve' | 'build', env: NodeJS.ProcessEnv = process.env): boolean {
+  if (env.SMR_LAB === '1') return true;
+  if (env.SMR_LAB === '0') return false;
+  if (command === 'serve') return true;
+  const branch = env.CF_PAGES_BRANCH;
+  return Boolean(branch) && branch !== 'main';
+}
+
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
     __BUILD_SHA__: JSON.stringify(resolveBuildSha()),
+    __LAB__: JSON.stringify(labEnabled(command)),
   },
   server: {
     host: true,
@@ -35,4 +45,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

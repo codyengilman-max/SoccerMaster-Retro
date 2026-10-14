@@ -8,7 +8,7 @@ import {
   pitchVectorToScreen,
   rectToScreen,
   screenVectorToPitch,
-  toScreen,
+  fromScreen, toScreen,
   type Insets,
   type PitchLayout,
 } from '../render/layout';
@@ -39,7 +39,9 @@ type FormationId = match.FormationId;
 const EDGE = 8;
 const HUD_HEIGHT = 40;
 const SIDELINE_SQUASH = 0.55;
-const VIEW_LENGTH = { landscape: 48, portrait: 40 } as const;
+const VIEW_LENGTH = { landscape: 40, portrait: 40 } as const;
+/** Portrait camera width across the pitch (yards): closer than the full 50-yard width. */
+const PORTRAIT_CROSS = 28;
 const HELP_TOUCH = 'Swipe any way to dribble · double-tap your player to feint  |  Hold your player, pull back, release to kick (back in the circle cancels)';
 const HELP_KEYS = 'Arrows/WASD dribble · F feint · hold Space aim (arrows adjust) · P/Esc pause · R reset · O overlay · M menu';
 /** Short interactive tutorial: each step advances when the player does it. */
@@ -54,6 +56,10 @@ export interface MatchSceneData {
   readonly formation?: FormationId;
   /** M6: record the career player's actions as game evidence. */
   readonly career?: boolean;
+  /** Gameplay Lab scenario (lab builds only): untimed, no Coach, no career evidence. */
+  readonly lab?: string;
+  /** Aim assistance for this sim, locked at kickoff. */
+  readonly aim?: 'slow' | 'normal';
 }
 
 /** 9v9 team-play sandbox. Reads `MatchSim` state and draws it; owns no soccer rules. */
@@ -74,6 +80,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private overlayOn = false;
   private lastSeq = 0;
   private camX = 37.5;
+  private camY = 25;
   /** Visible pitch length in yards; grown until the view fills the screen along the pitch axis. */
   private viewLen = 0;
   /** Field graphics are rebuilt only when the camera/layout changes. */
@@ -87,6 +94,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private over!: Phaser.GameObjects.Graphics;
   private dev!: Phaser.GameObjects.Graphics;
   private hud!: Phaser.GameObjects.Graphics;
+  private rotateText!: Phaser.GameObjects.Text;
   private sprites!: Record<Id, Phaser.GameObjects.Image>;
   private devLabels!: Record<Id, Phaser.GameObjects.Text>;
   private ball!: Phaser.GameObjects.Image;
@@ -151,21 +159,25 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const formation = data.formation ?? (fromUrl && FORMATION_IDS.includes(fromUrl) ? fromUrl : DEFAULT_FORMATION);
     // A timed two-half match by default; `?sandbox` keeps the open-ended M3 sandbox. Debug builds may shorten halves.
     const halfParam = Number(params.get('halfSeconds'));
-    const halfSeconds = params.has('sandbox')
+    const labId = __LAB__ ? (data.lab ?? params.get('lab')) : null;
+    this.labId = match.isLabScenarioId(labId) ? labId : null;
+    const halfSeconds = params.has('sandbox') || this.labId
       ? null
       : shouldExposeDebug(window.location) && Number.isFinite(halfParam) && halfParam > 0
         ? halfParam
         : MATCH_TUNING.match.halfSeconds;
     this.breakKey = '';
     this.breakMode = '';
-    this.sim = new MatchSim({ seed, homeFormation: formation, halfSeconds, aimAssist: params.get('aim') === 'normal' ? 'normal' : 'slow' });
+    this.sim = new MatchSim({ seed, homeFormation: formation, halfSeconds, aimAssist: (data.aim ?? params.get('aim')) === 'normal' ? 'normal' : 'slow' });
+    this.stageLab();
     if (shouldExposeDebug(window.location)) this.applyDebugSetup(params.get('setup'));
-    this.coachConfig = this.readCoachConfig(params, seed);
+    this.coachConfig = this.labId ? null : this.readCoachConfig(params, seed);
     this.coachRun = 0;
     this.coachDirector = this.coachConfig ? new coach.CoachDirector(this.coachConfig) : null;
     this.lastSeq = 0;
-    this.startCareer(data.career === true);
+    this.startCareer(data.career === true && !this.labId);
     this.camX = this.sim.state.ball.pos.x;
+    this.camY = this.sim.state.ball.pos.y;
     this.controls = new TouchControls(Math.min(this.scale.width, this.scale.height));
     this.lastPull = null;
     this.lastEpoch = this.sim.state.controlEpoch;
@@ -196,6 +208,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.scoreText = text(15).setOrigin(0.5, 0.5).setDepth(6001);
     this.helpText = text(11, CSS.ink, false).setOrigin(0.5, 1).setDepth(6001).setAlpha(0.9);
     this.toastText = text(15).setOrigin(0.5, 0.5).setDepth(6002);
+    this.rotateText = text(11, CSS.cream).setOrigin(0, 0.5).setDepth(6001).setText('Turn sideways for\na closer view');
     this.bannerText = text(24).setOrigin(0.5, 0.5).setDepth(6002);
 
     const hudButton = (name: string, label: string, onClick: () => void, cream = false): Button =>
@@ -221,7 +234,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const panelButton = (name: string, label: string, onClick: () => void, cream = false): Button =>
       new Button(this, 0, 0, { name, label, width: 140, height: 46, fontSize: 17, ...(cream ? { fill: PALETTE.cream, fillPressed: PALETTE.sand } : {}), onClick }).setDepth(7002);
     this.resumeButton = panelButton('resume-button', 'Resume ▶', () => this.togglePause());
-    this.resetButton = panelButton('reset-button', params.has('sandbox') ? 'Reset' : 'New match', () => this.reset(), true);
+    this.resetButton = panelButton('reset-button', params.has('sandbox') || this.labId ? 'Reset' : 'New match', () => this.reset(), true);
     this.panelMenuButton = panelButton('panel-menu-button', 'Menu', () => this.goToMenu(), true);
     this.overlayButton = panelButton('overlay-button', 'Dev overlay: off', () => this.toggleOverlay(), true);
     this.formationButtons = Object.fromEntries(
@@ -440,6 +453,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       'help-button': this.helpButton.getButtonBounds(),
       score: boundsOf(this.scoreText),
       help: boundsOf(this.helpText),
+      minimap: this.minimapRect(),
     };
     Object.assign(elements, this.coachOverlay.bounds());
     if (this.sim.state.pauseReasons.user) {
@@ -539,6 +553,17 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   }
 
   /** Debug-only staged scenarios for browser tests (`?debug&setup=...`). Clearly not normal play. */
+  private labId: match.LabScenarioId | null = null;
+
+  /** Lab: stage the scenario on the fresh sim (create and every reset). */
+  private stageLab(): void {
+    const id = this.labId;
+    if (!id) return;
+    this.sim.arrange((s) => match.stageLabScenario(s, id, MATCH_TUNING.pitch));
+    this.camX = this.sim.state.ball.pos.x;
+    this.camY = this.sim.state.ball.pos.y;
+  }
+
   private applyDebugSetup(setup: string | null): void {
     if (setup !== 'pass' && setup !== 'final-third' && setup !== 'space') return;
     // 'space': H8 in their own half with every away outfielder 45+ yd upfield, for control tests that need seconds on the ball.
@@ -815,12 +840,13 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private reset(): void {
     this.cancelInput('reset');
     this.sim.command({ type: 'reset' });
+    this.stageLab();
     this.lastSeq = 0;
     this.newCoachSession();
     this.coachOverlay.setSuspended(false);
     this.showPanel(false);
     this.breakKey = '';
-    this.toast(this.sim.state.clock ? 'New match — kick-off' : 'Sandbox reset');
+    this.toast(this.labId ? `Lab: ${match.LAB_SCENARIOS[this.labId].title}` : this.sim.state.clock ? 'New match — kick-off' : 'Sandbox reset');
   }
 
   private startSecondHalf(): void {
@@ -1053,7 +1079,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const portrait = orientationOf({ width, height }) === 'portrait';
     return portrait
       ? { top: EDGE + HUD_HEIGHT * 2 + 16, right: EDGE, bottom: 48, left: EDGE }
-      : { top: EDGE + HUD_HEIGHT + 6, right: EDGE, bottom: 26, left: EDGE };
+      : // Landscape: the follow camera fills the screen; the compact HUD floats over the pitch.
+        { top: 0, right: 0, bottom: 0, left: 0 };
   }
 
   private viewLength(): number {
@@ -1065,32 +1092,81 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const portrait = orientationOf({ width, height }) === 'portrait';
     const insets = this.insets(width, height);
     const available = portrait ? height - insets.top - insets.bottom : width - insets.left - insets.right;
-    // Landscape always shows the whole pitch (both goals); portrait grows the view to fill the screen.
-    let len: number = portrait ? VIEW_LENGTH.portrait : U11_9V9_PITCH.length + 6;
-    for (let pass = 0; pass < 3; pass++) {
+    if (!portrait) {
+      // Landscape: a closer, angled follow camera over ~40 yards; it scrolls in both directions.
+      const P = U11_9V9_PITCH;
+      const len = VIEW_LENGTH.landscape;
+      const availH = Math.max(1, height - insets.top - insets.bottom);
+      const hv = Math.min(P.width + 6, (len * availH) / (Math.max(1, available) * SIDELINE_SQUASH));
       this.viewLen = len;
-      const lo = len / 2 - 3;
-      const hi = U11_9V9_PITCH.length + 3 - len / 2;
-      const cx = lo >= hi ? U11_9V9_PITCH.length / 2 : Phaser.Math.Clamp(this.camX, lo, hi);
-      this.pitchLayout = fitRegion({ width, height }, { x: cx - len / 2, y: 0, width: len, height: U11_9V9_PITCH.width }, insets, 2, portrait ? 1 : SIDELINE_SQUASH);
-      const r = this.viewRect(cx);
-      const shown = portrait ? r.height : r.width;
-      const next = Phaser.Math.Clamp(len * (available / Math.max(1, shown)), 24, U11_9V9_PITCH.length + 6);
-      if (!portrait || Math.abs(next - len) < 0.05) break;
-      len = next;
+      const cx = Phaser.Math.Clamp(this.camX, len / 2 - 3, P.length + 3 - len / 2);
+      const cy = hv >= P.width + 6 - 1e-6 ? P.width / 2 : Phaser.Math.Clamp(this.camY, hv / 2 - 3, P.width + 3 - hv / 2);
+      this.pitchLayout = fitRegion({ width, height }, { x: cx - len / 2, y: cy - hv / 2, width: len, height: hv }, insets, 0, SIDELINE_SQUASH);
+      return;
     }
+    // Portrait: a follow camera ~PORTRAIT_CROSS yards across; the visible length fills the height.
+    const P = U11_9V9_PITCH;
+    const availW = Math.max(1, width - insets.left - insets.right);
+    const cross = Math.min(P.width + 4, PORTRAIT_CROSS);
+    const len = Math.min(P.length + 6, (cross * available) / availW);
+    this.viewLen = len;
+    const cx = len >= P.length + 6 - 1e-6 ? P.length / 2 : Phaser.Math.Clamp(this.camX, len / 2 - 3, P.length + 3 - len / 2);
+    const cy = Phaser.Math.Clamp(this.camY, cross / 2 - 2, P.width + 2 - cross / 2);
+    this.pitchLayout = fitRegion({ width, height }, { x: cx - len / 2, y: cy - cross / 2, width: len, height: cross }, insets, 0, 1);
   }
 
-  private viewRect(cx = this.viewCenter()): Rect {
-    const len = this.viewLength();
-    return rectToScreen(this.pitchLayout, { x: cx - len / 2, y: 0, width: len, height: U11_9V9_PITCH.width });
+  /** On-screen part of the pitch (the follow camera crops it). */
+  private viewRect(): Rect {
+    const { width, height } = this.scale;
+    const r = rectToScreen(this.pitchLayout, { x: 0, y: 0, width: U11_9V9_PITCH.length, height: U11_9V9_PITCH.width });
+    const x0 = Math.max(0, r.x);
+    const y0 = Math.max(0, r.y);
+    const x1 = Math.min(width, r.x + r.width);
+    const y1 = Math.min(height, r.y + r.height);
+    return { x: x0, y: y0, width: Math.max(0, x1 - x0), height: Math.max(0, y1 - y0) };
   }
 
-  private viewCenter(): number {
-    const len = this.viewLength();
-    const lo = len / 2 - 3;
-    const hi = U11_9V9_PITCH.length + 3 - len / 2;
-    return lo >= hi ? U11_9V9_PITCH.length / 2 : Phaser.Math.Clamp(this.camX, lo, hi);
+  /** Small whole-pitch overview: corner of the screen, oriented like the main view. */
+  private minimapRect(): Rect {
+    const { width, height } = this.scale;
+    const portrait = orientationOf({ width, height }) === 'portrait';
+    const P = U11_9V9_PITCH;
+    if (portrait) {
+      const h = HUD_HEIGHT + 4;
+      return { x: EDGE, y: EDGE + HUD_HEIGHT + 8, width: (h * P.width) / P.length, height: h };
+    }
+    const w = Phaser.Math.Clamp(width * 0.13, 72, 120);
+    const h = (w * P.width) / P.length;
+    return { x: width - EDGE - w, y: height - EDGE - h - 14, width: w, height: h };
+  }
+
+  private drawMinimap(g: Phaser.GameObjects.Graphics): void {
+    const s = this.sim.state;
+    const P = U11_9V9_PITCH;
+    const m = this.minimapRect();
+    const portrait = m.height > m.width;
+    const at = (p: Vec2): Vec2 =>
+      portrait
+        ? { x: m.x + (p.y / P.width) * m.width, y: m.y + (1 - p.x / P.length) * m.height }
+        : { x: m.x + (p.x / P.length) * m.width, y: m.y + (p.y / P.width) * m.height };
+    g.fillStyle(PALETTE.grassDark, 0.85).fillRect(m.x, m.y, m.width, m.height);
+    g.lineStyle(1, PALETTE.line, 0.9).strokeRect(m.x, m.y, m.width, m.height);
+    const h0 = at({ x: P.length / 2, y: 0 });
+    const h1 = at({ x: P.length / 2, y: P.width });
+    g.lineBetween(h0.x, h0.y, h1.x, h1.y);
+    const { width, height } = this.scale;
+    const c0 = fromScreen(this.pitchLayout, { x: 0, y: 0 });
+    const c1 = fromScreen(this.pitchLayout, { x: width, y: height });
+    const v0 = at({ x: Phaser.Math.Clamp(Math.min(c0.x, c1.x), 0, P.length), y: Phaser.Math.Clamp(Math.min(c0.y, c1.y), 0, P.width) });
+    const v1 = at({ x: Phaser.Math.Clamp(Math.max(c0.x, c1.x), 0, P.length), y: Phaser.Math.Clamp(Math.max(c0.y, c1.y), 0, P.width) });
+    g.lineStyle(1, PALETTE.mustard, 1).strokeRect(Math.min(v0.x, v1.x), Math.min(v0.y, v1.y), Math.abs(v1.x - v0.x), Math.abs(v1.y - v0.y));
+    for (const id of MATCH_PLAYER_IDS) {
+      const p = s.players[id];
+      const q = at(p.pos);
+      g.fillStyle(p.team === 'home' ? PALETTE.tomato : PALETTE.blue, 1).fillCircle(q.x, q.y, id === s.controlledId ? 2.6 : 1.8);
+    }
+    const b = at(s.ball.pos);
+    g.fillStyle(PALETTE.cream, 1).fillCircle(b.x, b.y, 2.2);
   }
 
   private layout(width: number, height: number): void {
@@ -1231,9 +1307,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const s = this.sim.state;
     // Camera: follows the ball with a little look-ahead toward the attacking direction, eased.
     const len = this.viewLength();
-    const ahead = s.possession === 'home' ? 5 : -5;
+    // Room ahead of the attack: home attacks +x, away attacks -x.
+    const ahead = s.possession === 'home' ? 7 : -7;
     const goalX = len / 2 - 3 >= U11_9V9_PITCH.length - len / 2 + 3 ? U11_9V9_PITCH.length / 2 : Phaser.Math.Clamp(s.ball.pos.x + ahead, len / 2 - 3, U11_9V9_PITCH.length - len / 2 + 3);
     this.camX = dt > 0 ? this.camX + (goalX - this.camX) * Math.min(1, dt * 2.5) : goalX;
+    this.camY = dt > 0 ? this.camY + (s.ball.pos.y - this.camY) * Math.min(1, dt * 2.2) : s.ball.pos.y;
     this.computeLayout();
     this.drawField();
 
@@ -1467,7 +1545,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.bannerText.setVisible(banner !== '' && !s.paused).setText(banner).setPosition(width / 2, height / 2);
     const toastOn = this.toastUntil > performance.now() && !s.paused;
     this.toastText.setVisible(toastOn);
-    if (toastOn) this.toastText.setText(this.toastMessage).setPosition(width / 2, this.viewRect().y + 18);
+    if (toastOn) this.toastText.setText(this.toastMessage).setPosition(width / 2, Math.max(this.viewRect().y, this.minimapRect().y + this.minimapRect().height) + 18);
+    this.drawMinimap(g);
+    const portrait = orientationOf({ width, height }) === 'portrait';
+    const mm = this.minimapRect();
+    this.rotateText.setVisible(portrait && !s.paused).setPosition(mm.x + mm.width + 8, mm.y + mm.height / 2);
   }
 
   private distanceToCarrier(x: number, y: number): number {

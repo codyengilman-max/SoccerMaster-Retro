@@ -8,6 +8,8 @@ import { Button } from './ui/Button';
 
 export const GAME_TITLE = 'SoccerMaster Retro';
 
+let labOpened = false;
+
 export class StartScene extends Phaser.Scene implements InspectableScene {
   private background!: Phaser.GameObjects.Graphics;
   private title!: Phaser.GameObjects.Text;
@@ -25,6 +27,12 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
 
   create(): void {
     this.navigating = false;
+    // Lab builds: `?lab` opens the Gameplay Lab once per page load.
+    if (__LAB__ && !labOpened && new URLSearchParams(window.location.search).get('lab') === '') {
+      labOpened = true;
+      this.navigating = true;
+      this.time.delayedCall(0, () => this.scene.start(SceneKeys.Lab));
+    }
     const resolution = textResolution();
 
     this.background = this.add.graphics();

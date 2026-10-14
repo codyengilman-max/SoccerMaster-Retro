@@ -5,6 +5,7 @@ export const SceneKeys = {
   Formation: 'formation',
   Match: 'match',
   Career: 'career',
+  Lab: 'lab',
 } as const;
 
 export type SceneKey = (typeof SceneKeys)[keyof typeof SceneKeys];
