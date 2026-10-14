@@ -20,6 +20,7 @@ import { createRng } from '../attack/rng';
 import { passSpeedFor } from '../attack/sim';
 import { DEFAULT_FORMATION, FORMATIONS, roleDef, type FormationId } from './formations';
 import { MATCH_TUNING, type MatchTuning } from './tuning';
+import { planUserPass } from './predict';
 import { computeAnchor, decideCarrier, planTeams, toTeam, toWorld, velToTeam, type AiContext } from './ai';
 import {
   AWAY_IDS,
@@ -483,9 +484,9 @@ export class MatchSim {
       this.emit('shot', carrier.id, speed.toFixed(1));
     } else {
       // Where a ground ball of this speed slows to a receivable pace; teammates read it, nothing is redirected.
-      const roll = clamp((speed * speed - T.pass.arriveSpeed * T.pass.arriveSpeed) / (2 * T.ball.friction), T.pass.minDistance, 45);
-      const target = add(ball, scale(dir, roll));
-      const receiver = this.nearestMate(carrier, target);
+      const plan = planUserPass(s, carrier.id, ball, dir, speed, T);
+      const target = plan.target;
+      const receiver = plan.receiver;
       this.kickBall(carrier, scale(dir, speed), 'pass', target, receiver);
       this.afterPass(carrier, target);
       this.emit('pass', carrier.id, receiver ?? '');
@@ -508,6 +509,7 @@ export class MatchSim {
 
     this.expireCoachIntent();
     this.establishPossession();
+    this.releaseMissedReceiver();
     planTeams(this.ctx());
     this.updateUserControl();
     if (s.userSteer && (s.simTime >= s.userSteer.until || s.userSteer.epoch !== s.controlEpoch)) s.userSteer = null;
@@ -538,6 +540,24 @@ export class MatchSim {
       s.aimAllowance[team] = T.aimAllowance.seconds;
     }
     this.emit('possession', o, `established ${team} #${s.possessionSeq}`);
+  }
+
+  /**
+   * Once a pass rolls clearly past its meeting point the named receiver has missed it: the ball
+   * becomes an ordinary loose ball so the normal chaser logic (both teams) goes after it.
+   */
+  private releaseMissedReceiver(): void {
+    const s = this.s;
+    const k = s.ball.kick;
+    if (s.ball.owner || !k || k.kind !== 'pass' || !k.receiver || !k.target) return;
+    const b = s.ball;
+    const dx = b.pos.x - k.target.x;
+    const dy = b.pos.y - k.target.y;
+    const past = dx * b.vel.x + dy * b.vel.y > 0 && Math.hypot(dx, dy) > this.tuning.receive.radius * 2;
+    const stopped = Math.hypot(b.vel.x, b.vel.y) < 0.05;
+    if (!past && !stopped) return;
+    b.kick = { ...k, receiver: null };
+    this.emit('rejected', k.receiver, 'receive: missed');
   }
 
   private ctx(): AiContext {
@@ -1030,20 +1050,6 @@ export class MatchSim {
     this.take(kicker, 'kickoff', team);
   }
 
-  private nearestMate(carrier: MatchPlayer, point: Vec2): MatchPlayerId | null {
-    let best: MatchPlayerId | null = null;
-    let bestD = Infinity;
-    for (const id of TEAM_PLAYER_IDS[carrier.team]) {
-      const p = this.s.players[id];
-      if (id === carrier.id || p.isKeeper) continue;
-      const d = distance(p.pos, point);
-      if (d < bestD) {
-        best = id;
-        bestD = d;
-      }
-    }
-    return best;
-  }
 
 
   private ignored(id: MatchPlayerId): boolean {

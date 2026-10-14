@@ -1339,9 +1339,18 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const dir = s.aim.direction;
     const T = this.sim.tuning;
     const speed = match.kickSpeed(s.aim.power, T);
-    const d = Phaser.Math.Clamp((speed * speed - T.pass.arriveSpeed ** 2) / (2 * T.ball.friction), 3, 40);
+    // Same prediction userKick() executes: rest point of the roll and the teammate who can meet it.
+    const plan = match.planUserPass(s, s.controlledId, from, dir, speed, T);
+    const stop = plan.prediction.stop;
+    const P = U11_9V9_PITCH;
+    const cut = Math.min(
+      1,
+      dir.x > 1e-6 ? (P.length - from.x) / (stop.x - from.x || 1e-6) : dir.x < -1e-6 ? from.x / (from.x - stop.x || 1e-6) : 1,
+      dir.y > 1e-6 ? (P.width - from.y) / (stop.y - from.y || 1e-6) : dir.y < -1e-6 ? from.y / (from.y - stop.y || 1e-6) : 1,
+    );
+    const end = { x: from.x + (stop.x - from.x) * Math.max(0, cut), y: from.y + (stop.y - from.y) * Math.max(0, cut) };
     const a = toScreen(L, from);
-    const b = toScreen(L, { x: from.x + dir.x * d, y: from.y + dir.y * d });
+    const b = toScreen(L, end);
     const dashes = 18;
     for (let k = 0; k < dashes; k += 2) {
       const t0 = k / dashes;
@@ -1359,6 +1368,21 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     o.lineStyle(2, PALETTE.ink, 1);
     o.fillTriangle(b.x, b.y, p1.x, p1.y, p2.x, p2.y);
     o.strokeTriangle(b.x, b.y, p1.x, p1.y, p2.x, p2.y);
+    if (cut >= 1) {
+      // Approximate rest point of an untouched ball.
+      o.lineStyle(3, PALETTE.ink, 0.9);
+      o.strokeCircle(b.x, b.y, Math.max(6, L.scale * 0.8));
+    }
+    if (plan.reachable && plan.receiver) {
+      const rp = toScreen(L, s.players[plan.receiver].pos);
+      const mp = toScreen(L, plan.target);
+      o.lineStyle(4, PALETTE.ink, 1);
+      o.strokeCircle(rp.x, rp.y - playerH * 0.45, playerH * 0.62);
+      o.lineStyle(2.5, PALETTE.sun, 1);
+      o.strokeCircle(rp.x, rp.y - playerH * 0.45, playerH * 0.62);
+      o.fillStyle(PALETTE.sun, 1);
+      o.fillCircle(mp.x, mp.y, Math.max(4, L.scale * 0.45));
+    }
   }
 
   /** Hidden by default: IDs, roles, intents, movement targets, formation anchors, presser/cover, owner. */

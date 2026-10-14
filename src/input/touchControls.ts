@@ -85,13 +85,17 @@ export interface Pull {
   readonly pullPx: number;
 }
 
+/** Pull-to-power exponent (see pullFor). */
+export const POWER_CURVE = 1.4;
+
 export function pullFor(dragX: number, dragY: number, th: Thresholds): Pull {
   const x = finite(dragX) ? dragX : 0;
   const y = finite(dragY) ? dragY : 0;
   const len = Math.hypot(x, y);
   const inCancel = len < th.cancelRadius;
   const span = Math.max(1, th.maxPull - th.cancelRadius);
-  const power = inCancel ? 0 : Math.min(1, Math.max(0, (len - th.cancelRadius) / span));
+  // A curve > 1 spreads the low/medium range (ordinary passes) over more pull; full power needs a deliberate long pull.
+  const power = inCancel ? 0 : Math.pow(Math.min(1, Math.max(0, (len - th.cancelRadius) / span)), POWER_CURVE);
   return { dirX: inCancel ? 0 : -x / len, dirY: inCancel ? 0 : -y / len, power, inCancel, pullPx: len };
 }
 
