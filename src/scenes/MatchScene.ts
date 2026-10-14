@@ -49,6 +49,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private pitchLayout!: PitchLayout;
   private controls!: TouchControls;
   private lastPull: Pull | null = null;
+  /** Debug trail of recent pointer decisions and control actions. */
+  private inputLog: string[] = [];
   private lastEpoch = 0;
   private tutorialStep = 0;
   private keyAim: KeyboardAim | null = null;
@@ -280,6 +282,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       gestureOrigin: this.controls.origin,
       thresholds: { ...this.controls.thresholds },
       tutorialStep: this.tutorialStep,
+      inputLog: [...this.inputLog],
       aimSource: this.aimSource,
       holdRadiusPx: this.holdRadius(),
       pass: { minDistance: this.sim.tuning.pass.minDistance, maxDistance: this.sim.tuning.pass.maxDistance },
@@ -307,9 +310,14 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
 
   private onPointerDown(pointer: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]): void {
     // UI presses never reach gameplay.
-    if (over.length > 0 || this.navigating || this.sim.state.paused || this.keyAim) return;
+    if (over.length > 0 || this.navigating || this.sim.state.paused || this.keyAim) {
+      this.logInput(over.length > 0 ? 'down:ui' : 'down:ignored');
+      return;
+    }
     const s = this.sim.state;
-    const near = this.sim.userHasBall() && this.distanceToCarrier(pointer.x, pointer.y) <= this.holdRadius();
+    const dist = this.distanceToCarrier(pointer.x, pointer.y);
+    const near = this.sim.userHasBall() && dist <= this.holdRadius();
+    this.logInput(`down:${near ? 'carrier' : 'pitch'}(${Math.round(dist)}/${Math.round(this.holdRadius())}):${this.controls.state}`);
     this.handleControls(this.controls.pointerDown(pointer.id, pointer.x, pointer.y, performance.now(), near ? `${s.controlledId}#${s.controlEpoch}` : null));
   }
 
@@ -318,6 +326,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   }
 
   private onPointerUp(pointer: Phaser.Input.Pointer): void {
+    this.logInput(`up:${pointer.id}:${this.controls.state}`);
     this.handleControls(this.controls.pointerUp(pointer.id, pointer.x, pointer.y, performance.now()));
   }
 
@@ -350,8 +359,14 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     if (!this.sim.state.paused) this.togglePause();
   }
 
+  private logInput(entry: string): void {
+    this.inputLog.push(entry);
+    if (this.inputLog.length > 12) this.inputLog.shift();
+  }
+
   private handleControls(actions: readonly ControlAction[]): void {
     for (const a of actions) {
+      this.logInput(a.type);
       switch (a.type) {
         case 'dribble':
           if (this.sim.command({ type: 'dribble', direction: screenVectorToPitch(this.pitchLayout, { x: a.dx, y: a.dy }) })) this.advanceTutorial(0);

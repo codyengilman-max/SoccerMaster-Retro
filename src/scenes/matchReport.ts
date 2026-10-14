@@ -47,6 +47,7 @@ export interface MatchReport {
   readonly gestureOrigin: { readonly x: number; readonly y: number } | null;
   readonly thresholds: { readonly swipeCommit: number; readonly holdSlop: number; readonly cancelRadius: number; readonly maxPull: number; readonly doubleTapDistance: number };
   readonly tutorialStep: number;
+  readonly inputLog: readonly string[];
   readonly aimSource: 'pointer' | 'keyboard' | null;
   readonly holdRadiusPx: number;
   readonly pass: { readonly minDistance: number; readonly maxDistance: number };

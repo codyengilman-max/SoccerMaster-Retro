@@ -140,6 +140,37 @@ export class Finger {
     await this.page.mouse.move(o.x + p.x, o.y + p.y);
     await this.page.mouse.up();
   }
+  /** A quick tap: touch start and end are sent back-to-back so CDP latency cannot turn it into a hold. */
+  async tap(p: Point): Promise<void> {
+    if (this.mode === 'touch') {
+      this.cdp ??= await this.page.context().newCDPSession(this.page);
+      const o = await this.origin();
+      const point = [{ x: o.x + p.x, y: o.y + p.y, id: 1 }];
+      await Promise.all([
+        this.cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: point }),
+        this.cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }),
+      ]);
+      return;
+    }
+    const o = await this.origin();
+    await this.page.mouse.click(o.x + p.x, o.y + p.y);
+  }
+  /**
+   * Two taps sent back-to-back: headless rendering can delay each awaited input by 100+ ms, which
+   * would push a scripted double tap past the double-tap window. Timing limits are unit tested.
+   */
+  async doubleTap(p: Point): Promise<void> {
+    const o = await this.origin();
+    if (this.mode === 'touch') {
+      this.cdp ??= await this.page.context().newCDPSession(this.page);
+      const point = [{ x: o.x + p.x, y: o.y + p.y, id: 1 }];
+      const send = (type: 'touchStart' | 'touchEnd') => this.cdp!.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchStart' ? point : [] });
+      await Promise.all([send('touchStart'), send('touchEnd'), send('touchStart'), send('touchEnd')]);
+      return;
+    }
+    await this.page.mouse.move(o.x + p.x, o.y + p.y);
+    await Promise.all([this.page.mouse.down(), this.page.mouse.up(), this.page.mouse.down(), this.page.mouse.up()]);
+  }
   async cancel(): Promise<void> {
     await this.touch('touchCancel');
   }

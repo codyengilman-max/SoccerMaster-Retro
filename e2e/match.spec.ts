@@ -166,40 +166,58 @@ test('aimed pass from the user carrier is released, slows time while aiming, and
   expect(errors).toEqual([]);
 });
 
-test('unified controls: swipes dribble back and sideways, release in the circle cancels, double-tap feints, UI taps never reach play (staged: ?setup=pass)', async ({ page }, info) => {
+const dot = (a: { x: number; y: number }, b: { x: number; y: number }): number => (a.x * b.x + a.y * b.y) / Math.hypot(b.x, b.y);
+
+/** A quick swipe along a pitch direction, started well away from the carrier so it can never become an aim. */
+async function swipe(page: Page, finger: Finger, pitch: { x: number; y: number }): Promise<void> {
+  const r = await report(page);
+  const viewport = page.viewportSize()!;
+  const c = r.players[r.controlledId];
+  const v = pitchVectorToScreen(r.layout, pitch);
+  const n = Math.hypot(v.x, v.y);
+  const len = r.thresholds.swipeCommit + 30;
+  const away = r.holdRadiusPx + 50;
+  const start = {
+    x: Math.min(Math.max(c.sx + (c.sx < viewport.width / 2 ? away : -away), len + 10), viewport.width - len - 10),
+    y: Math.min(Math.max(c.sy, len + 60), viewport.height - len - 40),
+  };
+  await finger.down(start);
+  await finger.move({ x: start.x + (v.x / n) * len * 0.5, y: start.y + (v.y / n) * len * 0.5 });
+  await finger.up({ x: start.x + (v.x / n) * len, y: start.y + (v.y / n) * len });
+}
+
+async function stagedCarrier(page: Page, finger: Finger): Promise<MatchReport> {
+  await openSandbox(page, finger.mode, '1-3-2-3', '&setup=pass');
+  return waitFor(page, (x) => x.phase === 'live' && x.userHasBall);
+}
+
+test('swipes dribble backward and sideways, and the carrier keeps that direction (staged: ?setup=pass)', async ({ page }, info) => {
   const errors = trackConsoleErrors(page);
   const finger = new Finger(page, modeFor(info));
-  await openSandbox(page, finger.mode, '1-3-2-3', '&setup=pass');
-  let r = await waitFor(page, (x) => x.phase === 'live' && x.userHasBall);
-  const viewport = page.viewportSize()!;
-  const swipe = async (pitch: { x: number; y: number }): Promise<void> => {
-    r = await report(page);
-    const c = r.players[r.controlledId];
-    const v = pitchVectorToScreen(r.layout, pitch);
-    const n = Math.hypot(v.x, v.y);
-    const len = r.thresholds.swipeCommit + 30;
-    // Start well away from the carrier so the press can never become an aim.
-    const away = r.holdRadiusPx + 50;
-    const start = { x: Math.min(Math.max(c.sx + (c.sx < viewport.width / 2 ? away : -away), len + 10), viewport.width - len - 10), y: Math.min(Math.max(c.sy, len + 60), viewport.height - len - 40) };
-    await finger.down(start);
-    await finger.move({ x: start.x + (v.x / n) * len * 0.5, y: start.y + (v.y / n) * len * 0.5 });
-    await finger.up({ x: start.x + (v.x / n) * len, y: start.y + (v.y / n) * len });
-  };
-  const dot = (a: { x: number; y: number }, b: { x: number; y: number }): number => (a.x * b.x + a.y * b.y) / Math.hypot(b.x, b.y);
-
-  await swipe({ x: -1, y: 0 });
+  let r = await stagedCarrier(page, finger);
+  expect(r.tutorialStep).toBe(0);
+  await swipe(page, finger, { x: -1, y: 0 });
   r = await waitFor(page, (x) => dot(x.dribbleDir, { x: -1, y: 0 }) > 0.9);
-  await page.waitForTimeout(900);
-  r = await report(page);
-  if (r.userHasBall) expect(r.players[r.controlledId].vx).toBeLessThan(0);
+  const x0 = r.players[r.controlledId].x;
   expect(r.tutorialStep).toBeGreaterThanOrEqual(1);
+  r = await waitFor(page, (x) => !x.userHasBall || x.players[x.controlledId].x < x0 - 1.5);
+  if (r.userHasBall) expect(r.players[r.controlledId].vx).toBeLessThan(0);
 
-  await swipe({ x: 0, y: 1 });
-  r = await waitFor(page, (x) => !x.userHasBall || dot(x.dribbleDir, { x: 0, y: 1 }) > 0.9);
-  test.skip(!r.userHasBall, 'carrier lost the ball before the remaining gestures');
+  r = await stagedCarrier(page, finger);
+  const y0 = r.players[r.controlledId].y;
+  await swipe(page, finger, { x: 0, y: 1 });
+  r = await waitFor(page, (x) => dot(x.dribbleDir, { x: 0, y: 1 }) > 0.9);
+  r = await waitFor(page, (x) => !x.userHasBall || x.players[x.controlledId].y > y0 + 1.5);
+  if (r.userHasBall) expect(r.players[r.controlledId].vy).toBeGreaterThan(0);
+  await linger(page);
+  expect(errors).toEqual([]);
+});
 
-  // Hold still on the carrier -> aim; pull out, then back inside the circle and release: cancelled, no kick.
-  let c = r.players[r.controlledId];
+test('hold to aim, pull out, slide back into the circle and release: cancelled with no kick; UI taps never reach play (staged: ?setup=pass)', async ({ page }, info) => {
+  const errors = trackConsoleErrors(page);
+  const finger = new Finger(page, modeFor(info));
+  let r = await stagedCarrier(page, finger);
+  const c = r.players[r.controlledId];
   const hold = { x: c.sx, y: c.sy - 8 };
   await finger.down(hold);
   await waitFor(page, (x) => x.phase === 'aiming', 5000);
@@ -211,23 +229,26 @@ test('unified controls: swipes dribble back and sideways, release in the circle 
   expect(r.phase).not.toBe('aiming');
   expect(r.events.some((e) => (e.type === 'pass' || e.type === 'shot') && e.by?.startsWith('H'))).toBe(false);
 
-  // UI tap: the help button restarts the tutorial and nothing reaches gameplay.
   const seq = r.events.at(-1)?.seq ?? 0;
+  const user = r.controlledId;
   await pressElement(page, 'help-button', finger.mode);
   r = await waitFor(page, (x) => x.tutorialStep === 0);
-  expect(r.events.filter((e) => e.seq > seq && ['dribble', 'feint', 'aimStart', 'pass', 'shot'].includes(e.type))).toEqual([]);
+  // AI teammates and opponents keep playing; only user actions are checked.
+  expect(r.events.filter((e) => e.seq > seq && (['dribble', 'feint', 'aimStart'].includes(e.type) || (['pass', 'shot'].includes(e.type) && e.by === user)))).toEqual([]);
+  await linger(page);
+  expect(errors).toEqual([]);
+});
 
-  // Double-tap the carrier: one feint.
-  r = await report(page);
-  test.skip(!r.userHasBall, 'carrier lost the ball before the feint');
-  c = r.players[r.controlledId];
-  const tapAt = { x: c.sx, y: c.sy - 8 };
-  await finger.down(tapAt);
-  await finger.up(tapAt);
-  await finger.down(tapAt);
-  await finger.up(tapAt);
-  r = await waitFor(page, (x) => x.events.some((e) => e.type === 'feint') || !x.userHasBall, 3000);
-  expect(r.events.filter((e) => e.type === 'feint')).toHaveLength(1);
+test('double-tapping the carrier gives exactly one feint (staged: ?setup=pass)', async ({ page }, info) => {
+  const errors = trackConsoleErrors(page);
+  const finger = new Finger(page, modeFor(info));
+  let r = await stagedCarrier(page, finger);
+  const c = r.players[r.controlledId];
+  await finger.doubleTap({ x: c.sx, y: c.sy - 8 });
+  r = await waitFor(page, (x) => x.events.some((e) => e.type === 'feint') || !x.userHasBall, 3000).catch(async () => report(page));
+  const trail = `${r.events.map((e) => `${e.type}(${e.detail})`).join(',')} | input: ${r.inputLog.join(',')}`;
+  expect(r.events.filter((e) => e.type === 'feint'), trail).toHaveLength(1);
+  expect(r.feint).not.toBeNull();
   await linger(page);
   expect(errors).toEqual([]);
 });
