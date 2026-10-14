@@ -1,6 +1,27 @@
 # Status
 
-## Current milestone: M3 — 9v9 team behaviour and formations (complete, in review)
+## Current milestone: M5 — Contextual Coach Moments (in review, development flag)
+
+Turn on with `?coach` (or `?coach=4`…`6`) on the 9v9 sandbox: Start → "9v9 Team Sandbox" → pick a formation → Kick Off. Details and authoring rules: `docs/COACH.md`.
+
+### Playable now
+- A **coached session** of 300 s sim time with 5 Coach Moments by default (4–6 configurable), spread through the session, then a summary.
+- Each moment comes from the live sim state: play freezes, the relevant players/lanes/space/goal are highlighted, one short question with 3–4 choices, feedback (strong / reasonable alternative / risky, other strong options named), Continue, and play resumes from the same state.
+- 23 templates across attacking, support, defending and restarts; several answers can be strong.
+- Choices change real play in a bounded way: on-ball choices show a cue that you must execute yourself; off-ball choices give one teammate a short (≤ 6 s) support/run/width/press/cover/protect job using normal movement.
+- Each moment records frozen facts, options and grades, the choice, the applied intention, and what actually happened afterwards. The summary shows moments completed, strengths and one next-match focus. Nothing is saved; no XP or stats.
+- HUD shows `COACH n/5 · m:ss` (session time left). Desktop: keys 1–4 answer, Enter/Space continue.
+
+### Missing match dependencies (M4 not built)
+- No match clock, halves, half-time, full-time or final result: the session timer stands in for a match. Half-time/full-time handling is therefore not tested.
+- No throw-ins, corners, goal kicks, fouls or offside. Restart templates use the sandbox restart only; no template mentions offside; time-left facts are never shown.
+- No weekly learning focus yet; the "next match" focus is shown but not carried forward.
+- Not tested on a physical iPhone; Chromium phone emulation only.
+
+### Verification
+`tests/coachTemplates.test.ts` (every template eligible / ineligible / counterexample, catalog validation, multiple strong answers, broken facts) and `tests/coachSession.test.ts` (seeded sessions in all three formations, 4–6 clamping, freeze/resume, duplicate answer/Continue, background pause kept, aim allowance not refilled, no moment while aiming or with a kick in flight, shortfall when nothing is eligible, abandonment, intention validation/expiry/no teleport, invalid facts, mirrored attacking direction, safe names). `e2e/coach.spec.ts` plays a whole shortened session to the summary on phone portrait/landscape, small phones and desktop, plus touch-through, double taps, backgrounding + rotation during a moment, keyboard, and names.
+
+## M3 — 9v9 team behaviour and formations (complete)
 
 A **9v9 team-play sandbox**: two teams of eight outfield players plus a keeper (H1–H9 attack right, A1–A9 attack left) on a 75×50 yd pitch with two goals. It is a sandbox for team behaviour, **not** a rules-complete match.
 
@@ -60,4 +81,4 @@ See the PR for exact counts. Unit tests cover swipe-vs-aim recognition, single p
 - Tuning is a first pass and should be adjusted after playtesting on a phone.
 
 ## Next task
-**Cloudflare Pages preview + real-iPhone playtest** of M2 and M3 (hosting unchanged in this task), then M4 match flow.
+Real-iPhone playtest of the coached sandbox, then M4 match flow so Coach Moments can run in real matches (halves, restarts, clock).

@@ -266,6 +266,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       this.cancelInput('coach summary');
       this.coachOverlay.showSummary(d.summary());
     }
+    this.helpText.setVisible(!this.coachOverlay.visible);
   }
 
   private coachAnswer(id: string): void {

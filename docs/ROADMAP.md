@@ -27,6 +27,7 @@ Staged plan. One milestone at a time; each ends with verified checks and an upda
 - 4–6 contextual pauses per standard match triggered from simulation state.
 - Tactical choices change real play (positions, runs, pressing) rather than awarding automatic goals.
 - One weekly learning focus that shapes which situations trigger pauses.
+- **Status:** Coach Moments are in review, hosted in the M3 sandbox behind `?coach` because M4 is not built (see `docs/COACH.md`). The weekly learning focus and full-match scheduling still need M4.
 
 ## M6 — Individual RPG growth
 - Weekly individual training focus and achievement-based player growth between matches.
