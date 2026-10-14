@@ -1,0 +1,25 @@
+import type { Activity } from '../types';
+import { family } from './build';
+import { steps } from './demos';
+
+const jg = family({
+  family: 'juggling',
+  attribute: null,
+  sources: [{ id: 'fifa-ball-control', relation: 'principle' }],
+  sourceNote: 'Original juggling ladder; not an official FIFA progression.',
+  limitations: ['Self-reported practice: the game cannot see or verify it.', 'Juggling does not automatically improve any game attribute.', 'No heading is needed.'],
+});
+
+const air = (a: string, b: string) => steps([{ caption: a, foot: 'either', ball: 'air' }, { caption: b, foot: 'right', ball: 'air' }, { caption: 'Catch or settle', foot: 'either', ball: 'front' }]);
+const L = (n: 1 | 2 | 3 | 4 | 5) => n;
+
+export const JUGGLING: readonly Activity[] = [
+  jg({ id: 'jg-1', title: 'Ladder 1: One contact and catch', focus: 'jg-ladder', level: L(1), objective: 'Drop the ball, kick it up once with the laces, catch it.', steps: ['Hold the ball at waist height.', 'Drop it onto your laces and kick it softly up.', 'Catch it.'], cue: 'Toes up, ankle locked.', success: 'Ball rises straight and you catch it.', mistake: ['Ball flies forward.', 'Lock the ankle, toes slightly up.'], easier: 'Let it bounce first.', harder: 'Two contacts.', pb: 'Clean catches in a row', variants: [['foot', 'Other foot.']], demo: air('Drop onto the laces', 'One soft contact up') }),
+  jg({ id: 'jg-2', title: 'Ladder 2: Either foot', focus: 'jg-ladder', level: L(1), objective: 'One contact and catch, alternating feet.', steps: ['Drop the ball.', 'One contact with the right, catch.', 'Then the left.'], cue: 'Same soft contact both sides.', success: 'Clean contact with both feet.', mistake: ['Weaker foot too hard.', 'Softer on the weaker side.'], easier: 'Strong foot twice, weaker once.', harder: 'No catch between.', variants: [['foot', 'Weaker foot only.']], demo: air('Drop', 'Contact with either foot') }),
+  jg({ id: 'jg-3', title: 'Ladder 3: Contact, bounce, contact', focus: 'jg-ladder', level: L(2), objective: 'Contact, let it bounce, contact again.', steps: ['Drop and contact once.', 'Let it bounce.', 'Contact again, then catch.'], cue: 'Wait for the bounce.', success: 'Two contacts with a bounce between.', mistake: ['Rushing.', 'Let it bounce fully.'], easier: 'Two bounces allowed.', harder: 'Three contacts.', variants: [['sequence', 'Three contacts.']], demo: air('Contact', 'Bounce, contact') }),
+  jg({ id: 'jg-4', title: 'Ladder 4: Two contacts and catch', focus: 'jg-ladder', level: L(2), objective: 'Two contacts without a bounce, then catch.', steps: ['Drop onto the laces.', 'Two soft contacts.', 'Catch.'], cue: 'Small and soft.', success: 'Two contacts then a catch.', mistake: ['Ball too high.', 'Smaller contacts.'], easier: 'Allow a bounce.', harder: 'Three contacts.', pb: 'Contacts without the ball touching the floor', variants: [['sequence', 'Three contacts.']], demo: air('Drop', 'Two contacts') }),
+  jg({ id: 'jg-5', title: 'Ladder 5: Alternating feet', focus: 'jg-ladder', level: L(3), objective: 'Alternate feet across several contacts.', steps: ['Start with a drop.', 'Right, left, right.', 'Catch.'], cue: 'Ball stays in the middle.', success: 'Alternating contacts under control.', mistake: ['Ball drifting sideways.', 'Contact under the centre.'], easier: 'Bounce between.', harder: 'Longer sequences.', pb: 'Alternating contacts', variants: [['sequence', 'Longer sequences.']], demo: air('Drop', 'Right, left, right') }),
+  jg({ id: 'jg-6', title: 'Ladder 6: Foot and thigh', focus: 'jg-ladder', level: L(3), objective: 'Combine foot and thigh contacts.', steps: ['Foot contact up.', 'Thigh contact.', 'Foot again, then catch.'], cue: 'Thigh flat.', success: 'Foot-thigh-foot under control.', mistake: ['Thigh angled forward.', 'Keep the thigh flat.'], easier: 'Catch after the thigh.', harder: 'Two thighs.', limits: ['No heading.'], variants: [['sequence', 'Add a second thigh.']], demo: air('Foot', 'Thigh, foot') }),
+  jg({ id: 'jg-7', title: 'Ladder 7: Juggle, settle, dribble', focus: 'jg-ladder', level: L(4), objective: 'Juggle, settle the ball and dribble away.', steps: ['Juggle a few contacts.', 'Settle it to the ground.', 'Dribble three steps.'], cue: 'Settle soft.', success: 'Settle and dribble without the ball escaping.', mistake: ['Settle bounces away.', 'Cushion it down.'], easier: 'One contact before settling.', harder: 'Weaker foot settle.', variants: [['foot', 'Weaker foot settle.']], demo: air('Juggle', 'Settle, dribble') }),
+  jg({ id: 'jg-8', title: 'Ladder 8: Juggle, settle, pass', focus: 'jg-ladder', level: L(5), objective: 'Juggle, settle and pass to a spot.', optional: ['markers'], application: true, steps: ['Juggle a few contacts.', 'Settle it.', 'Pass to a gate or spot.'], cue: 'Settle, look, pass.', success: 'Accurate pass after settling.', mistake: ['Rushing the pass.', 'Set it first.'], easier: 'Fewer contacts.', harder: 'Weaker foot pass.', ballOnly: ['Pass to a chosen spot.', 'Same to a spot.'], variants: [['foot', 'Weaker foot pass.']], demo: air('Juggle', 'Settle, pass') }),
+];
