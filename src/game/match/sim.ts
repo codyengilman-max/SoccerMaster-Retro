@@ -299,9 +299,10 @@ export class MatchSim {
     const P = T.pitch;
     let onGoal = false;
     if (dir.x > 1e-3) {
-      const t = (P.length - ball.x) / dir.x;
-      const y = ball.y + dir.y * t;
-      onGoal = P.length - ball.x <= T.ai.shootRange + 14 && Math.abs(y - P.goalCenterY) <= P.goalHalfWidth + 1;
+      // A kick is a shot whenever it is on target and rolls far enough, from any range.
+      const path = (P.length - ball.x) / dir.x;
+      const y = ball.y + dir.y * path;
+      onGoal = Math.abs(y - P.goalCenterY) <= P.goalHalfWidth + 1 && path <= (speed * speed) / (2 * T.ball.friction);
     }
     if (onGoal) {
       this.kickBall(carrier, scale(dir, speed), 'shot', null, null);
@@ -480,7 +481,9 @@ export class MatchSim {
     const vT = velToTeam(team, ball.vel);
     const gT = toTeam(team, gk.pos, T);
     const kick = ball.kick;
-    const shotIncoming = !ball.owner && kick?.kind === 'shot' && kick.team !== team && vT.x < -0.5 && s.simTime - kick.at >= K.reactionSeconds;
+    // Any opponent ball on target counts, whatever it was labelled (long passes, deflections), so range never skips the dive.
+    const shotIncoming =
+      !ball.owner && !!kick && kick.team !== team && vT.x < -0.5 && s.simTime - kick.at >= K.reactionSeconds && (kick.kind === 'shot' || this.onTarget(bT, vT));
     gk.intent = 'keeper';
     if (shotIncoming) {
       const t = (gT.x - bT.x) / vT.x;
@@ -499,6 +502,16 @@ export class MatchSim {
       target: toWorld(team, vec(depth, clamp(y, P.goalCenterY - P.goalHalfWidth + 0.5, P.goalCenterY + P.goalHalfWidth - 0.5)), T),
       speed: K.speed,
     };
+  }
+
+  /** True if a loose ball (team coordinates, own goal line at x = 0) would roll into the goal mouth (+1 yd). */
+  private onTarget(bT: Vec2, vT: Vec2): boolean {
+    const P = this.tuning.pitch;
+    const speed = length(vT);
+    if (vT.x >= 0 || speed < 1e-6) return false;
+    const t = bT.x / -vT.x;
+    const y = bT.y + vT.y * t;
+    return Math.abs(y - P.goalCenterY) <= P.goalHalfWidth + 1 && t * speed <= (speed * speed) / (2 * this.tuning.ball.friction);
   }
 
   private keeperFirst(gk: MatchPlayer): boolean {

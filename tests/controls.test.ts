@@ -287,4 +287,23 @@ describe('unified kick', () => {
     expect(Math.atan2(v.y, v.x)).toBeCloseTo(Math.atan2(1, 0.2), 9);
     expect(Math.hypot(v.x, v.y)).toBeCloseTo(kickSpeed(0.3), 9);
   });
+  it('a long-range kick on target is a shot the keeper plays, never a free goal', () => {
+    for (let seed = 1; seed <= 10; seed++) {
+      const sim = staged(seed, { x: 33, y: 25 });
+      sim.arrange((s) => {
+        for (const id of ['H2', 'H3', 'H4', 'H5', 'H6', 'H7', 'H9'] as const) s.players[id].pos = { x: 3, y: 3 + Number(id.slice(1)) * 5 };
+        s.players.A1.pos = { x: 73.5, y: 25 };
+      });
+      run(sim, 0.25);
+      const seq = lastSeq(sim);
+      const b = sim.state.ball.pos;
+      sim.command({ type: 'aimStart' });
+      sim.command({ type: 'aimUpdate', direction: { x: T.pitch.length - b.x, y: T.pitch.goalCenterY + 2 - b.y }, power: 1 });
+      sim.command({ type: 'aimRelease' });
+      for (let i = 0; i < 600 && sim.state.phase !== 'stopped' && !sim.state.ball.owner; i++) sim.step(H);
+      const evs = newEvents(sim, seq);
+      expect(evs.some((e) => e.type === 'shot')).toBe(true);
+      expect(sim.state.stoppage?.reason === 'goal').toBe(false);
+    }
+  });
 });
