@@ -23,6 +23,11 @@ export interface MatchReport {
   /** M6: career evidence recording for the career player's slot, or null outside career play. */
   readonly career?: { readonly slot: string; readonly pending: number; readonly batches: number; readonly recorded: number; readonly missed: number } | null;
   readonly phase: match.MatchPhase;
+  /** M4 timed match clock; null in the open-ended sandbox (`?sandbox`). */
+  readonly clock: { readonly half: 1 | 2; readonly elapsed: number; readonly halfSeconds: number; readonly label: string } | null;
+  readonly result: match.MatchResult | null;
+  /** Half-time or full-time card on screen. */
+  readonly breakPanel: 'halftime' | 'fulltime' | null;
   readonly paused: boolean;
   readonly simTime: number;
   readonly timeScale: number;

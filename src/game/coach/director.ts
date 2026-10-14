@@ -148,7 +148,7 @@ export class CoachDirector {
     if (this.cue && s.simTime >= this.cue.until) this.cue = null;
     if (this.cue && s.ball.owner !== this.cue.carrierId) this.cue = null;
     if (this.phase !== 'playing') return null;
-    if (s.simTime >= this.sessionSeconds) {
+    if (s.simTime >= this.sessionSeconds || s.phase === 'fulltime') {
       this.endSession(sim);
       return null;
     }

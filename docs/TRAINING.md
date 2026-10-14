@@ -114,7 +114,7 @@ prove reading the game; no heading, no sliding, no unstable obstacles).
 
 ## Not done / depends on later milestones
 
-- No full match (M4): evidence comes from the sandbox, which has no clock, halves, set pieces, fouls or offside.
-- Coach evidence is used only when the sandbox is opened with `?coach` (M5, unmerged PR #5).
+- Matches have a clock, halves and a result (M4 core), but no formal set pieces, fouls or offside, so evidence never covers those situations.
+- Coach evidence is used only when the match is opened with `?coach`.
 - Optional audio cues are described as an option for a helper; the game doesn't play audio.
 - Physical iPhone testing not done; browser tests use Chromium emulation.

@@ -72,7 +72,16 @@ export interface MatchBall {
   lastTouch: TeamId;
 }
 
-export type MatchPhase = 'kickoff' | 'live' | 'aiming' | 'stopped';
+/** `halftime` and `fulltime` exist only in a timed match (M4); the open-ended sandbox never reaches them. */
+export type MatchPhase = 'kickoff' | 'live' | 'aiming' | 'stopped' | 'halftime' | 'fulltime';
+
+/** Formal match clock. Counts sim seconds, so user pauses, backgrounding and Coach Moments stop it. */
+export interface MatchClock {
+  half: 1 | 2;
+  /** Sim seconds played in the current half. */
+  elapsed: number;
+  readonly halfSeconds: number;
+}
 
 export interface Stoppage {
   readonly reason: 'goal' | 'out';
@@ -137,7 +146,10 @@ export type MatchEventType =
   | 'coachHold'
   | 'coachRelease'
   | 'coachIntent'
-  | 'coachIntentEnd';
+  | 'coachIntentEnd'
+  | 'halftime'
+  | 'secondHalf'
+  | 'fulltime';
 
 export type CoachIntentKind = 'support' | 'run' | 'width' | 'press' | 'cover' | 'protect';
 
@@ -213,6 +225,8 @@ export interface MatchState {
   keeperDiving: Record<TeamId, boolean>;
   score: Record<TeamId, number>;
   stoppage: Stoppage | null;
+  /** Two-half match clock, or null in the open-ended sandbox. */
+  clock: MatchClock | null;
   stats: { passes: Record<TeamId, number>; shots: Record<TeamId, number>; saves: Record<TeamId, number>; turnovers: number };
   events: MatchEvent[];
 }

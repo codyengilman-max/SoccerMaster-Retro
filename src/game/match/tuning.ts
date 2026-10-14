@@ -22,6 +22,11 @@ export const MATCH_TUNING = {
     laneMargin: D.area.laneMargin,
   },
   kickoff: { countdownSeconds: 0.8 },
+  /**
+   * Timed 9v9 match (M4): two halves of `halfSeconds` sim seconds, shown on a 25-minute U11 half
+   * clock. Provisional: a short phone-sized match, not real-time youth match length.
+   */
+  match: { halfSeconds: 240, displayHalfMinutes: 25, minHalfSeconds: 10, maxHalfSeconds: 1800 },
   /** User carrier directional dribbling: swipes set a direction; speed, acceleration and turning are bounded. */
   carrier: {
     speed: D.dribble.speed,

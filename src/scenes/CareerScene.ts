@@ -203,7 +203,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         return {
           title: p ? `${p.name} · Week ${s.week}` : 'Home Training',
           body: p
-            ? `Focus: ${f ? f.label : 'not chosen yet'}\nHome sessions done: ${s.completedSessions.length} of 3 (optional)\nGame moments recorded this week: ${s.evidence.length}\n\nHome practice is your own log. Game attributes only change from what you do in the 9v9 sandbox.`
+            ? `Focus: ${f ? f.label : 'not chosen yet'}\nHome sessions done: ${s.completedSessions.length} of 3 (optional)\nGame moments recorded this week: ${s.evidence.length}\n\nHome practice is your own log. Game attributes only change from what you do in 9v9 matches.`
             : 'Create your player to start.',
           actions: p
             ? [
@@ -211,7 +211,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
                 { name: 'nav-sessions', label: 'My Home Sessions', onClick: () => this.go({ kind: 'sessions' }) },
                 { name: 'nav-library', label: 'Training Library', onClick: () => this.go({ kind: 'library', family: null }) },
                 { name: 'nav-journal', label: 'Practice Journal', onClick: () => this.go({ kind: 'journal' }) },
-                { name: 'nav-play', label: 'Play Sandbox (records game moments)', onClick: () => this.playSandbox() },
+                { name: 'nav-play', label: 'Play a 9v9 match (records game moments)', onClick: () => this.playSandbox() },
                 { name: 'nav-review', label: 'Weekly Review', onClick: () => this.go({ kind: 'review' }) },
                 { name: 'nav-player', label: 'Character Development', onClick: () => this.go({ kind: 'player' }) },
               ]
@@ -221,7 +221,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       case 'create':
         return {
           title: 'Create Your Player',
-          body: 'Pick a position. You will be asked for a name (plain text, up to 24 characters).\n\nYour player is the one shown as your slot in the sandbox: defender (H3), midfielder (H5) or forward (H8). Only that player\'s actions count as game evidence.',
+          body: 'Pick a position. You will be asked for a name (plain text, up to 24 characters).\n\nYour player is the one shown as your slot in 9v9 matches: defender (H3), midfielder (H5) or forward (H8). Only that player\'s actions count as game evidence.',
           actions: POSITIONS.map((pos) => ({ name: `pos-${pos}`, label: { DEF: 'Defender', MID: 'Midfielder', FWD: 'Forward' }[pos], onClick: () => this.createPlayer(pos) })),
         };
       case 'setup': {
@@ -355,7 +355,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         return {
           title: `Weekly Review${last ? ` · Week ${last.week}` : ''}`,
           body: [
-            `This week so far: ${s.completedSessions.length}/3 home sessions (self-reported), ${s.evidence.length} game moments (observed in the sandbox).`,
+            `This week so far: ${s.completedSessions.length}/3 home sessions (self-reported), ${s.evidence.length} game moments (observed in matches).`,
             last ? `\nLast review — Self-reported practice: ${last.sessionsCompleted} sessions, ${last.extraLogged} extra logs; felt comfortable ${last.ratings.comfortable}x.` : '',
             last ? `Demonstrated in play: ${last.evidenceCount} moments${last.missedEvents ? ` (${last.missedEvents} events missed and not counted)` : ''}.` : '',
             `Character changes and reasons:\n${outcome}`,

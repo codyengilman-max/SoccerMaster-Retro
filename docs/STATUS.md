@@ -1,5 +1,9 @@
 # Status
 
+## Release integration: M4 core match flow + M5 + M6
+
+Start → **Play 9v9 Match** → pick a formation → Kick Off plays a timed two-half match: clock, half-time card (Start 2nd half), away kick-off for the second half, full-time result with stats, Play again. `?coach` Coach Moments span the whole match and their summary is the full-time screen. Home Training's match button plays the same timed match. Not built: formal throw-ins/corners/goal kicks, fouls, offside, added time, swapping ends. `?sandbox` opens the old open-ended sandbox.
+
 ## Current milestone: M6 — Individual Home Training and Player Progression (in review)
 
 Start → **Home Training**. Full rules and worked examples: `docs/TRAINING.md`.

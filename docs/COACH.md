@@ -2,7 +2,7 @@
 
 Contextual tactical pauses inside the 9v9 sandbox. Turned on with the development flag `?coach` (5 moments) or `?coach=4`…`?coach=6`. Without the flag the sandbox is unchanged.
 
-There is no full match yet (M4 match flow is not built), so a **coached session** is a fixed-length sandbox session (300 s of sim time by default) that stands in for a match and ends with a summary. Debug builds can shorten it with `?debug&coach&coachSeconds=40` (20–299 s); the browser tests use this.
+In a timed match (the default) a **coached session** spans the whole match (both halves); the clock is frozen while a moment is open, no moment opens at half-time, and the summary is the full-time screen. In the open-ended `?sandbox` a session is 300 s of sim time. Debug builds can shorten it with `?debug&coach&coachSeconds=40` (20–299 s); the browser tests use this.
 
 ## Flow
 

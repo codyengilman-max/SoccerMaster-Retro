@@ -52,13 +52,20 @@ export type MatchCommand =
   | { readonly type: 'coachHold' }
   | { readonly type: 'coachRelease' }
   | { readonly type: 'coachIntent'; readonly playerId: MatchPlayerId; readonly kind: CoachIntentKind; readonly target: Vec2; readonly seconds: number; readonly source: string }
-  | { readonly type: 'coachIntentClear'; readonly reason: string };
+  | { readonly type: 'coachIntentClear'; readonly reason: string }
+  /** Timed match only: leave half-time and kick off the second half (the team that did not start kicks off). */
+  | { readonly type: 'startSecondHalf' };
+
+/** The only commands accepted while play is over for a half or the match. */
+const BREAK_COMMANDS: ReadonlySet<MatchCommand['type']> = new Set(['pause', 'resume', 'coachHold', 'coachRelease', 'coachIntentClear', 'reset', 'setFormation', 'startSecondHalf']);
 
 export interface MatchSimOptions {
   readonly seed?: number;
   readonly tuning?: MatchTuning;
   readonly homeFormation?: FormationId;
   readonly awayFormation?: FormationId;
+  /** Sim seconds per half for a timed match. Omitted or null: the open-ended sandbox (no clock). */
+  readonly halfSeconds?: number | null;
 }
 
 const MAX_EVENTS = 40;
@@ -75,11 +82,15 @@ export class MatchSim {
   private s: MatchState;
   private accumulator = 0;
   private seq = 0;
+  private readonly halfSeconds: number | null;
 
   constructor(options: MatchSimOptions = {}) {
     this.tuning = options.tuning ?? MATCH_TUNING;
     this.seed = options.seed ?? 1;
     this.rng = createRng(this.seed);
+    const hs = options.halfSeconds;
+    const M = this.tuning.match;
+    this.halfSeconds = typeof hs === 'number' && Number.isFinite(hs) ? clamp(hs, M.minHalfSeconds, M.maxHalfSeconds) : null;
     this.s = this.createState({
       home: options.homeFormation ?? DEFAULT_FORMATION,
       away: options.awayFormation ?? DEFAULT_FORMATION,
@@ -108,7 +119,10 @@ export class MatchSim {
 
   command(cmd: MatchCommand): boolean {
     const s = this.s;
+    if ((s.phase === 'halftime' || s.phase === 'fulltime') && !BREAK_COMMANDS.has(cmd.type)) return false;
     switch (cmd.type) {
+      case 'startSecondHalf':
+        return this.startSecondHalf();
       case 'pause':
         if (s.pauseReasons.user) return false;
         if (s.phase === 'aiming') this.cancelAim('paused');
@@ -147,7 +161,7 @@ export class MatchSim {
         this.s = this.createState({ ...s.formations });
         this.accumulator = 0;
         this.rng = createRng(this.seed + this.s.events.length + Math.round(s.simTime * 1000));
-        this.emit('reset', null, 'sandbox reset');
+        this.emit('reset', null, this.s.clock ? 'new match' : 'sandbox reset');
         return true;
       case 'setFormation':
         return this.setFormation(cmd.team, cmd.formation);
@@ -198,6 +212,10 @@ export class MatchSim {
       s.timeScale = 0;
       return;
     }
+    if (s.phase === 'halftime' || s.phase === 'fulltime') {
+      s.timeScale = 0;
+      return;
+    }
     if (s.phase === 'kickoff' || s.phase === 'stopped') {
       s.timeScale = 1;
     } else if (s.phase === 'aiming' && s.aimAllowance.home > 0) {
@@ -216,8 +234,60 @@ export class MatchSim {
       this.accumulator -= h;
       if (this.s.phase === 'kickoff') this.tickKickoff(h);
       else if (this.s.phase === 'stopped') this.tickStopped(h);
-      else this.tick(h);
+      else {
+        this.tick(h);
+        if (this.advanceClock(h)) break;
+      }
     }
+  }
+
+  /** The clock runs while the ball is in play (including slow-motion aiming); stoppages, kick-off countdowns and pauses never count. */
+  private advanceClock(h: number): boolean {
+    const c = this.s.clock;
+    if (!c) return false;
+    c.elapsed += h;
+    if (c.elapsed < c.halfSeconds - 1e-9) return false;
+    this.endHalf();
+    return true;
+  }
+
+  /** The whistle: everything in progress ends where it is (a ball in flight does not count). */
+  private endHalf(): void {
+    const s = this.s;
+    const c = s.clock;
+    if (!c) return;
+    const label = c.half === 1 ? 'half-time' : 'full-time';
+    c.elapsed = c.halfSeconds;
+    if (s.phase === 'aiming') this.cancelAim(label);
+    if (s.coachIntent) this.clearCoachIntent(label);
+    s.aim = null;
+    s.feint = null;
+    s.stoppage = null;
+    s.ball.vel = vec(0, 0);
+    s.ball.kick = null;
+    for (const p of Object.values(s.players)) p.vel = vec(0, 0);
+    s.phase = c.half === 1 ? 'halftime' : 'fulltime';
+    s.phaseTime = 0;
+    s.timeScale = 0;
+    this.accumulator = 0;
+    this.emit(c.half === 1 ? 'halftime' : 'fulltime', null, `${s.score.home}-${s.score.away}`);
+  }
+
+  private startSecondHalf(): boolean {
+    const T = this.tuning;
+    const s = this.s;
+    if (s.phase !== 'halftime' || !s.clock || s.paused) return false;
+    s.clock.half = 2;
+    s.clock.elapsed = 0;
+    this.placeForKickoff('away');
+    s.phase = 'kickoff';
+    s.phaseTime = 0;
+    s.timeScale = 1;
+    s.aimAllowance = { home: T.aimAllowance.seconds, away: T.aimAllowance.seconds };
+    s.allowanceRefillPending = { home: false, away: false };
+    this.accumulator = 0;
+    this.emit('secondHalf', null, 'away kick off');
+    return true;
   }
 
   private tickKickoff(h: number): void {
@@ -977,6 +1047,7 @@ export class MatchSim {
       keeperDiving: { home: false, away: false },
       score: { home: 0, away: 0 },
       stoppage: null,
+      clock: this.halfSeconds ? { half: 1, elapsed: 0, halfSeconds: this.halfSeconds } : null,
       stats: { passes: { home: 0, away: 0 }, shots: { home: 0, away: 0 }, saves: { home: 0, away: 0 }, turnovers: 0 },
       events: [],
     };

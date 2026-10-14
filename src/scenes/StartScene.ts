@@ -67,7 +67,7 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
     });
     this.sandboxButton = new Button(this, 0, 0, {
       name: 'sandbox-button',
-      label: '9v9 Team Sandbox',
+      label: 'Play 9v9 Match',
       width: 280,
       height: 72,
       fontSize: 24,

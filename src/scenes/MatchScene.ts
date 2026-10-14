@@ -107,6 +107,15 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private overlayButton!: Button;
   private formationButtons!: Record<FormationId, Button>;
   private panelRect: Rect = { x: 0, y: 0, width: 0, height: 0 };
+  private breakPanel!: Phaser.GameObjects.Graphics;
+  private breakTitle!: Phaser.GameObjects.Text;
+  private breakNote!: Phaser.GameObjects.Text;
+  private secondHalfButton!: Button;
+  private playAgainButton!: Button;
+  private breakMenuButton!: Button;
+  private breakKey = '';
+  private breakMode: '' | 'halftime' | 'fulltime' = '';
+  private breakRect: Rect = { x: 0, y: 0, width: 0, height: 0 };
   /** Coach Moments (`?coach`, M5 development flag). Null when the flag is off. */
   private coachDirector: coach.CoachDirector | null = null;
   private careerStore: CareerStore | null = null;
@@ -140,7 +149,16 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const seed = Number(params.get('seed') ?? '1') || 1;
     const fromUrl = params.get('formation') as FormationId | null;
     const formation = data.formation ?? (fromUrl && FORMATION_IDS.includes(fromUrl) ? fromUrl : DEFAULT_FORMATION);
-    this.sim = new MatchSim({ seed, homeFormation: formation });
+    // A timed two-half match by default; `?sandbox` keeps the open-ended M3 sandbox. Debug builds may shorten halves.
+    const halfParam = Number(params.get('halfSeconds'));
+    const halfSeconds = params.has('sandbox')
+      ? null
+      : shouldExposeDebug(window.location) && Number.isFinite(halfParam) && halfParam > 0
+        ? halfParam
+        : MATCH_TUNING.match.halfSeconds;
+    this.breakKey = '';
+    this.breakMode = '';
+    this.sim = new MatchSim({ seed, homeFormation: formation, halfSeconds });
     if (shouldExposeDebug(window.location)) this.applyDebugSetup(params.get('setup'));
     this.coachConfig = this.readCoachConfig(params, seed);
     this.coachRun = 0;
@@ -203,12 +221,19 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const panelButton = (name: string, label: string, onClick: () => void, cream = false): Button =>
       new Button(this, 0, 0, { name, label, width: 140, height: 46, fontSize: 17, ...(cream ? { fill: PALETTE.cream, fillPressed: PALETTE.sand } : {}), onClick }).setDepth(7002);
     this.resumeButton = panelButton('resume-button', 'Resume ▶', () => this.togglePause());
-    this.resetButton = panelButton('reset-button', 'Reset', () => this.reset(), true);
+    this.resetButton = panelButton('reset-button', params.has('sandbox') ? 'Reset' : 'New match', () => this.reset(), true);
     this.panelMenuButton = panelButton('panel-menu-button', 'Menu', () => this.goToMenu(), true);
     this.overlayButton = panelButton('overlay-button', 'Dev overlay: off', () => this.toggleOverlay(), true);
     this.formationButtons = Object.fromEntries(
       FORMATION_IDS.map((id) => [id, panelButton(`formation-${id}`, id, () => this.changeFormation(id), true)]),
     ) as Record<FormationId, Button>;
+    this.breakPanel = this.add.graphics().setDepth(6900);
+    this.breakTitle = text(26).setOrigin(0.5, 0.5).setDepth(6901);
+    this.breakNote = text(13, CSS.ink, false).setOrigin(0.5, 0).setDepth(6901);
+    const breakButton = (name: string, label: string, onClick: () => void, cream = false): Button => panelButton(name, label, onClick, cream).setDepth(6902);
+    this.secondHalfButton = breakButton('second-half-button', 'Start 2nd half ▶', () => this.startSecondHalf());
+    this.playAgainButton = breakButton('play-again-button', 'Play again', () => this.reset());
+    this.breakMenuButton = breakButton('break-menu-button', 'Menu', () => this.goToMenu(), true);
     this.coachOverlay = new CoachOverlay(this, {
       onAnswer: (id) => this.coachAnswer(id),
       onContinue: () => this.coachContinue(),
@@ -257,6 +282,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.consumeEvents();
     this.observeCareer();
     this.updateCoach();
+    this.updateBreak();
     this.renderFrame(dt);
   }
 
@@ -275,7 +301,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const secs = Number(params.get('coachSeconds'));
     const debugShort = shouldExposeDebug(window.location) && Number.isFinite(secs) && secs >= 20 && secs < coach.COACH_TUNING.sessionSeconds;
     const base = { sessionId: `s${seed}-${Date.now().toString(36)}`, seed, names, ...(moments !== undefined && Number.isFinite(moments) ? { moments } : {}) };
-    if (!debugShort) return base;
+    const clock = this.sim.state.clock;
+    if (!debugShort) return clock ? { ...base, sessionSeconds: clock.halfSeconds * 2 } : base;
     const target = Math.min(6, Math.max(4, Math.round(moments ?? 5)));
     return { ...base, sessionSeconds: secs, tuning: { ...coach.COACH_TUNING, minGapSeconds: Math.min(coach.COACH_TUNING.minGapSeconds, (secs / target) * 0.5) } };
   }
@@ -423,6 +450,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       elements['overlay-button'] = this.overlayButton.getButtonBounds();
       for (const id of FORMATION_IDS) elements[`formation-${id}`] = this.formationButtons[id].getButtonBounds();
     }
+    if (this.breakMode) {
+      elements['break-panel'] = this.breakRect;
+      elements['break-menu-button'] = this.breakMenuButton.getButtonBounds();
+      elements[this.breakMode === 'halftime' ? 'second-half-button' : 'play-again-button'] = (this.breakMode === 'halftime' ? this.secondHalfButton : this.playAgainButton).getButtonBounds();
+    }
     return { orientation: this.pitchLayout.orientation, viewport: { width, height }, elements };
   }
 
@@ -442,6 +474,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const bs = toScreen(L, s.ball.pos);
     return {
       phase: s.phase,
+      clock: s.clock ? { half: s.clock.half, elapsed: s.clock.elapsed, halfSeconds: s.clock.halfSeconds, label: match.clockLabel(s.clock) } : null,
+      result: s.phase === 'fulltime' ? match.matchResult(s) : null,
+      breakPanel: this.breakMode || null,
       paused: s.paused,
       simTime: s.simTime,
       timeScale: s.timeScale,
@@ -784,7 +819,73 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.newCoachSession();
     this.coachOverlay.setSuspended(false);
     this.showPanel(false);
-    this.toast('Sandbox reset');
+    this.breakKey = '';
+    this.toast(this.sim.state.clock ? 'New match — kick-off' : 'Sandbox reset');
+  }
+
+  private startSecondHalf(): void {
+    if (this.navigating) return;
+    this.cancelInput('second half');
+    this.sim.command({ type: 'startSecondHalf' });
+  }
+
+  /** Half-time and full-time cards. Hidden under the pause panel and while the Coach summary is the full-time screen. */
+  private updateBreak(): void {
+    const s = this.sim.state;
+    const coachSummary = this.coachOverlay.state === 'summary';
+    const mode: '' | 'halftime' | 'fulltime' = s.pauseReasons.user ? '' : s.phase === 'halftime' ? 'halftime' : s.phase === 'fulltime' && !coachSummary ? 'fulltime' : '';
+    const { width, height } = this.scale;
+    const key = `${mode}:${width}x${height}:${s.score.home}-${s.score.away}`;
+    if (key === this.breakKey) return;
+    this.breakKey = key;
+    this.breakMode = mode;
+    const on = mode !== '';
+    this.breakPanel.setVisible(on);
+    this.breakTitle.setVisible(on);
+    this.breakNote.setVisible(on);
+    this.secondHalfButton.setEnabled(mode === 'halftime');
+    this.playAgainButton.setEnabled(mode === 'fulltime');
+    this.breakMenuButton.setEnabled(on);
+    if (!on) return;
+    const st = s.stats;
+    const result = match.matchResult(s);
+    const title = mode === 'halftime' ? 'Half-time' : result === 'win' ? 'Full-time — you win!' : result === 'draw' ? 'Full-time — a draw' : 'Full-time — you lose';
+    const lines = [
+      `Home ${s.score.home} – ${s.score.away} Away`,
+      `Shots ${st.shots.home}–${st.shots.away} · Passes ${st.passes.home}–${st.passes.away} · Saves ${st.saves.home}–${st.saves.away}`,
+      mode === 'halftime'
+        ? 'Away kicks off the second half. Teams keep the same ends.'
+        : this.collector
+          ? 'Your game moments from this match are saved to Home Training.'
+          : 'Play again for a new match, or go back to the menu.',
+    ];
+    const short = height < 360;
+    const w = Math.min(width - 24, 460);
+    this.breakTitle.setText(title).setFontSize(short ? 20 : 26);
+    this.breakNote.setText(lines.join('\n')).setFontSize(short ? 11 : 13).setWordWrapWidth(w - 32, true);
+    const titleH = short ? 30 : 40;
+    const bh = short ? 38 : 44;
+    const h = titleH + this.breakNote.height + bh + 34;
+    const x = (width - w) / 2;
+    const y = Math.max(EDGE, (height - h) / 2);
+    this.breakRect = { x, y, width: w, height: h };
+    const g = this.breakPanel;
+    g.clear();
+    g.fillStyle(PALETTE.ink, 0.35);
+    g.fillRect(0, 0, width, height);
+    g.fillStyle(PALETTE.ink, 1);
+    g.fillRoundedRect(x, y + 5, w, h, 16);
+    g.fillStyle(PALETTE.cream, 1);
+    g.fillRoundedRect(x, y, w, h, 16);
+    g.lineStyle(4, PALETTE.ink, 1);
+    g.strokeRoundedRect(x, y, w, h, 16);
+    this.breakTitle.setPosition(width / 2, y + titleH / 2 + 6);
+    this.breakNote.setPosition(width / 2, y + titleH + 4);
+    const bw = Math.min(180, Math.floor((w - 48) / 2));
+    const by = y + titleH + this.breakNote.height + 14 + bh / 2;
+    const primary = mode === 'halftime' ? this.secondHalfButton : this.playAgainButton;
+    primary.resize(bw, bh, bw < 150 ? 14 : 17).setPosition(width / 2 - bw / 2 - 6, by);
+    this.breakMenuButton.resize(bw, bh, bw < 150 ? 14 : 17).setPosition(width / 2 + bw / 2 + 6, by);
   }
 
   private toggleOverlay(): void {
@@ -926,6 +1027,16 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
           break;
         case 'formation':
           break;
+        case 'halftime':
+          this.cancelInput('half-time');
+          break;
+        case 'fulltime':
+          this.cancelInput('full-time');
+          if (this.collector) void this.flushCareer(false);
+          break;
+        case 'secondHalf':
+          this.toast('Second half — away kick off');
+          break;
         default:
           break;
       }
@@ -1023,7 +1134,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const bh = height < 360 ? 38 : 44;
     const font = bw < 110 ? 14 : 17;
     const cur = this.sim.state.formations.home;
-    this.panelTitle.setText('Paused — Sandbox').setFontSize(height < 360 ? 20 : 26);
+    this.panelTitle.setText(this.sim.state.clock ? `Paused — ${match.clockLabel(this.sim.state.clock)}` : 'Paused — Sandbox').setFontSize(height < 360 ? 20 : 26);
     this.panelNote.setText(`Home formation: ${cur}. Changes keep every player where he is; they move to new roles when you resume. Opponent: ${this.sim.state.formations.away}.`).setFontSize(height < 360 ? 11 : 12);
     const titleH = height < 360 ? 30 : 40;
     const noteH = this.panelNote.height;
@@ -1305,9 +1416,14 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const left = d ? Math.ceil(d.timeLeft(s)) : 0;
     // Coach mode puts its counter on a second line so the HUD never runs into the buttons.
     const careerTag = this.collector ? ` · YOU ${this.collector.careerId}` : '';
-    const coachTag = d ? `${careerTag}\nCOACH ${d.entries.length}/${d.target} · ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}` : `${careerTag || ' · SANDBOX'}`;
+    const c = s.clock;
+    const clockTag = !c ? '' : s.phase === 'halftime' ? 'HALF-TIME' : s.phase === 'fulltime' ? 'FULL-TIME' : match.clockLabel(c);
+    const coachCount = d ? `COACH ${d.entries.length}/${d.target}` : '';
+    let tags: string;
+    if (c) tags = `\n${[clockTag, careerTag.replace(' · ', ''), coachCount].filter(Boolean).join(' · ')}`;
+    else tags = d ? `${careerTag}\n${coachCount} · ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}` : `${careerTag || ' · SANDBOX'}`;
     this.scoreText.setAlign(this.scoreText.originX === 1 ? 'right' : 'center');
-    this.scoreText.setText(`Home ${s.score.home} – ${s.score.away} Away${coachTag}`);
+    this.scoreText.setText(`Home ${s.score.home} – ${s.score.away} Away${tags}`);
     if (s.timeScale < 1 && s.timeScale > 0) {
       g.lineStyle(8, PALETTE.cream, 0.55);
       g.strokeRect(4, 4, width - 8, height - 8);
@@ -1317,10 +1433,12 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     if (s.phase === 'stopped' && st) {
       banner =
         st.reason === 'goal'
-          ? `GOAL! ${st.scorer === 'home' ? 'Home' : 'Away'} scores — sandbox restart`
-          : `Out of play — sandbox restart (${st.restartTeam === 'home' ? 'Home' : 'Away'} ball)`;
+          ? `GOAL! ${st.scorer === 'home' ? 'Home' : 'Away'} scores — ${s.clock ? `kick-off to ${st.restartTeam === 'home' ? 'Home' : 'Away'}` : 'sandbox restart'}`
+          : `Out of play — ${s.clock ? 'simplified' : 'sandbox'} restart (${st.restartTeam === 'home' ? 'Home' : 'Away'} ball)`;
     } else if (s.phase === 'kickoff') {
-      banner = s.simTime < 0.01 ? 'Sandbox kick-off…' : 'Sandbox restart…';
+      const kickoffs = s.clock ? ['Kick-off…', 'Second-half kick-off…', 'Restart…'] : ['Sandbox kick-off…', 'Sandbox kick-off…', 'Sandbox restart…'];
+      const second = s.clock?.half === 2 && s.clock.elapsed === 0;
+      banner = s.simTime < 0.01 ? kickoffs[0]! : second ? kickoffs[1]! : kickoffs[2]!;
     }
     this.bannerMessage = banner;
     this.bannerText.setVisible(banner !== '' && !s.paused).setText(banner).setPosition(width / 2, height / 2);

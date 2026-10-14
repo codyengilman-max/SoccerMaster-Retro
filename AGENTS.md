@@ -23,7 +23,7 @@ CI (`.github/workflows/ci.yml`) runs `npm ci`, typecheck, unit tests, build, and
 - `src/game/` — simulation layer. Framework-free: **no Phaser, DOM, or `src/render`/`src/scenes` imports** (enforced by `tests/architecture.test.ts`). Positions are in pitch yards.
 - `src/render/` — drawing helpers: `layout.ts` (pure pitch→screen math, unit tested), `textures.ts` (code-drawn placeholder art), `theme.ts` (palette, fonts).
 - `src/game/attack/` — M2 attack drill rules (`AttackSim`, `tuning.ts` holds every gameplay number).
-- `src/game/match/` — M3 9v9 sandbox (`MatchSim`, `formations.ts`, team AI in `ai.ts`, every number in `tuning.ts`). Reuses M2 commands and tuning.
+- `src/game/match/` — 9v9 engine (`MatchSim`, `formations.ts`, team AI in `ai.ts`, M4 match clock in `clock.ts`, every number in `tuning.ts`). Timed two-half match by default; `?sandbox` keeps the open-ended M3 sandbox and `?debug&halfSeconds=12` shortens halves for browser tests.
 - `src/game/coach/` — M5 Coach Moments (facts, templates, validation, `CoachDirector`), framework-free; turned on in the sandbox with `?coach`. See `docs/COACH.md`. `?debug&coach&coachSeconds=40` shortens the session for browser tests.
 - `src/game/career/` — M6 career player, activity catalog, planner, journal reducer, game evidence, growth and IndexedDB save (framework-free). UI in `src/scenes/CareerScene.ts`. See `docs/TRAINING.md`.
 - `src/input/` — pure gesture recognizer + keyboard bindings → the same sim `Command`s (also framework-free).

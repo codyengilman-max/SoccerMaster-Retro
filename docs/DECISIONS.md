@@ -49,3 +49,8 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - **All numbers in `CAREER_CONFIG` / `EVIDENCE_RULES`**, provisional until play-tested.
 - **Plain-text rendering only** (Phaser Text); names/notes are cleaned of control and bidi characters and length-bounded.
 
+## M4 core — match clock
+- The clock lives in `MatchSim` (`state.clock`, `src/game/match/clock.ts`), counts only ticks with the ball in play, and therefore stops for pauses, backgrounding, Coach holds, kick-off countdowns and stoppages. One sim tick is the only time source, so results stay deterministic.
+- At the whistle everything in progress ends where it is: an aim is cancelled (never fired), a ball in flight does not count, Coach intentions end. Only pause/resume, Coach hold/release, reset, formation and `startSecondHalf` commands are accepted during half-time and full-time.
+- Teams keep the same ends after half-time because the team AI assumes fixed attacking directions; swapping ends is deferred.
+- `MatchSim` without `halfSeconds` remains the open-ended sandbox, so M3/M5 unit tests and `?sandbox` keep their behaviour.
