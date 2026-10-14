@@ -55,3 +55,19 @@ describe('Gameplay Lab', () => {
     expect(sim.command({ type: 'dribble', direction: { x: 1, y: 0 } })).toBe(true);
   });
 });
+
+describe('Gameplay Lab reset', () => {
+  it('a seeded reset replays the scenario exactly like a fresh launch', () => {
+    const fresh = labSim('dribble-1v1', 3);
+    const replay = new MatchSim({ seed: 3, halfSeconds: null });
+    replay.arrange((s) => stageLabScenario(s, 'dribble-1v1', T.pitch));
+    for (let i = 0; i < 10 * 60; i++) replay.step(F);
+    replay.command({ type: 'reset', seed: 3 });
+    replay.arrange((s) => stageLabScenario(s, 'dribble-1v1', T.pitch));
+    for (let i = 0; i < 6 * 60; i++) {
+      fresh.step(F);
+      replay.step(F);
+    }
+    expect(snapshot(replay)).toBe(snapshot(fresh));
+  });
+});

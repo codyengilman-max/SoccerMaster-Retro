@@ -40,6 +40,15 @@ export function predictGroundKick(from: Vec2, dir: Vec2, speed: number, T: Match
   return { stop: { x: from.x + dir.x * d, y: from.y + dir.y * d }, stopDistance: d, stopSeconds: n * h };
 }
 
+/** userKick()'s shot test, shared with the aim guide: on target and rolling far enough to reach the goal line. */
+export function isShotOnGoal(from: Vec2, dir: Vec2, speed: number, T: MatchTuning): boolean {
+  if (dir.x <= 1e-3) return false;
+  const P = T.pitch;
+  const path = (P.length - from.x) / dir.x;
+  const y = from.y + dir.y * path;
+  return Math.abs(y - P.goalCenterY) <= P.goalHalfWidth + 1 && path <= (speed * speed) / (2 * T.ball.friction);
+}
+
 export interface ReachableReceiver {
   readonly id: MatchPlayerId;
   /** Point on the ball's path where he can first meet it. */
@@ -72,6 +81,8 @@ export function reachableReceiver(
   };
   for (let t = SAMPLE_SECONDS; t <= end + 1e-9; t += SAMPLE_SECONDS) {
     const d = rolledAfter(speed, f, t);
+    // A touch above receive.maxSpeed deflects (resolveLooseBall), so nobody can receive there.
+    const ballSpeed = Math.max(0, speed - f * t);
     const pt = { x: from.x + dir.x * d, y: from.y + dir.y * d };
     if (pt.x < 0 || pt.x > T.pitch.length || pt.y < 0 || pt.y > T.pitch.width) return null;
     let best: { id: MatchPlayerId; gap: number } | null = null;
@@ -79,7 +90,7 @@ export function reachableReceiver(
       const p = s.players[id];
       if (id === kickerId || p.isKeeper) continue;
       const gap = Math.max(0, Math.hypot(p.pos.x - pt.x, p.pos.y - pt.y) - reach);
-      if (RECEIVER_REACTION_SECONDS + runTime(gap) <= t && (!best || gap < best.gap)) best = { id, gap };
+      if (RECEIVER_REACTION_SECONDS + runTime(gap) <= t && ballSpeed <= T.receive.maxSpeed && (!best || gap < best.gap)) best = { id, gap };
     }
     if (best) return { id: best.id, point: pt, seconds: t };
   }

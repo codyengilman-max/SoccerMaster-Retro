@@ -155,11 +155,13 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.toastUntil = 0;
     const params = new URLSearchParams(window.location.search);
     const seed = Number(params.get('seed') ?? '1') || 1;
+    this.labSeed = seed;
     const fromUrl = params.get('formation') as FormationId | null;
     const formation = data.formation ?? (fromUrl && FORMATION_IDS.includes(fromUrl) ? fromUrl : DEFAULT_FORMATION);
     // A timed two-half match by default; `?sandbox` keeps the open-ended M3 sandbox. Debug builds may shorten halves.
     const halfParam = Number(params.get('halfSeconds'));
-    const labId = __LAB__ ? (data.lab ?? params.get('lab')) : null;
+    // Only the Lab picker launches a scenario; `?lab` itself just opens the picker.
+    const labId = __LAB__ ? data.lab : null;
     this.labId = match.isLabScenarioId(labId) ? labId : null;
     const halfSeconds = params.has('sandbox') || this.labId
       ? null
@@ -181,7 +183,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.controls = new TouchControls(Math.min(this.scale.width, this.scale.height));
     this.lastPull = null;
     this.lastEpoch = this.sim.state.controlEpoch;
-    this.tutorialStep = 0;
+    this.tutorialStep = this.labId ? TUTORIAL.length : 0;
     this.markings = pitchMarkings(U11_9V9_PITCH);
     ensurePlaceholderTextures(this);
 
@@ -554,6 +556,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
 
   /** Debug-only staged scenarios for browser tests (`?debug&setup=...`). Clearly not normal play. */
   private labId: match.LabScenarioId | null = null;
+  private labSeed = 1;
 
   /** Lab: stage the scenario on the fresh sim (create and every reset). */
   private stageLab(): void {
@@ -839,7 +842,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
 
   private reset(): void {
     this.cancelInput('reset');
-    this.sim.command({ type: 'reset' });
+    // A Lab reset replays the scenario exactly: same seed, same staging.
+    this.sim.command(this.labId ? { type: 'reset', seed: this.labSeed } : { type: 'reset' });
     this.stageLab();
     this.lastSeq = 0;
     this.newCoachSession();
@@ -1100,7 +1104,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       const hv = Math.min(P.width + 6, (len * availH) / (Math.max(1, available) * SIDELINE_SQUASH));
       this.viewLen = len;
       const cx = Phaser.Math.Clamp(this.camX, len / 2 - 3, P.length + 3 - len / 2);
-      const cy = hv >= P.width + 6 - 1e-6 ? P.width / 2 : Phaser.Math.Clamp(this.camY, hv / 2 - 3, P.width + 3 - hv / 2);
+      // Run-off margins keep a touchline player clear of the floating HUD (top) and the tip line (bottom).
+      const yardsPerPx = hv / availH;
+      const top = Math.max(3, (HUD_HEIGHT + EDGE + 12) * yardsPerPx);
+      const bottom = Math.max(3, 34 * yardsPerPx);
+      const cy = hv >= P.width + top + bottom - 1e-6 ? P.width / 2 : Phaser.Math.Clamp(this.camY, hv / 2 - top, P.width + bottom - hv / 2);
       this.pitchLayout = fitRegion({ width, height }, { x: cx - len / 2, y: cy - hv / 2, width: len, height: hv }, insets, 0, SIDELINE_SQUASH);
       return;
     }
@@ -1186,7 +1194,10 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const touchFirst = this.sys.game.device.input.touch;
     const base = portrait ? HELP_TOUCH.replace('  |  ', '\n') : touchFirst ? HELP_TOUCH : `${HELP_TOUCH}\n${HELP_KEYS}`;
     const help = TUTORIAL[this.tutorialStep] ?? base;
-    this.helpText.setText(help).setFontSize(compact ? 10 : 11).setWordWrapWidth(width - EDGE * 2, true).setPosition(width / 2, height - 4);
+    // Landscape keeps the tip line clear of the bottom-right minimap.
+    const mmLeft = orientationOf({ width, height }) === 'portrait' ? width : this.minimapRect().x;
+    const tipW = Math.max(120, mmLeft - EDGE * 2);
+    this.helpText.setText(help).setFontSize(compact ? 10 : 11).setWordWrapWidth(tipW, true).setPosition(EDGE + tipW / 2, height - 4);
     this.bannerText.setFontSize(compact ? 18 : 24).setWordWrapWidth(width - 40, true);
     this.panelNote.setWordWrapWidth(Math.min(380, width - 60), true);
     this.computeLayout();
@@ -1419,6 +1430,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const speed = match.kickSpeed(s.aim.power, T);
     // Same prediction userKick() executes: rest point of the roll and the teammate who can meet it.
     const plan = match.planUserPass(s, s.controlledId, from, dir, speed, T);
+    // A shot (userKick's own test) has no receiver, so none is highlighted.
+    const receiver = match.isShotOnGoal(from, dir, speed, T) ? null : plan.receiver;
     const stop = plan.prediction.stop;
     const P = U11_9V9_PITCH;
     const cut = Math.min(
@@ -1451,8 +1464,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       o.lineStyle(3, PALETTE.ink, 0.9);
       o.strokeCircle(b.x, b.y, Math.max(6, L.scale * 0.8));
     }
-    if (plan.reachable && plan.receiver) {
-      const rp = toScreen(L, s.players[plan.receiver].pos);
+    if (plan.reachable && receiver) {
+      const rp = toScreen(L, s.players[receiver].pos);
       const mp = toScreen(L, plan.target);
       o.lineStyle(4, PALETTE.ink, 1);
       o.strokeCircle(rp.x, rp.y - playerH * 0.45, playerH * 0.62);
@@ -1522,7 +1535,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const coachCount = d ? `COACH ${d.entries.length}/${d.target}` : '';
     let tags: string;
     if (c) tags = `\n${[clockTag, careerTag.replace(' · ', ''), coachCount].filter(Boolean).join(' · ')}`;
-    else tags = d ? `${careerTag}\n${coachCount} · ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}` : `${careerTag || ' · SANDBOX'}`;
+    else tags = d ? `${careerTag}\n${coachCount} · ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}` : `${careerTag || (this.labId ? ' · LAB' : ' · SANDBOX')}`;
     this.scoreText.setAlign(this.scoreText.originX === 1 ? 'right' : 'center');
     this.scoreText.setText(`Home ${s.score.home} – ${s.score.away} Away${tags}`);
     if (s.timeScale < 1 && s.timeScale > 0) {

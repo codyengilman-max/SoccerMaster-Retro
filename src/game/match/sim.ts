@@ -20,7 +20,7 @@ import { createRng } from '../attack/rng';
 import { passSpeedFor } from '../attack/sim';
 import { DEFAULT_FORMATION, FORMATIONS, roleDef, type FormationId } from './formations';
 import { MATCH_TUNING, type MatchTuning } from './tuning';
-import { planUserPass } from './predict';
+import { isShotOnGoal, planUserPass } from './predict';
 import { computeAnchor, decideCarrier, planTeams, toTeam, toWorld, velToTeam, type AiContext } from './ai';
 import {
   AWAY_IDS,
@@ -47,7 +47,7 @@ export type MatchCommand =
   | { readonly type: 'aimCancel'; readonly reason: string }
   | { readonly type: 'pause' }
   | { readonly type: 'resume' }
-  | { readonly type: 'reset' }
+  | { readonly type: 'reset'; readonly seed?: number }
   | { readonly type: 'setFormation'; readonly team: TeamId; readonly formation: FormationId }
   /** Coach Moment freeze. Independent of the user's pause: releasing it never resumes a user/background pause. */
   | { readonly type: 'coachHold' }
@@ -170,9 +170,14 @@ export class MatchSim {
         this.clearCoachIntent(cmd.reason);
         return true;
       case 'reset':
+        // A seeded reset (Gameplay Lab) replays a fresh sim exactly: the RNG is reseeded before the state is built.
+        if (cmd.seed !== undefined) {
+          this.rng = createRng(cmd.seed);
+          this.seq = 0;
+        }
         this.s = this.createState({ ...s.formations });
         this.accumulator = 0;
-        this.rng = createRng(this.seed + this.s.events.length + Math.round(s.simTime * 1000));
+        if (cmd.seed === undefined) this.rng = createRng(this.seed + this.s.events.length + Math.round(s.simTime * 1000));
         this.emit('reset', null, this.s.clock ? 'new match' : 'sandbox reset');
         return true;
       case 'setFormation':
@@ -481,15 +486,8 @@ export class MatchSim {
     const dir = normalize(direction);
     const speed = kickSpeed(power, T);
     const ball = s.ball.pos;
-    const P = T.pitch;
-    let onGoal = false;
-    if (dir.x > 1e-3) {
-      // A kick is a shot whenever it is on target and rolls far enough, from any range.
-      const path = (P.length - ball.x) / dir.x;
-      const y = ball.y + dir.y * path;
-      onGoal = Math.abs(y - P.goalCenterY) <= P.goalHalfWidth + 1 && path <= (speed * speed) / (2 * T.ball.friction);
-    }
-    if (onGoal) {
+    // A kick is a shot whenever it is on target and rolls far enough, from any range.
+    if (isShotOnGoal(ball, dir, speed, T)) {
       this.kickBall(carrier, scale(dir, speed), 'shot', null, null);
       s.stats.shots.home += 1;
       this.emit('shot', carrier.id, speed.toFixed(1));

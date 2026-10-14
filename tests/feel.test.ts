@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MatchSim, MATCH_TUNING as T, HOME_IDS, AWAY_IDS, kickSpeed, planUserPass, predictGroundKick, type MatchPlayerId } from '../src/game/match';
+import { MatchSim, MATCH_TUNING as T, HOME_IDS, AWAY_IDS, isShotOnGoal, kickSpeed, planUserPass, predictGroundKick, reachableReceiver, type MatchPlayerId } from '../src/game/match';
 
 type Sim = MatchSim;
 const F = 1 / 60;
@@ -189,5 +189,27 @@ describe('aim assistance', () => {
     const before = sim.state.aimAllowance.home;
     sim.step(30);
     expect(before - sim.state.aimAllowance.home).toBeLessThanOrEqual(T.maxFrameSeconds + 1e-9);
+  });
+});
+
+describe('guide and kick agree on receivability', () => {
+  it('never names a receiver where the ball is still too fast to receive', () => {
+    const sim = new MatchSim({ seed: 2, halfSeconds: null });
+    const T = sim.tuning;
+    sim.arrange((s) => {
+      s.players.H8.pos = { x: 30, y: 25 };
+      s.players.H7.pos = { x: 33, y: 26.3 };
+    });
+    const s = sim.state;
+    const fast = kickSpeed(1, T);
+    const r = reachableReceiver(s, 'H8', { x: 30.6, y: 25 }, { x: 1, y: 0 }, fast, T);
+    if (r) expect(fast - T.ball.friction * r.seconds).toBeLessThanOrEqual(T.receive.maxSpeed + 1e-9);
+  });
+
+  it('a kick on goal is a shot for both the guide test and userKick', () => {
+    const T = new MatchSim({ seed: 1 }).tuning;
+    const P = T.pitch;
+    expect(isShotOnGoal({ x: P.length - 12, y: P.goalCenterY }, { x: 1, y: 0 }, kickSpeed(1, T), T)).toBe(true);
+    expect(isShotOnGoal({ x: P.length - 12, y: P.goalCenterY }, { x: -1, y: 0 }, kickSpeed(1, T), T)).toBe(false);
   });
 });
