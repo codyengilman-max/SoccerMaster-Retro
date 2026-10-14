@@ -114,6 +114,10 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     for (const b of this.buttons) if (b.active) elements[b.name] = b.getButtonBounds();
     const tb = this.title.getBounds();
     elements.title = { x: tb.x, y: tb.y, width: tb.width, height: tb.height };
+    if (this.demoCaption?.active && this.demoCaption.visible) {
+      const cb = this.demoCaption.getBounds();
+      elements['demo-caption'] = { x: cb.x, y: cb.y, width: cb.width, height: cb.height };
+    }
     const bb = this.body.getBounds();
     elements.body = { x: bb.x, y: bb.y, width: bb.width, height: Math.min(bb.height, this.body.height) };
     return { orientation: orientationOf({ width: this.scale.width, height: this.scale.height }), viewport: { width: this.scale.width, height: this.scale.height }, elements };
@@ -477,6 +481,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       bodyY = top + dh + 8;
     } else this.demoRect = null;
     this.demoG.clear();
+    if (!demoOn) this.demoCaption?.setVisible(false);
     if (!portrait) {
       colX = 28 + contentW;
       colY = top;

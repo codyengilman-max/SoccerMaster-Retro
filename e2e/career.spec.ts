@@ -82,6 +82,21 @@ test('home training: create player, plan a ball-only indoor week, log once, pers
   }
   const all = seen.join('\n');
   for (const field of ['Easier:', 'Harder:', 'Limits', 'Source', 'Review: coaching pending']) expect(all, all).toContain(field);
+  await page.waitForTimeout(400);
+  expect(Object.keys((await diagnostics(page)).layout!.elements)).toContain('demo-caption');
+  await pressElement(page, 'career-home', mode);
+  await until(page, (x) => x.screen === 'home', 'home');
+  await pressElement(page, 'nav-journal', mode);
+  await until(page, (x) => x.screen === 'journal', 'journal');
+  await page.waitForTimeout(400);
+  // The activity demo's caption must not linger on other screens.
+  expect(Object.keys((await diagnostics(page)).layout!.elements)).not.toContain('demo-caption');
+  await pressElement(page, 'career-home', mode);
+  await until(page, (x) => x.screen === 'home', 'home');
+  await pressElement(page, 'nav-sessions', mode);
+  await until(page, (x) => x.screen === 'sessions', 'sessions again');
+  await pressElement(page, 'open-w1-s1-0', mode);
+  await until(page, (x) => x.screen === 'activity', 'activity again');
   await pressElement(page, 'log-open', mode);
   await until(page, (x) => x.screen === 'log', 'log');
   await fits(page);
