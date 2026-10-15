@@ -4,6 +4,8 @@
 
 Dribbling, passing, receiving and shooting feel: off-ball control, shared kick prediction, receivers that meet passes, aim-assist modes, follow camera and minimap, and a Gameplay Lab. See `docs/GAMEPLAY_FEEL.md`.
 
+Closer camera (pending the owner's iPhone pick): gameplay zoom 1.5× over the previous framing by default (landscape shows about 26.7 yd of pitch length instead of 40); 1.4× and 1.6× are selectable in the Lab (`Zoom` button) or with `?zoom=1.4|1.5|1.6`. Off-screen pass endpoints show an edge arrow.
+
 ## Release integration: M4 core match flow + M5 + M6
 
 Start → **Play 9v9 Match** → pick a formation → Kick Off plays a timed two-half match: clock, half-time card (Start 2nd half), away kick-off for the second half, full-time result with stats, Play again. `?coach` Coach Moments span the whole match and their summary is the full-time screen. Home Training's match button plays the same timed match. Not built: formal throw-ins/corners/goal kicks, fouls, offside, added time, swapping ends. `?sandbox` opens the old open-ended sandbox.

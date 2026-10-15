@@ -340,3 +340,66 @@ test('Start -> sandbox -> Menu repeated keeps one canvas and stable listeners', 
   }
   expect(errors).toEqual([]);
 });
+
+for (const [query, zoom] of [
+  ['&zoom=1.4', 1.4],
+  ['&zoom=abc', 1.5],
+  ['&zoom=9', 1.5],
+  ['&zoom=1.6', 1.6],
+] as const)
+  test(`camera zoom ${query}: span comes from the baseline (${zoom}x) and never compounds over resets and resizes`, async ({ page }, info) => {
+    const errors = trackConsoleErrors(page);
+    const mode = modeFor(info);
+    const expectSpan = (r: MatchReport, zoom: number) => {
+      expect(r.camera.zoom).toBe(zoom);
+      if (r.layout.orientation === 'landscape') expect(r.camera.viewLength).toBeCloseTo(40 / zoom, 6);
+      else expect(r.camera.viewCross).toBeCloseTo(Math.min(54, 28 / zoom), 6);
+    };
+    {
+      let r = await openSandbox(page, mode, '1-3-2-3', `&sandbox${query}`);
+      expectSpan(r, zoom);
+      const vp = page.viewportSize()!;
+      for (let i = 0; i < 2; i++) {
+        await page.keyboard.press('KeyR');
+        await page.setViewportSize({ width: vp.height, height: vp.width });
+        await page.waitForTimeout(150);
+        await page.setViewportSize(vp);
+        await page.waitForTimeout(150);
+      }
+      r = await report(page);
+      expectSpan(r, zoom);
+    }
+    expect(errors).toEqual([]);
+  });
+
+test('camera holds during aim: focus and aim do not drift while the finger is still (staged: ?setup=space)', async ({ page }, info) => {
+  const errors = trackConsoleErrors(page);
+  const finger = new Finger(page, modeFor(info));
+  let r = await stagedCarrier(page, finger);
+  const c = r.players[r.controlledId];
+  const viewport = page.viewportSize()!;
+  const pull = r.thresholds.cancelRadius + 0.5 * (r.thresholds.maxPull - r.thresholds.cancelRadius);
+  const start = {
+    x: Math.min(Math.max(c.sx, pull + 20), viewport.width - pull - 20),
+    y: Math.min(Math.max(c.sy + 30, pull + 60), viewport.height - pull - 40),
+  };
+  await finger.down(start);
+  await waitFor(page, (x) => x.phase === 'aiming', 5000);
+  await finger.move({ x: start.x - pull, y: start.y });
+  r = await waitFor(page, (x) => x.aim !== null, 3000);
+  const first = { cam: { x: r.camera.x, y: r.camera.y }, aim: r.aim! };
+  await page.waitForTimeout(700);
+  r = await report(page);
+  expect(r.phase).toBe('aiming');
+  expect(r.camera.mode).toBe('aiming');
+  expect(Math.abs(r.camera.x - first.cam.x)).toBeLessThan(1.5);
+  expect(Math.abs(r.camera.y - first.cam.y)).toBeLessThan(1.5);
+  expect(r.aim!.dx).toBeCloseTo(first.aim.dx, 6);
+  expect(r.aim!.dy).toBeCloseTo(first.aim.dy, 6);
+  expect(r.aim!.power).toBeCloseTo(first.aim.power, 6);
+  // Release back inside the cancel circle: no kick.
+  await finger.up(start);
+  await waitFor(page, (x) => x.phase !== 'aiming', 3000);
+  await linger(page);
+  expect(errors).toEqual([]);
+});

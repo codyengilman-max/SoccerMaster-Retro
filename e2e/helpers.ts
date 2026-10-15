@@ -100,6 +100,11 @@ export type PointerMode = 'touch' | 'mouse';
 export type Point = { x: number; y: number };
 
 /** One pointer, driven either as a real touch (CDP) or a mouse. */
+interface TouchStep {
+  readonly type: 'touchStart' | 'touchMove' | 'touchEnd' | 'touchCancel';
+  readonly p?: Point | undefined;
+}
+
 export class Finger {
   private cdp: CDPSession | null = null;
   private cachedOrigin: Point | null = null;
@@ -114,11 +119,82 @@ export class Finger {
     this.cachedOrigin = { x: box.x, y: box.y };
     return this.cachedOrigin;
   }
-  private async touch(type: 'touchStart' | 'touchMove' | 'touchEnd' | 'touchCancel', p?: Point): Promise<void> {
-    this.cdp ??= await this.page.context().newCDPSession(this.page);
+  /**
+   * Sends touch steps back-to-back. Chromium uses CDP (real input pipeline); other engines (WebKit)
+   * get synthetic TouchEvents on the canvas dispatched in one evaluate, so they also arrive together.
+   */
+  private async sendTouches(steps: readonly TouchStep[]): Promise<void> {
     const o = await this.origin();
-    const touchPoints = p ? [{ x: o.x + p.x, y: o.y + p.y, id: 1 }] : [];
-    await this.cdp.send('Input.dispatchTouchEvent', { type, touchPoints });
+    if (this.page.context().browser()?.browserType().name() === 'chromium') {
+      this.cdp ??= await this.page.context().newCDPSession(this.page);
+      const cdp = this.cdp;
+      const at = (p?: Point) => (p ? [{ x: o.x + p.x, y: o.y + p.y, id: 1 }] : []);
+      await Promise.all(
+        steps.map((st) =>
+          cdp.send('Input.dispatchTouchEvent', {
+            type: st.type,
+            touchPoints: at(st.p),
+          }),
+        ),
+      );
+      return;
+    }
+    const list = steps.map((st) => ({
+      type: st.type,
+      x: st.p ? o.x + st.p.x : null,
+      y: st.p ? o.y + st.p.y : null,
+    }));
+    await this.page.evaluate((items) => {
+      const canvas = document.querySelector('canvas');
+      if (!canvas) throw new Error('canvas not found');
+      const names = {
+        touchStart: 'touchstart',
+        touchMove: 'touchmove',
+        touchEnd: 'touchend',
+        touchCancel: 'touchcancel',
+      } as const;
+      const w = window as unknown as { __smrTouch?: Touch | null };
+      let last = w.__smrTouch ?? null;
+      for (const it of items) {
+        // WebKit has no Touch constructor; its legacy document.createTouch/createTouchList still work.
+        const legacy = document as unknown as {
+          createTouch(view: Window, target: EventTarget, id: number, pageX: number, pageY: number, screenX: number, screenY: number): Touch;
+          createTouchList(...touches: Touch[]): TouchList;
+        };
+        const make = (x: number, y: number): Touch =>
+          typeof legacy.createTouch === 'function'
+            ? legacy.createTouch(window, canvas, 1, x, y, x, y)
+            : new Touch({
+                identifier: 1,
+                target: canvas,
+                clientX: x,
+                clientY: y,
+                pageX: x,
+                pageY: y,
+                screenX: x,
+                screenY: y,
+              });
+        const list = (ts: Touch[]): TouchList | Touch[] => (typeof legacy.createTouchList === 'function' ? legacy.createTouchList(...ts) : ts);
+        const t = it.x === null || it.y === null ? last : make(it.x, it.y);
+        const ending = it.type === 'touchEnd' || it.type === 'touchCancel';
+        const changed = t ? [t] : [];
+        const live = list(ending ? [] : changed) as Touch[];
+        canvas.dispatchEvent(
+          new TouchEvent(names[it.type], {
+            bubbles: true,
+            cancelable: true,
+            touches: live,
+            targetTouches: live,
+            changedTouches: list(changed) as Touch[],
+          }),
+        );
+        last = ending ? null : t;
+      }
+      w.__smrTouch = last;
+    }, list);
+  }
+  private touch(type: TouchStep['type'], p?: Point): Promise<void> {
+    return this.sendTouches([{ type, p }]);
   }
   async down(p: Point): Promise<void> {
     if (this.mode === 'touch') return this.touch('touchStart', p);
@@ -143,13 +219,7 @@ export class Finger {
   /** A quick tap: touch start and end are sent back-to-back so CDP latency cannot turn it into a hold. */
   async tap(p: Point): Promise<void> {
     if (this.mode === 'touch') {
-      this.cdp ??= await this.page.context().newCDPSession(this.page);
-      const o = await this.origin();
-      const point = [{ x: o.x + p.x, y: o.y + p.y, id: 1 }];
-      await Promise.all([
-        this.cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: point }),
-        this.cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }),
-      ]);
+      await this.sendTouches([{ type: 'touchStart', p }, { type: 'touchEnd' }]);
       return;
     }
     const o = await this.origin();
@@ -162,10 +232,7 @@ export class Finger {
   async doubleTap(p: Point): Promise<void> {
     const o = await this.origin();
     if (this.mode === 'touch') {
-      this.cdp ??= await this.page.context().newCDPSession(this.page);
-      const point = [{ x: o.x + p.x, y: o.y + p.y, id: 1 }];
-      const send = (type: 'touchStart' | 'touchEnd') => this.cdp!.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchStart' ? point : [] });
-      await Promise.all([send('touchStart'), send('touchEnd'), send('touchStart'), send('touchEnd')]);
+      await this.sendTouches([{ type: 'touchStart', p }, { type: 'touchEnd' }, { type: 'touchStart', p }, { type: 'touchEnd' }]);
       return;
     }
     await this.page.mouse.move(o.x + p.x, o.y + p.y);
@@ -174,15 +241,7 @@ export class Finger {
   /** A quick swipe: down, move and up sent back-to-back so headless frame delays cannot turn it into a slow (aim) drag. */
   async swipe(from: Point, mid: Point, to: Point): Promise<void> {
     if (this.mode === 'touch') {
-      this.cdp ??= await this.page.context().newCDPSession(this.page);
-      const o = await this.origin();
-      const at = (p: Point) => [{ x: o.x + p.x, y: o.y + p.y, id: 1 }];
-      await Promise.all([
-        this.cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: at(from) }),
-        this.cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: at(mid) }),
-        this.cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: at(to) }),
-        this.cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }),
-      ]);
+      await this.sendTouches([{ type: 'touchStart', p: from }, { type: 'touchMove', p: mid }, { type: 'touchMove', p: to }, { type: 'touchEnd' }]);
       return;
     }
     const o = await this.origin();

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { match, type Rect } from '../game';
+import { DEFAULT_ZOOM, nextZoom, parseZoom, type ZoomChoice } from '../render/camera';
 import { orientationOf } from '../render/layout';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { InspectableScene, SceneLayoutReport } from './inspectable';
@@ -13,20 +14,23 @@ type AimMode = 'slow' | 'normal';
 export class LabScene extends Phaser.Scene implements InspectableScene {
   private navigating = false;
   private aim: AimMode = 'slow';
+  private zoom: ZoomChoice = DEFAULT_ZOOM;
   private background!: Phaser.GameObjects.Graphics;
   private title!: Phaser.GameObjects.Text;
   private note!: Phaser.GameObjects.Text;
   private picks!: Record<LabScenarioId, Button>;
   private aimButton!: Button;
+  private zoomButton!: Button;
   private backButton!: Button;
 
   constructor() {
     super(SceneKeys.Lab);
   }
 
-  create(data: { aim?: AimMode } = {}): void {
+  create(data: { aim?: AimMode; zoom?: number } = {}): void {
     this.navigating = false;
     this.aim = data.aim === 'normal' ? 'normal' : 'slow';
+    this.zoom = parseZoom(data.zoom);
     const resolution = textResolution();
     this.background = this.add.graphics();
     this.title = this.add
@@ -52,8 +56,32 @@ export class LabScene extends Phaser.Scene implements InspectableScene {
         }),
       ]),
     ) as Record<LabScenarioId, Button>;
-    this.aimButton = new Button(this, 0, 0, { name: 'lab-aim', label: '', width: 220, height: 44, fontSize: 15, onClick: () => this.toggleAim() });
-    this.backButton = new Button(this, 0, 0, { name: 'back-button', label: '‹ Back', width: 96, height: 44, fontSize: 18, fill: PALETTE.cream, fillPressed: PALETTE.sand, onClick: () => this.goBack() });
+    this.aimButton = new Button(this, 0, 0, {
+      name: 'lab-aim',
+      label: '',
+      width: 220,
+      height: 44,
+      fontSize: 15,
+      onClick: () => this.toggleAim(),
+    });
+    this.zoomButton = new Button(this, 0, 0, {
+      name: 'lab-zoom',
+      label: '',
+      width: 140,
+      height: 44,
+      fontSize: 15,
+      onClick: () => this.toggleZoom(),
+    });
+    this.backButton = new Button(this, 0, 0, {
+      name: 'back-button',
+      label: '‹ Back',
+      width: 96,
+      height: 44,
+      fontSize: 18,
+      fill: PALETTE.cream,
+      fillPressed: PALETTE.sand,
+      onClick: () => this.goBack(),
+    });
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleShutdown, this);
     this.toggleAim(this.aim);
@@ -61,25 +89,42 @@ export class LabScene extends Phaser.Scene implements InspectableScene {
 
   describeLayout(): SceneLayoutReport {
     const { width, height } = this.scale;
-    const elements: Record<string, Rect> = { 'lab-aim': this.aimButton.getButtonBounds(), 'back-button': this.backButton.getButtonBounds() };
+    const elements: Record<string, Rect> = {
+      'lab-aim': this.aimButton.getButtonBounds(),
+      'lab-zoom': this.zoomButton.getButtonBounds(),
+      'back-button': this.backButton.getButtonBounds(),
+    };
     for (const id of match.LAB_SCENARIO_IDS) elements[`lab-${id}`] = this.picks[id].getButtonBounds();
-    return { orientation: orientationOf({ width, height }), viewport: { width, height }, elements };
+    return {
+      orientation: orientationOf({ width, height }),
+      viewport: { width, height },
+      elements,
+    };
   }
 
-  describeGameplay(): { aim: AimMode } {
-    return { aim: this.aim };
+  describeGameplay(): { aim: AimMode; zoom: ZoomChoice } {
+    return { aim: this.aim, zoom: this.zoom };
   }
 
   private toggleAim(set?: AimMode): void {
     this.aim = set ?? (this.aim === 'slow' ? 'normal' : 'slow');
-    this.aimButton.setLabel(this.aim === 'slow' ? 'Aim: short slow motion' : 'Aim: normal speed');
+    this.layout(this.scale.width, this.scale.height);
+  }
+
+  /** Cycles the gameplay zoom comparison: 1.4x, 1.5x (default), 1.6x. */
+  private toggleZoom(): void {
+    this.zoom = nextZoom(this.zoom);
     this.layout(this.scale.width, this.scale.height);
   }
 
   private open(id: LabScenarioId): void {
     if (this.navigating) return;
     this.navigating = true;
-    this.scene.start(SceneKeys.Match, { lab: id, aim: this.aim });
+    this.scene.start(SceneKeys.Match, {
+      lab: id,
+      aim: this.aim,
+      zoom: this.zoom,
+    });
   }
 
   private goBack(): void {
@@ -117,6 +162,14 @@ export class LabScene extends Phaser.Scene implements InspectableScene {
       const x = cols === 1 ? width / 2 : width / 2 + (c === 0 ? -1 : 1) * (bw / 2 + 6);
       this.picks[id].resize(bw, bh, 14).setPosition(x, top + r * (bh + gap) + bh / 2);
     });
-    this.aimButton.resize(Math.min(260, width - 40), 44, 15).setPosition(width / 2, height - 34);
+    // Bottom row: aim mode and zoom side by side; narrow screens get the short aim label.
+    const zw = Math.min(150, Math.max(110, (width - 50) * 0.42));
+    const aw = Math.min(260, width - 50 - zw);
+    const narrow = aw < 200;
+    this.aimButton.setLabel(this.aim === 'slow' ? (narrow ? 'Aim: slow-mo' : 'Aim: short slow motion') : narrow ? 'Aim: normal' : 'Aim: normal speed');
+    this.zoomButton.setLabel(`Zoom ${this.zoom}×`);
+    const left = (width - aw - zw - 10) / 2;
+    this.aimButton.resize(aw, 44, 15).setPosition(left + aw / 2, height - 34);
+    this.zoomButton.resize(zw, 44, 15).setPosition(left + aw + 10 + zw / 2, height - 34);
   }
 }
