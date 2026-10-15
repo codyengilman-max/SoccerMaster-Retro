@@ -41,6 +41,8 @@ export type MatchCommand =
   /** Sets the user carrier's dribble direction (world/pitch vector; its length is ignored). */
   | { readonly type: 'dribble'; readonly direction: Vec2 }
   | { readonly type: 'feint' }
+  /** Double-tap: an immediate shot at the opponent goal, fast but with seeded placement error. */
+  | { readonly type: 'quickShot' }
   | { readonly type: 'aimStart' }
   | { readonly type: 'aimUpdate'; readonly direction: Vec2 | null; readonly power: number }
   | { readonly type: 'aimRelease' }
@@ -186,6 +188,8 @@ export class MatchSim {
         return this.dribble(cmd.direction);
       case 'feint':
         return this.feint();
+      case 'quickShot':
+        return this.quickShot();
       case 'aimStart':
         if (s.paused || s.phase !== 'live' || !this.userHasBall()) return false;
         s.phase = 'aiming';
@@ -400,6 +404,22 @@ export class MatchSim {
     s.controlSince = s.simTime;
     s.userSteer = null;
     this.emit('control', id, why);
+  }
+
+  /** Same rules as an aimed kick (live play, user carrier owns the ball); only the aim is automatic. */
+  private quickShot(): boolean {
+    const T = this.tuning;
+    const s = this.s;
+    if (s.paused || s.phase !== 'live') return false;
+    if (!this.userHasBall()) return this.reject('quickShot', 'no ball');
+    const P = T.pitch;
+    const ball = s.ball.pos;
+    const target = vec(P.length, P.goalCenterY + (this.rng() * 2 - 1) * T.quickShot.spread * P.goalHalfWidth);
+    const dir = normalize(vec(target.x - ball.x, target.y - ball.y));
+    if (!finiteVec(dir) || length(dir) < 0.5) return this.reject('quickShot', 'no angle');
+    this.emit('quickShot', s.controlledId, target.y.toFixed(1));
+    this.userKick(dir, T.quickShot.power);
+    return true;
   }
 
   private feint(): boolean {

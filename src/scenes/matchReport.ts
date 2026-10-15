@@ -56,7 +56,6 @@ export interface MatchReport {
   readonly tutorialStep: number;
   readonly inputLog: readonly string[];
   readonly aimSource: 'pointer' | 'keyboard' | null;
-  readonly holdRadiusPx: number;
   readonly pass: { readonly minDistance: number; readonly maxDistance: number };
   readonly overlay: boolean;
   readonly banner: string;

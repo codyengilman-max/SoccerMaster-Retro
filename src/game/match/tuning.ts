@@ -57,6 +57,11 @@ export const MATCH_TUNING = {
     /** Steered speed is the normal chase speed: no boost for being user-controlled. */
     minHoldSeconds: 0.6,
   },
+  /**
+   * Double-tap quick shot: fixed power toward the goal with a seeded target spread of this fraction
+   * of the goal half-width either side of centre (speed over placement). Project tuning, not a reference value.
+   */
+  quickShot: { power: 0.95, spread: 0.85 },
   feint: {
     seconds: 0.45,
     cooldownSeconds: 1.6,

@@ -171,6 +171,24 @@ export class Finger {
     await this.page.mouse.move(o.x + p.x, o.y + p.y);
     await Promise.all([this.page.mouse.down(), this.page.mouse.up(), this.page.mouse.down(), this.page.mouse.up()]);
   }
+  /** A quick swipe: down, move and up sent back-to-back so headless frame delays cannot turn it into a slow (aim) drag. */
+  async swipe(from: Point, mid: Point, to: Point): Promise<void> {
+    if (this.mode === 'touch') {
+      this.cdp ??= await this.page.context().newCDPSession(this.page);
+      const o = await this.origin();
+      const at = (p: Point) => [{ x: o.x + p.x, y: o.y + p.y, id: 1 }];
+      await Promise.all([
+        this.cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: at(from) }),
+        this.cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: at(mid) }),
+        this.cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: at(to) }),
+        this.cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }),
+      ]);
+      return;
+    }
+    const o = await this.origin();
+    await this.page.mouse.move(o.x + from.x, o.y + from.y);
+    await Promise.all([this.page.mouse.down(), this.page.mouse.move(o.x + mid.x, o.y + mid.y), this.page.mouse.move(o.x + to.x, o.y + to.y), this.page.mouse.up()]);
+  }
   async cancel(): Promise<void> {
     await this.touch('touchCancel');
   }

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { coach, match, pitchMarkings, U11_9V9_PITCH, type PitchMarkings, type Rect, type Vec2 } from '../game';
-import { KEY_BINDINGS, KeyboardAim, TouchControls, type ControlAction, type Pull } from '../input';
+import { inGestureArea, KEY_BINDINGS, KeyboardAim, TouchControls, type ControlAction, type Pull } from '../input';
 import {
   arcPoints,
   fitRegion,
@@ -42,14 +42,14 @@ const SIDELINE_SQUASH = 0.55;
 const VIEW_LENGTH = { landscape: 40, portrait: 40 } as const;
 /** Portrait camera width across the pitch (yards): closer than the full 50-yard width. */
 const PORTRAIT_CROSS = 28;
-const HELP_TOUCH = 'Swipe any way to dribble · double-tap your player to feint  |  Hold your player, pull back, release to kick (back in the circle cancels)';
+const HELP_TOUCH = 'Swipe anywhere to run · double-tap for a quick shot  |  Press and pull back anywhere, release to pass or shoot (back in the circle cancels)';
 const HELP_KEYS = 'Arrows/WASD dribble · F feint · hold Space aim (arrows adjust) · P/Esc pause · R reset · O overlay · M menu';
 /** Short interactive tutorial: each step advances when the player does it. */
 const TUTORIAL = [
   'Try it 1/4: swipe the pitch in any direction — your player dribbles that way until you swipe again',
-  'Try it 2/4: hold still on your player until the circle appears, then pull back — the arrow shows the kick',
+  'Try it 2/4: with the ball, press anywhere and pull back slowly — the arrow shows the kick',
   'Try it 3/4: release to kick (pass or shot, same move). Slide back inside the circle and release to cancel',
-  'Try it 4/4: double-tap your player for a body feint, then swipe to choose the way out',
+  'Try it 4/4: double-tap anywhere for a quick shot at goal — fast, but less accurate',
 ] as const;
 
 export interface MatchSceneData {
@@ -523,7 +523,6 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       tutorialStep: this.tutorialStep,
       inputLog: [...this.inputLog],
       aimSource: this.aimSource,
-      holdRadiusPx: this.holdRadius(),
       pass: { minDistance: this.sim.tuning.pass.minDistance, maxDistance: this.sim.tuning.pass.maxDistance },
       overlay: this.overlayOn,
       banner: this.bannerText.visible ? this.bannerMessage : '',
@@ -589,20 +588,24 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       this.logInput(over.length > 0 ? `down:ui(${over.map((o) => o.name || o.type).join('+')})` : 'down:ignored');
       return;
     }
+    if (!inGestureArea(pointer.x, pointer.y, this.scale.width, this.scale.height, this.controls.thresholds)) {
+      this.logInput('down:edge');
+      return;
+    }
     const s = this.sim.state;
-    const dist = this.distanceToCarrier(pointer.x, pointer.y);
-    const near = this.sim.userHasBall() && dist <= this.holdRadius();
-    this.logInput(`down:${near ? 'carrier' : 'pitch'}(${Math.round(dist)}/${Math.round(this.holdRadius())}):${this.controls.state}`);
-    this.handleControls(this.controls.pointerDown(pointer.id, pointer.x, pointer.y, performance.now(), near ? `${s.controlledId}#${s.controlEpoch}` : null));
+    // Screen-space gesture; it is mapped to pitch directions only when an action fires.
+    const withBall = this.sim.userHasBall() && s.phase === 'live';
+    this.logInput(`down:${withBall ? 'ball' : 'off-ball'}:${this.controls.state}`);
+    this.handleControls(this.controls.pointerDown(pointer.id, pointer.x, pointer.y, eventTime(pointer), withBall ? `${s.controlledId}#${s.controlEpoch}` : null));
   }
 
   private onPointerMove(pointer: Phaser.Input.Pointer): void {
-    this.handleControls(this.controls.pointerMove(pointer.id, pointer.x, pointer.y, performance.now()));
+    this.handleControls(this.controls.pointerMove(pointer.id, pointer.x, pointer.y, eventTime(pointer)));
   }
 
   private onPointerUp(pointer: Phaser.Input.Pointer): void {
     this.logInput(`up:${pointer.id}:${this.controls.state}`);
-    this.handleControls(this.controls.pointerUp(pointer.id, pointer.x, pointer.y, performance.now()));
+    this.handleControls(this.controls.pointerUp(pointer.id, pointer.x, pointer.y, eventTime(pointer)));
   }
 
   private readonly onWindowBlur = (): void => this.cancelInput('window blur');
@@ -653,6 +656,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
           this.lastPull = null;
           break;
         case 'aimMove':
+          if (!a.inCancel) this.advanceTutorial(1);
           this.lastPull = a;
           this.sendPointerAim(a);
           break;
@@ -670,8 +674,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
           this.aimSource = null;
           this.lastPull = null;
           break;
-        case 'feint':
-          if (this.sim.command({ type: 'feint' })) this.advanceTutorial(3);
+        case 'quickShot':
+          if (this.sim.command({ type: 'quickShot' })) this.advanceTutorial(3);
           break;
       }
     }
@@ -1033,8 +1037,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         case 'shot':
           if (e.by?.startsWith('H')) this.advanceTutorial(2);
           break;
-        case 'aimStart':
-          this.advanceTutorial(1);
+        case 'quickShot':
+          this.toast('Quick shot!');
           break;
         case 'tackle':
           this.toast(e.by?.startsWith('A') ? 'Tackled — win it back!' : `${e.by} won the ball`);
@@ -1564,17 +1568,13 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const mm = this.minimapRect();
     this.rotateText.setVisible(portrait && !s.paused).setPosition(mm.x + mm.width + 8, mm.y + mm.height / 2);
   }
+}
 
-  private distanceToCarrier(x: number, y: number): number {
-    const s = this.sim.state;
-    const feet = toScreen(this.pitchLayout, s.players[s.controlledId].pos);
-    const playerH = Phaser.Math.Clamp(this.pitchLayout.scale * 2.7, 24, 80);
-    return Math.min(Math.hypot(x - feet.x, y - feet.y), Math.hypot(x - feet.x, y - (feet.y - playerH / 2)));
-  }
-
-  private holdRadius(): number {
-    return Math.max(this.controls.thresholds.carrierRadius, this.pitchLayout.scale * 4);
-  }
+/** Input timestamp in performance.now() time; falls back when the event clock uses another base. */
+function eventTime(pointer: Phaser.Input.Pointer): number {
+  const now = performance.now();
+  const t = pointer.event?.timeStamp;
+  return typeof t === 'number' && Number.isFinite(t) && Math.abs(t - now) < 1000 ? t : now;
 }
 
 function boundsOf(object: { getBounds(): Phaser.Geom.Rectangle }): Rect {

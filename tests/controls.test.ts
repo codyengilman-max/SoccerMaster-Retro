@@ -320,3 +320,83 @@ describe('unified kick', () => {
     }
   });
 });
+
+describe('quick shot (double-tap)', () => {
+  it('one quick shot at goal per possession: spam, pause, aiming and no-ball are rejected', () => {
+    const sim = staged(3, { x: 55, y: 25 });
+    const seq = lastSeq(sim);
+    expect(sim.command({ type: 'quickShot' })).toBe(true);
+    expect(sim.state.ball.owner).toBeNull();
+    for (let i = 0; i < 10; i++) expect(sim.command({ type: 'quickShot' })).toBe(false);
+    const ev = newEvents(sim, seq);
+    expect(ev.filter((e) => e.type === 'quickShot')).toHaveLength(1);
+    expect(ev.filter((e) => (e.type === 'shot' || e.type === 'pass') && e.by === 'H8')).toHaveLength(1);
+    expect(ev.filter((e) => e.type === 'feint')).toEqual([]);
+
+    const paused = staged(3, { x: 55, y: 25 });
+    paused.command({ type: 'pause' });
+    expect(paused.command({ type: 'quickShot' })).toBe(false);
+    expect(paused.state.ball.owner).toBe('H8');
+
+    const aiming = staged(3, { x: 55, y: 25 });
+    expect(aiming.command({ type: 'aimStart' })).toBe(true);
+    expect(aiming.command({ type: 'quickShot' })).toBe(false);
+    expect(aiming.state.ball.owner).toBe('H8');
+
+    const lost = staged(3, { x: 55, y: 25 });
+    lost.arrange((s) => {
+      s.ball.owner = 'A5';
+      s.possession = 'away';
+    });
+    expect(lost.command({ type: 'quickShot' })).toBe(false);
+  });
+
+  it('heads for the goal mouth with seeded spread (speed over placement) and is deterministic', () => {
+    const P = T.pitch;
+    const ys: number[] = [];
+    for (let seed = 1; seed <= 25; seed++) {
+      const sim = staged(seed, { x: 50, y: 18 });
+      const from = { ...sim.state.ball.pos };
+      expect(sim.command({ type: 'quickShot' })).toBe(true);
+      const v = sim.state.ball.vel;
+      expect(Math.hypot(v.x, v.y)).toBeCloseTo(kickSpeed(T.quickShot.power, T), 6);
+      const y = from.y + (v.y / v.x) * (P.length - from.x);
+      expect(Math.abs(y - P.goalCenterY)).toBeLessThanOrEqual(T.quickShot.spread * P.goalHalfWidth + 1e-6);
+      ys.push(y);
+      const again = staged(seed, { x: 50, y: 18 });
+      again.command({ type: 'quickShot' });
+      expect(again.state.ball.vel).toEqual(v);
+    }
+    expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThan(1);
+  });
+});
+
+describe('aim slow motion', () => {
+  it('slows while aiming, restores on release or cancel, and aim/cancel spam never refills the allowance', () => {
+    const sim = staged(3);
+    let prev = sim.state.aimAllowance.home;
+    for (let i = 0; i < 30; i++) {
+      expect(sim.command({ type: 'aimStart' })).toBe(true);
+      sim.step(1 / 60);
+      if (sim.state.aimAllowance.home > 0 || i === 0) expect(sim.state.timeScale).toBeLessThanOrEqual(1);
+      expect(sim.state.aimAllowance.home).toBeLessThanOrEqual(prev);
+      prev = sim.state.aimAllowance.home;
+      expect(sim.command({ type: 'aimCancel', reason: 'spam' })).toBe(true);
+      sim.step(1 / 60);
+      expect(sim.state.timeScale).toBe(1);
+    }
+    expect(sim.state.aimAllowance.home).toBeLessThan(T.aimAllowance.seconds);
+  });
+
+  it('a pause during aiming keeps time frozen; ending the aim never unpauses', () => {
+    const sim = staged(3);
+    sim.command({ type: 'aimStart' });
+    sim.command({ type: 'pause' });
+    sim.step(1 / 60);
+    expect(sim.state.timeScale).toBe(0);
+    sim.command({ type: 'aimCancel', reason: 'paused' });
+    sim.step(1 / 60);
+    expect(sim.state.paused).toBe(true);
+    expect(sim.state.timeScale).toBe(0);
+  });
+});

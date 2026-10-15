@@ -134,6 +134,7 @@ export type MatchEventType =
   | 'restart'
   | 'dribble'
   | 'feint'
+  | 'quickShot'
   | 'rejected'
   | 'swipeRejected'
   | 'aimStart'

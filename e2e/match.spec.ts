@@ -168,7 +168,7 @@ test('aimed pass from the user carrier is released, slows time while aiming, and
 
 const dot = (a: { x: number; y: number }, b: { x: number; y: number }): number => (a.x * b.x + a.y * b.y) / Math.hypot(b.x, b.y);
 
-/** A quick swipe along a pitch direction, started well away from the carrier so it can never become an aim. */
+/** A quick swipe along a pitch direction, started away from the carrier (presses anywhere count). */
 async function swipe(page: Page, finger: Finger, pitch: { x: number; y: number }): Promise<void> {
   const r = await report(page);
   const viewport = page.viewportSize()!;
@@ -176,14 +176,12 @@ async function swipe(page: Page, finger: Finger, pitch: { x: number; y: number }
   const v = pitchVectorToScreen(r.layout, pitch);
   const n = Math.hypot(v.x, v.y);
   const len = r.thresholds.swipeCommit + 30;
-  const away = r.holdRadiusPx + 50;
+  const away = 90;
   const start = {
     x: Math.min(Math.max(c.sx + (c.sx < viewport.width / 2 ? away : -away), len + 10), viewport.width - len - 10),
     y: Math.min(Math.max(c.sy, len + 60), viewport.height - len - 40),
   };
-  await finger.down(start);
-  await finger.move({ x: start.x + (v.x / n) * len * 0.5, y: start.y + (v.y / n) * len * 0.5 });
-  await finger.up({ x: start.x + (v.x / n) * len, y: start.y + (v.y / n) * len });
+  await finger.swipe(start, { x: start.x + (v.x / n) * len * 0.5, y: start.y + (v.y / n) * len * 0.5 }, { x: start.x + (v.x / n) * len, y: start.y + (v.y / n) * len });
 }
 
 async function stagedCarrier(page: Page, finger: Finger): Promise<MatchReport> {
@@ -234,21 +232,28 @@ test('hold to aim, pull out, slide back into the circle and release: cancelled w
   await pressElement(page, 'help-button', finger.mode);
   r = await waitFor(page, (x) => x.tutorialStep === 0);
   // AI teammates and opponents keep playing; only user actions are checked.
-  expect(r.events.filter((e) => e.seq > seq && (['dribble', 'feint', 'aimStart'].includes(e.type) || (['pass', 'shot'].includes(e.type) && e.by === user)))).toEqual([]);
+  expect(r.events.filter((e) => e.seq > seq && (['dribble', 'feint', 'quickShot', 'aimStart'].includes(e.type) || (['pass', 'shot'].includes(e.type) && e.by === user)))).toEqual([]);
   await linger(page);
   expect(errors).toEqual([]);
 });
 
-test('double-tapping the carrier gives exactly one feint (staged: ?setup=space)', async ({ page }, info) => {
+test('double-tapping away from the carrier gives exactly one quick shot and no feint or aimed kick (staged: ?setup=space)', async ({ page }, info) => {
   const errors = trackConsoleErrors(page);
   const finger = new Finger(page, modeFor(info));
   let r = await stagedCarrier(page, finger);
   const c = r.players[r.controlledId];
-  await finger.doubleTap({ x: c.sx, y: c.sy - 8 });
-  r = await waitFor(page, (x) => x.events.some((e) => e.type === 'feint') || !x.userHasBall, 3000).catch(async () => report(page));
-  const trail = `${r.events.map((e) => `${e.type}(${e.detail})`).join(',')} | input: ${r.inputLog.join(',')}`;
-  expect(r.events.filter((e) => e.type === 'feint'), trail).toHaveLength(1);
-  expect(r.feint).not.toBeNull();
+  const user = r.controlledId;
+  const seq = r.events.at(-1)?.seq ?? 0;
+  const viewport = page.viewportSize()!;
+  await finger.doubleTap({ x: c.sx < viewport.width / 2 ? c.sx + 90 : c.sx - 90, y: Math.min(Math.max(c.sy, 80), viewport.height - 80) });
+  r = await waitFor(page, (x) => x.events.some((e) => e.type === 'quickShot') || !x.userHasBall, 3000).catch(async () => report(page));
+  await linger(page);
+  r = await report(page);
+  const mine = r.events.filter((e) => e.seq > seq);
+  const trail = `${mine.map((e) => `${e.type}(${e.detail})`).join(',')} | input: ${r.inputLog.join(',')}`;
+  expect(mine.filter((e) => e.type === 'quickShot'), trail).toHaveLength(1);
+  expect(mine.filter((e) => (e.type === 'shot' || e.type === 'pass') && e.by === user), trail).toHaveLength(1);
+  expect(mine.filter((e) => e.type === 'feint' || e.type === 'dribble'), trail).toEqual([]);
   await linger(page);
   expect(errors).toEqual([]);
 });

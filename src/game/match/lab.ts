@@ -17,6 +17,10 @@ export const LAB_SCENARIO_IDS = [
   'finish-centre',
   'finish-angle',
   'touchline',
+  'through-ball',
+  'receive-turn',
+  'quick-shot',
+  'cancel-pressure',
 ] as const;
 export type LabScenarioId = (typeof LAB_SCENARIO_IDS)[number];
 
@@ -30,6 +34,8 @@ export interface LabScenario {
   readonly carrier: MatchPlayerId | null;
   readonly ball?: readonly [number, number];
   readonly ballVel?: readonly [number, number];
+  /** Initial velocities (yd/s) for placed players, e.g. a teammate already making a run. */
+  readonly run?: Partial<Record<MatchPlayerId, readonly [number, number]>>;
 }
 
 export const LAB_SCENARIOS: Readonly<Record<LabScenarioId, LabScenario>> = {
@@ -50,7 +56,7 @@ export const LAB_SCENARIOS: Readonly<Record<LabScenarioId, LabScenario>> = {
   'dribble-1v1': {
     id: 'dribble-1v1',
     title: 'Dribble past one defender',
-    goal: 'Swipe to change direction, double-tap to feint.',
+    goal: 'Swipe forward, back, sideways and diagonally to get round him.',
     place: { H8: [40, 25], A5: [48, 25] },
     carrier: 'H8',
   },
@@ -105,6 +111,37 @@ export const LAB_SCENARIOS: Readonly<Record<LabScenarioId, LabScenario>> = {
     place: { H7: [40, 2.5], A3: [47, 4], H8: [36, 12] },
     carrier: 'H7',
   },
+  'through-ball': {
+    id: 'through-ball',
+    title: 'Through ball to a runner',
+    goal: 'Your striker is running: pass into the space ahead of him.',
+    place: { H8: [34, 25], H9: [42, 32], A4: [46, 26], A5: [47, 33] },
+    run: { H9: [4.5, 0] },
+    carrier: 'H8',
+  },
+  'receive-turn': {
+    id: 'receive-turn',
+    title: 'Receive, turn and pass',
+    goal: 'A pass is coming to you: take it, turn, and find the runner.',
+    place: { H5: [26, 25], H7: [38, 25], A6: [43, 27], H9: [50, 14] },
+    carrier: null,
+    ball: [29, 25],
+    ballVel: [9, 0],
+  },
+  'quick-shot': {
+    id: 'quick-shot',
+    title: 'Quick shot and rebound',
+    goal: 'Double-tap for a quick shot, then chase the rebound.',
+    place: { H9: [56, 23], H7: [52, 31], A4: [61, 26] },
+    carrier: 'H9',
+  },
+  'cancel-pressure': {
+    id: 'cancel-pressure',
+    title: 'Cancel under pressure',
+    goal: 'Start aiming, then slide back into the circle and dribble away instead.',
+    place: { H8: [40, 25], H6: [33, 15], A5: [44.5, 25], A6: [43.5, 29.5] },
+    carrier: 'H8',
+  },
 };
 
 export function isLabScenarioId(id: string | null | undefined): id is LabScenarioId {
@@ -117,7 +154,8 @@ export function stageLabScenario(s: MatchState, id: LabScenarioId, pitch: { leng
   const ids = [...HOME_IDS, ...AWAY_IDS];
   ids.forEach((pid, i) => {
     const p = s.players[pid];
-    p.vel = { x: 0, y: 0 };
+    const v = sc.run?.[pid];
+    p.vel = v ? { x: v[0], y: v[1] } : { x: 0, y: 0 };
     const at = sc.place[pid];
     if (at) p.pos = { x: at[0], y: at[1] };
     else if (p.isKeeper) p.pos = p.team === 'home' ? { x: 2, y: pitch.width / 2 } : { x: pitch.length - 2, y: pitch.width / 2 };
