@@ -1,5 +1,10 @@
 # Status
 
+## Training library v1.1 import (draft, branch `devin/1792084019-training-library`)
+- Package stored unchanged; strict importer, empty release manifest, review-only Draft library screens and six demo prototypes. No option is in player plans, journal or credit.
+- Open before release: qualified coach and QA review, resolution of the package's coaching findings (TR01, TR02, RC01 revise; JU01/JU02/PA02/FI01 contact mechanics; JU03 and FI02 demos held), 11 unresolved claims, real reviewed left/right demo assets, owner acceptance.
+
+
 ## In review: gameplay feel revision (not merged, not deployed)
 
 Dribbling, passing, receiving and shooting feel: off-ball control, shared kick prediction, receivers that meet passes, aim-assist modes, follow camera and minimap, and a Gameplay Lab. See `docs/GAMEPLAY_FEEL.md`.
