@@ -141,7 +141,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   /** Debug snapshot for browser tests. */
-  describeGameplay(): { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; text: string; textPage: string; overflow: string[] } {
+  describeGameplay(): { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; text: string; textPage: string; overflow: string[]; evidence: number; coachEvidence: number } {
     return {
       screen: this.screen.kind,
       week: this.save.week,
@@ -155,6 +155,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       text: this.body?.text ?? '',
       textPage: `${this.textPage + 1}/${this.textPages}`,
       overflow: this.buttons.filter((b) => b.active && !b.labelFits()).map((b) => b.name),
+      evidence: this.save.evidence.length,
+      coachEvidence: this.save.evidence.filter((e) => e.source === 'coach').length,
     };
   }
 
