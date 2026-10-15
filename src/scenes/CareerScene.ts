@@ -7,6 +7,7 @@ import { CareerStore } from '../game/career/store';
 import { ATTRIBUTES, ATTRIBUTE_LABELS, LEVEL_NAMES, POSITIONS, SKILL_FAMILY_LABELS, type Activity, type Foot, type Position, type Rating } from '../game/career/types';
 import { CATEGORY_SKILL_AREA, COACHING_REVIEW, CURRICULUM, EMPTY_STATE, FAMILY_MAPPING, publishedLevels } from '../game/career/curriculum';
 import { prototypeFor, resolveSteps, stepAt } from '../game/career/curriculum/demos';
+import { LOGIC_CATALOG, LOGIC_GROUPS, SCENARIO_GOAL, activeLogicScenarios, currentText, type LogicGroup } from '../game/logic/catalog';
 import { orientationOf } from '../render/layout';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspectable';
@@ -27,7 +28,10 @@ type Screen =
   | { kind: 'player' }
   | { kind: 'drafts' }
   | { kind: 'draftFamily'; id: string }
-  | { kind: 'draftLevel'; id: string };
+  | { kind: 'draftLevel'; id: string }
+  | { kind: 'reviewHub' }
+  | { kind: 'logic'; group: LogicGroup | null }
+  | { kind: 'logicItem'; id: string };
 
 interface Action {
   readonly name: string;
@@ -78,11 +82,11 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     super(SceneKeys.Career);
   }
 
-  create(): void {
+  create(data?: { open?: string }): void {
     this.navigating = false;
     this.reducedMotion = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.demoPaused = this.reducedMotion;
-    this.screen = { kind: 'home' };
+    this.screen = data?.open === 'reviewHub' ? { kind: 'reviewHub' } : { kind: 'home' };
     this.history = [];
     this.page = 0;
     this.textPage = 0;
@@ -109,7 +113,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         this.render();
       });
       this.toast = store.status.kind === 'ok' ? '' : store.status.reason;
-      if (!this.save.player) this.screen = { kind: 'create' };
+      if (!this.save.player && this.screen.kind === 'home') this.screen = { kind: 'create' };
       this.render();
     });
   }
@@ -178,6 +182,12 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.textPage = 0;
     this.toast = '';
     this.render();
+  }
+
+  private openLab(): void {
+    if (this.navigating) return;
+    this.navigating = true;
+    this.scene.start(SceneKeys.Lab);
   }
 
   private menu(): void {
@@ -304,6 +314,60 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           title: SKILL_FAMILY_LABELS[sc.family as (typeof fams)[number]],
           body: 'Tap an activity for steps and a demonstration.',
           actions: ALL_ACTIVITIES.filter((a) => a.skillFamilyId === sc.family).map((a) => ({ name: `act-${a.id}`, label: `${a.title} · ${LEVEL_NAMES[a.entryLevel]}`, onClick: () => this.go({ kind: 'activity', id: a.id, sessionId: null, index: 0 }) })),
+        };
+      }
+      case 'reviewHub': {
+        const n = LOGIC_CATALOG.scenarios.length;
+        return {
+          title: 'Review & Lab',
+          body: [
+            'Review areas for the combined preview. Nothing here changes your saved player, plan, journal or credit.',
+            `Training Review: draft library v1.1, review only, not in player plans.`,
+            `Soccer Logic Review: ${n} research outlines, catalog only, none drives the game (goal ${SCENARIO_GOAL}+).`,
+            `Coach Moments: play a 9v9 match from a link ending in ?coach.`,
+            'Story & RPG: not in this preview (story package not supplied).',
+          ].join('\n'),
+          actions: [
+            ...(__LAB__ ? [{ name: 'hub-lab', label: 'Gameplay Lab', onClick: () => this.openLab() }] : []),
+            { name: 'hub-training', label: 'Training Review (drafts)', onClick: () => this.go({ kind: 'drafts' }) },
+            { name: 'hub-logic', label: 'Soccer Logic Review', onClick: () => this.go({ kind: 'logic', group: null }) },
+            { name: 'hub-career', label: 'Home Training (your save)', onClick: () => this.go(this.save.player ? { kind: 'home' } : { kind: 'create' }) },
+          ],
+        };
+      }
+      case 'logic': {
+        const all = LOGIC_CATALOG.scenarios;
+        const status = `CATALOG ONLY · research outlines v${LOGIC_CATALOG.schemaVersion}. Switched off: ${activeLogicScenarios().length} of ${all.length} drive the game. Not linked to sources, not youth-calibrated, not game-validated. The ${SCENARIO_GOAL}+ scenario goal is ${SCENARIO_GOAL - all.length} short and is separate from home training.`;
+        if (sc.group === null) {
+          const groups = Object.keys(LOGIC_GROUPS) as LogicGroup[];
+          return {
+            title: 'Soccer Logic Review',
+            body: status,
+            actions: groups.map((g) => ({ name: `logic-${g}`, label: `${LOGIC_GROUPS[g]} (${all.filter((x) => x.group === g).length})`, onClick: () => this.go({ kind: 'logic', group: g }) })),
+          };
+        }
+        const group = sc.group;
+        return {
+          title: `Logic · ${LOGIC_GROUPS[group]}`,
+          body: status,
+          actions: all.filter((x) => x.group === group).map((x) => ({ name: `logic-item-${x.id}`, label: `${x.id} ${x.original.situation}${x.auditOverride ? ' · audit fix' : ''}`, onClick: () => this.go({ kind: 'logicItem', id: x.id }) })),
+        };
+      }
+      case 'logicItem': {
+        const x = LOGIC_CATALOG.scenarios.find((y) => y.id === sc.id);
+        if (!x) return { title: 'Soccer Logic Review', body: 'Unknown scenario.', actions: [] };
+        const t = currentText(x);
+        return {
+          title: `OUTLINE · ${x.id}`,
+          body: [
+            'CATALOG ONLY · switched off · not tuned · no source linked yet.',
+            `Situation: ${t.situation}`,
+            `Cue → response: ${t.cue}`,
+            `Counter: ${t.counter}`,
+            ...(x.auditOverride ? [`Audit corrected this. Original cue: ${x.original.cue}. Original counter: ${x.original.counter}`] : []),
+            `Needed before it can drive play: ${x.requiredBeforeActivation.join(', ').replace(/_/g, ' ')}.`,
+          ].join('\n'),
+          actions: [],
         };
       }
       case 'drafts': {

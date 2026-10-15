@@ -62,3 +62,8 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Owner override of P-001: no week-slot journal stamp. Credit stays one per scheduled `sessionId`; substitution, catalog update and replay add none (`tests/curriculum-economy.test.ts`).
 - Families are curriculum organization inside the seven skill areas, not progression tracks. Prerequisites only gate suitability.
 - Publication authority is a repository-side release manifest (`curriculum/release.ts`), never imported content or saves. It is empty until real coach/QA review and reviewed demo assets exist.
+
+## Combined preview integration
+- One integration branch (`devin/1792089834-all-updates-integration`) merges PR #8 gameplay and PR #9 training; both feature branches stay as they were. The PR #8 preview hook is reused (owner instruction "use old hook"), so PR #8's branch is fast-forwarded to the integration head; `devin/1792017697-gameplay-feel-backup-fdec076` keeps the gameplay-only state.
+- Soccer-logic package v0.2 is copied byte-for-byte to `research/logic/v0.2` (its scripts are not run). `src/game/logic/catalog.ts` loads it strictly and rejects any seed marked enabled, calibrated or non-draft; `activeLogicScenarios()` is empty, so the catalog has no effect on match behaviour. Its 40 entries are not counted toward the 500-plus scenario goal as fulfilled.
+- Start → Review & Lab opens review screens without creating a player or writing the save.

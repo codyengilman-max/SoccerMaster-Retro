@@ -1,5 +1,17 @@
 # Status
 
+## Combined preview integration (branch `devin/1792089834-all-updates-integration`, not merged, not in production)
+
+One build containing the gameplay-feel revision (PR #8), the training library v1.1 drafts (PR #9) and the soccer-logic research catalog v0.2. Start → **Review & Lab** opens a hub with Gameplay Lab (preview/lab builds only), Training Review, Soccer Logic Review and Home Training. Opening the hub does not create a player or touch the save.
+
+| Area | Status |
+|---|---|
+| Gameplay feel (controls, receiving, camera, AI, Lab) | Integrated and testable; owner iPhone acceptance pending |
+| Training library v1.1 (20 families / 100 options) | Imported as review-only drafts; none published or recommended; one credit per scheduled session unchanged |
+| Soccer-logic catalog v0.2 (`research/logic/v0.2`) | Imported, catalog only: 40 draft outlines, 0 active, no source links, not calibrated or game-validated. The 500-plus scenario goal is 460 short and separate from home training |
+| Coach Moments | Integrated behind `?coach`; no player-facing setting; weekly focus does not choose moments |
+| RPG / story (identity, cutscenes, clubs, tournaments, Next Level) | Blocked: the latest story package and club/tournament rules were not supplied. Nothing reconstructed |
+
 ## Training library v1.1 import (draft, branch `devin/1792084019-training-library`)
 - Package stored unchanged; strict importer, empty release manifest, review-only Draft library screens and six demo prototypes. No option is in player plans, journal or credit.
 - Open before release: qualified coach and QA review, resolution of the package's coaching findings (TR01, TR02, RC01 revise; JU01/JU02/PA02/FI01 contact mechanics; JU03 and FI02 demos held), 11 unresolved claims, real reviewed left/right demo assets, owner acceptance.
