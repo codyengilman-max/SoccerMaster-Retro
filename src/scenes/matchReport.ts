@@ -64,6 +64,15 @@ export interface MatchReport {
   /** Screen-space gesture origin while a gameplay pointer is captured. */
   readonly gestureOrigin: { readonly x: number; readonly y: number } | null;
   readonly thresholds: { readonly swipeCommit: number; readonly holdSlop: number; readonly cancelRadius: number; readonly maxPull: number; readonly doubleTapDistance: number };
+  readonly controlScheme: 'pad' | 'gesture';
+  readonly pad: {
+    readonly phase: string;
+    readonly actor: string | null;
+    readonly receiver: string | null;
+    readonly stick: { readonly x: number; readonly y: number };
+    readonly available: Readonly<Record<'pass' | 'shoot' | 'slide' | 'block', boolean>> | null;
+    readonly pressed: 'pass' | 'shoot' | 'slide' | 'block' | null;
+  };
   readonly tutorialStep: number;
   readonly inputLog: readonly string[];
   readonly aimSource: 'pointer' | 'keyboard' | null;

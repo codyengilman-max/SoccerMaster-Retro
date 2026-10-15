@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { coach, match, pitchMarkings, U11_9V9_PITCH, type PitchMarkings, type Rect, type Vec2 } from '../game';
-import { type ActionButton, type PadEvent } from '../input/joystickControls';
+import { ACTION_BUTTONS, type ActionButton, type PadEvent } from '../input/joystickControls';
 import { PadHud } from './ui/PadHud';
 import { inGestureArea, KEY_BINDINGS, KeyboardAim, TouchControls, type ControlAction, type Pull } from '../input';
 import {
@@ -88,6 +88,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   /** Joystick + four buttons (default); null with ?controls=gesture. */
   private pad: PadHud | null = null;
   private padIds = 0;
+  private padPrefButtons: Button[] = [];
   private readonly padKeys = new Set<string>();
   private lastPull: Pull | null = null;
   /** Debug trail of recent pointer decisions and control actions. */
@@ -276,6 +277,13 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.formationButtons = Object.fromEntries(
       FORMATION_IDS.map((id) => [id, panelButton(`formation-${id}`, id, () => this.changeFormation(id), true)]),
     ) as Record<FormationId, Button>;
+    this.padPrefButtons = this.pad
+      ? [
+          panelButton('controls-size', 'Size', () => this.cyclePadPref('size'), true),
+          panelButton('controls-opacity', 'Opacity', () => this.cyclePadPref('opacity'), true),
+          panelButton('controls-reset', 'Reset controls', () => this.resetPadPrefs(), true),
+        ]
+      : [];
     this.breakPanel = this.add.graphics().setDepth(6900);
     this.breakTitle = text(26).setOrigin(0.5, 0.5).setDepth(6901);
     this.breakNote = text(13, CSS.ink, false).setOrigin(0.5, 0).setDepth(6901);
@@ -494,6 +502,12 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       minimap: this.minimapRect(),
     };
     Object.assign(elements, this.coachOverlay.bounds());
+    if (this.pad) {
+      const PL = this.pad.controls.currentLayout;
+      const box = (c: { x: number; y: number; r: number }): Rect => ({ x: c.x - c.r, y: c.y - c.r, width: c.r * 2, height: c.r * 2 });
+      elements['pad-stick'] = box(PL.stick);
+      for (const a of ACTION_BUTTONS) elements[`pad-${a}`] = box(PL.buttons[a]);
+    }
     if (this.sim.state.pauseReasons.user) {
       elements['pause-panel'] = this.panelRect;
       elements['resume-button'] = this.resumeButton.getButtonBounds();
@@ -501,6 +515,10 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       elements['panel-menu-button'] = this.panelMenuButton.getButtonBounds();
       elements['overlay-button'] = this.overlayButton.getButtonBounds();
       for (const id of FORMATION_IDS) elements[`formation-${id}`] = this.formationButtons[id].getButtonBounds();
+      ['controls-size', 'controls-opacity', 'controls-reset'].forEach((n, i) => {
+        const b = this.padPrefButtons[i];
+        if (b) elements[n] = b.getButtonBounds();
+      });
     }
     if (this.breakMode) {
       elements['break-panel'] = this.breakRect;
@@ -566,6 +584,15 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       input: this.controls.state,
       gestureOrigin: this.controls.origin,
       thresholds: { ...this.controls.thresholds },
+      controlScheme: this.pad ? 'pad' : 'gesture',
+      pad: {
+        phase: s.pad.phase,
+        actor: s.pad.actor,
+        receiver: s.pad.receiver,
+        stick: { x: s.pad.stick.x, y: s.pad.stick.y },
+        available: this.pad ? { ...this.pad.controls.available } : null,
+        pressed: this.pad?.controls.pressed ?? null,
+      },
       tutorialStep: this.tutorialStep,
       inputLog: [...this.inputLog],
       aimSource: this.aimSource,
@@ -674,8 +701,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   }
 
   private onPointerUp(pointer: Phaser.Input.Pointer): void {
+    this.logInput(`up:${pointer.id}:${this.pad ? 'pad' : this.controls.state}`);
     if (this.pad) return this.handlePad(this.pad.controls.pointerUp(pointer.id));
-    this.logInput(`up:${pointer.id}:${this.controls.state}`);
     this.handleControls(this.controls.pointerUp(pointer.id, pointer.x, pointer.y, eventTime(pointer)));
   }
 
@@ -1394,7 +1421,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   }
 
   private showPanel(visible: boolean): void {
-    const items = [this.resumeButton, this.resetButton, this.panelMenuButton, this.overlayButton, ...FORMATION_IDS.map((id) => this.formationButtons[id])];
+    const items = [this.resumeButton, this.resetButton, this.panelMenuButton, this.overlayButton, ...FORMATION_IDS.map((id) => this.formationButtons[id]), ...this.padPrefButtons];
     this.panel.setVisible(visible);
     this.panelTitle.setVisible(visible);
     this.panelNote.setVisible(visible);
@@ -1412,7 +1439,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.panelNote.setText(`Home formation: ${cur}. Changes keep every player where he is; they move to new roles when you resume. Opponent: ${this.sim.state.formations.away}.`).setFontSize(height < 360 ? 11 : 12);
     const titleH = height < 360 ? 30 : 40;
     const noteH = this.panelNote.height;
-    const h = titleH + noteH + 3 * (bh + 10) + 26;
+    const h = titleH + noteH + (this.padPrefButtons.length ? 4 : 3) * (bh + 10) + 26;
     const x = (width - w) / 2;
     const y = Math.max(EDGE, (height - h) / 2);
     this.panelRect = { x, y, width: w, height: h };
@@ -1440,6 +1467,31 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         .setFill(on ? PALETTE.mustard : PALETTE.cream, on ? PALETTE.mustardDark : PALETTE.sand);
     });
     this.overlayButton.resize(Math.min(w - 40, 260), bh, font).setPosition(width / 2, row(2));
+    const P = this.pad?.preferences;
+    this.padPrefButtons.forEach((b, i) => b.resize(bw - 8, bh, font).setPosition(col(i), row(3)));
+    if (P) {
+      this.padPrefButtons[0]?.setLabel(`Size ${Math.round(P.size * 100)}%`);
+      this.padPrefButtons[1]?.setLabel(`Opacity ${Math.round(P.opacity * 100)}%`);
+    }
+  }
+
+  private cyclePadPref(kind: 'size' | 'opacity'): void {
+    if (!this.pad) return;
+    const P = this.pad.preferences;
+    const steps = kind === 'size' ? [0.85, 1, 1.15, 1.3] : [0.35, 0.55, 0.75, 0.9];
+    const next = steps[(steps.findIndex((v) => Math.abs(v - P[kind]) < 1e-3) + 1) % steps.length] ?? 1;
+    this.handlePad(this.pad.setPrefs({ ...P, [kind]: next }, this.scale.width, this.scale.height));
+    this.showPanel(true);
+    this.pad.draw();
+  }
+
+  /** Accessible reset: restores default size, opacity and dead zone; career saves are untouched. */
+  private resetPadPrefs(): void {
+    if (!this.pad) return;
+    this.handlePad(this.pad.setPrefs(null, this.scale.width, this.scale.height));
+    this.showPanel(true);
+    this.pad.draw();
+    this.toast('Controls reset to defaults');
   }
 
   private drawField(): void {

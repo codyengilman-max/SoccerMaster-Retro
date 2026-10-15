@@ -52,7 +52,7 @@ test.beforeEach(async ({ page }) => {
 
 test('formation picker -> 9v9 sandbox: 18 players, chosen formation, HUD fits, overlay hidden', async ({ page }, info) => {
   const errors = trackConsoleErrors(page);
-  const r = await openSandbox(page, modeFor(info), '1-3-3-2');
+  const r = await openSandbox(page, modeFor(info), '1-3-3-2', '&controls=gesture');
   const viewport = page.viewportSize();
   if (!viewport) throw new Error('no viewport');
   const ids = Object.keys(r.players);
@@ -130,7 +130,7 @@ test('pause -> change formation keeps identities, ball and positions; resume reo
 test('aimed pass from the user carrier is released, slows time while aiming, and resolves in continuous play (staged: ?setup=pass)', async ({ page }, info) => {
   const errors = trackConsoleErrors(page);
   const finger = new Finger(page, modeFor(info));
-  const r0 = await openSandbox(page, finger.mode, '1-3-2-3', '&setup=pass');
+  const r0 = await openSandbox(page, finger.mode, '1-3-2-3', '&controls=gesture&setup=pass');
   expect(r0.userHasBall).toBe(true);
   const r = await waitFor(page, (x) => x.phase === 'live' && x.userHasBall);
   const carrier = r.players[r.controlledId];
@@ -185,7 +185,7 @@ async function swipe(page: Page, finger: Finger, pitch: { x: number; y: number }
 }
 
 async function stagedCarrier(page: Page, finger: Finger): Promise<MatchReport> {
-  await openSandbox(page, finger.mode, '1-3-2-3', '&setup=space');
+  await openSandbox(page, finger.mode, '1-3-2-3', '&controls=gesture&setup=space');
   return waitFor(page, (x) => x.phase === 'live' && x.userHasBall);
 }
 
@@ -292,7 +292,7 @@ test('aiming starts from a press away from the carrier: pull back and release gi
 test('keyboard: P pauses, R resets, O toggles overlay, Space aims a pass, M returns to menu', async ({ page }, info) => {
   test.skip(Boolean(info.project.use.hasTouch), 'desktop keyboard controls');
   const errors = trackConsoleErrors(page);
-  await openSandbox(page, 'mouse', '1-3-2-3', '&setup=pass');
+  await openSandbox(page, 'mouse', '1-3-2-3', '&controls=gesture&setup=pass');
   await waitFor(page, (r) => r.phase === 'live' && r.userHasBall);
   await page.keyboard.down('Space');
   await waitFor(page, (r) => r.phase === 'aiming' && r.aimSource === 'keyboard');
@@ -356,7 +356,7 @@ for (const [query, zoom] of [
       else expect(r.camera.viewCross).toBeCloseTo(Math.min(54, 28 / zoom), 6);
     };
     {
-      let r = await openSandbox(page, mode, '1-3-2-3', `&sandbox${query}`);
+      let r = await openSandbox(page, mode, '1-3-2-3', `&controls=gesture&sandbox${query}`);
       expectSpan(r, zoom);
       const vp = page.viewportSize()!;
       for (let i = 0; i < 2; i++) {
