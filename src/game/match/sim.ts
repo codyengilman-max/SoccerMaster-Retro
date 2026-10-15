@@ -404,6 +404,9 @@ export class MatchSim {
     const pick = owner ? s.defense.home.presserId : s.chaser.home.id;
     if (!pick || pick === s.controlledId || s.players[pick].isKeeper) return;
     if (s.simTime - s.controlSince < T.offBall.minHoldSeconds) return;
+    // Never yank control from a player the user is steering right now, and never bounce straight back.
+    if (s.userSteer && s.simTime < s.userSteer.until) return;
+    if (pick === s.prevControlledId && s.simTime - s.controlSince < T.offBall.returnHoldSeconds) return;
     this.setControl(pick, owner ? 'defend' : 'loose ball');
   }
 
@@ -411,6 +414,7 @@ export class MatchSim {
     const s = this.s;
     s.controlEpoch += 1;
     if (s.phase === 'aiming') this.cancelAim('control changed');
+    if (s.controlledId !== id) s.prevControlledId = s.controlledId;
     s.controlledId = id;
     s.controlSince = s.simTime;
     s.userSteer = null;
@@ -1154,6 +1158,7 @@ export class MatchSim {
       controlSince: 0,
       userSteer: null,
       bufferedDribble: null,
+      prevControlledId: null,
       possessionSeq: 0,
       establishedTeam: null,
       controlEpoch: 0,

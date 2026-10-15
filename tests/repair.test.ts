@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MatchSim, MATCH_TUNING as T, kickRoll, kickSpeed, powerForSpeed, predictGroundKick, type MatchPlayerId } from '../src/game/match';
+import { MatchSim, MATCH_TUNING as T, HOME_IDS, kickRoll, kickSpeed, powerForSpeed, predictGroundKick, type MatchPlayerId } from '../src/game/match';
 import { stageLabScenario } from '../src/game/match/lab';
 
 type V = { x: number; y: number };
@@ -201,5 +201,28 @@ describe('a swipe just before the ball arrives carries into the first touch', ()
     run(stolen, 2, () => stolen.state.ball.owner !== null);
     expect(stolen.state.ball.owner).not.toBe('H6');
     expect(stolen.state.bufferedDribble).toBeNull();
+  });
+});
+
+describe('automatic selection is stable', () => {
+  it('control never bounces back to the previous player within returnHoldSeconds, and never leaves a home carrier', () => {
+    for (const seed of [1, 2, 3]) {
+      const sim = new MatchSim({ seed });
+      let last = sim.state.controlledId;
+      let prev: string | null = null;
+      let at = 0;
+      for (let i = 0; i < Math.round(60 / F); i++) {
+        sim.step(F);
+        const s = sim.state;
+        if (s.controlledId === last) continue;
+        const own = s.ball.owner;
+        if (own && (HOME_IDS as readonly string[]).includes(own) && !s.players[own].isKeeper) expect(s.controlledId).toBe(own);
+        // Winning the ball always hands control to the new carrier; only automatic off-ball switches are held.
+        if (s.controlledId === prev && own !== s.controlledId) expect(s.simTime - at).toBeGreaterThanOrEqual(T.offBall.returnHoldSeconds - 1e-9);
+        prev = last;
+        last = s.controlledId;
+        at = s.simTime;
+      }
+    }
   });
 });

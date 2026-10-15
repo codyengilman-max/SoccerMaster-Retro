@@ -197,6 +197,8 @@ export interface MatchState {
   /** Off-ball steer from a swipe (world unit vector) until sim time `until`; null = AI movement. */
   userSteer: { dir: Vec2; until: number; epoch: number } | null;
   /** A swipe made just before our pass arrives, applied to that receiver's first controlled touch only. */
+  /** The player control last moved away from, so it cannot bounce straight back (offBall.returnHoldSeconds). */
+  prevControlledId: MatchPlayerId | null;
   bufferedDribble: { dir: Vec2; receiver: MatchPlayerId; until: number } | null;
   /** Stable team-possession sequence: bumps only when a team establishes possession. */
   possessionSeq: number;

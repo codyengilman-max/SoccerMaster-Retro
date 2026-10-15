@@ -96,12 +96,14 @@ All units are pitch yards (yd) and simulation seconds (s) unless marked real ms.
 - **Pass weight:** `kickSpeed` was `lerp(8, 27, power)` and power was `pull^1.4`. The softest kick rolled 9.2 yd, so an 8 yd pass always overshot, and 8–20 yd was squeezed into the first ~30% of the pull.
 - **Turning with the ball:** `userCarrierVelocity` rotated the heading at 5 rad/s and cut the target speed to 30% while the heading was far off, and the carrier accelerated at 9 yd/s². A cut mostly braked along the old line: in a 1v1, a sideways swipe moved the carrier 0.01 yd sideways in 0.3 s before he was tackled. Turning upfield after a receive took 1.23 s.
 - **Reception reset:** `take()` reset the dribble direction to straight upfield whenever the receiver was moving backward, forcing a reversal on the first touch.
+- **Selection flicker:** off the ball, control followed whichever player was the presser or chaser that step, held for only 0.6 s, so it bounced between two players (A→B→A within 1 s 191 times in 20 min of seeded play), and could switch away from a defender the user was steering.
 - **Pressing:** the presser re-aimed at the ball every step with perfect information and was faster than the carrier (5.4 vs 5.2 yd/s), so any cut was mirrored instantly. Every dodge in the 1v1 drill lost the ball (0/80).
 
 **Changes**
 - **Power curve (`tuning.kick`, `kickRoll`):** power sets roll distance. 4.0 yd at the cancel edge, linear to 34 yd at 70% of the pull (about 0.43 yd per 1% of pull), then eased (with no slope kink) up to 27 yd/s, which is unchanged shot speed. Launch speed = `sqrt(2 × friction × roll)`; ball friction is unchanged, so the ball is not slowed globally. The guide still uses `predictGroundKick` on that same speed.
 - **Carrier (`tuning.carrier`):** steers straight at the swiped direction; the only limit is a 20 yd/s² velocity-change cap (no teleport; a 90° cut from full speed takes about 0.37 s). The redirect spam guard (0.12 s) and back-dribble factor (0.75) are kept.
 - **First touch:** the receiver keeps his own running direction. A swipe made while our pass is within `bufferReach` (5 yd) of its receiver is buffered for `bufferSeconds` (0.4 s) and becomes his first-touch direction. It is bound to that receiver, is cleared on any touch, pause or control change, and can only set a dribble direction (never a kick).
+- **Selection (`tuning.offBall`):** automatic switches never leave a player the user is steering, and returning to the player control just left needs `returnHoldSeconds` (1.5 s). Winning the ball still hands control to the new carrier at once.
 - **Presser reaction (`defense.readSeconds` 0.25 s):** pressers close on the carrier as read through a 0.25 s lag. This means a timely cut beats one presser, but running straight at him or cutting when he is on top of you still loses the ball. Tackle radius, contact time, protection and recovery bans are unchanged.
 
 **Before → after (seeded)**
@@ -114,6 +116,7 @@ All units are pitch yards (yd) and simulation seconds (s) unless marked real ms.
 | Progress in 1.5 s after receive, swipe upfield | 1.2 yd | 5.3 yd |
 | 1v1: sideways cut at 0.2–0.5 s beats the presser | 0/80 | 80/80 |
 | 1v1: straight at him / cut at ≥ 0.6 s | lost | still lost |
+| Off-ball control switches, no input, 8 seeds × 150 s | 35.1/min, 191 A→B→A under 1 s | 15.5/min, 7 (ball-win handoffs) |
 | Normal match, scripted user, 8 seeds × 150 s: pass completion | 62% (166/267) | 65% (200/306) |
 
 **Limitations**

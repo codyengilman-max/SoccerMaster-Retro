@@ -64,6 +64,8 @@ export const MATCH_TUNING = {
     steerSeconds: 1.1,
     /** Steered speed is the normal chase speed: no boost for being user-controlled. */
     minHoldSeconds: 0.6,
+    /** Switching back to the player control just left needs this long on the new one (no A-B-A flicker). */
+    returnHoldSeconds: 1.5,
   },
   /**
    * Double-tap quick shot: fixed power toward the goal with a seeded target spread of this fraction
