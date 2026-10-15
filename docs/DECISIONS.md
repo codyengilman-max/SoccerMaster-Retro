@@ -76,3 +76,10 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Activity outcomes come only from the existing systems' saved state (career save revision, focus, logged scheduled session, saved match evidence, `endWeek`). The story never invents a result, and home training keeps one credit per scheduled session.
 - The crossbar challenge uses its own framework-free 3-D ball model because the 9v9 engine has no ball height; same pull-back gesture, no Shoot button.
 - Club world is design data only: no league table, scheduler or tournament entry is built from it.
+
+## Controls — joystick + four buttons
+- The owner's controls brief replaces swipe / pull-back as the default 9v9 scheme. The old scheme stays behind `?controls=gesture` for comparison and rollback; the sim defaults to `gesture` so the Lab, attack drill and engine tests keep their contract.
+- Pointer ownership lives in pure `src/input/joystickControls.ts`; the sim owns availability and validation (`padPress`/`padRelease`/`padCancel`). One input path per scheme, one sim loop.
+- Control preferences are stored in localStorage (`smr-controls-v1`), separate from IndexedDB career/story saves; invalid values fall back to defaults.
+- A slide that hits the body first is a foul with a basic opponent free-kick restart; the engine has no other set pieces yet.
+

@@ -54,7 +54,8 @@ async function centre(page: Page, name: string): Promise<{ x: number; y: number 
   return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
 }
 
-const kicksAfter = (r: MatchReport, seq: number) => r.events.filter((e) => e.seq > seq && KICKS.has(e.type));
+// Only the user's side: the away AI keeps playing and may pass while the test holds a button.
+const kicksAfter = (r: MatchReport, seq: number) => r.events.filter((e) => e.seq > seq && KICKS.has(e.type) && String(e.by ?? '').startsWith('H'));
 const lastSeq = (r: MatchReport) => r.events.at(-1)?.seq ?? 0;
 
 test.beforeEach(async ({ page }) => {
@@ -86,7 +87,7 @@ test.describe('two-thumb touch', () => {
 
   test('A03: run with the stick while charging PASS; release gives exactly one kick', async ({ page }, info) => {
     const errors = trackConsoleErrors(page);
-    await open(page, modeFor(info), '&setup=pass');
+    await open(page, modeFor(info), '&setup=space');
     const cdp = await page.context().newCDPSession(page);
     const stick = await centre(page, 'pad-stick');
     const pass = await centre(page, 'pad-pass');
@@ -97,24 +98,26 @@ test.describe('two-thumb touch', () => {
     await waitFor(page, (r) => Math.hypot(r.pad.stick.x, r.pad.stick.y) > 0.5 && r.pad.available?.pass === true);
     const r0 = await report(page);
     const seq = lastSeq(r0);
-    await touch(page, cdp, 'touchStart', [run, { id: 2, x: pass.x, y: pass.y }]);
+    const passFinger = { id: 2, x: pass.x, y: pass.y };
+    await touch(page, cdp, 'touchStart', [run, passFinger]);
     const charging = await waitFor(page, (r) => r.pad.phase === 'chargingPass');
     expect(Math.hypot(charging.pad.stick.x, charging.pad.stick.y)).toBeGreaterThan(0.5);
     await page.waitForTimeout(250);
-    await touch(page, cdp, 'touchEnd', [run]);
+    // Lift only the PASS finger (Chromium's CDP touchEnd ends the listed points).
+    await touch(page, cdp, 'touchEnd', [passFinger]);
     await waitFor(page, (r) => kicksAfter(r, seq).length > 0, 3_000);
     await page.waitForTimeout(600);
     const r1 = await report(page);
     expect(kicksAfter(r1, seq).length).toBe(1);
     expect(Math.hypot(r1.pad.stick.x, r1.pad.stick.y)).toBeGreaterThan(0.5);
-    await touch(page, cdp, 'touchEnd', []);
+    await touch(page, cdp, 'touchEnd', [run]);
     await waitFor(page, (r) => r.pad.stick.x === 0 && r.pad.stick.y === 0);
     expect(errors).toEqual([]);
   });
 
   test('A05/A06: dragging PASS across SHOOT keeps PASS; a cancelled touch never kicks', async ({ page }, info) => {
     const errors = trackConsoleErrors(page);
-    await open(page, modeFor(info), '&setup=pass');
+    await open(page, modeFor(info), '&setup=space');
     const cdp = await page.context().newCDPSession(page);
     await waitFor(page, (r) => r.pad.available?.pass === true);
     const pass = await centre(page, 'pad-pass');
@@ -131,12 +134,14 @@ test.describe('two-thumb touch', () => {
     await waitFor(page, (r) => r.pad.phase !== 'chargingPass');
     await page.waitForTimeout(800);
     expect(kicksAfter(await report(page), seq)).toEqual([]);
-    expect(errors).toEqual([]);
+    // Chrome's intervention notice: Phaser's touch manager calls preventDefault on every touchcancel,
+    // and a system cancel is never cancelable. Any other console error still fails the test.
+    expect(errors.filter((e) => !e.startsWith('Ignored attempt to cancel a touchcancel event with cancelable=false'))).toEqual([]);
   });
 
   test('A20: rotating mid-charge cancels without a kick and rebuilds hit areas inside the new viewport', async ({ page }, info) => {
     const errors = trackConsoleErrors(page);
-    await open(page, modeFor(info), '&setup=pass');
+    await open(page, modeFor(info), '&setup=space');
     const cdp = await page.context().newCDPSession(page);
     await waitFor(page, (r) => r.pad.available?.pass === true);
     const pass = await centre(page, 'pad-pass');
