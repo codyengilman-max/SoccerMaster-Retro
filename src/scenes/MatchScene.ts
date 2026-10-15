@@ -591,6 +591,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const id = this.labId;
     if (!id) return;
     this.sim.arrange((s) => match.stageLabScenario(s, id, MATCH_TUNING.pitch));
+    this.toast(`You control ${this.sim.state.controlledId}`);
   }
 
   /** Frame the carrier (or ball) immediately: scene entry and resets never blend from a stale view. */
@@ -1103,7 +1104,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
           this.toast('Slow motion used up — normal speed');
           break;
         case 'control':
-          if (e.by) this.toast(`You control ${e.by}`);
+          // A stale switch (e.g. kickoff before Lab staging) must not name a player the user no longer controls.
+          if (e.by && e.by === this.sim.state.controlledId) this.toast(`You control ${e.by}`);
           break;
         case 'formation':
           break;

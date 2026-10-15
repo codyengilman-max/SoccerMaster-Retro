@@ -189,6 +189,8 @@ export function stageLabScenario(s: MatchState, id: LabScenarioId, pitch: { leng
   s.controlSince = s.simTime;
   s.controlEpoch += 1;
   s.userSteer = null;
+  s.bufferedDribble = null;
+  s.prevControlledId = null;
 }
 
 function dist(a: { x: number; y: number }, b: { x: number; y: number }): number {
