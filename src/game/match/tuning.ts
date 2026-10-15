@@ -32,16 +32,24 @@ export const MATCH_TUNING = {
     speed: D.dribble.speed,
     /** Dribbling back toward the user's own goal is slower. */
     backSpeedFactor: 0.75,
-    accel: 9,
-    /** Max heading change (rad/s); a reversal slows the carrier before it turns. */
-    turnRate: 5,
-    /** Speed fraction kept while the heading is still far from the requested direction. */
-    minTurnSpeedFactor: 0.3,
+    /**
+     * yd/s^2 cap on velocity change. The carrier steers straight at the swiped direction; a cut or reversal costs
+     * time only through this cap (a 90 deg cut from full speed takes about 0.37 s), never a separate turn-rate brake.
+     */
+    accel: 20,
     /** Minimum sim time between accepted redirects (spam guard; redirects never add speed). */
     redirectSeconds: 0.12,
+    /** A swipe while our pass is within bufferReach yd of its receiver becomes his first-touch direction, for bufferSeconds. */
+    bufferSeconds: 0.4,
+    bufferReach: 5,
   },
-  /** One ground kick for passes and shots (user and AI): speed = lerp(minSpeed, maxSpeed, power). */
-  kick: { minSpeed: 8, maxSpeed: D.shot.maxSpeed },
+  /**
+   * One ground kick for passes and shots (user and AI). Power (0..1) sets the roll distance in yards, and launch
+   * speed (yd/s) is sqrt(2 * ball.friction * distance), so the ball stops where the guide says. Roll grows linearly
+   * from minSpeed's roll (about 4 yd) to passRoll yd over power 0..passPower (the everyday passing range), then
+   * eases up to maxSpeed's roll for long balls and shots, with no kink in slope at passPower.
+   */
+  kick: { minSpeed: 5.3, maxSpeed: D.shot.maxSpeed, passRoll: 34, passPower: 0.7 },
   /** Aiming slow motion: real seconds per team possession spell; refills only after the opponent had the ball. */
   aimAllowance: {
     seconds: 2.4,
@@ -159,6 +167,8 @@ export const MATCH_TUNING = {
     /** Cover stands this fraction of the way from the ball toward the goal/most dangerous runner. */
     coverFraction: 0.4,
     coverDepth: 5,
+    /** Presser reaction lag (s): he closes on the carrier as read this long ago, so a well-timed cut can beat him. */
+    readSeconds: 0.25,
     /** Presser/cover stay assigned at least this long (no jitter) unless beaten by switchMargin seconds. */
     commitSeconds: 0.9,
     switchMarginSeconds: 0.6,

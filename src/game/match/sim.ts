@@ -21,7 +21,7 @@ import { passSpeedFor } from '../attack/sim';
 import { DEFAULT_FORMATION, FORMATIONS, roleDef, type FormationId } from './formations';
 import { MATCH_TUNING, type MatchTuning } from './tuning';
 import { isShotOnGoal, planUserPass } from './predict';
-import { computeAnchor, decideCarrier, planTeams, toTeam, toWorld, velToTeam, type AiContext } from './ai';
+import { ballFocus, computeAnchor, decideCarrier, planTeams, toTeam, toWorld, velToTeam, type AiContext } from './ai';
 import {
   AWAY_IDS,
   HOME_IDS,
@@ -142,6 +142,7 @@ export class MatchSim {
         if (s.phase === 'aiming') this.cancelAim('paused');
         s.pauseReasons.user = true;
         s.paused = true;
+        s.bufferedDribble = null;
         this.emit('paused', null, '');
         return true;
       case 'resume':
@@ -350,6 +351,16 @@ export class MatchSim {
     if (s.paused || s.phase !== 'live') return false;
     if (!finiteVec(direction) || length(direction) < 1e-6) return this.reject('dribble', 'invalid direction');
     if (s.swipeCooldown > 0) return this.reject('dribble', 'cooldown');
+    const k = s.ball.kick;
+    if (!s.ball.owner && k?.team === 'home' && k.kind === 'pass' && k.receiver) {
+      const r = s.players[k.receiver];
+      if (distance(r.pos, s.ball.pos) <= T.carrier.bufferReach) {
+        s.swipeCooldown = T.carrier.redirectSeconds;
+        s.bufferedDribble = { dir: normalize(direction), receiver: k.receiver, until: s.simTime + T.carrier.bufferSeconds };
+        this.emit('dribble', k.receiver, 'buffered');
+        return true;
+      }
+    }
     if (!this.userHasBall()) return this.steerOffBall(direction);
     s.swipeCooldown = T.carrier.redirectSeconds;
     const dir = normalize(direction);
@@ -403,6 +414,7 @@ export class MatchSim {
     s.controlledId = id;
     s.controlSince = s.simTime;
     s.userSteer = null;
+    s.bufferedDribble = null;
     this.emit('control', id, why);
   }
 
@@ -539,9 +551,11 @@ export class MatchSim {
     this.expireCoachIntent();
     this.establishPossession();
     this.releaseMissedReceiver();
+    this.updatePressRead(h);
     planTeams(this.ctx());
     this.updateUserControl();
     if (s.userSteer && (s.simTime >= s.userSteer.until || s.userSteer.epoch !== s.controlEpoch)) s.userSteer = null;
+    if (s.bufferedDribble && s.simTime > s.bufferedDribble.until) s.bufferedDribble = null;
     this.aiCarrier();
     for (const id of MATCH_PLAYER_IDS) this.movePlayer(s.players[id], h);
     const prev = copy(s.ball.pos);
@@ -654,6 +668,20 @@ export class MatchSim {
     passer.speed = T.movement.runSpeed;
   }
 
+  /** Pressers react to the carrier's cuts after a short lag instead of mirroring them instantly. */
+  private updatePressRead(h: number): void {
+    const s = this.s;
+    const focus = ballFocus(s);
+    const r = s.pressRead;
+    // First tick, or the ball was teleported (restart, Lab staging): no lag to carry over.
+    if (!finiteVec(r) || distance(r, focus) > 12) {
+      s.pressRead = copy(focus);
+      return;
+    }
+    const k = 1 - Math.exp(-h / Math.max(1e-3, this.tuning.defense.readSeconds));
+    s.pressRead = vec(r.x + (focus.x - r.x) * k, r.y + (focus.y - r.y) * k);
+  }
+
   private movePlayer(p: MatchPlayer, h: number): void {
     const T = this.tuning;
     const s = this.s;
@@ -664,7 +692,7 @@ export class MatchSim {
       if (p.isKeeper) desired = vec(0, 0);
       else if (p.team === 'home') {
         p.intent = 'carry';
-        desired = this.userCarrierVelocity(p, h);
+        desired = this.userCarrierVelocity(p);
         accel = T.carrier.accel;
       } else {
         desired = seek(p.pos, p.target, M.carrySpeed, 0.6);
@@ -689,7 +717,7 @@ export class MatchSim {
   }
 
   /** Steers toward `dribbleDir` with a bounded turn rate; a sharp change slows the carrier first. */
-  private userCarrierVelocity(p: MatchPlayer, h: number): MutableVec2 {
+  private userCarrierVelocity(p: MatchPlayer): MutableVec2 {
     const T = this.tuning;
     const C = T.carrier;
     const s = this.s;
@@ -700,19 +728,9 @@ export class MatchSim {
       if (s.simTime < f.until) top *= T.feint.speedFactor;
       else if (f.exitDir) top *= T.feint.exitSpeedFactor;
     }
-    const sp = length(p.vel);
-    let heading = want;
-    let factor = 1;
-    if (sp > 0.4) {
-      const cur = normalize(p.vel);
-      const angle = Math.atan2(cur.x * want.y - cur.y * want.x, cur.x * want.x + cur.y * want.y);
-      const maxTurn = C.turnRate * h;
-      const turn = clamp(angle, -maxTurn, maxTurn);
-      heading = rotate(cur, turn);
-      factor = Math.max(C.minTurnSpeedFactor, Math.cos(Math.min(Math.abs(angle - turn), Math.PI / 2)));
-    }
-    let vx = heading.x * top * factor;
-    let vy = heading.y * top * factor;
+    // Steer straight at the requested direction; movePlayer's accel cap is the only limit on cuts and reversals.
+    let vx = want.x * top;
+    let vy = want.y * top;
     const P = T.pitch;
     if (vx > 0) vx *= clamp((P.length - T.dribble.stopShort - p.pos.x) / T.dribble.slowZone, 0, 1);
     if (vx < 0) vx *= clamp((p.pos.x - 1.5) / 3, 0, 1);
@@ -954,6 +972,8 @@ export class MatchSim {
     const s = this.s;
     const ball = s.ball;
     const changed = s.possession !== p.team;
+    const buffered = s.bufferedDribble;
+    s.bufferedDribble = null;
     ball.owner = p.id;
     ball.vel = p.isKeeper ? vec(0, 0) : copy(p.vel);
     // Control brings the ball to the receiver's feet (it was within reach), so ownership and ball position agree.
@@ -986,7 +1006,9 @@ export class MatchSim {
       s.controlledId = p.id;
       s.controlSince = s.simTime;
       s.userSteer = null;
-      s.dribbleDir = length(p.vel) > 0.3 && p.vel.x >= 0 ? normalize(p.vel) : vec(1, 0);
+      // Keep the receiver's own momentum (any direction); only a standing receiver defaults to facing upfield.
+      s.dribbleDir = length(p.vel) > 0.3 ? normalize(p.vel) : vec(1, 0);
+      if (buffered && how === 'received' && buffered.receiver === p.id && s.simTime <= buffered.until) s.dribbleDir = copy(buffered.dir);
       this.emit('control', p.id, '');
     }
     if (changed) {
@@ -1131,6 +1153,7 @@ export class MatchSim {
       controlledId: 'H8',
       controlSince: 0,
       userSteer: null,
+      bufferedDribble: null,
       possessionSeq: 0,
       establishedTeam: null,
       controlEpoch: 0,
@@ -1151,6 +1174,7 @@ export class MatchSim {
       beatenUntil: {},
       defense: { home: { presserId: null, coverId: null, until: 0 }, away: { presserId: null, coverId: null, until: 0 } },
       chaser: { home: { id: null, until: 0 }, away: { id: null, until: 0 } },
+      pressRead: vec(Number.NaN, Number.NaN),
       runs: { home: { runnerId: null, until: 0, cooldownUntil: 0 }, away: { runnerId: null, until: 0, cooldownUntil: 0 } },
       nextDecisionAt: 0,
       keeperDiving: { home: false, away: false },
@@ -1200,12 +1224,41 @@ function finiteVec(v: Vec2): boolean {
   return Number.isFinite(v.x) && Number.isFinite(v.y);
 }
 
-/** The single kick-speed mapping used by user and AI kicks (ground balls only). */
+function kickCurve(T: MatchTuning): { f: number; dMin: number; dPass: number; pp: number; a: number; c: number } {
+  const K = T.kick;
+  const f = T.ball.friction;
+  const dMin = (K.minSpeed * K.minSpeed) / (2 * f);
+  const dMax = (K.maxSpeed * K.maxSpeed) / (2 * f);
+  const pp = K.passPower;
+  const dPass = K.passRoll;
+  const a = ((dPass - dMin) / pp) * (1 - pp);
+  return { f, dMin, dPass, pp, a, c: dMax - dPass - a };
+}
+
+/** Roll distance (yd) for a power 0..1; see tuning.kick. */
+export function kickRoll(power: number, T: MatchTuning = MATCH_TUNING): number {
+  const p = Number.isFinite(power) ? clamp(power, 0, 1) : 0;
+  const k = kickCurve(T);
+  if (p <= k.pp) return k.dMin + ((k.dPass - k.dMin) * p) / k.pp;
+  const u = (p - k.pp) / (1 - k.pp);
+  return k.dPass + k.a * u + k.c * u * u;
+}
+
+/** The single kick-speed mapping used by user and AI kicks (ground balls only), in yd/s. */
 export function kickSpeed(power: number, T: MatchTuning = MATCH_TUNING): number {
   const p = Number.isFinite(power) ? clamp(power, 0, 1) : 0;
-  return lerp(T.kick.minSpeed, T.kick.maxSpeed, p);
+  if (p <= 0) return T.kick.minSpeed;
+  if (p >= 1) return T.kick.maxSpeed;
+  return Math.sqrt(2 * T.ball.friction * kickRoll(p, T));
 }
 
 export function powerForSpeed(speed: number, T: MatchTuning = MATCH_TUNING): number {
-  return clamp((speed - T.kick.minSpeed) / (T.kick.maxSpeed - T.kick.minSpeed), 0, 1);
+  if (!Number.isFinite(speed) || speed <= T.kick.minSpeed) return 0;
+  if (speed >= T.kick.maxSpeed) return 1;
+  const k = kickCurve(T);
+  const d = (speed * speed) / (2 * k.f);
+  if (d <= k.dPass) return clamp((k.pp * (d - k.dMin)) / (k.dPass - k.dMin), 0, 1);
+  const r = d - k.dPass;
+  const u = Math.abs(k.c) < 1e-9 ? r / k.a : (-k.a + Math.sqrt(k.a * k.a + 4 * k.c * r)) / (2 * k.c);
+  return clamp(k.pp + u * (1 - k.pp), 0, 1);
 }

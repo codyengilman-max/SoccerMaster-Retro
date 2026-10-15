@@ -196,6 +196,8 @@ export interface MatchState {
   controlSince: number;
   /** Off-ball steer from a swipe (world unit vector) until sim time `until`; null = AI movement. */
   userSteer: { dir: Vec2; until: number; epoch: number } | null;
+  /** A swipe made just before our pass arrives, applied to that receiver's first controlled touch only. */
+  bufferedDribble: { dir: Vec2; receiver: MatchPlayerId; until: number } | null;
   /** Stable team-possession sequence: bumps only when a team establishes possession. */
   possessionSeq: number;
   /** Team whose current spell is established (see aimAllowance.establishSeconds), or null. */
@@ -228,6 +230,8 @@ export interface MatchState {
   beatenUntil: Partial<Record<MatchPlayerId, number>>;
   defense: Record<TeamId, DefenseAssignment>;
   chaser: Record<TeamId, { id: MatchPlayerId | null; until: number }>;
+  /** Where pressers think the ball is: the ball focus seen through a short reaction lag (defense.readSeconds). */
+  pressRead: MutableVec2;
   runs: Record<TeamId, TeamRun>;
   /** AI carrier's next decision time. */
   nextDecisionAt: number;

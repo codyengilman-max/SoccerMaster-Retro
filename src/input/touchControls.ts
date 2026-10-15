@@ -103,8 +103,8 @@ export interface Pull {
   readonly pullPx: number;
 }
 
-/** Pull-to-power exponent (see pullFor). */
-export const POWER_CURVE = 1.4;
+/** Pull-to-power exponent (see pullFor). Linear: the sim's kick curve already maps power to roll distance evenly. */
+export const POWER_CURVE = 1;
 
 export function pullFor(dragX: number, dragY: number, th: Thresholds): Pull {
   const x = finite(dragX) ? dragX : 0;
@@ -112,7 +112,7 @@ export function pullFor(dragX: number, dragY: number, th: Thresholds): Pull {
   const len = Math.hypot(x, y);
   const inCancel = len < th.cancelRadius;
   const span = Math.max(1, th.maxPull - th.cancelRadius);
-  // A curve > 1 spreads the low/medium range (ordinary passes) over more pull; full power needs a deliberate long pull.
+  // Power is the pull fraction from the cancel-circle edge to maxPull; the sim turns it into roll distance (tuning.kick).
   const power = inCancel ? 0 : Math.pow(Math.min(1, Math.max(0, (len - th.cancelRadius) / span)), POWER_CURVE);
   return { dirX: inCancel ? 0 : -x / len, dirY: inCancel ? 0 : -y / len, power, inCancel, pullPx: len };
 }
