@@ -183,6 +183,55 @@ export const MATCH_TUNING = {
     /** Players caught on the wrong side of the ball by this much sprint back. */
     recoverBeyond: 3,
   },
+  /**
+   * Joystick + four-button controls (controls brief §15). Provisional playtest values, not proven optimal.
+   * Charge times are sim seconds; speeds yd/s; angles radians.
+   */
+  pad: {
+    deadZone: 0.12,
+    passChargeSeconds: 0.65,
+    shotChargeSeconds: 0.85,
+    passPower: { min: 0.12, max: 0.85 },
+    shotPower: { min: 0.6, max: 1 },
+    prepSeconds: 0.08,
+    recoverySeconds: 0.22,
+    /** Ball must be this close to the kicker at contact. */
+    contactReach: 1.6,
+    receiverCone: 0.6,
+    receiverMinRange: 3,
+    receiverMaxRange: 34,
+    /** A highlighted receiver is kept unless another scores better by this margin. */
+    receiverStickiness: 0.25,
+    /** Max lead correction toward the locked receiver at contact. */
+    leadMaxAngle: 0.14,
+    leadSeconds: 0.45,
+    shotErrorMax: 0.12,
+    pressureRadius: 3.5,
+    blockSpeedFactor: 0.55,
+    blockTurnRate: 5,
+    blockHalfWidth: 1.1,
+    blockDepth: 0.6,
+    blockRestitution: 0.45,
+    /** Incoming ball faster than this rebounds off the block and cannot be taken by the blocker straight away. */
+    blockHardSpeed: 12,
+    blockIgnoreSeconds: 0.35,
+    agilityTurnPenalty: 0.5,
+    attrRange: { min: 0.8, max: 1.2 },
+    slide: {
+      startSeconds: 0.12,
+      activeSeconds: 0.35,
+      recoverySeconds: 0.7,
+      cooldownSeconds: 0.3,
+      speed: 8.5,
+      steerRate: 1.2,
+      ballReach: 0.9,
+      bodyReach: 0.75,
+      pokeSpeed: 7,
+      /** Body contact later than this after the ball touch is still a foul. */
+      cleanWindow: 0.12,
+      sliderIgnoreSeconds: 0.5,
+    },
+  },
   ai: {
     /** The AI carrier re-evaluates this often, and not sooner than reactionSeconds after receiving. */
     decisionSeconds: 0.3,

@@ -51,6 +51,49 @@ export interface MatchPlayer {
   intentUntil: number;
   /** Speed cap for the current intent. */
   speed: number;
+  /** Movement attributes as multipliers (1 = squad average). */
+  readonly attrs: PlayerAttrs;
+}
+
+export interface PlayerAttrs {
+  readonly pace: number;
+  readonly accel: number;
+  readonly agility: number;
+  readonly control: number;
+}
+
+export type PadAction = 'pass' | 'shoot' | 'slide' | 'block';
+export type PadPhase =
+  | 'ready'
+  | 'chargingPass'
+  | 'chargingShoot'
+  | 'kickPrep'
+  | 'kickRecovery'
+  | 'blocking'
+  | 'slideStart'
+  | 'slideActive'
+  | 'slideRecovery';
+
+/** Joystick + four-button control state (controls=pad). */
+export interface PadState {
+  /** Pitch-space stick vector, length 0..1. */
+  stick: MutableVec2;
+  /** Controlled player's body facing (unit). */
+  facing: MutableVec2;
+  phase: PadPhase;
+  actor: MatchPlayerId | null;
+  since: number;
+  /** controlEpoch and ownedSince when the action began: any change invalidates a kick. */
+  epoch: number;
+  ownedSince: number;
+  chargeStart: number;
+  receiver: MatchPlayerId | null;
+  locked: { readonly kind: 'pass' | 'shot'; readonly dir: Vec2; readonly power: number; readonly receiver: MatchPlayerId | null } | null;
+  slideDir: MutableVec2 | null;
+  ballTouchedAt: number | null;
+  bodyResolved: boolean;
+  lastCmdId: number;
+  readyAt: number;
 }
 
 export interface MatchKick {
@@ -84,7 +127,7 @@ export interface MatchClock {
 }
 
 export interface Stoppage {
-  readonly reason: 'goal' | 'out';
+  readonly reason: 'goal' | 'out' | 'foul';
   readonly scorer: TeamId | null;
   readonly detail: string;
   /** Team that restarts after the sandbox reset. */
@@ -117,6 +160,13 @@ export interface FeintState {
 
 export type MatchEventType =
   | 'kickoff'
+  | 'padPress'
+  | 'padRelease'
+  | 'padCancel'
+  | 'slide'
+  | 'block'
+  | 'deflect'
+  | 'foul'
   | 'live'
   | 'pass'
   | 'shot'
@@ -244,4 +294,5 @@ export interface MatchState {
   clock: MatchClock | null;
   stats: { passes: Record<TeamId, number>; shots: Record<TeamId, number>; saves: Record<TeamId, number>; turnovers: number };
   events: MatchEvent[];
+  pad: PadState;
 }

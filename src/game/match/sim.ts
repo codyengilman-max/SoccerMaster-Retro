@@ -36,10 +36,15 @@ import {
   type MatchState,
   type TeamId,
 } from './types';
+import type { PadAction, PadState, PlayerAttrs } from './types';
 
 export type MatchCommand =
   /** Sets the user carrier's dribble direction (world/pitch vector; its length is ignored). */
   | { readonly type: 'dribble'; readonly direction: Vec2 }
+  | { readonly type: 'padMove'; readonly x: number; readonly y: number }
+  | { readonly type: 'padPress'; readonly id: number; readonly action: PadAction }
+  | { readonly type: 'padRelease'; readonly id: number; readonly action: PadAction }
+  | { readonly type: 'padCancel'; readonly id: number; readonly reason: string }
   | { readonly type: 'feint' }
   /** Double-tap: an immediate shot at the opponent goal, fast but with seeded placement error. */
   | { readonly type: 'quickShot' }
@@ -75,7 +80,13 @@ export interface MatchSimOptions {
    * 'normal' = aiming at full speed, no allowance spent.
    */
   readonly aimAssist?: AimAssistMode;
+  /** 'pad' = joystick + four buttons (controls brief); 'gesture' keeps the swipe / pull-back controls. */
+  readonly controls?: ControlScheme;
+  /** Per-player movement attributes (multipliers, clamped to tuning.pad.attrRange); missing = 1. */
+  readonly attributes?: Partial<Record<MatchPlayerId, Partial<PlayerAttrs>>>;
 }
+
+export type ControlScheme = 'gesture' | 'pad';
 
 export type AimAssistMode = 'slow' | 'normal';
 
@@ -96,9 +107,13 @@ export class MatchSim {
   private readonly halfSeconds: number | null;
 
   readonly aimAssist: AimAssistMode;
+  readonly controls: ControlScheme;
+  private readonly attrOverrides: Partial<Record<MatchPlayerId, Partial<PlayerAttrs>>>;
 
   constructor(options: MatchSimOptions = {}) {
     this.tuning = options.tuning ?? MATCH_TUNING;
+    this.controls = options.controls === 'pad' ? 'pad' : 'gesture';
+    this.attrOverrides = options.attributes ?? {};
     this.aimAssist = options.aimAssist === 'normal' ? 'normal' : 'slow';
     this.seed = options.seed ?? 1;
     this.rng = createRng(this.seed);
@@ -140,6 +155,7 @@ export class MatchSim {
       case 'pause':
         if (s.pauseReasons.user) return false;
         if (s.phase === 'aiming') this.cancelAim('paused');
+        this.padReset('paused');
         s.pauseReasons.user = true;
         s.paused = true;
         s.bufferedDribble = null;
@@ -185,6 +201,14 @@ export class MatchSim {
         return true;
       case 'setFormation':
         return this.setFormation(cmd.team, cmd.formation);
+      case 'padMove':
+        return this.padMove(cmd.x, cmd.y);
+      case 'padPress':
+        return this.padPress(cmd.id, cmd.action);
+      case 'padRelease':
+        return this.padRelease(cmd.id, cmd.action);
+      case 'padCancel':
+        return this.padCancel(cmd.id, cmd.reason);
       case 'dribble':
         return this.dribble(cmd.direction);
       case 'feint':
@@ -404,6 +428,8 @@ export class MatchSim {
     const pick = owner ? s.defense.home.presserId : s.chaser.home.id;
     if (!pick || pick === s.controlledId || s.players[pick].isKeeper) return;
     if (s.simTime - s.controlSince < T.offBall.minHoldSeconds) return;
+    // A slide or block in progress is never handed to another player.
+    if (this.controls === 'pad' && s.pad.phase !== 'ready') return;
     // Never yank control from a player the user is steering right now, and never bounce straight back.
     if (s.userSteer && s.simTime < s.userSteer.until) return;
     if (pick === s.prevControlledId && s.simTime - s.controlSince < T.offBall.returnHoldSeconds) return;
@@ -539,6 +565,395 @@ export class MatchSim {
     s.feint = null;
   }
 
+
+  // ---- joystick + four-button controls (controls=pad) --------------------------------------------
+
+  private attrsFor(id: MatchPlayerId): PlayerAttrs {
+    const R = this.tuning.pad.attrRange;
+    const o = this.attrOverrides[id] ?? {};
+    const f = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? clamp(v, R.min, R.max) : 1);
+    return { pace: f(o.pace), accel: f(o.accel), agility: f(o.agility), control: f(o.control) };
+  }
+
+  private newPad(): PadState {
+    return {
+      stick: vec(0, 0), facing: vec(1, 0), phase: 'ready', actor: null, since: 0, epoch: -1, ownedSince: -1, chargeStart: 0,
+      receiver: null, locked: null, slideDir: null, ballTouchedAt: null, bodyResolved: false, lastCmdId: 0, readyAt: 0,
+    };
+  }
+
+  /** Which of the four buttons the authoritative state allows right now (brief §10). */
+  padAvailability(): Record<PadAction, boolean> {
+    const s = this.s;
+    const none = { pass: false, shoot: false, slide: false, block: false };
+    if (this.controls !== 'pad' || s.paused || s.phase !== 'live') return none;
+    const me = s.players[s.controlledId];
+    if (!me || me.team !== 'home' || me.isKeeper) return none;
+    const ph = s.pad.phase;
+    const cool = s.simTime >= s.pad.readyAt;
+    const owner = s.ball.owner ? s.players[s.ball.owner] : null;
+    if (owner?.id === me.id) {
+      return { pass: cool && (ph === 'ready' || ph === 'chargingPass'), shoot: cool && (ph === 'ready' || ph === 'chargingShoot'), slide: false, block: false };
+    }
+    if (owner && owner.team === 'home') return none;
+    const free = cool && ph === 'ready';
+    return { pass: false, shoot: false, slide: free, block: free || ph === 'blocking' };
+  }
+
+  /** Neutral-aim target for shots: the goal this team attacks (ends never switch in this engine). */
+  attackingGoal(team: TeamId): MutableVec2 {
+    return toWorld(team, vec(this.tuning.pitch.length, this.tuning.pitch.goalCenterY), this.tuning);
+  }
+
+  private padMove(x: number, y: number): boolean {
+    if (this.controls !== 'pad') return false;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return this.reject('padMove', 'non-finite');
+    const m = Math.hypot(x, y);
+    const k = m > 1 ? 1 / m : 1;
+    this.s.pad.stick = vec(x * k, y * k);
+    return true;
+  }
+
+  private padCmdId(id: number, what: string): boolean {
+    const pad = this.s.pad;
+    if (!Number.isSafeInteger(id) || id <= pad.lastCmdId) return this.reject(what, 'stale or duplicate command');
+    pad.lastCmdId = id;
+    return true;
+  }
+
+  private padPress(id: number, action: PadAction): boolean {
+    if (this.controls !== 'pad' || !this.padCmdId(id, 'padPress')) return false;
+    const s = this.s;
+    const pad = s.pad;
+    if (!(['pass', 'shoot', 'slide', 'block'] as const).includes(action)) return this.reject('padPress', 'unknown action');
+    if (pad.phase !== 'ready' || !this.padAvailability()[action]) return this.reject('padPress', `${action} unavailable`);
+    const me = s.players[s.controlledId];
+    pad.actor = me.id;
+    pad.since = s.simTime;
+    pad.epoch = s.controlEpoch;
+    pad.ownedSince = s.ownedSince;
+    pad.locked = null;
+    pad.receiver = null;
+    if (action === 'pass' || action === 'shoot') {
+      pad.phase = action === 'pass' ? 'chargingPass' : 'chargingShoot';
+      pad.chargeStart = s.simTime;
+      if (action === 'pass') pad.receiver = this.pickReceiver(me, null);
+    } else if (action === 'block') {
+      pad.phase = 'blocking';
+      this.emit('block', me.id, 'start');
+    } else {
+      pad.phase = 'slideStart';
+      pad.slideDir = length(pad.stick) > 0.2 ? normalize(pad.stick) : copy(pad.facing);
+      pad.ballTouchedAt = null;
+      pad.bodyResolved = false;
+      this.emit('slide', me.id, 'start');
+    }
+    this.emit('padPress', me.id, action);
+    return true;
+  }
+
+  private padRelease(id: number, action: PadAction): boolean {
+    if (this.controls !== 'pad' || !this.padCmdId(id, 'padRelease')) return false;
+    const s = this.s;
+    const pad = s.pad;
+    const T = this.tuning.pad;
+    if (action === 'block') {
+      if (pad.phase !== 'blocking') return false;
+      this.emit('block', pad.actor, 'end');
+      this.padToReady(0);
+      return true;
+    }
+    if (action !== 'pass' && action !== 'shoot') return false;
+    if (pad.phase !== (action === 'pass' ? 'chargingPass' : 'chargingShoot')) return this.reject('padRelease', 'not charging');
+    if (!this.padKickValid()) {
+      this.padReset('possession lost');
+      return false;
+    }
+    const me = s.players[pad.actor!];
+    const P = action === 'pass' ? T.passPower : T.shotPower;
+    const full = action === 'pass' ? T.passChargeSeconds : T.shotChargeSeconds;
+    const power = lerp(P.min, P.max, clamp((s.simTime - pad.chargeStart) / full, 0, 1));
+    let dir: Vec2;
+    if (length(pad.stick) > 0) dir = normalize(pad.stick);
+    else if (action === 'shoot') dir = normalize(sub(this.attackingGoal('home'), s.ball.pos));
+    else dir = copy(pad.facing);
+    const receiver = action === 'pass' ? this.pickReceiver(me, pad.receiver) : null;
+    pad.locked = { kind: action === 'pass' ? 'pass' : 'shot', dir, power, receiver };
+    pad.receiver = receiver;
+    pad.phase = 'kickPrep';
+    pad.since = s.simTime;
+    this.emit('padRelease', me.id, `${action} ${power.toFixed(2)}`);
+    return true;
+  }
+
+  /** Pointer cancel, lost focus, layout rebuild: never a kick. */
+  private padCancel(id: number, reason: string): boolean {
+    if (this.controls !== 'pad' || !this.padCmdId(id, 'padCancel')) return false;
+    const ph = this.s.pad.phase;
+    if (ph !== 'chargingPass' && ph !== 'chargingShoot' && ph !== 'blocking') return false;
+    this.padReset(String(reason).slice(0, 40));
+    return true;
+  }
+
+  private padKickValid(): boolean {
+    const s = this.s;
+    const pad = s.pad;
+    return !!pad.actor && s.ball.owner === pad.actor && s.controlledId === pad.actor && s.controlEpoch === pad.epoch && s.ownedSince === pad.ownedSince;
+  }
+
+  private padToReady(cooldown: number): void {
+    const pad = this.s.pad;
+    pad.phase = 'ready';
+    pad.actor = null;
+    pad.locked = null;
+    pad.receiver = null;
+    pad.slideDir = null;
+    pad.readyAt = this.s.simTime + cooldown;
+  }
+
+  private padReset(reason: string): void {
+    const pad = this.s.pad;
+    if (pad.phase === 'ready') return;
+    this.emit('padCancel', pad.actor, `${pad.phase}: ${reason}`);
+    this.padToReady(0);
+  }
+
+  private tickPad(h: number): void {
+    const s = this.s;
+    const pad = s.pad;
+    const T = this.tuning.pad;
+    const S = T.slide;
+    const me = s.players[s.controlledId];
+    const sliding = pad.phase === 'slideStart' || pad.phase === 'slideActive' || pad.phase === 'slideRecovery';
+    if (pad.phase === 'blocking') {
+      const to = sub(s.ball.pos, me.pos);
+      if (length(to) > 0.05) pad.facing = turnToward(pad.facing, normalize(to), T.blockTurnRate * h);
+    } else if (!sliding && length(me.vel) > 0.5) pad.facing = normalize(me.vel);
+    const t = s.simTime - pad.since;
+    switch (pad.phase) {
+      case 'chargingPass':
+      case 'chargingShoot':
+        if (!this.padKickValid()) return this.padReset('possession lost');
+        if (pad.phase === 'chargingPass') pad.receiver = this.pickReceiver(me, pad.receiver);
+        return;
+      case 'kickPrep':
+        if (!this.padKickValid()) return this.padReset('possession lost');
+        if (t >= T.prepSeconds - 1e-9) this.padContact();
+        return;
+      case 'kickRecovery':
+        if (t >= T.recoverySeconds - 1e-9) this.padToReady(0);
+        return;
+      case 'blocking':
+        if (pad.actor !== s.controlledId || pad.epoch !== s.controlEpoch) return this.padReset('control changed');
+        if (s.ball.owner === pad.actor) {
+          this.emit('block', pad.actor, 'gained possession');
+          this.padToReady(0);
+        }
+        return;
+      case 'slideStart':
+        if (pad.actor !== s.controlledId) return this.padToReady(S.cooldownSeconds);
+        if (t >= S.startSeconds - 1e-9) {
+          pad.phase = 'slideActive';
+          pad.since = s.simTime;
+        }
+        return;
+      case 'slideActive':
+        if (pad.actor !== s.controlledId) return this.padToReady(S.cooldownSeconds);
+        if (pad.slideDir && length(pad.stick) > 0.2) pad.slideDir = turnToward(pad.slideDir, normalize(pad.stick), S.steerRate * h);
+        if (t >= S.activeSeconds - 1e-9) {
+          pad.phase = 'slideRecovery';
+          pad.since = s.simTime;
+        }
+        return;
+      case 'slideRecovery':
+        if (t >= S.recoverySeconds - 1e-9) {
+          this.emit('slide', pad.actor, 'recovered');
+          this.padToReady(S.cooldownSeconds);
+        }
+        return;
+      default:
+        return;
+    }
+  }
+
+  /** The single ball-contact moment of a pad kick: possession and reach are checked again here. */
+  private padContact(): void {
+    const s = this.s;
+    const pad = s.pad;
+    const T = this.tuning.pad;
+    const L = pad.locked;
+    const me = pad.actor ? s.players[pad.actor] : null;
+    if (!L || !me) return this.padReset('nothing locked');
+    if (distance(me.pos, s.ball.pos) > T.contactReach) return this.padReset('ball out of reach');
+    const speed = kickSpeed(L.power, this.tuning);
+    let dir: Vec2 = L.dir;
+    if (L.kind === 'pass') {
+      const r = L.receiver ? s.players[L.receiver] : null;
+      if (r) dir = turnToward(L.dir, normalize(sub(add(r.pos, scale(r.vel, T.leadSeconds)), s.ball.pos)), T.leadMaxAngle);
+      const plan = planUserPass(s, me.id, s.ball.pos, dir, speed, this.tuning);
+      const receiver = L.receiver ?? plan.receiver;
+      this.kickBall(me, scale(dir, speed), 'pass', plan.target, receiver);
+      this.afterPass(me, plan.target);
+      this.emit('pass', me.id, receiver ?? '');
+    } else {
+      const misalign = (1 - dot2(pad.facing, L.dir)) / 2;
+      const err = T.shotErrorMax * (0.25 + 0.75 * this.pressureOn(me)) * (1 + misalign) * (2 - me.attrs.control);
+      dir = rotate(L.dir, (this.rng() * 2 - 1) * err);
+      this.kickBall(me, scale(dir, speed), 'shot', null, null);
+      s.stats.shots.home += 1;
+      this.emit('shot', me.id, speed.toFixed(1));
+    }
+    s.feint = null;
+    pad.phase = 'kickRecovery';
+    pad.since = s.simTime;
+    pad.locked = null;
+    pad.receiver = null;
+  }
+
+  private pressureOn(p: MatchPlayer): number {
+    let d = Infinity;
+    for (const id of TEAM_PLAYER_IDS[otherTeam(p.team)]) d = Math.min(d, distance(this.s.players[id].pos, p.pos));
+    return clamp(1 - d / this.tuning.pad.pressureRadius, 0, 1);
+  }
+
+  /** Receiver by intended direction first, then distance; a highlighted receiver is kept unless clearly beaten. */
+  private pickReceiver(me: MatchPlayer, current: MatchPlayerId | null): MatchPlayerId | null {
+    const s = this.s;
+    const T = this.tuning.pad;
+    const aim = length(s.pad.stick) > 0 ? normalize(s.pad.stick) : s.pad.facing;
+    const score = (id: MatchPlayerId): number | null => {
+      const p = s.players[id];
+      if (id === me.id || p.team !== me.team || p.isKeeper) return null;
+      const d = sub(p.pos, s.ball.pos);
+      const dist = length(d);
+      if (dist < T.receiverMinRange || dist > T.receiverMaxRange) return null;
+      const ang = Math.acos(clamp(dot2(d, aim) / dist, -1, 1));
+      if (ang > T.receiverCone) return null;
+      return ang / T.receiverCone + (0.35 * dist) / T.receiverMaxRange;
+    };
+    let best: MatchPlayerId | null = null;
+    let bestScore = Infinity;
+    for (const id of TEAM_PLAYER_IDS[me.team]) {
+      const v = score(id);
+      if (v !== null && v < bestScore) {
+        best = id;
+        bestScore = v;
+      }
+    }
+    if (current) {
+      const c = score(current);
+      if (c !== null && c <= bestScore + T.receiverStickiness) return current;
+    }
+    return best;
+  }
+
+  /** Stick-driven velocity for the controlled player: pace caps speed, acceleration and agility shape how it is reached. */
+  private padVelocity(p: MatchPlayer): { desired: MutableVec2; accel: number } {
+    const s = this.s;
+    const T = this.tuning;
+    const pad = s.pad;
+    const A = p.attrs;
+    const S = T.pad.slide;
+    const mine = pad.actor === p.id;
+    if (mine && pad.phase === 'slideActive' && pad.slideDir) return { desired: scale(pad.slideDir, S.speed * A.pace), accel: 60 };
+    if (mine && pad.phase === 'slideStart' && pad.slideDir) return { desired: scale(pad.slideDir, Math.max(length(p.vel), T.movement.chaseSpeed * 0.6)), accel: 30 };
+    if (mine && pad.phase === 'slideRecovery') return { desired: vec(0, 0), accel: 25 };
+    const carrying = s.ball.owner === p.id;
+    let top = (carrying ? T.carrier.speed * (0.85 + 0.15 * A.control) : T.movement.chaseSpeed) * A.pace;
+    if (mine && pad.phase === 'blocking') top *= T.pad.blockSpeedFactor;
+    const desired = scale(pad.stick, top);
+    if (carrying) {
+      if (length(pad.stick) > 0.05) s.dribbleDir = normalize(pad.stick);
+      const P = T.pitch;
+      if (desired.x > 0) desired.x *= clamp((P.length - T.dribble.stopShort - p.pos.x) / T.dribble.slowZone, 0, 1);
+      if (desired.x < 0) desired.x *= clamp((p.pos.x - 1.5) / 3, 0, 1);
+      if (desired.y > 0) desired.y *= clamp((P.width - 1.5 - p.pos.y) / 3, 0, 1);
+      if (desired.y < 0) desired.y *= clamp((p.pos.y - 1.5) / 3, 0, 1);
+    }
+    const base = (carrying ? T.carrier.accel : T.movement.sprintAccel) * A.accel;
+    const v = length(p.vel);
+    const want = length(desired);
+    let accel = base;
+    if (v > 0.5 && want > 0.1) {
+      const turn = (1 - dot2(p.vel, desired) / (v * want)) / 2;
+      accel = base * (1 - T.pad.agilityTurnPenalty * turn * (2 - A.agility));
+    }
+    return { desired, accel };
+  }
+
+  /**
+   * Slide and block contacts along this tick's swept paths, before goals and ordinary interceptions.
+   * Returns the ball's new sweep origin after a deflection, 'stopped' after a foul, else null.
+   */
+  private resolvePadContacts(me: MatchPlayer, mePrev: Vec2, ballPrev: Vec2): Vec2 | 'stopped' | null {
+    const s = this.s;
+    const pad = s.pad;
+    const T = this.tuning.pad;
+    const S = T.slide;
+    const ball = s.ball;
+    if (pad.actor !== me.id) return null;
+    if (pad.phase === 'slideActive' && !pad.bodyResolved && pad.slideDir) {
+      type Hit = { at: number; q: MatchPlayer | null };
+      const hits: Hit[] = [];
+      const owner = ball.owner ? s.players[ball.owner] : null;
+      if (pad.ballTouchedAt === null && owner?.team !== me.team && distanceToSegment(ball.pos, mePrev, me.pos) <= S.ballReach) {
+        hits.push({ at: along(mePrev, me.pos, ball.pos), q: null });
+      }
+      for (const id of TEAM_PLAYER_IDS[otherTeam(me.team)]) {
+        const q = s.players[id];
+        if (distanceToSegment(q.pos, mePrev, me.pos) <= S.bodyReach) hits.push({ at: along(mePrev, me.pos, q.pos), q });
+      }
+      hits.sort((a, b) => a.at - b.at);
+      for (const hit of hits) {
+        if (!hit.q) {
+          pad.ballTouchedAt = s.simTime;
+          const carried = owner ? copy(owner.vel) : copy(ball.vel);
+          if (owner) {
+            s.tackleBan[owner.id] = s.simTime + this.tuning.tackle.loserBanSeconds;
+            s.beatenUntil[owner.id] = s.simTime + this.tuning.tackle.beatenSeconds;
+          }
+          ball.owner = null;
+          ball.vel = add(scale(pad.slideDir, S.pokeSpeed), scale(carried, 0.3));
+          ball.kick = { by: me.id, team: me.team, kind: 'touch', at: s.simTime, target: null, receiver: null };
+          ball.lastTouch = me.team;
+          ball.ignore.push({ id: me.id, until: s.simTime + S.sliderIgnoreSeconds });
+          this.emit('slide', me.id, owner ? `ball poked from ${owner.id}` : 'ball touched');
+          continue;
+        }
+        pad.bodyResolved = true;
+        const clean = pad.ballTouchedAt !== null && s.simTime - pad.ballTouchedAt <= S.cleanWindow;
+        if (clean) {
+          s.beatenUntil[hit.q.id] = s.simTime + this.tuning.tackle.beatenSeconds;
+          this.emit('slide', me.id, `clean contact ${hit.q.id}`);
+          break;
+        }
+        this.emit('foul', me.id, `slide on ${hit.q.id}`);
+        this.stop('foul', null, `foul by ${me.id} on ${hit.q.id}`, otherTeam(me.team), hit.q.pos);
+        return 'stopped';
+      }
+      return null;
+    }
+    if (pad.phase === 'blocking' && !ball.owner) {
+      const speed = length(ball.vel);
+      if (speed < 0.5 || ball.kick?.team === me.team) return null;
+      const n = pad.facing;
+      if (dot2(ball.vel, n) >= 0) return null;
+      const c = add(me.pos, scale(n, T.blockDepth));
+      const side = vec(-n.y, n.x);
+      const hit = segmentHit(ballPrev, ball.pos, sub(c, scale(side, T.blockHalfWidth)), add(c, scale(side, T.blockHalfWidth)));
+      if (!hit) return null;
+      const vn = dot2(ball.vel, n);
+      ball.vel = scale(sub(ball.vel, scale(n, 2 * vn)), T.blockRestitution);
+      ball.pos = add(hit, scale(n, 0.25));
+      ball.kick = { by: me.id, team: me.team, kind: 'touch', at: s.simTime, target: null, receiver: null };
+      ball.lastTouch = me.team;
+      if (speed > T.blockHardSpeed) ball.ignore.push({ id: me.id, until: s.simTime + T.blockIgnoreSeconds });
+      this.emit('deflect', me.id, speed.toFixed(1));
+      return copy(ball.pos);
+    }
+    return null;
+  }
+
   // ---- simulation -----------------------------------------------------------------------------
 
   private tick(h: number): void {
@@ -560,10 +975,18 @@ export class MatchSim {
     this.updateUserControl();
     if (s.userSteer && (s.simTime >= s.userSteer.until || s.userSteer.epoch !== s.controlEpoch)) s.userSteer = null;
     if (s.bufferedDribble && s.simTime > s.bufferedDribble.until) s.bufferedDribble = null;
+    if (this.controls === 'pad') this.tickPad(h);
     this.aiCarrier();
+    const me = s.players[s.controlledId];
+    const mePrev = copy(me.pos);
     for (const id of MATCH_PLAYER_IDS) this.movePlayer(s.players[id], h);
-    const prev = copy(s.ball.pos);
+    let prev: Vec2 = copy(s.ball.pos);
     this.moveBall(h);
+    if (this.controls === 'pad') {
+      const r = this.resolvePadContacts(me, mePrev, prev);
+      if (r === 'stopped') return;
+      if (r) prev = r;
+    }
     this.resolveContacts(prev, h);
   }
 
@@ -692,6 +1115,14 @@ export class MatchSim {
     const M = T.movement;
     let desired: MutableVec2;
     let accel = M.accel;
+    if (this.controls === 'pad' && p.id === s.controlledId && p.team === 'home' && !p.isKeeper) {
+      if (s.ball.owner === p.id) p.intent = 'carry';
+      const v = this.padVelocity(p);
+      p.vel = approach(p.vel, v.desired, v.accel * h);
+      p.pos.x = clamp(p.pos.x + p.vel.x * h, 0.3, T.pitch.length - 0.3);
+      p.pos.y = clamp(p.pos.y + p.vel.y * h, 0.5, T.pitch.width - 0.5);
+      return;
+    }
     if (s.ball.owner === p.id) {
       if (p.isKeeper) desired = vec(0, 0);
       else if (p.team === 'home') {
@@ -1033,11 +1464,12 @@ export class MatchSim {
     s.possession = by.team;
   }
 
-  private stop(reason: 'goal' | 'out', scorer: TeamId | null, detail: string, restartTeam: TeamId, spot: Vec2): void {
+  private stop(reason: 'goal' | 'out' | 'foul', scorer: TeamId | null, detail: string, restartTeam: TeamId, spot: Vec2): void {
     const T = this.tuning;
     const s = this.s;
     if (s.phase === 'stopped') return;
     if (s.phase === 'aiming') this.cancelAim('play stopped');
+    this.padReset('play stopped');
     s.phase = 'stopped';
     s.phaseTime = 0;
     s.aim = null;
@@ -1137,6 +1569,7 @@ export class MatchSim {
           anchor: vec(0, 0),
           intentUntil: 0,
           speed: T.movement.shapeSpeed,
+          attrs: this.attrsFor(id),
         };
         contact[id] = 0;
       });
@@ -1168,6 +1601,7 @@ export class MatchSim {
       control: T.control.max,
       swipeCooldown: 0,
       dribbleDir: vec(1, 0),
+      pad: this.newPad(),
       feint: null,
       feintReadyAt: 0,
       feintBought: null,
@@ -1266,4 +1700,40 @@ export function powerForSpeed(speed: number, T: MatchTuning = MATCH_TUNING): num
   const r = d - k.dPass;
   const u = Math.abs(k.c) < 1e-9 ? r / k.a : (-k.a + Math.sqrt(k.a * k.a + 4 * k.c * r)) / (2 * k.c);
   return clamp(k.pp + u * (1 - k.pp), 0, 1);
+}
+
+const dot2 = (a: Vec2, b: Vec2): number => a.x * b.x + a.y * b.y;
+
+/** Rotates unit vector `from` toward `to` by at most `max` radians. */
+function turnToward(from: Vec2, to: Vec2, max: number): MutableVec2 {
+  const a = Math.atan2(from.y, from.x);
+  let d = Math.atan2(to.y, to.x) - a;
+  while (d > Math.PI) d -= 2 * Math.PI;
+  while (d < -Math.PI) d += 2 * Math.PI;
+  const r = a + clamp(d, -max, max);
+  return vec(Math.cos(r), Math.sin(r));
+}
+
+/** Fraction along a->b of p's projection (0 when a = b). */
+function along(a: Vec2, b: Vec2, p: Vec2): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const l2 = dx * dx + dy * dy;
+  return l2 < 1e-12 ? 0 : ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2;
+}
+
+/** Intersection point of segments p0-p1 and a-b, or null. */
+function segmentHit(p0: Vec2, p1: Vec2, a: Vec2, b: Vec2): MutableVec2 | null {
+  const rx = p1.x - p0.x;
+  const ry = p1.y - p0.y;
+  const qx = b.x - a.x;
+  const qy = b.y - a.y;
+  const den = rx * qy - ry * qx;
+  if (Math.abs(den) < 1e-12) return null;
+  const wx = a.x - p0.x;
+  const wy = a.y - p0.y;
+  const t = (wx * qy - wy * qx) / den;
+  const u = (wx * ry - wy * rx) / den;
+  if (t < 0 || t > 1 || u < 0 || u > 1) return null;
+  return vec(p0.x + rx * t, p0.y + ry * t);
 }
