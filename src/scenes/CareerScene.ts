@@ -82,7 +82,10 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     super(SceneKeys.Career);
   }
 
-  create(data?: { open?: string }): void {
+  private returnTo: 'story' | null = null;
+
+  create(data?: { open?: string; returnTo?: 'story' }): void {
+    this.returnTo = data?.returnTo === 'story' ? 'story' : null;
     this.navigating = false;
     this.reducedMotion = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.demoPaused = this.reducedMotion;
@@ -195,7 +198,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private menu(): void {
     if (this.navigating) return;
     this.navigating = true;
-    this.scene.start(SceneKeys.Start);
+    if (this.returnTo === 'story') this.scene.start(SceneKeys.Story, { resume: true });
+    else this.scene.start(SceneKeys.Start);
   }
 
   private async act(action: Parameters<CareerStore['dispatch']>[0], then?: Screen): Promise<boolean> {
@@ -673,7 +677,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     const nav: Action[] = [
       { name: 'career-back', label: 'Back', onClick: () => this.back() },
       { name: 'career-home', label: 'Training Home', onClick: () => (this.history = [], (this.screen = this.save.player ? { kind: 'home' } : { kind: 'create' }), this.render()) },
-      { name: 'career-menu', label: 'Menu', onClick: () => this.menu() },
+      { name: 'career-menu', label: this.returnTo === 'story' ? 'Back to story' : 'Menu', onClick: () => this.menu() },
     ];
     const nw = (width - 40 - gap * 2) / 3;
     nav.forEach((a, i) => {

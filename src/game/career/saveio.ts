@@ -53,7 +53,8 @@ function player(v: unknown): CareerPlayer {
   }
   const name = str(o.name, 'name', L.nameMax);
   if (!name) throw new Invalid('name: empty');
-  return { id: str(o.id, 'id', 40), name, position: oneOf(o.position, 'position', POSITIONS), attributes, potential };
+  const base = { id: str(o.id, 'id', 40), name, position: oneOf(o.position, 'position', POSITIONS), attributes, potential };
+  return o.gender === undefined ? base : { ...base, gender: oneOf(o.gender, 'gender', ['boy', 'girl'] as const) };
 }
 
 function input(v: unknown): PlannerInput {

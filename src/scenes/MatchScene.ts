@@ -72,6 +72,8 @@ export interface MatchSceneData {
   readonly aim?: 'slow' | 'normal';
   /** Gameplay zoom multiplier over the baseline framing (1.4, 1.5 or 1.6; anything else is 1.5). */
   readonly zoom?: number;
+  /** Story handoff: Menu returns to the story instead of the start screen. */
+  readonly returnTo?: 'story';
 }
 
 /** 9v9 team-play sandbox. Reads `MatchSim` state and draws it; owns no soccer rules. */
@@ -145,6 +147,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   /** Coach Moments (`?coach`, M5 development flag). Null when the flag is off. */
   private coachDirector: coach.CoachDirector | null = null;
   private careerStore: CareerStore | null = null;
+  private returnTo: 'story' | null = null;
   private collector: EvidenceCollector | null = null;
   private careerItems: EvidenceItem[] = [];
   private careerSession = '';
@@ -162,6 +165,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   }
 
   create(data: MatchSceneData = {}): void {
+    this.returnTo = data.returnTo === 'story' ? 'story' : null;
     this.navigating = false;
     this.overlayOn = false;
     this.fieldKey = '';
@@ -980,7 +984,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.navigating = true;
     this.cancelInput('navigation');
     this.coachDirector?.abandon(this.sim);
-    this.scene.start(SceneKeys.Start);
+    this.scene.start(this.returnTo === 'story' ? SceneKeys.Story : SceneKeys.Start, this.returnTo === 'story' ? { resume: true } : undefined);
   }
 
   private handleResize(size: Phaser.Structs.Size): void {

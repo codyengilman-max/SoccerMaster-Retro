@@ -1,7 +1,7 @@
 import { CAREER_CONFIG } from './config';
 import { FOCUSES, activityById, focusById } from './catalog';
 import { DEFAULT_INPUT, normalizeInput, planWeek, substitute, workableFocuses, type PlannerInput, type WeekPlan } from './planner';
-import { cleanText, createPlayer, type CareerPlayer } from './player';
+import { cleanName, cleanText, createPlayer, type CareerPlayer } from './player';
 import { applyGrowth, computeGrowth, type AttributeOutcome, type EvidenceItem } from './progression';
 import { SKILL_FAMILIES, type AttributeId, type Foot, type Level, type Position, type Rating, type SkillFamilyId } from './types';
 
@@ -65,7 +65,8 @@ export interface CareerSave {
 }
 
 export type Action =
-  | { readonly type: 'createPlayer'; readonly id: string; readonly name: string; readonly position: Position }
+  | { readonly type: 'createPlayer'; readonly id: string; readonly name: string; readonly position: Position; readonly gender?: 'boy' | 'girl' }
+  | { readonly type: 'setIdentity'; readonly name: string; readonly gender: 'boy' | 'girl' }
   | { readonly type: 'setInput'; readonly input: PlannerInput }
   | { readonly type: 'chooseFocus'; readonly focusId: string }
   | { readonly type: 'substitute'; readonly sessionId: string; readonly index: number; readonly activityId: string }
@@ -129,8 +130,17 @@ export function reduce(save: CareerSave, action: Action): Outcome {
   switch (action.type) {
     case 'createPlayer': {
       if (save.player) return fail('A career player already exists.');
-      const p = createPlayer(cleanText(action.id, 40) || 'career', action.name, action.position);
+      const p = createPlayer(cleanText(action.id, 40) || 'career', action.name, action.position, action.gender);
       return ok({ ...save, player: p }, `Welcome, ${p.name}.`);
+    }
+    case 'setIdentity': {
+      // Display name and presentation are editable; the canonical player id and soccer attributes never change.
+      if (!save.player) return fail('Create a player first.');
+      if (action.gender !== 'boy' && action.gender !== 'girl') return fail('Choose boy or girl.');
+      const name = cleanName(action.name);
+      if (!name) return fail('Enter a name.');
+      if (save.player.name === name && save.player.gender === action.gender) return same(save, 'Identity unchanged.');
+      return ok({ ...save, player: { ...save.player, name, gender: action.gender } }, `Saved: ${name}.`);
     }
     case 'setInput': {
       const input = normalizeInput(action.input);

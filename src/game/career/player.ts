@@ -5,6 +5,8 @@ export interface CareerPlayer {
   readonly id: string;
   readonly name: string;
   readonly position: Position;
+  /** Story identity (boy/girl): pronouns and presentation only, never abilities. Absent on older saves. */
+  readonly gender?: 'boy' | 'girl';
   readonly attributes: Readonly<Record<AttributeId, number>>;
   readonly potential: Readonly<Record<AttributeId, number>>;
 }
@@ -25,9 +27,10 @@ function filled(value: number): Record<AttributeId, number> {
   return Object.fromEntries(ATTRIBUTES.map((a) => [a, value])) as Record<AttributeId, number>;
 }
 
-export function createPlayer(id: string, name: string, position: Position): CareerPlayer {
+export function createPlayer(id: string, name: string, position: Position, gender?: 'boy' | 'girl'): CareerPlayer {
   const A = CAREER_CONFIG.attributes;
-  return { id, name: cleanName(name) || 'Player', position, attributes: filled(A.start), potential: filled(A.potential) };
+  const base = { id, name: cleanName(name) || 'Player', position, attributes: filled(A.start), potential: filled(A.potential) };
+  return gender === 'boy' || gender === 'girl' ? { ...base, gender } : base;
 }
 
 /** Home slot the career player occupies in the sandbox (1-3-2-3 numbering: H2-H4 defence, H5-H6 midfield, H7-H9 attack). */
