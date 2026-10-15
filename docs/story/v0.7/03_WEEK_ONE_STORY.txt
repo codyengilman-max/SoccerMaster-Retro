@@ -1,0 +1,72 @@
+v0.6 PRESENTATION NOTE: All relationship dialogue here uses cutscenes. 09_CUTSCENE_STORYBOARD.txt owns current order, moved lines and guards. This file supplies dialogue seeds, not a second executable scene graph.
+
+WEEK ONE — NEW KID
+Authored original dialogue. Replace all player references through canonical identity tokens. Each scene stores stable occurrence, steps, knowledge grants, chosen response and evidence. No automatic technical growth.
+
+W1_HOME_01 / Bedroom
+Boxes remain unpacked. Aquarium hum, soccer ball beside desk.
+Player to fish: "You've got your place sorted. Now I just need mine."
+Choose background memory (friends/team/solo), then ambition (learn role/contribute/earn opportunity). Fish swims behind ornament.
+Player: "Excellent advice. Very mysterious."
+Caregiver from doorway: "Bag's by the door. I'll ask about everything tonight."
+No promise penalty if this adult conversation later changes; adult behavior is authored, not player fault.
+
+W1_SCHOOL_01 / Arrival
+Jordan notices the player looking for the classroom.
+Jordan: "New kid? The map makes it look easier than it is."
+A ask for directions -> Jordan walks partway.
+B introduce yourself -> Jordan learns canonical name.
+C say you've got it -> Jordan points out the correct corridor anyway.
+All routes reach school. No hidden goodness score.
+
+W1_SCHOOL_02 / Crossbar invitation
+Blake: "You play soccer? Let's see it. New kid gets one practice shot."
+A accept -> one optional warm-up for everyone under equal rules.
+B ask for equal attempts -> clarify the same scored attempts for all.
+C suggest everyone warms up -> group agrees to the shared warm-up.
+D decline -> school continues; no loss recorded and no soccer penalty.
+This response cannot secretly alter shot physics. Warm-up attempt never counts as scored.
+
+W1_CROSSBAR / Play
+Three counted shots per participant. A real bar hit receives one point, single ownership. Persist result once. Replay uses practice mode.
+WIN: Blake: "Fine. You can hit a bar." Sam: "That was literally the challenge."
+LOSS: Blake: "That one missed." Jordan: "It happens. Next attempt."
+This is an adverse-tagged variant only if delivered as teasing; if the weekly budget is spent use Blake: "My turn?" and ordinary encouragement. WIN taunt variants use the same budget.
+DRAW: Blake: "Again tomorrow?" Player may accept invitation, decline or defer; invitation alone is not obligation.
+SKIP/ABANDON: Neutral departure; no fabricated contest outcome.
+Riley, if introduced, is an observer only and comments only on a witnessed attempt. No crush reward for winning.
+
+INIT_FOCUS / Before first team practice
+Choose one eligible focus; visibly explain carry-forward/default if no choice. This is the only week-one focus initialization.
+
+W1_TRAINING_ARRIVAL / Exactly once for actual session
+Coach Code: "First session. You don't have to prove everything in the first five minutes."
+Alex: "What position do you play?"
+A name supported role -> Alex discusses a relevant task.
+B "Still figuring it out." -> Coach explains the current assignment.
+C ask Alex's role -> learn Alex's ambition without creating selection facts.
+No stat bonus. Optional internal wording reflects confidence, not player controls.
+
+W1_PRACTICE / Actual supported role activity
+Use the existing training adapter. Alex participates only if implemented. Save evidence. Retry remains in activity; completion or explicit skip advances. Appropriate keeper alternative required. Missing content -> visible ordinary preparation, not false completion.
+
+W1_MATCH / Actual fixture
+One brief assignment encounter, existing match controls, existing tactical moment limit. Match owns results and growth. Resume supported state or explicitly abandon with no invented result.
+
+W1_HOME_CLOSE / Bedroom
+Player chooses tell fish about soccer, school, or say nothing and watch.
+If telling a known setback: "Today was a lot. You ever wish you could change tanks?"
+If telling a success: "They know my name now. I think that's good."
+Neutral: "You look like you've had a very busy day doing absolutely nothing."
+The fish receives no factual knowledge available to humans.
+Caregiver: "I nearly asked whether you scored. How was your day?"
+A talk / B soccer only / C "Later?". Caregiver responds warmly; no relationship penalty for privacy.
+Show factual journal and optional reviewed solo practice. Draft next-week focus through focus service. Save week completion atomically. No implication that later content exists if not built.
+
+ORDER NOTE: INIT_IDENTITY is mandatory before W1_HOME_01. First-week scenes cannot inherit the baseline S01–S06 schedule.
+
+W2_SCHOOL_CALLBACK / Next school boundary after W1_HOME_CLOSE and week advancement
+Only peers who know the actual result can discuss it. Rivals' win/loss dialogue requires the correct rival fixture. No rival fixture -> refer only to witnessed schoolyard event or neutral new-kid conversation. Never imply a match occurred on a skip path.
+Pick one relevant beat, not all: congratulations; rival boasting; Sam remembering an actual contribution; Jordan asking about something outside soccer. This callback consumes the week-two budget. At most one adverse school incident this game week; optional supportive interaction always available.
+
+

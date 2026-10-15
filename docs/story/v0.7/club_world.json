@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "contentVersion": "0.6",
+  "status": "design_configuration_not_live_game_data",
+  "clubs": [
+    {
+      "id": "batavia",
+      "displayName": "FC Batavia",
+      "storyRole": "developmental_home",
+      "leagueParticipation": "unconfigured",
+      "nameStatus": "established_starting_club"
+    },
+    {
+      "id": "royal_salt",
+      "displayName": "Royal Salt Academy",
+      "storyRole": "established_pathway",
+      "leagueParticipation": "unconfigured",
+      "nameStatus": "carried_forward_working_name"
+    },
+    {
+      "id": "valley_rising",
+      "displayName": "Valley Rising",
+      "storyRole": "visibility_ambition",
+      "leagueParticipation": "unconfigured",
+      "nameStatus": "carried_forward_working_name"
+    },
+    {
+      "id": "desert_tuzon",
+      "displayName": "Desert Tuzon",
+      "storyRole": "competitive_identity",
+      "leagueParticipation": "unconfigured",
+      "nameStatus": "carried_forward_working_name"
+    },
+    {
+      "id": "sol_vista",
+      "displayName": "Sol Vista",
+      "storyRole": "structured_environment",
+      "leagueParticipation": "unconfigured",
+      "nameStatus": "carried_forward_working_name"
+    },
+    {
+      "id": "next_horizon",
+      "displayName": "Next Horizon",
+      "storyRole": "prestige_tournament_club",
+      "leagueParticipation": "not_entered",
+      "nameStatus": "carried_forward_working_name"
+    }
+  ],
+  "events": [
+    {
+      "id": "pacific_wave",
+      "displayName": "Pacific Wave Cup",
+      "playableFromAgeBand": "U12",
+      "standingInvitationClubIds": [
+        "next_horizon"
+      ],
+      "otherClubEntryPolicy": "unconfigured",
+      "dates": null,
+      "format": null
+    },
+    {
+      "id": "lone_star",
+      "displayName": "Lone Star International Cup",
+      "playableFromAgeBand": "U12",
+      "standingInvitationClubIds": [
+        "next_horizon"
+      ],
+      "otherClubEntryPolicy": "unconfigured",
+      "dates": null,
+      "format": null
+    }
+  ],
+  "proposedAffiliations": {
+    "alex": "batavia",
+    "sam": "batavia",
+    "blake": "royal_salt",
+    "riley": "royal_salt"
+  },
+  "startingClubId": "batavia"
+}

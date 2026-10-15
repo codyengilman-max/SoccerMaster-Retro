@@ -1,0 +1,1069 @@
+{
+  "version": "0.7",
+  "entry": "INIT_IDENTITY",
+  "scenes": [
+    {
+      "id": "INIT_IDENTITY",
+      "version": "0.7",
+      "entry": "intro",
+      "background": "neutral_school",
+      "nodes": [
+        {
+          "id": "intro",
+          "type": "line",
+          "speaker": "System",
+          "text": "Choose your name and whether your character is a boy or a girl.",
+          "next": "handoff"
+        },
+        {
+          "id": "handoff",
+          "type": "activity_handoff",
+          "adapter": "identity",
+          "predicate": "always",
+          "on_false": "end",
+          "outcomes": {
+            "completed": "end"
+          }
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "next_scene": "W1_HOME_01"
+        }
+      ]
+    },
+    {
+      "id": "W1_HOME_01",
+      "version": "0.7",
+      "entry": "intro",
+      "background": "neutral_home",
+      "nodes": [
+        {
+          "id": "intro",
+          "type": "line",
+          "speaker": "Player",
+          "text": "You\u2019ve got your place sorted. Now I just need mine.",
+          "next": "memory"
+        },
+        {
+          "id": "memory",
+          "type": "choice",
+          "options": [
+            {
+              "id": "friends",
+              "label": "Friends",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "memory",
+                  "value": "friends"
+                }
+              ],
+              "next": "memory_reply_friends"
+            },
+            {
+              "id": "team",
+              "label": "Team",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "memory",
+                  "value": "team"
+                }
+              ],
+              "next": "memory_reply_team"
+            },
+            {
+              "id": "solo",
+              "label": "Solo",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "memory",
+                  "value": "solo"
+                }
+              ],
+              "next": "memory_reply_solo"
+            }
+          ]
+        },
+        {
+          "id": "memory_reply_friends",
+          "type": "line",
+          "speaker": "Player",
+          "text": "I miss knowing who to sit next to.",
+          "next": "ambition"
+        },
+        {
+          "id": "memory_reply_team",
+          "type": "line",
+          "speaker": "Player",
+          "text": "A new team means learning everyone all over again.",
+          "next": "ambition"
+        },
+        {
+          "id": "memory_reply_solo",
+          "type": "line",
+          "speaker": "Player",
+          "text": "At least the ball came with me.",
+          "next": "ambition"
+        },
+        {
+          "id": "ambition",
+          "type": "choice",
+          "options": [
+            {
+              "id": "learn_role",
+              "label": "Learn role",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "ambition",
+                  "value": "learn_role"
+                }
+              ],
+              "next": "ambition_reply_learn_role"
+            },
+            {
+              "id": "contribute",
+              "label": "Contribute",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "ambition",
+                  "value": "contribute"
+                }
+              ],
+              "next": "ambition_reply_contribute"
+            },
+            {
+              "id": "earn_opportunity",
+              "label": "Earn opportunity",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "ambition",
+                  "value": "earn_opportunity"
+                }
+              ],
+              "next": "ambition_reply_earn_opportunity"
+            }
+          ]
+        },
+        {
+          "id": "ambition_reply_learn_role",
+          "type": "line",
+          "speaker": "Player",
+          "text": "First, figure out where I can help.",
+          "next": "end"
+        },
+        {
+          "id": "ambition_reply_contribute",
+          "type": "line",
+          "speaker": "Player",
+          "text": "One useful thing at a time.",
+          "next": "end"
+        },
+        {
+          "id": "ambition_reply_earn_opportunity",
+          "type": "line",
+          "speaker": "Player",
+          "text": "I want a chance. I\u2019ll have to work for it.",
+          "next": "end"
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "next_scene": "W1_HOME_DOORWAY"
+        }
+      ]
+    },
+    {
+      "id": "W1_HOME_DOORWAY",
+      "version": "0.7",
+      "entry": "intro",
+      "background": "neutral_home",
+      "nodes": [
+        {
+          "id": "intro",
+          "type": "line",
+          "speaker": "Caregiver",
+          "text": "Bag\u2019s by the door. How are you feeling?",
+          "next": "response"
+        },
+        {
+          "id": "response",
+          "type": "choice",
+          "options": [
+            {
+              "id": "nerves",
+              "label": "Nerves",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "response",
+                  "value": "nerves"
+                }
+              ],
+              "next": "response_reply_nerves"
+            },
+            {
+              "id": "practical_question",
+              "label": "Practical question",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "response",
+                  "value": "practical_question"
+                }
+              ],
+              "next": "response_reply_practical_question"
+            },
+            {
+              "id": "joke",
+              "label": "Joke",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "response",
+                  "value": "joke"
+                }
+              ],
+              "next": "response_reply_joke"
+            }
+          ]
+        },
+        {
+          "id": "response_reply_nerves",
+          "type": "line",
+          "speaker": "Caregiver",
+          "text": "New places take time. You don\u2019t have to have it figured out today.",
+          "next": "end"
+        },
+        {
+          "id": "response_reply_practical_question",
+          "type": "line",
+          "speaker": "Caregiver",
+          "text": "Let\u2019s check your bag and where you need to go.",
+          "next": "end"
+        },
+        {
+          "id": "response_reply_joke",
+          "type": "line",
+          "speaker": "Caregiver",
+          "text": "Save some of those jokes for when you get home.",
+          "next": "end"
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "next_scene": "W1_SCHOOL_01"
+        }
+      ]
+    },
+    {
+      "id": "W1_SCHOOL_01",
+      "version": "0.7",
+      "entry": "intro",
+      "background": "neutral_school",
+      "nodes": [
+        {
+          "id": "intro",
+          "type": "line",
+          "speaker": "Jordan",
+          "text": "New kid? The map makes it look easier than it is.",
+          "next": "response"
+        },
+        {
+          "id": "response",
+          "type": "choice",
+          "options": [
+            {
+              "id": "directions",
+              "label": "Directions",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "response",
+                  "value": "directions"
+                }
+              ],
+              "next": "response_reply_directions"
+            },
+            {
+              "id": "introduce",
+              "label": "Introduce",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "response",
+                  "value": "introduce"
+                }
+              ],
+              "next": "response_reply_introduce"
+            },
+            {
+              "id": "quiet",
+              "label": "Quiet",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "response",
+                  "value": "quiet"
+                }
+              ],
+              "next": "response_reply_quiet"
+            }
+          ]
+        },
+        {
+          "id": "response_reply_directions",
+          "type": "line",
+          "speaker": "Jordan",
+          "text": "Come on. I\u2019m going that way.",
+          "next": "end"
+        },
+        {
+          "id": "response_reply_introduce",
+          "type": "line",
+          "speaker": "Jordan",
+          "text": "Nice to meet you, {player.name}. This corridor.",
+          "next": "end"
+        },
+        {
+          "id": "response_reply_quiet",
+          "type": "line",
+          "speaker": "Player",
+          "text": "We can just sit here a minute.",
+          "next": "end"
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "next_scene": "W1_SCHOOL_02"
+        }
+      ]
+    },
+    {
+      "id": "W1_SCHOOL_02",
+      "version": "0.7",
+      "entry": "intro",
+      "background": "neutral_school",
+      "nodes": [
+        {
+          "id": "intro",
+          "type": "line",
+          "speaker": "Blake",
+          "text": "You play soccer? Let\u2019s see it. Everyone gets the same attempts.",
+          "next": "invitation"
+        },
+        {
+          "id": "invitation",
+          "type": "choice",
+          "options": [
+            {
+              "id": "accept",
+              "label": "Accept",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "invitation",
+                  "value": "accept"
+                }
+              ],
+              "next": "invitation_reply_accept"
+            },
+            {
+              "id": "equal_attempts",
+              "label": "Equal attempts",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "invitation",
+                  "value": "equal_attempts"
+                }
+              ],
+              "next": "invitation_reply_equal_attempts"
+            },
+            {
+              "id": "shared_warmup",
+              "label": "Shared warmup",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "invitation",
+                  "value": "shared_warmup"
+                }
+              ],
+              "next": "invitation_reply_shared_warmup"
+            },
+            {
+              "id": "decline",
+              "label": "Decline",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "invitation",
+                  "value": "decline"
+                }
+              ],
+              "next": "invitation_reply_decline"
+            }
+          ]
+        },
+        {
+          "id": "invitation_reply_accept",
+          "type": "line",
+          "speaker": "Blake",
+          "text": "Three scored shots each. Warm-up first if we all want one.",
+          "next": "end"
+        },
+        {
+          "id": "invitation_reply_equal_attempts",
+          "type": "line",
+          "speaker": "Blake",
+          "text": "Same number for everybody. Count them.",
+          "next": "end"
+        },
+        {
+          "id": "invitation_reply_shared_warmup",
+          "type": "line",
+          "speaker": "Blake",
+          "text": "Everybody gets one practice shot, then we start.",
+          "next": "end"
+        },
+        {
+          "id": "invitation_reply_decline",
+          "type": "line",
+          "speaker": "Jordan",
+          "text": "No problem. Let\u2019s head back.",
+          "next": "end"
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "next_scene": "W1_CROSSBAR"
+        }
+      ]
+    },
+    {
+      "id": "W1_CROSSBAR",
+      "version": "0.7",
+      "entry": "intro",
+      "background": "neutral_school",
+      "nodes": [
+        {
+          "id": "intro",
+          "type": "line",
+          "speaker": "System",
+          "text": "Crossbar challenge: three scored shots each. Optional shared warm-up does not count.",
+          "next": "handoff"
+        },
+        {
+          "id": "handoff",
+          "type": "activity_handoff",
+          "adapter": "crossbar",
+          "predicate": "crossbar_accepted",
+          "on_false": "end",
+          "outcomes": {
+            "completed": "end",
+            "declined": "end",
+            "abandoned": "end",
+            "interrupted": "end"
+          }
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "next_scene": "W1_CROSSBAR_REACTION"
+        }
+      ]
+    },
+    {
+      "id": "W1_CROSSBAR_REACTION",
+      "version": "0.7",
+      "entry": "intro",
+      "background": "neutral_school",
+      "nodes": [
+        {
+          "id": "intro",
+          "type": "line",
+          "speaker": "Jordan",
+          "text": "We can head back together.",
+          "next": "end"
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "next_scene": "W1_TRAINING_CONNECTION"
+        }
+      ]
+    },
+    {
+      "id": "W1_TRAINING_CONNECTION",
+      "version": "0.7",
+      "entry": "intro",
+      "background": "neutral_pitch",
+      "nodes": [
+        {
+          "id": "intro",
+          "type": "line",
+          "speaker": "System",
+          "text": "Review your scheduled training arrangement.",
+          "next": "handoff"
+        },
+        {
+          "id": "handoff",
+          "type": "activity_handoff",
+          "adapter": "training_arrangement",
+          "predicate": "always",
+          "on_false": "end",
+          "outcomes": {
+            "completed": "end"
+          }
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "next_scene": "INIT_FOCUS"
+        }
+      ]
+    },
+    {
+      "id": "INIT_FOCUS",
+      "version": "0.7",
+      "entry": "intro",
+      "background": "neutral_school",
+      "nodes": [
+        {
+          "id": "intro",
+          "type": "line",
+          "speaker": "System",
+          "text": "Choose one eligible weekly learning focus.",
+          "next": "handoff"
+        },
+        {
+          "id": "handoff",
+          "type": "activity_handoff",
+          "adapter": "weekly_focus",
+          "predicate": "always",
+          "on_false": "end",
+          "outcomes": {
+            "completed": "end"
+          }
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "next_scene": "W1_TRAINING_ARRIVAL"
+        }
+      ]
+    },
+    {
+      "id": "W1_TRAINING_ARRIVAL",
+      "version": "0.7",
+      "entry": "intro",
+      "background": "neutral_pitch",
+      "nodes": [
+        {
+          "id": "intro",
+          "type": "line",
+          "speaker": "Coach Code",
+          "text": "First session. You don\u2019t have to prove everything in the first five minutes.",
+          "next": "response"
+        },
+        {
+          "id": "response",
+          "type": "choice",
+          "options": [
+            {
+              "id": "supported_role",
+              "label": "Supported role",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "response",
+                  "value": "supported_role"
+                }
+              ],
+              "next": "response_reply_supported_role"
+            },
+            {
+              "id": "still_learning",
+              "label": "Still learning",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "response",
+                  "value": "still_learning"
+                }
+              ],
+              "next": "response_reply_still_learning"
+            },
+            {
+              "id": "ask_alex",
+              "label": "Ask alex",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "response",
+                  "value": "ask_alex"
+                }
+              ],
+              "next": "response_reply_ask_alex"
+            }
+          ]
+        },
+        {
+          "id": "response_reply_supported_role",
+          "type": "line",
+          "speaker": "Coach Code",
+          "text": "We\u2019ll check your assignment before we begin.",
+          "next": "end"
+        },
+        {
+          "id": "response_reply_still_learning",
+          "type": "line",
+          "speaker": "Coach Code",
+          "text": "That\u2019s what training is for.",
+          "next": "end"
+        },
+        {
+          "id": "response_reply_ask_alex",
+          "type": "line",
+          "speaker": "Alex",
+          "text": "I\u2019m working out what I can do for the team too.",
+          "next": "end"
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "next_scene": "W1_PRACTICE"
+        }
+      ]
+    },
+    {
+      "id": "W1_PRACTICE",
+      "version": "0.7",
+      "entry": "intro",
+      "background": "neutral_pitch",
+      "nodes": [
+        {
+          "id": "intro",
+          "type": "line",
+          "speaker": "System",
+          "text": "Review your supported training activity.",
+          "next": "handoff"
+        },
+        {
+          "id": "handoff",
+          "type": "activity_handoff",
+          "adapter": "practice",
+          "predicate": "always",
+          "on_false": "end",
+          "outcomes": {
+            "completed": "end",
+            "declined": "end",
+            "abandoned": "end",
+            "interrupted": "end"
+          }
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "next_scene": "W1_TRAINING_REFLECTION"
+        }
+      ]
+    },
+    {
+      "id": "W1_TRAINING_REFLECTION",
+      "version": "0.7",
+      "entry": "intro",
+      "background": "neutral_pitch",
+      "nodes": [
+        {
+          "id": "intro",
+          "type": "line",
+          "speaker": "Alex",
+          "text": "First day always feels longer.",
+          "next": "response"
+        },
+        {
+          "id": "response",
+          "type": "choice",
+          "options": [
+            {
+              "id": "ask_about_day",
+              "label": "Ask about day",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "response",
+                  "value": "ask_about_day"
+                }
+              ],
+              "next": "response_reply_ask_about_day"
+            },
+            {
+              "id": "ask_if_ok",
+              "label": "Ask if ok",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "response",
+                  "value": "ask_if_ok"
+                }
+              ],
+              "next": "response_reply_ask_if_ok"
+            },
+            {
+              "id": "let_pass",
+              "label": "Let pass",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "response",
+                  "value": "let_pass"
+                }
+              ],
+              "next": "response_reply_let_pass"
+            }
+          ]
+        },
+        {
+          "id": "response_reply_ask_about_day",
+          "type": "line",
+          "speaker": "Alex",
+          "text": "Long. Yours?",
+          "next": "end"
+        },
+        {
+          "id": "response_reply_ask_if_ok",
+          "type": "line",
+          "speaker": "Alex",
+          "text": "Yeah. Just taking it all in.",
+          "next": "end"
+        },
+        {
+          "id": "response_reply_let_pass",
+          "type": "line",
+          "speaker": "Alex",
+          "text": "See you next time.",
+          "next": "end"
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "next_scene": "W1_MATCH_PRE"
+        }
+      ]
+    },
+    {
+      "id": "W1_MATCH_PRE",
+      "version": "0.7",
+      "entry": "intro",
+      "background": "neutral_pitch",
+      "nodes": [
+        {
+          "id": "intro",
+          "type": "line",
+          "speaker": "Coach Code",
+          "text": "Let\u2019s review today\u2019s assignment.",
+          "next": "handoff"
+        },
+        {
+          "id": "handoff",
+          "type": "activity_handoff",
+          "adapter": "assignment",
+          "predicate": "always",
+          "on_false": "end",
+          "outcomes": {
+            "completed": "end"
+          }
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "next_scene": "W1_MATCH"
+        }
+      ]
+    },
+    {
+      "id": "W1_MATCH",
+      "version": "0.7",
+      "entry": "intro",
+      "background": "neutral_pitch",
+      "nodes": [
+        {
+          "id": "intro",
+          "type": "line",
+          "speaker": "System",
+          "text": "Play the scheduled fixture or leave it unplayed.",
+          "next": "handoff"
+        },
+        {
+          "id": "handoff",
+          "type": "activity_handoff",
+          "adapter": "match",
+          "predicate": "always",
+          "on_false": "end",
+          "outcomes": {
+            "completed": "end",
+            "declined": "end",
+            "abandoned": "end",
+            "interrupted": "end"
+          }
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "next_scene": "W1_MATCH_POST"
+        }
+      ]
+    },
+    {
+      "id": "W1_MATCH_POST",
+      "version": "0.7",
+      "entry": "intro",
+      "background": "neutral_pitch",
+      "nodes": [
+        {
+          "id": "intro",
+          "type": "line",
+          "speaker": "Coach Code",
+          "text": "We\u2019ll use what actually happened to decide what to work on.",
+          "next": "end"
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "next_scene": "W1_HOME_CLOSE"
+        }
+      ]
+    },
+    {
+      "id": "W1_HOME_CLOSE",
+      "version": "0.7",
+      "entry": "intro",
+      "background": "neutral_home",
+      "nodes": [
+        {
+          "id": "intro",
+          "type": "line",
+          "speaker": "Player",
+          "text": "You look like you\u2019ve had a very busy day doing absolutely nothing.",
+          "next": "reflection"
+        },
+        {
+          "id": "reflection",
+          "type": "choice",
+          "options": [
+            {
+              "id": "soccer",
+              "label": "Soccer",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "reflection",
+                  "value": "soccer"
+                }
+              ],
+              "next": "reflection_reply_soccer"
+            },
+            {
+              "id": "school",
+              "label": "School",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "reflection",
+                  "value": "school"
+                }
+              ],
+              "next": "reflection_reply_school"
+            },
+            {
+              "id": "quiet",
+              "label": "Quiet",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "reflection",
+                  "value": "quiet"
+                }
+              ],
+              "next": "reflection_reply_quiet"
+            }
+          ]
+        },
+        {
+          "id": "reflection_reply_soccer",
+          "type": "line",
+          "speaker": "Player",
+          "text": "Soccer gives me plenty to think about.",
+          "next": "end"
+        },
+        {
+          "id": "reflection_reply_school",
+          "type": "line",
+          "speaker": "Player",
+          "text": "So many new faces. You have the easier classroom.",
+          "next": "end"
+        },
+        {
+          "id": "reflection_reply_quiet",
+          "type": "line",
+          "speaker": "Player",
+          "text": "We can just sit here a minute.",
+          "next": "end"
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "next_scene": "CLOSE_WEEK"
+        }
+      ]
+    },
+    {
+      "id": "CLOSE_WEEK",
+      "version": "0.7",
+      "entry": "intro",
+      "background": "neutral_school",
+      "nodes": [
+        {
+          "id": "intro",
+          "type": "line",
+          "speaker": "System",
+          "text": "Finish this week and open the next.",
+          "next": "handoff"
+        },
+        {
+          "id": "handoff",
+          "type": "activity_handoff",
+          "adapter": "week_close",
+          "predicate": "always",
+          "on_false": "end",
+          "outcomes": {
+            "completed": "end"
+          }
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "next_scene": "W2_SCHOOL_CALLBACK"
+        }
+      ]
+    },
+    {
+      "id": "W2_SCHOOL_CALLBACK",
+      "version": "0.7",
+      "entry": "intro",
+      "background": "neutral_school",
+      "nodes": [
+        {
+          "id": "intro",
+          "type": "line",
+          "speaker": "Jordan",
+          "text": "How\u2019s the new place feeling?",
+          "next": "response"
+        },
+        {
+          "id": "response",
+          "type": "choice",
+          "options": [
+            {
+              "id": "settling_in",
+              "label": "Settling in",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "response",
+                  "value": "settling_in"
+                }
+              ],
+              "next": "response_reply_settling_in"
+            },
+            {
+              "id": "still_new",
+              "label": "Still new",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "response",
+                  "value": "still_new"
+                }
+              ],
+              "next": "response_reply_still_new"
+            },
+            {
+              "id": "ask_jordan",
+              "label": "Ask jordan",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "response",
+                  "value": "ask_jordan"
+                }
+              ],
+              "next": "response_reply_ask_jordan"
+            }
+          ]
+        },
+        {
+          "id": "response_reply_settling_in",
+          "type": "line",
+          "speaker": "Jordan",
+          "text": "Good. It took me a while to find my way around.",
+          "next": "end"
+        },
+        {
+          "id": "response_reply_still_new",
+          "type": "line",
+          "speaker": "Jordan",
+          "text": "That makes sense. It\u2019s only been a week.",
+          "next": "end"
+        },
+        {
+          "id": "response_reply_ask_jordan",
+          "type": "line",
+          "speaker": "Jordan",
+          "text": "Mostly wondering what\u2019s for lunch. Very important question.",
+          "next": "end"
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "next_scene": null
+        }
+      ]
+    }
+  ]
+}

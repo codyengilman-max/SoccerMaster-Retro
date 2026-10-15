@@ -1,0 +1,56 @@
+CLUB WORLD AND TOURNAMENT ACCESS — v0.6
+
+DECISION STATUS
+Confirmed new direction: Next Horizon (fictional Next Level counterpart) considers itself the top club, primarily plays tournaments, and has standing invitations to Pacific Wave Cup and Lone Star International Cup independent of local league results. These are fictional campaign rules, not researched claims about actual organizations. The prior fresh-start/personalized-pitch identity is superseded.
+Carry forward: FC Batavia starts the story with Coach Code; six-club world; both marquee tournaments become playable at U12. U11 may foreshadow them. Older references to U13 access do not apply.
+Working fictional names retained from the consolidated master: Royal Salt Academy, Valley Rising, Desert Tuzon, Sol Vista, Next Horizon. Earlier alternate names are source-history aliases, not additional clubs.
+Proposal only: Alex and Sam at Batavia; Blake and Riley both at Royal Salt; Jordan outside club soccer initially. Preserve latest named cast and customizable protagonist. Do not import old gender-specific casts or older Alex/Jordan/Riley roles automatically. Alex inviting the newcomer while also competing for opportunities is a recommended story refinement, not a newly confirmed backstory.
+
+SIX CLUBS
+FC Batavia: Coach Code, personal attention, continuity, learning and a team growing together. Early modest team results can coexist with player improvement. Do not secretly weaken opponents or guarantee future championships.
+Royal Salt Academy: established pathway and competitive standards; depth creates uncertainty about individual opportunities.
+Valley Rising: visibility and ambitious events; expectations and reputation create pressure.
+Desert Tuzon: competitive intensity and group identity; fitting an approach matters. No ethnic stereotype or blanket misconduct label.
+Sol Vista: structure and an established environment; individual goals can conflict with organizational priorities.
+Next Horizon: prestigious tournament access, travel, visibility and self-confidence bordering on entitlement. Opportunities are real within the fiction; superiority must be tested on the field. Talented, friendly and insecure players can coexist. The club is not a universal villain.
+All clubs have credible strengths, limits and individual variation. No club badge grants a hidden stat multiplier or transfer penalty.
+
+LEAGUE PARTICIPATION
+For the initial fictional schedule, model Next Horizon as NOT ENTERED in the local league. This is the implementation default for the user's tournament-focused direction; it can later be changed by an explicit competition configuration. Do not infer zero points, a bottom ranking, forfeits or missed fixtures. Generate league fixtures and table rows solely from actual season entries. Do not assume the remaining five clubs are all entered; their entries require an actual schedule.
+Next Horizon may meet Batavia at configured tournaments or friendlies. Schoolyard matches are not official club matches. Its reputation does not create a game result or count toward standings.
+
+TWO MARQUEE TOURNAMENTS
+Pacific Wave Cup and Lone Star International Cup: U12 playable introduction. No event dates, qualification formula, format, roster size, travel cost or results have been approved here. Leave those data unconfigured, not guessed. Next Horizon receives an invitation for each eligible configured season/event independent of league participation or record. This does not imply attendance at every age group forever or entry into an undefined event edition.
+U11 reference scene is aspiration/established standing-invitation policy, not an accepted U11 tournament entry. A confirmed invitation for an event edition requires that edition and age category exist. If U12 progression is not implemented, foreshadow only and label future content honestly.
+Other clubs' entry routes are UNCONFIGURED. Do not silently choose league qualification, deny entry, promise access or award it based on friendship. Until a supported entry route is authored, entry UI says 'Entry route not yet configured'; week-one play remains available and has no dependency on tournament entry.
+
+STATE AND OWNERSHIP
+Separate competitionId, editionId, seasonId, ageCategory, clubId and teamId; a club may have several teams. Invitation is club-level or team-level according to explicit edition data; never guess which team it covers. Single-team prototype may map club to one explicit team.
+Invitation states: unissued -> issued -> accepted | declined | expired. An explicit cancellation may close an accepted invitation under documented event policy; no hidden revocation from league losses. Registration states: pending -> confirmed | rejected | cancelled. Individual selection: undecided -> selected | not_selected, scoped to a confirmed team entry and a versioned selection evaluation. Participation and match result are separate facts.
+Standing invitation policy creates one issued record per (editionId, ageCategory, clubId, invitationType), transactionally. League record is not an input. Resubmitting changes no state. Acceptance requires correct invitation, eligible registered team mapping, explicit authorized action and published prerequisites; invitation alone never means registration complete or travel selected.
+Transfer is not implemented by this addition. Future transfers change current membership through existing authority and do not rewrite historical team-at-event. A player joining Next Horizon does not automatically inherit a travel place or replay invitation rewards. No XP, badge or relationship points for merely processing an invitation. Claims about recruiting must distinguish interest, invitation, offer, registration and actual selection.
+
+NARRATIVE INTEGRATION
+Keep the week-one loop stable. Do not force a Royal Salt fixture if it does not exist. Blake/Riley affiliation remains a proposed casting record until adopted explicitly in content; school reaction requires actual affiliation and knowledge.
+Introduce at most one distant-club prestige reference in week one; avoid six-club exposition. A Next Horizon classmate should be a new fictional character only after authored casting, not a silent reassignment of Alex/Blake/Riley.
+Optional U11 school beat, if participants have been introduced and know the policy:
+Classmate: 'Our club gets invited to Pacific Wave.'
+Player: 'You qualified already?'
+Classmate: 'We get invited.'
+Player may ask about the event, mention their own team, or change subject. No penalty for curiosity. Do not say 'we booked flights' or claim individual attendance without confirmed facts.
+Later U12 scene can use actual invitation/selection facts: a child with an invited club may still be waiting for their own roster decision. That produces conflict without falsifying invitations.
+
+STORY TRADEOFFS
+Batavia: belonging and development while waiting for broader recognition.
+Royal Salt: immediate rivalry with school faces, subject to approved casting/fixtures.
+Next Horizon: aspiration and unequal access; the player can admire it without betraying friends.
+Alex may eventually want Next Horizon opportunities; this is a proposed branch and cannot trigger without actual authored desire/disclosure. Staying, leaving and returning remain choices with evidence-based opportunities, not morality grades.
+
+ACCEPTANCE
+Test no Next Horizon standings row when not entered; missing results never become losses. Test invitation independent of league standings across win/loss/no-entry cases. Test U11 reference without playable entry; age threshold is explicit age category, not device date. Test duplicate invitations, multiple teams, wrong edition/age/team acceptance, and no automatic registration or player selection. Test a declined invitation does not reissue on reload. Test unknown other-club policy stays unknown. Test membership transfer does not alter past evidence. Maintain emotion-to-soccer firewall and all v0.4 safeguards.
+
+CONFIGURATION FILE
+club_world.json is a structured seed for adapter mapping, not executable scheduler code. 'unconfigured' and null values are explicit missing capabilities, never truthy eligibility flags. Reject unknown enums/IDs, duplicate clubs and unsupported transitions. Keep proposedAffiliations separate from canonical live memberships. Resolve existing repository IDs by a reviewed migration map; never create duplicate clubs merely because existing IDs or names differ.
+
+SOURCE PROVENANCE
+User decisions in this conversation, 15 October 2026: Next Level prestige/tournament focus; standing invitations; confirmation of both tournament names. Prior consolidated Story Mode Master Playbook v1 (six-club table) and RPG Gameplay Guide v1 (six-club/transfer chapter) provide working names and world roles. The new direction supersedes Next Horizon's previous fresh-start description. Contemporary Scottsdale/customizable player/current cast supersede conflicting older location and cast treatments. No historical technical stack, tactical count, age-growth cap or season schedule is imported by this reference use.

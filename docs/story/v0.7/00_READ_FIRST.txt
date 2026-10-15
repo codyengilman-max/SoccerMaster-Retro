@@ -1,0 +1,28 @@
+V0.7 UPDATE: Read 10_V07_CORRECTIONS_AND_INTEGRATION.txt first. It and week_one_scenes.json override older conflicting executable behavior. All prior safety rules still apply.
+
+SOCCERMASTER RETRO — DEVIN HANDOFF v0.7
+15 October 2026
+
+STATUS: implementation specifications and authored content, not working engine code.
+No repository inspection, game runtime test or deployment was performed for this package.
+Target ONLY codyengilman-max/SoccerMaster-Retro. Preserve Phaser/TypeScript/Vite and current gameplay repairs. No Unity migration or new repository.
+
+Read order:
+1. 01_DEVIN_PROMPT.txt
+2. 02_IMPLEMENTATION_SPEC.txt (authoritative new scope and corrections)
+3. 03_WEEK_ONE_STORY.txt (first playable slice)
+4. 04_ACCEPTANCE_AND_REVIEW.txt
+5. 05_RESEARCH_SOURCES.txt
+6. 06_BASELINE_STORY_REFERENCE.txt (v0.2 historical baseline (non-normative))
+
+Precedence: this v0.6 implementation spec overrides conflicting v0.2 rules. Security fixes in section K are authoritative. The historical baseline never supplies runtime rules. Existing code is evidence of current behavior, not permission to erase new requirements. Record conflicts in an adapter/requirements map. Preserve unrelated approved gameplay work. Do not renumber the original M1–M7 deliverables.
+
+Build week one first. The four-week arc and later features are the approved design direction, not permission to claim the entire career is implemented. Supply a branch/PR and working preview; do not merge or deploy production until the owner accepts this story slice.
+
+A plain-text combined review is included separately outside this ZIP. No scripts need to be run to read this package. Checksums detect accidental file changes; they are not a security signature.
+
+07_RED_TEAM_REPORT.txt records findings and scope. tests/reference_contract_tests.py is an inspectable, standalone model test suite. TEST_RESULTS.txt contains executed results; these are not tests of the game repository.
+
+VERSION 0.5 ADDITION: Read 08_CLUBS_AND_TOURNAMENTS.txt and club_world.json before implementation. 07_RED_TEAM_REPORT.txt includes the latest delta review; TEST_RESULTS.txt is regenerated for this release. Prior v0.4 fixes remain in force. Club design is not implemented tournament scheduling.
+
+VERSION 0.6: 09_CUTSCENE_STORYBOARD.txt is the current relationship presentation and authoritative week-one ordering. Read it before implementing. All previous safety and club rules remain applicable. Original reference image is described, not bundled or copied. Use latest report/test results; prior audit records are historical.
