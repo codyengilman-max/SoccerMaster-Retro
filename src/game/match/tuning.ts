@@ -212,6 +212,8 @@ export const MATCH_TUNING = {
     blockHalfWidth: 1.1,
     blockDepth: 0.6,
     blockRestitution: 0.45,
+    /** Ball radius allowance when sweeping the ball path against the stance line. */
+    blockBallRadius: 0.3,
     /** Incoming ball faster than this rebounds off the block and cannot be taken by the blocker straight away. */
     blockHardSpeed: 12,
     blockIgnoreSeconds: 0.35,
@@ -228,7 +230,7 @@ export const MATCH_TUNING = {
       bodyReach: 0.75,
       pokeSpeed: 7,
       /** Body contact later than this after the ball touch is still a foul. */
-      cleanWindow: 0.12,
+      cleanWindow: 0.25,
       sliderIgnoreSeconds: 0.5,
     },
   },

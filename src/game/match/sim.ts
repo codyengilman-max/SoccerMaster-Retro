@@ -940,7 +940,16 @@ export class MatchSim {
       if (dot2(ball.vel, n) >= 0) return null;
       const c = add(me.pos, scale(n, T.blockDepth));
       const side = vec(-n.y, n.x);
-      const hit = segmentHit(ballPrev, ball.pos, sub(c, scale(side, T.blockHalfWidth)), add(c, scale(side, T.blockHalfWidth)));
+      const a = sub(c, scale(side, T.blockHalfWidth));
+      const b = add(c, scale(side, T.blockHalfWidth));
+      const near = Math.min(
+        distanceToSegment(ballPrev, a, b),
+        distanceToSegment(ball.pos, a, b),
+        distanceToSegment(a, ballPrev, ball.pos),
+        distanceToSegment(b, ballPrev, ball.pos),
+      );
+      const t = clamp(along(ballPrev, ball.pos, c), 0, 1);
+      const hit = segmentHit(ballPrev, ball.pos, a, b) ?? (near <= T.blockBallRadius ? vec(ballPrev.x + (ball.pos.x - ballPrev.x) * t, ballPrev.y + (ball.pos.y - ballPrev.y) * t) : null);
       if (!hit) return null;
       const vn = dot2(ball.vel, n);
       ball.vel = scale(sub(ball.vel, scale(n, 2 * vn)), T.blockRestitution);
