@@ -1,0 +1,814 @@
+import Phaser from 'phaser';
+import type { Rect } from '../game';
+import { POSITION_SLOT } from '../game/career/player';
+import type { CareerSave } from '../game/career/state';
+import { CareerStore } from '../game/career/store';
+import type { Position } from '../game/career/types';
+import { type Background, type StoryNode } from '../game/story/content';
+import { attemptKey, contestResult, launchAttempt, newContest, nextSlot, opponentKick, points, resolveAttempt, restoreContest, simulateShot, type Contest, type KickInput, type Participant } from '../game/story/crossbar';
+import { PRONOUNS, renderText, validateName, type Gender } from '../game/story/identity';
+import { createSession, currentNode, outcomeOf, type StoryCommand, type StoryOutcome, type StorySession, type StoryState } from '../game/story/runtime';
+import { StoryStore } from '../game/story/store';
+import { pullFor, thresholdsFor, type Pull } from '../input';
+import { orientationOf } from '../render/layout';
+import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
+import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspectable';
+import { SceneKeys } from './keys';
+import { Button } from './ui/Button';
+
+/** The career save has one slot ('main'); the story is keyed to it. */
+const CAREER_ID = 'main';
+const POSITION_LABEL: Record<Position, string> = { DEF: 'Defender', MID: 'Midfielder', FWD: 'Forward' };
+const SPEAKER_COLOR: Record<string, number> = { System: PALETTE.ink, Jordan: PALETTE.blue, Blake: PALETTE.tomato, Caregiver: PALETTE.purple, Coach: PALETTE.mustardDark };
+const CAREER_ADAPTERS = ['training_arrangement', 'weekly_focus', 'practice', 'match'] as const;
+type CareerAdapter = (typeof CAREER_ADAPTERS)[number];
+interface Snapshot { readonly revision: number; readonly sessions: number; readonly batches: number; readonly week: number }
+type Mode = 'loading' | 'error' | 'story' | 'crossbar' | 'transcript';
+type Cmd = StoryCommand extends infer C ? (C extends StoryCommand ? Omit<C, 'revision'> : never) : never;
+interface Action { readonly name: string; readonly label: string; readonly onClick: () => void }
+
+let instantText = false;
+
+function newRunId(): string {
+  const c = globalThis.crypto;
+  if (c && typeof c.randomUUID === 'function') return c.randomUUID();
+  const b = new Uint8Array(16);
+  c.getRandomValues(b);
+  return Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Week-one story (package v0.7): visual-novel cutscenes, code-owned activity handoffs and the crossbar
+ * challenge. All story rules live in src/game/story; this scene only draws state and sends commands.
+ */
+export class StoryScene extends Phaser.Scene implements InspectableScene, GameplayScene {
+  private mode: Mode = 'loading';
+  private career: CareerStore | null = null;
+  private save: CareerSave | null = null;
+  private store: StoryStore | null = null;
+  private session: StorySession | null = null;
+  private state: StoryState | null = null;
+  private busy = false;
+  private navigating = false;
+  private message = '';
+  private nodeKey = '';
+  private nodeShownAt = 0;
+  private downAt = -1;
+  private pointersDown = 0;
+  private typed = 0;
+  private gender: Gender | null = null;
+  private position: Position = 'MID';
+  private pendingName = '';
+  private contest: Contest | null = null;
+  private runId = '';
+  private anim: { path: readonly (readonly [number, number, number])[]; start: number; dur: number; who: Participant; scored: boolean } | null = null;
+  private aimFrom: { x: number; y: number } | null = null;
+  private pull: Pull | null = null;
+  private crossbarSummary = '';
+  private bg!: Phaser.GameObjects.Graphics;
+  private stage!: Phaser.GameObjects.Graphics;
+  private speaker!: Phaser.GameObjects.Text;
+  private body!: Phaser.GameObjects.Text;
+  private info!: Phaser.GameObjects.Text;
+  private hint!: Phaser.GameObjects.Text;
+  private top: Button[] = [];
+  private actions: Button[] = [];
+  private panel: Rect = { x: 0, y: 0, width: 0, height: 0 };
+
+  constructor() {
+    super(SceneKeys.Story);
+  }
+
+  create(): void {
+    this.mode = 'loading';
+    this.busy = false;
+    this.navigating = false;
+    this.message = '';
+    this.nodeKey = '';
+    this.contest = null;
+    this.anim = null;
+    this.aimFrom = null;
+    this.pull = null;
+    this.actions = [];
+    const res = textResolution();
+    const text = (color: string, bold = false) => this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color, fontStyle: bold ? 'bold' : 'normal' }).setResolution(res);
+    this.bg = this.add.graphics();
+    this.stage = this.add.graphics();
+    this.speaker = text(CSS.cream, true);
+    this.body = text(CSS.ink);
+    this.info = text(CSS.ink, true);
+    this.hint = text(CSS.ink).setAlpha(0.7);
+    const topButton = (name: string, label: string, onClick: () => void) => new Button(this, 0, 0, { name, label, width: 90, height: 40, fontSize: 15, onClick });
+    this.top = [
+      topButton('story-menu', 'Menu', () => this.goStart()),
+      topButton('story-log', 'Log', () => this.toggleTranscript()),
+      topButton('story-skip', 'Skip ›', () => void this.fastForward()),
+      topButton('story-speed', instantText ? 'Text: instant' : 'Text: normal', () => this.toggleSpeed()),
+    ];
+    this.input.on(Phaser.Input.Events.POINTER_DOWN, this.onDown, this);
+    this.input.on(Phaser.Input.Events.POINTER_MOVE, this.onMove, this);
+    this.input.on(Phaser.Input.Events.POINTER_UP, this.onUp, this);
+    this.scale.on(Phaser.Scale.Events.RESIZE, this.onResize, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.onShutdown, this);
+    this.layout();
+    void this.boot();
+  }
+
+  private async boot(): Promise<void> {
+    this.career = await CareerStore.open();
+    this.save = await this.career.load();
+    this.store = await StoryStore.open();
+    const begun = await this.store.begin(CAREER_ID);
+    if (!begun.ok) return this.fail(begun.error);
+    this.state = begun.state;
+    this.session = createSession('live', (c) => this.store!.dispatch(CAREER_ID, c));
+    this.gender = this.save.player?.gender ?? null;
+    this.pendingName = this.save.player?.name ?? '';
+    if (this.save.player) this.position = this.save.player.position;
+    this.mode = 'story';
+    await this.loadSummaries();
+    await this.resumeHandoff();
+    this.render();
+  }
+
+  private fail(error: string): void {
+    this.mode = 'error';
+    this.message = error;
+    this.render();
+  }
+
+  private async send(c: Cmd): Promise<StoryOutcome> {
+    if (!this.session || !this.state) return { ok: false, error: 'not ready' };
+    const r = await this.session.dispatch({ ...c, revision: this.state.revision } as StoryCommand);
+    if (r.ok) this.state = r.state;
+    else {
+      // Another tab may have moved on: reload the canonical state rather than guessing.
+      const fresh = await this.store!.load(CAREER_ID);
+      if (fresh) this.state = fresh;
+      this.message = r.error === 'stale revision' ? 'The story moved on in another tab; showing the latest step.' : r.error;
+    }
+    return r;
+  }
+
+  private seq(): number {
+    return Math.max((this.state?.lastSeq ?? 0) + 1, Date.now());
+  }
+
+  private node(): StoryNode | null {
+    return this.state ? currentNode(this.state) : null;
+  }
+
+  private name(): string {
+    return this.save?.player?.name ?? 'Player';
+  }
+
+  // ---- input ----
+
+  private onDown(p: Phaser.Input.Pointer): void {
+    this.pointersDown++;
+    this.downAt = this.time.now;
+    if (this.pointersDown > 1) {
+      this.aimFrom = null;
+      this.pull = null;
+      return;
+    }
+    if (this.mode === 'crossbar' && !this.anim && this.playerTurn() && p.y > 60) this.aimFrom = { x: p.x, y: p.y };
+  }
+
+  private onMove(p: Phaser.Input.Pointer): void {
+    if (!this.aimFrom || !p.isDown) return;
+    this.pull = pullFor(p.x - this.aimFrom.x, p.y - this.aimFrom.y, thresholdsFor(Math.min(this.scale.width, this.scale.height)));
+    this.drawStage();
+  }
+
+  private onUp(p: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]): void {
+    const multi = this.pointersDown > 1;
+    this.pointersDown = Math.max(0, this.pointersDown - 1);
+    if (this.mode === 'crossbar') {
+      const from = this.aimFrom;
+      this.aimFrom = null;
+      const pull = from ? pullFor(p.x - from.x, p.y - from.y, thresholdsFor(Math.min(this.scale.width, this.scale.height))) : null;
+      this.pull = null;
+      if (multi || over.length > 0 || !pull || pull.inCancel || pull.dirY >= -0.2) {
+        if (from && pull && !pull.inCancel) this.message = 'Pull back toward yourself to kick at the goal.';
+        this.render();
+        return;
+      }
+      void this.shoot('player', { dirX: pull.dirX, dirY: -pull.dirY, power: pull.power });
+      return;
+    }
+    if (multi || over.length > 0 || this.mode !== 'story' || this.downAt < this.nodeShownAt) return;
+    const n = this.node();
+    if (n?.type === 'line') void this.advance();
+  }
+
+  private fresh(): boolean {
+    return !this.busy && this.downAt >= this.nodeShownAt;
+  }
+
+  private async advance(): Promise<void> {
+    if (this.busy || !this.state) return;
+    this.busy = true;
+    const wasRevealed = this.state.revealed;
+    const r = await this.send({ type: 'advance', seq: this.seq() });
+    // If the typewriter already finished locally, one tap both reveals and advances.
+    if (r.ok && !wasRevealed && this.typed >= this.fullText().length && !instantText) await this.send({ type: 'advance', seq: this.seq() });
+    else if (r.ok && !wasRevealed && instantText) await this.send({ type: 'advance', seq: this.seq() });
+    this.busy = false;
+    this.render();
+  }
+
+  /** Fast-forward stops at every choice, activity and the end; it never chooses or launches. */
+  private async fastForward(): Promise<void> {
+    if (this.busy || this.mode !== 'story') return;
+    this.busy = true;
+    for (let i = 0; i < 60 && this.node()?.type === 'line'; i++) {
+      const r = await this.send({ type: 'advance', seq: this.seq() });
+      if (!r.ok) break;
+    }
+    this.busy = false;
+    this.render();
+  }
+
+  private toggleSpeed(): void {
+    instantText = !instantText;
+    this.top[3]!.setLabel(instantText ? 'Text: instant' : 'Text: normal');
+    this.render();
+  }
+
+  private toggleTranscript(): void {
+    if (this.mode === 'story') this.mode = 'transcript';
+    else if (this.mode === 'transcript') this.mode = 'story';
+    this.render();
+  }
+
+  // ---- adapters ----
+
+  private async launch(): Promise<string | null> {
+    const r = await this.send({ type: 'launch', runId: newRunId() });
+    return r.ok && r.runId ? r.runId : null;
+  }
+
+  private async complete(runId: string, outcome: 'completed' | 'declined' | 'abandoned' | 'interrupted', result: 'WIN' | 'LOSS' | 'DRAW' | null = null): Promise<void> {
+    await this.send({ type: 'complete', runId, outcome, result });
+    this.mode = 'story';
+    this.contest = null;
+    await this.loadSummaries();
+  }
+
+  private async choose(id: string): Promise<void> {
+    if (!this.fresh()) return;
+    this.busy = true;
+    await this.send({ type: 'choose', seq: this.seq(), choiceId: id });
+    this.busy = false;
+    this.render();
+  }
+
+  private async decline(): Promise<void> {
+    if (!this.fresh()) return;
+    this.busy = true;
+    await this.send({ type: 'decline', seq: this.seq() });
+    this.busy = false;
+    await this.loadSummaries();
+    this.render();
+  }
+
+  private async confirmIdentity(): Promise<void> {
+    if (!this.fresh() || !this.career) return;
+    const v = validateName(this.pendingName);
+    if (!v.ok) return void ((this.message = v.error), this.render());
+    if (!this.gender) return void ((this.message = 'Choose boy or girl.'), this.render());
+    this.busy = true;
+    const r = this.save?.player
+      ? await this.career.dispatch({ type: 'setIdentity', name: v.name, gender: this.gender })
+      : await this.career.dispatch({ type: 'createPlayer', id: `career-${Date.now().toString(36)}`, name: v.name, position: this.position, gender: this.gender });
+    if (!r.ok) {
+      this.busy = false;
+      this.message = r.error;
+      return this.render();
+    }
+    this.save = r.save;
+    const run = await this.launch();
+    if (run) await this.complete(run, 'completed');
+    this.busy = false;
+    this.render();
+  }
+
+  private askName(): void {
+    if (this.busy) return;
+    const raw = window.prompt('Your name (plain text, up to 24 characters)', this.pendingName) ?? this.pendingName;
+    const v = validateName(raw);
+    this.message = v.ok ? '' : v.error;
+    if (v.ok) this.pendingName = v.name;
+    this.render();
+  }
+
+  private async openCareer(kind: CareerAdapter): Promise<void> {
+    if (!this.fresh() || !this.store || !this.save) return;
+    this.busy = true;
+    const run = await this.launch();
+    if (!run) return void ((this.busy = false), this.render());
+    if ((await this.store.getRecord(`run:${run}`)) === undefined) {
+      const s = this.save;
+      const snap: Snapshot = { revision: s.revision, sessions: s.completedSessions.length, batches: s.batches.length, week: s.week };
+      await this.store.putRecord(`run:${run}`, snap);
+    }
+    this.navigating = true;
+    if (kind === 'match') this.scene.start(SceneKeys.Formation, { career: true, returnTo: 'story' });
+    else this.scene.start(SceneKeys.Career, { returnTo: 'story' });
+  }
+
+  /** On return from Home Training or a match, decide the outcome only from what the career save shows. */
+  private async resumeHandoff(): Promise<void> {
+    const n = this.node();
+    if (!n || n.type !== 'activity_handoff' || !this.state || !this.store || !this.career) return;
+    const run = Object.values(this.state.runs).find((r) => r.sceneId === this.state!.sceneId && r.nodeId === n.id && r.state === 'launched');
+    if (!run) return;
+    if (n.adapter === 'crossbar') return this.enterCrossbar(run.runId);
+    if (!(CAREER_ADAPTERS as readonly string[]).includes(n.adapter)) return;
+    const snap = (await this.store.getRecord(`run:${run.runId}`)) as Snapshot | undefined;
+    const s = (this.save = await this.career.load());
+    if (!snap) return;
+    const done =
+      n.adapter === 'training_arrangement' ? s.revision > snap.revision && s.player !== null
+      : n.adapter === 'weekly_focus' ? s.focusId !== null
+      : n.adapter === 'practice' ? s.completedSessions.length > snap.sessions
+      : s.batches.length > snap.batches;
+    if (done) await this.complete(run.runId, 'completed');
+    else this.message = 'Not finished yet. Nothing was recorded.';
+  }
+
+  private async closeWeek(): Promise<void> {
+    if (!this.fresh() || !this.career) return;
+    this.busy = true;
+    const before = (await this.career.load()).week;
+    const r = await this.career.dispatch({ type: 'endWeek' });
+    this.save = await this.career.load();
+    if (!r.ok || this.save.week <= before) {
+      this.message = r.ok ? 'The week did not close.' : r.error;
+    } else {
+      const run = await this.launch();
+      if (run) await this.complete(run, 'completed');
+    }
+    this.busy = false;
+    this.render();
+  }
+
+  private async assignment(): Promise<void> {
+    if (!this.fresh()) return;
+    this.busy = true;
+    const run = await this.launch();
+    if (run) await this.complete(run, 'completed');
+    this.busy = false;
+    this.render();
+  }
+
+  // ---- crossbar ----
+
+  private async startCrossbar(): Promise<void> {
+    if (!this.fresh()) return;
+    this.busy = true;
+    const run = await this.launch();
+    this.busy = false;
+    if (run) await this.enterCrossbar(run);
+    this.render();
+  }
+
+  private async enterCrossbar(runId: string): Promise<void> {
+    if (!this.store || !this.state) return;
+    this.runId = runId;
+    const inv = this.state.decisions.W1_SCHOOL_02?.invitation;
+    let c = restoreContest(await this.store.getRecord(`crossbar:${runId}`)) ?? newContest(runId, inv === 'accept' || inv === 'shared_warmup');
+    if (c.status === 'interrupted') return this.complete(runId, 'interrupted');
+    if (c.attempts.some((a) => a.state === 'launched')) {
+      const r = resolveAttempt(c);
+      if (r.ok) c = r.contest;
+    }
+    await this.store.putRecord(`crossbar:${runId}`, c);
+    this.contest = c;
+    this.mode = 'crossbar';
+    this.message = '';
+    this.nodeShownAt = this.time.now;
+    this.afterShot();
+  }
+
+  private playerTurn(): boolean {
+    return !!this.contest && nextSlot(this.contest)?.participant === 'player';
+  }
+
+  private async shoot(who: Participant, input: KickInput): Promise<void> {
+    if (!this.contest || !this.store || this.anim || this.busy) return;
+    const l = launchAttempt(this.contest, who, input);
+    if (!l.ok) return;
+    this.busy = true;
+    // Freeze the launch input before simulating, so a reload replays this exact attempt.
+    if (!(await this.store.putRecord(`crossbar:${this.runId}`, l.contest))) {
+      this.busy = false;
+      this.message = 'Save failed; that kick did not count.';
+      return this.render();
+    }
+    const r = resolveAttempt(l.contest);
+    if (!r.ok) return void (this.busy = false);
+    this.contest = r.contest;
+    await this.store.putRecord(`crossbar:${this.runId}`, r.contest);
+    const shot = simulateShot(input);
+    this.anim = { path: shot.path, start: this.time.now, dur: Math.max(400, shot.time * 1000), who, scored: shot.scored };
+    this.message = '';
+    this.busy = false;
+    this.render();
+  }
+
+  private afterShot(): void {
+    const c = this.contest;
+    if (!c) return;
+    const result = contestResult(c);
+    if (result) {
+      this.time.delayedCall(900, () => void this.complete(this.runId, 'completed', result).then(() => this.render()));
+      return;
+    }
+    const slot = nextSlot(c);
+    if (slot?.participant === 'blake') {
+      this.time.delayedCall(700, () => void this.shoot('blake', opponentKick(attemptKey(c.contestId, slot.round, 'blake', slot.index))));
+    }
+    this.render();
+  }
+
+  private async leaveCrossbar(): Promise<void> {
+    if (this.busy || this.anim) return;
+    // Leaving before a result is ABANDONED: never a loss, and it cannot be replaced by a reward-bearing retry.
+    await this.complete(this.runId, 'abandoned');
+    this.render();
+  }
+
+  private async loadSummaries(): Promise<void> {
+    if (!this.state || !this.store) return;
+    const run = outcomeOf(this.state, 'W1_CROSSBAR');
+    if (!run) return void (this.crossbarSummary = '');
+    if (run.outcome === 'completed' && run.runId) {
+      const c = restoreContest(await this.store.getRecord(`crossbar:${run.runId}`));
+      const p = c ? points(c, 'player') : 0;
+      const b = c ? points(c, 'blake') : 0;
+      this.crossbarSummary = `Crossbar result: ${this.name()} ${p}, Blake ${b} (${run.result === 'WIN' ? 'you won' : run.result === 'LOSS' ? 'Blake won' : 'a draw'}).`;
+    } else this.crossbarSummary = `Crossbar challenge: ${run.outcome === 'declined' ? 'you declined; no score' : run.outcome === 'abandoned' ? 'left before the end; no result' : 'interrupted; no result'}.`;
+  }
+
+  /** Factual recap from committed evidence only (shown on result scenes). */
+  private recap(): string {
+    const s = this.state;
+    if (!s) return '';
+    if (s.sceneId === 'W1_CROSSBAR_REACTION' || s.sceneId === 'W1_TRAINING_CONNECTION') return this.crossbarSummary;
+    if (s.sceneId === 'W1_TRAINING_REFLECTION' || s.sceneId === 'W1_MATCH_POST' || s.sceneId === 'W1_HOME_CLOSE' || s.sceneId === 'W2_SCHOOL_CALLBACK') {
+      const practice = outcomeOf(s, 'W1_PRACTICE');
+      const match = outcomeOf(s, 'W1_MATCH');
+      const parts = [practice ? `Practice: ${practice.outcome === 'completed' ? 'one scheduled session logged' : 'not done'}` : '', match ? `Match: ${match.outcome === 'completed' ? 'played' : 'not played'}` : ''].filter(Boolean);
+      return parts.join(' · ');
+    }
+    return '';
+  }
+
+  // ---- rendering ----
+
+  private fullText(): string {
+    const n = this.node();
+    return n?.type === 'line' ? renderText(n.text, this.name()) : '';
+  }
+
+  override update(time: number): void {
+    if (this.mode === 'story' && this.state && !this.state.revealed && !instantText) {
+      const full = this.fullText();
+      if (this.typed < full.length) {
+        this.typed = Math.min(full.length, Math.floor((time - this.nodeShownAt) / 22));
+        this.body.setText(full.slice(0, this.typed));
+      }
+    }
+    if (this.anim) {
+      this.drawStage();
+      if (time - this.anim.start >= this.anim.dur + 500) {
+        this.anim = null;
+        this.afterShot();
+      }
+    }
+  }
+
+  private clearActions(): void {
+    for (const b of this.actions) b.destroy();
+    this.actions = [];
+  }
+
+  private setActions(list: readonly Action[]): void {
+    this.clearActions();
+    const { width } = this.scale;
+    const portrait = orientationOf(this.scale) === 'portrait';
+    const cols = portrait ? 1 : Math.min(2, list.length);
+    const pad = 12;
+    const bw = Math.round(Math.min(portrait ? width - 2 * pad : (this.panel.width - pad * (cols + 1)) / cols, 420));
+    const bh = Math.round(Math.max(48, Math.min(this.scale.height * (portrait ? 0.065 : 0.12), 60)));
+    const fs = Math.round(Math.max(15, Math.min(bh * 0.36, 20)));
+    const rows = Math.ceil(list.length / cols);
+    const bottom = this.panel.y + this.panel.height - pad;
+    list.forEach((a, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = this.panel.x + pad + bw / 2 + col * (bw + pad) + (portrait ? (this.panel.width - 2 * pad - bw) / 2 : 0);
+      const y = bottom - (rows - row) * (bh + 8) + bh / 2 + 8;
+      this.actions.push(new Button(this, x, y, { name: a.name, label: a.label, width: bw, height: bh, fontSize: fs, onClick: a.onClick }));
+    });
+  }
+
+  private render(): void {
+    if (!this.bg) return;
+    const n = this.node();
+    const key = `${this.state?.sceneId}.${this.state?.nodeId}.${this.mode}`;
+    if (key !== this.nodeKey) {
+      this.nodeKey = key;
+      this.nodeShownAt = this.time.now;
+      this.typed = 0;
+      if (this.mode === 'story') this.message = n?.type === 'activity_handoff' ? this.message : '';
+    }
+    this.drawStage();
+    const acts: Action[] = [];
+    this.speaker.setText('');
+    let body = '';
+    let hint = '';
+    if (this.mode === 'loading') body = 'Loading story…';
+    else if (this.mode === 'error') {
+      body = this.message;
+      acts.push({ name: 'story-back', label: 'Back to menu', onClick: () => this.goStart() });
+    } else if (this.mode === 'transcript') {
+      const lines = (this.state?.transcript ?? []).map((t) => this.lineFor(t.sceneId, t.nodeId)).filter(Boolean).slice(-8);
+      body = lines.join('\n');
+      acts.push({ name: 'story-log-close', label: 'Close log', onClick: () => this.toggleTranscript() });
+    } else if (this.mode === 'crossbar' && this.contest) {
+      const c = this.contest;
+      const slot = nextSlot(c);
+      const main = c.attempts.filter((a) => a.round === 'main' && a.participant === 'player').length;
+      body = `${this.name()} ${points(c, 'player')} · Blake ${points(c, 'blake')}`;
+      hint = this.anim ? (this.anim.scored ? 'Crossbar! One point.' : 'No point.') : slot?.participant === 'player' ? `${slot.round === 'warmup' ? 'Warm-up shot (does not count)' : slot.round === 'sudden' ? 'Sudden death' : `Your shot ${main + 1} of 3`}: press and pull back, release to kick.` : slot ? 'Blake is shooting…' : 'Done.';
+      acts.push({ name: 'crossbar-leave', label: 'Leave (no result)', onClick: () => void this.leaveCrossbar() });
+    } else if (n && this.state) {
+      if (this.state.complete) {
+        body = `Week-one story complete. ${this.recap()}`;
+        acts.push({ name: 'story-done', label: 'Back to menu', onClick: () => this.goStart() });
+      } else if (n.type === 'line') {
+        this.speaker.setText(n.speaker === 'System' ? '' : n.speaker);
+        const full = this.fullText();
+        body = this.state.revealed || instantText ? full : full.slice(0, this.typed);
+        if (this.state.revealed || instantText) this.typed = full.length;
+        hint = 'Tap to continue';
+      } else if (n.type === 'choice') {
+        body = 'What do you do?';
+        for (const o of n.options) acts.push({ name: `choice-${o.id}`, label: o.label, onClick: () => void this.choose(o.id) });
+      } else if (n.type === 'activity_handoff') {
+        this.handoffUi(n, acts, (t) => (body = t));
+      }
+      const r = this.recap();
+      if (r && !this.state.complete) hint = hint ? `${r}\n${hint}` : r;
+    }
+    this.body.setText(this.mode === 'story' && n?.type === 'line' && !(this.state?.revealed || instantText) ? body : body);
+    this.info.setText(this.message);
+    this.hint.setText(hint);
+    this.setActions(acts);
+    this.layoutText();
+  }
+
+  private handoffUi(n: Extract<StoryNode, { type: 'activity_handoff' }>, acts: Action[], setBody: (t: string) => void): void {
+    const s = this.state!;
+    const p = this.save?.player ?? null;
+    switch (n.adapter) {
+      case 'identity': {
+        const g = this.gender ? `${this.gender === 'boy' ? 'Boy' : 'Girl'} (${PRONOUNS[this.gender].subject}/${PRONOUNS[this.gender].object})` : 'not chosen';
+        setBody(`Name: ${this.pendingName || '—'}\nCharacter: ${g}${p ? '' : `\nPosition: ${POSITION_LABEL[this.position]}`}\nThis never changes your soccer skills.`);
+        acts.push({ name: 'id-boy', label: 'Boy', onClick: () => ((this.gender = 'boy'), this.render()) }, { name: 'id-girl', label: 'Girl', onClick: () => ((this.gender = 'girl'), this.render()) });
+        acts.push({ name: 'id-name', label: 'Enter name', onClick: () => this.askName() });
+        if (!p) acts.push({ name: 'id-position', label: `Position: ${POSITION_LABEL[this.position]}`, onClick: () => ((this.position = this.position === 'DEF' ? 'MID' : this.position === 'MID' ? 'FWD' : 'DEF'), this.render()) });
+        acts.push({ name: 'id-confirm', label: 'Confirm', onClick: () => void this.confirmIdentity() });
+        return;
+      }
+      case 'crossbar': {
+        const inv = s.decisions.W1_SCHOOL_02?.invitation;
+        if (inv === 'decline') {
+          setBody('You head back with Jordan. No score is recorded.');
+          acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.decline() });
+        } else {
+          setBody(`Three counted shots each from the same spot.${inv === 'equal_attempts' ? '' : ' One warm-up shot each first (does not count).'} Hit the crossbar to score.`);
+          acts.push({ name: 'crossbar-start', label: 'Play crossbar challenge', onClick: () => void this.startCrossbar() });
+        }
+        return;
+      }
+      case 'training_arrangement':
+        setBody('Set up home training: your space, equipment and time. (Home Training opens; come back with Back to story.)');
+        acts.push({ name: 'handoff-career', label: 'Open Home Training setup', onClick: () => void this.openCareer('training_arrangement') });
+        return;
+      case 'weekly_focus':
+        setBody(this.save?.focusId ? 'Your weekly focus is chosen in Home Training.' : 'Choose this week\'s learning focus in Home Training.');
+        acts.push({ name: 'handoff-career', label: 'Choose weekly focus', onClick: () => void this.openCareer('weekly_focus') });
+        return;
+      case 'practice':
+        setBody('Do one scheduled session from your plan and log it in Home Training. Credit follows the usual rule: one per scheduled session.');
+        acts.push({ name: 'handoff-career', label: 'Open my training plan', onClick: () => void this.openCareer('practice') });
+        acts.push({ name: 'handoff-skip', label: 'Not this week', onClick: () => void this.skipRun('declined') });
+        return;
+      case 'assignment':
+        setBody(p ? `Coach Code: "You'll start as ${POSITION_LABEL[p.position]} (${POSITION_SLOT[p.position]} in the 1-3-2-3). Ask if anything is unclear."` : 'Create your player first.');
+        acts.push({ name: 'handoff-continue', label: 'Got it', onClick: () => void this.assignment() });
+        return;
+      case 'match':
+        setBody('Week-one match: a full 9v9 game with your usual controls. Your play becomes evidence for growth, as always.');
+        acts.push({ name: 'handoff-match', label: 'Play the match', onClick: () => void this.openCareer('match') });
+        acts.push({ name: 'handoff-skip', label: 'Skip the match', onClick: () => void this.skipRun('declined') });
+        return;
+      case 'week_close':
+        setBody('Finish week 1: your week review is saved and week 2 opens.');
+        acts.push({ name: 'handoff-week', label: 'Finish week 1', onClick: () => void this.closeWeek() });
+        return;
+    }
+  }
+
+  private async skipRun(outcome: 'declined'): Promise<void> {
+    if (!this.fresh()) return;
+    this.busy = true;
+    const run = await this.launch();
+    if (run) await this.complete(run, outcome);
+    this.busy = false;
+    this.render();
+  }
+
+  private lineFor(sceneId: string, nodeId: string): string {
+    const s = this.state && sceneId ? this.sceneNode(sceneId, nodeId) : null;
+    if (!s || s.type !== 'line') return '';
+    return `${s.speaker === 'System' ? '' : `${s.speaker}: `}${renderText(s.text, this.name())}`;
+  }
+
+  private sceneNode(sceneId: string, nodeId: string): StoryNode | null {
+    return currentNode({ ...this.state!, sceneId, nodeId });
+  }
+
+  private background(): Background {
+    const n = this.state ? currentNode(this.state) : null;
+    void n;
+    const id = this.state?.sceneId ?? '';
+    if (/HOME|CLOSE_WEEK/.test(id)) return 'neutral_home';
+    if (/TRAINING|PRACTICE|MATCH|FOCUS/.test(id)) return 'neutral_pitch';
+    return 'neutral_school';
+  }
+
+  private drawStage(): void {
+    const { width } = this.scale;
+    const g = this.bg;
+    g.clear();
+    const bgk = this.mode === 'crossbar' ? 'neutral_school' : this.background();
+    const stageH = this.panel.y;
+    if (bgk === 'neutral_home') {
+      g.fillStyle(PALETTE.sand, 1).fillRect(0, 0, width, stageH);
+      g.fillStyle(PALETTE.peach, 1).fillRect(0, stageH * 0.72, width, stageH * 0.28);
+      g.fillStyle(PALETTE.skyBottom, 1).fillRect(width * 0.08, stageH * 0.12, width * 0.22, stageH * 0.34);
+      g.lineStyle(4, PALETTE.ink, 1).strokeRect(width * 0.08, stageH * 0.12, width * 0.22, stageH * 0.34);
+      // Aquarium with a clownfish.
+      g.fillStyle(PALETTE.blue, 0.55).fillRect(width * 0.66, stageH * 0.46, width * 0.24, stageH * 0.24);
+      g.lineStyle(3, PALETTE.ink, 1).strokeRect(width * 0.66, stageH * 0.46, width * 0.24, stageH * 0.24);
+      g.fillStyle(PALETTE.tomato, 1).fillEllipse(width * 0.77, stageH * 0.58, width * 0.04, stageH * 0.05);
+      g.fillStyle(PALETTE.cream, 1).fillRect(width * 0.765, stageH * 0.555, width * 0.006, stageH * 0.05);
+    } else if (bgk === 'neutral_pitch') {
+      g.fillGradientStyle(PALETTE.skyTop, PALETTE.skyTop, PALETTE.skyBottom, PALETTE.skyBottom, 1).fillRect(0, 0, width, stageH * 0.45);
+      g.fillStyle(PALETTE.grassLight, 1).fillRect(0, stageH * 0.45, width, stageH * 0.55);
+      g.lineStyle(3, PALETTE.line, 1).lineBetween(0, stageH * 0.7, width, stageH * 0.7);
+    } else {
+      g.fillGradientStyle(PALETTE.skyTop, PALETTE.skyTop, PALETTE.skyBottom, PALETTE.skyBottom, 1).fillRect(0, 0, width, stageH * 0.5);
+      g.fillStyle(PALETTE.tomatoDark, 1).fillRect(0, stageH * 0.18, width * 0.45, stageH * 0.32);
+      g.fillStyle(PALETTE.grassDark, 1).fillRect(0, stageH * 0.5, width, stageH * 0.5);
+    }
+    g.fillStyle(PALETTE.cream, 0.96).fillRoundedRect(this.panel.x, this.panel.y, this.panel.width, this.panel.height, 14);
+    g.lineStyle(3, PALETTE.ink, 1).strokeRoundedRect(this.panel.x, this.panel.y, this.panel.width, this.panel.height, 14);
+    const s = this.stage;
+    s.clear();
+    const n = this.node();
+    if (this.mode === 'story' && n?.type === 'line' && n.speaker !== 'System') {
+      // Code-drawn portrait: head, hair and a coloured shirt per speaker.
+      const cx = width * 0.5;
+      const r = Math.min(stageH * 0.22, width * 0.14);
+      const cy = stageH - r * 1.6;
+      s.fillStyle(SPEAKER_COLOR[n.speaker] ?? PALETTE.blueDark, 1).fillRoundedRect(cx - r * 1.2, cy + r * 0.8, r * 2.4, r * 1.4, r * 0.4);
+      s.fillStyle(PALETTE.skin, 1).fillCircle(cx, cy, r);
+      s.fillStyle(PALETTE.hair, 1).fillEllipse(cx, cy - r * 0.6, r * 2, r * 0.9);
+      s.fillStyle(PALETTE.ink, 1).fillCircle(cx - r * 0.35, cy + r * 0.05, r * 0.1).fillCircle(cx + r * 0.35, cy + r * 0.05, r * 0.1);
+      s.lineStyle(3, PALETTE.ink, 1).strokeCircle(cx, cy, r);
+    }
+    if (this.mode === 'crossbar') this.drawCrossbar(s, width, stageH);
+  }
+
+  private drawCrossbar(s: Phaser.GameObjects.Graphics, width: number, stageH: number): void {
+    const f = (width * 0.62 * 15) / 6.4;
+    const cx = width / 2;
+    const horizon = stageH * 0.35;
+    const proj = (x: number, y: number, z: number) => {
+      const d = y + 4;
+      return { x: cx + (x / d) * f * 0.5, y: horizon + ((1.4 - z) / d) * f * 0.5, k: 1 / d };
+    };
+    const tl = proj(-3.2, 11, 2.13);
+    const tr = proj(3.2, 11, 2.13);
+    const bl = proj(-3.2, 11, 0);
+    const br = proj(3.2, 11, 0);
+    s.fillStyle(PALETTE.net, 0.25).fillRect(tl.x, tl.y, tr.x - tl.x, bl.y - tl.y);
+    s.lineStyle(Math.max(4, width * 0.008), PALETTE.cream, 1).lineBetween(bl.x, bl.y, tl.x, tl.y).lineBetween(tl.x, tl.y, tr.x, tr.y).lineBetween(tr.x, tr.y, br.x, br.y);
+    const spot = proj(0, 0, 0);
+    let ball = proj(0, 0, 0.105);
+    if (this.anim) {
+      const a = this.anim;
+      const i = Math.min(a.path.length - 1, Math.floor(((this.time.now - a.start) / a.dur) * (a.path.length - 1)));
+      const pt = a.path[Math.max(0, i)]!;
+      ball = proj(pt[0], pt[1], pt[2]);
+      const sh = proj(pt[0], pt[1], 0);
+      s.fillStyle(PALETTE.shadow, 0.3).fillEllipse(sh.x, sh.y, 30 * sh.k * 8, 10 * sh.k * 8);
+      s.fillStyle(a.who === 'blake' ? PALETTE.tomato : PALETTE.blue, 1).fillCircle(width * 0.08, stageH * 0.1, 8);
+    }
+    s.fillStyle(PALETTE.line, 1).fillCircle(spot.x, spot.y, 5);
+    s.fillStyle(PALETTE.cream, 1).fillCircle(ball.x, ball.y, Math.max(4, 0.105 * f * 0.5 * ball.k * 2));
+    s.lineStyle(2, PALETTE.ink, 1).strokeCircle(ball.x, ball.y, Math.max(4, 0.105 * f * 0.5 * ball.k * 2));
+    const p = this.pull;
+    if (p && !p.inCancel && this.aimFrom) {
+      const len = 40 + p.power * stageH * 0.5;
+      s.lineStyle(5, PALETTE.mustard, 1).lineBetween(spot.x, spot.y, spot.x + p.dirX * len, spot.y + p.dirY * len);
+      s.fillStyle(PALETTE.mustardDark, 1).fillRect(width * 0.9, stageH * (0.9 - 0.6 * p.power), width * 0.04, stageH * 0.6 * p.power);
+      s.lineStyle(2, PALETTE.ink, 1).strokeRect(width * 0.9, stageH * 0.3, width * 0.04, stageH * 0.6);
+    }
+  }
+
+  private layout(): void {
+    const { width, height } = this.scale;
+    const portrait = orientationOf({ width, height }) === 'portrait';
+    const pad = 10;
+    const topH = 44;
+    const tw = Math.round(Math.min((width - pad * 5) / 4, 140));
+    this.top.forEach((b, i) => b.resize(tw, 40, Math.round(Math.max(13, Math.min(tw * 0.13, 16)))).setPosition(pad + tw / 2 + i * (tw + pad), pad + topH / 2 - 2));
+    const ph = Math.round(portrait ? height * 0.5 : height * 0.56);
+    this.panel = { x: pad, y: height - ph - pad, width: width - 2 * pad, height: ph };
+    if (this.panel.y < topH + pad * 2) this.panel = { ...this.panel, y: topH + pad * 2, height: height - topH - pad * 3 };
+    this.render();
+  }
+
+  private layoutText(): void {
+    const { width, height } = this.scale;
+    const fs = Math.round(Math.max(17, Math.min(Math.min(width, height) * 0.05, 24)));
+    const x = this.panel.x + 16;
+    const w = this.panel.width - 32;
+    this.speaker.setFontSize(fs).setPosition(x, this.panel.y - fs * 1.6).setBackgroundColor(this.speaker.text ? CSS.blue : '').setPadding(8, 4, 8, 4);
+    this.body.setFontSize(fs).setWordWrapWidth(w, true).setLineSpacing(4).setPosition(x, this.panel.y + 12);
+    this.info.setFontSize(Math.round(fs * 0.8)).setColor(CSS.tomato).setWordWrapWidth(w, true).setPosition(x, this.body.y + this.body.height + 6);
+    this.hint.setFontSize(Math.round(fs * 0.75)).setWordWrapWidth(w, true).setPosition(x, this.info.y + this.info.height + 4);
+  }
+
+  private onResize(): void {
+    this.aimFrom = null;
+    this.pull = null;
+    this.layout();
+  }
+
+  private goStart(): void {
+    if (this.navigating) return;
+    this.navigating = true;
+    this.scene.start(SceneKeys.Start);
+  }
+
+  private onShutdown(): void {
+    this.input.off(Phaser.Input.Events.POINTER_DOWN, this.onDown, this);
+    this.input.off(Phaser.Input.Events.POINTER_MOVE, this.onMove, this);
+    this.input.off(Phaser.Input.Events.POINTER_UP, this.onUp, this);
+    this.scale.off(Phaser.Scale.Events.RESIZE, this.onResize, this);
+    this.clearActions();
+    this.store?.close();
+    this.store = null;
+  }
+
+  describeLayout(): SceneLayoutReport {
+    const elements: Record<string, Rect> = { panel: this.panel };
+    for (const b of [...this.top, ...this.actions]) elements[b.name] = b.getButtonBounds();
+    return { orientation: orientationOf(this.scale), viewport: { width: this.scale.width, height: this.scale.height }, elements };
+  }
+
+  describeGameplay(): unknown {
+    const s = this.state;
+    const n = this.node();
+    const c = this.contest;
+    return {
+      mode: this.mode,
+      scene: s?.sceneId ?? null,
+      node: s?.nodeId ?? null,
+      type: n?.type ?? null,
+      adapter: n?.type === 'activity_handoff' ? n.adapter : null,
+      revision: s?.revision ?? 0,
+      revealed: s?.revealed ?? false,
+      complete: s?.complete ?? false,
+      speaker: this.speaker?.text ?? '',
+      text: this.body?.text ?? '',
+      message: this.message,
+      hint: this.hint?.text ?? '',
+      buttons: this.actions.map((b) => b.name),
+      decisions: s?.decisions ?? {},
+      outcomes: s ? Object.values(s.runs).map((r) => ({ scene: r.sceneId, state: r.state, outcome: r.outcome, result: r.result })) : [],
+      completedScenes: s?.completedScenes.length ?? 0,
+      transcript: s?.transcript.length ?? 0,
+      player: this.save?.player ? { name: this.save.player.name, gender: this.save.player.gender ?? null } : null,
+      crossbar: c ? { status: c.status, next: nextSlot(c), player: points(c, 'player'), blake: points(c, 'blake'), attempts: c.attempts.length, animating: this.anim !== null } : null,
+    };
+  }
+}
