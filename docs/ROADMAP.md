@@ -22,7 +22,7 @@ Staged plan. One milestone at a time; each ends with verified checks and an upda
 
 ## M4 — 9v9 match flow (core done, in review)
 - Kick-off, restarts (throw-ins, goal kicks, corners), half-time, full-time, match clock; simple fouls/offside decisions.
-- **Done:** two-half match clock (default 2 × 240 sim s shown as 2 × 25 min), kick-off, half-time card, second half with the away team kicking off, full-time result (win/draw/loss and stats), Play again. The clock stops for pauses, backgrounding, Coach Moments, kick-off countdowns and stoppages. `?sandbox` keeps the open-ended M3 sandbox; `?debug&halfSeconds=N` shortens halves for tests.
+- **Done:** two-half match clock (default 2 × 165 sim s (5.5 min of play, owner cap 5–6 min) shown as 2 × 25 min), kick-off, half-time card, second half with the away team kicking off, full-time result (win/draw/loss and stats), Play again. The clock stops for pauses, backgrounding, Coach Moments, kick-off countdowns and stoppages. `?sandbox` keeps the open-ended M3 sandbox; `?debug&halfSeconds=N` shortens halves for tests.
 - **Still not built:** formal throw-ins, corners and goal kicks (restarts stay simplified), fouls, offside, added time, teams swapping ends at half-time.
 
 ## M5 — Tactical learning pauses

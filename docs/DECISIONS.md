@@ -83,3 +83,4 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Control preferences are stored in localStorage (`smr-controls-v1`), separate from IndexedDB career/story saves; invalid values fall back to defaults.
 - A slide that hits the body first is a foul with a basic opponent free-kick restart; the engine has no other set pieces yet.
 
+- Owner cap: actual playing time is 5–6 minutes max per match. Default `halfSeconds` is 165 (2 × 2:45 = 5:30 of play); the clock still stops for pauses, Coach Moments, kick-offs and stoppages, so those do not count. The displayed 25-minute U11 half clock is unchanged.

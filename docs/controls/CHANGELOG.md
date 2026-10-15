@@ -9,6 +9,7 @@
 - Pause panel: control size, opacity, Reset controls (stored apart from career saves).
 - Desktop keys: arrows/WASD, Space/J pass, K shoot, L slide, I block.
 - `?controls=gesture` keeps the previous swipe / pull-back scheme.
+- Match length: 2 × 165 s of actual play (5.5 min total, owner cap 5–6 min), down from 2 × 240 s.
 
 ### Known issues
 - No set pieces, offside, added time or switching ends (pre-existing M4 gaps).

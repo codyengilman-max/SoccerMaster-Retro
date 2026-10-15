@@ -104,6 +104,12 @@ describe('M4 match clock', () => {
     expect(new MatchSim({ halfSeconds: null }).state.clock).toBeNull();
   });
 
+  it('default match is 5-6 minutes of actual play (owner cap)', () => {
+    const total = MATCH_TUNING.match.halfSeconds * 2;
+    expect(total).toBeGreaterThanOrEqual(300);
+    expect(total).toBeLessThanOrEqual(360);
+  });
+
   it('a full default-length match keeps every invariant and is deterministic', () => {
     const play = (): string => {
       const sim = new MatchSim({ seed: 11, halfSeconds: MATCH_TUNING.match.halfSeconds });
