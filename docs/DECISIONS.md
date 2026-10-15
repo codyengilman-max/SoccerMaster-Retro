@@ -54,3 +54,9 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - At the whistle everything in progress ends where it is: an aim is cancelled (never fired), a ball in flight does not count, Coach intentions end. Only pause/resume, Coach hold/release, reset, formation and `startSecondHalf` commands are accepted during half-time and full-time.
 - Teams keep the same ends after half-time because the team AI assumes fixed attacking directions; swapping ends is deferred.
 - `MatchSim` without `halfSeconds` remains the open-ended sandbox, so M3/M5 unit tests and `?sandbox` keep their behaviour.
+
+## Training library v1.1 import (draft)
+- The package is kept byte-for-byte in `research/training/v1.1/`; revisions will go in a new versioned folder, never by editing it. Its 63 Python reference tests stay unchanged and still assert the package's own P-001 contract.
+- Owner override of P-001: no week-slot journal stamp. Credit stays one per scheduled `sessionId`; substitution, catalog update and replay add none (`tests/curriculum-economy.test.ts`).
+- Families are curriculum organization inside the seven skill areas, not progression tracks. Prerequisites only gate suitability.
+- Publication authority is a repository-side release manifest (`curriculum/release.ts`), never imported content or saves. It is empty until real coach/QA review and reviewed demo assets exist.
