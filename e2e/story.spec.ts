@@ -77,6 +77,12 @@ async function kick(page: Page, finger: Finger): Promise<void> {
 
 // The launch already bumped the revision, so wait for the run itself to resolve after returning.
 const resolved = (s: Story) => (x: Story) => x.scene !== s.scene || x.outcomes.some((o) => o.scene === s.scene && o.state === 'resolved');
+// The dialogue text never runs under the choice or action buttons.
+async function textClearsButtons(page: Page, buttons: string[]): Promise<void> {
+  const l = await layout(page);
+  const t = l.elements['story-text']!;
+  for (const b of buttons) expect(t.y + t.height, `text vs ${b}`).toBeLessThanOrEqual(l.elements[b]!.y + 1);
+}
 async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Promise<Story> {
   for (let i = 0; i < 400; i++) {
     const s = await story(page, () => true, 'story');
@@ -97,6 +103,7 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
       await finger.tap({ x: l.viewport.width / 2, y: l.elements.panel!.y * 0.6 });
       await story(page, moved, `advance ${s.node}`);
     } else if (s.type === 'choice') {
+      await textClearsButtons(page, s.buttons);
       const pick = s.buttons.find((b) => !/decline/.test(b)) ?? s.buttons[0]!;
       await pressStory(page, pick, mode);
       await story(page, moved, `choice ${s.node}`);
@@ -105,6 +112,7 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
       await pressStory(page, 'id-name', mode);
       await story(page, (x) => x.text.includes('Zoë'), 'name');
       await page.waitForTimeout(120);
+      await textClearsButtons(page, (await story(page, () => true, 'identity card')).buttons);
       await pressStory(page, 'id-confirm', mode);
       await story(page, resolved(s), 'identity');
     } else if (s.adapter === 'crossbar') {
@@ -214,6 +222,12 @@ test('story: reload restores the cursor and an answered choice is never re-appli
     await page.waitForTimeout(100);
   }
   expect(s.type).toBe('choice');
+  await pressStory(page, 'story-log', mode);
+  await story(page, (x) => x.mode === 'transcript', 'log');
+  await textClearsButtons(page, ['story-log-close']);
+  await pressStory(page, 'story-log-close', mode);
+  s = await story(page, (x) => x.mode === 'story', 'log closed');
+  await page.waitForTimeout(150);
   // Rapid double press on one option: one decision, one revision step.
   const rev = s.revision;
   await pressAny(page, s.buttons[0]!, mode);

@@ -49,6 +49,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private session: StorySession | null = null;
   private state: StoryState | null = null;
   private busy = false;
+  private actionsTop = 0;
   private navigating = false;
   private message = '';
   private nodeKey = '';
@@ -74,6 +75,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private top: Button[] = [];
   private actions: Button[] = [];
   private panel: Rect = { x: 0, y: 0, width: 0, height: 0 };
+  private basePanel: Rect = { x: 0, y: 0, width: 0, height: 0 };
 
   constructor() {
     super(SceneKeys.Story);
@@ -504,19 +506,19 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
 
   private setActions(list: readonly Action[]): void {
     this.clearActions();
-    const { width } = this.scale;
     const portrait = orientationOf(this.scale) === 'portrait';
-    const cols = portrait ? 1 : Math.min(2, list.length);
+    const cols = portrait ? (list.length < 3 ? 1 : 2) : Math.min(list.length >= 5 ? 3 : 2, list.length);
     const pad = 12;
-    const bw = Math.round(Math.min(portrait ? width - 2 * pad : (this.panel.width - pad * (cols + 1)) / cols, 420));
+    const bw = Math.round(Math.min((this.panel.width - pad * (cols + 1)) / cols, 420));
     const bh = Math.round(Math.max(48, Math.min(this.scale.height * (portrait ? 0.065 : 0.12), 60)));
     const fs = Math.round(Math.max(15, Math.min(bh * 0.36, 20)));
     const rows = Math.ceil(list.length / cols);
     const bottom = this.panel.y + this.panel.height - pad;
+    this.actionsTop = list.length ? bottom - rows * (bh + 8) + 8 : this.panel.y + this.panel.height;
     list.forEach((a, i) => {
       const col = i % cols;
       const row = Math.floor(i / cols);
-      const x = this.panel.x + pad + bw / 2 + col * (bw + pad) + (portrait ? (this.panel.width - 2 * pad - bw) / 2 : 0);
+      const x = this.panel.x + pad + bw / 2 + col * (bw + pad) + Math.max(0, (this.panel.width - pad * (cols + 1) - cols * bw) / 2);
       const y = bottom - (rows - row) * (bh + 8) + bh / 2 + 8;
       this.actions.push(new Button(this, x, y, { name: a.name, label: a.label, width: bw, height: bh, fontSize: fs, onClick: a.onClick }));
     });
@@ -524,6 +526,12 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
 
   private render(): void {
     if (!this.bg) return;
+    this.panel = { ...this.basePanel };
+    if (this.mode === 'crossbar') {
+      // A short panel leaves the goal and the kicking spot a clear stage under the top bar.
+      const h = Math.round(Math.min(this.basePanel.height, this.scale.height * 0.34));
+      this.panel = { ...this.panel, y: this.basePanel.y + this.basePanel.height - h, height: h };
+    }
     const n = this.node();
     const key = `${this.state?.sceneId}.${this.state?.nodeId}.${this.mode}`;
     if (key !== this.nodeKey) {
@@ -534,6 +542,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     }
     this.drawStage();
     const acts: Action[] = [];
+    let log: string[] | null = null;
     this.speaker.setText('');
     let body = '';
     let hint = '';
@@ -542,8 +551,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       body = this.message;
       acts.push({ name: 'story-back', label: 'Back to menu', onClick: () => this.goStart() });
     } else if (this.mode === 'transcript') {
-      const lines = (this.state?.transcript ?? []).map((t) => this.lineFor(t.sceneId, t.nodeId)).filter(Boolean).slice(-8);
-      body = lines.join('\n');
+      log = (this.state?.transcript ?? []).map((t) => this.lineFor(t.sceneId, t.nodeId)).filter(Boolean).slice(-8);
+      body = log.join('\n');
       acts.push({ name: 'story-log-close', label: 'Close log', onClick: () => this.toggleTranscript() });
     } else if (this.mode === 'crossbar' && this.contest) {
       const c = this.contest;
@@ -575,7 +584,11 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     this.info.setText(this.message);
     this.hint.setText(hint);
     this.setActions(acts);
-    this.layoutText();
+    // The log keeps its newest lines when the oldest ones would run under the buttons.
+    while (!this.layoutText() && log && log.length > 1) {
+      log.shift();
+      this.body.setText(log.join('\n'));
+    }
   }
 
   private handoffUi(n: Extract<StoryNode, { type: 'activity_handoff' }>, acts: Action[], setBody: (t: string) => void): void {
@@ -704,9 +717,12 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   }
 
   private drawCrossbar(s: Phaser.GameObjects.Graphics, width: number, stageH: number): void {
-    const f = (width * 0.62 * 15) / 6.4;
+    // Fit the goal-to-spot view between the top bar and the panel.
+    const top = 64;
+    const room = Math.max(60, stageH - top);
+    const f = Math.min((width * 0.62 * 15) / 6.4, room * 4);
     const cx = width / 2;
-    const horizon = stageH * 0.35;
+    const horizon = top + 0.035 * f + 4;
     const proj = (x: number, y: number, z: number) => {
       const d = y + 4;
       return { x: cx + (x / d) * f * 0.5, y: horizon + ((1.4 - z) / d) * f * 0.5, k: 1 / d };
@@ -726,17 +742,19 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       ball = proj(pt[0], pt[1], pt[2]);
       const sh = proj(pt[0], pt[1], 0);
       s.fillStyle(PALETTE.shadow, 0.3).fillEllipse(sh.x, sh.y, 30 * sh.k * 8, 10 * sh.k * 8);
-      s.fillStyle(a.who === 'blake' ? PALETTE.tomato : PALETTE.blue, 1).fillCircle(width * 0.08, stageH * 0.1, 8);
+      s.fillStyle(a.who === 'blake' ? PALETTE.tomato : PALETTE.blue, 1).fillCircle(width * 0.08, top + 10, 8);
     }
     s.fillStyle(PALETTE.line, 1).fillCircle(spot.x, spot.y, 5);
     s.fillStyle(PALETTE.cream, 1).fillCircle(ball.x, ball.y, Math.max(4, 0.105 * f * 0.5 * ball.k * 2));
     s.lineStyle(2, PALETTE.ink, 1).strokeCircle(ball.x, ball.y, Math.max(4, 0.105 * f * 0.5 * ball.k * 2));
     const p = this.pull;
     if (p && !p.inCancel && this.aimFrom) {
-      const len = 40 + p.power * stageH * 0.5;
+      const len = 40 + p.power * room * 0.5;
       s.lineStyle(5, PALETTE.mustard, 1).lineBetween(spot.x, spot.y, spot.x + p.dirX * len, spot.y + p.dirY * len);
-      s.fillStyle(PALETTE.mustardDark, 1).fillRect(width * 0.9, stageH * (0.9 - 0.6 * p.power), width * 0.04, stageH * 0.6 * p.power);
-      s.lineStyle(2, PALETTE.ink, 1).strokeRect(width * 0.9, stageH * 0.3, width * 0.04, stageH * 0.6);
+      const mTop = top + room * 0.1;
+      const mH = room * 0.8;
+      s.fillStyle(PALETTE.mustardDark, 1).fillRect(width * 0.9, mTop + mH * (1 - p.power), width * 0.04, mH * p.power);
+      s.lineStyle(2, PALETTE.ink, 1).strokeRect(width * 0.9, mTop, width * 0.04, mH);
     }
   }
 
@@ -750,14 +768,34 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     const ph = Math.round(portrait ? height * 0.5 : height * 0.56);
     this.panel = { x: pad, y: height - ph - pad, width: width - 2 * pad, height: ph };
     if (this.panel.y < topH + pad * 2) this.panel = { ...this.panel, y: topH + pad * 2, height: height - topH - pad * 3 };
+    this.basePanel = { ...this.panel };
     this.render();
   }
 
-  private layoutText(): void {
+  private layoutText(): boolean {
     const { width, height } = this.scale;
-    const fs = Math.round(Math.max(17, Math.min(Math.min(width, height) * 0.05, 24)));
     const x = this.panel.x + 16;
     const w = this.panel.width - 32;
+    // Shrink the text (never below 14 px) until it clears the buttons; the panel never overlaps them.
+    let fs = Math.round(Math.max(17, Math.min(Math.min(width, height) * 0.05, 24)));
+    const fits = () => this.hint.y + this.hint.height <= this.actionsTop - 6;
+    for (; fs > 14; fs--) {
+      this.placeText(fs, x, w);
+      if (fits()) return true;
+    }
+    this.placeText(fs, x, w);
+    if (fits()) return true;
+    // Still too tall: grow the panel upward (never under the top bar) and redraw the stage above it.
+    const bottom = this.panel.y + this.panel.height;
+    const need = this.hint.y + this.hint.height - this.panel.y + (bottom - this.actionsTop) + 18;
+    const y = Math.max(64, bottom - need);
+    this.panel = { ...this.panel, y, height: bottom - y };
+    this.drawStage();
+    this.placeText(fs, x, w);
+    return fits();
+  }
+
+  private placeText(fs: number, x: number, w: number): void {
     this.speaker.setFontSize(fs).setPosition(x, this.panel.y - fs * 1.6).setBackgroundColor(this.speaker.text ? CSS.blue : '').setPadding(8, 4, 8, 4);
     this.body.setFontSize(fs).setWordWrapWidth(w, true).setLineSpacing(4).setPosition(x, this.panel.y + 12);
     this.info.setFontSize(Math.round(fs * 0.8)).setColor(CSS.tomato).setWordWrapWidth(w, true).setPosition(x, this.body.y + this.body.height + 6);
@@ -787,7 +825,9 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   }
 
   describeLayout(): SceneLayoutReport {
-    const elements: Record<string, Rect> = { panel: this.panel };
+    const top = this.body.y;
+    const bottom = Math.max(this.body.y + this.body.height, this.hint.y + (this.hint.text ? this.hint.height : 0));
+    const elements: Record<string, Rect> = { panel: this.panel, 'story-text': { x: this.body.x, y: top, width: this.panel.width - 32, height: bottom - top } };
     for (const b of [...this.top, ...this.actions]) elements[b.name] = b.getButtonBounds();
     return { orientation: orientationOf(this.scale), viewport: { width: this.scale.width, height: this.scale.height }, elements };
   }
