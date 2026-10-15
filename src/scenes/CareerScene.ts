@@ -5,6 +5,8 @@ import { substitutes, workableFocuses } from '../game/career/planner';
 import { emptySave, levelSuggestion, type CareerSave, type Completion } from '../game/career/state';
 import { CareerStore } from '../game/career/store';
 import { ATTRIBUTES, ATTRIBUTE_LABELS, LEVEL_NAMES, POSITIONS, SKILL_FAMILY_LABELS, type Activity, type Foot, type Position, type Rating } from '../game/career/types';
+import { CATEGORY_SKILL_AREA, COACHING_REVIEW, CURRICULUM, EMPTY_STATE, FAMILY_MAPPING, publishedLevels } from '../game/career/curriculum';
+import { prototypeFor, resolveSteps, stepAt } from '../game/career/curriculum/demos';
 import { orientationOf } from '../render/layout';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspectable';
@@ -22,7 +24,10 @@ type Screen =
   | { kind: 'log'; id: string; sessionId: string | null }
   | { kind: 'journal' }
   | { kind: 'review' }
-  | { kind: 'player' };
+  | { kind: 'player' }
+  | { kind: 'drafts' }
+  | { kind: 'draftFamily'; id: string }
+  | { kind: 'draftLevel'; id: string };
 
 interface Action {
   readonly name: string;
@@ -63,6 +68,10 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private buttons: Button[] = [];
   private demoRect: { x: number; y: number; w: number; h: number } | null = null;
   private demoT = 0;
+  private demoSide: 'left' | 'right' = 'right';
+  private demoPaused = false;
+  private demoSpeed = 1;
+  private reducedMotion = false;
   private unsub: (() => void) | null = null;
 
   constructor() {
@@ -71,6 +80,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
 
   create(): void {
     this.navigating = false;
+    this.reducedMotion = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.demoPaused = this.reducedMotion;
     this.screen = { kind: 'home' };
     this.history = [];
     this.page = 0;
@@ -105,7 +116,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
 
   override update(_t: number, delta: number): void {
     if (!this.demoRect) return;
-    this.demoT += delta / 1000;
+    if (!this.demoPaused) this.demoT += (delta / 1000) * this.demoSpeed;
     this.drawDemo();
   }
 
@@ -282,13 +293,71 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           return {
             title: 'Training Library',
             body: `${ALL_ACTIVITIES.length} activities. All are original home adaptations awaiting coaching review.`,
-            actions: fams.map((fam) => ({ name: `lib-${fam}`, label: `${SKILL_FAMILY_LABELS[fam]} (${ALL_ACTIVITIES.filter((a) => a.skillFamilyId === fam).length})`, onClick: () => this.go({ kind: 'library', family: fam }) })),
+            actions: [
+              ...fams.map((fam) => ({ name: `lib-${fam}`, label: `${SKILL_FAMILY_LABELS[fam]} (${ALL_ACTIVITIES.filter((a) => a.skillFamilyId === fam).length})`, onClick: () => this.go({ kind: 'library', family: fam }) })),
+              { name: 'lib-drafts', label: 'Draft library v1.1 (review only)', onClick: () => this.go({ kind: 'drafts' }) },
+            ],
           };
         return {
           title: SKILL_FAMILY_LABELS[sc.family as (typeof fams)[number]],
           body: 'Tap an activity for steps and a demonstration.',
           actions: ALL_ACTIVITIES.filter((a) => a.skillFamilyId === sc.family).map((a) => ({ name: `act-${a.id}`, label: `${a.title} · ${LEVEL_NAMES[a.entryLevel]}`, onClick: () => this.go({ kind: 'activity', id: a.id, sessionId: null, index: 0 }) })),
         };
+      }
+      case 'drafts': {
+        if (!CURRICULUM.ok) return { title: 'Draft library', body: `Could not load the draft library (${CURRICULUM.error}). Existing activities are unaffected.`, actions: [] };
+        const m = CURRICULUM.manifest;
+        return {
+          title: 'Draft library v1.1',
+          body: `REVIEW ONLY. ${m.families.length} exercise families, ${m.families.length * 5} practice options, version ${m.contentVersion}. None is coach-approved, so none appears in your plan, journal or credit (published: ${publishedLevels().length}).\nFamilies organize practice inside the seven skill areas; your levels do not change.\nIn your plan: ${EMPTY_STATE}`,
+          actions: m.families.map((f) => ({ name: `draft-${f.id}`, label: `${f.id} ${f.title} · ${SKILL_FAMILY_LABELS[CATEGORY_SKILL_AREA[f.category]]}`, onClick: () => this.go({ kind: 'draftFamily', id: f.id }) })),
+        };
+      }
+      case 'draftFamily': {
+        const f = CURRICULUM.ok ? CURRICULUM.manifest.families.find((x) => x.id === sc.id) : undefined;
+        if (!f) return { title: 'Draft library', body: 'Unknown family.', actions: [] };
+        const rv = COACHING_REVIEW[f.id]!;
+        const mp = FAMILY_MAPPING[f.id]!;
+        return {
+          title: `DRAFT · ${f.id} ${f.title}`,
+          body: [
+            `Skill area: ${SKILL_FAMILY_LABELS[CATEGORY_SKILL_AREA[f.category]]}. Needs: ${f.requiredCapabilities.join(', ').replace(/_/g, ' ')}.`,
+            `Coaching review (AI-assisted, open): ${rv.disposition.replace('_', ' ')}. ${rv.note}`,
+            `Proposed mapping: ${mp.action}${mp.replaces.length ? ` ${mp.replaces.join(', ')} (after approval)` : ''}${mp.overlaps.length ? `; overlaps ${mp.overlaps.join(', ')} (kept)` : ''}.`,
+            `Check: ${f.qualityCheck}`,
+            `Limit: ${f.limitation}`,
+            'The five options are alternatives, not a difficulty ladder.',
+          ].join('\n'),
+          actions: f.levels.map((l) => ({ name: `draft-level-${l.id}`, label: `${l.id}${prototypeFor(l.id) ? ' · demo prototype' : ''}`, onClick: () => ((this.demoT = 0), (this.demoPaused = this.reducedMotion), this.go({ kind: 'draftLevel', id: l.id })) })),
+        };
+      }
+      case 'draftLevel': {
+        const m = CURRICULUM.ok ? CURRICULUM.manifest : null;
+        const f = m?.families.find((x) => x.levels.some((l) => l.id === sc.id));
+        const l = f?.levels.find((x) => x.id === sc.id);
+        if (!m || !f || !l) return { title: 'Draft library', body: 'Unknown option.', actions: [] };
+        const proto = prototypeFor(l.id);
+        const claims = m.claims.filter((c) => l.claimIds.includes(c.id));
+        const body = [
+          'DRAFT · REVIEW ONLY · not in your plan, journal or credit.',
+          `Setup: ${l.setup}`,
+          ...l.steps.map((x, i) => `${i + 1}. ${x}`),
+          `Foot: ${l.footMode}`,
+          l.prerequisites.length ? `Comfortable first with: ${l.prerequisites.join(', ')}` : 'No prerequisite option.',
+          `Evidence: ${claims.map((c) => `${c.id} ${c.type.replace(/_/g, ' ')}`).join('; ')}`,
+          `Stop: ${m.safety.stopRule}`,
+          proto ? `Demo prototype, not final. Open: ${proto.blockers.join(' ')}` : 'No demo yet (specification only).',
+        ].join('\n');
+        const actions: Action[] = proto
+          ? [
+              { name: 'demo-side', label: `Foot: ${this.demoSide} (switch)`, onClick: () => ((this.demoSide = this.demoSide === 'right' ? 'left' : 'right'), (this.demoT = 0), this.render()) },
+              { name: 'demo-pause', label: this.demoPaused ? 'Play' : 'Pause', onClick: () => ((this.demoPaused = !this.demoPaused), this.render()) },
+              { name: 'demo-slow', label: this.demoSpeed < 1 ? 'Normal speed' : 'Slow', on: this.demoSpeed < 1, onClick: () => ((this.demoSpeed = this.demoSpeed < 1 ? 1 : 0.4), this.render()) },
+              { name: 'demo-step', label: 'Next step', onClick: () => this.stepDemo(proto) },
+              { name: 'demo-replay', label: 'Replay', onClick: () => ((this.demoT = 0), this.render()) },
+            ]
+          : [];
+        return { title: `DRAFT · ${l.id} ${f.title}`, body, actions };
       }
       case 'activity': {
         const a = activityById(sc.id)!;
@@ -470,7 +539,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
 
     const navH = Math.max(48, Math.round(base * 2.8));
     const top = this.title.y + this.title.displayHeight + 10;
-    const demoOn = !!c.demo && this.screen.kind === 'activity';
+    const demoOn = (!!c.demo && this.screen.kind === 'activity') || (this.screen.kind === 'draftLevel' && !!prototypeFor(this.screen.id));
     const contentW = portrait ? width - 40 : (width - 48) / 2;
     let bodyX = 20;
     let bodyY = top;
@@ -552,6 +621,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private drawDemo(): void {
     const r = this.demoRect;
     const s = this.screen;
+    if (r && s.kind === 'draftLevel') return this.drawDraftDemo(s.id);
     if (!r || s.kind !== 'activity') return;
     const a = activityById(s.id);
     if (!a) return;
@@ -606,4 +676,49 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   private demoCaption: Phaser.GameObjects.Text | null = null;
+
+  private stepDemo(proto: NonNullable<ReturnType<typeof prototypeFor>>): void {
+    const { index } = stepAt(proto, this.demoT);
+    this.demoPaused = true;
+    this.demoT = proto.steps.slice(0, (index + 1) % proto.steps.length).reduce((t, x) => t + x.seconds, 0) + 0.001;
+    this.render();
+  }
+
+  /** Review-only prototype: close foot/ball view (or overhead for routes) with contact labels. */
+  private drawDraftDemo(levelId: string): void {
+    const r = this.demoRect;
+    const proto = prototypeFor(levelId);
+    if (!r || !proto) return;
+    const steps = resolveSteps(proto, this.demoSide);
+    const { index, f } = stepAt(proto, this.demoT);
+    const st = steps[index]!;
+    const g = this.demoG;
+    g.clear();
+    g.fillStyle(PALETTE.grassLight, 1).fillRoundedRect(r.x, r.y, r.w, r.h, 12);
+    g.lineStyle(3, PALETTE.ink, 1).strokeRoundedRect(r.x, r.y, r.w, r.h, 12);
+    const sx = (x: number) => r.x + 10 + (x / 10) * (r.w - 20);
+    const sy = (y: number) => r.y + 8 + (y / 6) * (r.h - 34);
+    const unit = Math.min(r.w / 10, (r.h - 26) / 6);
+    if (proto.levelId.startsWith('PA02')) g.fillStyle(PALETTE.track, 1).fillRect(sx(this.demoSide === 'right' ? 9.6 : 0.4) - unit * 0.15, r.y + 6, unit * 0.3, r.h - 34);
+    if (proto.levelId.startsWith('FI01')) g.lineStyle(3, PALETTE.blue, 1).strokeRect(sx(this.demoSide === 'right' ? 9.4 : 0.6) - unit * 0.3, sy(3) - unit * 1.2, unit * 0.6, unit * 2.4);
+    const foot = (p: { x: number; y: number }, working: boolean) => {
+      g.fillStyle(working ? PALETTE.blue : PALETTE.cream, 1).fillEllipse(sx(p.x), sy(p.y), unit * 0.55, unit * 0.95);
+      g.lineStyle(2, PALETTE.ink, 1).strokeEllipse(sx(p.x), sy(p.y), unit * 0.55, unit * 0.95);
+    };
+    foot(st.support, false);
+    foot(st.working, true);
+    if (st.contact) g.lineStyle(4, PALETTE.sun, 1).strokeCircle(sx(st.working.x), sy(st.working.y), unit * 0.7);
+    const b = { x: st.ballFrom.x + (st.ballTo.x - st.ballFrom.x) * f, y: st.ballFrom.y + (st.ballTo.y - st.ballFrom.y) * f };
+    if (st.hands) g.lineStyle(2, PALETTE.mustardDark, 1).strokeRect(sx(b.x) - unit * 0.45, sy(b.y) - unit * 0.45, unit * 0.9, unit * 0.9);
+    g.fillStyle(0xffffff, 1).fillCircle(sx(b.x), sy(b.y), unit * 0.28);
+    g.lineStyle(2, PALETTE.ink, 1).strokeCircle(sx(b.x), sy(b.y), unit * 0.28);
+    const contact = st.contact ? ` · contact: ${st.contact.side} ${st.contact.surface}` : '';
+    if (!this.demoCaption?.active) this.demoCaption = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: CSS.ink, fontStyle: 'bold' }).setOrigin(0.5, 1).setResolution(textResolution());
+    this.demoCaption
+      .setFontSize(Math.round(Math.max(12, Math.min(unit * 0.42, 16))))
+      .setPosition(r.x + r.w / 2, r.y + r.h - 4)
+      .setWordWrapWidth(r.w - 16)
+      .setText(`PROTOTYPE · ${index + 1}/${steps.length} ${st.phase}: ${st.caption}${contact}`)
+      .setVisible(true);
+  }
 }
