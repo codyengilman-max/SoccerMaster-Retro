@@ -101,11 +101,13 @@ export class LabScene extends Phaser.Scene implements InspectableScene {
     this.background.clear().fillStyle(PALETTE.skyBottom, 1).fillRect(0, 0, width, height);
     this.backButton.setPosition(10 + 48, 10 + 22);
     this.title.setFontSize(portrait ? 26 : 22).setPosition(width / 2, portrait ? 80 : 30);
-    this.note.setFontSize(12).setWordWrapWidth(width - 40, true).setPosition(width / 2, portrait ? 104 : 50);
+    this.note.setFontSize(12).setWordWrapWidth(width - 40, true).setPosition(width / 2, portrait ? (height < 640 ? 100 : 104) : 50);
     const cols = portrait ? 1 : 2;
-    const top = portrait ? 150 : height < 360 ? 74 : 96;
+    // Short portrait screens (320x568) need the list to start higher and pack tighter to fit 14 rows.
+    const tight = portrait && height < 640;
+    const top = portrait ? (tight ? 128 : 150) : height < 360 ? 74 : 96;
     const rows = Math.ceil(match.LAB_SCENARIO_IDS.length / cols);
-    const gap = 6;
+    const gap = tight ? 4 : 6;
     // Rows share what is left above the aim toggle (44 px plus margins), so they never overlap it.
     const bh = Math.max(22, Math.min(44, (height - top - 44 - 24) / rows - gap));
     const bw = Math.min(portrait ? width - 40 : (width - 60) / 2, 300);
