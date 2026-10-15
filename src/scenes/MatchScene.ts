@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { coach, match, pitchMarkings, U11_9V9_PITCH, type PitchMarkings, type Rect, type Vec2 } from '../game';
+import { type ActionButton, type PadEvent } from '../input/joystickControls';
+import { PadHud } from './ui/PadHud';
 import { inGestureArea, KEY_BINDINGS, KeyboardAim, TouchControls, type ControlAction, type Pull } from '../input';
 import {
   arcPoints,
@@ -52,6 +54,7 @@ const HUD_HEIGHT = 40;
 const SIDELINE_SQUASH = 0.55;
 /** Mouse presses this soon after a touch are browser compatibility events, not a second input. */
 const COMPAT_MOUSE_MS = 800;
+const HELP_PAD = 'Left stick: move  |  PASS / SHOOT: hold to charge, release to kick  |  SLIDE TACKLE: tap  |  BLOCK: hold';
 const HELP_TOUCH = 'Swipe anywhere to run · double-tap for a quick shot  |  Press and pull back anywhere, release to pass or shoot (back in the circle cancels)';
 const HELP_KEYS = 'Arrows/WASD dribble · F feint · hold Space aim (arrows adjust) · P/Esc pause · R reset · O overlay · M menu';
 /** Short interactive tutorial: each step advances when the player does it. */
@@ -82,6 +85,10 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private markings!: PitchMarkings;
   private pitchLayout!: PitchLayout;
   private controls!: TouchControls;
+  /** Joystick + four buttons (default); null with ?controls=gesture. */
+  private pad: PadHud | null = null;
+  private padIds = 0;
+  private readonly padKeys = new Set<string>();
   private lastPull: Pull | null = null;
   /** Debug trail of recent pointer decisions and control actions. */
   private inputLog: string[] = [];
@@ -192,7 +199,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         : MATCH_TUNING.match.halfSeconds;
     this.breakKey = '';
     this.breakMode = '';
-    this.sim = new MatchSim({ seed, homeFormation: formation, halfSeconds, aimAssist: (data.aim ?? params.get('aim')) === 'normal' ? 'normal' : 'slow' });
+    const padMode = params.get('controls') !== 'gesture';
+    this.sim = new MatchSim({ seed, homeFormation: formation, halfSeconds, controls: padMode ? 'pad' : 'gesture', aimAssist: (data.aim ?? params.get('aim')) === 'normal' ? 'normal' : 'slow' });
     this.stageLab();
     if (shouldExposeDebug(window.location)) this.applyDebugSetup(params.get('setup'));
     this.coachConfig = this.labId ? null : this.readCoachConfig(params, seed);
@@ -204,9 +212,12 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.camera = new CameraController(this.sim.state.ball.pos);
     this.snapCamera();
     this.controls = new TouchControls(Math.min(this.scale.width, this.scale.height));
+    this.pad = padMode ? new PadHud(this, this.scale.width, this.scale.height) : null;
+    this.padIds = 0;
+    this.padKeys.clear();
     this.lastPull = null;
     this.lastEpoch = this.sim.state.controlEpoch;
-    this.tutorialStep = this.labId ? TUTORIAL.length : 0;
+    this.tutorialStep = this.labId || this.pad ? TUTORIAL.length : 0;
     this.markings = pitchMarkings(U11_9V9_PITCH);
     ensurePlaceholderTextures(this);
 
@@ -304,7 +315,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   override update(_time: number, delta: number): void {
     const dt = delta / 1000;
     if (dt > 0) this.fps = this.fps ? this.fps * 0.95 + (1 / dt) * 0.05 : 1 / dt;
-    this.handleControls(this.controls.update(performance.now()));
+    if (!this.pad) this.handleControls(this.controls.update(performance.now()));
     if (this.sim.state.controlEpoch !== this.lastEpoch) {
       // Possession loss or control transfer: nothing half-done may act for the next carrier.
       this.lastEpoch = this.sim.state.controlEpoch;
@@ -316,6 +327,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       this.keyAim.update(dt, this.held);
       this.sendKeyboardAim();
     }
+    // Availability comes from the authoritative sim; a held button that loses it goes inert.
+    if (this.pad) this.handlePad(this.pad.controls.setAvailable(this.sim.padAvailability()));
     this.sim.step(dt);
     this.consumeEvents();
     this.observeCareer();
@@ -637,6 +650,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       this.logInput('down:compat-mouse');
       return;
     }
+    if (this.pad) {
+      this.logInput(`down:pad:${pointer.id}`);
+      this.handlePad(this.pad.controls.pointerDown(pointer.id, pointer.x, pointer.y));
+      return;
+    }
     const mm = this.minimapRect();
     const onMinimap = pointer.x >= mm.x && pointer.x <= mm.x + mm.width && pointer.y >= mm.y && pointer.y <= mm.y + mm.height;
     if (onMinimap || !inGestureArea(pointer.x, pointer.y, this.scale.width, this.scale.height, this.controls.thresholds)) {
@@ -651,10 +669,12 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   }
 
   private onPointerMove(pointer: Phaser.Input.Pointer): void {
+    if (this.pad) return this.handlePad(this.pad.controls.pointerMove(pointer.id, pointer.x, pointer.y));
     this.handleControls(this.controls.pointerMove(pointer.id, pointer.x, pointer.y, eventTime(pointer)));
   }
 
   private onPointerUp(pointer: Phaser.Input.Pointer): void {
+    if (this.pad) return this.handlePad(this.pad.controls.pointerUp(pointer.id));
     this.logInput(`up:${pointer.id}:${this.controls.state}`);
     this.handleControls(this.controls.pointerUp(pointer.id, pointer.x, pointer.y, eventTime(pointer)));
   }
@@ -753,6 +773,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private onKeyDown(event: KeyboardEvent): void {
     const s = this.sim.state;
     if (this.coachKey(event)) return;
+    if (this.pad && this.padKey(event, true)) return;
     if (event.code === 'KeyP' || event.code === 'KeyO' || event.code === 'KeyM' || event.code === 'KeyF' || (s.paused && event.code === 'Digit3')) {
       event.preventDefault();
       if (event.repeat) return;
@@ -807,6 +828,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   }
 
   private onKeyUp(event: KeyboardEvent): void {
+    if (this.pad && this.padKey(event, false)) return;
     const intent = KEY_BINDINGS[event.code];
     if (intent === 'up' || intent === 'down' || intent === 'left' || intent === 'right') this.held[intent] = false;
     if (intent === 'aim' && this.keyAim) {
@@ -867,7 +889,67 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     return best;
   }
 
+  private handlePad(events: readonly PadEvent[]): void {
+    for (const e of events) {
+      if (e.type === 'move') {
+        this.sendPadMove(e.x, e.y);
+        continue;
+      }
+      this.logInput(`pad:${e.type}:${e.action}`);
+      if (e.type === 'press') this.sim.command({ type: 'padPress', id: ++this.padIds, action: e.action });
+      else if (e.type === 'release') this.sim.command({ type: 'padRelease', id: ++this.padIds, action: e.action });
+      else this.sim.command({ type: 'padCancel', id: ++this.padIds, reason: e.reason });
+    }
+  }
+
+  /** Screen-space stick (length 0..1) to a pitch direction with the same length. */
+  private sendPadMove(x: number, y: number): void {
+    const m = Math.hypot(x, y);
+    if (m < 1e-6) {
+      this.sim.command({ type: 'padMove', x: 0, y: 0 });
+      return;
+    }
+    const v = screenVectorToPitch(this.pitchLayout, { x: x / m, y: y / m });
+    const l = Math.hypot(v.x, v.y) || 1;
+    this.sim.command({ type: 'padMove', x: (v.x / l) * m, y: (v.y / l) * m });
+  }
+
+  /** Desktop keys for the pad scheme: arrows/WASD move; Space or J pass, K shoot, L slide tackle, I block. */
+  private padKey(e: KeyboardEvent, down: boolean): boolean {
+    const dirs: Record<string, readonly [number, number]> = {
+      ArrowUp: [0, -1], KeyW: [0, -1], ArrowDown: [0, 1], KeyS: [0, 1], ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0],
+    };
+    const actions: Record<string, ActionButton> = { Space: 'pass', KeyJ: 'pass', KeyK: 'shoot', KeyL: 'slide', KeyI: 'block' };
+    if (e.code === 'KeyF') return true;
+    const d = dirs[e.code];
+    if (d) {
+      e.preventDefault();
+      if (down && !this.sim.state.paused) this.padKeys.add(e.code);
+      else this.padKeys.delete(e.code);
+      let x = 0;
+      let y = 0;
+      for (const k of this.padKeys) {
+        x += dirs[k]?.[0] ?? 0;
+        y += dirs[k]?.[1] ?? 0;
+      }
+      const m = Math.hypot(x, y) || 1;
+      this.sendPadMove(x / m, y / m);
+      return true;
+    }
+    const a = actions[e.code];
+    if (!a) return false;
+    e.preventDefault();
+    if (e.repeat || (down && this.sim.state.paused)) return true;
+    this.sim.command({ type: down ? 'padPress' : 'padRelease', id: ++this.padIds, action: a });
+    return true;
+  }
+
   private cancelInput(reason: string): void {
+    if (this.pad) {
+      this.handlePad(this.pad.controls.cancelAll(reason));
+      this.padKeys.clear();
+      this.sim.command({ type: 'padMove', x: 0, y: 0 });
+    }
     this.handleControls(this.controls.cancel(reason));
     this.lastPull = null;
     this.keyAim = null;
@@ -991,6 +1073,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.cancelInput('orientation change');
     this.handleControls(this.controls.resize(Math.min(size.width, size.height)));
     this.layout(size.width, size.height);
+    if (this.pad) this.handlePad(this.pad.layout(size.width, size.height));
     this.renderFrame(0);
   }
 
@@ -1070,6 +1153,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.game.canvas.removeEventListener('pointerup', this.onDomPointerUp);
     this.game.canvas.removeEventListener('lostpointercapture', this.onLostCapture);
     window.removeEventListener('blur', this.onWindowBlur);
+    this.pad?.destroy();
+    this.pad = null;
   }
 
   // ---- sim events ----------------------------------------------------------------------------
@@ -1246,6 +1331,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     }
     const w = Phaser.Math.Clamp(width * 0.13, 72, 120);
     const h = (w * P.width) / P.length;
+    // The four-button cluster owns the bottom-right corner, so the minimap moves under the HUD row.
+    if (this.pad) return { x: width - EDGE - w, y: EDGE + HUD_HEIGHT + 8, width: w, height: h };
     return { x: width - EDGE - w, y: height - EDGE - h - 14, width: w, height: h };
   }
 
@@ -1294,7 +1381,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     else this.scoreText.setOrigin(0.5, 0.5);
     const touchFirst = this.sys.game.device.input.touch;
     const base = portrait ? HELP_TOUCH.replace('  |  ', '\n') : touchFirst ? HELP_TOUCH : `${HELP_TOUCH}\n${HELP_KEYS}`;
-    const help = TUTORIAL[this.tutorialStep] ?? base;
+    const help = this.pad ? (portrait ? HELP_PAD.replaceAll('  |  ', '\n') : HELP_PAD) : (TUTORIAL[this.tutorialStep] ?? base);
     // Landscape keeps the tip line clear of the bottom-right minimap.
     const mmLeft = orientationOf({ width, height }) === 'portrait' ? width : this.minimapRect().x;
     const tipW = Math.max(120, mmLeft - EDGE * 2);
@@ -1417,6 +1504,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
 
   private renderFrame(dt: number): void {
     const s = this.sim.state;
+    this.pad?.draw();
     // One camera controller: carrier in possession, held while aiming, the ball in travel, frozen when paused.
     const owner = s.ball.owner;
     const mode: CameraMode =
@@ -1503,11 +1591,35 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   }
 
   /** Direction arrow from the live ball, cancellation circle at the fixed gesture origin, compact power meter. */
+  /** Pad scheme: highlighted receiver ring and a charge meter above the kicker. */
+  private drawPadGuide(playerH: number): void {
+    const s = this.sim.state;
+    const L = this.pitchLayout;
+    const o = this.over;
+    const pad = s.pad;
+    if (pad.receiver) {
+      const r = toScreen(L, s.players[pad.receiver].pos);
+      o.lineStyle(3, PALETTE.mustard, 1);
+      o.strokeCircle(r.x, r.y, playerH * 0.75);
+    }
+    const charging = pad.phase === 'chargingPass' || pad.phase === 'chargingShoot';
+    if (!charging || !pad.actor) return;
+    const T = match.MATCH_TUNING.pad;
+    const full = pad.phase === 'chargingPass' ? T.passChargeSeconds : T.shotChargeSeconds;
+    const f = Phaser.Math.Clamp((s.simTime - pad.chargeStart) / full, 0, 1);
+    const p = toScreen(L, s.players[pad.actor].pos);
+    const w = playerH * 2.2;
+    const y = p.y - playerH * 1.6;
+    o.fillStyle(PALETTE.ink, 0.6).fillRect(p.x - w / 2, y, w, 6);
+    o.fillStyle(pad.phase === 'chargingPass' ? PALETTE.grassLight : PALETTE.tomato, 1).fillRect(p.x - w / 2, y, w * f, 6);
+  }
+
   private drawAimGuide(playerH: number): void {
     const s = this.sim.state;
     const L = this.pitchLayout;
     const o = this.over;
     this.guideOffscreen = false;
+    if (this.pad) return this.drawPadGuide(playerH);
     if (s.phase !== 'aiming') return;
     const origin = this.controls.origin;
     const inCancel = this.aimSource === 'pointer' && (this.lastPull?.inCancel ?? true);
