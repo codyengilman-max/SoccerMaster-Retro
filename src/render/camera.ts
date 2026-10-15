@@ -136,8 +136,9 @@ export class CameraController {
     this.mode = input.mode;
     if (input.mode === 'hold' || dt === 0) return { x: this.x, y: this.y };
     if (input.mode === 'aiming') {
-      // Freeze the framing chosen at aim start; look-ahead stays as it was.
-      if (entering || !this.aimFocus) this.aimFocus = this.target({ ...input, mode: 'possession' });
+      // Freeze exactly where the camera is at aim start (no residual easing); look-ahead stays as it was.
+      if (entering || !this.aimFocus) this.aimFocus = { x: this.x, y: this.y };
+      return { x: this.x, y: this.y };
     } else {
       this.aimFocus = null;
       if (input.mode !== 'loose') {

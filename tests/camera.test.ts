@@ -202,8 +202,17 @@ describe('camera controller', () => {
         BOUNDS,
       );
     expect(c.look).toBe(look);
-    expect(Math.abs(last.x - first.x)).toBeLessThan(0.3);
-    expect(Math.abs(last.y - first.y)).toBeLessThan(0.3);
+    expect(last).toEqual(first);
+  });
+
+  it('stops dead at aim start even when it was still catching up to a fast carrier', () => {
+    const c = new CameraController({ x: 30, y: 25 });
+    c.snap({ x: 30, y: 25 }, 1, BOUNDS);
+    for (let i = 0; i < 20; i++) c.update(input({ carrier: { x: 30 + i * 0.25, y: 25 - i * 0.2 } }), 1 / 60, BOUNDS);
+    const before = { x: c.x, y: c.y };
+    const samples = [];
+    for (let i = 0; i < 90; i++) samples.push(c.update(input({ mode: 'aiming', carrier: { x: 35, y: 21 } }), 1 / 60, BOUNDS));
+    for (const s of samples) expect(s).toEqual(before);
   });
 
   it('does not move while held (paused / tactical moment)', () => {

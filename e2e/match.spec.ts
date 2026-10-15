@@ -392,8 +392,8 @@ test('camera holds during aim: focus and aim do not drift while the finger is st
   r = await report(page);
   expect(r.phase).toBe('aiming');
   expect(r.camera.mode).toBe('aiming');
-  expect(Math.abs(r.camera.x - first.cam.x)).toBeLessThan(1.5);
-  expect(Math.abs(r.camera.y - first.cam.y)).toBeLessThan(1.5);
+  expect(r.camera.x).toBeCloseTo(first.cam.x, 6);
+  expect(r.camera.y).toBeCloseTo(first.cam.y, 6);
   expect(r.aim!.dx).toBeCloseTo(first.aim.dx, 6);
   expect(r.aim!.dy).toBeCloseTo(first.aim.dy, 6);
   expect(r.aim!.power).toBeCloseTo(first.aim.power, 6);
