@@ -36,6 +36,10 @@ async function caption(page: Page): Promise<string> {
   });
 }
 
+async function demoTime(page: Page): Promise<number> {
+  return page.evaluate(() => (window as unknown as { __SMR__: { game: { scene: { getScene(k: string): { demoT: number } } } } }).__SMR__.game.scene.getScene('career').demoT);
+}
+
 test('draft library is review-only: cards and demo prototypes, never in the plan or credit', async ({ page }, info) => {
   const mode = modeFor(info);
   const errors = trackConsoleErrors(page);
@@ -88,6 +92,17 @@ test('draft library is review-only: cards and demo prototypes, never in the plan
   await press(page, 'demo-side', mode);
   await expect.poll(() => caption(page)).toContain('1/6 setup');
   await fits(page);
+  // Pausing a prototype must not freeze regular activity demonstrations.
+  await press(page, 'demo-pause', mode);
+  await press(page, 'career-home', mode);
+  await until(page, (x) => x.screen === 'home', 'home');
+  await press(page, 'nav-sessions', mode);
+  await until(page, (x) => x.screen === 'sessions', 'sessions');
+  await press(page, 'open-w1-s1-0', mode);
+  await until(page, (x) => x.screen === 'activity', 'activity');
+  const t0 = await demoTime(page);
+  await page.waitForTimeout(800);
+  expect(await demoTime(page)).toBeGreaterThan(t0);
   // Nothing about the draft library touched the plan, credit or journal.
   await press(page, 'career-home', mode);
   c = await until(page, (x) => x.screen === 'home', 'home');

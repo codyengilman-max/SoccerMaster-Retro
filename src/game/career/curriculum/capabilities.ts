@@ -7,14 +7,9 @@ import type { Capability } from './manifest';
 
 export function capabilitiesFor(input: PlannerInput): ReadonlySet<Capability> {
   const caps = new Set<Capability>(['ball', 'clear_floor']);
-  if (input.space === 'medium') {
-    caps.add('lane_clear');
-    caps.add('safe_runout');
-  }
+  if (input.space === 'medium') caps.add('lane_clear');
   if (input.setting === 'outdoor') caps.add('outdoor_clear');
-  if (input.striking && input.setting === 'outdoor') {
-    caps.add('safe_target');
-    caps.add('backstop');
-  }
+  // Setup never asks about a safe runout, a safe target or a backstop, so they are never granted:
+  // "medium space" or "safe striking area" alone must not qualify an exercise that needs them.
   return caps;
 }

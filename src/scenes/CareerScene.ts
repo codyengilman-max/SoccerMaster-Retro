@@ -116,7 +116,9 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
 
   override update(_t: number, delta: number): void {
     if (!this.demoRect) return;
-    if (!this.demoPaused) this.demoT += (delta / 1000) * this.demoSpeed;
+    // Pause and speed belong to the draft prototype player only; activity demos keep their own timing.
+    if (this.screen.kind !== 'draftLevel') this.demoT += delta / 1000;
+    else if (!this.demoPaused) this.demoT += (delta / 1000) * this.demoSpeed;
     this.drawDemo();
   }
 

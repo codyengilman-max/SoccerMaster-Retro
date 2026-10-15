@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ALL_ACTIVITIES, FOCUSES, activityById } from '../src/game/career/catalog';
+import { capabilitiesFor } from '../src/game/career/curriculum/capabilities';
 import { CATEGORY_SKILL_AREA, COACHING_REVIEW, CURRICULUM, FAMILY_MAPPING, recommend } from '../src/game/career/curriculum';
 import type { Manifest } from '../src/game/career/curriculum/manifest';
 import { planWeek, substitutes, type PlannerInput } from '../src/game/career/planner';
@@ -112,5 +113,20 @@ describe('curriculum organization and mapping', () => {
     // Prerequisites only gate suitability: some later options have none, so ordinal is not difficulty.
     const later = m.families.flatMap((f) => f.levels.slice(1)).filter((l) => l.prerequisites.length === 0);
     expect(later.length).toBeGreaterThan(0);
+  });
+});
+
+describe('setup answers only grant capabilities the setup actually asks about', () => {
+  it('never grants safe runout, safe target or backstop', () => {
+    const caps = capabilitiesFor({ equipment: 'optional', space: 'medium', setting: 'outdoor', striking: true, minutes: 15 });
+    for (const c of ['safe_runout', 'safe_target', 'backstop'] as const) expect(caps.has(c)).toBe(false);
+    expect(caps.has('lane_clear')).toBe(true);
+    expect(caps.has('outdoor_clear')).toBe(true);
+  });
+  it('an approved level needing those capabilities is still not recommended from setup alone', () => {
+    const needing = m.families.filter((f) => f.requiredCapabilities.some((c) => ['safe_runout', 'safe_target', 'backstop'].includes(c)));
+    expect(needing.length).toBeGreaterThan(0);
+    const caps = capabilitiesFor({ equipment: 'optional', space: 'medium', setting: 'outdoor', striking: true, minutes: 15 });
+    for (const f of needing) expect(f.requiredCapabilities.every((c) => caps.has(c))).toBe(false);
   });
 });
