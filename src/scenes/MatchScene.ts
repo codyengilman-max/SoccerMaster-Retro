@@ -42,6 +42,8 @@ const SIDELINE_SQUASH = 0.55;
 const VIEW_LENGTH = { landscape: 40, portrait: 40 } as const;
 /** Portrait camera width across the pitch (yards): closer than the full 50-yard width. */
 const PORTRAIT_CROSS = 28;
+/** Mouse presses this soon after a touch are browser compatibility events, not a second input. */
+const COMPAT_MOUSE_MS = 800;
 const HELP_TOUCH = 'Swipe anywhere to run · double-tap for a quick shot  |  Press and pull back anywhere, release to pass or shoot (back in the circle cancels)';
 const HELP_KEYS = 'Arrows/WASD dribble · F feint · hold Space aim (arrows adjust) · P/Esc pause · R reset · O overlay · M menu';
 /** Short interactive tutorial: each step advances when the player does it. */
@@ -73,6 +75,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private inputLog: string[] = [];
   private lastEpoch = 0;
   private tutorialStep = 0;
+  private lastTouchAt = Number.NEGATIVE_INFINITY;
   private keyAim: KeyboardAim | null = null;
   private aimSource: 'pointer' | 'keyboard' | null = null;
   private held = { left: false, right: false, up: false, down: false };
@@ -588,8 +591,17 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       this.logInput(over.length > 0 ? `down:ui(${over.map((o) => o.name || o.type).join('+')})` : 'down:ignored');
       return;
     }
-    if (!inGestureArea(pointer.x, pointer.y, this.scale.width, this.scale.height, this.controls.thresholds)) {
-      this.logInput('down:edge');
+    const now = performance.now();
+    if (pointer.wasTouch) this.lastTouchAt = now;
+    // Compatibility mouse events that follow a touch would otherwise count as a second tap.
+    else if (now - this.lastTouchAt < COMPAT_MOUSE_MS) {
+      this.logInput('down:compat-mouse');
+      return;
+    }
+    const mm = this.minimapRect();
+    const onMinimap = pointer.x >= mm.x && pointer.x <= mm.x + mm.width && pointer.y >= mm.y && pointer.y <= mm.y + mm.height;
+    if (onMinimap || !inGestureArea(pointer.x, pointer.y, this.scale.width, this.scale.height, this.controls.thresholds)) {
+      this.logInput(onMinimap ? 'down:minimap' : 'down:edge');
       return;
     }
     const s = this.sim.state;

@@ -258,6 +258,37 @@ test('double-tapping away from the carrier gives exactly one quick shot and no f
   expect(errors).toEqual([]);
 });
 
+test('aiming starts from a press away from the carrier: pull back and release gives exactly one kick and no dribble (staged: ?setup=space)', async ({ page }, info) => {
+  const errors = trackConsoleErrors(page);
+  const finger = new Finger(page, modeFor(info));
+  let r = await stagedCarrier(page, finger);
+  const user = r.controlledId;
+  const c = r.players[user];
+  const viewport = page.viewportSize()!;
+  const pull = r.thresholds.cancelRadius + 0.4 * (r.thresholds.maxPull - r.thresholds.cancelRadius);
+  const fwd = pitchVectorToScreen(r.layout, { x: 1, y: 0 });
+  const n = Math.hypot(fwd.x, fwd.y);
+  const start = {
+    x: Math.min(Math.max(c.sx < viewport.width / 2 ? c.sx + 110 : c.sx - 110, pull + 20), viewport.width - pull - 20),
+    y: Math.min(Math.max(c.sy + 40, pull + 60), viewport.height - pull - 40),
+  };
+  const seq = r.events.at(-1)?.seq ?? 0;
+  await finger.down(start);
+  await waitFor(page, (x) => x.phase === 'aiming', 5000);
+  const end = { x: start.x - (fwd.x / n) * pull, y: start.y - (fwd.y / n) * pull };
+  await finger.move({ x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 });
+  await finger.up(end);
+  r = await waitFor(page, (x) => x.events.some((e) => e.seq > seq && (e.type === 'pass' || e.type === 'shot') && e.by === user), 5000);
+  await linger(page);
+  r = await report(page);
+  const mine = r.events.filter((e) => e.seq > seq);
+  const trail = `${mine.map((e) => `${e.type}(${e.by}:${e.detail})`).join(',')} | input: ${r.inputLog.join(',')}`;
+  expect(mine.filter((e) => (e.type === 'pass' || e.type === 'shot') && e.by === user), trail).toHaveLength(1);
+  expect(mine.filter((e) => e.type === 'dribble' || e.type === 'quickShot'), trail).toEqual([]);
+  expect(r.timeScale).toBe(1);
+  expect(errors).toEqual([]);
+});
+
 test('keyboard: P pauses, R resets, O toggles overlay, Space aims a pass, M returns to menu', async ({ page }, info) => {
   test.skip(Boolean(info.project.use.hasTouch), 'desktop keyboard controls');
   const errors = trackConsoleErrors(page);

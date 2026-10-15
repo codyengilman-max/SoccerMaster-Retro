@@ -9,7 +9,8 @@ test('Gameplay Lab: ?lab opens the picker, a scenario stages the real match with
   await waitForScene(page, 'lab');
   // No scenario row may overlap the aim toggle or another row, at any viewport.
   const els = Object.entries((await diagnostics(page)).layout?.elements ?? {}).filter(([k]) => k.startsWith('lab-'));
-  expect(els.length).toBe(11);
+  // 14 scenarios (10 feel + 4 controls setups) and the aim toggle.
+  expect(els.length).toBe(15);
   for (let i = 0; i < els.length; i++)
     for (let j = i + 1; j < els.length; j++) {
       const [na, a] = els[i]!;
@@ -28,5 +29,17 @@ test('Gameplay Lab: ?lab opens the picker, a scenario stages the real match with
   expect(d.layout?.elements['minimap']).toBeTruthy();
   const career = await page.evaluate(() => indexedDB.databases().then((dbs) => dbs.map((x) => x.name)));
   expect(career.filter((n) => n && /career|smr/i.test(n))).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test('Gameplay Lab: the controls setups stage their carrier and runner', async ({ page }, info) => {
+  const errors = trackConsoleErrors(page);
+  await page.goto('/?debug=1&lab');
+  await waitForScene(page, 'lab');
+  await pressElement(page, 'lab-through-ball', modeFor(info));
+  await waitForScene(page, 'match');
+  const g = (await diagnostics(page)).gameplay as { owner: string | null; controlledId: string };
+  expect(g.owner).toBe('H8');
+  expect(g.controlledId).toBe('H8');
   expect(errors).toEqual([]);
 });

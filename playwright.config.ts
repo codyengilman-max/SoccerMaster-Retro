@@ -34,6 +34,10 @@ export default defineConfig({
       workers: 1,
       use: { browserName: 'chromium', viewport: { width: 1280, height: 720 }, hasTouch: false, isMobile: false },
     },
+    // Opt-in (WEBKIT=1): Playwright's WebKit build with touch on Linux. Not iOS Safari: no real Safari chrome, safe areas or iOS gesture system.
+    ...(process.env.WEBKIT
+      ? [{ name: 'webkit-phone-landscape', testMatch: /(match|lab)\.spec/, use: { browserName: 'webkit' as const, isMobile: true, hasTouch: true, deviceScaleFactor: 3, viewport: { width: 844, height: 390 } } }]
+      : []),
   ],
   webServer: {
     command: `SMR_LAB=1 npm run build && npx vite preview --host 127.0.0.1 --port ${port} --strictPort`,

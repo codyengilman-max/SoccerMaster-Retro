@@ -51,3 +51,24 @@ Rules: control never switches while our own pass is in flight; off-ball switches
 ## Save compatibility
 
 No save schema change. The new state is per-match and never persisted. Career saves (`docs/TRAINING.md`) are untouched.
+
+## Touch controls (Retro Goal-style revision)
+
+**What the references support** (App Store version history, Defector's hands-on review, Nintendo Life interview with New Star Games): swipes start anywhere on the screen to run; passes can be placed to lead a teammate into space; time slows while you set up a pass but opponents keep coming; a double tap is a quick shot that is less precise; an "Expert" control scheme was added later as a separate option. **What they do not establish:** hold times, gesture thresholds, power curves, slow-motion amounts or current version behaviour. Every number below is SoccerMaster tuning, not a measured Retro Goal value, and nothing here was tested against Retro Goal itself.
+
+| Gesture | With the ball | Without the ball |
+| --- | --- | --- |
+| Quick swipe (travels `swipeCommit` before `aimDelayMs`) | Run that way; fires as soon as it crosses the distance | Steer the controlled defender/chaser (`swipeMin`) |
+| Press and hold or slow drag, anywhere | Aim: pull back, the kick goes the opposite way; strength grows from the cancel-circle edge to `maxPull` (curve `POWER_CURVE`) | Movement only, never an aim |
+| Release outside the circle | Exactly one kick (pass, through ball or shot, decided by the same physics the guide draws) | — |
+| Release back inside the circle | Cancel, nothing launches, never a tap or shot | — |
+| Double tap | One quick shot at goal: power `quickShot.power`, seeded target spread `quickShot.spread` × goal half-width | Nothing |
+
+- **Movement vs aim tradeoff** (`TOUCH_TUNING.aimDelayMs` = 110 ms, `swipeCommit` ≈ 7% of the short side): shorter delay starts aims sooner but needs faster swipes to run; longer delay forgives slow swipes but makes aiming feel late. A gesture is classified once and never changes (a run never becomes a kick).
+- **Taps:** a still press released within `tapMaxMs` is a tap even if the aim had opened (that aim is cancelled quietly, reason `tap`). A press that left the tap slop or is released later is a cancel, not a tap.
+- **Timing:** gestures use input-event timestamps (real time); the simulation's slow motion and frame drops never change what a gesture means. A late move event after `aimDelayMs` is an aim even if no frame ran in between.
+- **Ownership:** one pointer owns the gesture; extra fingers and duplicate up events are ignored. Presses within `edgeMargin` of the screen edge (iOS back swipe, home bar) presses on HUD buttons or the minimap never start gameplay gestures, and compatibility mouse events within 800 ms of a touch are ignored (so one tap cannot count twice).
+- **Screen vs world:** the drag is measured in screen pixels from a fixed press point; it is converted to a pitch direction only when the action fires, so the following camera cannot change an aim's direction or strength.
+- **Slow motion:** one sim time scale (`aim.slowMoScale`) while aiming, spent from the per-possession allowance; the match clock follows sim time. Releasing, cancelling or any interruption restores normal speed and never unpauses a pause or Coach Moment. Aim/cancel spam never refills the allowance.
+- **Trajectory:** one ground kick for every pass and shot (no lofted pass gesture). Aim assist never redirects a kick; a shot on target never turns into a pass.
+- **Lab setups for controls comparison:** `dribble-1v1` (direction changes), `pass-unpressured` (short pass to a stationary teammate), `through-ball` (moving runner), `receive-turn`, `finish-centre` (both corners), `quick-shot` (rebound), `cancel-pressure`.
