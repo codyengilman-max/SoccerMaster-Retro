@@ -60,7 +60,7 @@ export const COACHING_REVIEW: Readonly<Record<string, { readonly disposition: Re
   DR02: { disposition: 'retain', note: 'Label slalom as control practice, not beating a real defender.' },
   DR03: { disposition: 'retain', note: 'Route-checking foundation; narrow awareness claims.' },
   TR01: { disposition: 'revise', note: 'Revise geometric and foot-specific turn instructions before animation.' },
-  TR02: { disposition: 'revise', note: 'Distinguish sideways cut from reversal/hook; document the exact variant.' },
+  TR02: { disposition: 'revise', note: 'Distinguish sideways cut from reversal/hook; record the exact variant.' },
   TR03: { disposition: 'retain', note: 'Resolve setup and exit; inspect video before final demo.' },
   PA01: { disposition: 'retain', note: 'Add passing-contact cues and individualized target distance.' },
   PA02: { disposition: 'revise', note: 'Specify receiving surface and intended first touch for each option.' },
