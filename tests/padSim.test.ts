@@ -288,7 +288,7 @@ describe('pad slide and block', () => {
   });
 
   it('A14: body-first contact is a foul with a free-kick restart for the opponent', () => {
-    const { sim, ev } = slideAtCarrier('behind', 1.6);
+    const { sim, ev } = slideAtCarrier('behind', 0.9);
     expect(ev.some((e) => e.type === 'foul' && e.by === 'H7')).toBe(true);
     expect(ev.some((e) => e.type === 'slide' && /poked/.test(e.detail))).toBe(false);
     run(sim, T.stoppage.outSeconds + 0.5);
@@ -402,5 +402,68 @@ describe('pad timing', () => {
     expect(release(sim, 'shoot')).toBe(false);
     run(sim, 0.5);
     expect(since(sim, seq).some((e) => e.type === 'shot')).toBe(false);
+  });
+});
+
+describe('pad review fixes', () => {
+  it('an interruption after release but before contact discards the kick', () => {
+    const sim = padSim();
+    give(sim, 'H7', { x: 25, y: 25 });
+    press(sim, 'shoot');
+    run(sim, 0.2);
+    release(sim, 'shoot');
+    expect(sim.state.pad.phase).toBe('kickPrep');
+    const seq = lastSeq(sim);
+    expect(sim.command({ type: 'padCancel', id: sim.id(), reason: 'resize' })).toBe(true);
+    run(sim, 0.5);
+    expect(since(sim, seq).some((e) => e.type === 'shot')).toBe(false);
+    expect(sim.state.pad.phase).toBe('ready');
+  });
+
+  it('a ball that crosses an active slide within one tick is still touched', () => {
+    const sim = padSim();
+    give(sim, 'A6', { x: 70, y: 45 });
+    place(sim, 'H7', { x: 30, y: 20 });
+    sim.arrange((s) => ((s.controlledId = 'H7'), (s.controlSince = s.simTime)));
+    stick(sim, 0, 1);
+    expect(press(sim, 'slide')).toBe(true);
+    run(sim, T.pad.slide.startSeconds + 2 * F, (s) => s.state.pad.phase === 'slideActive');
+    expect(sim.state.pad.phase).toBe('slideActive');
+    const seq = lastSeq(sim);
+    sim.arrange((s) => {
+      const p = s.players.H7;
+      s.ball.owner = null;
+      s.ball.pos = { x: p.pos.x - 1.3, y: p.pos.y + 0.1 };
+      s.ball.vel = { x: 2.6 / T.stepSeconds, y: 0 };
+      s.ball.kick = { by: 'A6', team: 'away', kind: 'shot', at: s.simTime, target: null, receiver: null };
+      s.possession = 'away';
+    });
+    sim.step(T.stepSeconds);
+    expect(since(sim, seq).some((e) => e.type === 'slide' && /ball/.test(e.detail))).toBe(true);
+  });
+
+  it('a slide never moves faster than the player can run', () => {
+    const fast = Object.fromEntries(TEAM_PLAYER_IDS.home.map((id) => [id, { pace: 1.2, accel: 1.2 }]));
+    const sim = padSim(fast);
+    give(sim, 'A6', { x: 70, y: 45 });
+    place(sim, 'H7', { x: 20, y: 25 });
+    sim.arrange((s) => ((s.controlledId = 'H7'), (s.controlSince = s.simTime)));
+    stick(sim, 1, 0);
+    run(sim, 1.5);
+    const me = sim.state.controlledId;
+    const seq = lastSeq(sim);
+    expect(press(sim, 'slide')).toBe(true);
+    let peak = 0;
+    run(sim, 1.2, (s) => ((peak = Math.max(peak, speed(s, me))), false));
+    expect(since(sim, seq).some((e) => e.type === 'slide' && e.by === me && e.detail === 'start')).toBe(true);
+    expect(peak).toBeLessThanOrEqual(T.movement.chaseSpeed * 1.2 + 1e-6);
+  });
+
+  it('late career attributes are clamped and change the player', () => {
+    const sim = padSim();
+    expect(sim.setPlayerAttrs('H5', { control: 5, agility: 0.1 })).toBe(true);
+    expect(sim.state.players.H5.attrs.control).toBe(T.pad.attrRange.max);
+    expect(sim.state.players.H5.attrs.agility).toBe(T.pad.attrRange.min);
+    expect(sim.state.players.H5.attrs.pace).toBe(1);
   });
 });

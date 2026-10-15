@@ -113,7 +113,7 @@ export class MatchSim {
   constructor(options: MatchSimOptions = {}) {
     this.tuning = options.tuning ?? MATCH_TUNING;
     this.controls = options.controls === 'pad' ? 'pad' : 'gesture';
-    this.attrOverrides = options.attributes ?? {};
+    this.attrOverrides = { ...(options.attributes ?? {}) };
     this.aimAssist = options.aimAssist === 'normal' ? 'normal' : 'slow';
     this.seed = options.seed ?? 1;
     this.rng = createRng(this.seed);
@@ -575,6 +575,15 @@ export class MatchSim {
     return { pace: f(o.pace), accel: f(o.accel), agility: f(o.agility), control: f(o.control) };
   }
 
+  /** Late attribute source (e.g. a career save loaded after the sim was built); values are clamped like constructor ones. */
+  setPlayerAttrs(id: MatchPlayerId, attrs: Partial<PlayerAttrs>): boolean {
+    const p = this.s.players[id];
+    if (!p || typeof attrs !== 'object' || attrs === null) return false;
+    this.attrOverrides[id] = { ...attrs };
+    p.attrs = this.attrsFor(id);
+    return true;
+  }
+
   private newPad(): PadState {
     return {
       stick: vec(0, 0), facing: vec(1, 0), phase: 'ready', actor: null, since: 0, epoch: -1, ownedSince: -1, chargeStart: 0,
@@ -690,7 +699,7 @@ export class MatchSim {
   private padCancel(id: number, reason: string): boolean {
     if (this.controls !== 'pad' || !this.padCmdId(id, 'padCancel')) return false;
     const ph = this.s.pad.phase;
-    if (ph !== 'chargingPass' && ph !== 'chargingShoot' && ph !== 'blocking') return false;
+    if (ph !== 'chargingPass' && ph !== 'chargingShoot' && ph !== 'kickPrep' && ph !== 'blocking') return false;
     this.padReset(String(reason).slice(0, 40));
     return true;
   }
@@ -791,7 +800,7 @@ export class MatchSim {
       const r = L.receiver ? s.players[L.receiver] : null;
       if (r) dir = turnToward(L.dir, normalize(sub(add(r.pos, scale(r.vel, T.leadSeconds)), s.ball.pos)), T.leadMaxAngle);
       const plan = planUserPass(s, me.id, s.ball.pos, dir, speed, this.tuning);
-      const receiver = L.receiver ?? plan.receiver;
+      const receiver = plan.reachable ? plan.receiver : (L.receiver ?? plan.receiver);
       this.kickBall(me, scale(dir, speed), 'pass', plan.target, receiver);
       this.afterPass(me, plan.target);
       this.emit('pass', me.id, receiver ?? '');
@@ -855,7 +864,7 @@ export class MatchSim {
     const A = p.attrs;
     const S = T.pad.slide;
     const mine = pad.actor === p.id;
-    if (mine && pad.phase === 'slideActive' && pad.slideDir) return { desired: scale(pad.slideDir, S.speed * A.pace), accel: 60 };
+    if (mine && pad.phase === 'slideActive' && pad.slideDir) return { desired: scale(pad.slideDir, Math.min(S.speed, T.movement.chaseSpeed) * A.pace), accel: 60 };
     if (mine && pad.phase === 'slideStart' && pad.slideDir) return { desired: scale(pad.slideDir, Math.max(length(p.vel), T.movement.chaseSpeed * 0.6)), accel: 30 };
     if (mine && pad.phase === 'slideRecovery') return { desired: vec(0, 0), accel: 25 };
     const carrying = s.ball.owner === p.id;
@@ -896,8 +905,13 @@ export class MatchSim {
       type Hit = { at: number; q: MatchPlayer | null };
       const hits: Hit[] = [];
       const owner = ball.owner ? s.players[ball.owner] : null;
-      if (pad.ballTouchedAt === null && owner?.team !== me.team && distanceToSegment(ball.pos, mePrev, me.pos) <= S.ballReach) {
-        hits.push({ at: along(mePrev, me.pos, ball.pos), q: null });
+      const rel0 = sub(ballPrev, mePrev);
+      const rel1 = sub(ball.pos, me.pos);
+      const origin = vec(0, 0);
+      if (pad.ballTouchedAt === null && owner?.team !== me.team && distanceToSegment(origin, rel0, rel1) <= S.ballReach) {
+        const t = clamp(along(rel0, rel1, origin), 0, 1);
+        const at = vec(ballPrev.x + (ball.pos.x - ballPrev.x) * t, ballPrev.y + (ball.pos.y - ballPrev.y) * t);
+        hits.push({ at: along(mePrev, me.pos, at), q: null });
       }
       for (const id of TEAM_PLAYER_IDS[otherTeam(me.team)]) {
         const q = s.players[id];

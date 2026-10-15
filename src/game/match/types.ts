@@ -52,7 +52,7 @@ export interface MatchPlayer {
   /** Speed cap for the current intent. */
   speed: number;
   /** Movement attributes as multipliers (1 = squad average). */
-  readonly attrs: PlayerAttrs;
+  attrs: PlayerAttrs;
 }
 
 export interface PlayerAttrs {

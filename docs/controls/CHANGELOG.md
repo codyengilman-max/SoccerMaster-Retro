@@ -10,6 +10,14 @@
 - Desktop keys: arrows/WASD, Space/J pass, K shoot, L slide, I block.
 - `?controls=gesture` keeps the previous swipe / pull-back scheme.
 - Match length: 2 × 165 s of actual play (5.5 min total, owner cap 5–6 min), down from 2 × 240 s.
+- Review fixes: an interruption (rotate, blur, pause, Coach card) during kick preparation now discards
+  the kick; slide-vs-ball contact uses both swept paths, so fast balls cannot pass through a slide;
+  slide speed is capped at the player's running top speed (was 8.5 yd/s, a speed burst); the
+  highlighted receiver is the pass target whenever the pass reaches a teammate; held pad input
+  defers Coach cards; a key-up only releases an action that key started (never a finger's);
+  career first touch/dribbling now set match control/agility (the career has no pace rating).
+- Test fixture: the body-first slide foul test now starts 0.9 yd behind the carrier (was 1.6 yd,
+  which only connected thanks to the removed speed burst). Assertions unchanged.
 
 ### Known issues
 - No set pieces, offside, added time or switching ends (pre-existing M4 gaps).

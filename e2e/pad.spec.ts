@@ -159,3 +159,28 @@ test.describe('two-thumb touch', () => {
     expect(errors).toEqual([]);
   });
 });
+
+test.describe('mixed inputs', () => {
+  test.skip(({ hasTouch }) => !hasTouch, 'needs a touch device');
+
+  test('a keyboard key-up never releases a PASS held by a finger', async ({ page }, info) => {
+    await open(page, modeFor(info), '&setup=space');
+    const cdp = await page.context().newCDPSession(page);
+    await waitFor(page, (r) => r.pad.available?.pass === true);
+    const pass = await centre(page, 'pad-pass');
+    const seq = lastSeq(await report(page));
+    await touch(page, cdp, 'touchStart', [{ id: 4, x: pass.x, y: pass.y }]);
+    await waitFor(page, (r) => r.pad.phase === 'chargingPass');
+    for (const key of ['Space', 'KeyJ', 'KeyI']) {
+      await page.keyboard.down(key === 'Space' ? ' ' : key.slice(3).toLowerCase());
+      await page.keyboard.up(key === 'Space' ? ' ' : key.slice(3).toLowerCase());
+    }
+    await page.waitForTimeout(300);
+    const mid = await report(page);
+    expect(mid.pad.phase).toBe('chargingPass');
+    expect(kicksAfter(mid, seq)).toEqual([]);
+    await touch(page, cdp, 'touchEnd', []);
+    const done = await waitFor(page, (r) => kicksAfter(r, seq).length > 0);
+    expect(kicksAfter(done, seq).length).toBe(1);
+  });
+});

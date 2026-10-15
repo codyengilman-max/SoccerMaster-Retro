@@ -224,7 +224,8 @@ export const MATCH_TUNING = {
       activeSeconds: 0.35,
       recoverySeconds: 0.7,
       cooldownSeconds: 0.3,
-      speed: 8.5,
+      /** Capped at the player's running top speed in sim: a slide is never a speed burst. */
+      speed: 6.2,
       steerRate: 1.2,
       ballReach: 0.9,
       bodyReach: 0.75,

@@ -32,6 +32,7 @@ import type { InspectableScene, SceneLayoutReport } from './inspectable';
 import type { MatchReport } from './matchReport';
 import { EvidenceCollector, coachEvidence } from '../game/career/evidence';
 import type { EvidenceItem } from '../game/career/progression';
+import { matchAttrsFromCareer } from '../game/career/player';
 import { CareerStore } from '../game/career/store';
 import type { Position } from '../game/career/types';
 import { MATCH_TUNING } from '../game/match/tuning';
@@ -90,6 +91,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private padIds = 0;
   private padPrefButtons: Button[] = [];
   private readonly padKeys = new Set<string>();
+  /** Which input began the held action (touch or a key code); only that input may release it. */
+  private padSource: 'touch' | { key: string } | null = null;
   private lastPull: Pull | null = null;
   /** Debug trail of recent pointer decisions and control actions. */
   private inputLog: string[] = [];
@@ -216,6 +219,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.pad = padMode ? new PadHud(this, this.scale.width, this.scale.height) : null;
     this.padIds = 0;
     this.padKeys.clear();
+    this.padSource = null;
     this.lastPull = null;
     this.lastEpoch = this.sim.state.controlEpoch;
     this.tutorialStep = this.labId || this.pad ? TUTORIAL.length : 0;
@@ -369,7 +373,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private updateCoach(): void {
     const d = this.coachDirector;
     if (!d) return;
-    const view = d.update(this.sim, { gestureActive: this.controls.state !== 'idle' || this.keyAim !== null, overlayOpen: this.sim.state.pauseReasons.user || this.navigating });
+    const view = d.update(this.sim, { gestureActive: this.controls.state !== 'idle' || this.keyAim !== null || (!!this.pad && (this.padSource !== null || this.sim.state.pad.phase !== 'ready')), overlayOpen: this.sim.state.pauseReasons.user || this.navigating });
     if (view) {
       // Frozen: nothing half-done may act when play resumes.
       this.cancelInput('coach moment');
@@ -923,9 +927,18 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         continue;
       }
       this.logInput(`pad:${e.type}:${e.action}`);
-      if (e.type === 'press') this.sim.command({ type: 'padPress', id: ++this.padIds, action: e.action });
-      else if (e.type === 'release') this.sim.command({ type: 'padRelease', id: ++this.padIds, action: e.action });
-      else this.sim.command({ type: 'padCancel', id: ++this.padIds, reason: e.reason });
+      if (e.type === 'press') {
+        if (this.padSource !== null) continue;
+        this.padSource = 'touch';
+        this.sim.command({ type: 'padPress', id: ++this.padIds, action: e.action });
+      } else if (e.type === 'release') {
+        if (this.padSource !== 'touch') continue;
+        this.padSource = null;
+        this.sim.command({ type: 'padRelease', id: ++this.padIds, action: e.action });
+      } else {
+        if (this.padSource === 'touch') this.padSource = null;
+        this.sim.command({ type: 'padCancel', id: ++this.padIds, reason: e.reason });
+      }
     }
   }
 
@@ -967,6 +980,14 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     if (!a) return false;
     e.preventDefault();
     if (e.repeat || (down && this.sim.state.paused)) return true;
+    const src = this.padSource;
+    if (down) {
+      if (src !== null) return true;
+      this.padSource = { key: e.code };
+    } else {
+      if (src === null || src === 'touch' || src.key !== e.code) return true;
+      this.padSource = null;
+    }
     this.sim.command({ type: down ? 'padPress' : 'padRelease', id: ++this.padIds, action: a });
     return true;
   }
@@ -974,6 +995,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private cancelInput(reason: string): void {
     if (this.pad) {
       this.handlePad(this.pad.controls.cancelAll(reason));
+      if (this.padSource !== null) this.sim.command({ type: 'padCancel', id: ++this.padIds, reason });
+      this.padSource = null;
       this.padKeys.clear();
       this.sim.command({ type: 'padMove', x: 0, y: 0 });
     }
@@ -1125,6 +1148,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         return;
       }
       this.careerStore = store;
+      this.sim.setPlayerAttrs(CAREER_SLOT[save.player.position], matchAttrsFromCareer(save.player.attributes));
       this.collector = new EvidenceCollector(CAREER_SLOT[save.player.position], MATCH_TUNING.pitch);
       this.careerFlushAt = this.sim.state.simTime + CAREER_FLUSH_SECONDS;
     });
