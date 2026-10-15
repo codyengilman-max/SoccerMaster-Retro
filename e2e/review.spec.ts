@@ -46,7 +46,7 @@ test('Review & Lab hub reaches Training Review and the catalog-only Soccer Logic
   await waitForScene(page, 'career');
   let c = await until(page, (x) => x.status === 'ok' && x.screen === 'reviewHub', 'hub');
   expect(c.player).toBeNull();
-  expect(c.text).toContain('Story & RPG: not in this preview');
+  expect(c.text).toContain('Story & RPG: week one of story package v0.7 is playable');
   await fits(page);
 
   await press(page, 'hub-logic', mode);

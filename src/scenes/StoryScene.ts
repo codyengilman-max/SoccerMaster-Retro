@@ -369,8 +369,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     if (!this.fresh()) return;
     this.busy = true;
     const run = await this.launch();
-    this.busy = false;
     if (run) await this.enterCrossbar(run);
+    this.busy = false;
     this.render();
   }
 
@@ -550,7 +550,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         body = `Week-one story complete. ${this.recap()}`;
         acts.push({ name: 'story-done', label: 'Back to menu', onClick: () => this.goStart() });
       } else if (n.type === 'line') {
-        this.speaker.setText(n.speaker === 'System' ? '' : n.speaker);
+        this.speaker.setText(n.speaker === 'System' ? '' : n.speaker === 'Player' ? this.name() : n.speaker);
         const full = this.fullText();
         body = this.state.revealed || instantText ? full : full.slice(0, this.typed);
         if (this.state.revealed || instantText) this.typed = full.length;
@@ -636,7 +636,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private lineFor(sceneId: string, nodeId: string): string {
     const s = this.state && sceneId ? this.sceneNode(sceneId, nodeId) : null;
     if (!s || s.type !== 'line') return '';
-    return `${s.speaker === 'System' ? '' : `${s.speaker}: `}${renderText(s.text, this.name())}`;
+    return `${s.speaker === 'System' ? '' : `${s.speaker === 'Player' ? this.name() : s.speaker}: `}${renderText(s.text, this.name())}`;
   }
 
   private sceneNode(sceneId: string, nodeId: string): StoryNode | null {

@@ -10,7 +10,7 @@ One build containing the gameplay-feel revision (PR #8), the training library v1
 | Training library v1.1 (20 families / 100 options) | Imported as review-only drafts; none published or recommended; one credit per scheduled session unchanged |
 | Soccer-logic catalog v0.2 (`research/logic/v0.2`) | Imported, catalog only: 40 draft outlines, 0 active, no source links, not calibrated or game-validated. The 500-plus scenario goal is 460 short and separate from home training |
 | Coach Moments | Integrated behind `?coach`; no player-facing setting; weekly focus does not choose moments |
-| RPG / story (identity, cutscenes, clubs, tournaments, Next Level) | Blocked: the latest story package and club/tournament rules were not supplied. Nothing reconstructed |
+| RPG / story (identity, cutscenes, clubs, tournaments, Next Level) | Partial: week one of story package v0.7 playable (identity, 18 scenes, crossbar, training/match/week-close handoffs, W2 callback). Weeks 2–4, leagues, tournaments, transfers and relationship arcs not implemented; club world is design data only |
 
 ## Training library v1.1 import (draft, branch `devin/1792084019-training-library`)
 - Package stored unchanged; strict importer, empty release manifest, review-only Draft library screens and six demo prototypes. No option is in player plans, journal or credit.

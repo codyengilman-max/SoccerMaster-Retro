@@ -3,7 +3,7 @@ import { diagnostics, pressElement as pressAny, trackConsoleErrors, waitForScene
 
 // Cross-feature flow on one isolated (per-test browser context) save:
 // create player -> home training credit -> career match with Coach Moments -> evidence -> reload -> week review -> reload.
-// Story/cutscene and story consequences are not in this build: the latest story package was not supplied.
+// Story/cutscene, identity and story consequences are covered by e2e/story.spec.ts on the same flow.
 
 type Career = { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; status: string; evidence: number; coachEvidence: number };
 type Match = { career: { slot: string } | null; coach: { overlay: string; entries: { selectedOptionId: string | null }[] } | null };
