@@ -172,7 +172,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       this.pull = null;
       return;
     }
-    if (this.mode === 'crossbar' && !this.anim && this.playerTurn() && p.y > 60) this.aimFrom = { x: p.x, y: p.y };
+    if (this.mode === 'crossbar' && this.kickReady() && p.y > 60) this.aimFrom = { x: p.x, y: p.y };
   }
 
   private onMove(p: Phaser.Input.Pointer): void {
@@ -396,6 +396,10 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     return !!this.contest && nextSlot(this.contest)?.participant === 'player';
   }
 
+  private kickReady(): boolean {
+    return this.mode === 'crossbar' && !this.busy && !this.anim && this.playerTurn();
+  }
+
   private async shoot(who: Participant, input: KickInput): Promise<void> {
     if (!this.contest || !this.store || this.anim || this.busy) return;
     const l = launchAttempt(this.contest, who, input);
@@ -409,11 +413,14 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     }
     const r = resolveAttempt(l.contest);
     if (!r.ok) return void (this.busy = false);
-    this.contest = r.contest;
-    await this.store.putRecord(`crossbar:${this.runId}`, r.contest);
+    // Start the flight before the turn passes, so the next kicker never sees a turn that is not open yet.
     const shot = simulateShot(input);
     this.anim = { path: shot.path, start: this.time.now, dur: Math.max(400, shot.time * 1000), who, scored: shot.scored };
+    this.contest = r.contest;
     this.message = '';
+    this.render();
+    // The launch record above already makes a reload replay this exact attempt if this write is lost.
+    await this.store.putRecord(`crossbar:${this.runId}`, r.contest);
     this.busy = false;
     this.render();
   }
@@ -483,7 +490,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     }
     if (this.anim) {
       this.drawStage();
-      if (time - this.anim.start >= this.anim.dur + 500) {
+      if (time - this.anim.start >= this.anim.dur + 500 && !this.busy) {
         this.anim = null;
         this.afterShot();
       }
@@ -808,7 +815,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       completedScenes: s?.completedScenes.length ?? 0,
       transcript: s?.transcript.length ?? 0,
       player: this.save?.player ? { name: this.save.player.name, gender: this.save.player.gender ?? null } : null,
-      crossbar: c ? { status: c.status, next: nextSlot(c), player: points(c, 'player'), blake: points(c, 'blake'), attempts: c.attempts.length, animating: this.anim !== null } : null,
+      crossbar: c ? { status: c.status, next: nextSlot(c), player: points(c, 'player'), blake: points(c, 'blake'), attempts: c.attempts.length, animating: this.anim !== null, ready: this.kickReady() } : null,
     };
   }
 }

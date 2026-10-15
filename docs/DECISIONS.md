@@ -67,3 +67,12 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - One integration branch (`devin/1792089834-all-updates-integration`) merges PR #8 gameplay and PR #9 training; both feature branches stay as they were. The PR #8 preview hook is reused (owner instruction "use old hook"), so PR #8's branch is fast-forwarded to the integration head; `devin/1792017697-gameplay-feel-backup-fdec076` keeps the gameplay-only state.
 - Soccer-logic package v0.2 is copied byte-for-byte to `research/logic/v0.2` (its scripts are not run). `src/game/logic/catalog.ts` loads it strictly and rejects any seed marked enabled, calibrated or non-draft; `activeLogicScenarios()` is empty, so the catalog has no effect on match behaviour. Its 40 entries are not counted toward the 500-plus scenario goal as fulfilled.
 - Start → Review & Lab opens review screens without creating a player or writing the save.
+
+## Story v0.7 week one
+
+- Package stored unchanged in `docs/story/v0.7/`; v0.7 corrections and `week_one_scenes.json` are authoritative. Only `remember_choice` effects and the `always` / `crossbar_accepted` predicates exist; everything else is rejected by the loader.
+- Story state lives in its own IndexedDB database (`smr-story`), one transaction per command with revision and sequence checks, so career saves are untouched by story bugs. Unreadable records are kept under `broken-<id>-<time>` keys, never overwritten.
+- Boy/girl is an optional field on the career player; older saves load unchanged. Identity never affects attributes, growth or eligibility.
+- Activity outcomes come only from the existing systems' saved state (career save revision, focus, logged scheduled session, saved match evidence, `endWeek`). The story never invents a result, and home training keeps one credit per scheduled session.
+- The crossbar challenge uses its own framework-free 3-D ball model because the 9v9 engine has no ball height; same pull-back gesture, no Shoot button.
+- Club world is design data only: no league table, scheduler or tournament entry is built from it.

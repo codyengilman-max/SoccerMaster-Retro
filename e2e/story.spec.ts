@@ -11,7 +11,7 @@ type Story = {
   text: string; hint: string; message: string; buttons: string[]; decisions: Record<string, Record<string, string>>;
   outcomes: { scene: string; state: string; outcome: string | null; result: string | null }[];
   player: { name: string; gender: string | null } | null;
-  crossbar: { status: string; next: { participant: string } | null; player: number; blake: number; animating: boolean } | null;
+  crossbar: { status: string; next: { participant: string } | null; player: number; blake: number; animating: boolean; ready: boolean } | null;
 };
 type Layout = { elements: Record<string, { x: number; y: number; width: number; height: number }>; viewport: { width: number; height: number } };
 
@@ -82,7 +82,7 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
     const s = await story(page, () => true, 'story');
     if (s.complete) return s;
     if (s.mode === 'crossbar') {
-      if (s.crossbar?.next?.participant === 'player' && !s.crossbar.animating) {
+      if (s.crossbar?.ready) {
         const before = s.crossbar.player + s.crossbar.blake;
         await kick(page, finger);
         await story(page, (x) => x.mode !== 'crossbar' || x.crossbar!.animating || x.crossbar!.next?.participant !== 'player' || x.crossbar!.player + x.crossbar!.blake > before, 'kick taken');
@@ -220,8 +220,14 @@ test('story: reload restores the cursor and an answered choice is never re-appli
   await pressAny(page, s.buttons[0]!, mode).catch(() => undefined);
   const after = await story(page, (x) => x.revision !== rev, 'choice');
   await page.waitForTimeout(300);
+  // A late second tap may land on the next line and advance it; it must never re-answer the choice.
   const settled = await story(page, () => true, 'settled');
-  expect(settled.revision).toBe(after.revision);
+  const key = Object.keys(settled.decisions[s.scene!] ?? {});
+  expect(key).toHaveLength(1);
+  expect(settled.decisions[s.scene!]![key[0]!]).toBe(s.buttons[0]!.replace(/^choice-/, ''));
+  expect(after.node).not.toBe(s.node);
+  expect([s.scene, after.scene]).toContain(settled.scene);
+  expect(settled.node).not.toBe(s.node);
   const reloaded = await openStory(page, mode);
   expect(reloaded).toMatchObject({ scene: settled.scene, node: settled.node, revision: settled.revision, decisions: settled.decisions });
 });
