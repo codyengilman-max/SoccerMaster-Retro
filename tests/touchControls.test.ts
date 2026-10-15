@@ -110,7 +110,8 @@ describe('TouchControls: aimed kick', () => {
     expect(soft.power).toBeLessThan(0.2);
     press(c, 0, 0, 1000);
     c.update(1000 + AIM);
-    c.pointerMove(1, 0, th.maxPull, 1100);
+    // Event time after the aim delay: a full pull 100 ms after the press would be a swipe.
+    c.pointerMove(1, 0, th.maxPull, 1000 + AIM + 10);
     const cancel = c.pointerUp(1, 1, 1, 1150);
     expect(types(cancel)).toEqual(['aimCancel']);
     expect((cancel[0] as Extract<ControlAction, { type: 'aimCancel' }>).reason).toBe('released in cancel circle');
@@ -247,5 +248,32 @@ describe('TouchControls: ownership and interruptions', () => {
     const p = pullFor(Number.NaN, Number.POSITIVE_INFINITY, th);
     expect(p.inCancel).toBe(true);
     expect(Number.isFinite(p.dirX) && Number.isFinite(p.power)).toBe(true);
+  });
+});
+
+describe('TouchControls: a frame that runs before queued input', () => {
+  it('a swipe whose moves arrive after a late frame promoted the press is a dribble, never a kick', () => {
+    const c = new TouchControls(SHORT);
+    press(c, 0, 0, 0);
+    expect(types(c.update(AIM + 50))).toEqual(['aimStart']);
+    expect(types(c.pointerMove(1, th.swipeCommit + 10, 0, 20))).toEqual(['aimCancel', 'dribble']);
+    expect(c.pointerUp(1, th.swipeCommit + 30, 0, 40)).toEqual([]);
+  });
+
+  it('a short early stroke released before the aim delay cancels the early aim and kicks nothing', () => {
+    const c = new TouchControls(SHORT);
+    press(c, 0, 0, 0);
+    c.update(AIM + 50);
+    const out = [...c.pointerMove(1, th.swipeMin + 2, 0, 30), ...c.pointerUp(1, th.swipeMin + 2, 0, 60)];
+    expect(types(out)).toEqual(['aimMove', 'aimCancel', 'dribble']);
+    expect(types(out).some((x) => KICKS.includes(x))).toBe(false);
+  });
+
+  it('moves timed after the aim delay still aim and kick', () => {
+    const c = new TouchControls(SHORT);
+    press(c, 0, 0, 0);
+    c.update(AIM + 50);
+    expect(types(c.pointerMove(1, -(th.swipeCommit + 40), 0, AIM + 60))).toEqual(['aimMove']);
+    expect(types(c.pointerUp(1, -(th.swipeCommit + 40), 0, AIM + 90))).toEqual(['kick']);
   });
 });

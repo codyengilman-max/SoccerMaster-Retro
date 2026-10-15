@@ -203,7 +203,12 @@ export class TouchControls {
     const dy = y - this.oy;
     const dist = Math.hypot(dx, dy);
     this.maxDist = Math.max(this.maxDist, dist);
-    if (this.current === 'aiming') {
+    if (this.current === 'aiming' && this.beforeAimDelay(t) && dist >= this.th.swipeCommit) {
+      // A frame promoted the press before this earlier, already-queued move arrived: it was a swipe.
+      out.push({ type: 'aimCancel', reason: 'swipe' }, { type: 'dribble', dx, dy });
+      this.current = 'spent';
+      this.lastTap = null;
+    } else if (this.current === 'aiming') {
       out.push({ type: 'aimMove', ...pullFor(dx, dy, this.th) });
     } else if (this.current === 'pending') {
       if (dist > this.th.holdSlop) this.lastTap = null;
@@ -226,7 +231,11 @@ export class TouchControls {
     const moved = Math.hypot(dx, dy);
     this.maxDist = Math.max(this.maxDist, moved);
     const quickStill = finite(t) && t - this.t0 <= this.tuning.tapMaxMs && this.maxDist <= this.th.holdSlop;
-    if (this.current === 'aiming') {
+    if (this.current === 'aiming' && !quickStill && this.beforeAimDelay(t)) {
+      out.push({ type: 'aimCancel', reason: 'swipe' });
+      if (moved >= this.th.swipeMin) out.push({ type: 'dribble', dx, dy });
+      this.lastTap = null;
+    } else if (this.current === 'aiming') {
       if (quickStill) {
         out.push({ type: 'aimCancel', reason: 'tap' });
         out.push(...this.tap(t));
@@ -251,6 +260,11 @@ export class TouchControls {
     if (this.current !== 'pending' || this.possessionKey === null || !finite(t) || t - this.t0 < this.tuning.aimDelayMs) return [];
     this.current = 'aiming';
     return [{ type: 'aimStart', originX: this.ox, originY: this.oy }];
+  }
+
+  /** The event happened before this press could have become an aim (its own time, not the frame's). */
+  private beforeAimDelay(t: number): boolean {
+    return finite(t) && t - this.t0 < this.tuning.aimDelayMs;
   }
 
   /** Pointer cancel, lost capture, blur, background, pause, reset, orientation, possession loss. */
