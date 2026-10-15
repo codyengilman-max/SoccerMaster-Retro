@@ -1,0 +1,101 @@
+{
+  "schema_version": "0.2",
+  "claims": [
+    {
+      "id": "E01",
+      "source_id": "S14",
+      "population": "UCL 2015/16",
+      "metric": "goals attributed to combinations",
+      "numerator": 61,
+      "denominator": null,
+      "representation": "count",
+      "action_probability": false,
+      "raw_data_checked": false,
+      "youth_transfer_validated": false
+    },
+    {
+      "id": "E02",
+      "source_id": "S14",
+      "population": "UCL 2015/16",
+      "metric": "goals from open-play crosses",
+      "numerator": 63,
+      "denominator": null,
+      "representation": "count",
+      "action_probability": false,
+      "raw_data_checked": false,
+      "youth_transfer_validated": false
+    },
+    {
+      "id": "E03",
+      "source_id": "S15",
+      "population": "UCL 2019/20",
+      "metric": "shots from high turnovers",
+      "numerator": 217,
+      "denominator": null,
+      "representation": "count",
+      "action_probability": false,
+      "raw_data_checked": false,
+      "youth_transfer_validated": false
+    },
+    {
+      "id": "E04",
+      "source_id": "S15",
+      "population": "UCL 2019/20",
+      "metric": "goals from high turnovers",
+      "numerator": 30,
+      "denominator": null,
+      "representation": "count",
+      "action_probability": false,
+      "raw_data_checked": false,
+      "youth_transfer_validated": false
+    },
+    {
+      "id": "E05",
+      "source_id": "S16",
+      "population": "UCL 2021/22",
+      "metric": "cross/cutback goals as share of all goals",
+      "numerator": 89,
+      "denominator": 380,
+      "representation": "reported_rounded_percent_23",
+      "action_probability": false,
+      "raw_data_checked": false,
+      "youth_transfer_validated": false
+    },
+    {
+      "id": "E06",
+      "source_id": "S17",
+      "population": "World Cup 2022 winning-team observations",
+      "metric": "counterattacks ending in shots",
+      "numerator": 42,
+      "denominator": 430,
+      "representation": "observational_ratio_not_causal",
+      "action_probability": false,
+      "raw_data_checked": false,
+      "youth_transfer_validated": false
+    },
+    {
+      "id": "E07",
+      "source_id": "S17",
+      "population": "World Cup 2022 losing-team observations",
+      "metric": "counterattacks ending in shots",
+      "numerator": 12,
+      "denominator": 274,
+      "representation": "observational_ratio_not_causal",
+      "action_probability": false,
+      "raw_data_checked": false,
+      "youth_transfer_validated": false
+    },
+    {
+      "id": "E08",
+      "source_id": "S9",
+      "population": "UCL 2024/25 Manchester City",
+      "metric": "goal kicks resulting in final-third entries",
+      "numerator": null,
+      "denominator": null,
+      "representation": "reported_percent_51_underlying_counts_unknown",
+      "action_probability": false,
+      "raw_data_checked": false,
+      "youth_transfer_validated": false
+    }
+  ]
+}
