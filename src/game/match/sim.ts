@@ -798,7 +798,17 @@ export class MatchSim {
     let dir: Vec2 = L.dir;
     if (L.kind === 'pass') {
       const r = L.receiver ? s.players[L.receiver] : null;
-      if (r) dir = turnToward(L.dir, normalize(sub(add(r.pos, scale(r.vel, T.leadSeconds)), s.ball.pos)), T.leadMaxAngle);
+      if (r) {
+        // Intercept: where the receiver's current run meets a ball at this speed (fixed iterations, no allocation in the loop).
+        let tx = r.pos.x + r.vel.x * T.leadSeconds;
+        let ty = r.pos.y + r.vel.y * T.leadSeconds;
+        for (let i = 0; i < 3; i++) {
+          const t = Math.min(2, Math.hypot(tx - s.ball.pos.x, ty - s.ball.pos.y) / Math.max(1, speed));
+          tx = r.pos.x + r.vel.x * t;
+          ty = r.pos.y + r.vel.y * t;
+        }
+        dir = turnToward(L.dir, normalize(vec(tx - s.ball.pos.x, ty - s.ball.pos.y)), T.leadLockAngle);
+      }
       const plan = planUserPass(s, me.id, s.ball.pos, dir, speed, this.tuning);
       const receiver = plan.reachable ? plan.receiver : (L.receiver ?? plan.receiver);
       this.kickBall(me, scale(dir, speed), 'pass', plan.target, receiver);
@@ -838,7 +848,9 @@ export class MatchSim {
       if (dist < T.receiverMinRange || dist > T.receiverMaxRange) return null;
       const ang = Math.acos(clamp(dot2(d, aim) / dist, -1, 1));
       if (ang > T.receiverCone) return null;
-      return ang / T.receiverCone + (0.35 * dist) / T.receiverMaxRange;
+      // Distance from the stick's line (relative to the cone's width there) plus distance from the passer.
+      const perp = dist * Math.sin(ang);
+      return perp / (dist * Math.tan(T.receiverCone)) + (0.35 * dist) / T.receiverMaxRange;
     };
     let best: MatchPlayerId | null = null;
     let bestScore = Infinity;

@@ -197,13 +197,16 @@ export const MATCH_TUNING = {
     recoverySeconds: 0.22,
     /** Ball must be this close to the kicker at contact. */
     contactReach: 1.6,
-    receiverCone: 0.6,
+    /** FIFA-style search cone half-angle along the stick (30°). */
+    receiverCone: 0.5236,
     receiverMinRange: 3,
     receiverMaxRange: 34,
     /** A highlighted receiver is kept unless another scores better by this margin. */
     receiverStickiness: 0.25,
     /** Max lead correction toward the locked receiver at contact. */
     leadMaxAngle: 0.14,
+    /** With a selected receiver the pass may bend up to this much to meet the receiver's run (intercept solve). */
+    leadLockAngle: 0.5236,
     leadSeconds: 0.45,
     shotErrorMax: 0.12,
     pressureRadius: 3.5,
