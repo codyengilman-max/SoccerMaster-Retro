@@ -116,3 +116,57 @@ describe('FIFA locomotion agility', () => {
     expect(reverse(1.2)).toBeLessThanOrEqual(reverse(0.8) * 0.85);
   });
 });
+
+describe('FIFA assisted passing', () => {
+  let n = 1000;
+  const press = (sim: Sim, action: match.PadAction) => sim.command({ type: 'padPress', id: ++n, action });
+  const release = (sim: Sim, action: match.PadAction) => sim.command({ type: 'padRelease', id: ++n, action });
+  const stage = (mates: Record<string, { x: number; y: number }>, vel: Record<string, { x: number; y: number }> = {}) => {
+    const sim = setup();
+    sim.arrange((s) => {
+      for (const id of match.TEAM_PLAYER_IDS.home) {
+        if (id === 'H7' || s.players[id].isKeeper) continue;
+        s.players[id].pos = mates[id] ? { ...mates[id]! } : { x: 12, y: 5 + Number(id.slice(1)) * 4 };
+        s.players[id].vel = vel[id] ? { ...vel[id]! } : { x: 0, y: 0 };
+      }
+      // Opponents well clear of the passing lanes, so only the passing assist is measured.
+      for (const id of match.TEAM_PLAYER_IDS.away) {
+        if (s.players[id].isKeeper) continue;
+        s.players[id].pos = { x: 30, y: 4 + Number(id.slice(1)) * 5 };
+        s.players[id].vel = { x: 0, y: 0 };
+      }
+    });
+    return sim;
+  };
+  it('scores teammates by distance from the stick line, not just distance from the passer', () => {
+    // H8 is closer to the passer but 18° off the stick; H9 is farther but almost on the line.
+    const sim = stage({ H8: { x: 50, y: 28.3 }, H9: { x: 60, y: 25.5 } });
+    sim.command({ type: 'padMove', x: 1, y: 0 });
+    expect(press(sim, 'pass')).toBe(true);
+    expect(sim.state.pad.receiver).toBe('H9');
+  });
+  it('ignores teammates outside the 30° cone and falls back to the stick direction', () => {
+    const sim = stage({ H8: { x: 50, y: 33 }, H9: { x: 46, y: 16 } });
+    sim.command({ type: 'padMove', x: 1, y: 0 });
+    expect(press(sim, 'pass')).toBe(true);
+    expect(sim.state.pad.receiver).toBeNull();
+  });
+  it('leads the selected receiver onto their run', () => {
+    const sim = stage({ H9: { x: 55, y: 25 } }, { H9: { x: 0, y: 4 } });
+    sim.command({ type: 'padMove', x: 1, y: 0 });
+    press(sim, 'pass');
+    run(sim, 0.3);
+    sim.arrange((s) => { s.players.H9.vel = { x: 0, y: 4 }; });
+    release(sim, 'pass');
+    const seq = sim.state.events.at(-1)?.seq ?? 0;
+    let kicked = false;
+    for (let i = 0; i < 30 && !kicked; i++) {
+      sim.step(F);
+      kicked = sim.state.events.some((e) => e.seq > seq && e.type === 'pass');
+    }
+    expect(kicked).toBe(true);
+    const b = sim.state.ball.vel;
+    // Aimed well ahead of the receiver (towards +y): more than the old 0.14 rad lead cap allowed.
+    expect(Math.atan2(b.y, b.x)).toBeGreaterThan(0.2);
+  });
+});
