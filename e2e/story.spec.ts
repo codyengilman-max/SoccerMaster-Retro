@@ -86,7 +86,9 @@ async function textClearsButtons(page: Page, buttons: string[]): Promise<void> {
 async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Promise<Story> {
   for (let i = 0; i < 400; i++) {
     const s = await story(page, () => true, 'story');
+    // Week one ends at the callback; the story now continues into the weeks 2–4 draft (covered by unit tests).
     if (s.complete) return s;
+    if (s.scene === 'W2_SCHOOL_CALLBACK') return story(page, (x) => `${x.text}\n${x.hint ?? ''}`.includes('Match:'), 'week one recap');
     if (s.mode === 'crossbar') {
       if (s.crossbar?.ready) {
         const before = s.crossbar.player + s.crossbar.blake;
@@ -179,12 +181,13 @@ test('story week one: identity, cutscenes, crossbar, training, match, week close
   expect(by('W1_CROSSBAR')).toMatchObject({ state: 'resolved', outcome: 'completed' });
   expect(['WIN', 'LOSS', 'DRAW']).toContain(by('W1_CROSSBAR')!.result);
   for (const id of ['INIT_IDENTITY', 'W1_PRACTICE', 'W1_MATCH', 'CLOSE_WEEK']) expect(by(id), id).toMatchObject({ outcome: 'completed' });
-  expect(end.text).toContain('Practice: one scheduled session logged');
-  expect(end.text).toContain('Match: played');
+  const recapText = `${end.text}\n${end.hint ?? ''}`;
+  expect(recapText).toContain('Practice: one scheduled session logged');
+  expect(recapText).toContain('Match: played');
 
   // Reload: the finished story, outcomes and identity persist; the career is in week 2 with one logged session.
   const again = await openStory(page, mode);
-  expect(again).toMatchObject({ complete: true, revision: end.revision, player: end.player });
+  expect(again).toMatchObject({ scene: 'W2_SCHOOL_CALLBACK', complete: false, revision: end.revision, player: end.player });
   expect(again.outcomes).toEqual(end.outcomes);
   await pressAny(page, 'story-menu', mode);
   await waitForScene(page, 'start');

@@ -615,7 +615,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       acts.push({ name: 'crossbar-leave', label: 'Leave (no result)', onClick: () => void this.leaveCrossbar() });
     } else if (n && this.state) {
       if (this.state.complete) {
-        body = `Week-one story complete. ${this.recap()}`;
+        body = `Chapter complete (weeks 1–4). ${this.recap()}`;
         acts.push({ name: 'story-done', label: 'Back to menu', onClick: () => this.goStart() });
       } else if (n.type === 'line') {
         this.speaker.setText(n.speaker === 'System' ? '' : n.speaker === 'Player' ? this.name() : n.speaker);
