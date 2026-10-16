@@ -9,6 +9,8 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('Jungle Ball opens from Start, fits the screen, runs, and Leave returns with stable listeners', async ({ page }) => {
+  // Three round trips into a sprite-rendered scene plus PUSH/SLIDE; slow CI runners need more than the 30 s default.
+  test.setTimeout(120_000);
   const errors = trackConsoleErrors(page);
   await page.goto('/?debug=1');
   const initial = await waitForScene(page, 'start');
@@ -45,6 +47,7 @@ test('Jungle Ball opens from Start, fits the screen, runs, and Leave returns wit
 });
 
 test('keyboard moves the Jungle Ball player and rotation keeps the pen on screen', async ({ page }) => {
+  test.setTimeout(90_000);
   const errors = trackConsoleErrors(page);
   await page.goto('/?debug=1');
   await waitForScene(page, 'start');
