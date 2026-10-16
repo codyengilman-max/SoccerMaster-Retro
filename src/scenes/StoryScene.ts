@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { fixtureForWeek, newLeague, parseLeague, recordPlayed, simulateThrough } from '../game/league/league';
+import { CLUB_WORLD } from '../game/story/clubs';
 import type { Rect } from '../game';
 import { POSITION_SLOT } from '../game/career/player';
 import type { CareerSave } from '../game/career/state';
@@ -323,8 +325,17 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       await this.store.putRecord(`run:${run}`, snap);
     }
     this.navigating = true;
-    if (kind === 'match') this.scene.start(SceneKeys.Formation, { career: true, returnTo: 'story' });
+    if (kind === 'match') this.scene.start(SceneKeys.Formation, { career: true, returnTo: 'story', resultKey: run });
     else this.scene.start(SceneKeys.Career, { returnTo: 'story' });
+  }
+
+  private async openJungle(): Promise<void> {
+    if (!this.fresh() || !this.store) return;
+    this.busy = true;
+    const run = await this.launch();
+    if (!run) return void ((this.busy = false), this.render());
+    this.navigating = true;
+    this.scene.start(SceneKeys.Jungle, { runId: run, returnTo: 'story' });
   }
 
   /** On return from Home Training or a match, decide the outcome only from what the career save shows. */
@@ -334,6 +345,12 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     const run = Object.values(this.state.runs).find((r) => r.sceneId === this.state!.sceneId && r.nodeId === n.id && r.state === 'launched');
     if (!run) return;
     if (n.adapter === 'crossbar') return this.enterCrossbar(run.runId);
+    if (n.adapter === 'jungle') {
+      const rec = (await this.store.getRecord(`jungle:${run.runId}`)) as { status?: string } | undefined;
+      if (rec) await this.complete(run.runId, rec.status === 'completed' ? 'completed' : 'abandoned');
+      else this.message = 'Not finished yet. Nothing was recorded.';
+      return;
+    }
     if (!(CAREER_ADAPTERS as readonly string[]).includes(n.adapter)) return;
     const snap = (await this.store.getRecord(`run:${run.runId}`)) as Snapshot | undefined;
     const s = (this.save = await this.career.load());
@@ -343,8 +360,26 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       : n.adapter === 'weekly_focus' ? s.focusId !== null
       : n.adapter === 'practice' ? s.completedSessions.length > snap.sessions
       : s.batches.length > snap.batches;
+    if (done && n.adapter === 'match') await this.recordLeague(run.runId, s.week);
     if (done) await this.complete(run.runId, 'completed');
     else this.message = 'Not finished yet. Nothing was recorded.';
+  }
+
+  /** League table: the finished match's score counts once for this week's Batavia fixture; other clubs are simulated. */
+  private async recordLeague(runId: string, week: number): Promise<void> {
+    const store = this.store;
+    const f = fixtureForWeek(week);
+    if (!store || !this.state || !f) return;
+    const res = (await store.getRecord(`matchresult:${runId}`)) as { home?: unknown; away?: unknown } | undefined;
+    if (!res || !Number.isInteger(res.home) || !Number.isInteger(res.away)) return;
+    const careerId = this.state.careerId;
+    const saved = parseLeague(await store.getRecord(`league:${careerId}`));
+    let seed = 0;
+    for (const ch of careerId) seed = (Math.imul(seed, 31) + ch.charCodeAt(0)) >>> 0;
+    const league = saved.ok ? saved.value : newLeague(careerId, seed);
+    const r = recordPlayed(league, f.id, res.home as number, res.away as number);
+    if (!r.ok) return;
+    await store.putRecord(`league:${careerId}`, simulateThrough(r.state, f.round));
   }
 
   private async closeWeek(): Promise<void> {
@@ -640,13 +675,23 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         acts.push({ name: 'handoff-continue', label: 'Got it', onClick: () => void this.assignment() });
         return;
       case 'match':
-        setBody('Week-one match: a full 9v9 game with your usual controls. Your play becomes evidence for growth, as always.');
+        {
+          const week = this.save?.week ?? 1;
+          const f = fixtureForWeek(week);
+          const club = (id: string): string => CLUB_WORLD.clubs.find((c) => c.id === id)?.displayName ?? id;
+          setBody(`${f ? `Week ${week} league match: ${club(f.home)} vs ${club(f.away)}.` : `Week ${week} match.`} A full 9v9 game with your usual controls. Your play becomes evidence for growth, as always.`);
+        }
         acts.push({ name: 'handoff-match', label: 'Play the match', onClick: () => void this.openCareer('match') });
         acts.push({ name: 'handoff-skip', label: 'Skip the match', onClick: () => void this.skipRun('declined') });
         return;
+      case 'jungle':
+        setBody('Jungle Ball at lunch: one goal, a neutral keeper, you against Alex, Blake and Sam. Just for fun: scores never count as match growth.');
+        acts.push({ name: 'handoff-jungle', label: 'Play Jungle Ball', onClick: () => void this.openJungle() });
+        acts.push({ name: 'handoff-skip', label: 'Not today', onClick: () => void this.skipRun('declined') });
+        return;
       case 'week_close':
-        setBody('Finish week 1: your week review is saved and week 2 opens.');
-        acts.push({ name: 'handoff-week', label: 'Finish week 1', onClick: () => void this.closeWeek() });
+        setBody(`Finish week ${this.save?.week ?? 1}: your week review is saved and week ${(this.save?.week ?? 1) + 1} opens.`);
+        acts.push({ name: 'handoff-week', label: `Finish week ${this.save?.week ?? 1}`, onClick: () => void this.closeWeek() });
         return;
     }
   }

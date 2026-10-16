@@ -91,6 +91,7 @@ export const SPEAKER_ROLE: Readonly<Record<string, CastRole>> = Object.freeze({
   Caregiver: 'caregiver',
   'Coach Code': 'coach',
   Alex: 'alex',
+  Sam: 'sam',
 });
 
 export function variantAsset(visualId: VisualId, outfit: string): string | null {
