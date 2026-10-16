@@ -105,7 +105,8 @@ test.describe('two-thumb touch', () => {
     await page.waitForTimeout(250);
     // Lift only the PASS finger (Chromium's CDP touchEnd ends the listed points).
     await touch(page, cdp, 'touchEnd', [passFinger]);
-    await waitFor(page, (r) => kicksAfter(r, seq).length > 0, 3_000);
+    // Default 8 s wall budget: a slow CI renderer lags sim time; exactly-one-kick is still asserted below.
+    await waitFor(page, (r) => kicksAfter(r, seq).length > 0);
     await page.waitForTimeout(600);
     const r1 = await report(page);
     expect(kicksAfter(r1, seq).length).toBe(1);
