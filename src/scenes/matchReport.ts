@@ -1,5 +1,4 @@
 import type { coach, match } from '../game';
-import type { ControlState } from '../input';
 import type { PitchLayout } from '../render/layout';
 
 export interface MatchPlayerReport {
@@ -37,10 +36,6 @@ export interface MatchReport {
   readonly owner: match.MatchPlayerId | null;
   readonly userHasBall: boolean;
   readonly dribbleDir: { readonly x: number; readonly y: number };
-  readonly feint: { readonly by: string; readonly start: number; readonly until: number; readonly exit: boolean } | null;
-  readonly feintReadyAt: number;
-  readonly aimAllowance: Readonly<Record<match.TeamId, number>>;
-  readonly aim: { readonly dx: number; readonly dy: number; readonly power: number } | null;
   readonly score: Readonly<Record<match.TeamId, number>>;
   readonly stoppage: { readonly reason: string; readonly scorer: match.TeamId | null; readonly restartTeam: match.TeamId } | null;
   readonly defense: Readonly<Record<match.TeamId, { presserId: string | null; coverId: string | null }>>;
@@ -54,17 +49,13 @@ export interface MatchReport {
     readonly zoom: number;
     readonly viewLength: number;
     readonly viewCross: number;
-    readonly mode: 'possession' | 'aiming' | 'travel' | 'loose' | 'hold';
+    readonly mode: 'possession' | 'travel' | 'loose' | 'hold';
     readonly x: number;
     readonly y: number;
     readonly look: number;
     readonly guideOffscreen: boolean;
   };
-  readonly input: ControlState;
-  /** Screen-space gesture origin while a gameplay pointer is captured. */
-  readonly gestureOrigin: { readonly x: number; readonly y: number } | null;
-  readonly thresholds: { readonly swipeCommit: number; readonly holdSlop: number; readonly cancelRadius: number; readonly maxPull: number; readonly doubleTapDistance: number };
-  readonly controlScheme: 'pad' | 'gesture';
+  readonly controlScheme: 'pad';
   readonly pad: {
     readonly phase: string;
     readonly actor: string | null;
@@ -73,9 +64,7 @@ export interface MatchReport {
     readonly available: Readonly<Record<'pass' | 'shoot' | 'slide' | 'block', boolean>> | null;
     readonly pressed: 'pass' | 'shoot' | 'slide' | 'block' | null;
   };
-  readonly tutorialStep: number;
   readonly inputLog: readonly string[];
-  readonly aimSource: 'pointer' | 'keyboard' | null;
   readonly pass: { readonly minDistance: number; readonly maxDistance: number };
   readonly overlay: boolean;
   readonly banner: string;

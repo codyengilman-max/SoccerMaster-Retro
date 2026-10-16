@@ -31,7 +31,7 @@ function playSession(seed: number, formation: (typeof FORMATION_IDS)[number], pi
       expect(d.continueMoment(sim)).toBe(true);
       continue;
     }
-    if (sim.userHasBall() && sim.state.phase === 'live' && n % 30 === 0) sim.command({ type: 'dribble', direction: { x: 1, y: Math.sin(n / 200) * 0.5 } });
+    if (sim.userHasBall() && sim.state.phase === 'live' && n % 30 === 0) sim.command({ type: 'padMove', x: 1, y: Math.sin(n / 200) * 0.5 });
     sim.step(STEP);
     d.update(sim, HOST);
   }
@@ -94,12 +94,12 @@ describe('Coach session (seeded, framework-free)', () => {
       }
       return { sim, d };
     })();
-    const snap = JSON.stringify({ p: sim.state.players, b: sim.state.ball, t: sim.state.simTime, a: sim.state.aimAllowance, f: sim.state.feintReadyAt });
+    const snap = JSON.stringify({ p: sim.state.players, b: sim.state.ball, t: sim.state.simTime, pad: sim.state.pad });
     for (let i = 0; i < 300; i++) {
       sim.step(0.1);
       d.update(sim, HOST);
     }
-    expect(JSON.stringify({ p: sim.state.players, b: sim.state.ball, t: sim.state.simTime, a: sim.state.aimAllowance, f: sim.state.feintReadyAt })).toBe(snap);
+    expect(JSON.stringify({ p: sim.state.players, b: sim.state.ball, t: sim.state.simTime, pad: sim.state.pad })).toBe(snap);
     expect(d.answer(d.view!.options[0]!.id)).toBe(true);
     expect(d.answer(d.view!.options[1]!.id)).toBe(false);
     expect(d.continueMoment(sim)).toBe(true);
@@ -110,34 +110,32 @@ describe('Coach session (seeded, framework-free)', () => {
     sim.step(0.1);
     // The hold left no banked frame time: one clamped frame only.
     expect(sim.state.simTime - before).toBeLessThanOrEqual(0.1 + 1e-9);
-    expect(sim.state.aimAllowance).toEqual(JSON.parse(snap).a);
   });
 
-  it('keeps a background (user) pause after Continue and never refills the aim allowance', () => {
+  it('keeps a background (user) pause after Continue', () => {
     const sim = new MatchSim({ seed: 5 });
     const d = new CoachDirector({ sessionId: 'b', seed: 5 });
     while (d.phase !== 'question') {
       sim.step(STEP);
       d.update(sim, HOST);
     }
-    const allowance = { ...sim.state.aimAllowance };
     expect(sim.command({ type: 'pause' })).toBe(true);
     d.answer(d.view!.options[0]!.id);
     d.continueMoment(sim);
     expect(sim.state.paused).toBe(true);
     expect(sim.state.pauseReasons).toEqual({ user: true, coach: false });
-    // Pause/resume and hold/release cycles do not give the allowance back.
+    // Pause/resume and hold/release cycles leave the pause reasons consistent.
     for (let i = 0; i < 5; i++) {
       sim.command({ type: 'resume' });
       sim.command({ type: 'coachHold' });
       sim.command({ type: 'pause' });
       sim.command({ type: 'coachRelease' });
     }
-    expect(sim.state.aimAllowance).toEqual(allowance);
+    expect(sim.state.pauseReasons.coach).toBe(false);
     expect(sim.command({ type: 'coachRelease' })).toBe(false);
   });
 
-  it('never opens during an aim, a shot in flight, another overlay, or a gesture', () => {
+  it('never opens during a kick in flight, another overlay, or active input', () => {
     const sim = new MatchSim({ seed: 6 });
     const d = new CoachDirector({ sessionId: 'g', seed: 6, sessionSeconds: 300 });
     const s = sim.state;
@@ -149,10 +147,11 @@ describe('Coach session (seeded, framework-free)', () => {
       st.possession = 'home';
       st.phase = 'live';
     });
-    expect(sim.command({ type: 'aimStart' })).toBe(true);
-    expect(d.safeToInterrupt(sim.state, HOST)).toBe(false);
-    sim.command({ type: 'aimUpdate', direction: { x: 1, y: 0 }, power: 1 });
-    sim.command({ type: 'aimRelease' });
+    expect(sim.command({ type: 'padMove', x: 1, y: 0 })).toBe(true);
+    expect(sim.command({ type: 'padPress', id: 1, action: 'shoot' })).toBe(true);
+    for (let i = 0; i < 30; i++) sim.step(STEP);
+    expect(sim.command({ type: 'padRelease', id: 2, action: 'shoot' })).toBe(true);
+    for (let i = 0; i < 60 && sim.state.ball.owner !== null; i++) sim.step(STEP);
     // Immediately after the kick the ball is in flight: still not safe.
     expect(sim.state.ball.owner).toBeNull();
     expect(d.safeToInterrupt(sim.state, HOST)).toBe(false);

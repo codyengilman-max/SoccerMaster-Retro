@@ -27,21 +27,16 @@ export const MATCH_TUNING = {
    * clock. Provisional: a short phone-sized match, not real-time youth match length.
    */
   match: { halfSeconds: 165, displayHalfMinutes: 25, minHalfSeconds: 10, maxHalfSeconds: 1800 },
-  /** User carrier directional dribbling: swipes set a direction; speed, acceleration and turning are bounded. */
+  /** User carrier movement from the joystick: speed, acceleration and turning are bounded. */
   carrier: {
     speed: D.dribble.speed,
     /** Dribbling back toward the user's own goal is slower. */
     backSpeedFactor: 0.75,
     /**
-     * yd/s^2 cap on velocity change. The carrier steers straight at the swiped direction; a cut or reversal costs
+     * yd/s^2 cap on velocity change. The carrier steers straight at the stick direction; a cut or reversal costs
      * time only through this cap (a 90 deg cut from full speed takes about 0.37 s), never a separate turn-rate brake.
      */
     accel: 20,
-    /** Minimum sim time between accepted redirects (spam guard; redirects never add speed). */
-    redirectSeconds: 0.12,
-    /** A swipe while our pass is within bufferReach yd of its receiver becomes his first-touch direction, for bufferSeconds. */
-    bufferSeconds: 0.4,
-    bufferReach: 5,
   },
   /**
    * One ground kick for passes and shots (user and AI). Power (0..1) sets the roll distance in yards, and launch
@@ -50,50 +45,21 @@ export const MATCH_TUNING = {
    * eases up to maxSpeed's roll for long balls and shots, with no kink in slope at passPower.
    */
   kick: { minSpeed: 5.3, maxSpeed: D.shot.maxSpeed, passRoll: 34, passPower: 0.7 },
-  /** Aiming slow motion: real seconds per team possession spell; refills only after the opponent had the ball. */
-  aimAllowance: {
-    seconds: 2.4,
-    /** The opponent must hold the ball this long (sim seconds) before it counts as their possession spell (refill). */
-    establishSeconds: 0.6,
-  },
+  /** A team must hold the ball this long (sim seconds) before it counts as an established possession spell. */
+  possessionEstablishSeconds: 0.6,
   /**
    * Off the ball the user controls one home outfielder: the presser when the opponent has it, the
-   * loose-ball chaser otherwise (stable during a friendly pass). A swipe steers him for steerSeconds.
+   * loose-ball chaser otherwise (stable during a friendly pass).
    */
   offBall: {
-    steerSeconds: 1.1,
-    /** Steered speed is the normal chase speed: no boost for being user-controlled. */
     minHoldSeconds: 0.6,
     /** Switching back to the player control just left needs this long on the new one (no A-B-A flicker). */
     returnHoldSeconds: 1.5,
   },
-  /**
-   * Double-tap quick shot: fixed power toward the goal with a seeded target spread of this fraction
-   * of the goal half-width either side of centre (speed over placement). Project tuning, not a reference value.
-   */
-  quickShot: { power: 0.95, spread: 0.85 },
-  feint: {
-    seconds: 0.45,
-    cooldownSeconds: 1.6,
-    /** Carrier speed fraction during the shoulder drop. */
-    speedFactor: 0.45,
-    /** Exit burst after a chosen exit direction: speed multiplier for exitSeconds (bounded by carrier.speed * this). */
-    exitSpeedFactor: 1.25,
-    exitSeconds: 0.4,
-    /** Defender within this range may bite (seeded chance), drifting the wrong way for biteSeconds. */
-    biteRange: 4.5,
-    biteChance: 0.55,
-    biteSeconds: 0.35,
-  },
   /** Temporary sandbox resets (not formal restarts). */
   stoppage: { goalSeconds: 1.6, outSeconds: 1.2 },
   dribble: D.dribble,
-  swipe: D.swipe,
-  cut: D.cut,
-  burst: D.burst,
-  check: D.check,
   control: D.control,
-  aim: D.aim,
   pass: D.pass,
   shot: D.shot,
   ball: D.ball,

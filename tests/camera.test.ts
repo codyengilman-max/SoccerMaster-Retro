@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { match, U11_9V9_PITCH } from '../src/game';
 import { MATCH_TUNING } from '../src/game/match/tuning';
-import { TouchControls, type ControlAction } from '../src/input';
 import {
   BASELINE_VIEW,
   CameraController,
@@ -94,31 +93,18 @@ describe('aiming is independent of the camera', () => {
     }
   });
 
-  it('identical gestures across zooms produce the same kick and the same simulation result', () => {
+  it('the same screen stick across zooms produces the same kick and the same simulation result', () => {
     const run = (zoom: number) => {
       const sim = new MatchSim({ seed: 7 });
       sim.arrange((s) => match.stageLabScenario(s, 'through-ball', MATCH_TUNING.pitch));
-      const tc = new TouchControls(Math.min(VIEW.width, VIEW.height));
       const L = layoutAt(zoom, { x: 40, y: 25 });
       const kicks: { x: number; y: number; power: number }[] = [];
-      const apply = (acts: readonly ControlAction[]) => {
-        for (const a of acts) {
-          if (a.type === 'aimStart') sim.command({ type: 'aimStart' });
-          if (a.type === 'aimMove' || a.type === 'kick') {
-            const direction = a.inCancel ? null : screenVectorToPitch(L, { x: a.dirX, y: a.dirY });
-            sim.command({ type: 'aimUpdate', direction, power: a.power });
-            if (a.type === 'kick') {
-              kicks.push({ ...unit(direction!), power: a.power });
-              sim.command({ type: 'aimRelease' });
-            }
-          }
-        }
-      };
-      const key = sim.state.ball.owner;
-      apply(tc.pointerDown(1, 500, 200, 0, key));
-      apply(tc.update(200));
-      apply(tc.pointerMove(1, 440, 230, 260));
-      apply(tc.pointerUp(1, 380, 250, 320));
+      for (let i = 0; i < Math.round((MATCH_TUNING.kickoff.countdownSeconds + 0.1) * 60); i++) sim.step(1 / 60);
+      const direction = screenVectorToPitch(L, { x: 120 / 130, y: -50 / 130 });
+      sim.command({ type: 'padMove', x: unit(direction).x, y: unit(direction).y });
+      sim.command({ type: 'padPress', id: 1, action: 'pass' });
+      for (let i = 0; i < 18; i++) sim.step(1 / 60);
+      if (sim.command({ type: 'padRelease', id: 2, action: 'pass' })) kicks.push({ ...unit(direction), power: 0 });
       for (let i = 0; i < 120; i++) sim.step(1 / 60);
       const s = sim.state;
       return {
@@ -182,37 +168,6 @@ describe('camera controller', () => {
     );
     c.update(input({ mode: 'loose', ball: { x: Number.NaN, y: 1 } }), 1 / 60, BOUNDS);
     expect(Number.isFinite(c.x) && Number.isFinite(c.y)).toBe(true);
-  });
-
-  it('holds focus and look-ahead while aiming even if the carrier input moves', () => {
-    const c = new CameraController({ x: 30, y: 25 });
-    c.snap({ x: 30, y: 25 }, 1, BOUNDS);
-    for (let i = 0; i < 30; i++) c.update(input(), 1 / 60, BOUNDS);
-    const look = c.look;
-    const first = c.update(input({ mode: 'aiming' }), 1 / 60, BOUNDS);
-    let last = first;
-    for (let i = 0; i < 120; i++)
-      last = c.update(
-        input({
-          mode: 'aiming',
-          carrier: { x: 30 + i * 0.1, y: 25 - i * 0.05 },
-          attackDir: -1,
-        }),
-        1 / 60,
-        BOUNDS,
-      );
-    expect(c.look).toBe(look);
-    expect(last).toEqual(first);
-  });
-
-  it('stops dead at aim start even when it was still catching up to a fast carrier', () => {
-    const c = new CameraController({ x: 30, y: 25 });
-    c.snap({ x: 30, y: 25 }, 1, BOUNDS);
-    for (let i = 0; i < 20; i++) c.update(input({ carrier: { x: 30 + i * 0.25, y: 25 - i * 0.2 } }), 1 / 60, BOUNDS);
-    const before = { x: c.x, y: c.y };
-    const samples = [];
-    for (let i = 0; i < 90; i++) samples.push(c.update(input({ mode: 'aiming', carrier: { x: 35, y: 21 } }), 1 / 60, BOUNDS));
-    for (const s of samples) expect(s).toEqual(before);
   });
 
   it('does not move while held (paused / tactical moment)', () => {

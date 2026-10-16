@@ -28,9 +28,8 @@ describe('M4 match clock', () => {
     const frozen = JSON.stringify({ t: s.simTime, b: s.ball.pos, p: s.players.H5.pos });
     run(sim, 5);
     expect(JSON.stringify({ t: sim.state.simTime, b: sim.state.ball.pos, p: sim.state.players.H5.pos })).toBe(frozen);
-    expect(sim.command({ type: 'dribble', direction: { x: 1, y: 0 } })).toBe(false);
-    expect(sim.command({ type: 'aimStart' })).toBe(false);
-    expect(sim.command({ type: 'feint' })).toBe(false);
+    expect(sim.command({ type: 'padPress', id: 1, action: 'pass' })).toBe(false);
+    expect(sim.command({ type: 'padPress', id: 2, action: 'slide' })).toBe(false);
     expect(sim.state.phase).toBe('halftime');
   });
 
@@ -67,11 +66,14 @@ describe('M4 match clock', () => {
     expect(s.clock).toMatchObject({ half: 2, elapsed: 0 });
     expect(s.ball.owner).toBe('A8');
     expect(s.score).toEqual({ home: 2, away: 1 });
-    expect(s.aimAllowance.home).toBe(MATCH_TUNING.aimAllowance.seconds);
     runUntil(sim, () => sim.state.phase === 'fulltime', 20);
     expect(sim.state.phase).toBe('fulltime');
-    expect(sim.state.events.some((e) => e.type === 'fulltime' && e.detail === '2-1')).toBe(true);
-    expect(matchResult(sim.state)).toBe('win');
+    // The staged 2-1 is kept into the second half; whatever is scored after it adds to it.
+    const ft = sim.state.score;
+    expect(ft.home).toBeGreaterThanOrEqual(2);
+    expect(ft.away).toBeGreaterThanOrEqual(1);
+    expect(sim.state.events.some((e) => e.type === 'fulltime' && e.detail === `${ft.home}-${ft.away}`)).toBe(true);
+    expect(matchResult(sim.state)).toBe(ft.home > ft.away ? 'win' : ft.home === ft.away ? 'draw' : 'loss');
     expect(sim.command({ type: 'startSecondHalf' })).toBe(false);
     run(sim, 5);
     expect(sim.state.phase).toBe('fulltime');
@@ -81,20 +83,19 @@ describe('M4 match clock', () => {
     expect(sim.state.score).toEqual({ home: 0, away: 0 });
   });
 
-  it('an aim in progress at the whistle is cancelled, never fired', () => {
+  it('a charging shot at the whistle is cancelled, never fired', () => {
     const sim = new MatchSim({ seed: 6, halfSeconds: 12 });
     runUntil(sim, () => sim.state.phase === 'live' && sim.userHasBall(), 5);
     sim.arrange((s) => {
       s.clock!.elapsed = 11.99;
     });
-    expect(sim.command({ type: 'aimStart' })).toBe(true);
-    sim.command({ type: 'aimUpdate', direction: { x: 1, y: 0 }, power: 1 });
+    expect(sim.command({ type: 'padPress', id: 1, action: 'shoot' })).toBe(true);
+    expect(sim.state.pad.phase).toBe('chargingShoot');
     run(sim, 0.5);
     expect(sim.state.phase).toBe('halftime');
-    expect(sim.state.aim).toBeNull();
-    expect(sim.command({ type: 'aimRelease' })).toBe(false);
+    expect(sim.state.pad.phase).toBe('ready');
+    expect(sim.command({ type: 'padRelease', id: 2, action: 'shoot' })).toBe(false);
     expect(sim.state.ball.kick).toBeNull();
-    expect(sim.state.events.some((e) => e.type === 'aimCancel' && e.detail === 'half-time')).toBe(true);
   });
 
   it('rejects unusable half lengths', () => {

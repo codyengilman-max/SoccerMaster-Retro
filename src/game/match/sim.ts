@@ -19,7 +19,7 @@ import {
 import { createRng } from '../rng';
 import { DEFAULT_FORMATION, FORMATIONS, roleDef, type FormationId } from './formations';
 import { MATCH_TUNING, type MatchTuning } from './tuning';
-import { isShotOnGoal, planUserPass } from './predict';
+import { planUserPass } from './predict';
 import { ballFocus, computeAnchor, decideCarrier, planTeams, toTeam, toWorld, velToTeam, type AiContext } from './ai';
 import {
   AWAY_IDS,
@@ -38,19 +38,10 @@ import {
 import type { PadAction, PadState, PassScan, PlayerAttrs } from './types';
 
 export type MatchCommand =
-  /** Sets the user carrier's dribble direction (world/pitch vector; its length is ignored). */
-  | { readonly type: 'dribble'; readonly direction: Vec2 }
   | { readonly type: 'padMove'; readonly x: number; readonly y: number }
   | { readonly type: 'padPress'; readonly id: number; readonly action: PadAction }
   | { readonly type: 'padRelease'; readonly id: number; readonly action: PadAction }
   | { readonly type: 'padCancel'; readonly id: number; readonly reason: string }
-  | { readonly type: 'feint' }
-  /** Double-tap: an immediate shot at the opponent goal, fast but with seeded placement error. */
-  | { readonly type: 'quickShot' }
-  | { readonly type: 'aimStart' }
-  | { readonly type: 'aimUpdate'; readonly direction: Vec2 | null; readonly power: number }
-  | { readonly type: 'aimRelease' }
-  | { readonly type: 'aimCancel'; readonly reason: string }
   | { readonly type: 'pause' }
   | { readonly type: 'resume' }
   | { readonly type: 'reset'; readonly seed?: number }
@@ -73,21 +64,9 @@ export interface MatchSimOptions {
   readonly awayFormation?: FormationId;
   /** Sim seconds per half for a timed match. Omitted or null: the open-ended sandbox (no clock). */
   readonly halfSeconds?: number | null;
-  /**
-   * Aim assistance, fixed for the life of the sim (a match locks it at kickoff):
-   * 'slow' = short slow motion while aiming (aimAllowance real seconds per established possession);
-   * 'normal' = aiming at full speed, no allowance spent.
-   */
-  readonly aimAssist?: AimAssistMode;
-  /** 'pad' = joystick + four buttons (controls brief); 'gesture' keeps the swipe / pull-back controls. */
-  readonly controls?: ControlScheme;
   /** Per-player movement attributes (multipliers, clamped to tuning.pad.attrRange); missing = 1. */
   readonly attributes?: Partial<Record<MatchPlayerId, Partial<PlayerAttrs>>>;
 }
-
-export type ControlScheme = 'gesture' | 'pad';
-
-export type AimAssistMode = 'slow' | 'normal';
 
 const MAX_EVENTS = 40;
 
@@ -105,8 +84,6 @@ export class MatchSim {
   private seq = 0;
   private readonly halfSeconds: number | null;
 
-  readonly aimAssist: AimAssistMode;
-  readonly controls: ControlScheme;
   /**
    * Last assisted-pass target search, for live debugging (?debug&passlog). Pre-allocated and overwritten in place;
    * never read by the simulation itself.
@@ -122,9 +99,7 @@ export class MatchSim {
 
   constructor(options: MatchSimOptions = {}) {
     this.tuning = options.tuning ?? MATCH_TUNING;
-    this.controls = options.controls === 'pad' ? 'pad' : 'gesture';
     this.attrOverrides = { ...(options.attributes ?? {}) };
-    this.aimAssist = options.aimAssist === 'normal' ? 'normal' : 'slow';
     this.seed = options.seed ?? 1;
     this.rng = createRng(this.seed);
     const hs = options.halfSeconds;
@@ -164,11 +139,9 @@ export class MatchSim {
         return this.startSecondHalf();
       case 'pause':
         if (s.pauseReasons.user) return false;
-        if (s.phase === 'aiming') this.cancelAim('paused');
         this.padReset('paused');
         s.pauseReasons.user = true;
         s.paused = true;
-        s.bufferedDribble = null;
         this.emit('paused', null, '');
         return true;
       case 'resume':
@@ -179,7 +152,6 @@ export class MatchSim {
         return true;
       case 'coachHold':
         if (s.pauseReasons.coach) return false;
-        if (s.phase === 'aiming') this.cancelAim('coach moment');
         s.pauseReasons.coach = true;
         s.paused = true;
         this.emit('coachHold', null, '');
@@ -219,42 +191,6 @@ export class MatchSim {
         return this.padRelease(cmd.id, cmd.action);
       case 'padCancel':
         return this.padCancel(cmd.id, cmd.reason);
-      case 'dribble':
-        return this.dribble(cmd.direction);
-      case 'feint':
-        return this.feint();
-      case 'quickShot':
-        return this.quickShot();
-      case 'aimStart':
-        if (s.paused || s.phase !== 'live' || !this.userHasBall()) return false;
-        s.phase = 'aiming';
-        s.aim = { direction: null, power: 0, epoch: s.controlEpoch };
-        this.emit('aimStart', s.controlledId, s.aimAllowance.home > 0 ? 'slow' : 'normal');
-        return true;
-      case 'aimUpdate': {
-        if (s.phase !== 'aiming' || !s.aim) return false;
-        if (!Number.isFinite(cmd.power) || (cmd.direction && !finiteVec(cmd.direction))) return this.reject('aim', 'non-finite');
-        const dir = cmd.direction && length(cmd.direction) > 1e-6 ? normalize(cmd.direction) : null;
-        s.aim = { direction: dir, power: clamp(cmd.power, 0, 1), epoch: s.aim.epoch };
-        return true;
-      }
-      case 'aimRelease': {
-        if (s.phase !== 'aiming') return false;
-        const aim = s.aim;
-        s.phase = 'live';
-        s.aim = null;
-        // An aim started for another carrier (or before a turnover) never fires for the new one.
-        if (!aim?.direction || aim.epoch !== s.controlEpoch || !this.userHasBall()) {
-          this.emit('aimCancel', s.controlledId, aim?.direction ? 'control changed' : 'no aim');
-          return false;
-        }
-        this.userKick(aim.direction, aim.power);
-        return true;
-      }
-      case 'aimCancel':
-        if (s.phase !== 'aiming') return false;
-        this.cancelAim(cmd.reason);
-        return true;
     }
   }
 
@@ -274,11 +210,6 @@ export class MatchSim {
     }
     if (s.phase === 'kickoff' || s.phase === 'stopped') {
       s.timeScale = 1;
-    } else if (s.phase === 'aiming' && this.aimAssist === 'slow' && s.aimAllowance.home > 0) {
-      // The allowance is spent in real time and never refills from releasing, cancelling or passing.
-      s.timeScale = T.aim.slowMoScale;
-      s.aimAllowance.home = Math.max(0, s.aimAllowance.home - dt);
-      if (s.aimAllowance.home === 0) this.emit('slowMoSpent', s.controlledId, '');
     } else {
       s.timeScale = 1;
     }
@@ -314,10 +245,8 @@ export class MatchSim {
     if (!c) return;
     const label = c.half === 1 ? 'half-time' : 'full-time';
     c.elapsed = c.halfSeconds;
-    if (s.phase === 'aiming') this.cancelAim(label);
+    this.padReset(label);
     if (s.coachIntent) this.clearCoachIntent(label);
-    s.aim = null;
-    s.feint = null;
     s.stoppage = null;
     s.ball.vel = vec(0, 0);
     s.ball.kick = null;
@@ -330,7 +259,6 @@ export class MatchSim {
   }
 
   private startSecondHalf(): boolean {
-    const T = this.tuning;
     const s = this.s;
     if (s.phase !== 'halftime' || !s.clock || s.paused) return false;
     s.clock.half = 2;
@@ -339,8 +267,6 @@ export class MatchSim {
     s.phase = 'kickoff';
     s.phaseTime = 0;
     s.timeScale = 1;
-    s.aimAllowance = { home: T.aimAllowance.seconds, away: T.aimAllowance.seconds };
-    s.allowanceRefillPending = { home: false, away: false };
     this.accumulator = 0;
     this.emit('secondHalf', null, 'away kick off');
     return true;
@@ -379,47 +305,7 @@ export class MatchSim {
     return true;
   }
 
-  private dribble(direction: Vec2): boolean {
-    const T = this.tuning;
-    const s = this.s;
-    if (s.paused || s.phase !== 'live') return false;
-    if (!finiteVec(direction) || length(direction) < 1e-6) return this.reject('dribble', 'invalid direction');
-    if (s.swipeCooldown > 0) return this.reject('dribble', 'cooldown');
-    const k = s.ball.kick;
-    if (!s.ball.owner && k?.team === 'home' && k.kind === 'pass' && k.receiver) {
-      const r = s.players[k.receiver];
-      if (distance(r.pos, s.ball.pos) <= T.carrier.bufferReach) {
-        s.swipeCooldown = T.carrier.redirectSeconds;
-        s.bufferedDribble = { dir: normalize(direction), receiver: k.receiver, until: s.simTime + T.carrier.bufferSeconds };
-        this.emit('dribble', k.receiver, 'buffered');
-        return true;
-      }
-    }
-    if (!this.userHasBall()) return this.steerOffBall(direction);
-    s.swipeCooldown = T.carrier.redirectSeconds;
-    const dir = normalize(direction);
-    // Only the direction changes; speed stays bounded by carrier.speed, acceleration and turn rate.
-    s.dribbleDir = vec(dir.x, dir.y);
-    const f = s.feint;
-    if (f && f.by === s.controlledId && s.simTime < f.until && !f.exitDir) f.exitDir = copy(dir);
-    this.emit('dribble', s.controlledId, `${dir.x.toFixed(2)},${dir.y.toFixed(2)}`);
-    return true;
-  }
 
-  /** Off the ball a swipe steers the controlled home outfielder for a short spell (normal speed caps, no boost). */
-  private steerOffBall(direction: Vec2): boolean {
-    const T = this.tuning;
-    const s = this.s;
-    const p = s.players[s.controlledId];
-    if (!p || p.team !== 'home' || p.isKeeper || s.ball.owner === p.id) return this.reject('dribble', 'no ball');
-    const owner = s.ball.owner ? s.players[s.ball.owner] : null;
-    if (owner && owner.team === 'home') return this.reject('dribble', 'teammate has the ball');
-    s.swipeCooldown = T.carrier.redirectSeconds;
-    const dir = normalize(direction);
-    s.userSteer = { dir: vec(dir.x, dir.y), until: s.simTime + T.offBall.steerSeconds, epoch: s.controlEpoch };
-    this.emit('dribble', p.id, `steer ${dir.x.toFixed(2)},${dir.y.toFixed(2)}`);
-    return true;
-  }
 
   /**
    * Off-ball control policy. Opponent ball: the home presser. Loose ball: the home chaser, except
@@ -432,16 +318,15 @@ export class MatchSim {
     const s = this.s;
     const owner = s.ball.owner ? s.players[s.ball.owner] : null;
     if (owner && owner.team === 'home') return;
-    if (s.phase !== 'live' && s.phase !== 'aiming') return;
+    if (s.phase !== 'live') return;
     const kick = s.ball.kick;
     if (!owner && kick && kick.team === 'home' && kick.kind !== 'touch') return;
     const pick = owner ? s.defense.home.presserId : s.chaser.home.id;
     if (!pick || pick === s.controlledId || s.players[pick].isKeeper) return;
     if (s.simTime - s.controlSince < T.offBall.minHoldSeconds) return;
     // A slide or block in progress is never handed to another player.
-    if (this.controls === 'pad' && s.pad.phase !== 'ready') return;
-    // Never yank control from a player the user is steering right now, and never bounce straight back.
-    if (s.userSteer && s.simTime < s.userSteer.until) return;
+    if (s.pad.phase !== 'ready') return;
+    // Never bounce straight back.
     if (pick === s.prevControlledId && s.simTime - s.controlSince < T.offBall.returnHoldSeconds) return;
     this.setControl(pick, owner ? 'defend' : 'loose ball');
   }
@@ -449,64 +334,13 @@ export class MatchSim {
   private setControl(id: MatchPlayerId, why: string): void {
     const s = this.s;
     s.controlEpoch += 1;
-    if (s.phase === 'aiming') this.cancelAim('control changed');
     if (s.controlledId !== id) s.prevControlledId = s.controlledId;
     s.controlledId = id;
     s.controlSince = s.simTime;
-    s.userSteer = null;
-    s.bufferedDribble = null;
     this.emit('control', id, why);
   }
 
-  /** Same rules as an aimed kick (live play, user carrier owns the ball); only the aim is automatic. */
-  private quickShot(): boolean {
-    const T = this.tuning;
-    const s = this.s;
-    if (s.paused || s.phase !== 'live') return false;
-    if (!this.userHasBall()) return this.reject('quickShot', 'no ball');
-    const P = T.pitch;
-    const ball = s.ball.pos;
-    const target = vec(P.length, P.goalCenterY + (this.rng() * 2 - 1) * T.quickShot.spread * P.goalHalfWidth);
-    const dir = normalize(vec(target.x - ball.x, target.y - ball.y));
-    if (!finiteVec(dir) || length(dir) < 0.5) return this.reject('quickShot', 'no angle');
-    this.emit('quickShot', s.controlledId, target.y.toFixed(1));
-    this.userKick(dir, T.quickShot.power);
-    return true;
-  }
 
-  private feint(): boolean {
-    const T = this.tuning;
-    const s = this.s;
-    if (s.paused || s.phase !== 'live') return false;
-    if (!this.userHasBall()) return this.reject('feint', 'no ball');
-    if (s.feint || s.simTime < s.feintReadyAt) return this.reject('feint', 'cooldown');
-    const carrier = s.players[s.controlledId];
-    const heading = length(carrier.vel) > 0.3 ? normalize(carrier.vel) : normalize(s.dribbleDir);
-    const side = this.rng() < 0.5 ? 1 : -1;
-    s.feint = { by: carrier.id, start: s.simTime, until: s.simTime + T.feint.seconds, side, exitDir: null };
-    s.feintReadyAt = s.simTime + T.feint.cooldownSeconds;
-    // The nearest opponent may (or may not) bite on the shoulder drop. Nothing else is granted.
-    let nearest: MatchPlayer | null = null;
-    let best = T.feint.biteRange;
-    for (const id of AWAY_IDS) {
-      const o = s.players[id];
-      if (o.isKeeper) continue;
-      const d = distance(o.pos, carrier.pos);
-      if (d <= best) {
-        best = d;
-        nearest = o;
-      }
-    }
-    let detail = 'no defender';
-    if (nearest) {
-      if (this.rng() < T.feint.biteChance) {
-        s.feintBought = { id: nearest.id, until: s.simTime + T.feint.seconds + T.feint.biteSeconds, dir: vec(-heading.y * side, heading.x * side) };
-        detail = `bit ${nearest.id}`;
-      } else detail = `read ${nearest.id}`;
-    }
-    this.emit('feint', carrier.id, detail);
-    return true;
-  }
 
   private setCoachIntent(cmd: Extract<MatchCommand, { type: 'coachIntent' }>): boolean {
     const T = this.tuning;
@@ -542,38 +376,7 @@ export class MatchSim {
     return false;
   }
 
-  private cancelAim(reason: string): void {
-    const s = this.s;
-    if (s.phase !== 'aiming') return;
-    s.phase = 'live';
-    s.aim = null;
-    this.emit('aimCancel', s.controlledId, reason);
-  }
 
-  /** One ground kick for passes and shots: the ball leaves the current ball position along `direction`. */
-  private userKick(direction: Vec2, power: number): void {
-    const T = this.tuning;
-    const s = this.s;
-    const carrier = s.players[s.controlledId];
-    const dir = normalize(direction);
-    const speed = kickSpeed(power, T);
-    const ball = s.ball.pos;
-    // A kick is a shot whenever it is on target and rolls far enough, from any range.
-    if (isShotOnGoal(ball, dir, speed, T)) {
-      this.kickBall(carrier, scale(dir, speed), 'shot', null, null);
-      s.stats.shots.home += 1;
-      this.emit('shot', carrier.id, speed.toFixed(1));
-    } else {
-      // Where a ground ball of this speed slows to a receivable pace; teammates read it, nothing is redirected.
-      const plan = planUserPass(s, carrier.id, ball, dir, speed, T);
-      const target = plan.target;
-      const receiver = plan.receiver;
-      this.kickBall(carrier, scale(dir, speed), 'pass', target, receiver);
-      this.afterPass(carrier, target);
-      this.emit('pass', carrier.id, receiver ?? '');
-    }
-    s.feint = null;
-  }
 
 
   // ---- joystick + four-button controls (controls=pad) --------------------------------------------
@@ -606,7 +409,7 @@ export class MatchSim {
   padAvailability(): Record<PadAction, boolean> {
     const s = this.s;
     const none = { pass: false, shoot: false, slide: false, block: false };
-    if (this.controls !== 'pad' || s.paused || s.phase !== 'live') return none;
+    if (s.paused || s.phase !== 'live') return none;
     const me = s.players[s.controlledId];
     if (!me || me.team !== 'home' || me.isKeeper) return none;
     const ph = s.pad.phase;
@@ -626,7 +429,6 @@ export class MatchSim {
   }
 
   private padMove(x: number, y: number): boolean {
-    if (this.controls !== 'pad') return false;
     if (!Number.isFinite(x) || !Number.isFinite(y)) return this.reject('padMove', 'non-finite');
     const m = Math.hypot(x, y);
     const k = m > 1 ? 1 / m : 1;
@@ -642,7 +444,7 @@ export class MatchSim {
   }
 
   private padPress(id: number, action: PadAction): boolean {
-    if (this.controls !== 'pad' || !this.padCmdId(id, 'padPress')) return false;
+    if (!this.padCmdId(id, 'padPress')) return false;
     const s = this.s;
     const pad = s.pad;
     if (!(['pass', 'shoot', 'slide', 'block'] as const).includes(action)) return this.reject('padPress', 'unknown action');
@@ -673,7 +475,7 @@ export class MatchSim {
   }
 
   private padRelease(id: number, action: PadAction): boolean {
-    if (this.controls !== 'pad' || !this.padCmdId(id, 'padRelease')) return false;
+    if (!this.padCmdId(id, 'padRelease')) return false;
     const s = this.s;
     const pad = s.pad;
     const T = this.tuning.pad;
@@ -708,7 +510,7 @@ export class MatchSim {
 
   /** Pointer cancel, lost focus, layout rebuild: never a kick. */
   private padCancel(id: number, reason: string): boolean {
-    if (this.controls !== 'pad' || !this.padCmdId(id, 'padCancel')) return false;
+    if (!this.padCmdId(id, 'padCancel')) return false;
     const ph = this.s.pad.phase;
     if (ph !== 'chargingPass' && ph !== 'chargingShoot' && ph !== 'kickPrep' && ph !== 'blocking') return false;
     this.padReset(String(reason).slice(0, 40));
@@ -833,7 +635,6 @@ export class MatchSim {
       s.stats.shots.home += 1;
       this.emit('shot', me.id, speed.toFixed(1));
     }
-    s.feint = null;
     pad.phase = 'kickRecovery';
     pad.since = s.simTime;
     pad.locked = null;
@@ -1079,10 +880,7 @@ export class MatchSim {
     const s = this.s;
     s.simTime += h;
     s.phaseTime += h;
-    s.swipeCooldown = Math.max(0, s.swipeCooldown - h);
     s.control = Math.min(T.control.max, s.control + T.control.regenPerSecond * h);
-    if (s.feint && (s.ball.owner !== s.feint.by || s.simTime >= s.feint.until + T.feint.exitSeconds)) s.feint = null;
-    if (s.feintBought && s.simTime >= s.feintBought.until) s.feintBought = null;
     s.ball.ignore = s.ball.ignore.filter((e) => e.until > s.simTime);
 
     this.expireCoachIntent();
@@ -1091,16 +889,14 @@ export class MatchSim {
     this.updatePressRead(h);
     planTeams(this.ctx());
     this.updateUserControl();
-    if (s.userSteer && (s.simTime >= s.userSteer.until || s.userSteer.epoch !== s.controlEpoch)) s.userSteer = null;
-    if (s.bufferedDribble && s.simTime > s.bufferedDribble.until) s.bufferedDribble = null;
-    if (this.controls === 'pad') this.tickPad(h);
+    this.tickPad(h);
     this.aiCarrier();
     const me = s.players[s.controlledId];
     const mePrev = copy(me.pos);
     for (const id of MATCH_PLAYER_IDS) this.movePlayer(s.players[id], h);
     let prev: Vec2 = copy(s.ball.pos);
     this.moveBall(h);
-    if (this.controls === 'pad') {
+    {
       const r = this.resolvePadContacts(me, mePrev, prev);
       if (r === 'stopped') return;
       if (r) prev = r;
@@ -1108,25 +904,16 @@ export class MatchSim {
     this.resolveContacts(prev, h);
   }
 
-  /**
-   * A possession spell is established once a team has held the ball for aimAllowance.establishSeconds.
-   * Only then does the other team's aim allowance become refillable, so deflections, ownership
-   * flicker and instant steals never refill it.
-   */
+  /** A possession spell is established once a team has held the ball for possessionEstablishSeconds. */
   private establishPossession(): void {
     const T = this.tuning;
     const s = this.s;
     const o = s.ball.owner;
     if (!o) return;
     const team = s.players[o].team;
-    if (s.establishedTeam === team || s.simTime - s.ownedSince < T.aimAllowance.establishSeconds - 1e-9) return;
+    if (s.establishedTeam === team || s.simTime - s.ownedSince < T.possessionEstablishSeconds - 1e-9) return;
     s.establishedTeam = team;
     s.possessionSeq += 1;
-    s.allowanceRefillPending[otherTeam(team)] = true;
-    if (s.allowanceRefillPending[team]) {
-      s.allowanceRefillPending[team] = false;
-      s.aimAllowance[team] = T.aimAllowance.seconds;
-    }
     this.emit('possession', o, `established ${team} #${s.possessionSeq}`);
   }
 
@@ -1233,7 +1020,7 @@ export class MatchSim {
     const M = T.movement;
     let desired: MutableVec2;
     let accel = M.accel;
-    if (this.controls === 'pad' && p.id === s.controlledId && p.team === 'home' && !p.isKeeper) {
+    if (p.id === s.controlledId && p.team === 'home' && !p.isKeeper) {
       if (s.ball.owner === p.id) p.intent = 'carry';
       const v = this.padVelocity(p);
       p.vel = approach(p.vel, v.desired, v.accel * h);
@@ -1260,15 +1047,10 @@ export class MatchSim {
       const k = this.keeperTarget(p);
       desired = seek(p.pos, k.target, k.speed, 0.4);
       accel = T.keeper.accel;
-    } else if (s.userSteer && p.id === s.controlledId && p.team === 'home') {
-      desired = scale(s.userSteer.dir, M.chaseSpeed);
-      accel = M.sprintAccel;
     } else {
       desired = seek(p.pos, p.target, p.speed, p.intent === 'chase' || p.intent === 'receive' ? 0.4 : 1.5);
       if (p.intent === 'chase' || p.intent === 'press' || p.intent === 'run' || p.intent === 'recover') accel = M.sprintAccel;
     }
-    const bit = s.feintBought;
-    if (bit && bit.id === p.id && s.ball.owner !== p.id && s.simTime < bit.until) desired = scale(bit.dir, M.pressSpeed);
     p.vel = approach(p.vel, desired, accel * h);
     p.pos.x = clamp(p.pos.x + p.vel.x * h, 0.3, T.pitch.length - 0.3);
     p.pos.y = clamp(p.pos.y + p.vel.y * h, 0.5, T.pitch.width - 0.5);
@@ -1280,12 +1062,7 @@ export class MatchSim {
     const C = T.carrier;
     const s = this.s;
     const want = normalize(s.dribbleDir);
-    let top = C.speed * (want.x < -0.3 ? C.backSpeedFactor : 1);
-    const f = s.feint;
-    if (f && f.by === p.id) {
-      if (s.simTime < f.until) top *= T.feint.speedFactor;
-      else if (f.exitDir) top *= T.feint.exitSpeedFactor;
-    }
+    const top = C.speed * (want.x < -0.3 ? C.backSpeedFactor : 1);
     // Steer straight at the requested direction; movePlayer's accel cap is the only limit on cuts and reversals.
     let vx = want.x * top;
     let vy = want.y * top;
@@ -1530,8 +1307,6 @@ export class MatchSim {
     const s = this.s;
     const ball = s.ball;
     const changed = s.possession !== p.team;
-    const buffered = s.bufferedDribble;
-    s.bufferedDribble = null;
     ball.owner = p.id;
     ball.vel = p.isKeeper ? vec(0, 0) : copy(p.vel);
     // Control brings the ball to the receiver's feet (it was within reach), so ownership and ball position agree.
@@ -1545,7 +1320,6 @@ export class MatchSim {
     s.protectUntil = s.simTime + T.tackle.protectSeconds;
     s.nextDecisionAt = s.simTime + T.ai.reactionSeconds;
     s.touchPhase = 0;
-    s.feint = null;
     for (const id of MATCH_PLAYER_IDS) s.contact[id] = 0;
     for (const t of ['home', 'away'] as const) s.chaser[t].id = null;
     const run = s.runs[p.team];
@@ -1558,15 +1332,13 @@ export class MatchSim {
     if (userControl ? s.controlledId !== p.id || changed : s.controlledId !== null) {
       // Any half-finished aim belonged to the previous carrier: void it.
       s.controlEpoch += 1;
-      if (s.phase === 'aiming') this.cancelAim(changed ? 'possession lost' : 'control changed');
     }
     if (userControl) {
+      if (s.controlledId !== p.id) s.prevControlledId = s.controlledId;
       s.controlledId = p.id;
       s.controlSince = s.simTime;
-      s.userSteer = null;
       // Keep the receiver's own momentum (any direction); only a standing receiver defaults to facing upfield.
       s.dribbleDir = length(p.vel) > 0.3 ? normalize(p.vel) : vec(1, 0);
-      if (buffered && how === 'received' && buffered.receiver === p.id && s.simTime <= buffered.until) s.dribbleDir = copy(buffered.dir);
       this.emit('control', p.id, '');
     }
     if (changed) {
@@ -1591,12 +1363,9 @@ export class MatchSim {
     const T = this.tuning;
     const s = this.s;
     if (s.phase === 'stopped') return;
-    if (s.phase === 'aiming') this.cancelAim('play stopped');
     this.padReset('play stopped');
     s.phase = 'stopped';
     s.phaseTime = 0;
-    s.aim = null;
-    s.feint = null;
     s.timeScale = 1;
     s.stoppage = { reason, scorer, detail, restartTeam, spot: copy(spot), until: reason === 'goal' ? T.stoppage.goalSeconds : T.stoppage.outSeconds };
     s.ball.vel = vec(0, 0);
@@ -1712,22 +1481,13 @@ export class MatchSim {
       possession: 'home',
       controlledId: 'H8',
       controlSince: 0,
-      userSteer: null,
-      bufferedDribble: null,
       prevControlledId: null,
       possessionSeq: 0,
       establishedTeam: null,
       controlEpoch: 0,
-      aim: null,
-      aimAllowance: { home: T.aimAllowance.seconds, away: T.aimAllowance.seconds },
-      allowanceRefillPending: { home: false, away: false },
       control: T.control.max,
-      swipeCooldown: 0,
       dribbleDir: vec(1, 0),
       pad: this.newPad(),
-      feint: null,
-      feintReadyAt: 0,
-      feintBought: null,
       touchPhase: 0,
       protectUntil: 0,
       ownedSince: 0,

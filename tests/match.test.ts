@@ -38,15 +38,24 @@ function giveBall(sim: Sim, id: Id, pos: { x: number; y: number }): void {
   });
 }
 
-function aimAt(sim: Sim, target: { x: number; y: number }, power: number): boolean {
+let padId = 0;
+/**
+ * Joystick + button kick: hold the button (stick neutral, so the carrier stays put) for `holdFrac` of its full
+ * charge, aim the stick at `target` for the release, then centre it once the ball has left the foot.
+ */
+function padTo(sim: Sim, target: { x: number; y: number }, action: 'pass' | 'shoot', holdFrac: number): boolean {
+  const carrier = sim.state.ball.owner;
+  if (!sim.command({ type: 'padPress', id: ++padId, action })) return false;
+  run(sim, holdFrac * (action === 'pass' ? T.pad.passChargeSeconds : T.pad.shotChargeSeconds));
   const b = sim.state.ball.pos;
-  if (!sim.command({ type: 'aimStart' })) return false;
-  sim.command({ type: 'aimUpdate', direction: { x: target.x - b.x, y: target.y - b.y }, power });
-  return sim.command({ type: 'aimRelease' });
+  const d = Math.hypot(target.x - b.x, target.y - b.y) || 1;
+  sim.command({ type: 'padMove', x: (target.x - b.x) / d, y: (target.y - b.y) / d });
+  const ok = sim.command({ type: 'padRelease', id: ++padId, action });
+  // The kick direction is locked at release; centring the stick keeps the carrier from drifting during kick prep.
+  sim.command({ type: 'padMove', x: 0, y: 0 });
+  run(sim, 0.5, (s) => s.state.ball.owner !== carrier);
+  return ok;
 }
-/** Unified kick: the power whose ground ball slows to a receivable pace at the target. */
-const passPower = (sim: Sim, target: { x: number; y: number }): number =>
-  match.powerForSpeed(Math.sqrt(T.pass.arriveSpeed ** 2 + 2 * T.ball.friction * Math.hypot(target.x - sim.state.ball.pos.x, target.y - sim.state.ball.pos.y)), T);
 
 describe('9v9 sandbox roster', () => {
   it('has exactly 18 unique players, nine per team, one keeper each', () => {
@@ -173,7 +182,7 @@ describe('passing, receiving and control', () => {
       s.players.H6.pos = { x: 34, y: 34 };
     });
     const target = { x: 34.5, y: 34 };
-    expect(aimAt(sim, target, passPower(sim, target))).toBe(true);
+    expect(padTo(sim, target, 'pass', 0.35)).toBe(true);
     run(sim, 3, (s) => s.state.ball.owner !== null);
     expect(sim.state.ball.owner).toBe('H6');
     expect(sim.state.controlledId).toBe('H6');
@@ -181,7 +190,7 @@ describe('passing, receiving and control', () => {
     expect(sim.state.stoppage).toBeNull();
   });
 
-  it('losing the ball cancels a held aim, and a stale release never kicks for anyone', () => {
+  it('losing the ball cancels a charging pass, and a stale release never kicks for anyone', () => {
     const sim = new MatchSim({ seed: 5 });
     live(sim);
     giveBall(sim, 'H5', { x: 30, y: 25 });
@@ -189,40 +198,39 @@ describe('passing, receiving and control', () => {
       s.protectUntil = 0;
       s.players.A5.pos = { x: 31.2, y: 25 };
     });
-    expect(sim.command({ type: 'aimStart' })).toBe(true);
-    sim.command({ type: 'aimUpdate', direction: { x: 1, y: 0 }, power: 0.8 });
+    expect(sim.command({ type: 'padPress', id: ++padId, action: 'pass' })).toBe(true);
     const seq = lastSeq(sim);
     run(sim, 3, (s) => s.state.possession === 'away');
     expect(sim.state.possession).toBe('away');
-    expect(sim.state.phase).not.toBe('aiming');
-    expect(newEvents(sim, seq).some((e) => e.type === 'aimCancel' && e.detail === 'possession lost')).toBe(true);
-    expect(sim.command({ type: 'aimRelease' })).toBe(false);
+    run(sim, 2 * F);
+    expect(sim.state.pad.phase).toBe('ready');
+    expect(newEvents(sim, seq).some((e) => e.type === 'padCancel')).toBe(true);
+    expect(sim.command({ type: 'padRelease', id: ++padId, action: 'pass' })).toBe(false);
     expect(newEvents(sim, seq).some((e) => (e.type === 'pass' || e.type === 'shot') && e.by?.startsWith('H'))).toBe(false);
   });
 
-  it('an aim started for one carrier is void if control moves before release', () => {
+  it('a pass charged by one carrier is void if control moves before release', () => {
     const sim = new MatchSim({ seed: 6 });
     live(sim);
     giveBall(sim, 'H5', { x: 30, y: 25 });
-    sim.command({ type: 'aimStart' });
-    sim.command({ type: 'aimUpdate', direction: { x: 1, y: 0 }, power: 1 });
+    expect(sim.command({ type: 'padPress', id: ++padId, action: 'pass' })).toBe(true);
     giveBall(sim, 'H6', { x: 32, y: 35 });
-    sim.arrange((s) => (s.phase = 'aiming'));
-    expect(sim.command({ type: 'aimRelease' })).toBe(false);
+    run(sim, 0.1);
+    sim.command({ type: 'padRelease', id: ++padId, action: 'pass' });
+    run(sim, 0.3);
     expect(sim.state.ball.owner).toBe('H6');
+    expect(sim.state.events.some((e) => e.type === 'pass' && e.by === 'H5')).toBe(false);
   });
 
-  it('defenders react only to visible play, never to the unreleased aim', () => {
+  it('defenders react only to visible play, never to which button is being charged', () => {
     const a = new MatchSim({ seed: 7 });
     const b = new MatchSim({ seed: 7 });
     for (const sim of [a, b]) {
       live(sim);
       giveBall(sim, 'H5', { x: 30, y: 25 });
     }
-    a.command({ type: 'aimStart' });
-    b.command({ type: 'aimStart' });
-    a.command({ type: 'aimUpdate', direction: { x: 0, y: 1 }, power: 1 });
-    b.command({ type: 'aimUpdate', direction: { x: 0, y: -1 }, power: 0.2 });
+    a.command({ type: 'padPress', id: 1, action: 'pass' });
+    b.command({ type: 'padPress', id: 1, action: 'shoot' });
     run(a, 0.5);
     run(b, 0.5);
     for (const id of AWAY_IDS) {
@@ -295,7 +303,10 @@ describe('team behaviour', () => {
     live(sim);
     giveBall(sim, 'H5', { x: 30, y: 20 });
     const target = { x: 36, y: 30 };
-    aimAt(sim, target, passPower(sim, target));
+    padTo(sim, target, 'pass', 0.35);
+    // The user steers the passer until the pass is received; then the AI takes him on.
+    run(sim, 3, (s) => s.state.ball.owner !== null);
+    expect(sim.state.controlledId).not.toBe('H5');
     run(sim, 0.1);
     expect(sim.player('H5').intent).toBe('giveAndGo');
     const from = { ...sim.player('H5').pos };
@@ -372,9 +383,27 @@ describe('opponent possession and keepers', () => {
           s.players.A1.pos = { x: 75 - T.keeper.depth, y: 25 + (19 - 25) * T.keeper.shade };
           s.players.A1.vel = { x: 0, y: 0 };
         });
-        aimAt(sim, { x: 75, y: 25 + off }, 1);
+        // Full-power joystick shot: charge for the whole charge time, then restage the M2 geometry so the
+        // release happens from the drill position against a settled keeper.
+        expect(sim.command({ type: 'padPress', id: ++padId, action: 'shoot' })).toBe(true);
+        run(sim, T.pad.shotChargeSeconds);
+        sim.arrange((s) => {
+          s.players.H8.pos = { x: 56, y: 19 };
+          s.players.H8.vel = { x: 0, y: 0 };
+          s.ball.pos = { x: 56.6, y: 19 };
+          s.ball.vel = { x: 0, y: 0 };
+          for (const id of AWAY_IDS) if (id !== 'A1') s.players[id].pos = { x: 30, y: s.players[id].pos.y };
+          s.players.A1.pos = { x: 75 - T.keeper.depth, y: 25 + (19 - 25) * T.keeper.shade };
+          s.players.A1.vel = { x: 0, y: 0 };
+        });
+        const aim = { x: 75 - 56.6, y: 25 + off - 19 };
+        const len = Math.hypot(aim.x, aim.y);
+        sim.command({ type: 'padMove', x: aim.x / len, y: aim.y / len });
+        expect(sim.command({ type: 'padRelease', id: ++padId, action: 'shoot' })).toBe(true);
+        sim.command({ type: 'padMove', x: 0, y: 0 });
         run(sim, 3, (s) => s.state.phase === 'stopped');
         const goal = sim.state.stoppage?.reason === 'goal' && sim.state.stoppage.scorer === 'home';
+        if (process.env.M2DBG) console.error(`M2 seed=${seed} off=${off} ${sim.state.events.slice(-4).map((e) => `${e.type}:${e.by}:${e.detail}`).join(' ')} ball=${sim.state.ball.pos.x.toFixed(1)},${sim.state.ball.pos.y.toFixed(1)}`);
         if (goal && off > 0) far++;
         if (goal && off === 0) central++;
       }
@@ -395,7 +424,7 @@ describe('sandbox flow', () => {
     run(sim, 2);
     expect(sim.state.simTime).toBe(t);
     expect(sim.state.players).toEqual(frozen);
-    expect(sim.command({ type: 'aimStart' })).toBe(false);
+    expect(sim.command({ type: 'padPress', id: ++padId, action: 'pass' })).toBe(false);
     sim.command({ type: 'resume' });
     run(sim, 0.5);
     expect(sim.state.simTime).toBeGreaterThan(t);
@@ -450,18 +479,24 @@ describe('sandbox flow', () => {
     const script = (fps: number) => {
       const sim = new MatchSim({ seed: 9 });
       const frame = 1 / fps;
-      let passed = false;
+      let pressedAt = -1;
+      let released = false;
       const types: string[] = [];
       let seq = 0;
       for (let i = 0; i < fps * 8; i++) {
-        if (!passed && sim.state.simTime >= 1.5 - 1e-6 && sim.userHasBall()) {
-          aimAt(sim, { x: sim.state.ball.pos.x + 6, y: sim.state.ball.pos.y + 12 }, 0.35);
-          passed = true;
+        if (pressedAt < 0 && sim.state.simTime >= 1.5 - 1e-6 && sim.userHasBall()) {
+          sim.command({ type: 'padMove', x: 6 / Math.hypot(6, 12), y: 12 / Math.hypot(6, 12) });
+          sim.command({ type: 'padPress', id: 1, action: 'pass' });
+          pressedAt = sim.state.simTime;
+        } else if (pressedAt >= 0 && !released && sim.state.simTime >= pressedAt + 0.25 - 1e-6) {
+          sim.command({ type: 'padRelease', id: 2, action: 'pass' });
+          sim.command({ type: 'padMove', x: 0, y: 0 });
+          released = true;
         }
         sim.step(frame);
         for (const e of sim.state.events) if (e.seq > seq) {
           seq = e.seq;
-          if (e.type !== 'aimStart') types.push(`${e.type}:${e.by ?? ''}`);
+          if (!e.type.startsWith('pad')) types.push(`${e.type}:${e.by ?? ''}`);
         }
       }
       return { types, sim };

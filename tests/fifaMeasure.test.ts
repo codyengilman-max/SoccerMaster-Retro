@@ -7,7 +7,7 @@ type Sim = InstanceType<typeof MatchSim>;
 const F = 1 / 60;
 const run = (sim: Sim, s: number, f = F) => { for (let i = 0; i < Math.round(s / f); i++) sim.step(f); };
 function setup(): Sim {
-  const sim = new MatchSim({ seed: 7, controls: 'pad' });
+  const sim = new MatchSim({ seed: 7 });
   run(sim, T.kickoff.countdownSeconds + 2 * F);
   sim.arrange((s) => {
     const p = s.players.H7;

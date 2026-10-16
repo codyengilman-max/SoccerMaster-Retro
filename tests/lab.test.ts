@@ -52,7 +52,7 @@ describe('Gameplay Lab', () => {
     const sim = labSim('turnover');
     for (let i = 0; i < Math.round((T.kickoff.countdownSeconds + 0.1) / F); i++) sim.step(F);
     expect(sim.state.players[sim.state.controlledId].team).toBe('home');
-    expect(sim.command({ type: 'dribble', direction: { x: 1, y: 0 } })).toBe(true);
+    expect(sim.command({ type: 'padMove', x: 1, y: 0 })).toBe(true);
   });
 });
 

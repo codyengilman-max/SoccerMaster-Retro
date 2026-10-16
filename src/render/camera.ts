@@ -40,10 +40,10 @@ export function viewSpan(orientation: 'landscape' | 'portrait', zoom: unknown): 
 
 /**
  * Camera priority for this frame. `hold`: paused or a tactical/break card — the camera does not move.
- * `aiming`: zoom and focus held at the aim start. `travel`: free ball moving — follow the ball and its
+ * `travel`: free ball moving — follow the ball and its
  * path (never a predicted receiver). `loose`: slow free ball. `possession`: follow the carrier.
  */
-export type CameraMode = 'possession' | 'aiming' | 'travel' | 'loose' | 'hold';
+export type CameraMode = 'possession' | 'travel' | 'loose' | 'hold';
 
 export interface CameraInput {
   readonly mode: CameraMode;
@@ -88,7 +88,6 @@ export class CameraController {
   y: number;
   look = 0;
   mode: CameraMode = 'possession';
-  private aimFocus: CamPoint | null = null;
   /** Attacking direction the look-ahead currently follows, and how long a different one has persisted. */
   private dir: 1 | -1 = 1;
   private otherFor = 0;
@@ -107,7 +106,6 @@ export class CameraController {
     this.look = attackDir * this.tuning.lookAhead;
     this.dir = attackDir;
     this.otherFor = 0;
-    this.aimFocus = null;
     this.x = focus.x + this.look;
     this.y = focus.y;
     if (bounds) this.clampTo(bounds);
@@ -116,7 +114,6 @@ export class CameraController {
   /** Focus this frame wants, before smoothing. */
   target(input: CameraInput): CamPoint {
     const T = this.tuning;
-    if (input.mode === 'aiming' && this.aimFocus) return this.aimFocus;
     if (input.mode === 'possession' && finite(input.carrier)) return { x: input.carrier.x + this.look, y: input.carrier.y };
     if (input.mode === 'travel' && finite(input.ball)) {
       const vx = Number.isFinite(input.ballVel.x) ? input.ballVel.x : 0;
@@ -132,23 +129,15 @@ export class CameraController {
   update(input: CameraInput, dtRaw: number, bounds?: CameraBounds): CamPoint {
     const T = this.tuning;
     const dt = Number.isFinite(dtRaw) ? Math.min(T.maxDt, Math.max(0, dtRaw)) : 0;
-    const entering = input.mode !== this.mode;
     this.mode = input.mode;
     if (input.mode === 'hold' || dt === 0) return { x: this.x, y: this.y };
-    if (input.mode === 'aiming') {
-      // Freeze exactly where the camera is at aim start (no residual easing); look-ahead stays as it was.
-      if (entering || !this.aimFocus) this.aimFocus = { x: this.x, y: this.y };
-      return { x: this.x, y: this.y };
-    } else {
-      this.aimFocus = null;
-      if (input.mode !== 'loose') {
-        this.otherFor = input.attackDir === this.dir ? 0 : this.otherFor + dt;
-        if (this.otherFor >= T.turnHold) {
-          this.dir = input.attackDir;
-          this.otherFor = 0;
-        }
-        this.look += (this.dir * T.lookAhead - this.look) * (1 - Math.exp(-T.lookRate * dt));
+    if (input.mode !== 'loose') {
+      this.otherFor = input.attackDir === this.dir ? 0 : this.otherFor + dt;
+      if (this.otherFor >= T.turnHold) {
+        this.dir = input.attackDir;
+        this.otherFor = 0;
       }
+      this.look += (this.dir * T.lookAhead - this.look) * (1 - Math.exp(-T.lookRate * dt));
     }
     let t = this.target(input);
     if (bounds)
