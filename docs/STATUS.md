@@ -1,5 +1,23 @@
 # Status
 
+## Story weeks 2–4, Jungle Ball and the local league (branch `devin/1792161560-story-weeks-2-4`, not merged, not in production)
+
+- **Story:** Start → **Story** now continues after the week-one callback into weeks 2–4 (25 scenes, S07–S24 of the v0.7 outline). The dialogue is Devin's **draft**, owner decision A of 2026-10-16. Every draft scene says so on screen, and `DRAFT_SCENES` lists them. Blake is the rival and Sam is a new teammate (decision B).
+- **Alex's promise:** the offer in week 2 can be kept, cancelled with notice, missed, or missed then repaired in week 3. Week 4's touchline line comes from what actually happened (`promise_*` predicates over committed decisions and runs). Nothing can be applied twice: a choice is one decision and a run is one entitlement.
+- **Week 4 outcome:** the coach gives the package's honest *Limited Evidence* conclusion, because no selection evaluator exists. The chapter ends with "Next chapter in development".
+- **Existing saves:** a save that finished the old week-one slice (complete at `W2_SCHOOL_CALLBACK`) continues into week 2 through `migrateStory`, with decisions, runs and history untouched. The package JSON is unchanged; the link into week 2 is patched in code by `mergeCatalogs`.
+- **Jungle Ball** (`src/game/jungle`, `JungleScene`, Start → Jungle Ball, and the story in week 2):
+  - You, Alex, Blake and Sam play to one goal with a neutral keeper, in 75-second rounds with individual scores and no elimination.
+  - A stunned player is then protected from being stunned again, but can still be tackled. Pushes are bounded and restarts are equidistant.
+  - Leaving keeps the score so far and invents no result. Scores never count as match growth.
+  - AI handicap: 0.9× speed, wider aim error, at most two chasers. This is tuned in seeded sweeps and still needs a playtest.
+- **League** (`src/game/league`), owner decision C:
+  - FC Batavia, Royal Salt Academy, Valley Rising, Desert Tuzon and Sol Vista play a single round robin, scoring 3/1/0. Next Horizon is not entered.
+  - Batavia's fixtures are the story's week 1–4 matches. A finished match's score is recorded once from full time; leaving early records nothing, and a missing result is never a loss.
+  - Other clubs' games are simulated deterministically and labelled as simulated. The table shows on each week's post-match scene.
+- **Cups:** Pacific Wave Cup and Lone Star International Cup are shown as "U12, coming later", as package §08 requires.
+- **Not done:** the indoor school background is waiting on the owner's choice. Real team selection, transfers and the cups are not built.
+
 ## Graphics v1.1 (branch `devin/1792120824-graphics-v1`, not merged, not in production)
 
 Owner-approved styles from `SoccerMaster_Graphics_v1.zip`, built on the joystick/story preview commit `b00c71b`. See `docs/ART.md` (inventory, mapping, gaps) and `docs/DECISIONS.md`.
