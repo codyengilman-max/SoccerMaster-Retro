@@ -145,6 +145,13 @@ describe('FIFA assisted passing', () => {
     expect(press(sim, 'pass')).toBe(true);
     expect(sim.state.pad.receiver).toBe('H9');
   });
+  it('prefers a near teammate close to the line over a far one at a smaller angle', () => {
+    // H8: 8 yd away, 20° off (2.7 yd from the line). H9: 25 yd away, 10° off (4.3 yd from the line).
+    const sim = stage({ H8: { x: 47.5, y: 27.74 }, H9: { x: 64.6, y: 29.34 } });
+    sim.command({ type: 'padMove', x: 1, y: 0 });
+    expect(press(sim, 'pass')).toBe(true);
+    expect(sim.state.pad.receiver).toBe('H8');
+  });
   it('ignores teammates outside the 30° cone and falls back to the stick direction', () => {
     const sim = stage({ H8: { x: 50, y: 33 }, H9: { x: 46, y: 16 } });
     sim.command({ type: 'padMove', x: 1, y: 0 });

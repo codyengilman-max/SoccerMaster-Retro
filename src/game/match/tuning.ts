@@ -200,6 +200,8 @@ export const MATCH_TUNING = {
     /** FIFA-style search cone half-angle along the stick (30°). */
     receiverCone: 0.5236,
     receiverMinRange: 3,
+    /** Yards from the stick's line that count as one unit of receiver score. */
+    receiverLineYards: 4,
     receiverMaxRange: 34,
     /** A highlighted receiver is kept unless another scores better by this margin. */
     receiverStickiness: 0.25,

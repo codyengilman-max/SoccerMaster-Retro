@@ -848,9 +848,9 @@ export class MatchSim {
       if (dist < T.receiverMinRange || dist > T.receiverMaxRange) return null;
       const ang = Math.acos(clamp(dot2(d, aim) / dist, -1, 1));
       if (ang > T.receiverCone) return null;
-      // Distance from the stick's line (relative to the cone's width there) plus distance from the passer.
+      // Yards from the stick's line plus distance from the passer.
       const perp = dist * Math.sin(ang);
-      return perp / (dist * Math.tan(T.receiverCone)) + (0.35 * dist) / T.receiverMaxRange;
+      return perp / T.receiverLineYards + (0.35 * dist) / T.receiverMaxRange;
     };
     let best: MatchPlayerId | null = null;
     let bestScore = Infinity;
