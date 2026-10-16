@@ -45,6 +45,8 @@ test('start screen fits the phone viewport', async ({ page }, info) => {
 });
 
 test('Start -> attack drill -> Back repeated keeps one canvas and stable listeners', async ({ page }) => {
+  // Five round trips through the playable attack drill (the old static pitch was near-instant to boot).
+  test.setTimeout(120_000);
   const errors = trackConsoleErrors(page);
   await page.goto('/?debug=1');
   const initial = await waitForScene(page, 'start');
