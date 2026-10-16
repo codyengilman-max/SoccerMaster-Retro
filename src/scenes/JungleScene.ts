@@ -8,11 +8,18 @@ import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspe
 import { SceneKeys } from './keys';
 import { Button } from './ui/Button';
 import { PadHud } from './ui/PadHud';
+import { PLAYER_ART, PlayerArt } from '../render/art/playerArt';
+import { sideLooks } from '../render/art/roster';
+import { REFERENCE_KITS, dirFromScreen, type PoseKind, type SpriteLook } from '../render/art/spriteFactory';
+import { artTextureKey, artUrl } from '../render/art/urls';
+import { BALL_TEXTURE_SIZE, TEXTURES, ensurePlaceholderTextures } from '../render/textures';
 
 export interface JungleData {
   readonly runId?: string;
   readonly returnTo?: 'story';
   readonly seed?: number;
+  /** The career player's chosen look (story); free play from Start uses the boy reference. */
+  readonly look?: 'boy' | 'girl';
 }
 
 /** What a finished or abandoned round leaves for the story to read (never match growth). */
@@ -24,11 +31,17 @@ export interface JungleRecord {
 }
 
 const NAMES: Record<CompetitorId, string> = { player: 'You', alex: 'Alex', blake: 'Blake', sam: 'Sam' };
-const COLORS: Record<CompetitorId, number> = { player: 0xf2c14e, alex: 0x4d9de0, blake: 0xe15554, sam: 0x7768ae };
+const COLORS: Record<CompetitorId, number> = { player: 0xed813d, alex: 0x4d9de0, blake: 0xe15554, sam: 0x7768ae };
+/** Bibs: the player wears reference kit 0; the others get their own colour so "everyone for themselves" reads at a glance. */
+const KITS = {
+  player: REFERENCE_KITS[0]!,
+  alex: { shirt: '#4d9de0', shade: '#2f6fa8', light: '#7fbbee' },
+  blake: { shirt: '#e15554', shade: '#a83a3a', light: '#f08080' },
+  sam: { shirt: '#7768ae', shade: '#52487d', light: '#9d90cc' },
+} as const;
+const BG_ASSET = 'school';
 const MAX_CHARGE_MS = 900;
 const HITSTOP_MS = 70;
-const SKIN: Record<CompetitorId, number> = { player: 0xf1c27d, alex: 0xc68642, blake: 0xffdbac, sam: 0x8d5524 };
-const HAIR: Record<CompetitorId, number> = { player: 0x3b2314, alex: 0x111111, blake: 0xe0b44c, sam: 0x2a1a0e };
 
 /**
  * Jungle Ball mini-game: one shared goal, a neutral keeper, the player and three AI competitors.
@@ -58,6 +71,18 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
   private wasRestart = true;
   /** Stage geometry: floor band for the pitch's depth axis, the jungle wall above it. */
   private floorTop = 0;
+  private hudG!: Phaser.GameObjects.Graphics;
+  private art!: PlayerArt;
+  private looks!: Record<CompetitorId | 'keeper', SpriteLook>;
+  private sprites: Partial<Record<CompetitorId | 'keeper', Phaser.GameObjects.Image>> = {};
+  private artDir: Record<CompetitorId, number> = { player: 0, alex: 4, blake: 4, sam: 4 };
+  private artDist: Record<CompetitorId, number> = { player: 0, alex: 0, blake: 0, sam: 0 };
+  private lastT = 0;
+  private ballImg!: Phaser.GameObjects.Image;
+  private bg: Phaser.GameObjects.Image | null = null;
+  private ownBg = false;
+  private kickedAt: Partial<Record<CompetitorId, number>> = {};
+  private savedAt: number | null = null;
   private kx = 1;
   private ky = 1;
 
@@ -75,10 +100,35 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     this.keys.clear();
     this.labels = {};
     this.cameras.main.setBackgroundColor('#1f3d2b');
-    this.g = this.add.graphics();
+    this.g = this.add.graphics().setDepth(1);
+    this.hudG = this.add.graphics().setDepth(5000);
+    ensurePlaceholderTextures(this);
+    this.art = new PlayerArt(this);
+    // Graphics v1 factory sprites. Alex, Blake and Sam have no supplied gameplay sheet, so they use reference roster hair (gap noted in STATUS).
+    const look = data.look === 'girl' ? 'girl' : 'boy';
+    const home = sideLooks('home', { slot: 1, look });
+    const away = sideLooks('away');
+    this.looks = {
+      player: { ...home[1]!, kit: KITS.player, number: '10' },
+      alex: { ...away[3]!, kit: KITS.alex, number: '7' },
+      blake: { ...away[2]!, kit: KITS.blake, number: '9' },
+      sam: { ...away[5]!, kit: KITS.sam, number: '4' },
+      keeper: home[0]!,
+    };
+    this.sprites = {};
+    for (const id of [...COMPETITORS, 'keeper'] as const) this.sprites[id] = this.add.image(0, 0, TEXTURES.ball).setOrigin(48 / 96, 68 / 96);
+    this.ballImg = this.add.image(0, 0, TEXTURES.ball);
+    this.artDir = { player: 0, alex: 4, blake: 4, sam: 4 };
+    this.artDist = { player: 0, alex: 0, blake: 0, sam: 0 };
+    this.lastT = 0;
+    this.bg = null;
+    this.ownBg = false;
+    this.kickedAt = {};
+    this.savedAt = null;
+    this.loadBackground();
     const text = (size: number, color = CSS.cream): Phaser.GameObjects.Text =>
       this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, fontSize: `${size}px`, color, align: 'center', resolution: textResolution() }).setOrigin(0.5);
-    this.title = text(18).setText('JUNGLE BALL');
+    this.title = text(18).setText('JUNGLE BALL').setDepth(5001);
     this.banner = this.add
       .text(0, 0, '', { fontFamily: FONT_FAMILY, fontSize: '44px', fontStyle: 'bold', color: '#ffd23f', stroke: '#3a1300', strokeThickness: 8, align: 'center', resolution: textResolution() })
       .setOrigin(0.5)
@@ -87,12 +137,14 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     this.bannerUntil = 0;
     this.freezeUntil = 0;
     this.wasRestart = true;
-    this.hud = text(16);
-    this.result = text(20).setVisible(false);
-    for (const id of COMPETITORS) this.labels[id] = text(12).setText(NAMES[id]);
+    this.hud = text(16).setDepth(5001);
+    this.result = text(20).setVisible(false).setDepth(5002);
+    for (const id of COMPETITORS) this.labels[id] = text(12).setText(NAMES[id]).setDepth(5001);
     this.backButton = new Button(this, 0, 0, { name: 'back-button', label: '‹ Leave', width: 110, height: 44, fontSize: 16, onClick: () => this.leave() });
     this.continueButton = new Button(this, 0, 0, { name: 'continue-button', label: this.returnTo ? 'Back to story' : 'Menu', width: 200, height: 52, fontSize: 18, onClick: () => this.exit() });
     this.continueButton.setVisible(false);
+    this.backButton.setDepth(5003);
+    this.continueButton.setDepth(5003);
     this.pad = new PadHud(this, this.scale.width, this.scale.height, { labels: { slide: 'SLIDE', block: 'PUSH' }, hidden: ['pass'] });
 
     this.input.addPointer(2);
@@ -120,8 +172,9 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
           this.freezeUntil = now + HITSTOP_MS;
           this.cameras.main.shake(110, 0.006);
           this.showBanner(e.kind === 'slide' ? 'SMASH!' : 'WHAM!', 450, 34);
-        } else if (e.type === 'goal') this.showBanner(`GOAL!\n${NAMES[e.by].toUpperCase()}`, 1100);
-        else if (e.type === 'save') this.showBanner('SAVED!', 600, 34);
+        } else if (e.type === 'shot') this.kickedAt[e.by] = this.sim.t;
+        else if (e.type === 'goal') this.showBanner(`GOAL!\n${NAMES[e.by].toUpperCase()}`, 1100);
+        else if (e.type === 'save') (this.savedAt = this.sim.t), this.showBanner('SAVED!', 600, 34);
       }
       const restart = (this.sim.phase as JungleState['phase']) === 'restart';
       if (this.wasRestart && !restart && this.sim.phase === 'live') this.showBanner('PLAY!', 600);
@@ -196,7 +249,7 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     const h = Math.max(120, height - top - bottom);
     this.pen = { x: (width - w) / 2, y: top, width: w, height: h };
     // Jungle wall takes the top of the stage; the floor (the pitch seen side-on) the rest.
-    this.floorTop = top + h * 0.3;
+    this.floorTop = top + h * 0.42;
     this.kx = w / JUNGLE.length;
     this.ky = (top + h - this.floorTop) / JUNGLE.width;
     this.scale1 = Math.min(this.kx, this.ky * 1.6);
@@ -208,11 +261,12 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     // End screen: the button sits at the bottom and the standings stack above it.
     this.continueButton.setPosition(width / 2, height - 44);
     this.result.setOrigin(0.5, 1).setPosition(width / 2, height - 82).setWordWrapWidth(Math.min(width - 40, 420)).setDepth(6001);
+    this.fitBackground();
     this.handlePad(this.pad.layout(width, height));
   }
 
   private drawBars(): void {
-    const g = this.g;
+    const g = this.hudG;
     const s = this.sim;
     const W = this.scale.width;
     const lead = Math.max(3, ...COMPETITORS.map((id) => s.scores[id]));
@@ -236,91 +290,101 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     this.hud.setVisible(true).setText(String(left)).setFontSize(26).setPosition(W / 2, y + 10);
   }
 
-  /** Chunky upright pixel fighter standing on its floor point (feet), drawn back-to-front. */
-  private drawFighter(id: CompetitorId): void {
-    const g = this.g;
+  /** Supplied school courtyard (Graphics v1) behind the play area; a plain fill stands in until it loads. */
+  private loadBackground(): void {
+    const key = artTextureKey(BG_ASSET);
+    const show = (): void => {
+      if (!this.sys.isActive() && !this.sys.isPaused()) return;
+      this.bg?.destroy();
+      this.bg = this.add.image(0, 0, key).setDepth(0);
+      this.fitBackground();
+    };
+    if (this.textures.exists(key)) return show();
+    const url = artUrl(BG_ASSET);
+    if (!url) return;
+    this.ownBg = true;
+    this.load.image(key, url);
+    this.load.once(`filecomplete-image-${key}`, show);
+    if (!this.load.isLoading()) this.load.start();
+  }
+
+  /** Cover-fit the courtyard into the stage: the paved ground sits under the floor band. */
+  private fitBackground(): void {
+    if (!this.bg) return;
+    const p = this.pen;
+    const k = Math.max(p.width / this.bg.width, p.height / this.bg.height);
+    this.bg.setScale(k).setPosition(p.x + p.width / 2, p.y + p.height - (this.bg.height * k) / 2);
+    this.bg.setCrop((this.bg.width - p.width / k) / 2, (this.bg.height - p.height / k), p.width / k, p.height / k);
+  }
+
+  /** Factory frame from what the sim says each competitor is doing (read-only). */
+  private frameFor(id: CompetitorId, dt: number): string {
     const s = this.sim;
     const c = s.competitors[id];
-    const f = this.toScreen(c.pos.x, c.pos.y);
-    const depth = 0.85 + 0.3 * (c.pos.y / JUNGLE.width);
-    const u = Math.max(2, this.scale1 * 0.42 * depth);
-    const face = c.facing.x >= 0 ? 1 : -1;
-    const stunned = s.t < c.stunUntil;
-    const sliding = s.t < c.slideUntil || (s.t < c.lagUntil && c.lastMove?.kind === 'slide');
-    const pushing = c.lastMove?.kind === 'push' && s.t - c.lastMove.t < 0.18;
-    g.fillStyle(0x000000, 0.3).fillEllipse(f.x, f.y, u * 6, u * 1.6);
-    if (sliding) {
-      g.fillStyle(0x1b1b1b, 1).fillRect(f.x - u * 3.5, f.y - u * 2, u * 7, u * 2);
-      g.fillStyle(COLORS[id], 1).fillRect(f.x - u * 3 * face - (face < 0 ? 0 : 0), f.y - u * 3, u * 4 * face, u * 2);
-      g.fillStyle(SKIN[id], 1).fillRect(f.x - u * 3.5 * face - u, f.y - u * 4, u * 2, u * 2);
-      return;
-    }
-    const run = Math.hypot(c.vel.x, c.vel.y) > 1 ? Math.sin(s.t * 18) : 0;
-    g.fillStyle(0x1b1b1b, 1).fillRect(f.x - u * 1.6, f.y - u * 4 - run * u, u * 1.3, u * 4 + run * u).fillRect(f.x + u * 0.3, f.y - u * 4 + run * u, u * 1.3, u * 4 - run * u);
-    g.fillStyle(COLORS[id], stunned ? 0.6 : 1).fillRect(f.x - u * 2, f.y - u * 8.5, u * 4, u * 4.5);
-    g.fillStyle(SKIN[id], 1).fillRect(pushing ? f.x + face * u * 1.5 - (face < 0 ? u * 3.5 : 0) : f.x + face * u * 1.2 - u * 0.6, f.y - u * 7.8, pushing ? u * 3.5 : u * 1.2, u * 1.2);
-    g.fillStyle(SKIN[id], 1).fillRect(f.x - u * 1.5, f.y - u * 11.5, u * 3, u * 3);
-    g.fillStyle(HAIR[id], 1).fillRect(f.x - u * 1.6, f.y - u * 12, u * 3.2, u * 1.2);
-    g.fillStyle(0x000000, 1).fillRect(f.x + face * u * 0.6 - u * 0.3, f.y - u * 10.6, u * 0.6, u * 0.6);
-    if (id === 'player') g.fillStyle(0xffffff, 1).fillTriangle(f.x - u, f.y - u * 14, f.x + u, f.y - u * 14, f.x, f.y - u * 12.8);
-    if (stunned) for (let i = 0; i < 3; i++) {
-      const a = s.t * 9 + (i * Math.PI * 2) / 3;
-      g.fillStyle(0xffd23f, 1).fillRect(f.x + Math.cos(a) * u * 2.4 - u * 0.4, f.y - u * 12.8 + Math.sin(a) * u * 0.6, u * 0.8, u * 0.8);
-    } else if (s.t < c.protectedUntil) g.lineStyle(2, 0xb3e5fc, 0.8).strokeEllipse(f.x, f.y, u * 7, u * 2);
+    const speed = Math.hypot(c.vel.x, c.vel.y);
+    let kind: PoseKind = speed > 0.6 ? 'run' : 'idle';
+    if (s.t < c.slideUntil || (s.t < c.lagUntil && c.lastMove?.kind === 'slide')) kind = 'slide';
+    else if (c.lastMove?.kind === 'push' && s.t - c.lastMove.t < 0.2) kind = 'kick';
+    else if (this.kickedAt[id] !== undefined && s.t - this.kickedAt[id]! < 0.25) kind = 'kick';
+    if (Math.hypot(c.facing.x, c.facing.y) > 1e-6) this.artDir[id] = dirFromScreen(c.facing.x * this.kx, c.facing.y * this.ky);
+    this.artDist[id] = (this.artDist[id] + speed * dt) % 1000;
+    return this.art.frame(this.looks[id], kind, this.artDir[id], Math.floor(this.artDist[id] / 0.55));
   }
 
   private draw(): void {
     const g = this.g;
+    const h = this.hudG;
     const s = this.sim;
     const p = this.pen;
     g.clear();
-    // Jungle wall: sky strip, tree trunks, pixel leaves and hanging vines.
-    g.fillStyle(0x0f2a1a, 1).fillRect(p.x, p.y, p.width, this.floorTop - p.y);
-    for (let i = 0; i < 9; i++) {
-      const tx = p.x + (p.width / 9) * (i + 0.5);
-      g.fillStyle(0x4a2f1b, 1).fillRect(tx - 5, p.y + 8, 10, this.floorTop - p.y - 8);
-      g.fillStyle(i % 2 ? 0x1e5631 : 0x2d6a3e, 1).fillRect(tx - 22, p.y, 44, 18);
-      g.fillStyle(0x3f8f4f, 1).fillRect(tx + 6, p.y + 18, 3, ((i * 37) % 30) + 12);
-    }
-    // Floor: striped grass seen side-on, brown rail front and back.
+    h.clear();
+    const dt = Math.min(0.1, Math.max(0, s.t - this.lastT));
+    this.lastT = s.t;
+    if (!this.bg) g.fillStyle(0xd9a86c, 1).fillRect(p.x, p.y, p.width, p.height);
+    // Play area chalked onto the courtyard paving.
     const fh = p.y + p.height - this.floorTop;
-    for (let i = 0; i < 8; i++) g.fillStyle(i % 2 ? 0x338a38 : 0x2e7d32, 1).fillRect(p.x + (p.width / 8) * i, this.floorTop, p.width / 8, fh);
-    g.fillStyle(0x6d4c2f, 1).fillRect(p.x, this.floorTop - 4, p.width, 4).fillRect(p.x, p.y + p.height, p.width, 6);
-    // Goal on the right: posts, crossbar and net rising off the floor.
+    g.fillStyle(0x2e7d32, 0.18).fillRect(p.x, this.floorTop, p.width, fh);
+    g.lineStyle(3, 0xffffff, 0.75).strokeRect(p.x + 2, this.floorTop, p.width - 4, fh - 2);
     const mid = JUNGLE.width / 2;
     const gb = this.toScreen(JUNGLE.goalX, mid - JUNGLE.goalHalfWidth);
     const gf = this.toScreen(JUNGLE.goalX, mid + JUNGLE.goalHalfWidth);
     const gh = this.scale1 * 4;
-    g.fillStyle(0xffffff, 0.18).fillRect(gb.x - this.kx * 0.8, gb.y - gh, this.kx * 0.8, gf.y - gb.y + gh);
-    g.lineStyle(4, 0xffffff, 1).lineBetween(gb.x, gb.y, gb.x, gb.y - gh).lineBetween(gf.x, gf.y, gf.x, gf.y - gh).lineBetween(gb.x, gb.y - gh, gf.x, gf.y - gh);
-    const order = [...COMPETITORS].sort((a, b) => s.competitors[a].pos.y - s.competitors[b].pos.y);
-    // Neutral keeper (grey) in front of the line.
-    const kp = this.toScreen(JUNGLE.goalX - 0.6, s.keeper.y);
-    const ku = this.scale1 * 0.42;
-    g.fillStyle(0x9e9e9e, 1).fillRect(kp.x - ku * 2, kp.y - ku * 9, ku * 4, ku * 9);
-    g.fillStyle(0xd7ccc8, 1).fillRect(kp.x - ku * 1.5, kp.y - ku * 12, ku * 3, ku * 3);
-    let ballDrawn = false;
-    const ball = (): void => {
-      const b = this.toScreen(s.ball.pos.x, s.ball.pos.y);
-      const r = Math.max(4, JUNGLE.ballRadius * this.scale1 * 1.8);
-      g.fillStyle(0x000000, 0.3).fillEllipse(b.x, b.y, r * 2.2, r * 0.8);
-      g.fillStyle(0xffffff, 1).fillCircle(b.x, b.y - r, r);
-      g.lineStyle(2, 0x1b1b1b, 1).strokeCircle(b.x, b.y - r, r);
-      ballDrawn = true;
-    };
-    for (const id of order) {
-      if (!ballDrawn && s.ball.pos.y < s.competitors[id].pos.y) ball();
-      this.drawFighter(id);
+    g.fillStyle(0xffffff, 0.25).fillRect(gb.x - this.kx * 0.8, gb.y - gh, this.kx * 0.8, gf.y - gb.y + gh);
+    for (let i = 1; i < 6; i++) g.lineStyle(1, 0xffffff, 0.5).lineBetween(gb.x - this.kx * 0.8, gb.y - gh + (gh * i) / 6, gf.x - this.kx * 0.8, gf.y - gh + (gh * i) / 6);
+    g.lineStyle(5, 0xffffff, 1).lineBetween(gb.x, gb.y, gb.x, gb.y - gh).lineBetween(gf.x, gf.y, gf.x, gf.y - gh).lineBetween(gb.x, gb.y - gh, gf.x, gf.y - gh);
+    // Oversized arcade fighters (art only; physics radii are unchanged).
+    const bodyH = (y: number): number => this.scale1 * 3.6 * (0.85 + 0.3 * (y / JUNGLE.width));
+    for (const id of COMPETITORS) {
+      const c = s.competitors[id];
+      const f = this.toScreen(c.pos.x, c.pos.y);
+      const ph = bodyH(c.pos.y);
+      g.fillStyle(0x000000, 0.3).fillEllipse(f.x, f.y, ph * 0.9, ph * 0.25);
+      const sc = PlayerArt.scaleFor(ph);
+      this.sprites[id]!.setTexture(this.frameFor(id, dt)).setScale(sc.x, sc.y).setPosition(f.x, f.y).setDepth(100 + f.y).setAlpha(s.t < c.stunUntil ? 0.75 : 1);
+      const top = f.y - ph * PLAYER_ART.bodyScale - 4;
+      if (s.t < c.stunUntil) for (let i = 0; i < 3; i++) {
+        const a = s.t * 9 + (i * Math.PI * 2) / 3;
+        h.fillStyle(0xffd23f, 1).fillRect(f.x + Math.cos(a) * ph * 0.35 - 3, top + Math.sin(a) * ph * 0.08, 6, 6);
+      } else if (s.t < c.protectedUntil) g.lineStyle(2, 0xb3e5fc, 0.9).strokeEllipse(f.x, f.y, ph * 1.1, ph * 0.32);
+      if (id === 'player') h.fillStyle(0xffd23f, 1).lineStyle(2, 0x1b1b1b, 1).fillTriangle(f.x - 7, top - 12, f.x + 7, top - 12, f.x, top - 2).strokeTriangle(f.x - 7, top - 12, f.x + 7, top - 12, f.x, top - 2);
     }
-    if (!ballDrawn) ball();
+    // Neutral keeper: reference keeper kit, diving briefly after a save.
+    const kp = this.toScreen(JUNGLE.goalX - 0.6, s.keeper.y);
+    const kh = bodyH(s.keeper.y);
+    const ksc = PlayerArt.scaleFor(kh);
+    this.sprites.keeper!.setTexture(this.art.frame(this.looks.keeper, this.savedAt !== null && s.t - this.savedAt < 0.4 ? 'dive' : 'idle', 4, 0)).setScale(ksc.x, ksc.y).setPosition(kp.x, kp.y).setDepth(100 + kp.y);
+    const b = this.toScreen(s.ball.pos.x, s.ball.pos.y);
+    const br = Math.max(9, this.scale1 * 0.55);
+    g.fillStyle(0x000000, 0.3).fillEllipse(b.x, b.y, br * 1.2, br * 0.4);
+    this.ballImg.setScale(br / BALL_TEXTURE_SIZE.width).setPosition(b.x, b.y - br * 0.45).setDepth(100 + b.y + 0.5);
     if (this.chargeStart !== null) {
       const k = Math.min(1, (performance.now() - this.chargeStart) / MAX_CHARGE_MS);
       const me = this.toScreen(s.competitors.player.pos.x, s.competitors.player.pos.y);
-      g.fillStyle(0x000000, 0.5).fillRect(me.x - 20, me.y + 8, 40, 6);
-      g.fillStyle(0xf2c14e, 1).fillRect(me.x - 20, me.y + 8, 40 * k, 6);
+      h.fillStyle(0x000000, 0.5).fillRect(me.x - 20, me.y + 8, 40, 6);
+      h.fillStyle(0xf2c14e, 1).fillRect(me.x - 20, me.y + 8, 40 * k, 6);
     }
     this.drawBars();
-    if (s.phase === 'ended') g.fillStyle(0x000000, 0.55).fillRect(0, 0, this.scale.width, this.scale.height);
+    if (s.phase === 'ended') h.fillStyle(0x000000, 0.55).fillRect(0, 0, this.scale.width, this.scale.height);
     this.pad.setVisible(s.phase !== 'ended');
     this.pad.draw();
   }
@@ -441,5 +505,9 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     this.input.keyboard?.off('keydown', this.onKeyDown, this);
     this.input.keyboard?.off('keyup', this.onKeyUp, this);
     this.pad.destroy();
+    this.art.destroy();
+    this.load.off(`filecomplete-image-${artTextureKey(BG_ASSET)}`);
+    // The courtyard texture is released only if this scene loaded it (the story may own it otherwise).
+    if (this.ownBg && this.textures.exists(artTextureKey(BG_ASSET))) this.textures.remove(artTextureKey(BG_ASSET));
   }
 }

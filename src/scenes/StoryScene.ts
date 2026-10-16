@@ -337,7 +337,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     const run = await this.launch();
     if (!run) return void ((this.busy = false), this.render());
     this.navigating = true;
-    this.scene.start(SceneKeys.Jungle, { runId: run, returnTo: 'story' });
+    this.scene.start(SceneKeys.Jungle, { runId: run, returnTo: 'story', look: this.save?.player?.gender === 'girl' ? 'girl' : 'boy' });
   }
 
   /** On return from Home Training or a match, decide the outcome only from what the career save shows. */
