@@ -52,3 +52,34 @@ export function seek(from: Vec2, to: Vec2, maxSpeed: number, slowRadius = 1.5): 
   const speed = maxSpeed * Math.min(1, l / slowRadius);
   return scale(d, speed / l);
 }
+
+/** In-place `approach`: moves `v` toward (tx, ty) by at most `maxDelta`. Same arithmetic, no allocation. */
+export function approachInPlace(v: MutableVec2, tx: number, ty: number, maxDelta: number): void {
+  const dx = tx - v.x;
+  const dy = ty - v.y;
+  const l = Math.hypot(dx, dy);
+  if (l <= maxDelta || l < 1e-9) {
+    v.x = tx;
+    v.y = ty;
+    return;
+  }
+  const k = maxDelta / l;
+  v.x += dx * k;
+  v.y += dy * k;
+}
+
+/** In-place `seek`: writes the velocity toward `to` into `out`. Same arithmetic, no allocation. */
+export function seekInto(out: MutableVec2, from: Vec2, to: Vec2, maxSpeed: number, slowRadius = 1.5): MutableVec2 {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const l = Math.hypot(dx, dy);
+  if (l < 0.05) {
+    out.x = 0;
+    out.y = 0;
+    return out;
+  }
+  const k = (maxSpeed * Math.min(1, l / slowRadius)) / l;
+  out.x = dx * k;
+  out.y = dy * k;
+  return out;
+}

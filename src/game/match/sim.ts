@@ -1,7 +1,6 @@
 import type { Vec2 } from '../vec';
 import {
   add,
-  approach,
   clamp,
   copy,
   distance,
@@ -11,10 +10,11 @@ import {
   normalize,
   rotate,
   scale,
-  seek,
   sub,
   vec,
   type MutableVec2,
+  approachInPlace,
+  seekInto,
 } from '../math';
 import { createRng } from '../rng';
 import { DEFAULT_FORMATION, FORMATIONS, roleDef, type FormationId } from './formations';
@@ -95,10 +95,16 @@ export class MatchSim {
     chosen: null,
     entries: Array.from({ length: 9 }, () => ({ id: 'H1' as MatchPlayerId, angle: 0, perp: 0, dist: 0, score: 0, inCone: false })),
   };
+  /** Per-step scratch vectors (overwritten in place; never stored in state). */
+  private readonly desired: MutableVec2 = { x: 0, y: 0 };
+  private readonly mePrev: MutableVec2 = { x: 0, y: 0 };
+  private readonly ballPrev: MutableVec2 = { x: 0, y: 0 };
+  private readonly aiCtx: AiContext = { s: null as unknown as MatchState, T: MATCH_TUNING, rng: () => 0 };
   private readonly attrOverrides: Partial<Record<MatchPlayerId, Partial<PlayerAttrs>>>;
 
   constructor(options: MatchSimOptions = {}) {
     this.tuning = options.tuning ?? MATCH_TUNING;
+    (this.aiCtx as { T: MatchTuning }).T = this.tuning;
     this.attrOverrides = { ...(options.attributes ?? {}) };
     this.seed = options.seed ?? 1;
     this.rng = createRng(this.seed);
@@ -881,7 +887,10 @@ export class MatchSim {
     s.simTime += h;
     s.phaseTime += h;
     s.control = Math.min(T.control.max, s.control + T.control.regenPerSecond * h);
-    s.ball.ignore = s.ball.ignore.filter((e) => e.until > s.simTime);
+    const ig = s.ball.ignore;
+    let keep = 0;
+    for (let i = 0; i < ig.length; i++) if (ig[i]!.until > s.simTime) ig[keep++] = ig[i]!;
+    ig.length = keep;
 
     this.expireCoachIntent();
     this.establishPossession();
@@ -892,9 +901,13 @@ export class MatchSim {
     this.tickPad(h);
     this.aiCarrier();
     const me = s.players[s.controlledId];
-    const mePrev = copy(me.pos);
+    const mePrev = this.mePrev;
+    mePrev.x = me.pos.x;
+    mePrev.y = me.pos.y;
     for (const id of MATCH_PLAYER_IDS) this.movePlayer(s.players[id], h);
-    let prev: Vec2 = copy(s.ball.pos);
+    let prev: Vec2 = this.ballPrev;
+    this.ballPrev.x = s.ball.pos.x;
+    this.ballPrev.y = s.ball.pos.y;
     this.moveBall(h);
     {
       const r = this.resolvePadContacts(me, mePrev, prev);
@@ -936,7 +949,10 @@ export class MatchSim {
   }
 
   private ctx(): AiContext {
-    return { s: this.s, T: this.tuning, rng: this.rng };
+    const c = this.aiCtx as { s: MatchState; T: MatchTuning; rng: () => number };
+    c.s = this.s;
+    c.rng = this.rng;
+    return this.aiCtx;
   }
 
   /** Opponent carriers and both keepers decide on a bounded cadence after a reaction delay. */
@@ -1018,40 +1034,46 @@ export class MatchSim {
     const T = this.tuning;
     const s = this.s;
     const M = T.movement;
-    let desired: MutableVec2;
+    let desired: MutableVec2 = this.desired;
     let accel = M.accel;
     if (p.id === s.controlledId && p.team === 'home' && !p.isKeeper) {
       if (s.ball.owner === p.id) p.intent = 'carry';
       const v = this.padVelocity(p);
-      p.vel = approach(p.vel, v.desired, v.accel * h);
+      approachInPlace(p.vel, v.desired.x, v.desired.y, v.accel * h);
       // Jockey caps the actual speed, so entering it at a sprint can't carry the defender through the gap.
       if (v.cap !== undefined) {
         const sp = Math.hypot(p.vel.x, p.vel.y);
-        if (sp > v.cap) p.vel = scale(p.vel, v.cap / sp);
+        if (sp > v.cap) {
+          p.vel.x *= v.cap / sp;
+          p.vel.y *= v.cap / sp;
+        }
       }
       p.pos.x = clamp(p.pos.x + p.vel.x * h, 0.3, T.pitch.length - 0.3);
       p.pos.y = clamp(p.pos.y + p.vel.y * h, 0.5, T.pitch.width - 0.5);
       return;
     }
     if (s.ball.owner === p.id) {
-      if (p.isKeeper) desired = vec(0, 0);
+      if (p.isKeeper) {
+        desired.x = 0;
+        desired.y = 0;
+      }
       else if (p.team === 'home') {
         p.intent = 'carry';
         desired = this.userCarrierVelocity(p);
         accel = T.carrier.accel;
       } else {
-        desired = seek(p.pos, p.target, M.carrySpeed, 0.6);
+        seekInto(desired, p.pos, p.target, M.carrySpeed, 0.6);
         accel = T.dribble.accel;
       }
     } else if (p.isKeeper) {
       const k = this.keeperTarget(p);
-      desired = seek(p.pos, k.target, k.speed, 0.4);
+      seekInto(desired, p.pos, k.target, k.speed, 0.4);
       accel = T.keeper.accel;
     } else {
-      desired = seek(p.pos, p.target, p.speed, p.intent === 'chase' || p.intent === 'receive' ? 0.4 : 1.5);
+      seekInto(desired, p.pos, p.target, p.speed, p.intent === 'chase' || p.intent === 'receive' ? 0.4 : 1.5);
       if (p.intent === 'chase' || p.intent === 'press' || p.intent === 'run' || p.intent === 'recover') accel = M.sprintAccel;
     }
-    p.vel = approach(p.vel, desired, accel * h);
+    approachInPlace(p.vel, desired.x, desired.y, accel * h);
     p.pos.x = clamp(p.pos.x + p.vel.x * h, 0.3, T.pitch.length - 0.3);
     p.pos.y = clamp(p.pos.y + p.vel.y * h, 0.5, T.pitch.width - 0.5);
   }
