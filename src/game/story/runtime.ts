@@ -57,6 +57,19 @@ export function newStory(careerId: string): StoryState {
   return { schema: STORY_SCHEMA, careerId, contentVersion: STORY.version, sceneId: scene.id, nodeId: scene.entry, revealed: false, revision: 0, lastSeq: 0, openedBy: 0, decisions: {}, runs: {}, transcript: [{ sceneId: scene.id, nodeId: scene.entry }], completedScenes: [], complete: false };
 }
 
+/**
+ * Saves that finished the old week-one slice (complete at the final callback) continue into week 2.
+ * Pure and deterministic; nothing already decided is touched.
+ */
+export function migrateStory(s: StoryState): StoryState {
+  if (!s.complete) return s;
+  const scene = sceneById(s.sceneId);
+  const node = scene ? nodeById(scene, s.nodeId) : undefined;
+  if (node?.type !== 'end' || node.next_scene === null) return s;
+  const next = sceneById(node.next_scene)!;
+  return enter({ ...s, complete: false }, next.id, next.entry, s.lastSeq);
+}
+
 export function currentNode(s: StoryState): StoryNode | null {
   const scene = sceneById(s.sceneId);
   return scene ? (nodeById(scene, s.nodeId) ?? null) : null;
@@ -65,6 +78,22 @@ export function currentNode(s: StoryState): StoryNode | null {
 /** Code-owned predicate registry. `null` means the evidence is missing: recovery, never false. */
 export function evaluatePredicate(s: StoryState, predicate: string): boolean | null {
   if (predicate === 'always') return true;
+  const run = (sceneId: string, nodeId: string): ActivityRun | undefined => Object.values(s.runs).find((r) => r.sceneId === sceneId && r.nodeId === nodeId && r.state === 'resolved');
+  if (predicate === 'jungle_accepted') {
+    const v = s.decisions.W2_JUNGLE?.invite;
+    return v === undefined ? null : v === 'play';
+  }
+  if (predicate === 'promise_made') {
+    const v = s.decisions.W2_ALEX_LATE?.offer;
+    return v === undefined ? null : v === 'agree' || v === 'other_slot';
+  }
+  if (predicate === 'promise_cancelled') return s.decisions.W3_COMMITMENT?.commit === 'cancel';
+  if (predicate === 'promise_kept') return run('W3_COMMITMENT', 'bound')?.outcome === 'completed';
+  if (predicate === 'promise_missed') {
+    const r = run('W3_COMMITMENT', 'bound');
+    return r !== undefined && r.outcome !== 'completed';
+  }
+  if (predicate === 'promise_repaired') return run('W3_REPAIR', 'repair')?.outcome === 'completed';
   if (predicate === 'crossbar_accepted') {
     const v = s.decisions.W1_SCHOOL_02?.invitation;
     if (v === undefined) return null;
@@ -90,6 +119,9 @@ function goTo(s: StoryState, nodeId: string, seq: number): StoryState {
   return enter(s, s.sceneId, nodeId, seq);
 }
 function enter(s: StoryState, sceneId: string, nodeId: string, seq: number): StoryState {
+  const n = nodeById(sceneById(sceneId)!, nodeId);
+  // Branch nodes are code-resolved on arrival from committed facts; missing evidence takes the default.
+  if (n?.type === 'branch') return enter(s, sceneId, n.cases.find((c) => evaluatePredicate({ ...s, sceneId }, c.predicate) === true)?.next ?? n.default, seq);
   const transcript = [...s.transcript, { sceneId, nodeId }].slice(-MAX_TRANSCRIPT);
   return { ...s, sceneId, nodeId, revealed: false, openedBy: seq, transcript };
 }
