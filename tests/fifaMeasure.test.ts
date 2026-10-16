@@ -99,3 +99,20 @@ describe('FIFA locomotion determinism', () => {
     expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeLessThanOrEqual(0.05);
   });
 });
+
+describe('FIFA locomotion agility', () => {
+  it('a more agile player brakes and reverses faster', () => {
+    const reverse = (agility: number) => {
+      const sim = setup();
+      sim.setPlayerAttrs('H7', { agility });
+      sim.command({ type: 'padMove', x: 1, y: 0 });
+      run(sim, 1.5);
+      const top = Math.hypot(sim.state.players.H7.vel.x, sim.state.players.H7.vel.y);
+      sim.command({ type: 'padMove', x: -1, y: 0 });
+      let t = 0;
+      for (; t < 3 && sim.state.players.H7.vel.x >= -top * 0.5; t += F) sim.step(F);
+      return t;
+    };
+    expect(reverse(1.2)).toBeLessThanOrEqual(reverse(0.8) * 0.85);
+  });
+});
