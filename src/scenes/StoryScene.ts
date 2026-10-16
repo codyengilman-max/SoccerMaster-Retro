@@ -15,6 +15,7 @@ import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspectable';
 import { SceneKeys } from './keys';
 import { Button } from './ui/Button';
+import { StoryArt } from './storyArt';
 
 /** The career save has one slot ('main'); the story is keyed to it. */
 const CAREER_ID = 'main';
@@ -43,6 +44,8 @@ function newRunId(): string {
  */
 export class StoryScene extends Phaser.Scene implements InspectableScene, GameplayScene {
   private mode: Mode = 'loading';
+  private art: StoryArt | null = null;
+  private panelG!: Phaser.GameObjects.Graphics;
   private career: CareerStore | null = null;
   private save: CareerSave | null = null;
   private store: StoryStore | null = null;
@@ -94,7 +97,11 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     this.actions = [];
     const res = textResolution();
     const text = (color: string, bold = false) => this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color, fontStyle: bold ? 'bold' : 'normal' }).setResolution(res);
-    this.bg = this.add.graphics();
+    this.bg = this.add.graphics().setDepth(-3);
+    this.art?.destroy();
+    this.art = new StoryArt(this, typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    this.art.onChange = () => this.drawStage();
+    this.panelG = this.add.graphics();
     this.stage = this.add.graphics();
     this.speaker = text(CSS.cream, true);
     this.body = text(CSS.ink);
@@ -678,7 +685,21 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     g.clear();
     const bgk = this.mode === 'crossbar' ? 'neutral_school' : this.background();
     const stageH = this.panel.y;
-    if (bgk === 'neutral_home') {
+    const n = this.node();
+    const art = this.art!;
+    art.update({
+      sceneId: this.mode === 'story' || this.mode === 'crossbar' ? (this.state?.sceneId ?? null) : null,
+      appearance: this.gender,
+      speaker: this.mode === 'story' && n?.type === 'line' ? n.speaker : null,
+      showCast: this.mode === 'story' && (n?.type === 'line' || n?.type === 'choice'),
+      width,
+      height: this.scale.height,
+      top: 58,
+      panelY: this.panel.y,
+    });
+    if (art.hasBackdrop) {
+      // Supplied Graphics v1 backdrop is on screen; the code-drawn one is only the fallback.
+    } else if (bgk === 'neutral_home') {
       g.fillStyle(PALETTE.sand, 1).fillRect(0, 0, width, stageH);
       g.fillStyle(PALETTE.peach, 1).fillRect(0, stageH * 0.72, width, stageH * 0.28);
       g.fillStyle(PALETTE.skyBottom, 1).fillRect(width * 0.08, stageH * 0.12, width * 0.22, stageH * 0.34);
@@ -697,12 +718,13 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       g.fillStyle(PALETTE.tomatoDark, 1).fillRect(0, stageH * 0.18, width * 0.45, stageH * 0.32);
       g.fillStyle(PALETTE.grassDark, 1).fillRect(0, stageH * 0.5, width, stageH * 0.5);
     }
-    g.fillStyle(PALETTE.cream, 0.96).fillRoundedRect(this.panel.x, this.panel.y, this.panel.width, this.panel.height, 14);
-    g.lineStyle(3, PALETTE.ink, 1).strokeRoundedRect(this.panel.x, this.panel.y, this.panel.width, this.panel.height, 14);
+    const pg = this.panelG;
+    pg.clear();
+    pg.fillStyle(PALETTE.cream, 0.96).fillRoundedRect(this.panel.x, this.panel.y, this.panel.width, this.panel.height, 14);
+    pg.lineStyle(3, PALETTE.ink, 1).strokeRoundedRect(this.panel.x, this.panel.y, this.panel.width, this.panel.height, 14);
     const s = this.stage;
     s.clear();
-    const n = this.node();
-    if (this.mode === 'story' && n?.type === 'line' && n.speaker !== 'System') {
+    if (this.mode === 'story' && n?.type === 'line' && n.speaker !== 'System' && !art.hasCast) {
       // Code-drawn portrait: head, hair and a coloured shirt per speaker.
       const cx = width * 0.5;
       const r = Math.min(stageH * 0.22, width * 0.14);
@@ -820,6 +842,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     this.input.off(Phaser.Input.Events.POINTER_UP, this.onUp, this);
     this.scale.off(Phaser.Scale.Events.RESIZE, this.onResize, this);
     this.clearActions();
+    this.art?.destroy();
+    this.art = null;
     this.store?.close();
     this.store = null;
   }
@@ -838,6 +862,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     const c = this.contest;
     return {
       mode: this.mode,
+      art: this.art?.describe() ?? null,
       scene: s?.sceneId ?? null,
       node: s?.nodeId ?? null,
       type: n?.type ?? null,
