@@ -1,13 +1,17 @@
-/** Week-one scene graph (package v0.7 week_one_scenes.json): strict validation, no executable content. */
+/**
+ * Story scene graph: week one from package v0.7 (immutable) plus the weeks 2–4 DRAFT extension
+ * (owner decision A, 2026-10-16). Strict validation, no executable content.
+ */
 import raw from '../../../docs/story/v0.7/week_one_scenes.json';
+import rawExt from '../../../docs/story/weeks-2-4/weeks_2_4_draft.json';
 
-export const ADAPTERS = ['identity', 'crossbar', 'training_arrangement', 'weekly_focus', 'practice', 'assignment', 'match', 'week_close'] as const;
+export const ADAPTERS = ['identity', 'crossbar', 'training_arrangement', 'weekly_focus', 'practice', 'assignment', 'match', 'week_close', 'jungle'] as const;
 export type AdapterKind = (typeof ADAPTERS)[number];
-export const PREDICATES = ['always', 'crossbar_accepted'] as const;
+export const PREDICATES = ['always', 'crossbar_accepted', 'jungle_accepted', 'promise_made', 'promise_kept', 'promise_cancelled', 'promise_missed', 'promise_repaired'] as const;
 export type PredicateId = (typeof PREDICATES)[number];
 export const OUTCOMES = ['completed', 'declined', 'abandoned', 'interrupted'] as const;
 export type Outcome = (typeof OUTCOMES)[number];
-const FULL_OUTCOMES: readonly AdapterKind[] = ['crossbar', 'practice', 'match'];
+const FULL_OUTCOMES: readonly AdapterKind[] = ['crossbar', 'practice', 'match', 'jungle'];
 export const BACKGROUNDS = ['neutral_school', 'neutral_home', 'neutral_pitch'] as const;
 export type Background = (typeof BACKGROUNDS)[number];
 
@@ -17,6 +21,7 @@ export type StoryNode =
   | { readonly id: string; readonly type: 'line'; readonly speaker: string; readonly text: string; readonly next: string }
   | { readonly id: string; readonly type: 'choice'; readonly options: readonly ChoiceOption[] }
   | { readonly id: string; readonly type: 'activity_handoff'; readonly adapter: AdapterKind; readonly predicate: PredicateId; readonly on_false: string; readonly outcomes: Readonly<Partial<Record<Outcome, string>>> }
+  | { readonly id: string; readonly type: 'branch'; readonly cases: readonly { readonly predicate: PredicateId; readonly next: string }[]; readonly default: string }
   | { readonly id: string; readonly type: 'end'; readonly next_scene: string | null };
 export interface StoryScene { readonly id: string; readonly version: string; readonly entry: string; readonly background: Background; readonly nodes: readonly StoryNode[] }
 export interface StoryCatalog { readonly version: string; readonly entry: string; readonly scenes: readonly StoryScene[]; readonly order: readonly string[] }
@@ -49,12 +54,14 @@ function oneOf<T extends string>(v: J, list: readonly T[], w: string): T {
 }
 
 export const SUPPORTED_VERSION = '0.7';
+export const EXTENSION_VERSION = 'w24-draft-1';
 
-export function parseCatalog(input: J): StoryCatalog {
+export function parseCatalog(input: J, opts: { version?: string; branches?: boolean; allowOpenLinks?: boolean } = {}): StoryCatalog {
+  const version = opts.version ?? SUPPORTED_VERSION;
   if (!isObj(input)) fail('catalog: expected object');
   const c = input as Record<string, J>;
   keys(c, ['version', 'entry', 'scenes'], 'catalog');
-  if (c.version !== SUPPORTED_VERSION) fail(`catalog: unsupported version ${String(c.version)}`);
+  if (c.version !== version) fail(`catalog: unsupported version ${String(c.version)}`);
   if (!Array.isArray(c.scenes) || c.scenes.length === 0 || c.scenes.length > 200) fail('catalog: scenes');
   const scenes: StoryScene[] = [];
   const sceneIds = new Set<string>();
@@ -81,7 +88,7 @@ export function parseCatalog(input: J): StoryCatalog {
       const nid = id(no.id, nw);
       if (nodeIds.has(nid)) fail(`${sid}: duplicate node ${nid}`);
       nodeIds.add(nid);
-      const t = oneOf(no.type, ['line', 'choice', 'activity_handoff', 'end'] as const, `${sid}.${nid}.type`);
+      const t = oneOf(no.type, opts.branches ? (['line', 'choice', 'activity_handoff', 'branch', 'end'] as const) : (['line', 'choice', 'activity_handoff', 'end'] as const), `${sid}.${nid}.type`);
       if (t === 'line') {
         keys(no, ['id', 'type', 'speaker', 'text', 'next'], nw);
         nodes.push({ id: nid, type: 'line', speaker: text(no.speaker, `${sid}.${nid}.speaker`, 32), text: text(no.text, `${sid}.${nid}.text`), next: id(no.next, `${sid}.${nid}.next`) });
@@ -127,6 +134,18 @@ export function parseCatalog(input: J): StoryCatalog {
         const onFalse = id(no.on_false, `${sid}.${nid}.on_false`);
         nodes.push({ id: nid, type: 'activity_handoff', adapter, predicate, on_false: onFalse, outcomes });
         edges.set(nid, [...Object.values(outcomes), onFalse] as string[]);
+      } else if (t === 'branch') {
+        keys(no, ['id', 'type', 'cases', 'default'], nw);
+        if (!Array.isArray(no.cases) || no.cases.length === 0 || no.cases.length > 8) fail(`${sid}.${nid}: cases`);
+        const cases = (no.cases as J[]).map((cv, ci) => {
+          if (!isObj(cv)) fail(`${sid}.${nid}.cases[${ci}]: expected object`);
+          const co = cv as Record<string, J>;
+          keys(co, ['predicate', 'next'], `${sid}.${nid}.cases[${ci}]`);
+          return { predicate: oneOf(co.predicate, PREDICATES, `${sid}.${nid}.cases[${ci}].predicate`), next: id(co.next, `${sid}.${nid}.cases[${ci}].next`) };
+        });
+        const dflt = id(no.default, `${sid}.${nid}.default`);
+        nodes.push({ id: nid, type: 'branch', cases, default: dflt });
+        edges.set(nid, [...cases.map((x) => x.next), dflt]);
       } else {
         keys(no, ['id', 'type', 'next_scene'], nw);
         const next = no.next_scene === null ? null : id(no.next_scene, `${sid}.${nid}.next_scene`);
@@ -167,7 +186,18 @@ export function parseCatalog(input: J): StoryCatalog {
   return { version: c.version as string, entry, scenes, order };
 }
 
-export const STORY: StoryCatalog = parseCatalog(raw);
+/** Week one stays byte-identical to the package; only its final callback now leads into week 2. */
+export function mergeCatalogs(week1: StoryCatalog, ext: StoryCatalog): StoryCatalog {
+  const last = week1.order[week1.order.length - 1]!;
+  const patched = week1.scenes.map((sc) => (sc.id !== last ? sc : { ...sc, nodes: sc.nodes.map((n) => (n.type === 'end' && n.next_scene === null ? { ...n, next_scene: ext.entry } : n)) }));
+  for (const sc of ext.scenes) if (week1.scenes.some((w) => w.id === sc.id)) fail(`extension: duplicate scene ${sc.id}`);
+  return { version: week1.version, entry: week1.entry, scenes: [...patched, ...ext.scenes], order: [...week1.order, ...ext.order] };
+}
+export const WEEK_ONE: StoryCatalog = parseCatalog(raw);
+export const WEEKS_2_4: StoryCatalog = parseCatalog(rawExt, { version: EXTENSION_VERSION, branches: true });
+export const STORY: StoryCatalog = mergeCatalogs(WEEK_ONE, WEEKS_2_4);
+/** Scene ids whose dialogue is Devin's draft from the outline, awaiting owner review. */
+export const DRAFT_SCENES: ReadonlySet<string> = new Set(WEEKS_2_4.order);
 
 export function sceneById(sid: string): StoryScene | undefined {
   return STORY.scenes.find((s) => s.id === sid);

@@ -21,6 +21,7 @@ export class FormationScene extends Phaser.Scene implements InspectableScene {
   private navigating = false;
   private career = false;
   private returnTo: 'story' | undefined;
+  private resultKey: string | undefined;
   private background!: Phaser.GameObjects.Graphics;
   private diagram!: Phaser.GameObjects.Graphics;
   private title!: Phaser.GameObjects.Text;
@@ -34,8 +35,9 @@ export class FormationScene extends Phaser.Scene implements InspectableScene {
     super(SceneKeys.Formation);
   }
 
-  create(data: { career?: boolean; returnTo?: 'story' } = {}): void {
+  create(data: { career?: boolean; returnTo?: 'story'; resultKey?: string } = {}): void {
     this.returnTo = data.returnTo === 'story' ? 'story' : undefined;
+    this.resultKey = this.returnTo && typeof data.resultKey === 'string' ? data.resultKey : undefined;
     this.navigating = false;
     this.career = data.career === true;
     this.selected = DEFAULT_FORMATION;
@@ -105,7 +107,7 @@ export class FormationScene extends Phaser.Scene implements InspectableScene {
   private kickOff(): void {
     if (this.navigating) return;
     this.navigating = true;
-    this.scene.start(SceneKeys.Match, { formation: this.selected, career: this.career, returnTo: this.returnTo });
+    this.scene.start(SceneKeys.Match, { formation: this.selected, career: this.career, returnTo: this.returnTo, ...(this.resultKey ? { resultKey: this.resultKey } : {}) });
   }
 
   private goBack(): void {

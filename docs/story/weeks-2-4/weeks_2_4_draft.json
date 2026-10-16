@@ -1,0 +1,1686 @@
+{
+ "version": "w24-draft-1",
+ "entry": "W2_ROLE_BOARD",
+ "scenes": [
+  {
+   "id": "W2_ROLE_BOARD",
+   "version": "w24-draft-1",
+   "entry": "l0",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "l0",
+     "type": "line",
+     "speaker": "System",
+     "text": "Week 2. A new role board is pinned up by the training shed.",
+     "next": "l1"
+    },
+    {
+     "id": "l1",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "You and Blake bring different things. I want to see both.",
+     "next": "l2"
+    },
+    {
+     "id": "l2",
+     "type": "line",
+     "speaker": "Blake",
+     "text": "Different things. Sure.",
+     "next": "role"
+    },
+    {
+     "id": "role",
+     "type": "choice",
+     "options": [
+      {
+       "id": "ask_criteria",
+       "label": "What are you looking for?",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "role",
+         "value": "ask_criteria"
+        }
+       ],
+       "next": "r_ask_criteria"
+      },
+      {
+       "id": "name_ambition",
+       "label": "I want to start.",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "role",
+         "value": "name_ambition"
+        }
+       ],
+       "next": "r_name_ambition"
+      },
+      {
+       "id": "request_demo",
+       "label": "Can I show you?",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "role",
+         "value": "request_demo"
+        }
+       ],
+       "next": "r_request_demo"
+      }
+     ]
+    },
+    {
+     "id": "r_ask_criteria",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Three things, for everyone: first touch that sets up the next action, a pass that matches what you see, and getting back into shape. Same list for you and Blake.",
+     "next": "end"
+    },
+    {
+     "id": "r_name_ambition",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Good. Say it out loud and then show it. I'll judge the same three things for everyone.",
+     "next": "end"
+    },
+    {
+     "id": "r_request_demo",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "You will. Practice this week is the demonstration. Same rules for everyone.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W2_ALEX_LATE"
+    }
+   ]
+  },
+  {
+   "id": "W2_ALEX_LATE",
+   "version": "w24-draft-1",
+   "entry": "l0",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "l0",
+     "type": "line",
+     "speaker": "System",
+     "text": "Alex glances at the role board, then drops a ball back into the bag.",
+     "next": "l1"
+    },
+    {
+     "id": "l1",
+     "type": "line",
+     "speaker": "Alex",
+     "text": "One more combination?",
+     "next": "offer"
+    },
+    {
+     "id": "offer",
+     "type": "choice",
+     "options": [
+      {
+       "id": "agree",
+       "label": "Yes, next week before training.",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "offer",
+         "value": "agree"
+        }
+       ],
+       "next": "r_agree"
+      },
+      {
+       "id": "other_slot",
+       "label": "Not today. Next week instead?",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "offer",
+         "value": "other_slot"
+        }
+       ],
+       "next": "r_other_slot"
+      },
+      {
+       "id": "decline",
+       "label": "Not this time, thanks.",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "offer",
+         "value": "decline"
+        }
+       ],
+       "next": "r_decline"
+      }
+     ]
+    },
+    {
+     "id": "r_agree",
+     "type": "line",
+     "speaker": "Alex",
+     "text": "Deal. Next week, before training, same spot. If something comes up, just tell me.",
+     "next": "end"
+    },
+    {
+     "id": "r_other_slot",
+     "type": "line",
+     "speaker": "Alex",
+     "text": "Next week works. Before training. I'll bring the cones.",
+     "next": "end"
+    },
+    {
+     "id": "r_decline",
+     "type": "line",
+     "speaker": "Alex",
+     "text": "No worries. See you Thursday.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W2_JORDAN"
+    }
+   ]
+  },
+  {
+   "id": "W2_JORDAN",
+   "version": "w24-draft-1",
+   "entry": "l0",
+   "background": "neutral_school",
+   "nodes": [
+    {
+     "id": "l0",
+     "type": "line",
+     "speaker": "Jordan",
+     "text": "Do I need an appointment to talk to you now?",
+     "next": "topic"
+    },
+    {
+     "id": "topic",
+     "type": "choice",
+     "options": [
+      {
+       "id": "funny_detail",
+       "label": "Tell a funny training story",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "topic",
+         "value": "funny_detail"
+        }
+       ],
+       "next": "r_funny_detail"
+      },
+      {
+       "id": "ask_day",
+       "label": "Ask about Jordan’s day",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "topic",
+         "value": "ask_day"
+        }
+       ],
+       "next": "r_ask_day"
+      },
+      {
+       "id": "later_chat",
+       "label": "Sorry, distracted. Talk at lunch?",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "topic",
+         "value": "later_chat"
+        }
+       ],
+       "next": "r_later_chat"
+      }
+     ]
+    },
+    {
+     "id": "r_funny_detail",
+     "type": "line",
+     "speaker": "Jordan",
+     "text": "Wait, the ball hit the coach’s water bottle? Twice? Okay, that’s actually great.",
+     "next": "end"
+    },
+    {
+     "id": "r_ask_day",
+     "type": "line",
+     "speaker": "Jordan",
+     "text": "Mine? Science test, and I think I passed. Thanks for asking.",
+     "next": "end"
+    },
+    {
+     "id": "r_later_chat",
+     "type": "line",
+     "speaker": "Jordan",
+     "text": "Lunch it is. I’ll save you a seat.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W2_JUNGLE"
+    }
+   ]
+  },
+  {
+   "id": "W2_JUNGLE",
+   "version": "w24-draft-1",
+   "entry": "l0",
+   "background": "neutral_school",
+   "nodes": [
+    {
+     "id": "l0",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "Hi, I’m Sam. We play Jungle Ball at lunch: one goal, everyone for themselves.",
+     "next": "l1"
+    },
+    {
+     "id": "l1",
+     "type": "line",
+     "speaker": "Blake",
+     "text": "Try to keep up, {player.name}.",
+     "next": "l2"
+    },
+    {
+     "id": "l2",
+     "type": "line",
+     "speaker": "Alex",
+     "text": "It’s chaos. Good chaos. You in?",
+     "next": "invite"
+    },
+    {
+     "id": "invite",
+     "type": "choice",
+     "options": [
+      {
+       "id": "play",
+       "label": "Play",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "invite",
+         "value": "play"
+        }
+       ],
+       "next": "game"
+      },
+      {
+       "id": "watch",
+       "label": "Watch this time",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "invite",
+         "value": "watch"
+        }
+       ],
+       "next": "game"
+      }
+     ]
+    },
+    {
+     "id": "game",
+     "type": "activity_handoff",
+     "adapter": "jungle",
+     "predicate": "jungle_accepted",
+     "on_false": "after_watch",
+     "outcomes": {
+      "completed": "after_play",
+      "declined": "after_other",
+      "abandoned": "after_other",
+      "interrupted": "after_other"
+     }
+    },
+    {
+     "id": "after_play",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "Chaos, right? Same time next week.",
+     "next": "end"
+    },
+    {
+     "id": "after_other",
+     "type": "line",
+     "speaker": "Alex",
+     "text": "Another lunch, then.",
+     "next": "end"
+    },
+    {
+     "id": "after_watch",
+     "type": "line",
+     "speaker": "Jordan",
+     "text": "Watching is a sport too. Mostly yelling.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W2_PRACTICE"
+    }
+   ]
+  },
+  {
+   "id": "W2_PRACTICE",
+   "version": "w24-draft-1",
+   "entry": "l0",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "l0",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Role challenge this week: one scheduled session from your plan. Log what you actually did.",
+     "next": "session"
+    },
+    {
+     "id": "session",
+     "type": "activity_handoff",
+     "adapter": "practice",
+     "predicate": "always",
+     "on_false": "skipped",
+     "outcomes": {
+      "completed": "done",
+      "declined": "skipped",
+      "abandoned": "skipped",
+      "interrupted": "skipped"
+     }
+    },
+    {
+     "id": "done",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "I'll take one strength from what you logged and one next step. That's it. No winners in practice.",
+     "next": "end"
+    },
+    {
+     "id": "skipped",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "No session logged this week. That’s fine; nothing is held against you.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W2_MATCH_PRE"
+    }
+   ]
+  },
+  {
+   "id": "W2_MATCH_PRE",
+   "version": "w24-draft-1",
+   "entry": "assign",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "assign",
+     "type": "activity_handoff",
+     "adapter": "assignment",
+     "predicate": "always",
+     "on_false": "end",
+     "outcomes": {
+      "completed": "end"
+     }
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W2_MATCH"
+    }
+   ]
+  },
+  {
+   "id": "W2_MATCH",
+   "version": "w24-draft-1",
+   "entry": "play",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "play",
+     "type": "activity_handoff",
+     "adapter": "match",
+     "predicate": "always",
+     "on_false": "end",
+     "outcomes": {
+      "completed": "end",
+      "declined": "end",
+      "abandoned": "end",
+      "interrupted": "end"
+     }
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W2_MATCH_POST"
+    }
+   ]
+  },
+  {
+   "id": "W2_MATCH_POST",
+   "version": "w24-draft-1",
+   "entry": "l0",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "l0",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "I need to see more before drawing conclusions about roles. What do you want to ask?",
+     "next": "ask"
+    },
+    {
+     "id": "ask",
+     "type": "choice",
+     "options": [
+      {
+       "id": "ask_role",
+       "label": "Ask about your role",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "ask",
+         "value": "ask_role"
+        }
+       ],
+       "next": "r_ask_role"
+      },
+      {
+       "id": "ask_alex",
+       "label": "Ask about Alex",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "ask",
+         "value": "ask_alex"
+        }
+       ],
+       "next": "r_ask_alex"
+      },
+      {
+       "id": "ask_next",
+       "label": "Ask for one next focus",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "ask",
+         "value": "ask_next"
+        }
+       ],
+       "next": "r_ask_next"
+      }
+     ]
+    },
+    {
+     "id": "r_ask_role",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Same role next week. Keep doing the things on the board.",
+     "next": "end"
+    },
+    {
+     "id": "r_ask_alex",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Alex works hard off the ball. You two could learn from each other.",
+     "next": "end"
+    },
+    {
+     "id": "r_ask_next",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Pick one thing from your training plan and do it every session this week.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W2_HOME_REFLECT"
+    }
+   ]
+  },
+  {
+   "id": "W2_HOME_REFLECT",
+   "version": "w24-draft-1",
+   "entry": "l0",
+   "background": "neutral_home",
+   "nodes": [
+    {
+     "id": "l0",
+     "type": "line",
+     "speaker": "Caregiver",
+     "text": "Two weeks in. Your journal is filling up. Keep the same focus next week, or try another?",
+     "next": "focus"
+    },
+    {
+     "id": "focus",
+     "type": "choice",
+     "options": [
+      {
+       "id": "keep_focus",
+       "label": "Keep my focus",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "focus",
+         "value": "keep_focus"
+        }
+       ],
+       "next": "r_keep_focus"
+      },
+      {
+       "id": "change_focus",
+       "label": "Try another focus",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "focus",
+         "value": "change_focus"
+        }
+       ],
+       "next": "r_change_focus"
+      }
+     ]
+    },
+    {
+     "id": "r_keep_focus",
+     "type": "line",
+     "speaker": "Caregiver",
+     "text": "Steady is good. You can change it in Home Training any time.",
+     "next": "end"
+    },
+    {
+     "id": "r_change_focus",
+     "type": "line",
+     "speaker": "Caregiver",
+     "text": "Change it in Home Training before next week. What you learned stays.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W2_CLOSE"
+    }
+   ]
+  },
+  {
+   "id": "W2_CLOSE",
+   "version": "w24-draft-1",
+   "entry": "close",
+   "background": "neutral_home",
+   "nodes": [
+    {
+     "id": "close",
+     "type": "activity_handoff",
+     "adapter": "week_close",
+     "predicate": "always",
+     "on_false": "end",
+     "outcomes": {
+      "completed": "end"
+     }
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W3_COMMITMENT"
+    }
+   ]
+  },
+  {
+   "id": "W3_COMMITMENT",
+   "version": "w24-draft-1",
+   "entry": "l0",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "l0",
+     "type": "line",
+     "speaker": "System",
+     "text": "Week 3. Before training.",
+     "next": "check"
+    },
+    {
+     "id": "check",
+     "type": "branch",
+     "cases": [
+      {
+       "predicate": "promise_made",
+       "next": "alex_waits"
+      }
+     ],
+     "default": "no_promise"
+    },
+    {
+     "id": "alex_waits",
+     "type": "line",
+     "speaker": "Alex",
+     "text": "Still on for that combination session?",
+     "next": "commit"
+    },
+    {
+     "id": "commit",
+     "type": "choice",
+     "options": [
+      {
+       "id": "keep",
+       "label": "Keep the session",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "commit",
+         "value": "keep"
+        }
+       ],
+       "next": "bound"
+      },
+      {
+       "id": "cancel",
+       "label": "Cancel now, with notice",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "commit",
+         "value": "cancel"
+        }
+       ],
+       "next": "cancelled"
+      }
+     ]
+    },
+    {
+     "id": "bound",
+     "type": "activity_handoff",
+     "adapter": "practice",
+     "predicate": "always",
+     "on_false": "missed",
+     "outcomes": {
+      "completed": "kept",
+      "declined": "missed",
+      "abandoned": "missed",
+      "interrupted": "missed"
+     }
+    },
+    {
+     "id": "kept",
+     "type": "line",
+     "speaker": "Alex",
+     "text": "That was good. Thanks for showing up.",
+     "next": "end"
+    },
+    {
+     "id": "missed",
+     "type": "line",
+     "speaker": "System",
+     "text": "The session with Alex did not happen.",
+     "next": "end"
+    },
+    {
+     "id": "cancelled",
+     "type": "line",
+     "speaker": "Alex",
+     "text": "Thanks for letting me know. Another time?",
+     "next": "end"
+    },
+    {
+     "id": "no_promise",
+     "type": "line",
+     "speaker": "Alex",
+     "text": "Warming up? Join in if you like. No pressure.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W3_ASSIGNMENT"
+    }
+   ]
+  },
+  {
+   "id": "W3_ASSIGNMENT",
+   "version": "w24-draft-1",
+   "entry": "l0",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "l0",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "This week I have a harder task for your position: track your runner every time we lose the ball.",
+     "next": "task"
+    },
+    {
+     "id": "task",
+     "type": "choice",
+     "options": [
+      {
+       "id": "accept",
+       "label": "Accept the task",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "task",
+         "value": "accept"
+        }
+       ],
+       "next": "r_accept"
+      },
+      {
+       "id": "ask_why",
+       "label": "Ask why",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "task",
+         "value": "ask_why"
+        }
+       ],
+       "next": "r_ask_why"
+      },
+      {
+       "id": "retain",
+       "label": "Keep my current task",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "task",
+         "value": "retain"
+        }
+       ],
+       "next": "r_retain"
+      }
+     ]
+    },
+    {
+     "id": "r_accept",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Good. I’ll watch for it, not for goals.",
+     "next": "end"
+    },
+    {
+     "id": "r_ask_why",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "When we lose the ball, the first two seconds matter most. You’re close to the action, so it’s yours.",
+     "next": "end"
+    },
+    {
+     "id": "r_retain",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Fair. Keep your current task. We can try this another week.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W3_SAM"
+    }
+   ]
+  },
+  {
+   "id": "W3_SAM",
+   "version": "w24-draft-1",
+   "entry": "l0",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "l0",
+     "type": "line",
+     "speaker": "System",
+     "text": "By the equipment bag, Sam is lining up cones alone.",
+     "next": "l1"
+    },
+    {
+     "id": "l1",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "Can I try this one on my own first?",
+     "next": "reply"
+    },
+    {
+     "id": "reply",
+     "type": "choice",
+     "options": [
+      {
+       "id": "of_course",
+       "label": "“Of course.”",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "reply",
+         "value": "of_course"
+        }
+       ],
+       "next": "r_of_course"
+      },
+      {
+       "id": "feedback_after",
+       "label": "“Want feedback afterwards?”",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "reply",
+         "value": "feedback_after"
+        }
+       ],
+       "next": "r_feedback_after"
+      },
+      {
+       "id": "elsewhere",
+       "label": "“I’ll work over there.”",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "reply",
+         "value": "elsewhere"
+        }
+       ],
+       "next": "r_elsewhere"
+      }
+     ]
+    },
+    {
+     "id": "r_of_course",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "Thanks.",
+     "next": "end"
+    },
+    {
+     "id": "r_feedback_after",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "Maybe. I’ll let you know.",
+     "next": "end"
+    },
+    {
+     "id": "r_elsewhere",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "Okay. See you in the game.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W3_MATCH_PRE"
+    }
+   ]
+  },
+  {
+   "id": "W3_MATCH_PRE",
+   "version": "w24-draft-1",
+   "entry": "assign",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "assign",
+     "type": "activity_handoff",
+     "adapter": "assignment",
+     "predicate": "always",
+     "on_false": "end",
+     "outcomes": {
+      "completed": "end"
+     }
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W3_MATCH"
+    }
+   ]
+  },
+  {
+   "id": "W3_MATCH",
+   "version": "w24-draft-1",
+   "entry": "play",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "play",
+     "type": "activity_handoff",
+     "adapter": "match",
+     "predicate": "always",
+     "on_false": "end",
+     "outcomes": {
+      "completed": "end",
+      "declined": "end",
+      "abandoned": "end",
+      "interrupted": "end"
+     }
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W3_MATCH_POST"
+    }
+   ]
+  },
+  {
+   "id": "W3_MATCH_POST",
+   "version": "w24-draft-1",
+   "entry": "l0",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "l0",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Let’s talk about one moment, good or bad. Which part do you want to look at?",
+     "next": "response"
+    },
+    {
+     "id": "response",
+     "type": "choice",
+     "options": [
+      {
+       "id": "execution",
+       "label": "How I did it",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "response",
+         "value": "execution"
+        }
+       ],
+       "next": "r_execution"
+      },
+      {
+       "id": "decision",
+       "label": "What I chose",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "response",
+         "value": "decision"
+        }
+       ],
+       "next": "r_decision"
+      },
+      {
+       "id": "next_attempt",
+       "label": "What I’ll try next",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "response",
+         "value": "next_attempt"
+        }
+       ],
+       "next": "r_next_attempt"
+      }
+     ]
+    },
+    {
+     "id": "r_execution",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Technique first: look at your first touch and the weight of your passes.",
+     "next": "end"
+    },
+    {
+     "id": "r_decision",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Decisions: look up before the ball arrives, then pick.",
+     "next": "end"
+    },
+    {
+     "id": "r_next_attempt",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Good. One clear thing to try next time. Write it in your journal.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W3_REPAIR"
+    }
+   ]
+  },
+  {
+   "id": "W3_REPAIR",
+   "version": "w24-draft-1",
+   "entry": "check",
+   "background": "neutral_home",
+   "nodes": [
+    {
+     "id": "check",
+     "type": "branch",
+     "cases": [
+      {
+       "predicate": "promise_missed",
+       "next": "alex_msg"
+      }
+     ],
+     "default": "quiet"
+    },
+    {
+     "id": "alex_msg",
+     "type": "line",
+     "speaker": "Alex",
+     "text": "I waited. Next time, just tell me.",
+     "next": "answer"
+    },
+    {
+     "id": "answer",
+     "type": "choice",
+     "options": [
+      {
+       "id": "propose_repair",
+       "label": "Propose a make-up session",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "answer",
+         "value": "propose_repair"
+        }
+       ],
+       "next": "repair"
+      },
+      {
+       "id": "acknowledge",
+       "label": "Say sorry and explain",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "answer",
+         "value": "acknowledge"
+        }
+       ],
+       "next": "acknowledged"
+      },
+      {
+       "id": "close",
+       "label": "Be honest, no new promise",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "answer",
+         "value": "close"
+        }
+       ],
+       "next": "closed"
+      }
+     ]
+    },
+    {
+     "id": "repair",
+     "type": "activity_handoff",
+     "adapter": "practice",
+     "predicate": "always",
+     "on_false": "unrepaired",
+     "outcomes": {
+      "completed": "repaired",
+      "declined": "unrepaired",
+      "abandoned": "unrepaired",
+      "interrupted": "unrepaired"
+     }
+    },
+    {
+     "id": "repaired",
+     "type": "line",
+     "speaker": "Alex",
+     "text": "We sorted it. Thanks.",
+     "next": "end"
+    },
+    {
+     "id": "unrepaired",
+     "type": "line",
+     "speaker": "Alex",
+     "text": "Okay. Let’s leave it there for now.",
+     "next": "end"
+    },
+    {
+     "id": "acknowledged",
+     "type": "line",
+     "speaker": "Alex",
+     "text": "Okay. Thanks for saying it.",
+     "next": "end"
+    },
+    {
+     "id": "closed",
+     "type": "line",
+     "speaker": "Alex",
+     "text": "Fair enough.",
+     "next": "end"
+    },
+    {
+     "id": "quiet",
+     "type": "line",
+     "speaker": "Caregiver",
+     "text": "Quiet evening. Ready for the last week of the chapter?",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W3_PREP"
+    }
+   ]
+  },
+  {
+   "id": "W3_PREP",
+   "version": "w24-draft-1",
+   "entry": "l0",
+   "background": "neutral_home",
+   "nodes": [
+    {
+     "id": "l0",
+     "type": "line",
+     "speaker": "Caregiver",
+     "text": "Next week is the big one, an exhibition match against a familiar team. Pick one objective to take in.",
+     "next": "objective"
+    },
+    {
+     "id": "objective",
+     "type": "choice",
+     "options": [
+      {
+       "id": "first_touch",
+       "label": "A clean first touch",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "objective",
+         "value": "first_touch"
+        }
+       ],
+       "next": "r_first_touch"
+      },
+      {
+       "id": "look_up",
+       "label": "Look up before receiving",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "objective",
+         "value": "look_up"
+        }
+       ],
+       "next": "r_look_up"
+      },
+      {
+       "id": "recover",
+       "label": "Get back into shape fast",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "objective",
+         "value": "recover"
+        }
+       ],
+       "next": "r_recover"
+      }
+     ]
+    },
+    {
+     "id": "r_first_touch",
+     "type": "line",
+     "speaker": "Caregiver",
+     "text": "First touch it is.",
+     "next": "end"
+    },
+    {
+     "id": "r_look_up",
+     "type": "line",
+     "speaker": "Caregiver",
+     "text": "Eyes up. Good one.",
+     "next": "end"
+    },
+    {
+     "id": "r_recover",
+     "type": "line",
+     "speaker": "Caregiver",
+     "text": "Back into shape. Coach will like that.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W3_CLOSE"
+    }
+   ]
+  },
+  {
+   "id": "W3_CLOSE",
+   "version": "w24-draft-1",
+   "entry": "close",
+   "background": "neutral_home",
+   "nodes": [
+    {
+     "id": "close",
+     "type": "activity_handoff",
+     "adapter": "week_close",
+     "predicate": "always",
+     "on_false": "end",
+     "outcomes": {
+      "completed": "end"
+     }
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W4_ROLE"
+    }
+   ]
+  },
+  {
+   "id": "W4_ROLE",
+   "version": "w24-draft-1",
+   "entry": "l0",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "l0",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "{player.name}, here’s what I’m asking you to do.",
+     "next": "assign"
+    },
+    {
+     "id": "assign",
+     "type": "activity_handoff",
+     "adapter": "assignment",
+     "predicate": "always",
+     "on_false": "ask",
+     "outcomes": {
+      "completed": "ask"
+     }
+    },
+    {
+     "id": "ask",
+     "type": "choice",
+     "options": [
+      {
+       "id": "accept",
+       "label": "Accept",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "ask",
+         "value": "accept"
+        }
+       ],
+       "next": "r_accept"
+      },
+      {
+       "id": "question",
+       "label": "Ask a question",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "ask",
+         "value": "question"
+        }
+       ],
+       "next": "r_question"
+      },
+      {
+       "id": "alternative",
+       "label": "Ask for a different role",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "ask",
+         "value": "alternative"
+        }
+       ],
+       "next": "r_alternative"
+      }
+     ]
+    },
+    {
+     "id": "r_accept",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Good. Play your role and trust the team around you.",
+     "next": "end"
+    },
+    {
+     "id": "r_question",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Ask me anything at half-time too. That’s what I’m here for.",
+     "next": "end"
+    },
+    {
+     "id": "r_alternative",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Team selection isn’t in the game yet, so this is a default assignment. Your position stays as set in Home Training.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W4_TOUCHLINE"
+    }
+   ]
+  },
+  {
+   "id": "W4_TOUCHLINE",
+   "version": "w24-draft-1",
+   "entry": "alex",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "alex",
+     "type": "branch",
+     "cases": [
+      {
+       "predicate": "promise_repaired",
+       "next": "repaired"
+      },
+      {
+       "predicate": "promise_kept",
+       "next": "kept"
+      },
+      {
+       "predicate": "promise_cancelled",
+       "next": "cancelled"
+      },
+      {
+       "predicate": "promise_missed",
+       "next": "unresolved"
+      }
+     ],
+     "default": "none"
+    },
+    {
+     "id": "kept",
+     "type": "line",
+     "speaker": "Alex",
+     "text": "Ready to play?",
+     "next": "end"
+    },
+    {
+     "id": "repaired",
+     "type": "line",
+     "speaker": "Alex",
+     "text": "We sorted it. Let’s play.",
+     "next": "end"
+    },
+    {
+     "id": "cancelled",
+     "type": "line",
+     "speaker": "Alex",
+     "text": "Another session sometime. Let’s play.",
+     "next": "end"
+    },
+    {
+     "id": "unresolved",
+     "type": "line",
+     "speaker": "Alex",
+     "text": "Let’s talk afterwards. We’ve got a match.",
+     "next": "end"
+    },
+    {
+     "id": "none",
+     "type": "line",
+     "speaker": "Alex",
+     "text": "I’ll show when there’s space.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W4_MATCH"
+    }
+   ]
+  },
+  {
+   "id": "W4_MATCH",
+   "version": "w24-draft-1",
+   "entry": "play",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "play",
+     "type": "activity_handoff",
+     "adapter": "match",
+     "predicate": "always",
+     "on_false": "end",
+     "outcomes": {
+      "completed": "end",
+      "declined": "end",
+      "abandoned": "end",
+      "interrupted": "end"
+     }
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W4_FINAL"
+    }
+   ]
+  },
+  {
+   "id": "W4_FINAL",
+   "version": "w24-draft-1",
+   "entry": "l0",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "l0",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Final whistle. How did that role feel?",
+     "next": "reflect"
+    },
+    {
+     "id": "reflect",
+     "type": "choice",
+     "options": [
+      {
+       "id": "learning",
+       "label": "Name one thing I learned",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "reflect",
+         "value": "learning"
+        }
+       ],
+       "next": "r_learning"
+      },
+      {
+       "id": "teammate",
+       "label": "Thank a teammate",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "reflect",
+         "value": "teammate"
+        }
+       ],
+       "next": "r_teammate"
+      },
+      {
+       "id": "next_step",
+       "label": "Ask for the next step",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "reflect",
+         "value": "next_step"
+        }
+       ],
+       "next": "r_next_step"
+      }
+     ]
+    },
+    {
+     "id": "r_learning",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Write it down tonight. That’s yours now.",
+     "next": "end"
+    },
+    {
+     "id": "r_teammate",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Good teams notice each other. Tell them, too.",
+     "next": "end"
+    },
+    {
+     "id": "r_next_step",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Next step: keep your focus going in Home Training.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W4_OUTCOME"
+    }
+   ]
+  },
+  {
+   "id": "W4_OUTCOME",
+   "version": "w24-draft-1",
+   "entry": "l0",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "l0",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "We haven’t got enough information to decide the next opportunity yet. Your chapter is complete; your progress is saved.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "W4_BEDROOM"
+    }
+   ]
+  },
+  {
+   "id": "W4_BEDROOM",
+   "version": "w24-draft-1",
+   "entry": "l0",
+   "background": "neutral_home",
+   "nodes": [
+    {
+     "id": "l0",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Four weeks. New school, new team, new friends.",
+     "next": "ambition"
+    },
+    {
+     "id": "ambition",
+     "type": "choice",
+     "options": [
+      {
+       "id": "new_ambition",
+       "label": "Set a new ambition",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "ambition",
+         "value": "new_ambition"
+        }
+       ],
+       "next": "r_new_ambition"
+      },
+      {
+       "id": "keep_ambition",
+       "label": "Keep my ambition",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "ambition",
+         "value": "keep_ambition"
+        }
+       ],
+       "next": "r_keep_ambition"
+      }
+     ]
+    },
+    {
+     "id": "r_new_ambition",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Next: earn a starting place, one session at a time.",
+     "next": "next_chapter"
+    },
+    {
+     "id": "r_keep_ambition",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Same goal. Closer than last month.",
+     "next": "next_chapter"
+    },
+    {
+     "id": "next_chapter",
+     "type": "line",
+     "speaker": "System",
+     "text": "Next chapter in development. Leagues continue; the Pacific Wave Cup and Lone Star International Cup arrive at U12.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": null
+    }
+   ]
+  }
+ ]
+}

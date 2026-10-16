@@ -81,6 +81,8 @@ export interface MatchSceneData {
   readonly zoom?: number;
   /** Story handoff: Menu returns to the story instead of the start screen. */
   readonly returnTo?: 'story';
+  /** Story run id: the full-time score is kept once under `matchresult:<key>` for the league table. */
+  readonly resultKey?: string;
 }
 
 /** 9v9 team-play sandbox. Reads `MatchSim` state and draws it; owns no soccer rules. */
@@ -168,6 +170,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private coachDirector: coach.CoachDirector | null = null;
   private careerStore: CareerStore | null = null;
   private returnTo: 'story' | null = null;
+  private resultKey: string | null = null;
   private collector: EvidenceCollector | null = null;
   private careerItems: EvidenceItem[] = [];
   private careerSession = '';
@@ -186,6 +189,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
 
   create(data: MatchSceneData = {}): void {
     this.returnTo = data.returnTo === 'story' ? 'story' : null;
+    this.resultKey = this.returnTo && typeof data.resultKey === 'string' ? data.resultKey : null;
     this.navigating = false;
     this.overlayOn = false;
     this.fieldKey = '';
@@ -1315,6 +1319,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         case 'fulltime':
           this.cancelInput('full-time');
           if (this.collector) void this.flushCareer(false);
+          void this.recordResult();
           break;
         case 'secondHalf':
           this.toast('Second half — away kick off');
@@ -1323,6 +1328,18 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
           break;
       }
     }
+  }
+
+  /** Full-time score for a story league fixture, written once (first write wins). Leaving early writes nothing. */
+  private async recordResult(): Promise<void> {
+    const key = this.resultKey;
+    if (!key) return;
+    this.resultKey = null;
+    const { home, away } = this.sim.state.score;
+    const { StoryStore } = await import('../game/story/store');
+    const store = await StoryStore.open();
+    if ((await store.getRecord(`matchresult:${key}`)) === undefined) await store.putRecord(`matchresult:${key}`, { home, away });
+    store.close();
   }
 
   private toast(message: string): void {

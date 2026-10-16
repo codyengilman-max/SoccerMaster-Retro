@@ -1,6 +1,5 @@
 export const SceneKeys = {
   Start: 'start',
-  Pitch: 'pitch',
   Attack: 'attack',
   Formation: 'formation',
   Match: 'match',
@@ -8,6 +7,7 @@ export const SceneKeys = {
   Lab: 'lab',
   Story: 'story',
   Gallery: 'gallery',
+  Jungle: 'jungle',
 } as const;
 
 export type SceneKey = (typeof SceneKeys)[keyof typeof SceneKeys];

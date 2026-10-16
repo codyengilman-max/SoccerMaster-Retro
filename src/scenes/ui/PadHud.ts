@@ -57,7 +57,11 @@ export class PadHud {
   private readonly g: Phaser.GameObjects.Graphics;
   private readonly labels: Record<ActionButton, Phaser.GameObjects.Text>;
 
-  constructor(scene: Phaser.Scene, width: number, height: number) {
+  private readonly hidden: ReadonlySet<ActionButton>;
+
+  /** `labels` renames buttons and `hidden` leaves a button undrawn (e.g. Jungle Ball shows SHOOT / SLIDE / PUSH). */
+  constructor(scene: Phaser.Scene, width: number, height: number, opts: { labels?: Partial<Record<ActionButton, string>>; hidden?: readonly ActionButton[] } = {}) {
+    this.hidden = new Set(opts.hidden ?? []);
     this.prefs = loadPrefs();
     this.controls = new JoystickControls(padLayout(width, height, safeInsets(), this.prefs), this.prefs.deadZone);
     this.g = scene.add.graphics().setDepth(5900).setScrollFactor(0);
@@ -65,7 +69,7 @@ export class PadHud {
       ACTION_BUTTONS.map((a) => [
         a,
         scene.add
-          .text(0, 0, LABELS[a], { fontFamily: 'system-ui, sans-serif', fontStyle: 'bold', fontSize: '14px', color: '#fff8e7', align: 'center' })
+          .text(0, 0, opts.labels?.[a] ?? LABELS[a], { fontFamily: 'system-ui, sans-serif', fontStyle: 'bold', fontSize: '14px', color: '#fff8e7', align: 'center' })
           .setOrigin(0.5)
           .setDepth(5901)
           .setScrollFactor(0)
@@ -90,7 +94,7 @@ export class PadHud {
 
   setVisible(v: boolean): void {
     this.g.setVisible(v);
-    for (const a of ACTION_BUTTONS) this.labels[a].setVisible(v);
+    for (const a of ACTION_BUTTONS) this.labels[a].setVisible(v && !this.hidden.has(a));
   }
 
   draw(): void {
@@ -107,6 +111,10 @@ export class PadHud {
     const st = this.controls.stick;
     g.fillStyle(0xfff8e7, Math.min(1, op + 0.2)).fillCircle(origin.x + st.x * r, origin.y + st.y * r, r * 0.42);
     for (const a of ACTION_BUTTONS) {
+      if (this.hidden.has(a)) {
+        this.labels[a].setVisible(false);
+        continue;
+      }
       const c = L.buttons[a];
       const on = avail[a];
       const down = pressed === a;

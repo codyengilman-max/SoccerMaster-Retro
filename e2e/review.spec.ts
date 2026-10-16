@@ -39,14 +39,15 @@ test('Review & Lab hub reaches Training Review and the catalog-only Soccer Logic
   await waitForScene(page, 'start');
   const start = await diagnostics(page);
   const els = start.layout!.elements as Record<string, Rect>;
-  for (const other of ['enter-button', 'play-button', 'sandbox-button', 'career-button', 'footer', 'subtitle']) expect(overlaps(els['review-button']!, els[other]!), other).toBe(false);
+  for (const other of ['play-button', 'sandbox-button', 'career-button', 'footer', 'subtitle']) expect(overlaps(els['review-button']!, els[other]!), other).toBe(false);
   expect(els['review-button']!.height).toBeGreaterThanOrEqual(44);
 
   await press(page, 'review-button', mode);
   await waitForScene(page, 'career');
   let c = await until(page, (x) => x.status === 'ok' && x.screen === 'reviewHub', 'hub');
   expect(c.player).toBeNull();
-  expect(c.text).toContain('Story & RPG: week one of story package v0.7 is playable');
+  expect(c.text).toContain('Story & RPG: Start → Story plays week one (package v0.7) and weeks 2–4 (DRAFT dialogue awaiting review)');
+  expect(c.text).toContain('U12, coming later');
   await fits(page);
 
   await press(page, 'hub-logic', mode);
