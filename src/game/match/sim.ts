@@ -15,9 +15,8 @@ import {
   sub,
   vec,
   type MutableVec2,
-} from '../attack/math';
-import { createRng } from '../attack/rng';
-import { passSpeedFor } from '../attack/sim';
+} from '../math';
+import { createRng } from '../rng';
 import { DEFAULT_FORMATION, FORMATIONS, roleDef, type FormationId } from './formations';
 import { MATCH_TUNING, type MatchTuning } from './tuning';
 import { isShotOnGoal, planUserPass } from './predict';
@@ -1186,7 +1185,7 @@ export class MatchSim {
       return;
     }
     const dist = clamp(length(raw), T.pass.minDistance, T.pass.maxDistance);
-    const speed = kickSpeed(powerForSpeed(passSpeedFor(dist), T) * (1 + noise(T.ai.powerNoise)), T);
+    const speed = kickSpeed(powerForSpeed(passSpeedFor(dist, T), T) * (1 + noise(T.ai.powerNoise)), T);
     const target = add(s.ball.pos, scale(dir, dist));
     this.kickBall(p, scale(dir, speed), p.isKeeper && d.why === 'long' ? 'clearance' : 'pass', target, d.receiver === p.id ? null : d.receiver);
     this.afterPass(p, target);
@@ -1756,6 +1755,12 @@ export class MatchSim {
 
 function toWorldVel(team: TeamId, v: Vec2): MutableVec2 {
   return team === 'home' ? vec(v.x, v.y) : vec(-v.x, -v.y);
+}
+
+/** Ground-pass launch speed that arrives at `pass.arriveSpeed` after rolling `distanceYards` under friction. */
+function passSpeedFor(distanceYards: number, T: MatchTuning): number {
+  const { arriveSpeed, maxSpeed } = T.pass;
+  return Math.min(maxSpeed, Math.sqrt(arriveSpeed * arriveSpeed + 2 * T.ball.friction * distanceYards));
 }
 
 /** Structural checks that must hold after every step. Returns human-readable violations. */

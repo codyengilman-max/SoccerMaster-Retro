@@ -3,7 +3,7 @@
  * competitors attack one shared goal past a neutral keeper. Individual scores, no elimination.
  * Framework-free and deterministic for a seed. Units: yards, seconds.
  */
-import { createRng } from '../attack/rng';
+import { createRng } from '../rng';
 
 export const JUNGLE_SIM_VERSION = 1;
 export const JUNGLE = {

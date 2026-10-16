@@ -16,7 +16,6 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
   private subtitle!: Phaser.GameObjects.Text;
   private footer!: Phaser.GameObjects.Text;
   private careerButton!: Button;
-  private playButton!: Button;
   private sandboxButton!: Button;
   private reviewButton!: Button;
   private storyButton!: Button;
@@ -67,14 +66,6 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
       .setOrigin(0.5, 1)
       .setAlpha(0.7)
       .setResolution(resolution);
-    this.playButton = new Button(this, 0, 0, {
-      name: 'play-button',
-      label: 'Play Attack Drill',
-      width: 280,
-      height: 72,
-      fontSize: 24,
-      onClick: () => this.playAttackDrill(),
-    });
     this.sandboxButton = new Button(this, 0, 0, {
       name: 'sandbox-button',
       label: 'Play 9v9 Match',
@@ -118,7 +109,6 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
     });
 
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this);
-    this.input.keyboard?.on('keydown-P', this.playAttackDrill, this);
     this.input.keyboard?.on('keydown-T', this.openSandbox, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleShutdown, this);
 
@@ -135,7 +125,6 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
         subtitle: boundsOf(this.subtitle),
         footer: boundsOf(this.footer),
         'career-button': this.careerButton.getButtonBounds(),
-        'play-button': this.playButton.getButtonBounds(),
         'sandbox-button': this.sandboxButton.getButtonBounds(),
         'review-button': this.reviewButton.getButtonBounds(),
         'story-button': this.storyButton.getButtonBounds(),
@@ -148,12 +137,6 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
     if (this.navigating) return;
     this.navigating = true;
     this.scene.start(SceneKeys.Jungle);
-  }
-
-  private playAttackDrill(): void {
-    if (this.navigating) return;
-    this.navigating = true;
-    this.scene.start(SceneKeys.Attack);
   }
 
   private openCareer(): void {
@@ -186,7 +169,6 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
 
   private handleShutdown(): void {
     this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this);
-    this.input.keyboard?.off('keydown-P', this.playAttackDrill, this);
     this.input.keyboard?.off('keydown-T', this.openSandbox, this);
   }
 
@@ -210,7 +192,7 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
       .setPosition(width / 2, this.title.y + this.title.displayHeight / 2 + subtitleSize * 1.1);
 
     // Portrait stacks the buttons; landscape puts them side by side.
-    const buttons = [this.sandboxButton, this.careerButton, this.playButton, this.jungleButton];
+    const buttons = [this.sandboxButton, this.careerButton, this.jungleButton];
     const n = buttons.length;
     const buttonWidth = Math.round(portrait ? Math.min(width * 0.84, 460) : Math.min((width - 24 - 12 * n) / n, 300));
     const buttonHeight = Math.round(Math.max(56, Math.min(height * (portrait ? 0.085 : 0.2), 88)));

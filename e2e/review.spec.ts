@@ -39,7 +39,7 @@ test('Review & Lab hub reaches Training Review and the catalog-only Soccer Logic
   await waitForScene(page, 'start');
   const start = await diagnostics(page);
   const els = start.layout!.elements as Record<string, Rect>;
-  for (const other of ['play-button', 'sandbox-button', 'career-button', 'footer', 'subtitle']) expect(overlaps(els['review-button']!, els[other]!), other).toBe(false);
+  for (const other of ['sandbox-button', 'jungle-button', 'career-button', 'footer', 'subtitle']) expect(overlaps(els['review-button']!, els[other]!), other).toBe(false);
   expect(els['review-button']!.height).toBeGreaterThanOrEqual(44);
 
   await press(page, 'review-button', mode);

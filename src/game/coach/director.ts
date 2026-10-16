@@ -1,6 +1,6 @@
 import type { MatchSim } from '../match/sim';
 import type { MatchPlayerId, MatchState } from '../match/types';
-import { createRng } from '../attack/rng';
+import { createRng } from '../rng';
 import { extractFacts, type CoachFacts } from './facts';
 import { buildMoment } from './moment';
 import { makeNames } from './names';

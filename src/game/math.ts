@@ -1,4 +1,4 @@
-import type { Vec2 } from '../vec';
+import type { Vec2 } from './vec';
 
 export interface MutableVec2 {
   x: number;

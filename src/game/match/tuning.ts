@@ -1,4 +1,4 @@
-import { ATTACK_TUNING } from '../attack/tuning';
+import { ATTACK_TUNING } from './baseTuning';
 
 const D = ATTACK_TUNING;
 

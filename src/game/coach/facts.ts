@@ -1,5 +1,5 @@
 import type { Vec2 } from '../vec';
-import { distance, distanceToSegment, length, sub, vec, type MutableVec2 } from '../attack/math';
+import { distance, distanceToSegment, length, sub, vec, type MutableVec2 } from '../math';
 import { roleOf, toTeam, toWorld } from '../match/ai';
 import type { MatchTuning } from '../match/tuning';
 import { MATCH_PLAYER_IDS, TEAM_PLAYER_IDS, otherTeam, type MatchPlayer, type MatchPlayerId, type MatchState, type TeamId } from '../match/types';

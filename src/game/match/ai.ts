@@ -1,5 +1,5 @@
 import type { Vec2 } from '../vec';
-import { add, clamp, distance, distanceToSegment, lerp, lerpVec, normalize, scale, sub, vec, type MutableVec2 } from '../attack/math';
+import { add, clamp, distance, distanceToSegment, lerp, lerpVec, normalize, scale, sub, vec, type MutableVec2 } from '../math';
 import { roleDef, type RoleDef } from './formations';
 import type { MatchTuning } from './tuning';
 import {

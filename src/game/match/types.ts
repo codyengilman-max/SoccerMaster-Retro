@@ -1,5 +1,5 @@
 import type { Vec2 } from '../vec';
-import type { MutableVec2 } from '../attack/math';
+import type { MutableVec2 } from '../math';
 import type { FormationId, RoleId } from './formations';
 
 export type TeamId = 'home' | 'away';
