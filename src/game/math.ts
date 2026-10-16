@@ -10,8 +10,8 @@ export const copy = (a: Vec2): MutableVec2 => ({ x: a.x, y: a.y });
 export const add = (a: Vec2, b: Vec2): MutableVec2 => ({ x: a.x + b.x, y: a.y + b.y });
 export const sub = (a: Vec2, b: Vec2): MutableVec2 => ({ x: a.x - b.x, y: a.y - b.y });
 export const scale = (a: Vec2, k: number): MutableVec2 => ({ x: a.x * k, y: a.y * k });
-export const length = (a: Vec2): number => Math.hypot(a.x, a.y);
-export const distance = (a: Vec2, b: Vec2): number => Math.hypot(a.x - b.x, a.y - b.y);
+export const length = (a: Vec2): number => Math.sqrt(a.x * a.x + a.y * a.y);
+export const distance = (a: Vec2, b: Vec2): number => Math.sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
 export const dot = (a: Vec2, b: Vec2): number => a.x * b.x + a.y * b.y;
 export const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
 export const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
@@ -57,7 +57,7 @@ export function seek(from: Vec2, to: Vec2, maxSpeed: number, slowRadius = 1.5): 
 export function approachInPlace(v: MutableVec2, tx: number, ty: number, maxDelta: number): void {
   const dx = tx - v.x;
   const dy = ty - v.y;
-  const l = Math.hypot(dx, dy);
+  const l = Math.sqrt(dx * dx + dy * dy);
   if (l <= maxDelta || l < 1e-9) {
     v.x = tx;
     v.y = ty;
@@ -72,7 +72,7 @@ export function approachInPlace(v: MutableVec2, tx: number, ty: number, maxDelta
 export function seekInto(out: MutableVec2, from: Vec2, to: Vec2, maxSpeed: number, slowRadius = 1.5): MutableVec2 {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
-  const l = Math.hypot(dx, dy);
+  const l = Math.sqrt(dx * dx + dy * dy);
   if (l < 0.05) {
     out.x = 0;
     out.y = 0;
