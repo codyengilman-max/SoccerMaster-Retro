@@ -900,7 +900,7 @@ export class MatchSim {
    * Jockey: hold a point goal-side of the opponent carrier (mirroring their run a beat ahead), shaded by the stick,
    * never closer than the gap, at no more than the carrier's speed. Null when no opponent carrier is in range.
    */
-  private jockeyVelocity(p: MatchPlayer): { desired: MutableVec2; accel: number } | null {
+  private jockeyVelocity(p: MatchPlayer): { desired: MutableVec2; accel: number; cap: number } | null {
     const s = this.s;
     const pad = s.pad;
     const T = this.tuning;
@@ -932,10 +932,10 @@ export class MatchSim {
       dx *= cap / want;
       dy *= cap / want;
     }
-    return { desired: vec(dx, dy), accel: T.movement.sprintAccel * p.attrs.accel * p.attrs.agility };
+    return { desired: vec(dx, dy), accel: T.movement.sprintAccel * p.attrs.accel * p.attrs.agility, cap };
   }
 
-  private padVelocity(p: MatchPlayer): { desired: MutableVec2; accel: number } {
+  private padVelocity(p: MatchPlayer): { desired: MutableVec2; accel: number; cap?: number } {
     const s = this.s;
     const T = this.tuning;
     const pad = s.pad;
@@ -1238,6 +1238,11 @@ export class MatchSim {
       if (s.ball.owner === p.id) p.intent = 'carry';
       const v = this.padVelocity(p);
       p.vel = approach(p.vel, v.desired, v.accel * h);
+      // Jockey caps the actual speed, so entering it at a sprint can't carry the defender through the gap.
+      if (v.cap !== undefined) {
+        const sp = Math.hypot(p.vel.x, p.vel.y);
+        if (sp > v.cap) p.vel = scale(p.vel, v.cap / sp);
+      }
       p.pos.x = clamp(p.pos.x + p.vel.x * h, 0.3, T.pitch.length - 0.3);
       p.pos.y = clamp(p.pos.y + p.vel.y * h, 0.5, T.pitch.width - 0.5);
       return;

@@ -530,6 +530,37 @@ describe('BLOCK-hold jockeying (FIFA-style)', () => {
     expect(d.y).toBeGreaterThan(c.y);
   });
 
+  it('entering jockey at a full sprint drops to the carrier speed at once and keeps the gap', () => {
+    const sim = padSim();
+    for (const id of TEAM_PLAYER_IDS.home) if (id !== 'H1') place(sim, id, { x: 3, y: 3 + Number(id.slice(1)) * 4 });
+    give(sim, 'A6', { x: 30, y: 18 }, 'H4');
+    place(sim, 'H4', { x: 24, y: 18 });
+    sim.arrange((s) => (s.players.H4.vel = { x: 6.2, y: 0 }));
+    let minGap = Infinity;
+    let maxSpeed = 0;
+    for (let i = 0; i < 90; i++) {
+      sim.arrange((s) => {
+        s.players.A6.pos = { x: 30, y: 18 };
+        s.players.A6.vel = { x: 0, y: 0 };
+        s.ball.pos = { x: 29.4, y: 18 };
+        s.ball.owner = 'A6';
+        s.protectUntil = s.simTime + 5;
+        s.nextDecisionAt = s.simTime + 5;
+      });
+      if (i === 0) {
+        stick(sim, 1, 0);
+        expect(press(sim, 'block')).toBe(true);
+      }
+      sim.step(F);
+      if (sim.state.pad.jockeying) maxSpeed = Math.max(maxSpeed, speed(sim, 'H4'));
+      const d = sim.state.players.H4.pos;
+      minGap = Math.min(minGap, Math.hypot(d.x - 30, d.y - 18));
+    }
+    expect(sim.state.pad.jockeying).toBe(true);
+    expect(maxSpeed).toBeLessThanOrEqual(T.pad.jockey.minSpeed + 1e-9);
+    expect(minGap).toBeGreaterThan(T.pad.jockey.gap * 0.7);
+  });
+
   it('turns off when the carrier is out of range or BLOCK is released', () => {
     const r = jockey(true);
     expect(release(r.sim, 'block')).toBe(true);

@@ -1757,7 +1757,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private drawPassScan(): void {
     const s = this.sim.state;
     const scan = this.sim.passScan;
-    if (s.pad.phase !== 'chargingPass' || !s.pad.actor) return;
+    if (s.pad.phase !== 'chargingPass' || !s.pad.actor) {
+      // Each new charge logs its first search, even with the same target and aim as the last one.
+      this.passLogKey = '';
+      return;
+    }
     const T = match.MATCH_TUNING.pad;
     const L = this.pitchLayout;
     const b = s.ball.pos;
