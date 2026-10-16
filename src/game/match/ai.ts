@@ -342,9 +342,12 @@ function planDefence(ctx: AiContext, team: TeamId, B: Vec2, oppOutfield: readonl
   const a = s.defense[team];
   a.presserId = pickCommitted(s, players, a.presserId, pressTime, a.until, D);
   // Cover: second player between the ball and goal, toward the most dangerous nearby opponent.
-  const danger = oppOutfield
-    .filter((o) => distance(o, B) > 2 && distance(o, B) < 18)
-    .sort((m, n) => m.x - n.x)[0];
+  // Deepest opponent 2-18 yd from the ball (first one wins a tie, as the stable sort did).
+  let danger: Vec2 | undefined;
+  for (const o of oppOutfield) {
+    const d = distance(o, B);
+    if (d > 2 && d < 18 && (!danger || o.x < danger.x)) danger = o;
+  }
   const coverBase = add(B, scale(toGoal, D.coverDepth));
   const coverSpot = danger ? lerpVec(coverBase, danger, D.coverFraction) : coverBase;
   const coverTime = (p: MatchPlayer): number => distance(toTeam(team, p.pos, T), coverSpot) / M.coverSpeed;
