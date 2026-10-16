@@ -1,5 +1,13 @@
 # Status
 
+## FIFA-style mechanics (branch `feature/fifa-gameplay-mechanics`, not merged, not in production)
+
+- **Locomotion:** a light stick push is close control (slow, tight turns); a full push runs with momentum; a sharp reversal brakes first, shorter with higher agility.
+- **Passing:** a 30° cone along the stick; teammates scored by yards from the stick's line plus distance; the pass leads the chosen receiver's run, with hold length still setting power.
+- **Jockeying:** hold BLOCK near the opponent carrier to stay goal-side, mirror them, at their speed.
+- **Debug:** `?debug&passlog` draws the cone and logs each target search to the console.
+- Details, measurements and limits (no strict zero-allocation engine): `docs/FIFA_MECHANICS.md`. Not playtested on a real iPhone.
+
 ## Story weeks 2–4, Jungle Ball and the local league (branch `devin/1792161560-story-weeks-2-4`, not merged, not in production)
 
 - **Story:** Start → **Story** now continues after the week-one callback into weeks 2–4 (25 scenes, S07–S24 of the v0.7 outline). The dialogue is Devin's **draft**, owner decision A of 2026-10-16. Every draft scene says so on screen, and `DRAFT_SCENES` lists them. Blake is the rival and Sam is a new teammate (decision B).
