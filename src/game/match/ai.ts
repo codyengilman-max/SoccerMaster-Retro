@@ -287,23 +287,39 @@ function planAttack(
 }
 
 /** Short option beside/behind/ahead of the carrier on `side`, moving off any blocked lane. */
+const SUPPORT_CANDIDATE: MutableVec2 = { x: 0, y: 0 };
 function supportSpot(carrier: Vec2, self: Vec2, side: number, taken: readonly Vec2[], blockers: readonly Vec2[], T: MatchTuning): MutableVec2 {
   const S = T.support;
   const W = T.pitch.width;
-  let best: { p: MutableVec2; score: number } | null = null;
-  for (const dx of [S.depth * 1.5, 0, -S.depth]) {
-    for (const lat of [S.lateral, S.lateral - 3, S.lateral + 3]) {
-      for (const sgn of [side, -side]) {
-        const p = vec(clamp(carrier.x + dx, 4, T.shape.maxAttackX), clamp(carrier.y + sgn * lat, T.pitch.laneMargin, W - T.pitch.laneMargin));
+  // 18 candidates scored in one scratch vector; only the winner is copied out.
+  const p = SUPPORT_CANDIDATE;
+  let found = false;
+  let bestScore = 0;
+  let bx = 0;
+  let by = 0;
+  for (let i = 0; i < 3; i++) {
+    const dx = i === 0 ? S.depth * 1.5 : i === 1 ? 0 : -S.depth;
+    for (let j = 0; j < 3; j++) {
+      const lat = j === 0 ? S.lateral : j === 1 ? S.lateral - 3 : S.lateral + 3;
+      for (let k = 0; k < 2; k++) {
+        const sgn = k === 0 ? side : -side;
+        p.x = clamp(carrier.x + dx, 4, T.shape.maxAttackX);
+        p.y = clamp(carrier.y + sgn * lat, T.pitch.laneMargin, W - T.pitch.laneMargin);
         const clear = Math.min(laneClearance(carrier, p, blockers), 5);
-        const crowd = taken.reduce((m, t) => Math.min(m, distance(t, p)), Infinity);
+        let crowd = Infinity;
+        for (const t of taken) crowd = Math.min(crowd, distance(t, p));
         const score =
           clear * 1.0 + (clear >= S.laneClearance ? 2 : 0) + Math.min(crowd, T.shape.minSpacing) * 0.4 + dx * 0.08 - distance(self, p) * 0.05 - (sgn === side ? 0 : 1.2);
-        if (!best || score > best.score) best = { p, score };
+        if (!found || score > bestScore) {
+          found = true;
+          bestScore = score;
+          bx = p.x;
+          by = p.y;
+        }
       }
     }
   }
-  return best ? best.p : vec(carrier.x, carrier.y + side * S.lateral);
+  return found ? vec(bx, by) : vec(carrier.x, carrier.y + side * S.lateral);
 }
 
 function spread(target: Vec2, taken: readonly Vec2[], minSpacing: number): MutableVec2 {
