@@ -68,11 +68,13 @@ export function computeAnchor(role: RoleDef, ballT: Vec2, inPossession: boolean,
 /** Closest blocker to the lane. A presser right on the ball (within 2 yd) and level with or behind the kick is beside it, not in its lane. */
 function laneClearance(from: Vec2, to: Vec2, blockers: readonly Vec2[]): number {
   const len = distance(from, to);
-  const dir = len > 1e-6 ? scale(sub(to, from), 1 / len) : vec(1, 0);
+  const dx = len > 1e-6 ? (to.x - from.x) * (1 / len) : 1;
+  const dy = len > 1e-6 ? (to.y - from.y) * (1 / len) : 0;
   let best = Infinity;
   for (const o of blockers) {
-    const rel = sub(o, from);
-    if (Math.hypot(rel.x, rel.y) <= 2 && rel.x * dir.x + rel.y * dir.y < 0.5) continue;
+    const rx = o.x - from.x;
+    const ry = o.y - from.y;
+    if (Math.sqrt(rx * rx + ry * ry) <= 2 && rx * dx + ry * dy < 0.5) continue;
     best = Math.min(best, distanceToSegment(o, from, to));
   }
   return best;
