@@ -185,3 +185,21 @@ test.describe('mixed inputs', () => {
     expect(kicksAfter(done, seq).length).toBe(1);
   });
 });
+
+test('?debug&passlog logs the assisted-pass target search while PASS is held', async ({ page }, info) => {
+  const logs: string[] = [];
+  page.on('console', (m) => {
+    if (m.text().startsWith('[passlog]')) logs.push(m.text());
+  });
+  await open(page, modeFor(info), '&passlog&setup=space');
+  await waitFor(page, (r) => r.pad.available?.pass === true);
+  const seq = lastSeq(await report(page));
+  await page.keyboard.down('j');
+  await waitFor(page, (r) => r.pad.phase === 'chargingPass');
+  await page.waitForTimeout(200);
+  await page.keyboard.up('j');
+  const done = await waitFor(page, (r) => kicksAfter(r, seq).length > 0);
+  expect(kicksAfter(done, seq).length).toBe(1);
+  expect(logs.length).toBeGreaterThan(0);
+  expect(logs[0]).toMatch(/^\[passlog\] t=\d+\.\d\d aim=\(-?\d\.\d\d,-?\d\.\d\d\) chosen=(H\d|none)/);
+});
