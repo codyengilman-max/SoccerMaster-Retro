@@ -32,8 +32,17 @@ export function velToTeam(team: TeamId, v: Vec2): MutableVec2 {
   return team === 'home' ? vec(v.x, v.y) : vec(-v.x, -v.y);
 }
 
-const outfield = (s: MatchState, team: TeamId): MatchPlayer[] =>
-  TEAM_PLAYER_IDS[team].map((id) => s.players[id]).filter((p) => !p.isKeeper);
+/** Outfield players per team, cached per state object (player objects are mutated in place, never replaced). */
+const outfieldCache = new WeakMap<MatchState['players'], Record<TeamId, MatchPlayer[]>>();
+const outfield = (s: MatchState, team: TeamId): readonly MatchPlayer[] => {
+  let c = outfieldCache.get(s.players);
+  if (!c) {
+    const pick = (t: TeamId) => TEAM_PLAYER_IDS[t].map((id) => s.players[id]).filter((p) => !p.isKeeper);
+    c = { home: pick('home'), away: pick('away') };
+    outfieldCache.set(s.players, c);
+  }
+  return c[team];
+};
 
 export function roleOf(s: MatchState, p: MatchPlayer): RoleDef {
   return roleDef(s.formations[p.team], p.slot);
