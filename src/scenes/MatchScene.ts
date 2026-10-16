@@ -26,7 +26,7 @@ import {
   type CameraMode,
   type ZoomChoice,
 } from '../render/camera';
-import { BALL_TEXTURE_SIZE, PLAYER_TEXTURE_SIZE, TEXTURES, ensurePlaceholderTextures } from '../render/textures';
+import { BALL_TEXTURE_SIZE, TEXTURES, ensurePlaceholderTextures } from '../render/textures';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { InspectableScene, SceneLayoutReport } from './inspectable';
 import type { MatchReport } from './matchReport';
@@ -43,6 +43,9 @@ const CAREER_FLUSH_SECONDS = 30;
 import { SceneKeys } from './keys';
 import { Button } from './ui/Button';
 import { COACH_OVERLAY_DEPTH, CoachOverlay } from './ui/CoachOverlay';
+import { PlayerArt } from '../render/art/playerArt';
+import { sideLooks, type ProtagonistLook, type RosterLook } from '../render/art/roster';
+import { SPRITE_FRAME, dirFromScreen, type PoseKind } from '../render/art/spriteFactory';
 
 const COACH_HUD_DEPTH = COACH_OVERLAY_DEPTH + 10;
 
@@ -127,6 +130,12 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private hud!: Phaser.GameObjects.Graphics;
   private rotateText!: Phaser.GameObjects.Text;
   private sprites!: Record<Id, Phaser.GameObjects.Image>;
+  private art!: PlayerArt;
+  private looks!: Record<Id, RosterLook>;
+  /** Cosmetic animation memory only (last screen heading, distance for the run cycle). Never read by the sim. */
+  private artDir!: Record<Id, number>;
+  private artDist!: Record<Id, number>;
+  private artSimTime = 0;
   private devLabels!: Record<Id, Phaser.GameObjects.Text>;
   private ball!: Phaser.GameObjects.Image;
   private menuButton!: Button;
@@ -234,8 +243,14 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
 
     this.field = this.add.graphics().setDepth(0);
     this.under = this.add.graphics().setDepth(1);
-    const kit = (id: Id): string => (id === 'H1' || id === 'A1' ? TEXTURES.keeper : id.startsWith('H') ? TEXTURES.attacker : TEXTURES.defender);
-    this.sprites = Object.fromEntries(MATCH_PLAYER_IDS.map((id) => [id, this.add.image(0, 0, kit(id)).setOrigin(0.5, 0.95).setName(id)])) as Record<Id, Phaser.GameObjects.Image>;
+    this.art = new PlayerArt(this);
+    this.artSimTime = 0;
+    this.setRosterLooks(null);
+    this.artDir = Object.fromEntries(MATCH_PLAYER_IDS.map((id) => [id, id.startsWith('H') ? 0 : 4])) as Record<Id, number>;
+    this.artDist = Object.fromEntries(MATCH_PLAYER_IDS.map((id) => [id, 0])) as Record<Id, number>;
+    this.sprites = Object.fromEntries(
+      MATCH_PLAYER_IDS.map((id) => [id, this.add.image(0, 0, this.art.frame(this.looks[id], 'idle', this.artDir[id], 0)).setOrigin(0.5, SPRITE_FRAME.anchorY / SPRITE_FRAME.height).setName(id)]),
+    ) as Record<Id, Phaser.GameObjects.Image>;
     // Away keeper wears a tinted keeper kit so the two keepers are distinguishable.
     this.sprites.A1.setTint(0xb7d3ff);
     this.ball = this.add.image(0, 0, TEXTURES.ball).setName('ball');
@@ -1149,6 +1164,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       }
       this.careerStore = store;
       this.sim.setPlayerAttrs(CAREER_SLOT[save.player.position], matchAttrsFromCareer(save.player.attributes));
+      const gender = save.player.gender;
+      if (gender === 'boy' || gender === 'girl') this.setRosterLooks({ id: CAREER_SLOT[save.player.position], look: gender });
       this.collector = new EvidenceCollector(CAREER_SLOT[save.player.position], MATCH_TUNING.pitch);
       this.careerFlushAt = this.sim.state.simTime + CAREER_FLUSH_SECONDS;
     });
@@ -1183,7 +1200,50 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     return store.dispatch({ type: 'evidence', batchId: `${this.careerSession}-${++this.careerBatch}`, items, missed }).then(() => undefined);
   }
 
+  /** Cosmetic roster looks (stable per side + slot); the career player shows the chosen boy/girl presentation. */
+  private setRosterLooks(protagonist: { id: Id; look: ProtagonistLook } | null): void {
+    const slot = protagonist ? this.sim.state.players[protagonist.id].slot : -1;
+    const home = sideLooks('home', protagonist ? { slot, look: protagonist.look } : null);
+    const away = sideLooks('away');
+    this.looks = Object.fromEntries(MATCH_PLAYER_IDS.map((id) => {
+      const p = this.sim.state.players[id];
+      return [id, (p.team === 'home' ? home : away)[p.slot]!];
+    })) as Record<Id, RosterLook>;
+  }
+
+  /** Pick a frame from what the sim says the player is doing. Read-only: the sim never sees art state. */
+  private artFrame(id: Id, L: PitchLayout, simDt: number): string {
+    const s = this.sim.state;
+    const p = s.players[id];
+    const speed = Math.hypot(p.vel.x, p.vel.y);
+    const pad = s.pad;
+    let kind: PoseKind = speed > 0.6 ? 'run' : 'idle';
+    let heading: Vec2 | null = speed > 0.6 ? p.vel : id === s.controlledId && pad.actor === id ? pad.facing : null;
+    if (pad.actor === id && (pad.phase === 'slideStart' || pad.phase === 'slideActive' || pad.phase === 'slideRecovery')) {
+      kind = 'slide';
+      heading = pad.slideDir ?? heading;
+    } else {
+      for (let i = s.events.length - 1; i >= 0; i--) {
+        const e = s.events[i]!;
+        if (s.simTime - e.at > 0.5) break;
+        if (e.by !== id) continue;
+        if (p.isKeeper && (e.type === 'saved' || e.type === 'parried')) { kind = 'dive'; break; }
+        if (s.simTime - e.at <= 0.25 && (e.type === 'pass' || e.type === 'shot' || e.type === 'quickShot' || e.type === 'distributed' || e.type === 'slide')) {
+          kind = e.type === 'slide' ? 'slide' : 'kick';
+          break;
+        }
+      }
+    }
+    if (heading && Math.hypot(heading.x, heading.y) > 1e-6) {
+      const v = pitchVectorToScreen(L, heading);
+      this.artDir[id] = dirFromScreen(v.x, v.y);
+    }
+    this.artDist[id] = (this.artDist[id] + speed * simDt) % 1000;
+    return this.art.frame(this.looks[id], kind, this.artDir[id], Math.floor(this.artDist[id] / 0.55));
+  }
+
   private handleShutdown(): void {
+    this.art?.destroy();
     const store = this.careerStore;
     void this.flushCareer(true).finally(() => store?.close());
     this.careerStore = null;
@@ -1622,6 +1682,10 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       const v = pitchVectorToScreen(L, { x: r, y: r });
       return { x: sp.x, y: sp.y, w: Math.abs(v.x) * 2, h: Math.abs(v.y) * 2 };
     };
+    const artScale = PlayerArt.scaleFor(playerH);
+    // Run cycle advances with sim time, so pauses, Coach cards and slow motion freeze/slow it with play.
+    const simDt = Phaser.Math.Clamp(s.simTime - this.artSimTime, 0, 0.1);
+    this.artSimTime = s.simTime;
     for (const id of MATCH_PLAYER_IDS) {
       const p = s.players[id];
       const sp = toScreen(L, p.pos);
@@ -1632,8 +1696,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         const t = (s.simTime - f.start) / (f.until - f.start);
         sway = Math.sin(t * Math.PI) * f.side * playerH * 0.22;
       }
-      img.setScale(playerH / PLAYER_TEXTURE_SIZE.height).setPosition(sp.x + sway, sp.y).setDepth(100 + sp.y).setAngle(sway * 0.6);
-      img.setFlipX(p.team === 'away' && L.orientation === 'landscape');
+      img.setTexture(this.artFrame(id, L, simDt)).setScale(artScale.x, artScale.y).setPosition(sp.x + sway, sp.y).setDepth(100 + sp.y).setAngle(sway * 0.6);
       const e = ellipse(p.pos, 0.85);
       u.fillStyle(PALETTE.shadow, 0.3);
       u.fillEllipse(e.x, e.y, e.w, e.h);
