@@ -75,6 +75,13 @@ const MAX_EVENTS = 40;
  * carrier with the M2 gestures), away is AI. Deterministic for a seed, a sequence of step durations
  * and commands: the fixed step (tuning.stepSeconds) decides every outcome, never the frame rate.
  */
+/** Desired velocity, acceleration and optional speed cap for the controlled player this step. */
+interface PadVelocity {
+  desired: MutableVec2;
+  accel: number;
+  cap: number | undefined;
+}
+
 export class MatchSim {
   readonly tuning: MatchTuning;
   private readonly seed: number;
@@ -96,6 +103,7 @@ export class MatchSim {
     entries: Array.from({ length: 9 }, () => ({ id: 'H1' as MatchPlayerId, angle: 0, perp: 0, dist: 0, score: 0, inCone: false })),
   };
   /** Per-step scratch vectors (overwritten in place; never stored in state). */
+  private readonly padVel: PadVelocity = { desired: { x: 0, y: 0 }, accel: 0, cap: undefined };
   private readonly desired: MutableVec2 = { x: 0, y: 0 };
   private readonly mePrev: MutableVec2 = { x: 0, y: 0 };
   private readonly ballPrev: MutableVec2 = { x: 0, y: 0 };
@@ -706,7 +714,7 @@ export class MatchSim {
    * Jockey: hold a point goal-side of the opponent carrier (mirroring their run a beat ahead), shaded by the stick,
    * never closer than the gap, at no more than the carrier's speed. Null when no opponent carrier is in range.
    */
-  private jockeyVelocity(p: MatchPlayer): { desired: MutableVec2; accel: number; cap: number } | null {
+  private jockeyVelocity(p: MatchPlayer): PadVelocity | null {
     const s = this.s;
     const pad = s.pad;
     const T = this.tuning;
@@ -718,11 +726,12 @@ export class MatchSim {
     }
     pad.jockeying = true;
     const P = T.pitch;
-    const goal = toWorld(p.team, vec(0, P.goalCenterY), T);
+    const goalX = p.team === 'home' ? 0 : P.length;
+    const goalY = p.team === 'home' ? P.goalCenterY : P.width - P.goalCenterY;
     const cx = owner.pos.x + owner.vel.x * J.lookahead;
     const cy = owner.pos.y + owner.vel.y * J.lookahead;
-    let gx = goal.x - cx;
-    let gy = goal.y - cy;
+    let gx = goalX - cx;
+    let gy = goalY - cy;
     const gl = Math.hypot(gx, gy) || 1;
     gx /= gl;
     gy /= gl;
@@ -738,19 +747,35 @@ export class MatchSim {
       dx *= cap / want;
       dy *= cap / want;
     }
-    return { desired: vec(dx, dy), accel: T.movement.sprintAccel * p.attrs.accel * p.attrs.agility, cap };
+    return this.padResult(dx, dy, T.movement.sprintAccel * p.attrs.accel * p.attrs.agility, cap);
   }
 
-  private padVelocity(p: MatchPlayer): { desired: MutableVec2; accel: number; cap?: number } {
+  /** Fills the single reused movement result (callers read it before the next call). */
+  private padResult(dx: number, dy: number, accel: number, cap?: number): PadVelocity {
+    const r = this.padVel;
+    r.desired.x = dx;
+    r.desired.y = dy;
+    r.accel = accel;
+    r.cap = cap;
+    return r;
+  }
+
+  private padVelocity(p: MatchPlayer): PadVelocity {
     const s = this.s;
     const T = this.tuning;
     const pad = s.pad;
     const A = p.attrs;
     const S = T.pad.slide;
     const mine = pad.actor === p.id;
-    if (mine && pad.phase === 'slideActive' && pad.slideDir) return { desired: scale(pad.slideDir, Math.min(S.speed, T.movement.chaseSpeed) * A.pace), accel: 60 };
-    if (mine && pad.phase === 'slideStart' && pad.slideDir) return { desired: scale(pad.slideDir, Math.max(length(p.vel), T.movement.chaseSpeed * 0.6)), accel: 30 };
-    if (mine && pad.phase === 'slideRecovery') return { desired: vec(0, 0), accel: 25 };
+    if (mine && pad.phase === 'slideActive' && pad.slideDir) {
+      const k = Math.min(S.speed, T.movement.chaseSpeed) * A.pace;
+      return this.padResult(pad.slideDir.x * k, pad.slideDir.y * k, 60);
+    }
+    if (mine && pad.phase === 'slideStart' && pad.slideDir) {
+      const k = Math.max(length(p.vel), T.movement.chaseSpeed * 0.6);
+      return this.padResult(pad.slideDir.x * k, pad.slideDir.y * k, 30);
+    }
+    if (mine && pad.phase === 'slideRecovery') return this.padResult(0, 0, 25);
     const carrying = s.ball.owner === p.id;
     let top = (carrying ? T.carrier.speed * (0.85 + 0.15 * A.control) : T.movement.chaseSpeed) * A.pace;
     if (p.id === s.controlledId && pad.phase !== 'blocking') pad.jockeying = false;
@@ -759,9 +784,13 @@ export class MatchSim {
       if (j) return j;
       top *= T.pad.blockSpeedFactor;
     }
-    const desired = scale(pad.stick, top);
+    const desired = this.padResult(pad.stick.x * top, pad.stick.y * top, 0).desired;
     if (carrying) {
-      if (length(pad.stick) > 0.05) s.dribbleDir = normalize(pad.stick);
+      if (length(pad.stick) > 0.05) {
+        const sl = length(pad.stick);
+        s.dribbleDir.x = pad.stick.x / sl;
+        s.dribbleDir.y = pad.stick.y / sl;
+      }
       const P = T.pitch;
       if (desired.x > 0) desired.x *= clamp((P.length - T.dribble.stopShort - p.pos.x) / T.dribble.slowZone, 0, 1);
       if (desired.x < 0) desired.x *= clamp((p.pos.x - 1.5) / 3, 0, 1);
@@ -782,14 +811,15 @@ export class MatchSim {
       const cos = dot2(p.vel, desired) / (v * want);
       // Momentum: a sharp reversal at running pace brakes (agility shortens it) before accelerating the new way.
       if (user && cos < L.brakeCos && v > top * L.brakeMinSpeedFrac * Math.max(band, 0.01)) pad.braking = true;
-      if (pad.braking && user && v > top * L.brakeDoneFrac && cos < 0) return { desired: vec(0, 0), accel: L.brakeAccel * A.agility * A.accel };
+      if (pad.braking && user && v > top * L.brakeDoneFrac && cos < 0) return this.padResult(0, 0, L.brakeAccel * A.agility * A.accel);
       pad.braking = false;
       // Nearly stopped (e.g. after a brake): turning is free, momentum no longer applies.
       const turn = v < top * L.brakeDoneFrac * 1.5 ? 0 : (1 - cos) / 2;
       const factor = lerp(L.closeTurnFactor, L.runTurnFactor, band);
       accel = base * Math.max(0.15, 1 - T.pad.agilityTurnPenalty * factor * turn * (2 - A.agility));
     } else if (user) pad.braking = false;
-    return { desired, accel };
+    this.padVel.accel = accel;
+    return this.padVel;
   }
 
   /**
