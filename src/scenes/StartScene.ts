@@ -101,7 +101,7 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
     });
     this.storyButton = new Button(this, 0, 0, {
       name: 'story-button',
-      label: 'Story: Week 1',
+      label: 'Story',
       width: 220,
       height: 48,
       fontSize: 18,

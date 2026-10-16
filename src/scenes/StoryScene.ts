@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { fixtureForWeek, newLeague, parseLeague, recordPlayed, simulateThrough } from '../game/league/league';
+import { fixtureForWeek, newLeague, parseLeague, recordPlayed, simulateThrough, table } from '../game/league/league';
+import { DRAFT_SCENES } from '../game/story/content';
 import { CLUB_WORLD } from '../game/story/clubs';
 import type { Rect } from '../game';
 import { POSITION_SLOT } from '../game/career/player';
@@ -71,6 +72,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private aimFrom: { x: number; y: number } | null = null;
   private pull: Pull | null = null;
   private crossbarSummary = '';
+  private leagueSummary = '';
   private bg!: Phaser.GameObjects.Graphics;
   private stage!: Phaser.GameObjects.Graphics;
   private speaker!: Phaser.GameObjects.Text;
@@ -493,6 +495,11 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
 
   private async loadSummaries(): Promise<void> {
     if (!this.state || !this.store) return;
+    const league = parseLeague(await this.store.getRecord(`league:${this.state.careerId}`));
+    const names = Object.fromEntries(CLUB_WORLD.clubs.map((c) => [c.id, c.displayName]));
+    this.leagueSummary = league.ok
+      ? `League table (other clubs' games are simulated):\n${table(league.value, names).map((r) => `${r.position}. ${names[r.club] ?? r.club}  P${r.played} ${r.points} pts`).join('\n')}`
+      : 'League table: no league result recorded yet (a match left early counts for nobody).';
     const run = outcomeOf(this.state, 'W1_CROSSBAR');
     if (!run) return void (this.crossbarSummary = '');
     if (run.outcome === 'completed' && run.runId) {
@@ -507,6 +514,9 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private recap(): string {
     const s = this.state;
     if (!s) return '';
+    const draft = 'Draft dialogue (weeks 2–4), awaiting owner review.';
+    if (/^W[234]_(MATCH_POST|FINAL)$/.test(s.sceneId)) return `${this.leagueSummary}\n${draft}`;
+    if (DRAFT_SCENES.has(s.sceneId)) return draft;
     if (s.sceneId === 'W1_CROSSBAR_REACTION' || s.sceneId === 'W1_TRAINING_CONNECTION') return this.crossbarSummary;
     if (s.sceneId === 'W1_TRAINING_REFLECTION' || s.sceneId === 'W1_MATCH_POST' || s.sceneId === 'W1_HOME_CLOSE' || s.sceneId === 'W2_SCHOOL_CALLBACK') {
       const practice = outcomeOf(s, 'W1_PRACTICE');
