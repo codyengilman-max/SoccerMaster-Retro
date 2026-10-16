@@ -81,3 +81,21 @@ describe('FIFA locomotion targets (set before tuning)', () => {
     expect(m['reverse@1']).toBeLessThanOrEqual(1.0);
   });
 });
+
+describe('FIFA locomotion determinism', () => {
+  it('60 Hz and 120 Hz give the same path through a run, a reversal and a turn', () => {
+    const path = (f: number) => {
+      const sim = setup();
+      sim.command({ type: 'padMove', x: 1, y: 0 });
+      run(sim, 1.5, f);
+      sim.command({ type: 'padMove', x: -1, y: 0 });
+      run(sim, 1, f);
+      sim.command({ type: 'padMove', x: 0, y: 0.4 });
+      run(sim, 0.5, f);
+      return sim.state.players.H7.pos;
+    };
+    const a = path(1 / 60);
+    const b = path(1 / 120);
+    expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeLessThanOrEqual(0.05);
+  });
+});
