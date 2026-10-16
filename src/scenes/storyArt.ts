@@ -1,10 +1,10 @@
 import Phaser from 'phaser';
-import { SPEAKER_ROLE, artAsset, sceneVisual, type CastRole, type SceneVisual } from '../render/art/catalog';
+import { MAPPED_SCENE_IDS, SPEAKER_ROLE, artAsset, sceneVisual, type CastRole, type SceneVisual } from '../render/art/catalog';
 import { artTextureKey, artUrl } from '../render/art/urls';
 import { CSS, FONT_FAMILY, PALETTE } from '../render/theme';
 
 /** Upper bound on cutscene textures resident at once (current scene's backdrop + cast, plus slack). */
-export const STORY_ART_MAX_TEXTURES = 8;
+export const STORY_ART_MAX_TEXTURES = 12;
 const ENTER_MS = 260;
 const LIFT_MS = 140;
 
@@ -99,14 +99,17 @@ export class StoryArt {
     this.owned.clear();
   }
 
-  private wanted(): string[] {
-    const v = this.visual;
+  private wanted(v: SceneVisual | null = this.visual): string[] {
     if (!v) return [];
     return [v.backgroundAssetId, ...(v.presentation === 'cutscene' ? v.cast.map((c) => c.assetId) : [])].filter((x): x is string => x !== null);
   }
 
   private request(): void {
-    const want = this.wanted();
+    // Current scene first, then the next authored scene so its art is ready when the story moves on.
+    const cur = this.visual?.sceneId ?? null;
+    const i = cur ? MAPPED_SCENE_IDS.indexOf(cur) : -1;
+    const next = i >= 0 ? sceneVisual(MAPPED_SCENE_IDS[i + 1], this.last?.appearance ?? null) : null;
+    const want = [...new Set([...this.wanted(), ...this.wanted(next)])];
     const keep = new Set(want.map(artTextureKey));
     // Bound residency: drop textures the current scene does not use.
     for (const k of [...this.owned]) {
@@ -232,12 +235,12 @@ export class StoryArt {
       const speaking = this.speakerRole !== null && s.role === this.speakerRole;
       const anySpeaker = this.speakerRole !== null && this.slots.some((o) => o.role === this.speakerRole);
       const dim = f.showCast && anySpeaker && !speaking;
-      const alpha = f.showCast ? (dim ? 0.62 : 1) : 0;
+      const alpha = f.showCast ? 1 : 0;
       const lift = speaking ? Math.round(h * 0.025) : 0;
       if (s.img) {
         s.box.setVisible(false);
         s.label.setVisible(false);
-        s.img.setDisplaySize(w, h).setVisible(f.showCast).setTint(dim ? 0xb4b0a8 : 0xffffff);
+        s.img.setDisplaySize(w, h).setVisible(f.showCast).setTint(dim ? 0x9c968c : 0xffffff);
         const ty = bottom - lift;
         if (this.reducedMotion) s.img.setPosition(s.x, ty).setAlpha(alpha);
         else if (entering) {

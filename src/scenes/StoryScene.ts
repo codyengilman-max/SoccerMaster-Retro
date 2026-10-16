@@ -787,7 +787,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     const topH = 44;
     const tw = Math.round(Math.min((width - pad * 5) / 4, 140));
     this.top.forEach((b, i) => b.resize(tw, 40, Math.round(Math.max(13, Math.min(tw * 0.13, 16)))).setPosition(pad + tw / 2 + i * (tw + pad), pad + topH / 2 - 2));
-    const ph = Math.round(portrait ? height * 0.5 : height * 0.56);
+    const ph = Math.round(portrait ? height * 0.5 : height * 0.46);
     this.panel = { x: pad, y: height - ph - pad, width: width - 2 * pad, height: ph };
     if (this.panel.y < topH + pad * 2) this.panel = { ...this.panel, y: topH + pad * 2, height: height - topH - pad * 3 };
     this.basePanel = { ...this.panel };
