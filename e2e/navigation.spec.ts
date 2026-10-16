@@ -38,13 +38,13 @@ test('start screen fits the phone viewport', async ({ page }, info) => {
   expect(d.canvases).toBe(1);
   expect(d.layout?.orientation).toBe(info.project.name.includes('portrait') ? 'portrait' : 'landscape');
   expect(d.layout?.viewport).toEqual(viewport);
-  for (const name of ['title', 'subtitle', 'footer', 'enter-button', 'play-button', 'sandbox-button', 'review-button']) expectInside(name, d.layout?.elements[name], viewport);
-  expect(d.layout?.elements['enter-button']?.height ?? 0).toBeGreaterThanOrEqual(44);
+  for (const name of ['title', 'subtitle', 'footer', 'play-button', 'sandbox-button', 'review-button']) expectInside(name, d.layout?.elements[name], viewport);
+  expect(d.layout?.elements['play-button']?.height ?? 0).toBeGreaterThanOrEqual(44);
   await linger(page);
   expect(errors).toEqual([]);
 });
 
-test('Start -> pitch -> Back repeated keeps one canvas and stable listeners', async ({ page }) => {
+test('Start -> attack drill -> Back repeated keeps one canvas and stable listeners', async ({ page }) => {
   const errors = trackConsoleErrors(page);
   await page.goto('/?debug=1');
   const initial = await waitForScene(page, 'start');
@@ -58,14 +58,14 @@ test('Start -> pitch -> Back repeated keeps one canvas and stable listeners', as
 
   for (let i = 0; i < ROUND_TRIPS; i++) {
     const via = i % 2 === 0 ? 'touch' : 'mouse';
-    await pressElement(page, 'enter-button', via);
-    const pitch = await waitForScene(page, 'pitch');
+    await pressElement(page, 'play-button', via);
+    const pitch = await waitForScene(page, 'attack');
     expect(pitch.canvases).toBe(1);
-    for (const name of ['pitch', 'goalA', 'goalB', 'player', 'ball', 'back-button']) {
+    for (const name of ['pitch', 'goal', 'back-button']) {
       expectInside(name, pitch.layout?.elements[name], viewport);
     }
     const pitchSnap = stableSnapshot(pitch, await page.evaluate(() => window.__domListeners?.() ?? {}));
-    if (pitchBaseline) expect(pitchSnap, `pitch visit ${i + 1}`).toEqual(pitchBaseline);
+    if (pitchBaseline) expect(pitchSnap, `attack drill visit ${i + 1}`).toEqual(pitchBaseline);
     else pitchBaseline = pitchSnap;
     await linger(page);
 
@@ -84,12 +84,12 @@ test('Start -> pitch -> Back repeated keeps one canvas and stable listeners', as
   expect(errors).toEqual([]);
 });
 
-test('pitch re-lays out on orientation change and Back still works', async ({ page }) => {
+test('attack drill re-lays out on orientation change and Back still works', async ({ page }) => {
   const errors = trackConsoleErrors(page);
   await page.goto('/?debug=1');
   await waitForScene(page, 'start');
-  await pressElement(page, 'enter-button', 'touch');
-  const before = await waitForScene(page, 'pitch');
+  await pressElement(page, 'play-button', 'touch');
+  const before = await waitForScene(page, 'attack');
   const viewport = page.viewportSize();
   if (!viewport) throw new Error('no viewport');
   await linger(page);
@@ -103,7 +103,7 @@ test('pitch re-lays out on orientation change and Back still works', async ({ pa
   expect(after.layout?.viewport).toEqual(rotated);
   expect(after.canvases).toBe(1);
   expect(after.listeners).toEqual(before.listeners);
-  for (const name of ['pitch', 'goalA', 'goalB', 'player', 'ball', 'back-button']) {
+  for (const name of ['pitch', 'goal', 'back-button']) {
     expectInside(name, after.layout?.elements[name], rotated);
   }
   await linger(page);
@@ -111,7 +111,7 @@ test('pitch re-lays out on orientation change and Back still works', async ({ pa
   await pressElement(page, 'back-button', 'touch');
   const start = await waitForScene(page, 'start');
   expect(start.layout?.orientation).toBe(expected);
-  for (const name of ['title', 'enter-button']) expectInside(name, start.layout?.elements[name], rotated);
+  for (const name of ['title', 'play-button']) expectInside(name, start.layout?.elements[name], rotated);
   await linger(page);
   expect(errors).toEqual([]);
 });
@@ -120,8 +120,8 @@ test('canvas recovers when Phaser refreshes with a stale parent size (rotation r
   const errors = trackConsoleErrors(page);
   await page.goto('/?debug=1');
   await waitForScene(page, 'start');
-  await pressElement(page, 'enter-button', 'touch');
-  const before = await waitForScene(page, 'pitch');
+  await pressElement(page, 'play-button', 'touch');
+  const before = await waitForScene(page, 'attack');
   const viewport = page.viewportSize();
   if (!viewport) throw new Error('no viewport');
 
@@ -145,7 +145,7 @@ test('canvas recovers when Phaser refreshes with a stale parent size (rotation r
   const after = await diagnostics(page);
   expect(after.layout?.viewport).toEqual(viewport);
   expect(after.layout?.orientation).toBe(before.layout?.orientation);
-  for (const name of ['pitch', 'goalA', 'goalB', 'player', 'ball', 'back-button']) {
+  for (const name of ['pitch', 'goal', 'back-button']) {
     expectInside(name, after.layout?.elements[name], viewport);
   }
   expect(errors).toEqual([]);
@@ -156,8 +156,8 @@ test('keyboard shortcuts navigate without stacking scenes', async ({ page }) => 
   await page.goto('/?debug=1');
   await waitForScene(page, 'start');
   await page.locator('canvas').focus();
-  await page.keyboard.press('Enter');
-  await waitForScene(page, 'pitch');
+  await page.keyboard.press('p');
+  await waitForScene(page, 'attack');
   await page.keyboard.press('Escape');
   const start = await waitForScene(page, 'start');
   expect(start.activeScenes).toEqual(['start']);

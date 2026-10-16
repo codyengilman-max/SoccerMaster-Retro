@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { U11_9V9_PITCH, createTrainingGroundState, pitchMarkings, validatePitchSpec } from '../src/game';
+import { U11_9V9_PITCH, pitchMarkings, validatePitchSpec } from '../src/game';
 
 describe('U11 9v9 pitch geometry', () => {
   it('default spec is internally consistent', () => {
@@ -28,14 +28,4 @@ describe('U11 9v9 pitch geometry', () => {
     expect(validatePitchSpec({ ...U11_9V9_PITCH, length: 40 })).toContain('length must exceed width');
   });
 
-  it('places the static player and ball on the pitch', () => {
-    const state = createTrainingGroundState();
-    for (const p of [state.player.position, state.ball.position]) {
-      expect(p.x).toBeGreaterThan(0);
-      expect(p.x).toBeLessThan(state.pitch.length);
-      expect(p.y).toBeGreaterThan(0);
-      expect(p.y).toBeLessThan(state.pitch.width);
-    }
-    expect(state.ball.position).toEqual(pitchMarkings(state.pitch).centerSpot);
-  });
 });
