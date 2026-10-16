@@ -158,6 +158,19 @@ describe('FIFA assisted passing', () => {
     expect(press(sim, 'pass')).toBe(true);
     expect(sim.state.pad.receiver).toBeNull();
   });
+  it('records the target search for ?debug&passlog in pre-allocated slots', () => {
+    const sim = stage({ H8: { x: 47.5, y: 27.74 }, H9: { x: 64.6, y: 29.34 } });
+    const slots = [...sim.passScan.entries];
+    sim.command({ type: 'padMove', x: 1, y: 0 });
+    press(sim, 'pass');
+    const scan = sim.passScan;
+    expect(scan.chosen).toBe('H8');
+    expect(scan.aimX).toBeCloseTo(1);
+    const h8 = scan.entries.slice(0, scan.count).find((e) => e.id === 'H8')!;
+    expect(h8.inCone).toBe(true);
+    expect(h8.perp).toBeCloseTo(2.74, 1);
+    expect(scan.entries.every((e, i) => e === slots[i])).toBe(true);
+  });
   it('leads the selected receiver onto their run', () => {
     const sim = stage({ H9: { x: 55, y: 25 } }, { H9: { x: 0, y: 4 } });
     sim.command({ type: 'padMove', x: 1, y: 0 });

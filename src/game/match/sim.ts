@@ -36,7 +36,7 @@ import {
   type MatchState,
   type TeamId,
 } from './types';
-import type { PadAction, PadState, PlayerAttrs } from './types';
+import type { PadAction, PadState, PassScan, PlayerAttrs } from './types';
 
 export type MatchCommand =
   /** Sets the user carrier's dribble direction (world/pitch vector; its length is ignored). */
@@ -108,6 +108,17 @@ export class MatchSim {
 
   readonly aimAssist: AimAssistMode;
   readonly controls: ControlScheme;
+  /**
+   * Last assisted-pass target search, for live debugging (?debug&passlog). Pre-allocated and overwritten in place;
+   * never read by the simulation itself.
+   */
+  readonly passScan: PassScan = {
+    aimX: 0,
+    aimY: 0,
+    count: 0,
+    chosen: null,
+    entries: Array.from({ length: 9 }, () => ({ id: 'H1' as MatchPlayerId, angle: 0, perp: 0, dist: 0, score: 0, inCone: false })),
+  };
   private readonly attrOverrides: Partial<Record<MatchPlayerId, Partial<PlayerAttrs>>>;
 
   constructor(options: MatchSimOptions = {}) {
@@ -840,31 +851,46 @@ export class MatchSim {
     const s = this.s;
     const T = this.tuning.pad;
     const aim = length(s.pad.stick) > 0 ? normalize(s.pad.stick) : s.pad.facing;
-    const score = (id: MatchPlayerId): number | null => {
+    const scan = this.passScan;
+    const score = (id: MatchPlayerId, record: boolean): number | null => {
       const p = s.players[id];
       if (id === me.id || p.team !== me.team || p.isKeeper) return null;
-      const d = sub(p.pos, s.ball.pos);
-      const dist = length(d);
-      if (dist < T.receiverMinRange || dist > T.receiverMaxRange) return null;
-      const ang = Math.acos(clamp(dot2(d, aim) / dist, -1, 1));
-      if (ang > T.receiverCone) return null;
+      const dx = p.pos.x - s.ball.pos.x;
+      const dy = p.pos.y - s.ball.pos.y;
+      const dist = Math.hypot(dx, dy);
+      const ang = dist > 0 ? Math.acos(clamp((dx * aim.x + dy * aim.y) / dist, -1, 1)) : 0;
       // Yards from the stick's line plus distance from the passer.
       const perp = dist * Math.sin(ang);
-      return perp / T.receiverLineYards + (0.35 * dist) / T.receiverMaxRange;
+      const inCone = dist >= T.receiverMinRange && dist <= T.receiverMaxRange && ang <= T.receiverCone;
+      const v = perp / T.receiverLineYards + (0.35 * dist) / T.receiverMaxRange;
+      if (record && scan.count < scan.entries.length) {
+        const e = scan.entries[scan.count++]!;
+        e.id = id;
+        e.angle = ang;
+        e.perp = perp;
+        e.dist = dist;
+        e.score = v;
+        e.inCone = inCone;
+      }
+      return inCone ? v : null;
     };
+    scan.aimX = aim.x;
+    scan.aimY = aim.y;
+    scan.count = 0;
     let best: MatchPlayerId | null = null;
     let bestScore = Infinity;
     for (const id of TEAM_PLAYER_IDS[me.team]) {
-      const v = score(id);
+      const v = score(id, true);
       if (v !== null && v < bestScore) {
         best = id;
         bestScore = v;
       }
     }
     if (current) {
-      const c = score(current);
-      if (c !== null && c <= bestScore + T.receiverStickiness) return current;
+      const c = score(current, false);
+      if (c !== null && c <= bestScore + T.receiverStickiness) best = current;
     }
+    scan.chosen = best;
     return best;
   }
 

@@ -220,6 +220,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.sim = new MatchSim({ seed, homeFormation: formation, halfSeconds, controls: padMode ? 'pad' : 'gesture', aimAssist: (data.aim ?? params.get('aim')) === 'normal' ? 'normal' : 'slow' });
     this.stageLab();
     if (shouldExposeDebug(window.location)) this.applyDebugSetup(params.get('setup'));
+    this.passLog = shouldExposeDebug(window.location) && params.has('passlog');
+    this.passLogKey = '';
     this.coachConfig = this.labId ? null : this.readCoachConfig(params, seed);
     this.coachRun = 0;
     this.coachDirector = this.coachConfig ? new coach.CoachDirector(this.coachConfig) : null;
@@ -1748,12 +1750,46 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   }
 
   /** Direction arrow from the live ball, cancellation circle at the fixed gesture origin, compact power meter. */
+  /** ?debug&passlog: draw the assisted-pass search cone and log each new target search to the console. */
+  private passLog = false;
+  private passLogKey = '';
+
+  private drawPassScan(): void {
+    const s = this.sim.state;
+    const scan = this.sim.passScan;
+    if (s.pad.phase !== 'chargingPass' || !s.pad.actor) return;
+    const T = match.MATCH_TUNING.pad;
+    const L = this.pitchLayout;
+    const b = s.ball.pos;
+    const o = this.over;
+    const from = toScreen(L, b);
+    o.lineStyle(1, PALETTE.cream, 0.7);
+    for (const side of [-1, 1]) {
+      const a = Math.atan2(scan.aimY, scan.aimX) + side * T.receiverCone;
+      const to = toScreen(L, { x: b.x + Math.cos(a) * T.receiverMaxRange, y: b.y + Math.sin(a) * T.receiverMaxRange });
+      o.lineBetween(from.x, from.y, to.x, to.y);
+    }
+    const key = `${scan.chosen}|${scan.aimX.toFixed(1)},${scan.aimY.toFixed(1)}`;
+    if (key === this.passLogKey) return;
+    this.passLogKey = key;
+    const rows = scan.entries.slice(0, scan.count).map((e) => ({
+      id: e.id,
+      inCone: e.inCone,
+      deg: Math.round((e.angle * 180) / Math.PI),
+      lineYd: Number(e.perp.toFixed(1)),
+      distYd: Number(e.dist.toFixed(1)),
+      score: Number(e.score.toFixed(3)),
+    }));
+    console.log(`[passlog] t=${s.simTime.toFixed(2)} aim=(${scan.aimX.toFixed(2)},${scan.aimY.toFixed(2)}) chosen=${scan.chosen ?? 'none'}`, rows);
+  }
+
   /** Pad scheme: highlighted receiver ring and a charge meter above the kicker. */
   private drawPadGuide(playerH: number): void {
     const s = this.sim.state;
     const L = this.pitchLayout;
     const o = this.over;
     const pad = s.pad;
+    if (this.passLog) this.drawPassScan();
     if (pad.receiver) {
       const r = toScreen(L, s.players[pad.receiver].pos);
       o.lineStyle(3, PALETTE.mustard, 1);

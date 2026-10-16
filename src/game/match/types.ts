@@ -298,3 +298,24 @@ export interface MatchState {
   events: MatchEvent[];
   pad: PadState;
 }
+
+/** One teammate considered by the assisted-pass search (debug only). */
+export interface PassScanEntry {
+  id: MatchPlayerId;
+  /** Radians off the stick direction. */
+  angle: number;
+  /** Yards from the stick's line. */
+  perp: number;
+  dist: number;
+  /** Lower is better; only meaningful when inCone. */
+  score: number;
+  inCone: boolean;
+}
+
+export interface PassScan {
+  aimX: number;
+  aimY: number;
+  count: number;
+  chosen: MatchPlayerId | null;
+  readonly entries: PassScanEntry[];
+}
