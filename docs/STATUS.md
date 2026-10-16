@@ -1,5 +1,17 @@
 # Status
 
+## Graphics v1.1 (branch `devin/1792120824-graphics-v1`, not merged, not in production)
+
+Owner-approved styles from `SoccerMaster_Graphics_v1.zip`, built on the joystick/story preview commit `b00c71b`. See `docs/ART.md` (inventory, mapping, gaps) and `docs/DECISIONS.md`.
+
+| Area | Status |
+|---|---|
+| Asset import (28 PNG masters, scene + wardrobe maps, review status) | Integrated; masters unchanged, runtime WebP copies hash-linked |
+| 9v9 oversized players (ported sprite factory, fixed hair per slot, boy/girl career look) | Integrated; physics, controls, camera and `src/game/` unchanged. No BLOCK pose; no squad numbers/club kits in engine |
+| Story cutscene backdrops + static portraits (all 18 week-one scenes) | Integrated; pinned outfit per scene, speaker highlight, reduced motion, labelled fallbacks |
+| Art Gallery (Start → Review & Lab) | Integrated, review only; new character/outfit art `NEW_ART_REVIEW_PENDING` |
+| Physical iPhone check | Pending (browser phone emulation only) |
+
 ## Controls: joystick + four buttons (branch `devin/1792100194-joystick-controls`, not merged, not in production)
 
 Default 9v9 scheme is now a left joystick plus PASS, SHOOT, SLIDE TACKLE and BLOCK; `?controls=gesture` keeps the old swipes. See `docs/controls/CONTROLS_IMPLEMENTATION.md`, `ACCEPTANCE_RESULTS.md` (A01–A24: 21 pass automatically, A12/A21/A23 partial, none device-checked) and `CHANGELOG.md`. Physical-iPhone acceptance and frame-time measurement pending.

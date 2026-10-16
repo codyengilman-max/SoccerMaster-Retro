@@ -84,3 +84,11 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - A slide that hits the body first is a foul with a basic opponent free-kick restart; the engine has no other set pieces yet.
 
 - Owner cap: actual playing time is 5–6 minutes max per match. Default `halfSeconds` is 165 (2 × 2:45 = 5:30 of play); the clock still stops for pauses, Coach Moments, kick-offs and stoppages, so those do not count. The displayed 25-minute U11 half clock is unchanged.
+
+## Graphics v1.1 (owner-approved styles; branch `devin/1792120824-graphics-v1`)
+- Package stored byte-for-byte in `docs/art/graphics-v1/` (checksums verified). `scripts/art/build-runtime-art.py` derives half-size WebP runtime copies into `src/assets/art/v1/` and records each master's SHA-256 in `runtime-manifest.json`; masters are never edited.
+- `src/render/art/catalog.ts` is the only path from story data to art: a fixed asset allowlist, the package's scene and wardrobe maps, and speaker *roles* (Player, Jordan, Blake, Caregiver, Coach Code, Alex). Typed names are never used to pick art, so a player named Alex is still the player. Unknown scenes and missing/failed images show labelled neutral placeholders, never another character.
+- Match players are drawn by a TypeScript port of the package's Canvas2D factory (`render/art/spriteFactory.ts`), cached as lazily built textures (≤ 512 frames, freed on shutdown). Art scale and foot anchor are presentation only; physics, collision, camera, controls and `src/game/` are unchanged. Poses come from real sim state/events; animation time is sim time.
+- The engine has no squad numbers, club kits or named gameplay characters: numbers are formation slot + 1, kits are home/away/keeper reference colours, hair is fixed per roster slot. The career player uses the saved boy/girl look on their career slot.
+- Cutscene portraits are static: entrance slide/fade and a tint-only speaker highlight, disabled under `prefers-reduced-motion`. Art never writes story, saves, rewards or input; dialogue, names and choices stay live text.
+- New character/outfit art stays `NEW_ART_REVIEW_PENDING` in the Art Gallery until the owner reviews each image.

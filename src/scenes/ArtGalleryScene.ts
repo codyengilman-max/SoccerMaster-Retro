@@ -92,7 +92,7 @@ export class ArtGalleryScene extends Phaser.Scene {
     this.clear();
     const { width, height } = this.scale;
     const portrait = orientationOf({ width, height }) === 'portrait';
-    const g = this.add.graphics();
+    const g = this.add.graphics().setDepth(-1);
     this.items.push(g);
     g.fillStyle(PALETTE.sand, 1).fillRect(0, 0, width, height);
     const pad = 10;
@@ -155,17 +155,18 @@ export class ArtGalleryScene extends Phaser.Scene {
     const looks = [...home.slice(1), ...away.slice(1, 4), sideLooks('home', { slot: 7, look: 'girl' })[7]!, home[0]!];
     const cols = Math.min(looks.length, Math.max(4, Math.floor(area.width / 70)));
     const cw = area.width / cols;
-    const k = Math.min(cw / (SPRITE_FRAME.width * SPRITE_FRAME.scaleX * 0.6), 1.4);
+    const rows = Math.ceil(looks.length / cols) + 1;
+    const k = Math.min(cw / (SPRITE_FRAME.width * SPRITE_FRAME.scaleX * 0.5), (area.height - 30) / (rows * 100 + 10), 1.6);
     looks.forEach((l, i) => {
       const x = area.x + cw * (i % cols) + cw / 2;
       const y = area.y + Math.floor(i / cols) * 100 * k + 80 * k;
-      this.items.push(this.add.image(x, y, art.frame(l, 'idle', 2, 0)).setOrigin(0.5, SPRITE_FRAME.anchorY / SPRITE_FRAME.height).setScale(k * SPRITE_FRAME.scaleX * 0.6, k * SPRITE_FRAME.scaleY * 0.6));
+      this.items.push(this.add.image(x, y, art.frame(l, 'idle', 2, 0)).setOrigin(0.5, SPRITE_FRAME.anchorY / SPRITE_FRAME.height).setScale(k * SPRITE_FRAME.scaleX * 0.45, k * SPRITE_FRAME.scaleY * 0.45));
       this.text(x, y + 6 * k, l.girl ? 'ponytail' : HAIR_STYLES[l.hairStyle]!, 10);
     });
     const rowY = area.y + Math.ceil(looks.length / cols) * 100 * k + 40 * k;
     POSE_KINDS.forEach((kind, i) => {
       const x = area.x + (area.width / POSE_KINDS.length) * (i + 0.5);
-      this.items.push(this.add.image(x, rowY + 70 * k, art.frame(home[5]!, kind, 0, 1)).setOrigin(0.5, SPRITE_FRAME.anchorY / SPRITE_FRAME.height).setScale(k * SPRITE_FRAME.scaleX * 0.6, k * SPRITE_FRAME.scaleY * 0.6));
+      this.items.push(this.add.image(x, rowY + 70 * k, art.frame(home[5]!, kind, 0, 1)).setOrigin(0.5, SPRITE_FRAME.anchorY / SPRITE_FRAME.height).setScale(k * SPRITE_FRAME.scaleX * 0.45, k * SPRITE_FRAME.scaleY * 0.45));
       this.text(x, rowY + 76 * k, kind, 11);
     });
     this.text(area.x + area.width / 2, rowY + 100 * k, 'No BLOCK pose supplied (gap). Hair is fixed per roster slot.', Math.max(11, fs - 3), CSS.ink, area.width);
