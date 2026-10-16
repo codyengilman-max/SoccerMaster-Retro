@@ -267,9 +267,9 @@ export class MatchSim {
     this.padReset(label);
     if (s.coachIntent) this.clearCoachIntent(label);
     s.stoppage = null;
-    s.ball.vel = vec(0, 0);
+    zero(s.ball.vel);
     s.ball.kick = null;
-    for (const p of Object.values(s.players)) p.vel = vec(0, 0);
+    for (const p of Object.values(s.players)) zero(p.vel);
     s.phase = c.half === 1 ? 'halftime' : 'fulltime';
     s.phaseTime = 0;
     s.timeScale = 0;
@@ -873,7 +873,7 @@ export class MatchSim {
             s.beatenUntil[owner.id] = s.simTime + this.tuning.tackle.beatenSeconds;
           }
           ball.owner = null;
-          ball.vel = add(scale(pad.slideDir, S.pokeSpeed), scale(carried, 0.3));
+          setXY(ball.vel, pad.slideDir.x * S.pokeSpeed + carried.x * 0.3, pad.slideDir.y * S.pokeSpeed + carried.y * 0.3);
           ball.kick = { by: me.id, team: me.team, kind: 'touch', at: s.simTime, target: null, receiver: null };
           ball.lastTouch = me.team;
           ball.ignore.push({ id: me.id, until: s.simTime + S.sliderIgnoreSeconds });
@@ -912,8 +912,8 @@ export class MatchSim {
       const hit = segmentHit(ballPrev, ball.pos, a, b) ?? (near <= T.blockBallRadius ? vec(ballPrev.x + (ball.pos.x - ballPrev.x) * t, ballPrev.y + (ball.pos.y - ballPrev.y) * t) : null);
       if (!hit) return null;
       const vn = dot2(ball.vel, n);
-      ball.vel = scale(sub(ball.vel, scale(n, 2 * vn)), T.blockRestitution);
-      ball.pos = add(hit, scale(n, 0.25));
+      setXY(ball.vel, (ball.vel.x - n.x * (2 * vn)) * T.blockRestitution, (ball.vel.y - n.y * (2 * vn)) * T.blockRestitution);
+      setXY(ball.pos, hit.x + n.x * 0.25, hit.y + n.y * 0.25);
       ball.kick = { by: me.id, team: me.team, kind: 'touch', at: s.simTime, target: null, receiver: null };
       ball.lastTouch = me.team;
       if (speed > T.blockHardSpeed) ball.ignore.push({ id: me.id, until: s.simTime + T.blockIgnoreSeconds });
@@ -1235,21 +1235,27 @@ export class MatchSim {
     if (ball.owner) {
       const o = s.players[ball.owner];
       if (o.isKeeper) {
-        ball.pos = copy(o.pos);
-        ball.vel = vec(0, 0);
+        setXY(ball.pos, o.pos.x, o.pos.y);
+        zero(ball.vel);
         return;
       }
       s.touchPhase = (s.touchPhase + h / T.dribble.touchSeconds) % 1;
       const t = s.touchPhase;
       const k = t < 0.25 ? t / 0.25 : 1 - (t - 0.25) / 0.75;
-      const heading = length(o.vel) > 0.3 ? normalize(o.vel) : vec(o.team === 'home' ? 1 : -1, 0);
-      ball.pos = add(o.pos, scale(heading, lerp(T.dribble.minLead, T.dribble.maxLead, k)));
-      ball.vel = copy(o.vel);
+      const hl = length(o.vel);
+      const hx = hl > 0.3 ? o.vel.x / hl : o.team === 'home' ? 1 : -1;
+      const hy = hl > 0.3 ? o.vel.y / hl : 0;
+      const lead = lerp(T.dribble.minLead, T.dribble.maxLead, k);
+      setXY(ball.pos, o.pos.x + hx * lead, o.pos.y + hy * lead);
+      setXY(ball.vel, o.vel.x, o.vel.y);
       return;
     }
-    ball.pos = add(ball.pos, scale(ball.vel, h));
+    setXY(ball.pos, ball.pos.x + ball.vel.x * h, ball.pos.y + ball.vel.y * h);
     const speed = length(ball.vel);
-    if (speed > 0) ball.vel = scale(ball.vel, Math.max(0, speed - T.ball.friction * h) / speed);
+    if (speed > 0) {
+      const k = Math.max(0, speed - T.ball.friction * h) / speed;
+      setXY(ball.vel, ball.vel.x * k, ball.vel.y * k);
+    }
   }
 
   private resolveContacts(prev: Vec2, h: number): void {
@@ -1304,14 +1310,14 @@ export class MatchSim {
     const speed = length(ball.vel);
     const shot = ball.kick?.kind === 'shot' && ball.kick.team !== team;
     if (speed <= T.keeper.catchSpeed) {
-      ball.pos = copy(gk.pos);
+      setXY(ball.pos, gk.pos.x, gk.pos.y);
       this.take(gk, shot ? 'saved' : 'received', shot ? `keeper caught it (${speed.toFixed(1)} yd/s)` : 'keeper collected');
       if (shot) s.stats.saves[team] += 1;
       return true;
     }
     const vT = velToTeam(team, ball.vel);
     const side = toTeam(team, ball.pos, T).y >= toTeam(team, gk.pos, T).y ? 1 : -1;
-    ball.vel = toWorldVel(team, vec(Math.abs(vT.x) * T.keeper.parryFactor, side * speed * 0.3));
+    copyInto(ball.vel, toWorldVel(team, vec(Math.abs(vT.x) * T.keeper.parryFactor, side * speed * 0.3)));
     ball.ignore.push({ id: gk.id, until: s.simTime + T.keeper.ignoreSeconds });
     ball.lastTouch = team;
     s.keeperDiving[team] = false;
@@ -1371,7 +1377,7 @@ export class MatchSim {
     if (friendly) {
       if (speed <= T.receive.maxSpeed) this.take(p, 'received', '');
       else {
-        ball.vel = scale(ball.vel, T.receive.hotTouchFactor);
+        setXY(ball.vel, ball.vel.x * T.receive.hotTouchFactor, ball.vel.y * T.receive.hotTouchFactor);
         ball.ignore.push({ id: p.id, until: s.simTime + T.intercept.ignoreSeconds });
         ball.lastTouch = p.team;
         this.emit('deflected', p.id, 'too fast to control');
@@ -1386,7 +1392,7 @@ export class MatchSim {
     if (d <= T.intercept.deflectRadius) {
       const toBall = sub(ball.pos, p.pos);
       const cross = ball.vel.x * toBall.y - ball.vel.y * toBall.x;
-      ball.vel = scale(rotate(ball.vel, (cross >= 0 ? 1 : -1) * T.intercept.deflectAngle), T.intercept.deflectSpeedFactor);
+      copyInto(ball.vel, scale(rotate(ball.vel, (cross >= 0 ? 1 : -1) * T.intercept.deflectAngle), T.intercept.deflectSpeedFactor));
       ball.ignore.push({ id: p.id, until: s.simTime + T.intercept.ignoreSeconds });
       ball.lastTouch = p.team;
       ball.kick = { by: p.id, team: p.team, kind: 'touch', at: s.simTime, target: null, receiver: null };
@@ -1401,10 +1407,14 @@ export class MatchSim {
     const ball = s.ball;
     const changed = s.possession !== p.team;
     ball.owner = p.id;
-    ball.vel = p.isKeeper ? vec(0, 0) : copy(p.vel);
+    if (p.isKeeper) zero(ball.vel);
+    else setXY(ball.vel, p.vel.x, p.vel.y);
     // Control brings the ball to the receiver's feet (it was within reach), so ownership and ball position agree.
-    const heading = length(p.vel) > 0.3 ? normalize(p.vel) : vec(p.team === 'home' ? 1 : -1, 0);
-    ball.pos = p.isKeeper ? copy(p.pos) : add(p.pos, scale(heading, T.dribble.minLead));
+    const hl = length(p.vel);
+    const hx = hl > 0.3 ? p.vel.x / hl : p.team === 'home' ? 1 : -1;
+    const hy = hl > 0.3 ? p.vel.y / hl : 0;
+    if (p.isKeeper) setXY(ball.pos, p.pos.x, p.pos.y);
+    else setXY(ball.pos, p.pos.x + hx * T.dribble.minLead, p.pos.y + hy * T.dribble.minLead);
     ball.kick = null;
     ball.ignore = [];
     ball.lastTouch = p.team;
@@ -1445,7 +1455,7 @@ export class MatchSim {
   private kickBall(by: MatchPlayer, velocity: Vec2, kind: MatchKick['kind'], target: Vec2 | null, receiver: MatchPlayerId | null): void {
     const s = this.s;
     s.ball.owner = null;
-    s.ball.vel = copy(velocity);
+    setXY(s.ball.vel, velocity.x, velocity.y);
     s.ball.kick = { by: by.id, team: by.team, kind, at: s.simTime, target, receiver };
     s.ball.ignore = [{ id: by.id, until: s.simTime + this.tuning.ball.kickerIgnoreSeconds }];
     s.ball.lastTouch = by.team;
@@ -1461,7 +1471,7 @@ export class MatchSim {
     s.phaseTime = 0;
     s.timeScale = 1;
     s.stoppage = { reason, scorer, detail, restartTeam, spot: copy(spot), until: reason === 'goal' ? T.stoppage.goalSeconds : T.stoppage.outSeconds };
-    s.ball.vel = vec(0, 0);
+    zero(s.ball.vel);
     if (s.coachIntent) this.clearCoachIntent('play stopped');
     this.emit(reason, s.ball.kick?.by ?? null, detail);
   }
@@ -1481,9 +1491,9 @@ export class MatchSim {
         : TEAM_PLAYER_IDS[st.restartTeam].map((id) => s.players[id]).filter((p) => !p.isKeeper)
             .sort((a, b) => distance(a.pos, st.spot) - distance(b.pos, st.spot))[0];
       if (!taker) return;
-      taker.pos = copy(st.spot);
-      taker.vel = vec(0, 0);
-      s.ball.pos = copy(st.spot);
+      setXY(taker.pos, st.spot.x, st.spot.y);
+      zero(taker.vel);
+      setXY(s.ball.pos, st.spot.x, st.spot.y);
       s.ball.owner = null;
       this.take(taker, 'restart', st.reason);
       s.protectUntil = s.simTime + 1.5;
@@ -1503,19 +1513,21 @@ export class MatchSim {
         const a = p.isKeeper ? vec(role.base.x, role.base.y) : computeAnchor(role, toTeam(t, centre, T), t === team, T);
         a.x = Math.min(a.x, T.pitch.length / 2 - (t === team ? 0.5 : 6));
         const jitter = t === 'away' ? (this.rng() * 2 - 1) * 0.5 : 0;
-        p.pos = toWorld(t, vec(a.x, a.y + jitter), T);
-        p.vel = vec(0, 0);
+        const w = toWorld(t, vec(a.x, a.y + jitter), T);
+        setXY(p.pos, w.x, w.y);
+        zero(p.vel);
         p.target.x = p.pos.x;
         p.target.y = p.pos.y;
-        p.anchor = copy(p.pos);
+        setXY(p.anchor, p.pos.x, p.pos.y);
         p.intent = p.isKeeper ? 'keeper' : 'hold';
         p.intentUntil = 0;
       }
     }
     const kicker = s.players[team === 'home' ? 'H8' : 'A8'];
-    kicker.pos = toWorld(team, vec(T.pitch.length / 2 - 1, T.pitch.goalCenterY), T);
-    s.ball.pos = copy(centre);
-    s.ball.vel = vec(0, 0);
+    const k = toWorld(team, vec(T.pitch.length / 2 - 1, T.pitch.goalCenterY), T);
+    setXY(kicker.pos, k.x, k.y);
+    setXY(s.ball.pos, centre.x, centre.y);
+    zero(s.ball.vel);
     s.ball.owner = null;
     s.ball.kick = null;
     s.runs = { home: { runnerId: null, until: 0, cooldownUntil: 0 }, away: { runnerId: null, until: 0, cooldownUntil: 0 } };
@@ -1688,6 +1700,13 @@ export function powerForSpeed(speed: number, T: MatchTuning = MATCH_TUNING): num
 const dot2 = (a: Vec2, b: Vec2): number => a.x * b.x + a.y * b.y;
 
 /** Rotates unit vector `from` toward `to` by at most `max` radians. */
+function setXY(v: MutableVec2, x: number, y: number): void {
+  v.x = x;
+  v.y = y;
+}
+const zero = (v: MutableVec2): void => setXY(v, 0, 0);
+const copyInto = (v: MutableVec2, a: Vec2): void => setXY(v, a.x, a.y);
+
 /** In-place turnToward: rotates the unit vector `v` toward the unit direction (tx, ty) by at most `max` radians. */
 function turnTowardInto(v: MutableVec2, tx: number, ty: number, max: number): void {
   const a = Math.atan2(v.y, v.x);

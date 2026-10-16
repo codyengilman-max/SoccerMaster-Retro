@@ -59,6 +59,8 @@ function tv(x: number, y: number): MutableVec2 {
   v.y = y;
   return v;
 }
+/** Scratch vectors the planner has ever needed; stays flat once play is warmed up (allocation regression test). */
+export const aiScratchSize = (): number => POOL.length;
 const tt = (team: TeamId, p: Vec2, T: MatchTuning): MutableVec2 =>
   team === 'home' ? tv(p.x, p.y) : tv(T.pitch.length - p.x, T.pitch.width - p.y);
 function tNorm(x: number, y: number): MutableVec2 {
