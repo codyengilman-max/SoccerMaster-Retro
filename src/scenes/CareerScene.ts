@@ -189,6 +189,12 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.render();
   }
 
+  private openGallery(): void {
+    if (this.navigating) return;
+    this.navigating = true;
+    this.scene.start(SceneKeys.Gallery);
+  }
+
   private openLab(): void {
     if (this.navigating) return;
     this.navigating = true;
@@ -331,12 +337,14 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             `Training Review: draft library v1.1, review only, not in player plans.`,
             `Soccer Logic Review: ${n} research outlines, catalog only, none drives the game (goal ${SCENARIO_GOAL}+).`,
             `Coach Moments: play a 9v9 match from a link ending in ?coach.`,
+            'Art Gallery: Graphics v1.1 cutscene and player art with review status; most new character/outfit art is awaiting your individual review.',
             'Story & RPG: week one of story package v0.7 is playable from Start → Story: Week 1. Weeks 2–4, leagues, tournaments, transfers and full relationship arcs are not implemented; the club world is design data only.',
           ].join('\n'),
           actions: [
             ...(__LAB__ ? [{ name: 'hub-lab', label: 'Gameplay Lab', onClick: () => this.openLab() }] : []),
             { name: 'hub-training', label: 'Training Review (drafts)', onClick: () => this.go({ kind: 'drafts' }) },
             { name: 'hub-logic', label: 'Soccer Logic Review', onClick: () => this.go({ kind: 'logic', group: null }) },
+            { name: 'hub-art', label: 'Art Gallery (Graphics v1)', onClick: () => this.openGallery() },
             { name: 'hub-career', label: 'Home Training (your save)', onClick: () => this.go(this.save.player ? { kind: 'home' } : { kind: 'create' }) },
           ],
         };
