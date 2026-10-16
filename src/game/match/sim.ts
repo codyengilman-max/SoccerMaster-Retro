@@ -20,7 +20,7 @@ import { createRng } from '../rng';
 import { DEFAULT_FORMATION, FORMATIONS, roleDef, type FormationId } from './formations';
 import { MATCH_TUNING, type MatchTuning } from './tuning';
 import { planUserPass } from './predict';
-import { ballFocus, computeAnchor, decideCarrier, planTeams, toTeam, toWorld, velToTeam, type AiContext } from './ai';
+import { computeAnchor, decideCarrier, planTeams, toTeam, toWorld, velToTeam, type AiContext } from './ai';
 import {
   AWAY_IDS,
   HOME_IDS,
@@ -103,6 +103,7 @@ export class MatchSim {
     entries: Array.from({ length: 9 }, () => ({ id: 'H1' as MatchPlayerId, angle: 0, perp: 0, dist: 0, score: 0, inCone: false })),
   };
   /** Per-step scratch vectors (overwritten in place; never stored in state). */
+  private readonly focusScratch: MutableVec2 = { x: 0, y: 0 };
   private readonly keeperRes = { target: { x: 0, y: 0 } as MutableVec2, speed: 0 };
   private readonly kbT: MutableVec2 = { x: 0, y: 0 };
   private readonly kvT: MutableVec2 = { x: 0, y: 0 };
@@ -566,9 +567,15 @@ export class MatchSim {
     const me = s.players[s.controlledId];
     const sliding = pad.phase === 'slideStart' || pad.phase === 'slideActive' || pad.phase === 'slideRecovery';
     if (pad.phase === 'blocking') {
-      const to = sub(s.ball.pos, me.pos);
-      if (length(to) > 0.05) pad.facing = turnToward(pad.facing, normalize(to), T.blockTurnRate * h);
-    } else if (!sliding && length(me.vel) > 0.5) pad.facing = normalize(me.vel);
+      const tx = s.ball.pos.x - me.pos.x;
+      const ty = s.ball.pos.y - me.pos.y;
+      const tl = Math.sqrt(tx * tx + ty * ty);
+      if (tl > 0.05) turnTowardInto(pad.facing, tx / tl, ty / tl, T.blockTurnRate * h);
+    } else if (!sliding && length(me.vel) > 0.5) {
+      const vl = length(me.vel);
+      pad.facing.x = me.vel.x / vl;
+      pad.facing.y = me.vel.y / vl;
+    }
     const t = s.simTime - pad.since;
     switch (pad.phase) {
       case 'chargingPass':
@@ -599,7 +606,10 @@ export class MatchSim {
         return;
       case 'slideActive':
         if (pad.actor !== s.controlledId) return this.padToReady(S.cooldownSeconds);
-        if (pad.slideDir && length(pad.stick) > 0.2) pad.slideDir = turnToward(pad.slideDir, normalize(pad.stick), S.steerRate * h);
+        if (pad.slideDir && length(pad.stick) > 0.2) {
+          const sl = length(pad.stick);
+          turnTowardInto(pad.slideDir, pad.stick.x / sl, pad.stick.y / sl, S.steerRate * h);
+        }
         if (t >= S.activeSeconds - 1e-9) {
           pad.phase = 'slideRecovery';
           pad.since = s.simTime;
@@ -1056,15 +1066,21 @@ export class MatchSim {
   /** Pressers react to the carrier's cuts after a short lag instead of mirroring them instantly. */
   private updatePressRead(h: number): void {
     const s = this.s;
-    const focus = ballFocus(s);
+    const b = s.ball;
+    const owner = b.owner ? s.players[b.owner] : null;
+    const focus = this.focusScratch;
+    focus.x = owner ? owner.pos.x : b.pos.x + b.vel.x * 0.35;
+    focus.y = owner ? owner.pos.y : b.pos.y + b.vel.y * 0.35;
     const r = s.pressRead;
     // First tick, or the ball was teleported (restart, Lab staging): no lag to carry over.
     if (!finiteVec(r) || distance(r, focus) > 12) {
-      s.pressRead = copy(focus);
+      r.x = focus.x;
+      r.y = focus.y;
       return;
     }
     const k = 1 - Math.exp(-h / Math.max(1e-3, this.tuning.defense.readSeconds));
-    s.pressRead = vec(r.x + (focus.x - r.x) * k, r.y + (focus.y - r.y) * k);
+    r.x = r.x + (focus.x - r.x) * k;
+    r.y = r.y + (focus.y - r.y) * k;
   }
 
   private movePlayer(p: MatchPlayer, h: number): void {
@@ -1207,8 +1223,9 @@ export class MatchSim {
 
   private inBox(team: TeamId, p: Vec2): boolean {
     const P = this.tuning.pitch;
-    const t = toTeam(team, p, this.tuning);
-    return t.x <= P.boxDepth && Math.abs(t.y - P.goalCenterY) <= P.boxHalfWidth;
+    const tx = team === 'home' ? p.x : P.length - p.x;
+    const ty = team === 'home' ? p.y : P.width - p.y;
+    return tx <= P.boxDepth && Math.abs(ty - P.goalCenterY) <= P.boxHalfWidth;
   }
 
   private moveBall(h: number): void {
@@ -1671,6 +1688,17 @@ export function powerForSpeed(speed: number, T: MatchTuning = MATCH_TUNING): num
 const dot2 = (a: Vec2, b: Vec2): number => a.x * b.x + a.y * b.y;
 
 /** Rotates unit vector `from` toward `to` by at most `max` radians. */
+/** In-place turnToward: rotates the unit vector `v` toward the unit direction (tx, ty) by at most `max` radians. */
+function turnTowardInto(v: MutableVec2, tx: number, ty: number, max: number): void {
+  const a = Math.atan2(v.y, v.x);
+  let d = Math.atan2(ty, tx) - a;
+  while (d > Math.PI) d -= 2 * Math.PI;
+  while (d < -Math.PI) d += 2 * Math.PI;
+  const r = a + clamp(d, -max, max);
+  v.x = Math.cos(r);
+  v.y = Math.sin(r);
+}
+
 function turnToward(from: Vec2, to: Vec2, max: number): MutableVec2 {
   const a = Math.atan2(from.y, from.x);
   let d = Math.atan2(to.y, to.x) - a;
