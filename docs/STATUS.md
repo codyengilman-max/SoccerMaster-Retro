@@ -1,6 +1,6 @@
 # Status
 
-## FIFA-style mechanics (branch `feature/fifa-gameplay-mechanics`, not merged, not in production)
+## FIFA-style mechanics (branch `feature/fifa-gameplay-mechanics`; merged to `main` once CI passes, not deployed to production)
 
 - **Locomotion:** a light stick push is close control (slow, tight turns); a full push runs with momentum; a sharp reversal brakes first, shorter with higher agility.
 - **Passing:** a 30° cone along the stick; teammates scored by yards from the stick's line plus distance; the pass leads the chosen receiver's run, with hold length still setting power.
