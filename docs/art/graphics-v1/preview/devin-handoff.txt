@@ -1,0 +1,10 @@
+SOCCERMASTER GRAPHICS v1 — REFERENCE PREVIEW
+
+This preview is a scripted visual reference, not the real soccer simulation.
+Read ../00_START_HERE.md and ../DEVIN_PROMPT.txt for the current integration task.
+
+The preview preserves the approved 64x64 procedural source and original cutscene images. The packaged exporter uses 96x96 padded frames to prevent rotated poses clipping, with the same visible body scale. Read ../code/README.md for anchors and frame dimensions.
+
+Keep current game controls, physics, story, saves and progression authoritative. Map art to existing game state. Follow current owner deployment authorization and repository gates. New character/outfit art is labeled for visual review.
+
+Package checks do not establish actual Phaser integration, browser compatibility or physical iPhone acceptance. See ../docs/VALIDATION_REPORT.md.

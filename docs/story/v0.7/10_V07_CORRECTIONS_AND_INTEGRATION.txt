@@ -1,0 +1,115 @@
+V0.7 IMPLEMENTATION CONTRACT — authoritative corrections
+
+This version fixes six package audit findings. It does not certify production.
+Read this file and week_one_scenes.json before other normative files. Historical
+reports retain their original version labels. No automatic merge or deployment.
+
+1. VALIDATED CHOICE COMMAND
+The runtime owns careerId, occurrenceId, contentVersion, active node, revision,
+and mode. UI sends only requested choiceId, expected revision and input sequence.
+In one transaction: load canonical state, require live mode, require matching
+revision and pinned content version, resolve current node and choice allowlist,
+evaluate code-owned eligibility predicate against canonical evidence, validate
+fresh input, apply allowlisted effects and save cursor/decision/revision together.
+A stale/conflicting command writes nothing. An identical committed request may
+return its prior receipt. Never accept effect values, eligibility, actor identity,
+replay mode or activity outcome from arbitrary UI payloads. Render names as text;
+only {player.name} is supported here and resolves from validated canonical identity.
+User text is never parsed as markup, code, a second template, or an asset path.
+
+2. REPLAY CAPABILITY
+Create live and read-only replay sessions through a code-owned factory. Mode is
+fixed for the session lifetime; no per-call replay flag. The central persistence
+boundary denies ALL writes from replay, including effects, seen flags, knowledge,
+activity launches, scheduling and week completion. Replay reads a snapshot and
+can navigate only previously revealed content using a separate ephemeral cursor.
+A transcript never exposes alternative replies or hidden outcomes. Local saves
+are not cheat-proof against someone editing their own browser storage; do not use
+this model to authorize competitive rewards or server-owned state.
+
+3. ACTIVITY OWNERSHIP
+Allocate a random unique run ID once inside the canonical launch transaction.
+Unique entitlement key is structured (career, occurrence, pinnedVersion, node).
+Persist ID, owner, adapter kind, input snapshot and launched state atomically.
+Reload/retry retrieves that same run. Different careers, nodes and occurrences
+must have different IDs. Adapter completion validates ownership, current run,
+allowed outcome and expected revision; commit result and next cursor atomically.
+Duplicate completion returns prior receipt, conflicting completion fails closed.
+Never generate a new run because a render, reload or network retry occurred.
+
+4. CANCELLATIONS
+missed -> repair_proposed -> repair_accepted -> repair_active -> repaired -> closed.
+Missed may also close honestly without repair. Advance-cancelled -> acknowledged
+-> closed. Later social practice is independent, not a repair, with zero penalty
+and zero repair restoration. Never-promised -> neutral -> closed. Retain original
+history. Restore only actually applied original loss, capped at two, once.
+
+5. EXECUTABLE CONTENT AND PRECEDENCE
+week_one_scenes.json is the minimal neutral week-one graph, not pseudocode.
+It supplies stable scene/node IDs, original dialogue, per-choice branch replies,
+next targets, effect mappings and activity outcomes. It has 18 ordered scenes,
+including the week-close adapter and week-two epilogue. It intentionally uses
+neutral result reactions: no fabricated victory, bullying or romance. Richer
+variants described in 03 and 09 are later content additions requiring evidence
+predicates, validation and author review; do not silently replace this graph.
+This graph wins if a prior prose beat implies a different executable branch.
+Earlier safety rules remain required. No new soccer-stat effect is permitted.
+remember_choice stores narrative context only; it grants no ability or reward.
+
+Code-owned adapters (not implementations supplied by this package):
+identity: require validated chosen boy/girl identity and name before completion;
+  it cannot be skipped. Names render throughout dialogue, journal and gameplay.
+training_arrangement: show canonical supported arrangement. If none exists, stop
+  with an explicit setup/recovery action; do not invent acceptance or membership.
+weekly_focus: use existing eligible-focus service and its visible carry-forward
+  rules. Do not unlock a focus from a scene response.
+assignment: show actual assignment; never invent selection or opponent fixture.
+crossbar: predicate crossbar_accepted reads the same career/week's committed
+  W1_SCHOOL_02 invitation choice. accept/equal_attempts/shared_warmup are true;
+  decline is false and creates a DECLINED outcome once before end; missing choice
+  is recovery, not false. An explicit shared_warmup means one warm-up each;
+  otherwise offer one uniformly to all participants, never scored. Completion
+  carries validated WIN/LOSS/DRAW result; abandoned/interrupted are not losses.
+practice/match: bind supported scheduled activity. completed requires genuine
+  adapter evidence; declined/abandoned/interrupted never award completion growth.
+  Missing implementation is a release blocker, not an automatic skipped result.
+week_close: perform the existing closure/debt checks, focus draft and week advance
+  in one transaction. If closure is blocked, show its honest resolution options.
+  Only completed may proceed to W2; retries must never advance to week three.
+
+All adapters pause/resume without advancing the graph; nonterminal errors show
+recovery. Canonical decline needs an explicit player action; adapter errors do
+not imply decline. At most one adapter outcome owns each node transition.
+Scene end commits completion and next occurrence atomically and once. Only end
+of final epilogue completes the slice; it must not invent further playable weeks.
+
+The validator checks unique IDs, allowed effects/predicates/adapters, all targets,
+acyclic reachable nodes/scenes and required activity outcomes. Run it on trusted
+bundled content before build; malformed content blocks release. For future new
+predicates, add registry implementation and negative tests before allowlisting.
+Do not implement executable expressions or dynamic imports from content.
+
+6. TESTING / RELEASE GATES
+The SQLite reference models provide disk-backed transactions, close/reopen-style
+new connections, two-connection stale revision checks and injected rollback
+between effect and cursor writes. They are NOT browser IndexedDB tests and not
+an end-to-end engine. The reference intentionally refuses conditional activity
+launch without an evidence adapter; it does not fake those integrations.
+Devin must implement and run these against actual game persistence and renderer:
+A. forged/unknown/ineligible choice, stale version/revision and duplicate request;
+B. replay every progression API including handoff/end/week close; zero writes;
+C. two tabs choose concurrently; one canonical decision and effect;
+D. fail storage between effect and cursor writes; reopen and retry without loss
+   or duplication; test real transaction abort and browser reload;
+E. reload before/after handoff and adapter completion; exactly one owned run;
+F. multiple choices in one scene, every branch, decline and interruption paths;
+G. cancellation acknowledgement then independent social completion: no repair;
+H. content migration/missing nodes; preserve backup, never erase saves;
+I. skip/fast-forward stops choices/handoffs; reveal/knowledge commits atomic;
+J. gestures, held keys, multitouch, background, orientation and input handoff;
+K. physical iPhone Safari walkthrough with chosen boy/girl and custom name;
+L. soccer controls, match growth, training credits and 4–6 Coach Moments unchanged.
+Record actual commit, environment, result and unresolved items. No fabricated
+browser, coach-review, iPhone or production verification. Missing tests are gates,
+not passed checks. Stop integration when a required existing API is absent and
+report the minimal adapter work rather than returning placeholder success.

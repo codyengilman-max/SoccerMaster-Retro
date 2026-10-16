@@ -1,0 +1,198 @@
+{
+  "source": "SoccerMaster_Devin_Plain_Text_Review_v0.7.txt, current Library version 4",
+  "purpose": "Read-only validation excerpt. Not a replacement story engine.",
+  "scenes": [
+    {
+      "id": "W1_SCHOOL_01",
+      "version": "0.7",
+      "entry": "intro",
+      "background": "neutral_school",
+      "nodes": [
+        {
+          "id": "intro",
+          "type": "line",
+          "speaker": "Jordan",
+          "text": "New kid? The map makes it look easier than it is.",
+          "next": "response"
+        },
+        {
+          "id": "response",
+          "type": "choice",
+          "options": [
+            {
+              "id": "directions",
+              "label": "Directions",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "response",
+                  "value": "directions"
+                }
+              ],
+              "next": "response_reply_directions"
+            },
+            {
+              "id": "introduce",
+              "label": "Introduce",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "response",
+                  "value": "introduce"
+                }
+              ],
+              "next": "response_reply_introduce"
+            },
+            {
+              "id": "quiet",
+              "label": "Quiet",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "response",
+                  "value": "quiet"
+                }
+              ],
+              "next": "response_reply_quiet"
+            }
+          ]
+        },
+        {
+          "id": "response_reply_directions",
+          "type": "line",
+          "speaker": "Jordan",
+          "text": "Come on. I’m going that way.",
+          "next": "end"
+        },
+        {
+          "id": "response_reply_introduce",
+          "type": "line",
+          "speaker": "Jordan",
+          "text": "Nice to meet you, {player.name}. This corridor.",
+          "next": "end"
+        },
+        {
+          "id": "response_reply_quiet",
+          "type": "line",
+          "speaker": "Player",
+          "text": "We can just sit here a minute.",
+          "next": "end"
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "next_scene": "W1_SCHOOL_02"
+        }
+      ]
+    },
+    {
+      "id": "W1_SCHOOL_02",
+      "version": "0.7",
+      "entry": "intro",
+      "background": "neutral_school",
+      "nodes": [
+        {
+          "id": "intro",
+          "type": "line",
+          "speaker": "Blake",
+          "text": "You play soccer? Let’s see it. Everyone gets the same attempts.",
+          "next": "invitation"
+        },
+        {
+          "id": "invitation",
+          "type": "choice",
+          "options": [
+            {
+              "id": "accept",
+              "label": "Accept",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "invitation",
+                  "value": "accept"
+                }
+              ],
+              "next": "invitation_reply_accept"
+            },
+            {
+              "id": "equal_attempts",
+              "label": "Equal attempts",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "invitation",
+                  "value": "equal_attempts"
+                }
+              ],
+              "next": "invitation_reply_equal_attempts"
+            },
+            {
+              "id": "shared_warmup",
+              "label": "Shared warmup",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "invitation",
+                  "value": "shared_warmup"
+                }
+              ],
+              "next": "invitation_reply_shared_warmup"
+            },
+            {
+              "id": "decline",
+              "label": "Decline",
+              "predicate": "always",
+              "effects": [
+                {
+                  "op": "remember_choice",
+                  "key": "invitation",
+                  "value": "decline"
+                }
+              ],
+              "next": "invitation_reply_decline"
+            }
+          ]
+        },
+        {
+          "id": "invitation_reply_accept",
+          "type": "line",
+          "speaker": "Blake",
+          "text": "Three scored shots each. Warm-up first if we all want one.",
+          "next": "end"
+        },
+        {
+          "id": "invitation_reply_equal_attempts",
+          "type": "line",
+          "speaker": "Blake",
+          "text": "Same number for everybody. Count them.",
+          "next": "end"
+        },
+        {
+          "id": "invitation_reply_shared_warmup",
+          "type": "line",
+          "speaker": "Blake",
+          "text": "Everybody gets one practice shot, then we start.",
+          "next": "end"
+        },
+        {
+          "id": "invitation_reply_decline",
+          "type": "line",
+          "speaker": "Jordan",
+          "text": "No problem. Let’s head back.",
+          "next": "end"
+        },
+        {
+          "id": "end",
+          "type": "end",
+          "next_scene": "W1_CROSSBAR"
+        }
+      ]
+    }
+  ]
+}

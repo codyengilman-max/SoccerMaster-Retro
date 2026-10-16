@@ -1,0 +1,75 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>SoccerMaster • Sprite Lab</title>
+<style>
+:root{color-scheme:dark;--cream:#f4ead4;--navy:#112433;--muted:#a4b5bd;--orange:#ff9a48}*{box-sizing:border-box}body{margin:0;background:#091722;color:var(--cream);font:15px system-ui,sans-serif}main{max-width:1440px;margin:auto;padding:22px clamp(12px,3vw,40px)}header{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:20px}.eyebrow{color:var(--orange);font-size:11px;letter-spacing:3px;font-weight:800}h1{font-size:clamp(23px,4vw,40px);font-style:italic;letter-spacing:-1.8px;margin:4px 0}h1 span{color:var(--orange)}.tag{border:1px solid #38515e;border-radius:24px;padding:8px 12px;font-size:11px;color:var(--muted)}.stage{position:relative;border:1px solid #36515b;border-radius:14px;overflow:hidden;background:#315f40}canvas{display:block;width:100%;height:min(65vh,660px);min-height:300px}.score{position:absolute;left:16px;top:16px;display:flex;align-items:center;gap:16px;background:#102532ed;padding:12px 16px;border-radius:6px;border-left:4px solid var(--orange);font-weight:800;pointer-events:none}.score small{font-size:10px;color:#a4b5bd}.phase{position:absolute;bottom:16px;left:16px;background:#102532e8;padding:10px 14px;border-radius:5px;font-size:12px;pointer-events:none}.telemetry{position:absolute;top:18px;right:16px;background:#102532d9;color:#d1e1dc;padding:8px;border-radius:5px;font:11px ui-monospace,monospace}.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:#132734;border:1px solid #36515b;border-top:0;border-radius:0 0 12px 12px;padding:14px;margin:0 8px}button,select{font:inherit;min-height:44px;border:1px solid #385261;border-radius:7px;background:#203845;color:var(--cream);padding:8px 14px;cursor:pointer}button:hover{background:#304c5d}button[aria-pressed=true]{background:var(--cream);color:var(--navy)}label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}input{accent-color:var(--orange);max-width:130px}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #ff9a48;outline-offset:3px}.notes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:22px;margin-top:24px}.notes h2{font-size:14px;margin:0 0 7px}.notes p{font-size:12px;line-height:1.7;color:var(--muted);margin:0}.foot{font-size:11px;color:var(--muted);margin:18px 0} @media(max-width:650px){main{padding:12px}header{margin-bottom:12px}.tag{max-width:140px}.notes{grid-template-columns:1fr;gap:14px}canvas{height:52vh;min-height:310px}.score{gap:10px;font-size:12px;padding:9px}.telemetry{font-size:9px}.toolbar{margin:0;padding:10px}.phase{max-width:85%}}@media(orientation:landscape) and (max-height:500px){main{padding:8px 16px}header{margin:0 0 8px}h1{font-size:23px}.eyebrow{display:none}canvas{height:73vh;min-height:220px}.notes{display:none}}
+</style>
+<main><header><div><div class="eyebrow">SCOTTSDALE • GRAPHICS STUDY 01</div><h1>SOCCER<span>MASTER</span></h1></div><div class="tag">Running 2D prototype<br>Separate from your game</div></header>
+<nav style="display:flex;gap:16px;margin:0 0 14px;font-size:14px"><strong>Gameplay lab</strong><a style="color:#ffb978" href="cutscene.html">School cutscene →</a></nav><div class="stage"><canvas id="pitch" aria-label="Animated overhead soccer graphics demonstration with eighteen players"></canvas><div class="score">ORANGE <span>0 : 0</span> NAVY <small>VISUAL DEMO</small></div><div class="telemetry" id="meter">18 players • measuring…</div><div class="phase" id="phase" aria-live="off">Receive & turn</div></div>
+<div class="toolbar"><button id="pause" aria-pressed="false">Pause</button><button id="slow" aria-pressed="false">Slow motion</button><button id="restart">Restart sequence</button><label>Camera <input id="zoom" aria-label="Camera zoom" type="range" min="1" max="1.7" step="0.05" value="1.35"><output id="zvalue">1.35×</output></label><label>Protagonist <select id="identity"><option value="boy">Boy • dark hair</option><option value="girl">Girl • light hair</option></select></label><button id="follow" aria-pressed="true">Follow play</button></div>
+<div class="notes"><section><h2>Actual drawn frames.</h2><p>Oversized players with taller proportions, shaded kits and clear limbs. Cached 64 × 64 source frames, eight directions, six running poses. Five hair colors; mohawks, long hair, curls, Afros, ponytails, shaggy hair and short cuts. Simple kits, grounded shadows and consistent foot anchors. This is deliberately modest art we can implement.</p></section><section><h2>Look first. Gameplay later.</h2><p>A scripted loop shows carrying, a pass, a shot, a block/slide and a goalkeeper dive. No soccer AI, scoring or production controls are implemented here.</p></section><section><h2>Same identity. Two art scales.</h2><p>Choose dark-haired boy or light-haired girl. Flatter pixel-art portraits for cutscenes; enlarged match sprites emphasize movement, hair silhouette and team recognition.</p></section></div><p class="foot">Standalone Canvas 2D rendering proof — not a Phaser integration or a performance guarantee for the full game. FPS is this page’s animation cadence on your device. No accounts or tracking. <a style="color:#ffb978" href="devin-handoff.txt" download>Devin implementation brief</a></p></main>
+<script>
+'use strict';
+const canvas=document.getElementById('pitch'),ctx=canvas.getContext('2d'),meter=document.getElementById('meter'),phaseLabel=document.getElementById('phase');
+const P={x:90,y:80,w:1200,h:760},CW=1380,CH=920;
+let W=1000,H=580,dpr=1,t=0,last=0,paused=false,slow=false,zoom=1.35,follow=true,identity='boy',elapsed=0,frames=0;
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v)),mix=(a,b,u)=>a+(b-a)*u;
+function resize(){const r=canvas.getBoundingClientRect();W=r.width;H=r.height;dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr)}
+new ResizeObserver(resize).observe(canvas);
+function ellipse(g,x,y,rx,ry,color){g.fillStyle=color;g.beginPath();g.ellipse(x,y,rx,ry,0,0,Math.PI*2);g.fill()}
+function stroke(g,points,color,width){g.strokeStyle=color;g.lineWidth=width;g.lineCap='round';g.lineJoin='round';g.beginPath();points.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.stroke()}
+const atlas=new Map();
+function sprite(team,dir,frame,kind='run',girl=false,hairIndex=0,hairStyle=0){const key=[team,dir,frame,kind,girl,hairIndex,hairStyle].join('/');if(atlas.has(key))return atlas.get(key);const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');
+const a=dir*Math.PI/4,dx=Math.cos(a),dy=Math.sin(a),s=Math.sin(frame/6*Math.PI*2),kit=team===0?'#ed813d':team===1?'#233f59':'#69ac91',skin='#e9bc94';
+g.save();g.translate(32,52);if(kind==='slide'||kind==='dive'){g.rotate((dx<0?-1:1)*1.05);g.translate(0,8)}
+let step=kind==='run'?s*5:0,foot=kind==='kick'?10:0;
+stroke(g,[[-5,-13],[-5+dx*step,-6],[-5+dx*(step+foot),0+dy*step]],'#152b3e',7);
+stroke(g,[[5,-13],[5-dx*step,-6],[5-dx*step,0-dy*step]],'#152b3e',7);
+stroke(g,[[-5+dx*step,-5],[-5+dx*(step+foot),dy*step]],kit,4);stroke(g,[[5-dx*step,-5],[5-dx*step,-dy*step]],kit,4);
+ellipse(g,-4+dx*(step+foot),1+dy*step,4,2,'#142332');ellipse(g,6-dx*step,1-dy*step,4,2,'#142332');
+stroke(g,[[-9,-28],[-13-dx*step,-22],[-13-dx*step,-17]],skin,4);stroke(g,[[9,-28],[13+dx*step,-22],[13+dx*step,-17]],skin,4);
+g.fillStyle='#102e42';g.fillRect(-8,-17,16,7);g.fillStyle=kit;g.beginPath();g.moveTo(-8,-33);g.lineTo(8,-33);g.lineTo(11,-18);g.lineTo(-11,-18);g.closePath();g.fill();
+stroke(g,[[-8,-31],[-10,-25]],'#f6e5bd',2);stroke(g,[[8,-31],[10,-25]],'#f6e5bd',2);stroke(g,[[-3,-32],[0,-29],[3,-32]],'#f6e5bd',2);
+stroke(g,[[6,-28],[8,-20]],team===0?'#ba582c':'#172e43',2);stroke(g,[[-5,-28],[-4,-23]],team===0?'#ffa75f':'#47647d',2);g.fillStyle='#f5e8cc';g.font='bold 8px sans-serif';g.textAlign='center';g.fillText(team===0?'10':team===1?'6':'1',0,-20);
+stroke(g,[[0,-34],[0,-31]],skin,4);ellipse(g,dx*1.5,-39,6.2,7.3,skin);const hairColors=['#211d25','#65402c','#b04d2f','#e6b94f','#f6df99'];const hc=girl?'#f6df99':hairColors[hairIndex%5];const hs=girl?5:hairStyle;
+if(hs===0){ellipse(g,dx,-44,7.5,4.5,hc)}
+if(hs===1){for(let h=0;h<7;h++)ellipse(g,dx-7+h*2.4,-44-Math.sin(h/6*Math.PI)*3,3.3,3.5,hc)}
+if(hs===2){ellipse(g,dx,-42,11,9,hc);for(let h=0;h<9;h++){const ha=Math.PI+h/8*Math.PI;ellipse(g,dx+Math.cos(ha)*9,-41+Math.sin(ha)*8,3,3,hc)}ellipse(g,dx*2,-37,4.5,3.8,skin)}
+if(hs===3){ellipse(g,dx,-44,6.5,3,hc);g.fillStyle=hc;g.beginPath();g.moveTo(dx-2,-44);g.lineTo(dx-3,-50);g.lineTo(dx+1,-51);g.lineTo(dx+4,-49);g.lineTo(dx+3,-41);g.fill()}
+if(hs===4){ellipse(g,dx,-43,8,5,hc);stroke(g,[[-7,-42],[-9,-34],[-7+Math.sin(frame)*2,-23]],hc,5);stroke(g,[[7,-42],[9,-34],[7+Math.sin(frame)*2,-23]],hc,5)}
+if(hs===5){ellipse(g,dx,-43,8,5,hc);stroke(g,[[-dx*6,-42],[-dx*11,-35],[-dx*10+Math.sin(frame)*3,-23]],hc,6);ellipse(g,-dx*8,-39,2,2,'#f38756')}
+if(hs===6){ellipse(g,dx,-44,9,6,hc);stroke(g,[[-7,-43],[-9,-36]],hc,4);stroke(g,[[7,-43],[9,-37]],hc,4)}
+if(dy>=0){g.fillStyle='#22333c';g.fillRect(dx*3-2,-39,1.4,1.4);g.fillRect(dx*3+2,-39,1.4,1.4)}g.restore();atlas.set(key,c);return c}
+// Pre-render every locomotion frame; special poses are cached on first use.
+for(let team=0;team<3;team++)for(let d=0;d<8;d++)for(let f=0;f<6;f++)sprite(team,d,f);
+const homes=[[140,460],[370,260],[340,450],[370,660],[580,340],[560,570],[770,230],[740,470],[780,680]];
+const aways=[[1240,460],[1050,260],[1060,450],[1050,660],[870,330],[890,590],[660,220],[640,450],[660,700]];
+const people=[...homes.map((v,i)=>({bx:v[0],by:v[1],team:0,id:i})),...aways.map((v,i)=>({bx:v[0],by:v[1],team:1,id:i}))];
+function world(){ctx.fillStyle='#b9a886';ctx.fillRect(0,0,CW,CH);ctx.fillStyle='#2a5142';ctx.fillRect(40,30,1300,860);for(let i=0;i<12;i++){ctx.fillStyle=i%2?'#488659':'#4e8d5e';ctx.fillRect(P.x+i*100,P.y,100,P.h)}
+ctx.strokeStyle='#dae5ba';ctx.lineWidth=2.5;ctx.strokeRect(P.x,P.y,P.w,P.h);ctx.beginPath();ctx.moveTo(690,80);ctx.lineTo(690,840);ctx.stroke();ctx.beginPath();ctx.arc(690,460,93,0,Math.PI*2);ctx.stroke();ellipse(ctx,690,460,3,3,'#e8ead0');
+for(const right of [false,true]){let x=right?1290:90,sg=right?-1:1;ctx.strokeRect(right?1100:x,260,190,400);ctx.strokeRect(right?1220:x,365,70,190);ellipse(ctx,x+sg*130,460,3,3,'#e8ead0');ctx.beginPath();ctx.arc(x+sg*130,460,85,right?Math.PI*.7:-Math.PI*.3,right?Math.PI*1.3:Math.PI*.3);ctx.stroke();
+ctx.fillStyle='#172b3270';ctx.fillRect(right?1290:54,403,36,124);ctx.strokeStyle='#dbe5dc88';ctx.lineWidth=1;for(let j=0;j<=6;j++){stroke(ctx,[[right?1290:54,403+j*20],[right?1326:90,403+j*20]],'#dbe5dc70',1)}for(let j=0;j<=3;j++)stroke(ctx,[[x+(right?j*12:-j*12),403],[x+(right?j*12:-j*12),527]],'#dbe5dc70',1);stroke(ctx,[[x,399],[x,527]],'#f5f0d6',5)}
+for(let i=0;i<40;i++){ellipse(ctx,80+i*31,42,4,5,i%3?'#32475b':'#da824f')}
+ctx.fillStyle='#f4e8cb';ctx.font='bold 13px sans-serif';ctx.textAlign='center';ctx.fillText('SOCCERMASTER  •  SPRITE LAB',690,888)}
+function state(){const q=t%16;let ps=people.map((p,i)=>{let moving=p.id!==0;return {...p,x:p.bx+(moving?Math.sin(t*.55+i)*20:0),y:p.by+(moving?Math.cos(t*.7+i)*24:0),a:moving?Math.atan2(-Math.sin(t*.7+i)*17,Math.cos(t*.55+i)*11):p.team?Math.PI:0,kind:moving?'run':'idle'}});
+let a=ps[7],b=ps[6],k=ps[9],def=ps[13];a.x=700+Math.min(q,4)*19;a.y=490-Math.min(q,4)*8;a.a=-.4;
+b.x=900+Math.max(0,Math.min(q-6,3))*22;b.y=285+Math.max(0,Math.min(q-6,3))*16;b.a=.45;
+let ball={x:a.x+15,y:a.y+3,z:0},label='01 / Carry & turn';
+if(q>=4&&q<6){let u=(q-4)/2;ball={x:mix(791,b.x+12,u),y:mix(461,b.y+3,u),z:0};a.kind=q<4.35?'kick':'idle';label='02 / Ground pass'}
+else if(q>=6&&q<9){ball={x:b.x+14+Math.sin(t*10)*2,y:b.y+4,z:0};label='03 / Receive & carry'}
+else if(q>=9&&q<11){let u=(q-9)/2;ball={x:mix(b.x+14,1230,u),y:mix(b.y+4,455,u),z:Math.sin(u*Math.PI)*26};b.kind=q<9.35?'kick':'idle';def.kind='slide';def.x=1080;def.y=400;def.a=0;k.kind=q>10.25?'dive':'idle';k.y=460;label='04 / Shot • defensive slide • keeper dive'}
+else if(q>=11&&q<13){ball={x:1230-(q-11)*50,y:455+(q-11)*20,z:Math.max(0,8-(q-11)*8)};k.kind='dive';label='05 / Parry & loose ball'}
+else if(q>=13){let u=(q-13)/3;ball={x:mix(1130,a.x+15,u),y:mix(495,a.y+3,u),z:0};label='06 / Reset for next animation loop'}
+return {ps,ball,label}}
+function draw(dt){ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#263e36';ctx.fillRect(0,0,W,H);const {ps,ball,label}=state();phaseLabel.textContent=label;let scale=Math.min(W/CW,H/CH)*zoom;
+let vw=W/scale,vh=H/scale,cx=follow?ball.x-80:CW/2,cy=follow?ball.y:CH/2;
+cx=vw>=CW?CW/2:clamp(cx,vw/2,CW-vw/2);cy=vh>=CH?CH/2:clamp(cy,vh/2,CH-vh/2);
+ctx.save();ctx.translate(W/2-cx*scale,H/2-cy*scale);ctx.scale(scale,scale);world();
+for(const p of ps)ellipse(ctx,p.x,p.y,18,5,'#172d2855');ellipse(ctx,ball.x,ball.y,5+ball.z*.035,2.3,'#15292380');
+ctx.strokeStyle='#ffe5a2';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(ps[7].x,ps[7].y,24,9,0,0,Math.PI*2);ctx.stroke();
+const drawables=ps.map(p=>({y:p.y,draw:()=>{let dir=(Math.round(p.a/(Math.PI/4))+8)%8;let g=sprite(p.id===0?2:p.team,dir,Math.floor(t*10)%6,p.kind,p.team===0&&p.id===7&&identity==='girl',p.team===0&&p.id===7?0:(p.id+p.team*2)%5,p.team===0&&p.id===7?6:(p.id+p.team)%7);ctx.drawImage(g,p.x-48,p.y-85.8,96,105.6)}}));
+drawables.push({y:ball.y,draw:()=>{ellipse(ctx,ball.x,ball.y-ball.z-4,5.5,5.5,'#fff9df');ellipse(ctx,ball.x+Math.sin(t*8)*2,ball.y-ball.z-4,2,2,'#20363d')}});drawables.sort((a,b)=>a.y-b.y).forEach(d=>d.draw());ctx.restore();
+}
+function loop(now){const raw=last?(now-last)/1000:0;last=now;const dt=Math.min(raw,.05);if(!paused&&!document.hidden)t+=dt*(slow?.3:1);draw(dt);if(!document.hidden&&raw>0){elapsed+=raw;frames++;if(elapsed>=1){meter.textContent='18 players · '+Math.round(frames/elapsed)+' fps'+(paused?' · paused':'');elapsed=0;frames=0}}requestAnimationFrame(loop)}
+const pause=document.getElementById('pause');pause.onclick=()=>{paused=!paused;pause.textContent=paused?'Play':'Pause';pause.setAttribute('aria-pressed',String(paused))};document.getElementById('slow').onclick=e=>{slow=!slow;e.currentTarget.setAttribute('aria-pressed',String(slow))};document.getElementById('restart').onclick=()=>{t=0};document.getElementById('zoom').oninput=e=>{zoom=Number(e.target.value);document.getElementById('zvalue').textContent=zoom.toFixed(2)+'×'};document.getElementById('identity').onchange=e=>identity=e.target.value;document.getElementById('follow').onclick=e=>{follow=!follow;e.currentTarget.setAttribute('aria-pressed',String(follow))};document.addEventListener('visibilitychange',()=>{last=0;elapsed=0;frames=0});
+if(matchMedia('(prefers-reduced-motion: reduce)').matches){paused=true;pause.textContent='Play';pause.setAttribute('aria-pressed','true')}
+resize();requestAnimationFrame(loop);
+</script></html>

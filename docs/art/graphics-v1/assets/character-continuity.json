@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 1,
+  "packageRevision": "1.1",
+  "authority": "Visual continuity only. Canonical character IDs and facts remain owned by the story/identity services.",
+  "protagonist": {
+    "canonicalRole": "player",
+    "choices": [
+      "boy",
+      "girl"
+    ],
+    "defaultDisplayName": null,
+    "singleActiveAppearance": true,
+    "nameMayEqualNPCName": true
+  },
+  "characters": [
+    {
+      "visualId": "boy",
+      "storyRole": "player",
+      "roleDescription": "Selectable player: boy",
+      "identityMasterAssetId": "boy",
+      "appearanceReference": "dark shaggy hair; fair skin",
+      "pronouns": "canonical identity/story metadata; do not infer from portrait",
+      "clubId": null,
+      "clubBinding": "canonical event-scoped membership only; palette is not evidence",
+      "gameplaySheetId": "team0-slot7",
+      "gameplayStatus": "SIMPLIFIED_REFERENCE_ONLY",
+      "reviewStatus": "APPROVED_REFERENCE"
+    },
+    {
+      "visualId": "girl",
+      "storyRole": "player",
+      "roleDescription": "Selectable player: girl",
+      "identityMasterAssetId": "girl",
+      "appearanceReference": "light-blonde ponytail; fair skin",
+      "pronouns": "canonical identity/story metadata; do not infer from portrait",
+      "clubId": null,
+      "clubBinding": "canonical event-scoped membership only; palette is not evidence",
+      "gameplaySheetId": "protagonist-girl",
+      "gameplayStatus": "SIMPLIFIED_REFERENCE_ONLY",
+      "reviewStatus": "APPROVED_REFERENCE"
+    },
+    {
+      "visualId": "alex",
+      "storyRole": "alex",
+      "roleDescription": "Competitive teammate; seeking a meaningful role",
+      "identityMasterAssetId": "alex-school",
+      "appearanceReference": "copper curls; freckles",
+      "pronouns": "canonical identity/story metadata; do not infer from portrait",
+      "clubId": null,
+      "clubBinding": "canonical event-scoped membership only; palette is not evidence",
+      "gameplaySheetId": null,
+      "gameplayStatus": "NOT_SUPPLIED_FOR_THIS_IDENTITY",
+      "reviewStatus": "NEW_DESIGN_REVIEW_PENDING"
+    },
+    {
+      "visualId": "sam",
+      "storyRole": "sam",
+      "roleDescription": "Humorous teammate; wants independence and recognition",
+      "identityMasterAssetId": "sam-school",
+      "appearanceReference": "black side fringe",
+      "pronouns": "canonical identity/story metadata; do not infer from portrait",
+      "clubId": null,
+      "clubBinding": "canonical event-scoped membership only; palette is not evidence",
+      "gameplaySheetId": null,
+      "gameplayStatus": "NOT_SUPPLIED_FOR_THIS_IDENTITY",
+      "reviewStatus": "NEW_DESIGN_REVIEW_PENDING"
+    },
+    {
+      "visualId": "jordan",
+      "storyRole": "jordan",
+      "roleDescription": "School friend with interests beyond soccer",
+      "identityMasterAssetId": "jordan",
+      "appearanceReference": "short dark curls; dark skin",
+      "pronouns": "canonical identity/story metadata; do not infer from portrait",
+      "clubId": null,
+      "clubBinding": "canonical event-scoped membership only; palette is not evidence",
+      "gameplaySheetId": null,
+      "gameplayStatus": "NOT_SUPPLIED_FOR_THIS_IDENTITY",
+      "reviewStatus": "APPROVED_REFERENCE"
+    },
+    {
+      "visualId": "blake",
+      "storyRole": "blake",
+      "roleDescription": "Rival-club schoolmate; working name",
+      "identityMasterAssetId": "blake",
+      "appearanceReference": "sandy-blonde tousled/shaggy hair; fair skin",
+      "pronouns": "canonical identity/story metadata; do not infer from portrait",
+      "clubId": null,
+      "clubBinding": "canonical event-scoped membership only; palette is not evidence",
+      "gameplaySheetId": null,
+      "gameplayStatus": "NOT_SUPPLIED_FOR_THIS_IDENTITY",
+      "reviewStatus": "APPROVED_REFERENCE"
+    },
+    {
+      "visualId": "riley",
+      "storyRole": "riley",
+      "roleDescription": "Rival-team friend; optional later friendship/crush",
+      "identityMasterAssetId": "riley-school",
+      "appearanceReference": "dark curly ponytail; medium-brown skin",
+      "pronouns": "canonical identity/story metadata; do not infer from portrait",
+      "clubId": null,
+      "clubBinding": "canonical event-scoped membership only; palette is not evidence",
+      "gameplaySheetId": null,
+      "gameplayStatus": "NOT_SUPPLIED_FOR_THIS_IDENTITY",
+      "reviewStatus": "NEW_DESIGN_REVIEW_PENDING"
+    },
+    {
+      "visualId": "coach",
+      "storyRole": "coach",
+      "roleDescription": "Coach Code: direct, demanding and kind",
+      "identityMasterAssetId": "coach-club",
+      "appearanceReference": "salt-and-pepper curls and moustache",
+      "pronouns": "canonical identity/story metadata; do not infer from portrait",
+      "clubId": null,
+      "clubBinding": "canonical event-scoped membership only; palette is not evidence",
+      "gameplaySheetId": null,
+      "gameplayStatus": "NOT_SUPPLIED_FOR_THIS_IDENTITY",
+      "reviewStatus": "NEW_DESIGN_REVIEW_PENDING"
+    },
+    {
+      "visualId": "caregiver",
+      "storyRole": "caregiver",
+      "roleDescription": "Busy caregiver; meaningful, occasional presence",
+      "identityMasterAssetId": "caregiver-home",
+      "appearanceReference": "chestnut waves; sage clothing",
+      "pronouns": "canonical identity/story metadata; do not infer from portrait",
+      "clubId": null,
+      "clubBinding": "canonical event-scoped membership only; palette is not evidence",
+      "gameplaySheetId": null,
+      "gameplayStatus": "NOT_SUPPLIED_FOR_THIS_IDENTITY",
+      "reviewStatus": "NEW_DESIGN_REVIEW_PENDING"
+    },
+    {
+      "visualId": "fish",
+      "storyRole": "fish",
+      "roleDescription": "Clownfish: pet and imagined confidant",
+      "identityMasterAssetId": "fish-tank",
+      "appearanceReference": "orange/white clownfish",
+      "pronouns": "canonical identity/story metadata; do not infer from portrait",
+      "clubId": null,
+      "clubBinding": "canonical event-scoped membership only; palette is not evidence",
+      "gameplaySheetId": null,
+      "gameplayStatus": "NOT_SUPPLIED_FOR_THIS_IDENTITY",
+      "reviewStatus": "NEW_DESIGN_REVIEW_PENDING"
+    }
+  ],
+  "invariants": [
+    "Alex is not the protagonist unless the player independently chooses the display name Alex; IDs must remain distinct.",
+    "Only the selected protagonist appearance is visible; no duplicate boy/girl actor.",
+    "Identity, hair, clothing and emotions confer no soccer-stat, input, growth or eligibility effect.",
+    "Riley has an independent role; no automatic romantic orientation or first-week romance.",
+    "Caregiver presence is authored; absence does not diagnose neglect.",
+    "Fish dialogue is imagined/private; it cannot reveal omniscient facts or real animal-care instructions.",
+    "No public reuse of real children as named antagonists."
+  ]
+}

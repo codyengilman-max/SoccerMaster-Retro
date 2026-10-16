@@ -49,14 +49,33 @@ export interface MatchReport {
   readonly players: Readonly<Record<match.MatchPlayerId, MatchPlayerReport>>;
   readonly ball: { x: number; y: number; vx: number; vy: number; sx: number; sy: number };
   readonly layout: PitchLayout;
+  /** Follow camera: zoom choice, visible span (yards), controller mode and focus. */
+  readonly camera: {
+    readonly zoom: number;
+    readonly viewLength: number;
+    readonly viewCross: number;
+    readonly mode: 'possession' | 'aiming' | 'travel' | 'loose' | 'hold';
+    readonly x: number;
+    readonly y: number;
+    readonly look: number;
+    readonly guideOffscreen: boolean;
+  };
   readonly input: ControlState;
   /** Screen-space gesture origin while a gameplay pointer is captured. */
   readonly gestureOrigin: { readonly x: number; readonly y: number } | null;
   readonly thresholds: { readonly swipeCommit: number; readonly holdSlop: number; readonly cancelRadius: number; readonly maxPull: number; readonly doubleTapDistance: number };
+  readonly controlScheme: 'pad' | 'gesture';
+  readonly pad: {
+    readonly phase: string;
+    readonly actor: string | null;
+    readonly receiver: string | null;
+    readonly stick: { readonly x: number; readonly y: number };
+    readonly available: Readonly<Record<'pass' | 'shoot' | 'slide' | 'block', boolean>> | null;
+    readonly pressed: 'pass' | 'shoot' | 'slide' | 'block' | null;
+  };
   readonly tutorialStep: number;
   readonly inputLog: readonly string[];
   readonly aimSource: 'pointer' | 'keyboard' | null;
-  readonly holdRadiusPx: number;
   readonly pass: { readonly minDistance: number; readonly maxDistance: number };
   readonly overlay: boolean;
   readonly banner: string;

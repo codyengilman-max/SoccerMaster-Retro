@@ -1,0 +1,32 @@
+RESEARCH REGISTER — accessed 15 October 2026
+These sources inform design principles, not proof of game efficacy. Proposed timings, story structures and emotional states are original product decisions. This package makes no claim that a digital minigame transfers to real-world mastery.
+
+1. Center for Self-Determination Theory — The Theory
+https://selfdeterminationtheory.org/the-theory/
+Supports autonomy, competence and relatedness as motivation concepts. Application: meaningful choice, visible learning and relationships; not a clinical emotion score.
+
+2. CDC — School Connectedness Helps Students Thrive
+https://www.cdc.gov/youth-behavior/school-connectedness/index.html
+Supports belonging through feeling valued and supported by adults and peers. Application: individual relationships, not winning as the condition for belonging.
+
+3. StopBullying.gov — The Roles Kids Play in Bullying
+https://www.stopbullying.gov/bullying/roles-kids-play
+Describes changing participation, bystander and defender roles. Application: varied peer behavior, adult support and no fixed villain label.
+
+4. StopBullying.gov — Bystanders to Bullying
+https://www.stopbullying.gov/prevention/bystanders-to-bullying
+Supports meaningful peer support. Application: private and public supportive scenes independent of soccer results.
+
+5. FIFA Training Centre / Diogo Coutinho — Small-sided games, part 1
+https://www.fifatrainingcentre.com/en/environment/science-explained/high-performance/train/diogo-coutinho-on-small-sided-games-part1.php
+Describes manipulating player count, space, instructions, targets, scoring and duration. Application: vary soccer tasks; does not validate violent playground behavior or digital skill transfer.
+
+6. inkle — So what is 80 Days?
+https://www.inklestudios.com/2014/04/15/so-what-is-eighty-days
+Developer describes remembered choices and good/bad consequences. Application: explicit memories and delayed callbacks.
+
+7. inkle — Writing web-based interactive fiction with ink
+https://www.inklestudios.com/ink/web-tutorial/
+Shows structured narrative authoring and engine integration. Reference only; do not introduce ink or replace the project's current narrative stack without inspecting its needs.
+
+Research limitation: this is a selected primary-source design synthesis, not a systematic literature review, coaching approval, psychological assessment or clinical intervention. No real children's data is required.

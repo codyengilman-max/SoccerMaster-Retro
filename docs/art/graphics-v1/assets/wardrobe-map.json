@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 2,
+  "authoritativeFor": "cosmetic reference selection only",
+  "characters": [
+    {
+      "characterId": "boy",
+      "label": "Player — boy",
+      "variants": {
+        "home": "boy-home",
+        "match": "boy-match",
+        "training": "boy-training",
+        "school": "boy"
+      }
+    },
+    {
+      "characterId": "girl",
+      "label": "Player — girl",
+      "variants": {
+        "home": "girl-home",
+        "match": "girl-match",
+        "training": "girl-training",
+        "school": "girl"
+      }
+    },
+    {
+      "characterId": "alex",
+      "label": "Alex — teammate",
+      "variants": {
+        "match": "alex-match",
+        "school": "alex-school",
+        "training": "alex-training"
+      }
+    },
+    {
+      "characterId": "sam",
+      "label": "Sam — teammate",
+      "variants": {
+        "match": "sam-match",
+        "school": "sam-school",
+        "training": "sam-training"
+      }
+    },
+    {
+      "characterId": "jordan",
+      "label": "Jordan — school friend",
+      "variants": {
+        "school": "jordan"
+      }
+    },
+    {
+      "characterId": "blake",
+      "label": "Blake — rival schoolmate",
+      "variants": {
+        "match": "blake-match",
+        "training": "blake-training",
+        "school": "blake"
+      }
+    },
+    {
+      "characterId": "riley",
+      "label": "Riley — rival-team friend",
+      "variants": {
+        "match": "riley-match",
+        "school": "riley-school",
+        "training": "riley-training"
+      }
+    },
+    {
+      "characterId": "coach",
+      "label": "Coach Code",
+      "variants": {
+        "club": "coach-club"
+      }
+    },
+    {
+      "characterId": "caregiver",
+      "label": "Caregiver",
+      "variants": {
+        "home": "caregiver-home"
+      }
+    },
+    {
+      "characterId": "fish",
+      "label": "Clownfish",
+      "variants": {
+        "tank": "fish-tank"
+      }
+    }
+  ],
+  "locations": {
+    "school": {
+      "background": "school",
+      "wardrobe": {
+        "boy": "school",
+        "girl": "school",
+        "alex": "school",
+        "sam": "school",
+        "jordan": "school",
+        "blake": "school",
+        "riley": "school"
+      },
+      "contexts": [
+        "school-arrival",
+        "school-courtyard",
+        "schoolyard-crossbar-cutscene",
+        "jungle-soccer-cutscene"
+      ],
+      "note": "Cutscene backdrop only; playable schoolyard arena is separate."
+    },
+    "home": {
+      "background": "bedroom",
+      "wardrobe": {
+        "boy": "home",
+        "girl": "home",
+        "caregiver": "home",
+        "fish": "tank"
+      },
+      "contexts": [
+        "bedroom",
+        "desk",
+        "aquarium",
+        "home-solo-practice-cutscene",
+        "home-callback"
+      ],
+      "note": "One caregiver visual; do not map separate actual caregiver identities to one art ID without review. Fish image contains a decorative fantasy pellet; not a separate physics ball."
+    },
+    "training": {
+      "background": "training-ground",
+      "wardrobe": {
+        "boy": "training",
+        "girl": "training",
+        "alex": "training",
+        "sam": "training",
+        "blake": "training",
+        "riley": "training",
+        "coach": "club"
+      },
+      "contexts": [
+        "training-arrival",
+        "training-boundary"
+      ],
+      "note": "Only show characters actually authored at this session. Rival practice portraits are available, not permission to put rivals in the player team."
+    },
+    "match": {
+      "background": "match-ground",
+      "wardrobe": {
+        "boy": "match",
+        "girl": "match",
+        "alex": "match",
+        "sam": "match",
+        "blake": "match",
+        "riley": "match",
+        "coach": "club"
+      },
+      "contexts": [
+        "pre-match",
+        "touchline",
+        "post-match"
+      ],
+      "note": "Match kit persists through the event; affiliation and opponents come from canonical game data."
+    }
+  },
+  "rules": [
+    "Names never become asset keys or paths.",
+    "Unknown mapping is an explicit gap, not a random fallback.",
+    "Outfit is fixed throughout an authored event.",
+    "Never modify soccer or story effect state on art load.",
+    "Only boy OR girl represents the player at one time.",
+    "Source v0.7 defines Alex separately from player.",
+    "Current controls SOW supersedes older gestures; graphics must not revert it.",
+    "Scene cast comes from scene-visual-map.json plus canonical evidence; available wardrobe does not grant attendance."
+  ],
+  "authorityNotice": "Available wardrobe variants, not cast/scene eligibility. Use scene-visual-map.json and canonical scene evidence.",
+  "runtimeSelection": {
+    "pathSource": "bundled allowlisted assetId only",
+    "unknownIdentity": "visible named neutral fallback; no substitution with another cast member",
+    "outfitRevision": "pin in scene occurrence; replay uses the recorded revision",
+    "membership": "canonical teamId at event; never inferred from kit color",
+    "transfer": "keep face/hair; use a supported kit for the new membership or mark an art gap; never reuse a rival kit silently"
+  }
+}

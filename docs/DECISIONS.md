@@ -29,6 +29,8 @@ Approved technical choices. Add a new entry rather than silently changing an old
 | D23 | **AI sees only visible state and completed kicks.** One presser (best arrival time with role penalties) and one cover per defending team, each held for a commitment spell; loose balls get one chaser per team. Seeded RNG for small decision noise and reaction delay. Stale aims are void via `controlEpoch`. | Credible, non-swarming defending that cannot cheat on the user's unreleased aim. |
 | D24 | **Sandbox stoppages, not match rules:** goals and ball out of play stop play briefly, are labelled as sandbox restarts, and restart in place (goal: conceding team from the centre; out: other team from the spot). No offside, fouls, set-piece rules or match clock. | Keeps M3 about team behaviour; full match flow is a later milestone. |
 | D25 | **Debug-only `?debug&setup=pass` / `setup=final-third`** start the sandbox with the user carrier in space, used by the browser pass test. | Deterministic browser checks without changing normal play. |
+| D26b | **Retro Goal-style touch controls** (supersedes the aiming/double-tap parts of D26): with the ball, a press anywhere that has not travelled `swipeCommit` within `aimDelayMs` becomes an aim (no hold on the carrier, no arming wait beyond that); faster travel is a dribble. Double-tap = quick shot; feint is keyboard-only. Gesture timing uses input-event timestamps; presses in an edge margin are ignored. | Matches the documented reference behaviour (swipe anywhere, slow-motion aim, double-tap quick shot) with project-specific tuning; see `docs/GAMEPLAY_FEEL.md`. |
+| D26c | **Closer follow camera with a zoom choice** (`src/render/camera.ts`, pure): visible span = fixed baseline (landscape 40 yd of length, portrait 28 yd across) ÷ zoom choice 1.4 / 1.5 (default) / 1.6, recomputed from constants every frame. One `CameraController` with explicit modes (possession, aiming = held, travel = ball with capped lead, loose, hold = paused) and exponential, frame-rate-independent smoothing; look-ahead turns only after an attacking-direction change persists 0.45 s. Gestures stay in screen space; the camera never feeds the sim. Off-screen aim rest points are drawn as an edge arrow. | Bigger, readable players (Retro Goal-inspired framing, not a measured value) without changing kick strength, physics or outcomes; the final zoom is chosen after an iPhone test. |
 | D26 | **Unified sandbox controls** (`src/input/touchControls.ts`, pure): one gameplay pointer, explicit states idle → pending → dribble / aiming / spent, stable screen-space origin, thresholds scaled by the viewport's short side. Swipe = dribble direction, still hold on carrier = aim (pull back, cancel circle), double-tap carrier = feint. One action per gesture. The M2 drill keeps its own recognizer. | One intuitive kick instead of a Pass/Shoot mode; arbitration is unit-testable without a browser. |
 | D27 | **Aim allowance per possession spell**, spent in real time, refilled only by regaining the ball after genuine opponent possession or Reset. Commands are validated in the sim (ownership, finite values, power clamp, cooldowns, phase). | Slow motion cannot be farmed by cancel/pass spam; malformed input cannot corrupt physics. |
 | D28 | **M5 Coach Moments run inside the existing `MatchSim` behind `?coach`**, not in a new engine. M4 match flow is not built, so a coached session is a fixed-length sandbox session (300 s sim time) with a summary. | Builds the learning layer on the real sim honestly without pretending a full match exists. |
@@ -54,3 +56,39 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - At the whistle everything in progress ends where it is: an aim is cancelled (never fired), a ball in flight does not count, Coach intentions end. Only pause/resume, Coach hold/release, reset, formation and `startSecondHalf` commands are accepted during half-time and full-time.
 - Teams keep the same ends after half-time because the team AI assumes fixed attacking directions; swapping ends is deferred.
 - `MatchSim` without `halfSeconds` remains the open-ended sandbox, so M3/M5 unit tests and `?sandbox` keep their behaviour.
+
+## Training library v1.1 import (draft)
+- The package is kept byte-for-byte in `research/training/v1.1/`; revisions will go in a new versioned folder, never by editing it. Its 63 Python reference tests stay unchanged and still assert the package's own P-001 contract.
+- Owner override of P-001: no week-slot journal stamp. Credit stays one per scheduled `sessionId`; substitution, catalog update and replay add none (`tests/curriculum-economy.test.ts`).
+- Families are curriculum organization inside the seven skill areas, not progression tracks. Prerequisites only gate suitability.
+- Publication authority is a repository-side release manifest (`curriculum/release.ts`), never imported content or saves. It is empty until real coach/QA review and reviewed demo assets exist.
+
+## Combined preview integration
+- One integration branch (`devin/1792089834-all-updates-integration`) merges PR #8 gameplay and PR #9 training; both feature branches stay as they were. The PR #8 preview hook is reused (owner instruction "use old hook"), so PR #8's branch is fast-forwarded to the integration head; `devin/1792017697-gameplay-feel-backup-fdec076` keeps the gameplay-only state.
+- Soccer-logic package v0.2 is copied byte-for-byte to `research/logic/v0.2` (its scripts are not run). `src/game/logic/catalog.ts` loads it strictly and rejects any seed marked enabled, calibrated or non-draft; `activeLogicScenarios()` is empty, so the catalog has no effect on match behaviour. Its 40 entries are not counted toward the 500-plus scenario goal as fulfilled.
+- Start → Review & Lab opens review screens without creating a player or writing the save.
+
+## Story v0.7 week one
+
+- Package stored unchanged in `docs/story/v0.7/`; v0.7 corrections and `week_one_scenes.json` are authoritative. Only `remember_choice` effects and the `always` / `crossbar_accepted` predicates exist; everything else is rejected by the loader.
+- Story state lives in its own IndexedDB database (`smr-story`), one transaction per command with revision and sequence checks, so career saves are untouched by story bugs. Unreadable records are kept under `broken-<id>-<time>` keys, never overwritten.
+- Boy/girl is an optional field on the career player; older saves load unchanged. Identity never affects attributes, growth or eligibility.
+- Activity outcomes come only from the existing systems' saved state (career save revision, focus, logged scheduled session, saved match evidence, `endWeek`). The story never invents a result, and home training keeps one credit per scheduled session.
+- The crossbar challenge uses its own framework-free 3-D ball model because the 9v9 engine has no ball height; same pull-back gesture, no Shoot button.
+- Club world is design data only: no league table, scheduler or tournament entry is built from it.
+
+## Controls — joystick + four buttons
+- The owner's controls brief replaces swipe / pull-back as the default 9v9 scheme. The old scheme stays behind `?controls=gesture` for comparison and rollback; the sim defaults to `gesture` so the Lab, attack drill and engine tests keep their contract.
+- Pointer ownership lives in pure `src/input/joystickControls.ts`; the sim owns availability and validation (`padPress`/`padRelease`/`padCancel`). One input path per scheme, one sim loop.
+- Control preferences are stored in localStorage (`smr-controls-v1`), separate from IndexedDB career/story saves; invalid values fall back to defaults.
+- A slide that hits the body first is a foul with a basic opponent free-kick restart; the engine has no other set pieces yet.
+
+- Owner cap: actual playing time is 5–6 minutes max per match. Default `halfSeconds` is 165 (2 × 2:45 = 5:30 of play); the clock still stops for pauses, Coach Moments, kick-offs and stoppages, so those do not count. The displayed 25-minute U11 half clock is unchanged.
+
+## Graphics v1.1 (owner-approved styles; branch `devin/1792120824-graphics-v1`)
+- Package stored byte-for-byte in `docs/art/graphics-v1/` (checksums verified). `scripts/art/build-runtime-art.py` derives half-size WebP runtime copies into `src/assets/art/v1/` and records each master's SHA-256 in `runtime-manifest.json`; masters are never edited.
+- `src/render/art/catalog.ts` is the only path from story data to art: a fixed asset allowlist, the package's scene and wardrobe maps, and speaker *roles* (Player, Jordan, Blake, Caregiver, Coach Code, Alex). Typed names are never used to pick art, so a player named Alex is still the player. Unknown scenes and missing/failed images show labelled neutral placeholders, never another character.
+- Match players are drawn by a TypeScript port of the package's Canvas2D factory (`render/art/spriteFactory.ts`), cached as lazily built textures (≤ 512 frames, freed on shutdown). Art scale and foot anchor are presentation only; physics, collision, camera, controls and `src/game/` are unchanged. Poses come from real sim state/events; animation time is sim time.
+- The engine has no squad numbers, club kits or named gameplay characters: numbers are formation slot + 1, kits are home/away/keeper reference colours, hair is fixed per roster slot. The career player uses the saved boy/girl look on their career slot.
+- Cutscene portraits are static: entrance slide/fade and a tint-only speaker highlight, disabled under `prefers-reduced-motion`. Art never writes story, saves, rewards or input; dialogue, names and choices stay live text.
+- New character/outfit art stays `NEW_ART_REVIEW_PENDING` in the Art Gallery until the owner reviews each image.

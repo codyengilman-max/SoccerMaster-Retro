@@ -112,6 +112,18 @@ the level ordering. Known limits are stated on each activity (e.g. self-roll con
 defending is movement practice, not tackling; target striking is not finishing against a keeper; audio cues don't
 prove reading the game; no heading, no sliding, no unstable obstacles).
 
+## Draft training library v1.1 (review only)
+
+The supplied package (20 exercise families, 100 practice options, 200 planned left/right demos) is stored unchanged in `research/training/v1.1/`, with provenance and owner overrides in `research/training/README.md`. Code under `src/game/career/curriculum/` (framework-free):
+
+- `json.ts`, `manifest.ts`: strict schema-2 importer (1,000,000-byte and depth-16 limits, duplicate/prototype keys, unsafe text, source URL allowlist, cycles, draft-only release status, unchanged package reward/schedule/safety policy).
+- `release.ts`: the trusted release manifest. It is **empty**: no option is approved.
+- `approval.ts`: an option is published only with a trusted approval whose content hash, coach and QA reviewers, evidence and rights review, resolved claims and both demo assets match. `choose()` tries the family and one declared substitute, then returns "No eligible reviewed activity. Choose another focus or skip without penalty."
+- `mapping.ts`: each family belongs to one of the seven existing skill areas; proposed retain/replace/add mapping to the 92 activities (no retirements) and the AI-assisted coaching-review disposition per family.
+- `demos.ts`: six code-drawn prototypes (BM01, DR01, TR01, PA02, JU01, FI01 first options) with left/right mirroring that keeps contact surfaces. Each lists the open coaching findings and unresolved claims; none is final. JU03 and FI02 demos stay held.
+
+Owner decisions (2026-10-15): Retro keeps one credit per scheduled session (the package's week-slot journal stamp is not adopted); the seven skill-area levels stay the only progression; the five options are alternatives, not a difficulty ladder; no numeric quota, and the 500-plus soccer-scenario catalog is separate from home training. The planner still uses only the 92 existing activities. Career → Training Library → "Draft library v1.1 (review only)" shows the review cards and prototype demos (switch foot, pause, slow, next step, replay; reduced motion starts paused).
+
 ## Not done / depends on later milestones
 
 - Matches have a clock, halves and a result (M4 core), but no formal set pieces, fouls or offside, so evidence never covers those situations.

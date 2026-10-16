@@ -1,0 +1,33 @@
+SOCCERMASTER STORY v0.7 — FIX AND RECHECK REPORT
+15 October 2026
+Scope: package specifications, scene catalog and reference models only.
+No game repository, browser, physical iPhone or deployment was tested.
+
+F1 HIGH Invalid choices: fixed in reference allowlist and canonical validation
+contract. Negative arbitrary-choice test passes. Eligibility/version integration
+remains a game-level gate.
+F2 HIGH Replay writes: fixed by session-level mode and central action denial,
+including launch. Replay-at-handoff and all-mutator reference tests pass.
+F3 HIGH Run collisions: replaced constant with persisted UUID plus structured
+owner key. Cross-owner/node/occurrence uniqueness and reopen stability pass.
+F4 MEDIUM Cancellation contradiction: removed cancelled-origin repair route;
+added acknowledgement/social-only path and zero entitlement test.
+F5 MEDIUM Unsupported assurance: replaced toy cutscene tests with transactional
+SQLite reference coverage and explicitly separate mandatory real-browser tests.
+The assurance gap is addressed in the handoff; actual browser verification is
+still outstanding and must never be represented as completed.
+F6 MEDIUM Non-executable storyboard: added validated 18-scene neutral catalog,
+branch replies, effect allowlist, adapter outcomes and explicit ownership rules.
+Integration adapters and richer conditional story variants are not implemented
+here. Required adapter contracts and release gates are supplied.
+
+Recheck: 48 reference tests passed, 0 failed. These comprise 16 prior safety,
+12 club and 20 revised scene/catalog/storage tests. Actual command output is in
+TEST_RESULTS.txt. Counts do not constitute a production security certification.
+Residual limits: Python model is not production TypeScript; SQLite is not
+IndexedDB; reference private fields are not an adversarial trust boundary; local
+save editing remains possible. Browser storage/input, migrations, iPhone play,
+art approval and gameplay acceptance require implementation-level verification.
+
+No unrelated gameplay changes, stat boosts, new club affiliation canon, automatic
+production deployment or new repository are authorized by this revision.

@@ -51,6 +51,49 @@ export interface MatchPlayer {
   intentUntil: number;
   /** Speed cap for the current intent. */
   speed: number;
+  /** Movement attributes as multipliers (1 = squad average). */
+  attrs: PlayerAttrs;
+}
+
+export interface PlayerAttrs {
+  readonly pace: number;
+  readonly accel: number;
+  readonly agility: number;
+  readonly control: number;
+}
+
+export type PadAction = 'pass' | 'shoot' | 'slide' | 'block';
+export type PadPhase =
+  | 'ready'
+  | 'chargingPass'
+  | 'chargingShoot'
+  | 'kickPrep'
+  | 'kickRecovery'
+  | 'blocking'
+  | 'slideStart'
+  | 'slideActive'
+  | 'slideRecovery';
+
+/** Joystick + four-button control state (controls=pad). */
+export interface PadState {
+  /** Pitch-space stick vector, length 0..1. */
+  stick: MutableVec2;
+  /** Controlled player's body facing (unit). */
+  facing: MutableVec2;
+  phase: PadPhase;
+  actor: MatchPlayerId | null;
+  since: number;
+  /** controlEpoch and ownedSince when the action began: any change invalidates a kick. */
+  epoch: number;
+  ownedSince: number;
+  chargeStart: number;
+  receiver: MatchPlayerId | null;
+  locked: { readonly kind: 'pass' | 'shot'; readonly dir: Vec2; readonly power: number; readonly receiver: MatchPlayerId | null } | null;
+  slideDir: MutableVec2 | null;
+  ballTouchedAt: number | null;
+  bodyResolved: boolean;
+  lastCmdId: number;
+  readyAt: number;
 }
 
 export interface MatchKick {
@@ -84,7 +127,7 @@ export interface MatchClock {
 }
 
 export interface Stoppage {
-  readonly reason: 'goal' | 'out';
+  readonly reason: 'goal' | 'out' | 'foul';
   readonly scorer: TeamId | null;
   readonly detail: string;
   /** Team that restarts after the sandbox reset. */
@@ -117,6 +160,13 @@ export interface FeintState {
 
 export type MatchEventType =
   | 'kickoff'
+  | 'padPress'
+  | 'padRelease'
+  | 'padCancel'
+  | 'slide'
+  | 'block'
+  | 'deflect'
+  | 'foul'
   | 'live'
   | 'pass'
   | 'shot'
@@ -134,6 +184,7 @@ export type MatchEventType =
   | 'restart'
   | 'dribble'
   | 'feint'
+  | 'quickShot'
   | 'rejected'
   | 'swipeRejected'
   | 'aimStart'
@@ -189,8 +240,20 @@ export interface MatchState {
   formations: Record<TeamId, FormationId>;
   /** Team with controlled possession, or the team that played the loose ball last. */
   possession: TeamId;
-  /** Home player the user controls. Only meaningful while a home outfield player owns the ball. */
+  /** Home outfielder the user controls: the carrier in possession, otherwise the selected defender/chaser. */
   controlledId: MatchPlayerId;
+  /** Sim time control last moved to another player (off-ball selection hysteresis). */
+  controlSince: number;
+  /** Off-ball steer from a swipe (world unit vector) until sim time `until`; null = AI movement. */
+  userSteer: { dir: Vec2; until: number; epoch: number } | null;
+  /** A swipe made just before our pass arrives, applied to that receiver's first controlled touch only. */
+  /** The player control last moved away from, so it cannot bounce straight back (offBall.returnHoldSeconds). */
+  prevControlledId: MatchPlayerId | null;
+  bufferedDribble: { dir: Vec2; receiver: MatchPlayerId; until: number } | null;
+  /** Stable team-possession sequence: bumps only when a team establishes possession. */
+  possessionSeq: number;
+  /** Team whose current spell is established (see aimAllowance.establishSeconds), or null. */
+  establishedTeam: TeamId | null;
   /** Bumped whenever user control changes hands; an aim started under an older epoch is void. */
   controlEpoch: number;
   aim: { direction: Vec2 | null; power: number; epoch: number } | null;
@@ -219,6 +282,8 @@ export interface MatchState {
   beatenUntil: Partial<Record<MatchPlayerId, number>>;
   defense: Record<TeamId, DefenseAssignment>;
   chaser: Record<TeamId, { id: MatchPlayerId | null; until: number }>;
+  /** Where pressers think the ball is: the ball focus seen through a short reaction lag (defense.readSeconds). */
+  pressRead: MutableVec2;
   runs: Record<TeamId, TeamRun>;
   /** AI carrier's next decision time. */
   nextDecisionAt: number;
@@ -229,4 +294,5 @@ export interface MatchState {
   clock: MatchClock | null;
   stats: { passes: Record<TeamId, number>; shots: Record<TeamId, number>; saves: Record<TeamId, number>; turnovers: number };
   events: MatchEvent[];
+  pad: PadState;
 }

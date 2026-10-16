@@ -52,7 +52,7 @@ test.beforeEach(async ({ page }) => {
 
 test('formation picker -> 9v9 sandbox: 18 players, chosen formation, HUD fits, overlay hidden', async ({ page }, info) => {
   const errors = trackConsoleErrors(page);
-  const r = await openSandbox(page, modeFor(info), '1-3-3-2');
+  const r = await openSandbox(page, modeFor(info), '1-3-3-2', '&controls=gesture');
   const viewport = page.viewportSize();
   if (!viewport) throw new Error('no viewport');
   const ids = Object.keys(r.players);
@@ -130,7 +130,7 @@ test('pause -> change formation keeps identities, ball and positions; resume reo
 test('aimed pass from the user carrier is released, slows time while aiming, and resolves in continuous play (staged: ?setup=pass)', async ({ page }, info) => {
   const errors = trackConsoleErrors(page);
   const finger = new Finger(page, modeFor(info));
-  const r0 = await openSandbox(page, finger.mode, '1-3-2-3', '&setup=pass');
+  const r0 = await openSandbox(page, finger.mode, '1-3-2-3', '&controls=gesture&setup=pass');
   expect(r0.userHasBall).toBe(true);
   const r = await waitFor(page, (x) => x.phase === 'live' && x.userHasBall);
   const carrier = r.players[r.controlledId];
@@ -168,7 +168,7 @@ test('aimed pass from the user carrier is released, slows time while aiming, and
 
 const dot = (a: { x: number; y: number }, b: { x: number; y: number }): number => (a.x * b.x + a.y * b.y) / Math.hypot(b.x, b.y);
 
-/** A quick swipe along a pitch direction, started well away from the carrier so it can never become an aim. */
+/** A quick swipe along a pitch direction, started away from the carrier (presses anywhere count). */
 async function swipe(page: Page, finger: Finger, pitch: { x: number; y: number }): Promise<void> {
   const r = await report(page);
   const viewport = page.viewportSize()!;
@@ -176,18 +176,16 @@ async function swipe(page: Page, finger: Finger, pitch: { x: number; y: number }
   const v = pitchVectorToScreen(r.layout, pitch);
   const n = Math.hypot(v.x, v.y);
   const len = r.thresholds.swipeCommit + 30;
-  const away = r.holdRadiusPx + 50;
+  const away = 90;
   const start = {
     x: Math.min(Math.max(c.sx + (c.sx < viewport.width / 2 ? away : -away), len + 10), viewport.width - len - 10),
     y: Math.min(Math.max(c.sy, len + 60), viewport.height - len - 40),
   };
-  await finger.down(start);
-  await finger.move({ x: start.x + (v.x / n) * len * 0.5, y: start.y + (v.y / n) * len * 0.5 });
-  await finger.up({ x: start.x + (v.x / n) * len, y: start.y + (v.y / n) * len });
+  await finger.swipe(start, { x: start.x + (v.x / n) * len * 0.5, y: start.y + (v.y / n) * len * 0.5 }, { x: start.x + (v.x / n) * len, y: start.y + (v.y / n) * len });
 }
 
 async function stagedCarrier(page: Page, finger: Finger): Promise<MatchReport> {
-  await openSandbox(page, finger.mode, '1-3-2-3', '&setup=space');
+  await openSandbox(page, finger.mode, '1-3-2-3', '&controls=gesture&setup=space');
   return waitFor(page, (x) => x.phase === 'live' && x.userHasBall);
 }
 
@@ -234,29 +232,67 @@ test('hold to aim, pull out, slide back into the circle and release: cancelled w
   await pressElement(page, 'help-button', finger.mode);
   r = await waitFor(page, (x) => x.tutorialStep === 0);
   // AI teammates and opponents keep playing; only user actions are checked.
-  expect(r.events.filter((e) => e.seq > seq && (['dribble', 'feint', 'aimStart'].includes(e.type) || (['pass', 'shot'].includes(e.type) && e.by === user)))).toEqual([]);
+  expect(r.events.filter((e) => e.seq > seq && (['dribble', 'feint', 'quickShot', 'aimStart'].includes(e.type) || (['pass', 'shot'].includes(e.type) && e.by === user)))).toEqual([]);
   await linger(page);
   expect(errors).toEqual([]);
 });
 
-test('double-tapping the carrier gives exactly one feint (staged: ?setup=space)', async ({ page }, info) => {
+test('double-tapping away from the carrier gives exactly one quick shot and no feint or aimed kick (staged: ?setup=space)', async ({ page }, info) => {
   const errors = trackConsoleErrors(page);
   const finger = new Finger(page, modeFor(info));
   let r = await stagedCarrier(page, finger);
   const c = r.players[r.controlledId];
-  await finger.doubleTap({ x: c.sx, y: c.sy - 8 });
-  r = await waitFor(page, (x) => x.events.some((e) => e.type === 'feint') || !x.userHasBall, 3000).catch(async () => report(page));
-  const trail = `${r.events.map((e) => `${e.type}(${e.detail})`).join(',')} | input: ${r.inputLog.join(',')}`;
-  expect(r.events.filter((e) => e.type === 'feint'), trail).toHaveLength(1);
-  expect(r.feint).not.toBeNull();
+  const user = r.controlledId;
+  const seq = r.events.at(-1)?.seq ?? 0;
+  const viewport = page.viewportSize()!;
+  await finger.doubleTap({ x: c.sx < viewport.width / 2 ? c.sx + 90 : c.sx - 90, y: Math.min(Math.max(c.sy, 80), viewport.height - 80) });
+  r = await waitFor(page, (x) => x.events.some((e) => e.type === 'quickShot') || !x.userHasBall, 3000).catch(async () => report(page));
   await linger(page);
+  r = await report(page);
+  const mine = r.events.filter((e) => e.seq > seq);
+  const trail = `${mine.map((e) => `${e.type}(${e.detail})`).join(',')} | input: ${r.inputLog.join(',')}`;
+  expect(mine.filter((e) => e.type === 'quickShot'), trail).toHaveLength(1);
+  expect(mine.filter((e) => (e.type === 'shot' || e.type === 'pass') && e.by === user), trail).toHaveLength(1);
+  expect(mine.filter((e) => e.type === 'feint' || e.type === 'dribble'), trail).toEqual([]);
+  await linger(page);
+  expect(errors).toEqual([]);
+});
+
+test('aiming starts from a press away from the carrier: pull back and release gives exactly one kick and no dribble (staged: ?setup=space)', async ({ page }, info) => {
+  const errors = trackConsoleErrors(page);
+  const finger = new Finger(page, modeFor(info));
+  let r = await stagedCarrier(page, finger);
+  const user = r.controlledId;
+  const c = r.players[user];
+  const viewport = page.viewportSize()!;
+  const pull = r.thresholds.cancelRadius + 0.4 * (r.thresholds.maxPull - r.thresholds.cancelRadius);
+  const fwd = pitchVectorToScreen(r.layout, { x: 1, y: 0 });
+  const n = Math.hypot(fwd.x, fwd.y);
+  const start = {
+    x: Math.min(Math.max(c.sx < viewport.width / 2 ? c.sx + 110 : c.sx - 110, pull + 20), viewport.width - pull - 20),
+    y: Math.min(Math.max(c.sy + 40, pull + 60), viewport.height - pull - 40),
+  };
+  const seq = r.events.at(-1)?.seq ?? 0;
+  await finger.down(start);
+  await waitFor(page, (x) => x.phase === 'aiming', 5000);
+  const end = { x: start.x - (fwd.x / n) * pull, y: start.y - (fwd.y / n) * pull };
+  await finger.move({ x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 });
+  await finger.up(end);
+  r = await waitFor(page, (x) => x.events.some((e) => e.seq > seq && (e.type === 'pass' || e.type === 'shot') && e.by === user), 5000);
+  await linger(page);
+  r = await report(page);
+  const mine = r.events.filter((e) => e.seq > seq);
+  const trail = `${mine.map((e) => `${e.type}(${e.by}:${e.detail})`).join(',')} | input: ${r.inputLog.join(',')}`;
+  expect(mine.filter((e) => (e.type === 'pass' || e.type === 'shot') && e.by === user), trail).toHaveLength(1);
+  expect(mine.filter((e) => e.type === 'dribble' || e.type === 'quickShot'), trail).toEqual([]);
+  expect(r.timeScale).toBe(1);
   expect(errors).toEqual([]);
 });
 
 test('keyboard: P pauses, R resets, O toggles overlay, Space aims a pass, M returns to menu', async ({ page }, info) => {
   test.skip(Boolean(info.project.use.hasTouch), 'desktop keyboard controls');
   const errors = trackConsoleErrors(page);
-  await openSandbox(page, 'mouse', '1-3-2-3', '&setup=pass');
+  await openSandbox(page, 'mouse', '1-3-2-3', '&controls=gesture&setup=pass');
   await waitFor(page, (r) => r.phase === 'live' && r.userHasBall);
   await page.keyboard.down('Space');
   await waitFor(page, (r) => r.phase === 'aiming' && r.aimSource === 'keyboard');
@@ -302,5 +338,68 @@ test('Start -> sandbox -> Menu repeated keeps one canvas and stable listeners', 
     if (baseline) expect(snap, `return ${i + 1}`).toEqual(baseline);
     else baseline = snap;
   }
+  expect(errors).toEqual([]);
+});
+
+for (const [query, zoom] of [
+  ['&zoom=1.4', 1.4],
+  ['&zoom=abc', 1.5],
+  ['&zoom=9', 1.5],
+  ['&zoom=1.6', 1.6],
+] as const)
+  test(`camera zoom ${query}: span comes from the baseline (${zoom}x) and never compounds over resets and resizes`, async ({ page }, info) => {
+    const errors = trackConsoleErrors(page);
+    const mode = modeFor(info);
+    const expectSpan = (r: MatchReport, zoom: number) => {
+      expect(r.camera.zoom).toBe(zoom);
+      if (r.layout.orientation === 'landscape') expect(r.camera.viewLength).toBeCloseTo(40 / zoom, 6);
+      else expect(r.camera.viewCross).toBeCloseTo(Math.min(54, 28 / zoom), 6);
+    };
+    {
+      let r = await openSandbox(page, mode, '1-3-2-3', `&controls=gesture&sandbox${query}`);
+      expectSpan(r, zoom);
+      const vp = page.viewportSize()!;
+      for (let i = 0; i < 2; i++) {
+        await page.keyboard.press('KeyR');
+        await page.setViewportSize({ width: vp.height, height: vp.width });
+        await page.waitForTimeout(150);
+        await page.setViewportSize(vp);
+        await page.waitForTimeout(150);
+      }
+      r = await report(page);
+      expectSpan(r, zoom);
+    }
+    expect(errors).toEqual([]);
+  });
+
+test('camera holds during aim: focus and aim do not drift while the finger is still (staged: ?setup=space)', async ({ page }, info) => {
+  const errors = trackConsoleErrors(page);
+  const finger = new Finger(page, modeFor(info));
+  let r = await stagedCarrier(page, finger);
+  const c = r.players[r.controlledId];
+  const viewport = page.viewportSize()!;
+  const pull = r.thresholds.cancelRadius + 0.5 * (r.thresholds.maxPull - r.thresholds.cancelRadius);
+  const start = {
+    x: Math.min(Math.max(c.sx, pull + 20), viewport.width - pull - 20),
+    y: Math.min(Math.max(c.sy + 30, pull + 60), viewport.height - pull - 40),
+  };
+  await finger.down(start);
+  await waitFor(page, (x) => x.phase === 'aiming', 5000);
+  await finger.move({ x: start.x - pull, y: start.y });
+  r = await waitFor(page, (x) => x.aim !== null, 3000);
+  const first = { cam: { x: r.camera.x, y: r.camera.y }, aim: r.aim! };
+  await page.waitForTimeout(700);
+  r = await report(page);
+  expect(r.phase).toBe('aiming');
+  expect(r.camera.mode).toBe('aiming');
+  expect(r.camera.x).toBeCloseTo(first.cam.x, 6);
+  expect(r.camera.y).toBeCloseTo(first.cam.y, 6);
+  expect(r.aim!.dx).toBeCloseTo(first.aim.dx, 6);
+  expect(r.aim!.dy).toBeCloseTo(first.aim.dy, 6);
+  expect(r.aim!.power).toBeCloseTo(first.aim.power, 6);
+  // Release back inside the cancel circle: no kick.
+  await finger.up(start);
+  await waitFor(page, (x) => x.phase !== 'aiming', 3000);
+  await linger(page);
   expect(errors).toEqual([]);
 });

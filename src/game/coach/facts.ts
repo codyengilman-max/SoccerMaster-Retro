@@ -104,7 +104,7 @@ export interface CoachFacts {
   readonly shot: ShotFact | null;
   readonly support: { readonly underneath: number; readonly beyond: number; readonly wide: number; readonly open: number };
   readonly defend: DefendFact | null;
-  readonly stopped: { readonly reason: 'goal' | 'out'; readonly restartOurs: boolean } | null;
+  readonly stopped: { readonly reason: 'goal' | 'out' | 'foul'; readonly restartOurs: boolean } | null;
   readonly spaceBehindDefence: number;
 }
 

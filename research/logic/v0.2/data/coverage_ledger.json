@@ -1,0 +1,127 @@
+{
+  "schema_version": "0.2",
+  "target": "2016/17–2025/26",
+  "seasons": [
+    {
+      "season": "2016/17",
+      "status": "not_extracted",
+      "source_ids": [],
+      "all_matches_analyzed": false,
+      "full_report_reviewed": false,
+      "event_dataset_ingested": false,
+      "parameters_fitted": false
+    },
+    {
+      "season": "2017/18",
+      "status": "not_extracted",
+      "source_ids": [],
+      "all_matches_analyzed": false,
+      "full_report_reviewed": false,
+      "event_dataset_ingested": false,
+      "parameters_fitted": false
+    },
+    {
+      "season": "2018/19",
+      "status": "not_extracted",
+      "source_ids": [],
+      "all_matches_analyzed": false,
+      "full_report_reviewed": false,
+      "event_dataset_ingested": false,
+      "parameters_fitted": false
+    },
+    {
+      "season": "2019/20",
+      "status": "selected_articles_only",
+      "source_ids": [
+        "S15"
+      ],
+      "all_matches_analyzed": false,
+      "full_report_reviewed": false,
+      "event_dataset_ingested": false,
+      "parameters_fitted": false
+    },
+    {
+      "season": "2020/21",
+      "status": "not_extracted",
+      "source_ids": [],
+      "all_matches_analyzed": false,
+      "full_report_reviewed": false,
+      "event_dataset_ingested": false,
+      "parameters_fitted": false
+    },
+    {
+      "season": "2021/22",
+      "status": "selected_articles_only",
+      "source_ids": [
+        "S16"
+      ],
+      "all_matches_analyzed": false,
+      "full_report_reviewed": false,
+      "event_dataset_ingested": false,
+      "parameters_fitted": false
+    },
+    {
+      "season": "2022/23",
+      "status": "selected_articles_only",
+      "source_ids": [
+        "S3",
+        "S4",
+        "S13"
+      ],
+      "all_matches_analyzed": false,
+      "full_report_reviewed": false,
+      "event_dataset_ingested": false,
+      "parameters_fitted": false
+    },
+    {
+      "season": "2023/24",
+      "status": "selected_articles_only",
+      "source_ids": [
+        "S2",
+        "S8"
+      ],
+      "all_matches_analyzed": false,
+      "full_report_reviewed": false,
+      "event_dataset_ingested": false,
+      "parameters_fitted": false
+    },
+    {
+      "season": "2024/25",
+      "status": "selected_articles_only",
+      "source_ids": [
+        "S9",
+        "S10"
+      ],
+      "all_matches_analyzed": false,
+      "full_report_reviewed": false,
+      "event_dataset_ingested": false,
+      "parameters_fitted": false
+    },
+    {
+      "season": "2025/26",
+      "status": "not_extracted",
+      "source_ids": [],
+      "all_matches_analyzed": false,
+      "full_report_reviewed": false,
+      "event_dataset_ingested": false,
+      "parameters_fitted": false
+    }
+  ],
+  "separate_samples": [
+    {
+      "label": "2015/16 Champions League historical baseline",
+      "source_ids": [
+        "S14"
+      ],
+      "pooled_with_target": false
+    },
+    {
+      "label": "2022 World Cup",
+      "source_ids": [
+        "S17"
+      ],
+      "pooled_with_target": false
+    }
+  ],
+  "note": "Coverage means selected textual review only. Manager biography and playing-role accounts do not count as season-level datasets."
+}

@@ -1,0 +1,10 @@
+# Story source and honest scope
+Roster source: SoccerMaster_Devin_Plain_Text_Review_v0.7.txt, Library version 4, modified 2026-10-15. Its current implementation spec names the player, Alex, Sam, Jordan, Blake (working name), Riley (working name), Coach Code, caregiver and clownfish. All relationship interactions use cutscenes. Character identity/affiliation must be reconciled with the actual repo before integration.
+
+This art pack provides nine story roles, with two selectable protagonist presentations (ten visual identities). It covers documented school/courtyard/schoolyard, home/desk/aquarium/home practice, training arrival/training, and match boundary contexts. Reuse a location background for its related subscene; the full minigame arenas and game UI are outside these cutscene PNGs.
+
+New NPC appearance details (Alex's copper curls, Sam's black fringe, Riley's curly ponytail, Coach Code's grey curls, caregiver appearance) are newly authored visual proposals. They do not define a character's pronouns, personal history or club. Preserve approved story metadata. One caregiver visual does not establish the whole family or replace separate caregiver IDs in the current implementation.
+
+No complete repository scene list was available in this handoff. Devin must produce the actual coverage diff. Additional caregivers, coaches, extras, future locations, alternate weather/time-of-day backgrounds, away/tournament uniforms and expression sets require explicit entries. Do not silently treat the school background as every location. Portraits are not gameplay full-body sprites. The procedural gameplay renderer is a base for visual integration; exact cross-scale likeness for every new NPC still needs mapping/refinement.
+
+Revision 1.1 removes the forced default name. Alex remains a valid user-entered name, but canonical player and teammate IDs stay different. The preview now uses the exact current v0.7 school dialogue excerpt in an effect-free demo. It stops before the crossbar adapter. The full story engine is not included.

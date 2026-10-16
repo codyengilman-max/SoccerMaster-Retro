@@ -1,0 +1,9 @@
+FIRST: Read 01_COACHING_REVIEW.md. Resolve its coaching-content findings before final demo production; this package is not certified player-ready. Preserve the original specification and make versioned corrections with evidence.
+
+Implement the attached SoccerMaster training library revision 1.1.0 in codyengilman-max/SoccerMaster-Retro. Extract the ZIP and first read 00_START_HERE.md, then the complete SoccerMaster_Training_Library_v1.md. Follow the explicit implementation sequence and delivery checklist.
+
+Work on an isolated training branch. Preserve the concurrent gameplay revision, TypeScript/Vite/Phaser architecture, saves and existing player progress. Run the supplied 63 offline reference tests, then implement and test the real TypeScript/browser integration. Do not treat Python test success as proof of app correctness or accurate demonstrations.
+
+Build the catalog/review interface and six specified original demo prototypes. All imported exercises remain draft until genuine evidence, coaching, rights and demo reviews meet the specification. Never invent approvals or ship synthetic fixtures. Reconcile P-001 with the current economy before changing existing rewards; report any concrete conflict while completing compatible work.
+
+Complete routine implementation and verification without asking permission between steps. Deliver a focused PR, exact tested commit, actual test/build results, preview where available, prototype evidence and remaining release prerequisites. Do not merge into main or deploy production. Keep this task separate from the gameplay overhaul already underway.

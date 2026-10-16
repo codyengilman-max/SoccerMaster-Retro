@@ -1,0 +1,33 @@
+V0.7 UPDATE: Read 10_V07_CORRECTIONS_AND_INTEGRATION.txt first. It and week_one_scenes.json override older conflicting executable behavior. All prior safety rules still apply.
+
+PLAIN-TEXT REVIEW AND ACCEPTANCE
+
+PACKAGE STATUS
+Specification review completed; no code security certification. Prior v0.2 spec remains enclosed for traceability, not as overriding instruction. New design specifies the previously unresolved scene reservation, activity race and repair acceptance rules. Existing repo behavior is not verified here.
+
+IMPLEMENTATION GATES
+1. Identity: all named surfaces use chosen name and correct pronouns; renaming preserves IDs, history and awards. Boy/girl with identical input/seed have equal gameplay outcomes. International names render as text; unsafe tokens/oversized imports rejected.
+2. Crossbar: bar/post/net/ground distinguishable; fast ball cannot tunnel through bar; one shot one score; warm-up excluded; ties/skip/reload truthful. Regular match shots still work.
+3. Controls: no Pass/Shoot buttons; dribble and kick input unchanged; orientation/background cancels or resumes gesture safely, never firing stale kick.
+4. Narrative: private information cannot appear in school; unknown/skipped match never becomes a loss; rivalry uses actual opponent; all optional declines proceed.
+5. Emotional firewall: changing every emotional state with identical match seed/input leaves physics, stats, rankings, growth and eligibility unchanged. Essential support/core training remain available at every state.
+6. Training: one arrival per real session; retries/reloads create no new scene or rewards. Focus initializes once and locks only at defined boundary.
+7. Persistence: race two tabs at scene selection and choice submission; only one occurrence/choice/effect wins. Simulate quota failure, aborted transaction and migration failure. Recover prior valid state without duplicate reward.
+8. Commitments: no invitation becomes missed; cancelled/missed/closed commitment rejects late original completion. Repair requires confirmation and active bound session. Early/foreign/replayed completions fail. Completion vs advance race has one winner. One miss plus repair never profits in trust.
+9. Content: all scenes have exits; no missing steps/tokens/assets; actor/role restrictions truthful; neutral fallbacks for absent evidence. No endless adversity loop.
+10. Runtime: browser desktop and touch emulation plus actual owner iPhone test; pause, rotation, small landscape layout, sound controls, readable text, skip detail. Never equate emulation with device acceptance.
+11. Deployment: test exact built commit in preview; report URL and version; no production merge under this package.
+12. Existing regressions: saves, weekly growth, training, tactical moments, keeper/outfield roles, matches and current gameplay repairs.
+
+DESIGN RISKS STILL REQUIRING PLAYTEST
+- Is the first week enjoyable before dialogue expands?
+- Is crossbar aiming comprehensible on a physical iPhone?
+- Are school scenes too frequent or unpleasant?
+- Does quiet home feel comforting rather than empty?
+- Are choices followed by recognizable consequences?
+- Does the fish add warmth without distracting from soccer?
+- Does Jungle Soccer remain readable, fair and fun under crowding?
+
+No blanket claim of zero vulnerabilities. Record findings by severity, reproduction, affected version, fix and retest evidence. npm audit is dependency coverage only. Browser-local career saves remain editable by the device owner; competitive anti-cheat is outside scope.
+
+V0.6 ADDITION: Require every week-one relationship route to use the cutscene renderer. Follow file 09 phone/input/save gates. Check same-gesture choices, fast-forward, replay, fresh soccer input after handoff, and all cursor restore cases in actual app.

@@ -80,6 +80,8 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('coached session: freeze, answer, feedback, Continue once, through to the summary', async ({ page }, info) => {
+  // Five full moments of live play: on 2-core CI software WebGL this alone ran past 150 s (b00c71b and 5d6f1a2 runs).
+  test.setTimeout(300_000);
   const errors = trackConsoleErrors(page);
   const mode = modeFor(info);
   await openCoached(page, mode);

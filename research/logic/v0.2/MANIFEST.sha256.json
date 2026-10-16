@@ -1,0 +1,77 @@
+{
+  "scope": "Files committed with audit revision, excluding this manifest itself and .git metadata",
+  "files": {
+    ".gitignore": {
+      "bytes": 38,
+      "sha256": "558ca839f68a56f90a560a3f358fc47501e1ba685b187124e87c1e947257b1ca"
+    },
+    "README.md": {
+      "bytes": 2108,
+      "sha256": "692b25ccc39dc90a601400675d0a150a53334c3c235bc3a496faa0f4addc795a"
+    },
+    "archive/PROVENANCE.md": {
+      "bytes": 1658,
+      "sha256": "6918103c2dabd16247fdfbb21953b477e53264ccce1e7029aa67739703ebccc0"
+    },
+    "archive/SoccerMaster_Logic_Foundation_v0.1.md": {
+      "bytes": 24054,
+      "sha256": "e45f8e5eaff31d2f2781f1109f05f6353aff37c83af9c021ceabb91a010f481b"
+    },
+    "audit/AUDIT.md": {
+      "bytes": 7673,
+      "sha256": "44b28906260676a8803a8b0fb4cce8d9b2e28a7f816d53177f57d600651fa4f4"
+    },
+    "audit/foundation_v0.1_to_v0.2.diff": {
+      "bytes": 5787,
+      "sha256": "a1a27273da1e47889eba4d9590694e00bbc39c33527ca016bc9eb9ddef899650"
+    },
+    "audit/verification.txt": {
+      "bytes": 1648,
+      "sha256": "c97f082fbbedf10de618a7c126830654803d6f663b5b21b622234acf4513f924"
+    },
+    "contracts/ENGINE_CONTRACT.md": {
+      "bytes": 10262,
+      "sha256": "d7d7f509cda58fc012bc0c382e35d7cb1f9d9e7034aa363d8712ce59f819a53f"
+    },
+    "data/coverage_ledger.json": {
+      "bytes": 3166,
+      "sha256": "2771848255aabba1261036fda2d6ca357fbcf5f2f4a64ae805210c85692d36c9"
+    },
+    "data/evidence_register.json": {
+      "bytes": 13521,
+      "sha256": "d75278d2d881cc4e2c13cd541c3dca47ae8720058a0d74b1515ff763b4833b46"
+    },
+    "data/runtime_acceptance.json": {
+      "bytes": 4408,
+      "sha256": "8dd2f34ac05ba23af64f48e570f354eb1aa13839d7f38fa9a88ce5aca26f4a0d"
+    },
+    "data/scenario_catalog.json": {
+      "bytes": 38461,
+      "sha256": "ea3b615fcd506b84cc10c1206a92e105e35f9d1bcf94b0399c15d72e87e691f6"
+    },
+    "data/statistical_claims.json": {
+      "bytes": 2918,
+      "sha256": "169f8f5413b147d3bab273b9ac719b14cdfbfe53935909bc46664b765a5b48bc"
+    },
+    "docs/COVERAGE_GAPS.md": {
+      "bytes": 1130,
+      "sha256": "9460e49f549cc9c8b6ce11a7a71087e2ff96f7557e858564d3256f048ee0556f"
+    },
+    "docs/DEVIN_HANDOFF.md": {
+      "bytes": 1828,
+      "sha256": "a4a3bfd2b49068c201b888524d5158b2ca58807190217c45411939235b9d9380"
+    },
+    "docs/SoccerMaster_Logic_Foundation_v0.2.md": {
+      "bytes": 24786,
+      "sha256": "d4cc6d8b4d850f287d7aac03e760fdd2c4a8349d98db50266a9e4f960d1ea38f"
+    },
+    "tests/test_repository.py": {
+      "bytes": 2785,
+      "sha256": "3d834aa8d03f675cf269a0d5ba26508d1b1b4908cb8e5ddea57f80395af8e2e7"
+    },
+    "tools/validate_repository.py": {
+      "bytes": 7405,
+      "sha256": "66627abdeb6f76d79911ab320c214c402810bb0ad06810f0c43e9991cafa1ba4"
+    }
+  }
+}

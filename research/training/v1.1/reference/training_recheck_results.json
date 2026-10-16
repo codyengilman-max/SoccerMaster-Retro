@@ -1,0 +1,254 @@
+[
+  {
+    "test": "valid catalog parses",
+    "result": "PASS"
+  },
+  {
+    "test": "100 standalone variants / 200 demo references",
+    "result": "PASS"
+  },
+  {
+    "test": "unknown top-level field",
+    "result": "PASS"
+  },
+  {
+    "test": "unknown schema version",
+    "result": "PASS"
+  },
+  {
+    "test": "boolean schema version",
+    "result": "PASS"
+  },
+  {
+    "test": "duplicate family ID",
+    "result": "PASS"
+  },
+  {
+    "test": "unknown profile",
+    "result": "PASS"
+  },
+  {
+    "test": "missing profile capability",
+    "result": "PASS"
+  },
+  {
+    "test": "nonexistent prerequisite",
+    "result": "PASS"
+  },
+  {
+    "test": "cyclic prerequisite",
+    "result": "PASS"
+  },
+  {
+    "test": "missing source reference",
+    "result": "PASS"
+  },
+  {
+    "test": "missing locator",
+    "result": "PASS"
+  },
+  {
+    "test": "missing demo",
+    "result": "PASS"
+  },
+  {
+    "test": "wrong-side demo identity",
+    "result": "PASS"
+  },
+  {
+    "test": "forged release flag",
+    "result": "PASS"
+  },
+  {
+    "test": "forged catalog approval record",
+    "result": "PASS"
+  },
+  {
+    "test": "untrusted demo asset authority",
+    "result": "PASS"
+  },
+  {
+    "test": "combination contains lane drill",
+    "result": "PASS"
+  },
+  {
+    "test": "unknown fallback target",
+    "result": "PASS"
+  },
+  {
+    "test": "fallback cycle",
+    "result": "PASS"
+  },
+  {
+    "test": "duplicate slot index",
+    "result": "PASS"
+  },
+  {
+    "test": "stat reward injection",
+    "result": "PASS"
+  },
+  {
+    "test": "integer disguised as policy boolean",
+    "result": "PASS"
+  },
+  {
+    "test": "physical catch-up enabled",
+    "result": "PASS"
+  },
+  {
+    "test": "null setup",
+    "result": "PASS"
+  },
+  {
+    "test": "HTML in text",
+    "result": "PASS"
+  },
+  {
+    "test": "oversize field",
+    "result": "PASS"
+  },
+  {
+    "test": "non-HTTPS URL",
+    "result": "PASS"
+  },
+  {
+    "test": "hostname suffix spoof",
+    "result": "PASS"
+  },
+  {
+    "test": "URL credentials",
+    "result": "PASS"
+  },
+  {
+    "test": "query-driven redirect URL",
+    "result": "PASS"
+  },
+  {
+    "test": "duplicate JSON properties",
+    "result": "PASS"
+  },
+  {
+    "test": "prototype-like property",
+    "result": "PASS"
+  },
+  {
+    "test": "NaN constant",
+    "result": "PASS"
+  },
+  {
+    "test": "infinite constant",
+    "result": "PASS"
+  },
+  {
+    "test": "truncated JSON",
+    "result": "PASS"
+  },
+  {
+    "test": "oversized bytes",
+    "result": "PASS"
+  },
+  {
+    "test": "deep nesting before parse",
+    "result": "PASS"
+  },
+  {
+    "test": "synthetic approval positive control",
+    "result": "PASS"
+  },
+  {
+    "test": "revoked approval rejected",
+    "result": "PASS"
+  },
+  {
+    "test": "changed instruction hash rejected",
+    "result": "PASS"
+  },
+  {
+    "test": "changed safety hash rejected",
+    "result": "PASS"
+  },
+  {
+    "test": "changed asset rejected",
+    "result": "PASS"
+  },
+  {
+    "test": "changed caption rejected",
+    "result": "PASS"
+  },
+  {
+    "test": "wrong-foot asset rejected",
+    "result": "PASS"
+  },
+  {
+    "test": "missing reviewer rejected",
+    "result": "PASS"
+  },
+  {
+    "test": "missing rights review rejected",
+    "result": "PASS"
+  },
+  {
+    "test": "unresolved evidence blocks synthetic approval",
+    "result": "PASS"
+  },
+  {
+    "test": "all-draft catalog returns no content",
+    "result": "PASS"
+  },
+  {
+    "test": "no wall and small space cannot fallback to target",
+    "result": "PASS"
+  },
+  {
+    "test": "no target/no outdoor cannot fallback to finishing",
+    "result": "PASS"
+  },
+  {
+    "test": "wall fallback requires target capabilities",
+    "result": "PASS"
+  },
+  {
+    "test": "no overhead uses disclosed ground alternative",
+    "result": "PASS"
+  },
+  {
+    "test": "unfamiliar prerequisite blocks one-touch",
+    "result": "PASS"
+  },
+  {
+    "test": "combination rechecks component approval",
+    "result": "PASS"
+  },
+  {
+    "test": "mirroring preserves all four surfaces",
+    "result": "PASS"
+  },
+  {
+    "test": "16 concurrent claims create one stamp",
+    "result": "PASS"
+  },
+  {
+    "test": "replay remains idempotent",
+    "result": "PASS"
+  },
+  {
+    "test": "crash rolls back claim and retry succeeds",
+    "result": "PASS"
+  },
+  {
+    "test": "skipped slot not rewarded",
+    "result": "PASS"
+  },
+  {
+    "test": "unknown week slot rejected",
+    "result": "PASS"
+  },
+  {
+    "test": "stable entitlement excludes content and drill versions",
+    "result": "PASS"
+  },
+  {
+    "test": "fourth weekly slot rejected",
+    "result": "PASS"
+  }
+]

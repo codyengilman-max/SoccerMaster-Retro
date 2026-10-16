@@ -26,24 +26,52 @@ export const MATCH_TUNING = {
    * Timed 9v9 match (M4): two halves of `halfSeconds` sim seconds, shown on a 25-minute U11 half
    * clock. Provisional: a short phone-sized match, not real-time youth match length.
    */
-  match: { halfSeconds: 240, displayHalfMinutes: 25, minHalfSeconds: 10, maxHalfSeconds: 1800 },
+  match: { halfSeconds: 165, displayHalfMinutes: 25, minHalfSeconds: 10, maxHalfSeconds: 1800 },
   /** User carrier directional dribbling: swipes set a direction; speed, acceleration and turning are bounded. */
   carrier: {
     speed: D.dribble.speed,
     /** Dribbling back toward the user's own goal is slower. */
     backSpeedFactor: 0.75,
-    accel: 9,
-    /** Max heading change (rad/s); a reversal slows the carrier before it turns. */
-    turnRate: 5,
-    /** Speed fraction kept while the heading is still far from the requested direction. */
-    minTurnSpeedFactor: 0.3,
+    /**
+     * yd/s^2 cap on velocity change. The carrier steers straight at the swiped direction; a cut or reversal costs
+     * time only through this cap (a 90 deg cut from full speed takes about 0.37 s), never a separate turn-rate brake.
+     */
+    accel: 20,
     /** Minimum sim time between accepted redirects (spam guard; redirects never add speed). */
     redirectSeconds: 0.12,
+    /** A swipe while our pass is within bufferReach yd of its receiver becomes his first-touch direction, for bufferSeconds. */
+    bufferSeconds: 0.4,
+    bufferReach: 5,
   },
-  /** One ground kick for passes and shots (user and AI): speed = lerp(minSpeed, maxSpeed, power). */
-  kick: { minSpeed: 8, maxSpeed: D.shot.maxSpeed },
+  /**
+   * One ground kick for passes and shots (user and AI). Power (0..1) sets the roll distance in yards, and launch
+   * speed (yd/s) is sqrt(2 * ball.friction * distance), so the ball stops where the guide says. Roll grows linearly
+   * from minSpeed's roll (about 4 yd) to passRoll yd over power 0..passPower (the everyday passing range), then
+   * eases up to maxSpeed's roll for long balls and shots, with no kink in slope at passPower.
+   */
+  kick: { minSpeed: 5.3, maxSpeed: D.shot.maxSpeed, passRoll: 34, passPower: 0.7 },
   /** Aiming slow motion: real seconds per team possession spell; refills only after the opponent had the ball. */
-  aimAllowance: { seconds: 2.4 },
+  aimAllowance: {
+    seconds: 2.4,
+    /** The opponent must hold the ball this long (sim seconds) before it counts as their possession spell (refill). */
+    establishSeconds: 0.6,
+  },
+  /**
+   * Off the ball the user controls one home outfielder: the presser when the opponent has it, the
+   * loose-ball chaser otherwise (stable during a friendly pass). A swipe steers him for steerSeconds.
+   */
+  offBall: {
+    steerSeconds: 1.1,
+    /** Steered speed is the normal chase speed: no boost for being user-controlled. */
+    minHoldSeconds: 0.6,
+    /** Switching back to the player control just left needs this long on the new one (no A-B-A flicker). */
+    returnHoldSeconds: 1.5,
+  },
+  /**
+   * Double-tap quick shot: fixed power toward the goal with a seeded target spread of this fraction
+   * of the goal half-width either side of centre (speed over placement). Project tuning, not a reference value.
+   */
+  quickShot: { power: 0.95, spread: 0.85 },
   feint: {
     seconds: 0.45,
     cooldownSeconds: 1.6,
@@ -141,6 +169,8 @@ export const MATCH_TUNING = {
     /** Cover stands this fraction of the way from the ball toward the goal/most dangerous runner. */
     coverFraction: 0.4,
     coverDepth: 5,
+    /** Presser reaction lag (s): he closes on the carrier as read this long ago, so a well-timed cut can beat him. */
+    readSeconds: 0.25,
     /** Presser/cover stay assigned at least this long (no jitter) unless beaten by switchMargin seconds. */
     commitSeconds: 0.9,
     switchMarginSeconds: 0.6,
@@ -152,6 +182,58 @@ export const MATCH_TUNING = {
     protectFraction: 0.45,
     /** Players caught on the wrong side of the ball by this much sprint back. */
     recoverBeyond: 3,
+  },
+  /**
+   * Joystick + four-button controls (controls brief §15). Provisional playtest values, not proven optimal.
+   * Charge times are sim seconds; speeds yd/s; angles radians.
+   */
+  pad: {
+    deadZone: 0.12,
+    passChargeSeconds: 0.65,
+    shotChargeSeconds: 0.85,
+    passPower: { min: 0.12, max: 0.85 },
+    shotPower: { min: 0.6, max: 1 },
+    prepSeconds: 0.08,
+    recoverySeconds: 0.22,
+    /** Ball must be this close to the kicker at contact. */
+    contactReach: 1.6,
+    receiverCone: 0.6,
+    receiverMinRange: 3,
+    receiverMaxRange: 34,
+    /** A highlighted receiver is kept unless another scores better by this margin. */
+    receiverStickiness: 0.25,
+    /** Max lead correction toward the locked receiver at contact. */
+    leadMaxAngle: 0.14,
+    leadSeconds: 0.45,
+    shotErrorMax: 0.12,
+    pressureRadius: 3.5,
+    blockSpeedFactor: 0.55,
+    blockTurnRate: 5,
+    blockHalfWidth: 1.1,
+    blockDepth: 0.6,
+    blockRestitution: 0.45,
+    /** Ball radius allowance when sweeping the ball path against the stance line. */
+    blockBallRadius: 0.3,
+    /** Incoming ball faster than this rebounds off the block and cannot be taken by the blocker straight away. */
+    blockHardSpeed: 12,
+    blockIgnoreSeconds: 0.35,
+    agilityTurnPenalty: 0.5,
+    attrRange: { min: 0.8, max: 1.2 },
+    slide: {
+      startSeconds: 0.12,
+      activeSeconds: 0.35,
+      recoverySeconds: 0.7,
+      cooldownSeconds: 0.3,
+      /** Capped at the player's running top speed in sim: a slide is never a speed burst. */
+      speed: 6.2,
+      steerRate: 1.2,
+      ballReach: 0.9,
+      bodyReach: 0.75,
+      pokeSpeed: 7,
+      /** Body contact later than this after the ball touch is still a foul. */
+      cleanWindow: 0.25,
+      sliderIgnoreSeconds: 0.5,
+    },
   },
   ai: {
     /** The AI carrier re-evaluates this often, and not sooner than reactionSeconds after receiving. */

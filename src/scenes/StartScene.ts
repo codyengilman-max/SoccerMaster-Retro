@@ -8,6 +8,8 @@ import { Button } from './ui/Button';
 
 export const GAME_TITLE = 'SoccerMaster Retro';
 
+let labOpened = false;
+
 export class StartScene extends Phaser.Scene implements InspectableScene {
   private background!: Phaser.GameObjects.Graphics;
   private title!: Phaser.GameObjects.Text;
@@ -17,6 +19,8 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
   private careerButton!: Button;
   private playButton!: Button;
   private sandboxButton!: Button;
+  private reviewButton!: Button;
+  private storyButton!: Button;
   private navigating = false;
 
   constructor() {
@@ -25,6 +29,12 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
 
   create(): void {
     this.navigating = false;
+    // Lab builds: `?lab` opens the Gameplay Lab once per page load.
+    if (__LAB__ && !labOpened && new URLSearchParams(window.location.search).get('lab') === '') {
+      labOpened = true;
+      this.navigating = true;
+      this.time.delayedCall(0, () => this.scene.start(SceneKeys.Lab));
+    }
     const resolution = textResolution();
 
     this.background = this.add.graphics();
@@ -81,6 +91,22 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
       fontSize: 24,
       onClick: () => this.openCareer(),
     });
+    this.reviewButton = new Button(this, 0, 0, {
+      name: 'review-button',
+      label: 'Review & Lab',
+      width: 220,
+      height: 48,
+      fontSize: 18,
+      onClick: () => this.openReview(),
+    });
+    this.storyButton = new Button(this, 0, 0, {
+      name: 'story-button',
+      label: 'Story: Week 1',
+      width: 220,
+      height: 48,
+      fontSize: 18,
+      onClick: () => this.openStory(),
+    });
     this.enterButton = new Button(this, 0, 0, {
       name: 'enter-button',
       label: 'Enter Training Ground',
@@ -113,6 +139,8 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
         'career-button': this.careerButton.getButtonBounds(),
         'play-button': this.playButton.getButtonBounds(),
         'sandbox-button': this.sandboxButton.getButtonBounds(),
+        'review-button': this.reviewButton.getButtonBounds(),
+        'story-button': this.storyButton.getButtonBounds(),
       },
     };
   }
@@ -133,6 +161,18 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
     if (this.navigating) return;
     this.navigating = true;
     this.scene.start(SceneKeys.Career);
+  }
+
+  private openStory(): void {
+    if (this.navigating) return;
+    this.navigating = true;
+    this.scene.start(SceneKeys.Story);
+  }
+
+  private openReview(): void {
+    if (this.navigating) return;
+    this.navigating = true;
+    this.scene.start(SceneKeys.Career, { open: 'reviewHub' });
   }
 
   private openSandbox(): void {
@@ -181,12 +221,22 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
     for (const b of buttons) b.resize(buttonWidth, buttonHeight, buttonFont);
     if (portrait) {
       const gap = Math.max(10, height * 0.018);
-      const top = Math.min(height * 0.5, height - 40 - buttonHeight * n - gap * (n - 1));
+      const reviewHeight = Math.round(buttonHeight * 0.8);
+      const top = Math.min(height * 0.5, height - 40 - buttonHeight * n - gap * n - reviewHeight);
       buttons.forEach((b, i) => b.setPosition(width / 2, top + buttonHeight / 2 + i * (buttonHeight + gap)));
+      const half = Math.round((buttonWidth - gap) / 2);
+      const ry = top + n * (buttonHeight + gap) + reviewHeight / 2;
+      this.storyButton.resize(half, reviewHeight, buttonFont).setPosition(width / 2 - (half + gap) / 2, ry);
+      this.reviewButton.resize(half, reviewHeight, buttonFont).setPosition(width / 2 + (half + gap) / 2, ry);
     } else {
       const gap = 12;
-      const y = height * 0.66;
+      const y = height * 0.62;
       buttons.forEach((b, i) => b.setPosition(width / 2 + (i - (n - 1) / 2) * (buttonWidth + gap), y));
+      const rh = Math.round(Math.max(44, Math.min(height * 0.13, 60)));
+      const rw = Math.round(Math.min(width * 0.32, 260));
+      const ry = y + buttonHeight / 2 + 10 + rh / 2;
+      this.storyButton.resize(rw, rh, Math.round(Math.min(rh * 0.4, 22))).setPosition(width / 2 - (rw + gap) / 2, ry);
+      this.reviewButton.resize(rw, rh, Math.round(Math.min(rh * 0.4, 22))).setPosition(width / 2 + (rw + gap) / 2, ry);
     }
 
     this.footer.setFontSize(Math.max(11, Math.round(Math.min(width, height) * 0.032))).setPosition(width / 2, height - 10);

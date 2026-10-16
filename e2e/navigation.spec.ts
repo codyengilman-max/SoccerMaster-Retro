@@ -38,7 +38,7 @@ test('start screen fits the phone viewport', async ({ page }, info) => {
   expect(d.canvases).toBe(1);
   expect(d.layout?.orientation).toBe(info.project.name.includes('portrait') ? 'portrait' : 'landscape');
   expect(d.layout?.viewport).toEqual(viewport);
-  for (const name of ['title', 'subtitle', 'footer', 'enter-button', 'play-button', 'sandbox-button']) expectInside(name, d.layout?.elements[name], viewport);
+  for (const name of ['title', 'subtitle', 'footer', 'enter-button', 'play-button', 'sandbox-button', 'review-button']) expectInside(name, d.layout?.elements[name], viewport);
   expect(d.layout?.elements['enter-button']?.height ?? 0).toBeGreaterThanOrEqual(44);
   await linger(page);
   expect(errors).toEqual([]);

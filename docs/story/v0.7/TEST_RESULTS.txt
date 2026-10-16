@@ -1,0 +1,54 @@
+REFERENCE TESTS ONLY — not game/browser/iPhone tests
+test_affiliations_are_proposals (club_contract_tests.ClubContractTests.test_affiliations_are_proposals) ... ok
+test_duplicate_no_reset (club_contract_tests.ClubContractTests.test_duplicate_no_reset) ... ok
+test_editions_separate (club_contract_tests.ClubContractTests.test_editions_separate) ... ok
+test_invitation_not_selection (club_contract_tests.ClubContractTests.test_invitation_not_selection) ... ok
+test_next_horizon_not_in_table (club_contract_tests.ClubContractTests.test_next_horizon_not_in_table) ... ok
+test_no_u11_entry (club_contract_tests.ClubContractTests.test_no_u11_entry) ... ok
+test_no_undefined_edition (club_contract_tests.ClubContractTests.test_no_undefined_edition) ... ok
+test_record_independent_invitation (club_contract_tests.ClubContractTests.test_record_independent_invitation) ... ok
+test_two_named_events (club_contract_tests.ClubContractTests.test_two_named_events) ... ok
+test_u12_and_unknown_routes (club_contract_tests.ClubContractTests.test_u12_and_unknown_routes) ... ok
+test_unconfigured_not_assumed_entered (club_contract_tests.ClubContractTests.test_unconfigured_not_assumed_entered) ... ok
+test_unique_six_clubs (club_contract_tests.ClubContractTests.test_unique_six_clubs) ... ok
+test_cancelled_has_no_repair_entitlement (cutscene_contract_tests.CutsceneTests.test_cancelled_has_no_repair_entitlement) ... ok
+test_catalog (cutscene_contract_tests.CutsceneTests.test_catalog) ... ok
+test_catalog_rejects_duplicate_choice (cutscene_contract_tests.CutsceneTests.test_catalog_rejects_duplicate_choice) ... ok
+test_catalog_rejects_effect_injection (cutscene_contract_tests.CutsceneTests.test_catalog_rejects_effect_injection) ... ok
+test_catalog_rejects_missing_target (cutscene_contract_tests.CutsceneTests.test_catalog_rejects_missing_target) ... ok
+test_catalog_rejects_unreachable (cutscene_contract_tests.CutsceneTests.test_catalog_rejects_unreachable) ... ok
+test_conditional_launch_fails_without_evidence (cutscene_contract_tests.CutsceneTests.test_conditional_launch_fails_without_evidence) ... ok
+test_duplicate_choice (cutscene_contract_tests.CutsceneTests.test_duplicate_choice) ... ok
+test_failure_rolls_back_effect_and_cursor (cutscene_contract_tests.CutsceneTests.test_failure_rolls_back_effect_and_cursor) ... ok
+test_invalid_choice (cutscene_contract_tests.CutsceneTests.test_invalid_choice) ... ok
+test_launch_stable_after_reopen (cutscene_contract_tests.CutsceneTests.test_launch_stable_after_reopen) ... ok
+test_launch_unique_across_owners (cutscene_contract_tests.CutsceneTests.test_launch_unique_across_owners) ... ok
+test_missed_has_repair_path (cutscene_contract_tests.CutsceneTests.test_missed_has_repair_path) ... ok
+test_multiple_choices (cutscene_contract_tests.CutsceneTests.test_multiple_choices) ... ok
+test_reopen_preserves_decisions (cutscene_contract_tests.CutsceneTests.test_reopen_preserves_decisions) ... ok
+test_replay_blocks_all_mutations (cutscene_contract_tests.CutsceneTests.test_replay_blocks_all_mutations) ... ok
+test_replay_launch_blocked_at_handoff (cutscene_contract_tests.CutsceneTests.test_replay_launch_blocked_at_handoff) ... ok
+test_reveal_before_advance (cutscene_contract_tests.CutsceneTests.test_reveal_before_advance) ... ok
+test_same_gesture (cutscene_contract_tests.CutsceneTests.test_same_gesture) ... ok
+test_two_connections_stale_revision (cutscene_contract_tests.CutsceneTests.test_two_connections_stale_revision) ... ok
+test_aborted_transaction_has_no_effect (reference_contract_tests.ContractTests.test_aborted_transaction_has_no_effect) ... ok
+test_advance_completion_order (reference_contract_tests.ContractTests.test_advance_completion_order) ... ok
+test_all_ineligible (reference_contract_tests.ContractTests.test_all_ineligible) ... ok
+test_cancel_completion_order (reference_contract_tests.ContractTests.test_cancel_completion_order) ... ok
+test_conflicting_choices (reference_contract_tests.ContractTests.test_conflicting_choices) ... ok
+test_duplicate_returns_prior_result (reference_contract_tests.ContractTests.test_duplicate_returns_prior_result) ... ok
+test_empty_evaluation_is_unknown (reference_contract_tests.ContractTests.test_empty_evaluation_is_unknown) ... ok
+test_first_contact_crossbar (reference_contract_tests.ContractTests.test_first_contact_crossbar) ... ok
+test_late_completion_cannot_resurrect (reference_contract_tests.ContractTests.test_late_completion_cannot_resurrect) ... ok
+test_priority (reference_contract_tests.ContractTests.test_priority) ... ok
+test_producer_namespaces (reference_contract_tests.ContractTests.test_producer_namespaces) ... ok
+test_repair_never_profits_at_any_trust (reference_contract_tests.ContractTests.test_repair_never_profits_at_any_trust) ... ok
+test_school_budget_reservation (reference_contract_tests.ContractTests.test_school_budget_reservation) ... ok
+test_stale_revision_rejected (reference_contract_tests.ContractTests.test_stale_revision_rejected) ... ok
+test_structured_keys_do_not_alias (reference_contract_tests.ContractTests.test_structured_keys_do_not_alias) ... ok
+test_unknown_not_ineligible (reference_contract_tests.ContractTests.test_unknown_not_ineligible) ... ok
+
+----------------------------------------------------------------------
+Ran 48 tests in 0.034s
+
+OK

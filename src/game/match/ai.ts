@@ -312,7 +312,8 @@ function planDefence(ctx: AiContext, team: TeamId, B: Vec2, oppOutfield: readonl
   const D = T.defense;
   const goal = vec(0, T.pitch.width / 2);
   const toGoal = normalize(sub(goal, B));
-  const pressSpot = add(B, scale(toGoal, D.goalSideOffset));
+  const read = toTeam(team, s.pressRead, T);
+  const pressSpot = add(read, scale(normalize(sub(goal, read)), D.goalSideOffset));
   const players = outfield(s, team);
 
   const pressTime = (p: MatchPlayer): number => {
