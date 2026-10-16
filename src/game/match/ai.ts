@@ -88,8 +88,11 @@ function nearestDistance(p: Vec2, others: readonly Vec2[]): number {
 
 function set(p: MatchPlayer, intent: Intent, target: Vec2, speed: number, T: MatchTuning, team: TeamId): void {
   p.intent = intent;
-  const w = toWorld(team, target, T);
-  p.target = vec(clamp(w.x, 0.5, T.pitch.length - 0.5), clamp(w.y, 0.5, T.pitch.width - 0.5));
+  // Written in place: p.target is the player's own object and is never shared.
+  const wx = team === 'home' ? target.x : T.pitch.length - target.x;
+  const wy = team === 'home' ? target.y : T.pitch.width - target.y;
+  p.target.x = clamp(wx, 0.5, T.pitch.length - 0.5);
+  p.target.y = clamp(wy, 0.5, T.pitch.width - 0.5);
   p.speed = speed;
 }
 

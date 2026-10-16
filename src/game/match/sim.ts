@@ -974,7 +974,8 @@ export class MatchSim {
     s.nextDecisionAt = s.simTime + T.ai.decisionSeconds;
     const d = decideCarrier(this.ctx(), p);
     if (d.type === 'carry') {
-      p.target = d.target;
+      p.target.x = d.target.x;
+      p.target.y = d.target.y;
       return;
     }
     const noise = (k: number): number => (this.rng() * 2 - 1) * k;
@@ -1012,7 +1013,9 @@ export class MatchSim {
     const spot = blocked ? vec(clamp(tT.x - 2, 2, T.shape.maxAttackX), clamp(pT.y, 3, T.pitch.width - 3)) : ahead;
     passer.intent = 'giveAndGo';
     passer.intentUntil = s.simTime + G.seconds;
-    passer.target = toWorld(team, spot, T);
+    const w = toWorld(team, spot, T);
+    passer.target.x = w.x;
+    passer.target.y = w.y;
     passer.speed = T.movement.runSpeed;
   }
 
@@ -1434,7 +1437,8 @@ export class MatchSim {
         const jitter = t === 'away' ? (this.rng() * 2 - 1) * 0.5 : 0;
         p.pos = toWorld(t, vec(a.x, a.y + jitter), T);
         p.vel = vec(0, 0);
-        p.target = copy(p.pos);
+        p.target.x = p.pos.x;
+        p.target.y = p.pos.y;
         p.anchor = copy(p.pos);
         p.intent = p.isKeeper ? 'keeper' : 'hold';
         p.intentUntil = 0;
