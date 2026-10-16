@@ -59,7 +59,7 @@ async function layout(page: Page): Promise<Layout> {
   return (await diagnostics(page)).layout as unknown as Layout;
 }
 async function openStory(page: Page, mode: 'touch' | 'mouse'): Promise<Story> {
-  await page.goto('/?debug=1');
+  await page.goto('/?debug=1&halfSeconds=8');
   await waitForScene(page, 'start');
   await pressAny(page, 'story-button', mode);
   return story(page, () => true, 'story loaded');
@@ -153,8 +153,18 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
       await pressStory(page, 'handoff-match', mode);
       await waitForScene(page, 'formation');
       await pressAny(page, 'kickoff-button', mode);
-      await scene(page, 'match', (g) => ((g.career as { batches: number } | null)?.batches ?? 0) >= 1, 'evidence batch', 120_000);
+      await scene(page, 'match', (g) => g.phase === 'live', 'match live', 60_000);
       await pressAny(page, 'menu-button', mode);
+      // Leaving before full time finishes nothing: the same story match stays open to play again.
+      const early = await story(page, (x) => x.message.includes('No full-time result'), 'early exit not counted');
+      expect(resolved(s)(early)).toBe(false);
+      await pressStory(page, 'handoff-match', mode);
+      await waitForScene(page, 'formation');
+      await pressAny(page, 'kickoff-button', mode);
+      await scene(page, 'match', (g) => g.breakPanel === 'halftime', 'half-time', 120_000);
+      await pressAny(page, 'second-half-button', mode);
+      await scene(page, 'match', (g) => g.breakPanel === 'fulltime', 'full-time', 120_000);
+      await pressAny(page, 'break-menu-button', mode);
       await story(page, resolved(s), 'match completed');
     } else if (s.adapter === 'assignment') {
       await pressStory(page, 'handoff-continue', mode);

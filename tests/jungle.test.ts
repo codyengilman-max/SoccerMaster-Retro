@@ -106,6 +106,42 @@ describe('Jungle Ball sim', () => {
     expect(scored).toBe(true);
   });
 
+  it('a ball dribbled over the goal line inside the mouth scores once (unless the keeper is there)', () => {
+    const mid = JUNGLE.width / 2;
+    const setup = (keeperY: number): JungleState => {
+      const s = newJungle(5);
+      s.phase = 'live';
+      s.restartUntil = 0;
+      for (const id of COMPETITORS) if (id !== 'player') s.competitors[id].pos = { x: 4, y: 2 + COMPETITORS.indexOf(id) * 6 };
+      s.competitors.player.pos = { x: 30.6, y: mid + 1.5 };
+      s.competitors.player.vel = { x: JUNGLE.dribbleSpeed, y: 0 };
+      s.ball.owner = 'player';
+      s.ball.lastTouch = 'player';
+      s.ball.pos = { x: 31.3, y: mid + 1.5 };
+      s.keeper.y = keeperY;
+      return s;
+    };
+    const s = setup(mid - 2.2);
+    const events: JungleEvent[] = [];
+    for (let i = 0; i < 30; i++) {
+      command(s, { type: 'move', x: 1, y: 0 });
+      step(s, 1 / 60);
+      events.push(...drainEvents(s));
+    }
+    expect(events.filter((e) => e.type === 'goal')).toEqual([expect.objectContaining({ by: 'player' })]);
+    expect(s.scores.player).toBe(1);
+    const saved = setup(mid + 1.5);
+    const ev2: JungleEvent[] = [];
+    for (let i = 0; i < 30; i++) {
+      command(saved, { type: 'move', x: 1, y: 0 });
+      step(saved, 1 / 60);
+      ev2.push(...drainEvents(saved));
+    }
+    expect(ev2.some((e) => e.type === 'save')).toBe(true);
+    expect(saved.scores.player).toBe(0);
+    expect(saved.ball.pos.x).toBeLessThan(JUNGLE.goalX);
+  });
+
   it('rejects malformed commands and kicks without the ball', () => {
     const s = newJungle(1);
     expect(command(s, { type: 'move', x: Number.NaN, y: 0 })).toBe(false);

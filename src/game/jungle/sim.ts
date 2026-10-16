@@ -259,14 +259,46 @@ function contacts(s: JungleState, rnd: () => number): void {
   }
 }
 
+/** Goal plane: the ball centre reaching the end wall line inside the mouth. Saved or scored; returns true when handled. */
+function goalPlane(s: JungleState, prevX: number, prevY: number): boolean {
+  const b = s.ball;
+  const r = JUNGLE.ballRadius;
+  const line = JUNGLE.goalX - r;
+  if (!(b.pos.x >= line && prevX < line)) return false;
+  const t = (line - prevX) / (b.pos.x - prevX);
+  const y = prevY + (b.pos.y - prevY) * t;
+  if (Math.abs(y - JUNGLE.width / 2) > JUNGLE.goalHalfWidth - r) return false;
+  if (Math.abs(y - s.keeper.y) <= JUNGLE.keeperReach) {
+    s.events.push({ type: 'save', t: s.t });
+    b.owner = null;
+    b.pos = { x: line - 1.2, y };
+    b.vel = { x: -Math.abs(b.vel.x) * 0.45, y: b.vel.y * 0.4 + (y >= s.keeper.y ? 2 : -2) };
+    b.lastTouch = null;
+    return true;
+  }
+  // One score per crossing: the round restarts before the ball could cross again.
+  if (!b.inGoal && b.lastTouch) {
+    b.inGoal = true;
+    s.scores[b.lastTouch] += 1;
+    s.events.push({ type: 'goal', by: b.lastTouch, t: s.t });
+    resetForRestart(s);
+  }
+  return true;
+}
+
 function stepBall(s: JungleState, dt: number): void {
   const b = s.ball;
+  const r = JUNGLE.ballRadius;
   if (b.owner) {
     const c = s.competitors[b.owner];
     const sp = len(c.vel);
     const dir = sp > 0.3 ? { x: c.vel.x / sp, y: c.vel.y / sp } : { x: 1, y: 0 };
+    const prev = b.pos;
     b.pos = { x: c.pos.x + dir.x * JUNGLE.carryOffset, y: c.pos.y + dir.y * JUNGLE.carryOffset };
     b.vel = { ...c.vel };
+    // A carried ball is checked against the goal plane like a free one (the keeper can still save it).
+    if (goalPlane(s, prev.x, prev.y)) return;
+    b.pos = { x: clamp(b.pos.x, r, JUNGLE.goalX - r - 1e-3), y: clamp(b.pos.y, r, JUNGLE.width - r) };
     return;
   }
   const prevX = b.pos.x;
@@ -275,31 +307,7 @@ function stepBall(s: JungleState, dt: number): void {
   const sp = len(b.vel);
   const f = Math.max(0, sp - JUNGLE.ballFriction * 6 * dt);
   b.vel = sp > 0 ? { x: (b.vel.x / sp) * f, y: (b.vel.y / sp) * f } : b.vel;
-  const r = JUNGLE.ballRadius;
-  const mid = JUNGLE.width / 2;
-  // Goal plane: the ball centre reaching the end wall line inside the mouth. Outside the mouth the wall rebounds.
-  const line = JUNGLE.goalX - r;
-  if (b.pos.x >= line && prevX < line) {
-    const t = (line - prevX) / (b.pos.x - prevX);
-    const y = prevY + (b.pos.y - prevY) * t;
-    if (Math.abs(y - mid) <= JUNGLE.goalHalfWidth - r) {
-      if (Math.abs(y - s.keeper.y) <= JUNGLE.keeperReach) {
-        s.events.push({ type: 'save', t: s.t });
-        b.pos = { x: line - 1.2, y };
-        b.vel = { x: -Math.abs(b.vel.x) * 0.45, y: b.vel.y * 0.4 + (y >= s.keeper.y ? 2 : -2) };
-        b.lastTouch = null;
-        return;
-      }
-      // One score per crossing: the round restarts before the ball could cross again.
-      if (!b.inGoal && b.lastTouch) {
-        b.inGoal = true;
-        s.scores[b.lastTouch] += 1;
-        s.events.push({ type: 'goal', by: b.lastTouch, t: s.t });
-        resetForRestart(s);
-      }
-      return;
-    }
-  }
+  if (goalPlane(s, prevX, prevY)) return;
   if (b.pos.x < r) b.pos.x = r, (b.vel.x = Math.abs(b.vel.x) * JUNGLE.wallRestitution);
   if (b.pos.x > JUNGLE.length - r) b.pos.x = JUNGLE.length - r, (b.vel.x = -Math.abs(b.vel.x) * JUNGLE.wallRestitution);
   if (b.pos.y < r) b.pos.y = r, (b.vel.y = Math.abs(b.vel.y) * JUNGLE.wallRestitution);

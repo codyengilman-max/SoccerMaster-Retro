@@ -10,11 +10,12 @@
   - You, Alex, Blake and Sam play to one goal with a neutral keeper, in 75-second rounds with individual scores and no elimination.
   - A stunned player is then protected from being stunned again, but can still be tackled. Pushes are bounded and restarts are equidistant.
   - Leaving keeps the score so far and invents no result. Scores never count as match growth.
+  - Carrying the ball over the goal line inside the mouth counts as a goal unless the keeper is there to save it.
   - AI handicap: 0.9× speed, wider aim error, at most two chasers. This is tuned in seeded sweeps and still needs a playtest.
 - **League** (`src/game/league`), owner decision C:
   - FC Batavia, Royal Salt Academy, Valley Rising, Desert Tuzon and Sol Vista play a single round robin, scoring 3/1/0. Next Horizon is not entered.
-  - Batavia's fixtures are the story's week 1–4 matches. A finished match's score is recorded once from full time; leaving early records nothing, and a missing result is never a loss.
-  - Other clubs' games are simulated deterministically and labelled as simulated. The table shows on each week's post-match scene.
+  - Batavia's fixtures are the story's week 1–4 matches. A finished match's score is recorded once from full time; leaving early records nothing, and a missing result is never a loss. A story match only finishes at full time (growth evidence alone no longer finishes it); after an early exit the same match can be played again. The fixture comes from the story match's week (W2_MATCH → week 2), not the career week. Skipping a match still simulates that round's other fixtures.
+  - Other clubs' games are simulated deterministically and labelled as simulated. The table shows on each week's post-match scene, including week 1.
 - **Cups:** Pacific Wave Cup and Lone Star International Cup are shown as "U12, coming later", as package §08 requires.
 - **Not done:** the indoor school background is waiting on the owner's choice. Real team selection, transfers and the cups are not built.
 
