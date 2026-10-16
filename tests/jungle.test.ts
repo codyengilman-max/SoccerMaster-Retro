@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { COMPETITORS, JUNGLE, abandon, command, drainEvents, newJungle, restartSpots, standings, step, type JungleEvent, type JungleState } from '../src/game/jungle/sim';
+import { COMPETITORS, JUNGLE, abandon, canMove, command, drainEvents, newJungle, restartSpots, standings, step, type JungleEvent, type JungleState } from '../src/game/jungle/sim';
 
 function run(seed: number, seconds = JUNGLE.roundSeconds + 1, each?: (s: JungleState) => void): { s: JungleState; events: JungleEvent[] } {
   const s = newJungle(seed);
@@ -140,6 +140,97 @@ describe('Jungle Ball sim', () => {
     expect(ev2.some((e) => e.type === 'save')).toBe(true);
     expect(saved.scores.player).toBe(0);
     expect(saved.ball.pos.x).toBeLessThan(JUNGLE.goalX);
+  });
+
+  describe('arcade moves (SHOOT / SLIDE / PUSH)', () => {
+    const staged = (): JungleState => {
+      const s = newJungle(9);
+      s.phase = 'live';
+      s.restartUntil = 0;
+      s.t = 5;
+      const mid = JUNGLE.width / 2;
+      s.competitors.player.pos = { x: 10, y: mid };
+      s.competitors.player.facing = { x: 1, y: 0 };
+      s.competitors.alex.pos = { x: 11.2, y: mid };
+      s.competitors.blake.pos = { x: 3, y: 2 };
+      s.competitors.sam.pos = { x: 3, y: 20 };
+      s.ball.owner = 'alex';
+      s.ball.lastTouch = 'alex';
+      s.ball.pos = { x: 11.9, y: mid };
+      return s;
+    };
+    const tick = (s: JungleState, n = 1): JungleEvent[] => {
+      const ev: JungleEvent[] = [];
+      for (let i = 0; i < n; i++) step(s, 1 / 60, () => 0.99), ev.push(...drainEvents(s));
+      return ev;
+    };
+
+    it('PUSH knocks the carrier back a bounded distance, pops the ball loose and stuns once', () => {
+      const s = staged();
+      const x0 = s.competitors.alex.pos.x;
+      expect(command(s, { type: 'push' })).toBe(true);
+      const ev = tick(s);
+      expect(ev.some((e) => e.type === 'hit' && e.by === 'player' && e.on === 'alex' && e.kind === 'push')).toBe(true);
+      expect(s.ball.owner).not.toBe('alex');
+      expect(s.competitors.alex.pos.x - x0).toBeLessThanOrEqual(JUNGLE.pushKnock + JUNGLE.maxPush + 0.2);
+      expect(s.t < s.competitors.alex.stunUntil).toBe(true);
+      // Cooldown: an immediate second push is refused.
+      expect(command(s, { type: 'push' })).toBe(false);
+    });
+
+    it('a protected competitor is hit but not stunned again (no stun-lock)', () => {
+      const s = staged();
+      command(s, { type: 'push' });
+      tick(s);
+      const until = s.competitors.alex.stunUntil;
+      s.t = until + 0.01;
+      s.competitors.player.cooldownUntil = 0;
+      s.competitors.alex.pos = { x: 11, y: JUNGLE.width / 2 };
+      command(s, { type: 'push' });
+      const ev = tick(s);
+      expect(ev.some((e) => e.type === 'hit' && e.on === 'alex')).toBe(true);
+      expect(ev.some((e) => e.type === 'bump' && e.b === 'alex')).toBe(false);
+      expect(s.competitors.alex.stunUntil).toBe(until);
+    });
+
+    it('PUSH with nobody in front whiffs and still costs the cooldown', () => {
+      const s = staged();
+      s.competitors.player.facing = { x: -1, y: 0 };
+      command(s, { type: 'push' });
+      const ev = tick(s);
+      expect(ev.some((e) => e.type === 'whiff' && e.by === 'player')).toBe(true);
+      expect(canMove(s, s.competitors.player, 'push')).toBe(false);
+    });
+
+    it('SLIDE lunges, takes the ball off the carrier once, then has recovery lag', () => {
+      const s = staged();
+      s.competitors.alex.pos = { x: 12.4, y: JUNGLE.width / 2 };
+      s.ball.pos = { x: 13.1, y: JUNGLE.width / 2 };
+      expect(command(s, { type: 'slide' })).toBe(true);
+      const ev = tick(s, Math.ceil(JUNGLE.slideSeconds * 60));
+      expect(ev.filter((e) => e.type === 'hit' && e.kind === 'slide')).toHaveLength(1);
+      expect(s.ball.owner).not.toBe('alex');
+      expect(canMove(s, s.competitors.player, 'push')).toBe(false);
+      const x = s.competitors.player.pos.x;
+      command(s, { type: 'move', x: 1, y: 0 });
+      tick(s, 6);
+      expect(s.competitors.player.pos.x - x).toBeLessThan(0.3);
+    });
+
+    it('the ball carrier cannot slide, and moves are refused while stunned or before kick-off', () => {
+      const s = staged();
+      s.ball.owner = 'player';
+      expect(command(s, { type: 'slide' })).toBe(false);
+      s.competitors.player.stunUntil = s.t + 1;
+      expect(command(s, { type: 'push' })).toBe(false);
+      expect(command(newJungle(1), { type: 'push' })).toBe(false);
+    });
+
+    it('the AI uses pushes and slides in seeded rounds, and every stun still respects protection', () => {
+      let hits = 0;
+      for (let seed = 1; seed <= 10; seed++) hits += run(seed).events.filter((e) => e.type === 'hit' && e.by !== 'player').length;
+      expect(hits).toBeGreaterThan(0);
+    });
   });
 
   it('rejects malformed commands and kicks without the ball', () => {

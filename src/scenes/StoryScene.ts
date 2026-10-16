@@ -800,7 +800,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       // Code-drawn portrait: head, hair and a coloured shirt per speaker.
       const cx = width * 0.5;
       const r = Math.min(stageH * 0.22, width * 0.14);
-      const cy = stageH - r * 1.6;
+      // Shirt bottom rests on the panel's top edge so the figure never covers the dialogue.
+      const cy = stageH - r * 2.25;
       s.fillStyle(SPEAKER_COLOR[n.speaker] ?? PALETTE.blueDark, 1).fillRoundedRect(cx - r * 1.2, cy + r * 0.8, r * 2.4, r * 1.4, r * 0.4);
       s.fillStyle(PALETTE.skin, 1).fillCircle(cx, cy, r);
       s.fillStyle(PALETTE.hair, 1).fillEllipse(cx, cy - r * 0.6, r * 2, r * 0.9);

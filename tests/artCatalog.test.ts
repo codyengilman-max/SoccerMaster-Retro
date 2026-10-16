@@ -53,6 +53,19 @@ describe('Graphics v1 catalog', () => {
     expect(c[0]).toMatchObject({ role: 'player', visualId: null, assetId: null });
   });
 
+  it('maps every draft weeks 2–4 scene to supplied art only, one location and outfit per scene', async () => {
+    const { WEEKS_2_4 } = await import('../src/game/story/content');
+    for (const id of WEEKS_2_4.order) {
+      const v = sceneVisual(id, 'girl');
+      expect(v, id).not.toBeNull();
+      if (v!.backgroundAssetId !== null) expect(isAllowedAsset(v!.backgroundAssetId), id).toBe(true);
+      for (const c of v!.cast) expect(c.assetId === null || isAllowedAsset(c.assetId), `${id} ${c.role}`).toBe(true);
+      expect(v!.cast.filter((c) => c.role === 'player').length, id).toBeLessThanOrEqual(1);
+    }
+    expect(sceneVisual('W4_TOUCHLINE', 'boy')!.cast.map((c) => c.role)).toEqual(['player', 'alex']);
+    expect(MAPPED_SCENE_IDS.some((id) => WEEKS_2_4.order.includes(id))).toBe(false);
+  });
+
   it('rejects unknown, forged and traversal-like IDs', () => {
     for (const bad of ['../boy', 'boy.png', '/etc/passwd', 'https://x/y.png', 'BOY', '', 'constructor', '__proto__', 'boy-school', null, 7]) {
       expect(isAllowedAsset(bad)).toBe(false);

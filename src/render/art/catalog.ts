@@ -73,8 +73,59 @@ const WARDROBE: ReadonlyMap<VisualId, WardrobeChar> = new Map((wardrobeRaw.chara
 export const WARDROBE_CHARACTERS: readonly WardrobeChar[] = [...WARDROBE.values()];
 
 interface RawScene { readonly sceneId: string; readonly presentation: Presentation; readonly backgroundAssetId: string | null; readonly castRoles: readonly CastRole[]; readonly wardrobeByRole: Readonly<Record<string, string>>; readonly continuityFlags: readonly string[] }
-const SCENES: ReadonlyMap<string, RawScene> = new Map((sceneMapRaw.scenes as unknown as RawScene[]).map((s) => [s.sceneId, s]));
-export const MAPPED_SCENE_IDS: readonly string[] = [...SCENES.keys()];
+const PACKAGE_SCENES: readonly RawScene[] = sceneMapRaw.scenes as unknown as RawScene[];
+
+/**
+ * Draft weeks 2–4 (not in the Graphics v1 scene map): one location per scene, using only supplied
+ * backgrounds and wardrobe variants. A speaker with no outfit for that location is left out of the cast.
+ */
+type Location = 'school' | 'training' | 'match' | 'home' | 'handoff';
+const LOCATION: Readonly<Record<Exclude<Location, 'handoff'>, { bg: string; outfit: string }>> = {
+  school: { bg: 'school', outfit: 'school' },
+  training: { bg: 'training-ground', outfit: 'training' },
+  match: { bg: 'match-ground', outfit: 'match' },
+  home: { bg: 'bedroom', outfit: 'home' },
+};
+const DRAFT_SCENE_ART: Readonly<Record<string, readonly [Location, readonly CastRole[]]>> = {
+  W2_ROLE_BOARD: ['training', ['coach', 'blake']],
+  W2_ALEX_LATE: ['school', ['alex']],
+  W2_JORDAN: ['school', ['jordan']],
+  W2_JUNGLE: ['school', ['alex', 'blake', 'sam', 'jordan']],
+  W2_PRACTICE: ['training', ['coach']],
+  W2_MATCH_PRE: ['match', []],
+  W2_MATCH: ['handoff', []],
+  W2_MATCH_POST: ['match', ['coach']],
+  W2_HOME_REFLECT: ['home', ['caregiver']],
+  W2_CLOSE: ['handoff', []],
+  W3_COMMITMENT: ['school', ['alex']],
+  W3_ASSIGNMENT: ['training', ['coach']],
+  W3_SAM: ['training', ['sam']],
+  W3_MATCH_PRE: ['match', []],
+  W3_MATCH: ['handoff', []],
+  W3_MATCH_POST: ['match', ['coach']],
+  W3_REPAIR: ['school', ['alex']],
+  W3_PREP: ['home', ['caregiver']],
+  W3_CLOSE: ['handoff', []],
+  W4_ROLE: ['training', ['coach']],
+  W4_TOUCHLINE: ['match', ['alex']],
+  W4_MATCH: ['handoff', []],
+  W4_FINAL: ['match', ['coach']],
+  W4_OUTCOME: ['match', ['coach']],
+  W4_BEDROOM: ['home', []],
+};
+const outfitFor = (role: CastRole, loc: Exclude<Location, 'handoff'>): string | null => {
+  const want = role === 'coach' ? 'club' : role === 'caregiver' ? 'home' : LOCATION[loc].outfit;
+  const v = role === 'player' ? WARDROBE.get('boy') : WARDROBE.get(role);
+  return v?.variants[want] ? want : null;
+};
+export const DRAFT_ART_SCENES: readonly RawScene[] = Object.entries(DRAFT_SCENE_ART).map(([sceneId, [loc, roles]]): RawScene => {
+  if (loc === 'handoff') return { sceneId, presentation: 'activity_handoff', backgroundAssetId: null, castRoles: [], wardrobeByRole: {}, continuityFlags: [] };
+  const cast = (['player', ...roles] as CastRole[]).filter((r) => outfitFor(r, loc) !== null);
+  return { sceneId, presentation: 'cutscene', backgroundAssetId: LOCATION[loc].bg, castRoles: cast, wardrobeByRole: Object.fromEntries(cast.map((r) => [r, outfitFor(r, loc)!])), continuityFlags: ['draft_weeks_2_4'] };
+});
+const SCENES: ReadonlyMap<string, RawScene> = new Map([...DRAFT_ART_SCENES, ...PACKAGE_SCENES].map((s) => [s.sceneId, s]));
+/** Scenes mapped by the supplied Graphics v1 package (draft weeks 2–4 are mapped in code above). */
+export const MAPPED_SCENE_IDS: readonly string[] = PACKAGE_SCENES.map((s) => s.sceneId);
 export const SCENE_MAP_STORY_VERSION: string = sceneMapRaw.storyContentVersion;
 
 export interface ContinuityEntry { readonly visualId: VisualId; readonly storyRole: string; readonly identityMasterAssetId: string; readonly gameplaySheetId: string | null; readonly gameplayStatus: string; readonly reviewStatus: string }

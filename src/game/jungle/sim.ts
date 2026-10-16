@@ -43,7 +43,21 @@ export const JUNGLE = {
   aiSpeedFactor: 0.9,
   aiAimError: 2.6,
   aiChasers: 2,
+  /** Arcade moves (owner direction: SHOOT, SLIDE, PUSH). Every hit is bounded and respects stun protection. */
+  pushRange: 1.6,
+  pushKnock: 1.1,
+  pushCooldown: 0.6,
+  slideSeconds: 0.35,
+  slideSpeed: 8.5,
+  slideLag: 0.4,
+  slideCooldown: 1.0,
+  slideReach: 1.0,
+  pokeSpeed: 7,
+  aiPushChance: 0.3,
+  aiSlideChance: 0.12,
 } as const;
+
+export type MoveKind = 'push' | 'slide';
 
 export type CompetitorId = 'player' | 'alex' | 'blake' | 'sam';
 export const COMPETITORS: readonly CompetitorId[] = ['player', 'alex', 'blake', 'sam'];
@@ -57,6 +71,14 @@ export interface Competitor {
   stunUntil: number;
   protectedUntil: number;
   noPickupUntil: number;
+  /** Arcade move state: facing (unit), slide time, recovery lag, cooldown and the last move for drawing. */
+  facing: V;
+  slideDir: V | null;
+  slideUntil: number;
+  slideHit: boolean;
+  lagUntil: number;
+  cooldownUntil: number;
+  lastMove: { kind: MoveKind; t: number } | null;
   /** AI: target refresh time and current target (perception is only the present state). */
   thinkAt: number;
   target: V;
@@ -67,6 +89,8 @@ export type JungleEvent =
   | { readonly type: 'steal'; readonly by: CompetitorId; readonly from: CompetitorId; readonly t: number }
   | { readonly type: 'bump'; readonly a: CompetitorId; readonly b: CompetitorId; readonly t: number }
   | { readonly type: 'shot'; readonly by: CompetitorId; readonly t: number }
+  | { readonly type: 'hit'; readonly by: CompetitorId; readonly on: CompetitorId; readonly kind: MoveKind; readonly t: number }
+  | { readonly type: 'whiff'; readonly by: CompetitorId; readonly kind: MoveKind; readonly t: number }
   | { readonly type: 'end'; readonly t: number };
 
 export interface JungleState {
@@ -82,11 +106,14 @@ export interface JungleState {
   /** Player stick (−1..1 each axis) and a pending kick request; the scene writes only through commands. */
   stick: V;
   kick: { dir: V; power: number } | null;
+  move: MoveKind | null;
 }
 
 export type JungleCommand =
   | { readonly type: 'move'; readonly x: number; readonly y: number }
-  | { readonly type: 'kick'; readonly x: number; readonly y: number; readonly power: number };
+  | { readonly type: 'kick'; readonly x: number; readonly y: number; readonly power: number }
+  | { readonly type: 'push' }
+  | { readonly type: 'slide' };
 
 const len = (v: V): number => Math.hypot(v.x, v.y);
 const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
@@ -110,7 +137,7 @@ const ballSpot = (): V => ({ x: JUNGLE.length * 0.38, y: JUNGLE.width / 2 });
 export function newJungle(seed: number): JungleState {
   const spots = restartSpots();
   const competitors = Object.fromEntries(
-    COMPETITORS.map((id) => [id, { id, pos: { ...spots[id] }, vel: { x: 0, y: 0 }, stunUntil: 0, protectedUntil: 0, noPickupUntil: 0, thinkAt: 0, target: ballSpot() }]),
+    COMPETITORS.map((id) => [id, { id, pos: { ...spots[id] }, vel: { x: 0, y: 0 }, stunUntil: 0, protectedUntil: 0, noPickupUntil: 0, facing: { x: 1, y: 0 }, slideDir: null, slideUntil: 0, slideHit: false, lagUntil: 0, cooldownUntil: 0, lastMove: null, thinkAt: 0, target: ballSpot() }]),
   ) as Record<CompetitorId, Competitor>;
   return {
     seed,
@@ -124,6 +151,7 @@ export function newJungle(seed: number): JungleState {
     events: [],
     stick: { x: 0, y: 0 },
     kick: null,
+    move: null,
   };
 }
 
@@ -134,6 +162,11 @@ export function command(s: JungleState, c: JungleCommand): boolean {
     if (!finite(c.x, c.y)) return false;
     const m = Math.hypot(c.x, c.y);
     s.stick = m > 1 ? { x: c.x / m, y: c.y / m } : { x: c.x, y: c.y };
+    return true;
+  }
+  if (c.type === 'push' || c.type === 'slide') {
+    if (s.phase !== 'live' || !canMove(s, s.competitors.player, c.type)) return false;
+    s.move = c.type;
     return true;
   }
   if (!finite(c.x, c.y, c.power) || c.power < 0 || c.power > 1 || Math.hypot(c.x, c.y) < 1e-6) return false;
@@ -160,6 +193,11 @@ function resetForRestart(s: JungleState): void {
     c.stunUntil = 0;
     c.protectedUntil = 0;
     c.noPickupUntil = 0;
+    c.facing = { x: 1, y: 0 };
+    c.slideDir = null;
+    c.slideUntil = 0;
+    c.lagUntil = 0;
+    c.cooldownUntil = 0;
   }
   s.ball = { pos: ballSpot(), vel: { x: 0, y: 0 }, owner: null, lastTouch: null, inGoal: false, graceUntil: 0 };
   s.keeper.y = JUNGLE.width / 2;
@@ -167,6 +205,75 @@ function resetForRestart(s: JungleState): void {
   s.restartUntil = s.t + JUNGLE.restartFreeze;
   s.stick = { x: 0, y: 0 };
   s.kick = null;
+  s.move = null;
+}
+
+/** A move is allowed when not stunned, sliding, recovering or cooling down; a ball carrier cannot slide. */
+export function canMove(s: JungleState, c: Competitor, kind: MoveKind): boolean {
+  if (s.t < c.stunUntil || s.t < c.slideUntil || s.t < c.lagUntil || s.t < c.cooldownUntil) return false;
+  return !(kind === 'slide' && s.ball.owner === c.id);
+}
+
+/** A landed hit: the victim drops the ball (it pops forward) and is stunned only when not protected. */
+function land(s: JungleState, by: Competitor, on: Competitor, kind: MoveKind): void {
+  if (s.ball.owner === on.id) {
+    s.ball.owner = null;
+    s.ball.lastTouch = by.id;
+    s.ball.vel = { x: by.facing.x * JUNGLE.pokeSpeed * 0.7, y: by.facing.y * JUNGLE.pokeSpeed * 0.7 };
+    on.noPickupUntil = s.t + JUNGLE.regainDelay;
+    s.events.push({ type: 'steal', by: by.id, from: on.id, t: s.t });
+  }
+  if (s.t >= on.protectedUntil) {
+    on.stunUntil = s.t + JUNGLE.stunSeconds;
+    on.protectedUntil = s.t + JUNGLE.stunSeconds + JUNGLE.protectSeconds;
+    s.events.push({ type: 'bump', a: by.id, b: on.id, t: s.t });
+  }
+  s.events.push({ type: 'hit', by: by.id, on: on.id, kind, t: s.t });
+}
+
+function startMove(s: JungleState, c: Competitor, kind: MoveKind): void {
+  if (!canMove(s, c, kind)) return;
+  c.lastMove = { kind, t: s.t };
+  if (kind === 'slide') {
+    c.slideDir = { ...c.facing };
+    c.slideUntil = s.t + JUNGLE.slideSeconds;
+    c.slideHit = false;
+    c.lagUntil = c.slideUntil + JUNGLE.slideLag;
+    c.cooldownUntil = s.t + JUNGLE.slideCooldown;
+    return;
+  }
+  c.cooldownUntil = s.t + JUNGLE.pushCooldown;
+  let best: Competitor | null = null;
+  let bestD = Infinity;
+  for (const id of COMPETITORS) {
+    const o = s.competitors[id];
+    if (o === c) continue;
+    const d = { x: o.pos.x - c.pos.x, y: o.pos.y - c.pos.y };
+    const m = len(d);
+    if (m <= JUNGLE.pushRange && m < bestD && (m < 1e-6 || (d.x * c.facing.x + d.y * c.facing.y) / m > 0.3)) (best = o), (bestD = m);
+  }
+  if (!best) return void s.events.push({ type: 'whiff', by: c.id, kind, t: s.t });
+  const r = JUNGLE.playerRadius;
+  best.pos = { x: clamp(best.pos.x + c.facing.x * JUNGLE.pushKnock, r, JUNGLE.length - r), y: clamp(best.pos.y + c.facing.y * JUNGLE.pushKnock, r, JUNGLE.width - r) };
+  land(s, c, best, kind);
+}
+
+/** During a slide: one hit on the first competitor touched; a loose ball in reach is poked on. */
+function slideContacts(s: JungleState, c: Competitor): void {
+  if (s.t >= c.slideUntil || !c.slideDir) return;
+  const b = s.ball;
+  if (!b.owner && Math.hypot(b.pos.x - c.pos.x, b.pos.y - c.pos.y) <= JUNGLE.slideReach) {
+    b.lastTouch = c.id;
+    b.vel = { x: c.slideDir.x * JUNGLE.pokeSpeed, y: c.slideDir.y * JUNGLE.pokeSpeed };
+  }
+  if (c.slideHit) return;
+  for (const id of COMPETITORS) {
+    const o = s.competitors[id];
+    if (o === c || Math.hypot(o.pos.x - c.pos.x, o.pos.y - c.pos.y) > JUNGLE.playerRadius * 2 + 0.25) continue;
+    c.slideHit = true;
+    land(s, c, o, 'slide');
+    return;
+  }
 }
 
 function kickBall(s: JungleState, by: CompetitorId, dir: V, power: number): void {
@@ -181,7 +288,7 @@ function kickBall(s: JungleState, by: CompetitorId, dir: V, power: number): void
 }
 
 /** AI decisions use only the present positions/velocities (declared perception); refreshed every reaction period. */
-function think(s: JungleState, c: Competitor, rnd: () => number): { move: V; kick: { dir: V; power: number } | null } {
+function think(s: JungleState, c: Competitor, rnd: () => number): { move: V; kick: { dir: V; power: number } | null; act?: MoveKind } {
   const ball = s.ball;
   if (ball.owner === c.id) {
     const goal = { x: JUNGLE.goalX, y: JUNGLE.width / 2 + (s.keeper.y < JUNGLE.width / 2 ? 1.6 : -1.6) };
@@ -205,6 +312,18 @@ function think(s: JungleState, c: Competitor, rnd: () => number): { move: V; kic
       .map((r) => r.id);
     if (chasers.includes(c.id)) c.target = { x: ball.pos.x + ball.vel.x * 0.15, y: ball.pos.y + ball.vel.y * 0.15 };
     else c.target = REBOUND_SPOTS[c.id];
+    // Arcade challenges on the carrier, decided once per reaction period (never every frame).
+    if (ball.owner && chasers.includes(c.id)) {
+      const o = s.competitors[ball.owner];
+      const to = { x: o.pos.x - c.pos.x, y: o.pos.y - c.pos.y };
+      const d = len(to);
+      if (d > 1e-6) {
+        const roll = rnd();
+        const face = { x: to.x / d, y: to.y / d };
+        if (d <= JUNGLE.pushRange && roll < JUNGLE.aiPushChance) return (c.facing = face), { move: face, kick: null, act: 'push' };
+        if (d > JUNGLE.pushRange && d < 3 && roll < JUNGLE.aiSlideChance) return (c.facing = face), { move: face, kick: null, act: 'slide' };
+      }
+    }
   }
   const to = { x: c.target.x - c.pos.x, y: c.target.y - c.pos.y };
   const d = len(to);
@@ -212,6 +331,17 @@ function think(s: JungleState, c: Competitor, rnd: () => number): { move: V; kic
 }
 
 function moveCompetitor(s: JungleState, c: Competitor, want: V, dt: number): void {
+  const r0 = JUNGLE.playerRadius;
+  if (s.t < c.slideUntil && c.slideDir) {
+    c.vel = { x: c.slideDir.x * JUNGLE.slideSpeed, y: c.slideDir.y * JUNGLE.slideSpeed };
+    c.pos = { x: clamp(c.pos.x + c.vel.x * dt, r0, JUNGLE.length - r0), y: clamp(c.pos.y + c.vel.y * dt, r0, JUNGLE.width - r0) };
+    return;
+  }
+  if (s.t < c.lagUntil) {
+    // Recovering from a slide: down on the grass, not moving.
+    c.vel = { x: 0, y: 0 };
+    return;
+  }
   const stunned = s.t < c.stunUntil;
   const top = (s.ball.owner === c.id ? JUNGLE.dribbleSpeed : JUNGLE.runSpeed) * (stunned ? JUNGLE.stunSpeedFactor : 1) * (c.id === 'player' ? 1 : JUNGLE.aiSpeedFactor);
   const tv = { x: want.x * top, y: want.y * top };
@@ -221,6 +351,8 @@ function moveCompetitor(s: JungleState, c: Competitor, want: V, dt: number): voi
   c.vel = m <= step ? tv : { x: c.vel.x + (dv.x / m) * step, y: c.vel.y + (dv.y / m) * step };
   const r = JUNGLE.playerRadius;
   c.pos = { x: clamp(c.pos.x + c.vel.x * dt, r, JUNGLE.length - r), y: clamp(c.pos.y + c.vel.y * dt, r, JUNGLE.width - r) };
+  const sp = len(c.vel);
+  if (sp > 0.5) c.facing = { x: c.vel.x / sp, y: c.vel.y / sp };
 }
 
 /** Shoulder contact: bounded separation; the owner may lose the ball; a protected player is never stunned again. */
@@ -359,11 +491,18 @@ export function step(s: JungleState, seconds: number, rng?: () => number): void 
       const d = think(s, c, rnd);
       intents[id] = d.move;
       if (d.kick && s.ball.owner === id && s.t >= c.stunUntil) kickBall(s, id, d.kick.dir, d.kick.power);
+      if (d.act) startMove(s, c, d.act);
     }
     intents.player = s.stick;
-    if (s.kick && s.ball.owner === 'player' && s.t >= s.competitors.player.stunUntil) kickBall(s, 'player', s.kick.dir, s.kick.power);
+    const me = s.competitors.player;
+    const sm = len(s.stick);
+    if (sm > 0.2 && s.t >= me.slideUntil) me.facing = { x: s.stick.x / sm, y: s.stick.y / sm };
+    if (s.kick && s.ball.owner === 'player' && s.t >= me.stunUntil) kickBall(s, 'player', s.kick.dir, s.kick.power);
+    if (s.move) startMove(s, me, s.move);
     s.kick = null;
+    s.move = null;
     for (const id of COMPETITORS) moveCompetitor(s, s.competitors[id], intents[id]!, dt);
+    for (const id of COMPETITORS) slideContacts(s, s.competitors[id]);
     contacts(s, rnd);
     stepBall(s, dt);
     stepKeeper(s, dt);
