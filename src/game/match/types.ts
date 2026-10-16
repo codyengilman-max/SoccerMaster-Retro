@@ -81,6 +81,8 @@ export interface PadState {
   /** Controlled player's body facing (unit). */
   facing: MutableVec2;
   phase: PadPhase;
+  /** Mid-reversal brake at running pace (FIFA-style momentum); cleared when slow enough or the turn eases. */
+  braking: boolean;
   actor: MatchPlayerId | null;
   since: number;
   /** controlEpoch and ownedSince when the action began: any change invalidates a kick. */

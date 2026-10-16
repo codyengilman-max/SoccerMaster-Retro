@@ -586,7 +586,7 @@ export class MatchSim {
 
   private newPad(): PadState {
     return {
-      stick: vec(0, 0), facing: vec(1, 0), phase: 'ready', actor: null, since: 0, epoch: -1, ownedSince: -1, chargeStart: 0,
+      stick: vec(0, 0), facing: vec(1, 0), phase: 'ready', braking: false, actor: null, since: 0, epoch: -1, ownedSince: -1, chargeStart: 0,
       receiver: null, locked: null, slideDir: null, ballTouchedAt: null, bodyResolved: false, lastCmdId: 0, readyAt: 0,
     };
   }
@@ -882,11 +882,24 @@ export class MatchSim {
     const base = (carrying ? T.carrier.accel : T.movement.sprintAccel) * A.accel;
     const v = length(p.vel);
     const want = length(desired);
+    const L = T.pad.locomotion;
+    // pad.actor is only set while a button is held; locomotion applies to the controlled player always.
+    const user = p.id === s.controlledId;
+    const m = length(pad.stick);
+    // 0 = close control, 1 = running; blended between the two stick bands.
+    const band = clamp((m - L.closeControlMax) / (L.runMin - L.closeControlMax), 0, 1);
     let accel = base;
     if (v > 0.5 && want > 0.1) {
-      const turn = (1 - dot2(p.vel, desired) / (v * want)) / 2;
-      accel = base * (1 - T.pad.agilityTurnPenalty * turn * (2 - A.agility));
-    }
+      const cos = dot2(p.vel, desired) / (v * want);
+      // Momentum: a sharp reversal at running pace brakes (agility shortens it) before accelerating the new way.
+      if (user && cos < L.brakeCos && v > top * L.brakeMinSpeedFrac * Math.max(band, 0.01)) pad.braking = true;
+      if (pad.braking && user && v > top * L.brakeDoneFrac && cos < 0) return { desired: vec(0, 0), accel: L.brakeAccel * A.agility * A.accel };
+      pad.braking = false;
+      // Nearly stopped (e.g. after a brake): turning is free, momentum no longer applies.
+      const turn = v < top * L.brakeDoneFrac * 1.5 ? 0 : (1 - cos) / 2;
+      const factor = lerp(L.closeTurnFactor, L.runTurnFactor, band);
+      accel = base * Math.max(0.15, 1 - T.pad.agilityTurnPenalty * factor * turn * (2 - A.agility));
+    } else if (user) pad.braking = false;
     return { desired, accel };
   }
 

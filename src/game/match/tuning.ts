@@ -218,6 +218,19 @@ export const MATCH_TUNING = {
     blockHardSpeed: 12,
     blockIgnoreSeconds: 0.35,
     agilityTurnPenalty: 0.5,
+    /** FIFA-style stick magnitude bands: light push = close control (tight turns), full push = running (momentum). */
+    locomotion: {
+      closeControlMax: 0.5,
+      runMin: 0.8,
+      /** Turn penalty multiplier at close control and at full running (blended between the bands). */
+      closeTurnFactor: 0.2,
+      runTurnFactor: 1.8,
+      /** A reversal sharper than this (cosine) at speed brakes first, then re-accelerates. */
+      brakeCos: -0.3,
+      brakeMinSpeedFrac: 0.5,
+      brakeDoneFrac: 0.15,
+      brakeAccel: 7,
+    },
     attrRange: { min: 0.8, max: 1.2 },
     slide: {
       startSeconds: 0.12,
