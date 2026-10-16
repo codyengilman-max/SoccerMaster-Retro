@@ -7,10 +7,10 @@ test('Gameplay Lab: ?lab opens the picker, a scenario stages the real match with
   const errors = trackConsoleErrors(page);
   await page.goto('/?debug=1&lab');
   await waitForScene(page, 'lab');
-  // No scenario row may overlap the aim toggle or another row, at any viewport.
+  // No scenario row may overlap the zoom toggle or another row, at any viewport.
   const els = Object.entries((await diagnostics(page)).layout?.elements ?? {}).filter(([k]) => k.startsWith('lab-'));
-  // 14 scenarios (10 feel + 4 controls setups), the aim toggle and the zoom toggle.
-  expect(els.length).toBe(16);
+  // 14 scenarios (10 feel + 4 controls setups) and the zoom toggle.
+  expect(els.length).toBe(15);
   for (let i = 0; i < els.length; i++)
     for (let j = i + 1; j < els.length; j++) {
       const [na, a] = els[i]!;
@@ -18,8 +18,6 @@ test('Gameplay Lab: ?lab opens the picker, a scenario stages the real match with
       const overlap = a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
       expect(overlap, `${na} overlaps ${nb}`).toBe(false);
     }
-  await pressElement(page, 'lab-aim', modeFor(info));
-  expect(((await diagnostics(page)).gameplay as { aim: string }).aim).toBe('normal');
   expect(((await diagnostics(page)).gameplay as { zoom: number }).zoom).toBe(1.5);
   await pressElement(page, 'lab-zoom', modeFor(info));
   expect(((await diagnostics(page)).gameplay as { zoom: number }).zoom).toBe(1.6);
@@ -31,7 +29,6 @@ test('Gameplay Lab: ?lab opens the picker, a scenario stages the real match with
     owner: string | null;
     controlledId: string;
     clock: unknown;
-    aimAssist?: string;
   };
   expect(g.owner).toBe('A7');
   expect(g.controlledId.startsWith('H')).toBe(true);
