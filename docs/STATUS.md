@@ -1,5 +1,10 @@
 # Status
 
+## Owner approvals (2026-10-16)
+
+- Weeks 2–4 dialogue approved: the on-screen "draft, awaiting review" line is gone (`WEEKS_2_4_OWNER_APPROVED`). `DRAFT_SCENES` stays as provenance (Devin wrote it from the outline).
+- All 28 Graphics v1.1 images approved (`OWNER_ART_APPROVAL`); the Gallery shows "Owner approved 2026-10-16". The package's `asset-manifest.json` is unchanged.
+
 ## FIFA-style mechanics (branch `feature/fifa-gameplay-mechanics`; merged to `main` once CI passes, not deployed to production)
 
 - **Locomotion:** a light stick push is close control (slow, tight turns); a full push runs with momentum; a sharp reversal brakes first, shorter with higher agility.
@@ -38,7 +43,7 @@ Owner-approved styles from `SoccerMaster_Graphics_v1.zip`, built on the joystick
 | Asset import (28 PNG masters, scene + wardrobe maps, review status) | Integrated; masters unchanged, runtime WebP copies hash-linked |
 | 9v9 oversized players (ported sprite factory, fixed hair per slot, boy/girl career look) | Integrated; physics, controls, camera and `src/game/` unchanged. No BLOCK pose; no squad numbers/club kits in engine |
 | Story cutscene backdrops + static portraits (all 18 week-one scenes) | Integrated; pinned outfit per scene, speaker highlight, reduced motion, labelled fallbacks |
-| Art Gallery (Start → Review & Lab) | Integrated, review only; new character/outfit art `NEW_ART_REVIEW_PENDING` |
+| Art Gallery (Start → Review & Lab) | Integrated; all 28 images owner-approved 2026-10-16 (package manifest statuses kept as supplied) |
 | Physical iPhone check | Pending (browser phone emulation only) |
 
 ## Controls: joystick + four buttons (branch `devin/1792100194-joystick-controls`, not merged, not in production)

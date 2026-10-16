@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ART_ASSETS, ART_REVISION, type ArtAsset } from '../render/art/catalog';
+import { ART_ASSETS, ART_REVISION, type ArtAsset, OWNER_ART_APPROVAL } from '../render/art/catalog';
 import { artTextureKey, artUrl } from '../render/art/urls';
 import { PlayerArt } from '../render/art/playerArt';
 import { sideLooks } from '../render/art/roster';
@@ -123,7 +123,7 @@ export class ArtGalleryScene extends Phaser.Scene {
     this.body.setText('');
     if (p.kind === 'assets') {
       const list = ART_ASSETS.slice(p.index * PER_PAGE, p.index * PER_PAGE + PER_PAGE);
-      this.title.setText(`Art Gallery · ${ART_REVISION} · cutscene art ${p.index + 1}/${Math.ceil(ART_ASSETS.length / PER_PAGE)} · review only`);
+      this.title.setText(`Art Gallery · ${ART_REVISION} · cutscene art ${p.index + 1}/${Math.ceil(ART_ASSETS.length / PER_PAGE)} · owner approved`);
       this.drawAssets(list, area, portrait ? 2 : 3, fs);
     } else if (p.kind === 'gameplay') {
       this.shown = [];
@@ -154,9 +154,9 @@ export class ArtGalleryScene extends Phaser.Scene {
         img.setScale(k);
         this.items.push(img);
       } else if (artUrl(a.assetId)) want.push(a.assetId);
-      const color = a.status === 'NEW_ART_REVIEW_PENDING' ? CSS.tomato : CSS.blue;
+      const color = CSS.blue;
       this.text(cx, y0 + imgH + 2, a.label, Math.max(11, fs - 3), CSS.ink, cw - 6);
-      this.text(cx, y0 + imgH + fs * 1.6, a.status, Math.max(10, fs - 4), color, cw - 6);
+      this.text(cx, y0 + imgH + fs * 1.6, `Owner approved ${OWNER_ART_APPROVAL}`, Math.max(10, fs - 4), color, cw - 6);
     });
     for (const id of want) this.load.image(artTextureKey(id), artUrl(id)!);
     if (want.length && !this.load.isLoading()) this.load.start();
