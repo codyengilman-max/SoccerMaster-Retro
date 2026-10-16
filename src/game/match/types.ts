@@ -81,6 +81,10 @@ export interface PadState {
   /** Controlled player's body facing (unit). */
   facing: MutableVec2;
   phase: PadPhase;
+  /** Mid-reversal brake at running pace (FIFA-style momentum); cleared when slow enough or the turn eases. */
+  braking: boolean;
+  /** BLOCK held near an opponent carrier: auto-tracking goal-side of them. */
+  jockeying: boolean;
   actor: MatchPlayerId | null;
   since: number;
   /** controlEpoch and ownedSince when the action began: any change invalidates a kick. */
@@ -295,4 +299,25 @@ export interface MatchState {
   stats: { passes: Record<TeamId, number>; shots: Record<TeamId, number>; saves: Record<TeamId, number>; turnovers: number };
   events: MatchEvent[];
   pad: PadState;
+}
+
+/** One teammate considered by the assisted-pass search (debug only). */
+export interface PassScanEntry {
+  id: MatchPlayerId;
+  /** Radians off the stick direction. */
+  angle: number;
+  /** Yards from the stick's line. */
+  perp: number;
+  dist: number;
+  /** Lower is better; only meaningful when inCone. */
+  score: number;
+  inCone: boolean;
+}
+
+export interface PassScan {
+  aimX: number;
+  aimY: number;
+  count: number;
+  chosen: MatchPlayerId | null;
+  readonly entries: PassScanEntry[];
 }

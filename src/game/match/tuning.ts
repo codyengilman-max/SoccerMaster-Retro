@@ -197,18 +197,36 @@ export const MATCH_TUNING = {
     recoverySeconds: 0.22,
     /** Ball must be this close to the kicker at contact. */
     contactReach: 1.6,
-    receiverCone: 0.6,
+    /** FIFA-style search cone half-angle along the stick (30°). */
+    receiverCone: 0.5236,
     receiverMinRange: 3,
+    /** Yards from the stick's line that count as one unit of receiver score. */
+    receiverLineYards: 4,
     receiverMaxRange: 34,
     /** A highlighted receiver is kept unless another scores better by this margin. */
     receiverStickiness: 0.25,
     /** Max lead correction toward the locked receiver at contact. */
     leadMaxAngle: 0.14,
+    /** With a selected receiver the pass may bend up to this much to meet the receiver's run (intercept solve). */
+    leadLockAngle: 0.5236,
     leadSeconds: 0.45,
     shotErrorMax: 0.12,
     pressureRadius: 3.5,
     blockSpeedFactor: 0.55,
     blockTurnRate: 5,
+    /** BLOCK held near an opponent carrier: FIFA-style jockey (goal-side, lateral mirror, speed matched to the carrier). */
+    jockey: {
+      radius: 7,
+      /** Yards kept between defender and carrier, on the carrier-to-own-goal line. */
+      gap: 1.8,
+      /** Seconds of carrier velocity the defender mirrors ahead. */
+      lookahead: 0.25,
+      /** Yards the stick can shade the defender off that line (left/right of the carrier). */
+      stickShade: 1.2,
+      gain: 3,
+      /** Speed floor so a stationary carrier can still be closed down slowly. */
+      minSpeed: 1.5,
+    },
     blockHalfWidth: 1.1,
     blockDepth: 0.6,
     blockRestitution: 0.45,
@@ -218,6 +236,19 @@ export const MATCH_TUNING = {
     blockHardSpeed: 12,
     blockIgnoreSeconds: 0.35,
     agilityTurnPenalty: 0.5,
+    /** FIFA-style stick magnitude bands: light push = close control (tight turns), full push = running (momentum). */
+    locomotion: {
+      closeControlMax: 0.5,
+      runMin: 0.8,
+      /** Turn penalty multiplier at close control and at full running (blended between the bands). */
+      closeTurnFactor: 0.2,
+      runTurnFactor: 1.8,
+      /** A reversal sharper than this (cosine) at speed brakes first, then re-accelerates. */
+      brakeCos: -0.3,
+      brakeMinSpeedFrac: 0.5,
+      brakeDoneFrac: 0.15,
+      brakeAccel: 7,
+    },
     attrRange: { min: 0.8, max: 1.2 },
     slide: {
       startSeconds: 0.12,

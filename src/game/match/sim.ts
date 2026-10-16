@@ -36,7 +36,7 @@ import {
   type MatchState,
   type TeamId,
 } from './types';
-import type { PadAction, PadState, PlayerAttrs } from './types';
+import type { PadAction, PadState, PassScan, PlayerAttrs } from './types';
 
 export type MatchCommand =
   /** Sets the user carrier's dribble direction (world/pitch vector; its length is ignored). */
@@ -108,6 +108,17 @@ export class MatchSim {
 
   readonly aimAssist: AimAssistMode;
   readonly controls: ControlScheme;
+  /**
+   * Last assisted-pass target search, for live debugging (?debug&passlog). Pre-allocated and overwritten in place;
+   * never read by the simulation itself.
+   */
+  readonly passScan: PassScan = {
+    aimX: 0,
+    aimY: 0,
+    count: 0,
+    chosen: null,
+    entries: Array.from({ length: 9 }, () => ({ id: 'H1' as MatchPlayerId, angle: 0, perp: 0, dist: 0, score: 0, inCone: false })),
+  };
   private readonly attrOverrides: Partial<Record<MatchPlayerId, Partial<PlayerAttrs>>>;
 
   constructor(options: MatchSimOptions = {}) {
@@ -586,7 +597,8 @@ export class MatchSim {
 
   private newPad(): PadState {
     return {
-      stick: vec(0, 0), facing: vec(1, 0), phase: 'ready', actor: null, since: 0, epoch: -1, ownedSince: -1, chargeStart: 0,
+      stick: vec(0, 0), facing: vec(1, 0), phase: 'ready', braking: false,
+      jockeying: false, actor: null, since: 0, epoch: -1, ownedSince: -1, chargeStart: 0,
       receiver: null, locked: null, slideDir: null, ballTouchedAt: null, bodyResolved: false, lastCmdId: 0, readyAt: 0,
     };
   }
@@ -798,7 +810,17 @@ export class MatchSim {
     let dir: Vec2 = L.dir;
     if (L.kind === 'pass') {
       const r = L.receiver ? s.players[L.receiver] : null;
-      if (r) dir = turnToward(L.dir, normalize(sub(add(r.pos, scale(r.vel, T.leadSeconds)), s.ball.pos)), T.leadMaxAngle);
+      if (r) {
+        // Intercept: where the receiver's current run meets a ball at this speed (fixed iterations, no allocation in the loop).
+        let tx = r.pos.x + r.vel.x * T.leadSeconds;
+        let ty = r.pos.y + r.vel.y * T.leadSeconds;
+        for (let i = 0; i < 3; i++) {
+          const t = Math.min(2, Math.hypot(tx - s.ball.pos.x, ty - s.ball.pos.y) / Math.max(1, speed));
+          tx = r.pos.x + r.vel.x * t;
+          ty = r.pos.y + r.vel.y * t;
+        }
+        dir = turnToward(L.dir, normalize(vec(tx - s.ball.pos.x, ty - s.ball.pos.y)), T.leadLockAngle);
+      }
       const plan = planUserPass(s, me.id, s.ball.pos, dir, speed, this.tuning);
       const receiver = plan.reachable ? plan.receiver : (L.receiver ?? plan.receiver);
       this.kickBall(me, scale(dir, speed), 'pass', plan.target, receiver);
@@ -830,34 +852,90 @@ export class MatchSim {
     const s = this.s;
     const T = this.tuning.pad;
     const aim = length(s.pad.stick) > 0 ? normalize(s.pad.stick) : s.pad.facing;
-    const score = (id: MatchPlayerId): number | null => {
+    const scan = this.passScan;
+    const score = (id: MatchPlayerId, record: boolean): number | null => {
       const p = s.players[id];
       if (id === me.id || p.team !== me.team || p.isKeeper) return null;
-      const d = sub(p.pos, s.ball.pos);
-      const dist = length(d);
-      if (dist < T.receiverMinRange || dist > T.receiverMaxRange) return null;
-      const ang = Math.acos(clamp(dot2(d, aim) / dist, -1, 1));
-      if (ang > T.receiverCone) return null;
-      return ang / T.receiverCone + (0.35 * dist) / T.receiverMaxRange;
+      const dx = p.pos.x - s.ball.pos.x;
+      const dy = p.pos.y - s.ball.pos.y;
+      const dist = Math.hypot(dx, dy);
+      const ang = dist > 0 ? Math.acos(clamp((dx * aim.x + dy * aim.y) / dist, -1, 1)) : 0;
+      // Yards from the stick's line plus distance from the passer.
+      const perp = dist * Math.sin(ang);
+      const inCone = dist >= T.receiverMinRange && dist <= T.receiverMaxRange && ang <= T.receiverCone;
+      const v = perp / T.receiverLineYards + (0.35 * dist) / T.receiverMaxRange;
+      if (record && scan.count < scan.entries.length) {
+        const e = scan.entries[scan.count++]!;
+        e.id = id;
+        e.angle = ang;
+        e.perp = perp;
+        e.dist = dist;
+        e.score = v;
+        e.inCone = inCone;
+      }
+      return inCone ? v : null;
     };
+    scan.aimX = aim.x;
+    scan.aimY = aim.y;
+    scan.count = 0;
     let best: MatchPlayerId | null = null;
     let bestScore = Infinity;
     for (const id of TEAM_PLAYER_IDS[me.team]) {
-      const v = score(id);
+      const v = score(id, true);
       if (v !== null && v < bestScore) {
         best = id;
         bestScore = v;
       }
     }
     if (current) {
-      const c = score(current);
-      if (c !== null && c <= bestScore + T.receiverStickiness) return current;
+      const c = score(current, false);
+      if (c !== null && c <= bestScore + T.receiverStickiness) best = current;
     }
+    scan.chosen = best;
     return best;
   }
 
   /** Stick-driven velocity for the controlled player: pace caps speed, acceleration and agility shape how it is reached. */
-  private padVelocity(p: MatchPlayer): { desired: MutableVec2; accel: number } {
+  /**
+   * Jockey: hold a point goal-side of the opponent carrier (mirroring their run a beat ahead), shaded by the stick,
+   * never closer than the gap, at no more than the carrier's speed. Null when no opponent carrier is in range.
+   */
+  private jockeyVelocity(p: MatchPlayer): { desired: MutableVec2; accel: number; cap: number } | null {
+    const s = this.s;
+    const pad = s.pad;
+    const T = this.tuning;
+    const J = T.pad.jockey;
+    const owner = s.ball.owner ? s.players[s.ball.owner] : null;
+    if (!owner || owner.team === p.team || distance(owner.pos, p.pos) > J.radius) {
+      pad.jockeying = false;
+      return null;
+    }
+    pad.jockeying = true;
+    const P = T.pitch;
+    const goal = toWorld(p.team, vec(0, P.goalCenterY), T);
+    const cx = owner.pos.x + owner.vel.x * J.lookahead;
+    const cy = owner.pos.y + owner.vel.y * J.lookahead;
+    let gx = goal.x - cx;
+    let gy = goal.y - cy;
+    const gl = Math.hypot(gx, gy) || 1;
+    gx /= gl;
+    gy /= gl;
+    // Stick shades the line sideways only (perpendicular to carrier→goal), so pushing at the carrier can't overcommit.
+    const side = pad.stick.x * -gy + pad.stick.y * gx;
+    const tx = cx + gx * J.gap + -gy * side * J.stickShade;
+    const ty = cy + gy * J.gap + gx * side * J.stickShade;
+    let dx = (tx - p.pos.x) * J.gain;
+    let dy = (ty - p.pos.y) * J.gain;
+    const cap = Math.min(T.movement.chaseSpeed * p.attrs.pace, Math.max(J.minSpeed, length(owner.vel)));
+    const want = Math.hypot(dx, dy);
+    if (want > cap) {
+      dx *= cap / want;
+      dy *= cap / want;
+    }
+    return { desired: vec(dx, dy), accel: T.movement.sprintAccel * p.attrs.accel * p.attrs.agility, cap };
+  }
+
+  private padVelocity(p: MatchPlayer): { desired: MutableVec2; accel: number; cap?: number } {
     const s = this.s;
     const T = this.tuning;
     const pad = s.pad;
@@ -869,7 +947,12 @@ export class MatchSim {
     if (mine && pad.phase === 'slideRecovery') return { desired: vec(0, 0), accel: 25 };
     const carrying = s.ball.owner === p.id;
     let top = (carrying ? T.carrier.speed * (0.85 + 0.15 * A.control) : T.movement.chaseSpeed) * A.pace;
-    if (mine && pad.phase === 'blocking') top *= T.pad.blockSpeedFactor;
+    if (p.id === s.controlledId && pad.phase !== 'blocking') pad.jockeying = false;
+    if (mine && pad.phase === 'blocking') {
+      const j = this.jockeyVelocity(p);
+      if (j) return j;
+      top *= T.pad.blockSpeedFactor;
+    }
     const desired = scale(pad.stick, top);
     if (carrying) {
       if (length(pad.stick) > 0.05) s.dribbleDir = normalize(pad.stick);
@@ -882,11 +965,24 @@ export class MatchSim {
     const base = (carrying ? T.carrier.accel : T.movement.sprintAccel) * A.accel;
     const v = length(p.vel);
     const want = length(desired);
+    const L = T.pad.locomotion;
+    // pad.actor is only set while a button is held; locomotion applies to the controlled player always.
+    const user = p.id === s.controlledId;
+    const m = length(pad.stick);
+    // 0 = close control, 1 = running; blended between the two stick bands.
+    const band = clamp((m - L.closeControlMax) / (L.runMin - L.closeControlMax), 0, 1);
     let accel = base;
     if (v > 0.5 && want > 0.1) {
-      const turn = (1 - dot2(p.vel, desired) / (v * want)) / 2;
-      accel = base * (1 - T.pad.agilityTurnPenalty * turn * (2 - A.agility));
-    }
+      const cos = dot2(p.vel, desired) / (v * want);
+      // Momentum: a sharp reversal at running pace brakes (agility shortens it) before accelerating the new way.
+      if (user && cos < L.brakeCos && v > top * L.brakeMinSpeedFrac * Math.max(band, 0.01)) pad.braking = true;
+      if (pad.braking && user && v > top * L.brakeDoneFrac && cos < 0) return { desired: vec(0, 0), accel: L.brakeAccel * A.agility * A.accel };
+      pad.braking = false;
+      // Nearly stopped (e.g. after a brake): turning is free, momentum no longer applies.
+      const turn = v < top * L.brakeDoneFrac * 1.5 ? 0 : (1 - cos) / 2;
+      const factor = lerp(L.closeTurnFactor, L.runTurnFactor, band);
+      accel = base * Math.max(0.15, 1 - T.pad.agilityTurnPenalty * factor * turn * (2 - A.agility));
+    } else if (user) pad.braking = false;
     return { desired, accel };
   }
 
@@ -1142,6 +1238,11 @@ export class MatchSim {
       if (s.ball.owner === p.id) p.intent = 'carry';
       const v = this.padVelocity(p);
       p.vel = approach(p.vel, v.desired, v.accel * h);
+      // Jockey caps the actual speed, so entering it at a sprint can't carry the defender through the gap.
+      if (v.cap !== undefined) {
+        const sp = Math.hypot(p.vel.x, p.vel.y);
+        if (sp > v.cap) p.vel = scale(p.vel, v.cap / sp);
+      }
       p.pos.x = clamp(p.pos.x + p.vel.x * h, 0.3, T.pitch.length - 0.3);
       p.pos.y = clamp(p.pos.y + p.vel.y * h, 0.5, T.pitch.width - 0.5);
       return;
