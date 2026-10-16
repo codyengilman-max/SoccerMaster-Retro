@@ -103,6 +103,10 @@ export class MatchSim {
     entries: Array.from({ length: 9 }, () => ({ id: 'H1' as MatchPlayerId, angle: 0, perp: 0, dist: 0, score: 0, inCone: false })),
   };
   /** Per-step scratch vectors (overwritten in place; never stored in state). */
+  private readonly keeperRes = { target: { x: 0, y: 0 } as MutableVec2, speed: 0 };
+  private readonly kbT: MutableVec2 = { x: 0, y: 0 };
+  private readonly kvT: MutableVec2 = { x: 0, y: 0 };
+  private readonly kgT: MutableVec2 = { x: 0, y: 0 };
   private readonly padVel: PadVelocity = { desired: { x: 0, y: 0 }, accel: 0, cap: undefined };
   private readonly desired: MutableVec2 = { x: 0, y: 0 };
   private readonly mePrev: MutableVec2 = { x: 0, y: 0 };
@@ -1136,9 +1140,16 @@ export class MatchSim {
     const P = T.pitch;
     const team = gk.team;
     const ball = s.ball;
-    const bT = toTeam(team, ball.pos, T);
-    const vT = velToTeam(team, ball.vel);
-    const gT = toTeam(team, gk.pos, T);
+    const home = team === 'home';
+    const bT = this.kbT;
+    bT.x = home ? ball.pos.x : P.length - ball.pos.x;
+    bT.y = home ? ball.pos.y : P.width - ball.pos.y;
+    const vT = this.kvT;
+    vT.x = home ? ball.vel.x : -ball.vel.x;
+    vT.y = home ? ball.vel.y : -ball.vel.y;
+    const gT = this.kgT;
+    gT.x = home ? gk.pos.x : P.length - gk.pos.x;
+    gT.y = home ? gk.pos.y : P.width - gk.pos.y;
     const kick = ball.kick;
     // Any opponent ball on target counts, whatever it was labelled (long passes, deflections), so range never skips the dive.
     const shotIncoming =
@@ -1148,19 +1159,29 @@ export class MatchSim {
       const t = (gT.x - bT.x) / vT.x;
       const y = t > 0 ? bT.y + vT.y * t : bT.y;
       s.keeperDiving[team] = true;
-      return { target: toWorld(team, vec(gT.x, clamp(y, P.goalCenterY - P.goalHalfWidth - 1, P.goalCenterY + P.goalHalfWidth + 1)), T), speed: K.diveSpeed };
+      return this.keeperResult(team, gT.x, clamp(y, P.goalCenterY - P.goalHalfWidth - 1, P.goalCenterY + P.goalHalfWidth + 1), K.diveSpeed);
     }
     s.keeperDiving[team] = false;
     // A slow loose ball inside the box that the keeper reaches first is his to collect.
     if (!ball.owner && length(ball.vel) < 5 && this.inBox(team, ball.pos) && this.keeperFirst(gk)) {
-      return { target: copy(ball.pos), speed: K.speed };
+      this.keeperRes.target.x = ball.pos.x;
+      this.keeperRes.target.y = ball.pos.y;
+      this.keeperRes.speed = K.speed;
+      return this.keeperRes;
     }
     const depth = K.depth;
     const y = P.goalCenterY + (bT.y - P.goalCenterY) * K.shade;
-    return {
-      target: toWorld(team, vec(depth, clamp(y, P.goalCenterY - P.goalHalfWidth + 0.5, P.goalCenterY + P.goalHalfWidth - 0.5)), T),
-      speed: K.speed,
-    };
+    return this.keeperResult(team, depth, clamp(y, P.goalCenterY - P.goalHalfWidth + 0.5, P.goalCenterY + P.goalHalfWidth - 0.5), K.speed);
+  }
+
+  /** Fills the reused keeper result with a team-frame point mirrored to world yards. */
+  private keeperResult(team: TeamId, x: number, y: number, speed: number): { target: MutableVec2; speed: number } {
+    const P = this.tuning.pitch;
+    const r = this.keeperRes;
+    r.target.x = team === 'home' ? x : P.length - x;
+    r.target.y = team === 'home' ? y : P.width - y;
+    r.speed = speed;
+    return r;
   }
 
   /** True if a loose ball (team coordinates, own goal line at x = 0) would roll into the goal mouth (+1 yd). */
