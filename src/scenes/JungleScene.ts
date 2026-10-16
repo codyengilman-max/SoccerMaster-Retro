@@ -483,8 +483,14 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     }
     if (status === 'completed' && this.scene.isActive()) {
       const lines = rows.map((r) => `${r.place}. ${NAMES[r.id]} — ${r.score}`);
-      this.result.setText(`Final whistle!\n${lines.join('\n')}\nJust for fun: never counts as match growth.`).setVisible(true);
-      this.continueButton.setVisible(true);
+      this.result.setText(`Final whistle!\n${lines.join('\n')}\nJust for fun: never counts as match growth.`);
+      // TIME! gets its moment first; the standings then replace it so the banner never covers names or scores.
+      this.time.delayedCall(Math.max(0, this.bannerUntil - performance.now()), () => {
+        this.bannerUntil = 0;
+        this.banner.setVisible(false);
+        this.result.setVisible(true);
+        this.continueButton.setVisible(true);
+      });
     }
   }
 
