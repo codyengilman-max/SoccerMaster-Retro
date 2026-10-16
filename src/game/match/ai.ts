@@ -1,5 +1,5 @@
 import type { Vec2 } from '../vec';
-import { add, clamp, distance, distanceToSegment, lerp, lerpVec, normalize, scale, sub, vec, type MutableVec2 } from '../math';
+import { add, clamp, distance, distanceToSegment, lerp, normalize, scale, sub, vec, type MutableVec2 } from '../math';
 import { roleDef, type RoleDef } from './formations';
 import type { MatchTuning } from './tuning';
 import {
@@ -44,6 +44,33 @@ const outfield = (s: MatchState, team: TeamId): readonly MatchPlayer[] => {
   return c[team];
 };
 
+// Plan-time scratch vectors, handed out from a pool that planTeams resets each step. They never outlive one plan:
+// anything kept in state (anchors, targets) is copied out.
+const POOL: MutableVec2[] = [];
+let poolTop = 0;
+function tv(x: number, y: number): MutableVec2 {
+  let v = POOL[poolTop];
+  if (!v) {
+    v = { x: 0, y: 0 };
+    POOL.push(v);
+  }
+  poolTop++;
+  v.x = x;
+  v.y = y;
+  return v;
+}
+const tt = (team: TeamId, p: Vec2, T: MatchTuning): MutableVec2 =>
+  team === 'home' ? tv(p.x, p.y) : tv(T.pitch.length - p.x, T.pitch.width - p.y);
+function tNorm(x: number, y: number): MutableVec2 {
+  const l = Math.sqrt(x * x + y * y);
+  return l > 1e-9 ? tv(x / l, y / l) : tv(0, 0);
+}
+const tLerp = (a: Vec2, b: Vec2, t: number): MutableVec2 => tv(lerp(a.x, b.x, t), lerp(a.y, b.y, t));
+const TEAMS = ['home', 'away'] as const;
+const OPP_POS: MutableVec2[] = [];
+const OPP_OUT: MutableVec2[] = [];
+const TAKEN: Vec2[] = [];
+
 export function roleOf(s: MatchState, p: MatchPlayer): RoleDef {
   return roleDef(s.formations[p.team], p.slot);
 }
@@ -56,13 +83,19 @@ export function ballFocus(s: MatchState): MutableVec2 {
 }
 
 export function computeAnchor(role: RoleDef, ballT: Vec2, inPossession: boolean, T: MatchTuning): MutableVec2 {
+  return anchorInto({ x: 0, y: 0 }, role, ballT, inPossession, T);
+}
+
+function anchorInto(out: MutableVec2, role: RoleDef, ballT: Vec2, inPossession: boolean, T: MatchTuning): MutableVec2 {
   const S = T.shape;
   const sy = inPossession && role.inPossession === 'width' ? S.widthShiftY : S.shiftY;
   let x = role.base.x + (ballT.x - T.pitch.length / 2) * S.shiftX + (inPossession ? S.pushUp : -S.dropOff);
   const y = role.base.y + (ballT.y - T.pitch.width / 2) * sy;
   if (role.line === 'attack') x = Math.min(x, S.maxAttackX);
   const B = role.bounds;
-  return vec(clamp(x, B.minX, B.maxX), clamp(y, B.minY, B.maxY));
+  out.x = clamp(x, B.minX, B.maxX);
+  out.y = clamp(y, B.minY, B.maxY);
+  return out;
 }
 
 /** Closest blocker to the lane. A presser right on the ball (within 2 yd) and level with or behind the kick is beside it, not in its lane. */
@@ -98,23 +131,33 @@ function set(p: MatchPlayer, intent: Intent, target: Vec2, speed: number, T: Mat
 
 /** Plans both teams. The sim calls this every fixed step before moving players. */
 export function planTeams(ctx: AiContext): void {
-  for (const team of ['home', 'away'] as const) planTeam(ctx, team);
+  poolTop = 0;
+  for (const team of TEAMS) planTeam(ctx, team);
 }
 
 function planTeam(ctx: AiContext, team: TeamId): void {
   const { s, T } = ctx;
   const M = T.movement;
   const ball = s.ball;
-  const focusT = toTeam(team, ballFocus(s), T);
+  const owner = ball.owner ? s.players[ball.owner] : null;
+  const focusT = owner ? tt(team, owner.pos, T) : tt(team, tv(ball.pos.x + ball.vel.x * 0.35, ball.pos.y + ball.vel.y * 0.35), T);
   const inPossession = s.possession === team;
   const opp = otherTeam(team);
-  const oppPos = TEAM_PLAYER_IDS[opp].map((id) => toTeam(team, s.players[id].pos, T));
-  const oppOutfield = outfield(s, opp).map((p) => toTeam(team, p.pos, T));
+  const oppIds = TEAM_PLAYER_IDS[opp];
+  const oppPos = OPP_POS;
+  for (let i = 0; i < oppIds.length; i++) oppPos[i] = tt(team, s.players[oppIds[i]!].pos, T);
+  if (oppPos.length !== oppIds.length) oppPos.length = oppIds.length;
+  const oppField = outfield(s, opp);
+  const oppOutfield = OPP_OUT;
+  for (let i = 0; i < oppField.length; i++) oppOutfield[i] = tt(team, oppField[i]!.pos, T);
+  if (oppOutfield.length !== oppField.length) oppOutfield.length = oppField.length;
   const ownKick = !ball.owner && ball.kick?.team === team ? ball.kick : null;
   const receiverId = ownKick?.kind === 'pass' ? ownKick.receiver : null;
 
   for (const p of outfield(s, team)) {
-    p.anchor = toWorld(team, computeAnchor(roleOf(s, p), focusT, inPossession, T), T);
+    const a = anchorInto(tv(0, 0), roleOf(s, p), focusT, inPossession, T);
+    p.anchor.x = team === 'home' ? a.x : T.pitch.length - a.x;
+    p.anchor.y = team === 'home' ? a.y : T.pitch.width - a.y;
   }
 
   // Loose ball: each team sends the player who can reach it first (committed for a short spell).
@@ -126,14 +169,14 @@ function planTeam(ctx: AiContext, team: TeamId): void {
   const chaser = s.chaser[team].id;
   if (!ball.owner && chaser && chaser !== receiverId) {
     const p = s.players[chaser];
-    set(p, 'chase', toTeam(team, chasePoint(s, T), T), M.chaseSpeed, T, team);
+    set(p, 'chase', tt(team, chasePointT(s, T), T), M.chaseSpeed, T, team);
   }
   applyCoachIntent(ctx, team, receiverId);
   if (receiverId) {
     const p = s.players[receiverId];
     const target = ownKick?.target ?? ball.pos;
     const meet = distance(p.pos, target) < T.receive.meetDistance || distance(p.pos, ball.pos) < 4;
-    set(p, 'receive', toTeam(team, meet ? ball.pos : target, T), meet ? M.supportSpeed : M.runSpeed, T, team);
+    set(p, 'receive', tt(team, meet ? ball.pos : target, T), meet ? M.supportSpeed : M.runSpeed, T, team);
   }
 }
 
@@ -143,9 +186,11 @@ function applyCoachIntent(ctx: AiContext, team: TeamId, receiverId: MatchPlayerI
   const ci = s.coachIntent;
   if (!ci || s.players[ci.playerId].team !== team || ci.playerId === s.ball.owner || ci.playerId === receiverId) return;
   const M = T.movement;
-  const speed = { support: M.supportSpeed, run: M.runSpeed, width: M.supportSpeed, press: M.pressSpeed, cover: M.coverSpeed, protect: M.shapeSpeed }[ci.kind];
+  const k = ci.kind;
+  const speed =
+    k === 'support' || k === 'width' ? M.supportSpeed : k === 'run' ? M.runSpeed : k === 'press' ? M.pressSpeed : k === 'cover' ? M.coverSpeed : M.shapeSpeed;
   const intent: Intent = ci.kind === 'width' ? 'width' : ci.kind === 'protect' ? 'protect' : ci.kind;
-  set(s.players[ci.playerId], intent, toTeam(team, ci.target, T), speed, T, team);
+  set(s.players[ci.playerId], intent, tt(team, ci.target, T), speed, T, team);
 }
 
 export function chasePoint(s: MatchState, T: MatchTuning): MutableVec2 {
@@ -154,6 +199,17 @@ export function chasePoint(s: MatchState, T: MatchTuning): MutableVec2 {
   const stopDist = (speed * speed) / (2 * T.ball.friction);
   const ahead = Math.min(stopDist, 6);
   return speed > 0.05 ? add(b.pos, scale(normalize(b.vel), ahead)) : vec(b.pos.x, b.pos.y);
+}
+
+/** chasePoint in a pooled scratch vector (same arithmetic). */
+function chasePointT(s: MatchState, T: MatchTuning): MutableVec2 {
+  const b = s.ball;
+  const speed = Math.hypot(b.vel.x, b.vel.y);
+  const stopDist = (speed * speed) / (2 * T.ball.friction);
+  const ahead = Math.min(stopDist, 6);
+  if (!(speed > 0.05)) return tv(b.pos.x, b.pos.y);
+  const n = tNorm(b.vel.x, b.vel.y);
+  return tv(b.pos.x + n.x * ahead, b.pos.y + n.y * ahead);
 }
 
 function updateChaser(ctx: AiContext, team: TeamId, receiverId: MatchPlayerId | null): void {
@@ -168,13 +224,20 @@ function updateChaser(ctx: AiContext, team: TeamId, receiverId: MatchPlayerId | 
     c.id = null;
     return;
   }
-  const point = chasePoint(s, T);
-  const time = (p: MatchPlayer): number => distance(p.pos, point) / T.movement.chaseSpeed;
+  const point = chasePointT(s, T);
+  const sp = T.movement.chaseSpeed;
   let best: MatchPlayer | null = null;
-  for (const p of outfield(s, team)) if (!best || time(p) < time(best)) best = p;
+  let bestTime = 0;
+  for (const p of outfield(s, team)) {
+    const t = distance(p.pos, point) / sp;
+    if (!best || t < bestTime) {
+      best = p;
+      bestTime = t;
+    }
+  }
   if (!best) return;
   const current = c.id ? s.players[c.id] : null;
-  if (current && s.simTime < c.until && time(best) > time(current) - T.defense.switchMarginSeconds) return;
+  if (current && s.simTime < c.until && bestTime > distance(current.pos, point) / sp - T.defense.switchMarginSeconds) return;
   if (!current || current.id !== best.id) c.until = s.simTime + T.defense.commitSeconds;
   c.id = best.id;
 }
@@ -194,31 +257,34 @@ function planAttack(
   const L = T.pitch.length;
   const W = T.pitch.width;
   const ownerId = s.ball.owner;
-  const carrierT = ownerId ? toTeam(team, s.players[ownerId].pos, T) : B;
-  const deepestOpp = oppOutfield.reduce((m, o) => Math.max(m, o.x), 0);
+  const carrierT = ownerId ? tt(team, s.players[ownerId].pos, T) : B;
+  let deepestOpp = 0;
+  for (const o of oppOutfield) deepestOpp = Math.max(deepestOpp, o.x);
   const run = s.runs[team];
   if (run.runnerId && (s.simTime >= run.until || run.runnerId === ownerId)) {
     run.runnerId = null;
     run.cooldownUntil = s.simTime + T.run.cooldownSeconds;
   }
-  const taken: Vec2[] = [carrierT];
+  const taken = TAKEN;
+  let n = 0;
+  taken[n++] = carrierT;
   const ballSide = B.y < W / 2 ? -1 : 1;
 
   for (const p of outfield(s, team)) {
     if (p.id === ownerId || p.id === receiverId) continue;
     const role = roleOf(s, p);
-    const pT = toTeam(team, p.pos, T);
-    const anchor = toTeam(team, p.anchor, T);
+    const pT = tt(team, p.pos, T);
+    const anchor = tt(team, p.anchor, T);
     const own = role.base.y < W / 2 ? -1 : 1;
 
     if (run.runnerId === p.id) {
-      set(p, 'run', toTeam(team, p.target, T), M.runSpeed, T, team);
-      taken.push(toTeam(team, p.target, T));
+      set(p, 'run', tt(team, p.target, T), M.runSpeed, T, team);
+      taken[n++] = tt(team, p.target, T);
       continue;
     }
     if (p.intent === 'giveAndGo' && s.simTime < p.intentUntil) {
       p.speed = M.runSpeed;
-      taken.push(toTeam(team, p.target, T));
+      taken[n++] = tt(team, p.target, T);
       continue;
     }
 
@@ -231,7 +297,7 @@ function planAttack(
       case 'balance': {
         intent = 'balance';
         const x = Math.min(anchor.x, B.x - T.balance.behindBall);
-        target = vec(Math.max(4, x), anchor.y);
+        target = tv(Math.max(4, x), anchor.y);
         break;
       }
       case 'width': {
@@ -240,26 +306,26 @@ function planAttack(
         if (role.line === 'defence') {
           // Full-backs give width but stay behind the ball as part of the rest defence.
           intent = sameSide ? 'width' : 'balance';
-          target = vec(Math.min(anchor.x, B.x - (sameSide ? 3 : T.balance.behindBall)), sameSide ? touchY + -own * 2 : anchor.y);
+          target = tv(Math.min(anchor.x, B.x - (sameSide ? 3 : T.balance.behindBall)), sameSide ? touchY + -own * 2 : anchor.y);
         } else if (!sameSide) {
           intent = 'weakSide';
           const finishing = B.x > T.weakSide.finalThirdX && role.line === 'attack';
           target = finishing
-            ? vec(Math.min(B.x + 6, T.shape.maxAttackX), W / 2 + own * T.weakSide.narrowY)
-            : vec(clamp(B.x - 1, anchor.x - 8, anchor.x + 8), touchY);
+            ? tv(Math.min(B.x + 6, T.shape.maxAttackX), W / 2 + own * T.weakSide.narrowY)
+            : tv(clamp(B.x - 1, anchor.x - 8, anchor.x + 8), touchY);
         } else if (Math.abs(carrierT.y - touchY) < T.support.crowdDistance) {
           // Carrier is on our touchline: come inside rather than crowd him.
           intent = 'support';
-          target = supportSpot(carrierT, pT, -own, taken, oppPos, T);
+          target = supportSpot(carrierT, pT, -own, taken, n, oppPos, T);
         } else {
           intent = 'width';
-          target = vec(clamp(B.x + 5, anchor.x - 6, T.shape.maxAttackX), touchY);
+          target = tv(clamp(B.x + 5, anchor.x - 6, T.shape.maxAttackX), touchY);
         }
         break;
       }
       case 'support':
         intent = 'support';
-        target = supportSpot(carrierT, pT, own, taken, oppPos, T);
+        target = supportSpot(carrierT, pT, own, taken, n, oppPos, T);
         speed = M.supportSpeed;
         break;
       case 'depth': {
@@ -269,26 +335,26 @@ function planAttack(
         if (ownerId && !run.runnerId && s.simTime >= run.cooldownUntil && roomForCarrier && spaceBehind && pT.x < deepestOpp + 2) {
           run.runnerId = p.id;
           run.until = s.simTime + T.run.seconds;
-          const t = vec(Math.min(deepestOpp + T.run.beyondLine, T.shape.maxAttackX), clamp(pT.y, 8, W - 8));
+          const t = tv(Math.min(deepestOpp + T.run.beyondLine, T.shape.maxAttackX), clamp(pT.y, 8, W - 8));
           set(p, 'run', t, M.runSpeed, T, team);
-          taken.push(t);
+          taken[n++] = t;
           continue;
         }
-        target = vec(Math.min(anchor.x, deepestOpp - 0.5), anchor.y);
+        target = tv(Math.min(anchor.x, deepestOpp - 0.5), anchor.y);
         break;
       }
     }
-    const spaced = spread(target, taken, T.shape.minSpacing);
+    const spaced = spread(target, taken, n, T.shape.minSpacing);
     const B2 = role.bounds;
-    const clamped = intent === 'weakSide' || intent === 'width' ? spaced : vec(clamp(spaced.x, B2.minX, B2.maxX), clamp(spaced.y, B2.minY, B2.maxY));
-    taken.push(clamped);
+    const clamped = intent === 'weakSide' || intent === 'width' ? spaced : tv(clamp(spaced.x, B2.minX, B2.maxX), clamp(spaced.y, B2.minY, B2.maxY));
+    taken[n++] = clamped;
     set(p, intent, clamped, speed, T, team);
   }
 }
 
 /** Short option beside/behind/ahead of the carrier on `side`, moving off any blocked lane. */
 const SUPPORT_CANDIDATE: MutableVec2 = { x: 0, y: 0 };
-function supportSpot(carrier: Vec2, self: Vec2, side: number, taken: readonly Vec2[], blockers: readonly Vec2[], T: MatchTuning): MutableVec2 {
+function supportSpot(carrier: Vec2, self: Vec2, side: number, taken: readonly Vec2[], n: number, blockers: readonly Vec2[], T: MatchTuning): MutableVec2 {
   const S = T.support;
   const W = T.pitch.width;
   // 18 candidates scored in one scratch vector; only the winner is copied out.
@@ -307,7 +373,7 @@ function supportSpot(carrier: Vec2, self: Vec2, side: number, taken: readonly Ve
         p.y = clamp(carrier.y + sgn * lat, T.pitch.laneMargin, W - T.pitch.laneMargin);
         const clear = Math.min(laneClearance(carrier, p, blockers), 5);
         let crowd = Infinity;
-        for (const t of taken) crowd = Math.min(crowd, distance(t, p));
+        for (let q = 0; q < n; q++) crowd = Math.min(crowd, distance(taken[q]!, p));
         const score =
           clear * 1.0 + (clear >= S.laneClearance ? 2 : 0) + Math.min(crowd, T.shape.minSpacing) * 0.4 + dx * 0.08 - distance(self, p) * 0.05 - (sgn === side ? 0 : 1.2);
         if (!found || score > bestScore) {
@@ -319,17 +385,26 @@ function supportSpot(carrier: Vec2, self: Vec2, side: number, taken: readonly Ve
       }
     }
   }
-  return found ? vec(bx, by) : vec(carrier.x, carrier.y + side * S.lateral);
+  return found ? tv(bx, by) : tv(carrier.x, carrier.y + side * S.lateral);
 }
 
-function spread(target: Vec2, taken: readonly Vec2[], minSpacing: number): MutableVec2 {
-  const out = vec(target.x, target.y);
-  for (const t of taken) {
+function spread(target: Vec2, taken: readonly Vec2[], n: number, minSpacing: number): MutableVec2 {
+  const out = tv(target.x, target.y);
+  for (let i = 0; i < n; i++) {
+    const t = taken[i]!;
     const d = distance(out, t);
     if (d >= minSpacing) continue;
-    const away = d > 1e-3 ? normalize(sub(out, t)) : vec(0, out.y < 25 ? -1 : 1);
-    out.x += away.x * (minSpacing - d);
-    out.y += away.y * (minSpacing - d);
+    let ax = 0;
+    let ay = out.y < 25 ? -1 : 1;
+    if (d > 1e-3) {
+      const dx = out.x - t.x;
+      const dy = out.y - t.y;
+      const l = Math.sqrt(dx * dx + dy * dy);
+      ax = l > 1e-9 ? dx / l : 0;
+      ay = l > 1e-9 ? dy / l : 0;
+    }
+    out.x += ax * (minSpacing - d);
+    out.y += ay * (minSpacing - d);
   }
   return out;
 }
@@ -340,23 +415,21 @@ function planDefence(ctx: AiContext, team: TeamId, B: Vec2, oppOutfield: readonl
   const { s, T } = ctx;
   const M = T.movement;
   const D = T.defense;
-  const goal = vec(0, T.pitch.width / 2);
-  const toGoal = normalize(sub(goal, B));
-  const read = toTeam(team, s.pressRead, T);
-  const pressSpot = add(read, scale(normalize(sub(goal, read)), D.goalSideOffset));
+  const goal = tv(0, T.pitch.width / 2);
+  const toGoal = tNorm(goal.x - B.x, goal.y - B.y);
+  const read = tt(team, s.pressRead, T);
+  const gr = tNorm(goal.x - read.x, goal.y - read.y);
+  const pressSpot = tv(read.x + gr.x * D.goalSideOffset, read.y + gr.y * D.goalSideOffset);
   const players = outfield(s, team);
 
-  const pressTime = (p: MatchPlayer): number => {
-    const role = roleOf(s, p);
-    const pT = toTeam(team, p.pos, T);
-    let t = distance(pT, pressSpot) / M.pressSpeed;
-    if (role.line === 'defence' && B.x > 40) t += D.defenderHighPenalty;
-    if (role.line === 'attack' && B.x < 25) t += D.forwardDeepPenalty;
-    if (pT.x > B.x + 2) t += 0.3; // chasing from behind arrives late
-    return t;
-  };
   const a = s.defense[team];
-  a.presserId = pickCommitted(s, players, a.presserId, pressTime, a.until, D);
+  PICK.s = s;
+  PICK.T = T;
+  PICK.team = team;
+  PICK.B = B;
+  PICK.kind = 'press';
+  PICK.spot = pressSpot;
+  a.presserId = pickCommitted(s, players, null, a.presserId, a.until, D);
   // Cover: second player between the ball and goal, toward the most dangerous nearby opponent.
   // Deepest opponent 2-18 yd from the ball (first one wins a tie, as the stable sort did).
   let danger: Vec2 | undefined;
@@ -364,18 +437,19 @@ function planDefence(ctx: AiContext, team: TeamId, B: Vec2, oppOutfield: readonl
     const d = distance(o, B);
     if (d > 2 && d < 18 && (!danger || o.x < danger.x)) danger = o;
   }
-  const coverBase = add(B, scale(toGoal, D.coverDepth));
-  const coverSpot = danger ? lerpVec(coverBase, danger, D.coverFraction) : coverBase;
-  const coverTime = (p: MatchPlayer): number => distance(toTeam(team, p.pos, T), coverSpot) / M.coverSpeed;
+  const coverBase = tv(B.x + toGoal.x * D.coverDepth, B.y + toGoal.y * D.coverDepth);
+  const coverSpot = danger ? tLerp(coverBase, danger, D.coverFraction) : coverBase;
   const prevCover = a.coverId;
-  a.coverId = pickCommitted(s, players.filter((p) => p.id !== a.presserId), a.coverId, coverTime, a.until, D);
+  PICK.kind = 'cover';
+  PICK.spot = coverSpot;
+  a.coverId = pickCommitted(s, players, a.presserId, a.coverId, a.until, D);
   if (s.simTime >= a.until || prevCover !== a.coverId) a.until = s.simTime + D.commitSeconds;
 
-  const marked = new Set<number>();
+  let marked = 0; // bit i = opponent i already tracked
   for (const p of players) {
     const role = roleOf(s, p);
-    const pT = toTeam(team, p.pos, T);
-    const anchor = toTeam(team, p.anchor, T);
+    const pT = tt(team, p.pos, T);
+    const anchor = tt(team, p.anchor, T);
     if (p.id === a.presserId) {
       set(p, 'press', s.ball.owner ? pressSpot : B, M.pressSpeed, T, team);
       continue;
@@ -385,59 +459,97 @@ function planDefence(ctx: AiContext, team: TeamId, B: Vec2, oppOutfield: readonl
       continue;
     }
     if (pT.x > B.x + D.recoverBeyond && role.line !== 'attack') {
-      set(p, 'recover', vec(Math.min(anchor.x, B.x - 2), anchor.y), M.recoverSpeed, T, team);
+      set(p, 'recover', tv(Math.min(anchor.x, B.x - 2), anchor.y), M.recoverSpeed, T, team);
       continue;
     }
-    const markIndex = (): number => {
-      let best = -1;
-      let bestD = D.trackRadius;
-      oppOutfield.forEach((o, i) => {
-        if (marked.has(i)) return;
-        const d = distance(o, anchor);
-        if (d < bestD && o.x < anchor.x + 4) {
-          best = i;
-          bestD = d;
-        }
-      });
-      return best;
-    };
     switch (role.outOfPossession) {
       case 'holdLine':
       case 'trackRunner': {
-        const i = markIndex();
+        const i = markIndex(oppOutfield, marked, anchor, D.trackRadius);
         const o = oppOutfield[i];
         if (o) {
-          marked.add(i);
-          const gs = add(o, scale(normalize(sub(goal, o)), 1.5));
+          marked |= 1 << i;
+          const g = tNorm(goal.x - o.x, goal.y - o.y);
+          const gs = tv(o.x + g.x * 1.5, o.y + g.y * 1.5);
           set(p, 'track', gs, M.trackSpeed, T, team);
         } else set(p, 'hold', anchor, M.shapeSpeed, T, team);
         break;
       }
       case 'protectCentre': {
-        const screen = lerpVec(B, goal, D.protectFraction);
-        set(p, 'protect', lerpVec(anchor, screen, 0.5), M.shapeSpeed, T, team);
+        const screen = tLerp(B, goal, D.protectFraction);
+        set(p, 'protect', tLerp(anchor, screen, 0.5), M.shapeSpeed, T, team);
         break;
       }
       case 'pressHigh':
       case 'goal':
-        set(p, 'hold', vec(anchor.x, lerp(anchor.y, B.y, 0.25)), M.shapeSpeed, T, team);
+        set(p, 'hold', tv(anchor.x, lerp(anchor.y, B.y, 0.25)), M.shapeSpeed, T, team);
         break;
     }
   }
 }
 
+/** Inputs for pickTime, set by planDefence before each pickCommitted call (no per-step closures). */
+const PICK = {
+  s: null as unknown as MatchState,
+  T: null as unknown as MatchTuning,
+  team: 'home' as TeamId,
+  B: null as unknown as Vec2,
+  spot: null as unknown as Vec2,
+  kind: 'press' as 'press' | 'cover',
+};
+
+/** Seconds for `p` to reach the press or cover spot (team frame). */
+function pickTime(p: MatchPlayer): number {
+  const { s, T, team, B, spot } = PICK;
+  const px = team === 'home' ? p.pos.x : T.pitch.length - p.pos.x;
+  const py = team === 'home' ? p.pos.y : T.pitch.width - p.pos.y;
+  const dist = Math.sqrt((px - spot.x) * (px - spot.x) + (py - spot.y) * (py - spot.y));
+  if (PICK.kind === 'cover') return dist / T.movement.coverSpeed;
+  const D = T.defense;
+  const role = roleOf(s, p);
+  let t = dist / T.movement.pressSpeed;
+  if (role.line === 'defence' && B.x > 40) t += D.defenderHighPenalty;
+  if (role.line === 'attack' && B.x < 25) t += D.forwardDeepPenalty;
+  if (px > B.x + 2) t += 0.3; // chasing from behind arrives late
+  return t;
+}
+
+function markIndex(opp: readonly Vec2[], marked: number, anchor: Vec2, trackRadius: number): number {
+  let best = -1;
+  let bestD = trackRadius;
+  for (let i = 0; i < opp.length; i++) {
+    if (marked & (1 << i)) continue;
+    const o = opp[i]!;
+    const d = distance(o, anchor);
+    if (d < bestD && o.x < anchor.x + 4) {
+      best = i;
+      bestD = d;
+    }
+  }
+  return best;
+}
+
 function pickCommitted(
   s: MatchState,
   candidates: readonly MatchPlayer[],
+  exclude: MatchPlayerId | null,
   current: MatchPlayerId | null,
-  time: (p: MatchPlayer) => number,
   until: number,
   D: MatchTuning['defense'],
 ): MatchPlayerId | null {
+  const time = pickTime;
   let best: MatchPlayer | null = null;
-  for (const p of candidates) if (!best || time(p) < time(best)) best = p;
+  for (const p of candidates) if (p.id !== exclude && (!best || time(p) < time(best))) best = p;
   if (!best) return null;
-  const cur = current ? candidates.find((p) => p.id === current) : undefined;
+  let cur: MatchPlayer | undefined;
+  if (current) {
+    for (const p of candidates) {
+      if (p.id === current && p.id !== exclude) {
+        cur = p;
+        break;
+      }
+    }
+  }
   if (cur && s.simTime < until && time(best) > time(cur) - D.switchMarginSeconds) return cur.id;
   if (cur && time(best) > time(cur) - D.switchMarginSeconds * 0.5) return cur.id;
   return best.id;
