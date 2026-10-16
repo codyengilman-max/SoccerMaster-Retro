@@ -1,0 +1,193 @@
+[
+  {
+    "id": "team0-slot0",
+    "team": 2,
+    "dir": 0,
+    "girl": false,
+    "hairIndex": 0,
+    "hairStyle": 0,
+    "usage": "reference_roster_slot_only",
+    "canonicalCharacterId": null
+  },
+  {
+    "id": "team0-slot1",
+    "team": 0,
+    "dir": 0,
+    "girl": false,
+    "hairIndex": 1,
+    "hairStyle": 1,
+    "usage": "reference_roster_slot_only",
+    "canonicalCharacterId": null
+  },
+  {
+    "id": "team0-slot2",
+    "team": 0,
+    "dir": 0,
+    "girl": false,
+    "hairIndex": 2,
+    "hairStyle": 2,
+    "usage": "reference_roster_slot_only",
+    "canonicalCharacterId": null
+  },
+  {
+    "id": "team0-slot3",
+    "team": 0,
+    "dir": 0,
+    "girl": false,
+    "hairIndex": 3,
+    "hairStyle": 3,
+    "usage": "reference_roster_slot_only",
+    "canonicalCharacterId": null
+  },
+  {
+    "id": "team0-slot4",
+    "team": 0,
+    "dir": 0,
+    "girl": false,
+    "hairIndex": 4,
+    "hairStyle": 4,
+    "usage": "reference_roster_slot_only",
+    "canonicalCharacterId": null
+  },
+  {
+    "id": "team0-slot5",
+    "team": 0,
+    "dir": 0,
+    "girl": false,
+    "hairIndex": 0,
+    "hairStyle": 5,
+    "usage": "reference_roster_slot_only",
+    "canonicalCharacterId": null
+  },
+  {
+    "id": "team0-slot6",
+    "team": 0,
+    "dir": 0,
+    "girl": false,
+    "hairIndex": 1,
+    "hairStyle": 6,
+    "usage": "reference_roster_slot_only",
+    "canonicalCharacterId": null
+  },
+  {
+    "id": "team0-slot7",
+    "team": 0,
+    "dir": 0,
+    "girl": false,
+    "hairIndex": 0,
+    "hairStyle": 6,
+    "usage": "reference_roster_slot_only",
+    "canonicalCharacterId": null,
+    "referenceVisualId": "boy"
+  },
+  {
+    "id": "team0-slot8",
+    "team": 0,
+    "dir": 0,
+    "girl": false,
+    "hairIndex": 3,
+    "hairStyle": 1,
+    "usage": "reference_roster_slot_only",
+    "canonicalCharacterId": null
+  },
+  {
+    "id": "team1-slot0",
+    "team": 2,
+    "dir": 0,
+    "girl": false,
+    "hairIndex": 2,
+    "hairStyle": 1,
+    "usage": "reference_roster_slot_only",
+    "canonicalCharacterId": null
+  },
+  {
+    "id": "team1-slot1",
+    "team": 1,
+    "dir": 0,
+    "girl": false,
+    "hairIndex": 3,
+    "hairStyle": 2,
+    "usage": "reference_roster_slot_only",
+    "canonicalCharacterId": null
+  },
+  {
+    "id": "team1-slot2",
+    "team": 1,
+    "dir": 0,
+    "girl": false,
+    "hairIndex": 4,
+    "hairStyle": 3,
+    "usage": "reference_roster_slot_only",
+    "canonicalCharacterId": null
+  },
+  {
+    "id": "team1-slot3",
+    "team": 1,
+    "dir": 0,
+    "girl": false,
+    "hairIndex": 0,
+    "hairStyle": 4,
+    "usage": "reference_roster_slot_only",
+    "canonicalCharacterId": null
+  },
+  {
+    "id": "team1-slot4",
+    "team": 1,
+    "dir": 0,
+    "girl": false,
+    "hairIndex": 1,
+    "hairStyle": 5,
+    "usage": "reference_roster_slot_only",
+    "canonicalCharacterId": null
+  },
+  {
+    "id": "team1-slot5",
+    "team": 1,
+    "dir": 0,
+    "girl": false,
+    "hairIndex": 2,
+    "hairStyle": 6,
+    "usage": "reference_roster_slot_only",
+    "canonicalCharacterId": null
+  },
+  {
+    "id": "team1-slot6",
+    "team": 1,
+    "dir": 0,
+    "girl": false,
+    "hairIndex": 3,
+    "hairStyle": 0,
+    "usage": "reference_roster_slot_only",
+    "canonicalCharacterId": null
+  },
+  {
+    "id": "team1-slot7",
+    "team": 1,
+    "dir": 0,
+    "girl": false,
+    "hairIndex": 4,
+    "hairStyle": 1,
+    "usage": "reference_roster_slot_only",
+    "canonicalCharacterId": null
+  },
+  {
+    "id": "team1-slot8",
+    "team": 1,
+    "dir": 0,
+    "girl": false,
+    "hairIndex": 0,
+    "hairStyle": 2,
+    "usage": "reference_roster_slot_only",
+    "canonicalCharacterId": null
+  },
+  {
+    "id": "protagonist-girl",
+    "team": 0,
+    "girl": true,
+    "hairIndex": 4,
+    "hairStyle": 5,
+    "usage": "reference_roster_slot_only",
+    "canonicalCharacterId": null,
+    "referenceVisualId": "girl"
+  }
+]

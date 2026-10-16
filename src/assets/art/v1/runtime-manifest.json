@@ -1,0 +1,231 @@
+{
+  "schemaVersion": 1,
+  "source": "docs/art/graphics-v1/assets/asset-manifest.json",
+  "packageRevision": "1.1",
+  "assets": [
+    {
+      "assetId": "alex-match",
+      "file": "alex-match.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "64b204411ab9e862dc0e6d668e7141045aea022ca5d9b62822c2460e90f713dc",
+      "bytes": 81086
+    },
+    {
+      "assetId": "alex-school",
+      "file": "alex-school.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "656b0b98804d3f029f2bad7bc767a520aafd146ee43a4d35901da660d959f9f1",
+      "bytes": 82638
+    },
+    {
+      "assetId": "alex-training",
+      "file": "alex-training.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "0c8907f720763c30fd81ba1d8f3db8e40b3a85d1ab58b93d56ab7fc2795fdf7f",
+      "bytes": 78964
+    },
+    {
+      "assetId": "bedroom",
+      "file": "bedroom.webp",
+      "width": 768,
+      "height": 512,
+      "masterSha256": "07792cb31689b2b5847ee2c04ca9c369019f0a3cd3c011d21783512ab9b80ddb",
+      "bytes": 79050
+    },
+    {
+      "assetId": "blake-match",
+      "file": "blake-match.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "daba3d6e6449b90aae5f4d36efe5101081877a3815c36b4d0a450e80a2ff546e",
+      "bytes": 79702
+    },
+    {
+      "assetId": "blake-training",
+      "file": "blake-training.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "bddf0ffe5f46ce463502fa6dc4f0d6aebc18998743a1666a63ef7dae23634305",
+      "bytes": 83022
+    },
+    {
+      "assetId": "blake",
+      "file": "blake.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "e2270b0000f83d44dcfdc9407a39d4eab146caec6725b9d7bbbfe1cc33db0abc",
+      "bytes": 90004
+    },
+    {
+      "assetId": "boy-home",
+      "file": "boy-home.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "50957db7bba177154008ded82d0758409cabb0b36cd2ff1f42c5aa823b680d6b",
+      "bytes": 75028
+    },
+    {
+      "assetId": "boy-match",
+      "file": "boy-match.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "04eb66daf0398087a10f42853ce1c92d7a464db57c828ebda8cd464d58237423",
+      "bytes": 78980
+    },
+    {
+      "assetId": "boy-training",
+      "file": "boy-training.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "cd61ab9c4055255b987b3da9e10a0c70c702b4f16d5247cabcc332aa8f505b42",
+      "bytes": 76542
+    },
+    {
+      "assetId": "boy",
+      "file": "boy.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "9079ce120afc25e08ead7ca465110ab4b6f7ddb55c567dc21f402385cbc4bfe5",
+      "bytes": 90104
+    },
+    {
+      "assetId": "caregiver-home",
+      "file": "caregiver-home.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "19afde82083b5f6bd5735809b90ebb5f1e259fb132d5c8bf000c56bdf1b49e08",
+      "bytes": 80062
+    },
+    {
+      "assetId": "coach-club",
+      "file": "coach-club.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "2cd0a5013c465ee1e7bf8540683832a5a2db2c54c2edc5f3a6c888acd9367625",
+      "bytes": 78018
+    },
+    {
+      "assetId": "fish-tank",
+      "file": "fish-tank.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "81363a8f1b1c6fad2d16c8e2db0cf78e50a6257cee5d95a864941adf5c2d000d",
+      "bytes": 46176
+    },
+    {
+      "assetId": "girl-home",
+      "file": "girl-home.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "0702a851d16194d3c96f5bd2cb2c8745ee593c32e670108e26e42c2f79e46f02",
+      "bytes": 87180
+    },
+    {
+      "assetId": "girl-match",
+      "file": "girl-match.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "f811a34a1246f9ae8aaca2c88e3162d283c32801ac673b0bbc9d44f65131491c",
+      "bytes": 87424
+    },
+    {
+      "assetId": "girl-training",
+      "file": "girl-training.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "28e95a245f8706a250fe65ff32013457f09600c4958bbb3e16fb6afaba122edd",
+      "bytes": 91136
+    },
+    {
+      "assetId": "girl",
+      "file": "girl.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "502faf2ac0d1dfcf55d26cfeb1327d986233778dea0d000cab70e0eef6a53001",
+      "bytes": 112500
+    },
+    {
+      "assetId": "jordan",
+      "file": "jordan.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "b84bb123349074ce5ceaff86669a0676d0fadf8fa9a938e4f6c8523967e6cf9f",
+      "bytes": 71682
+    },
+    {
+      "assetId": "match-ground",
+      "file": "match-ground.webp",
+      "width": 768,
+      "height": 512,
+      "masterSha256": "f854c3ad107a843c40ea313e9254381cf4c6066d7e7bdebc471b93b19c2c102f",
+      "bytes": 122212
+    },
+    {
+      "assetId": "riley-match",
+      "file": "riley-match.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "dcdf8f826a134ed6329b33ee075f219f7497ef9bd789441a17cdb8b885717cdd",
+      "bytes": 74428
+    },
+    {
+      "assetId": "riley-school",
+      "file": "riley-school.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "e8d14230da56e72772b669bc13a0cce6337fba2550b3fbc92cb739f2c922ca6d",
+      "bytes": 87180
+    },
+    {
+      "assetId": "riley-training",
+      "file": "riley-training.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "90b746329ae2e8bc2b75c516e36a4dd29b2897f277d295bcc5870c50c344bb08",
+      "bytes": 83814
+    },
+    {
+      "assetId": "sam-match",
+      "file": "sam-match.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "6cc5f8b2747514bb873c4914ae5f34890cccab875d2255904125ccfe675deeed",
+      "bytes": 65788
+    },
+    {
+      "assetId": "sam-school",
+      "file": "sam-school.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "1a842e83294f7ab6a48bc84490de57cee3170ffc11a99caa712932a9ab32d030",
+      "bytes": 79460
+    },
+    {
+      "assetId": "sam-training",
+      "file": "sam-training.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "8a0903e62b07548753540b6205b6f7c52ed8a50cc1733bbdc66d00ed4cd1ea98",
+      "bytes": 66010
+    },
+    {
+      "assetId": "school",
+      "file": "school.webp",
+      "width": 768,
+      "height": 512,
+      "masterSha256": "039fd1d35b3e5d040eb8f5d90902aa61a0522534912ca4e71bbeb95488805444",
+      "bytes": 124868
+    },
+    {
+      "assetId": "training-ground",
+      "file": "training-ground.webp",
+      "width": 768,
+      "height": 512,
+      "masterSha256": "677fe0c4c3129385ea1938a3ff1f6ba96ef457e1af5afd88f4ede3f3a174fe24",
+      "bytes": 132528
+    }
+  ]
+}

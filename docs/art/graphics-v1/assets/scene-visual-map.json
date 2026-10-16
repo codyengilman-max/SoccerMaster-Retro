@@ -1,0 +1,318 @@
+{
+  "schemaVersion": 1,
+  "storyContentVersion": "0.7",
+  "sourceLibraryVersion": 4,
+  "scope": "18 current authored scenes only; reference bindings, not a runtime scheduler or evidence of repository coverage",
+  "playerAppearanceResolver": {
+    "boy": "boy",
+    "girl": "girl"
+  },
+  "scenes": [
+    {
+      "sceneId": "INIT_IDENTITY",
+      "storyBackgroundKey": "neutral_school",
+      "presentation": "system_panel",
+      "backgroundAssetId": null,
+      "castRoles": [],
+      "wardrobeByRole": {},
+      "speakers": [
+        "System"
+      ],
+      "continuityFlags": []
+    },
+    {
+      "sceneId": "W1_HOME_01",
+      "storyBackgroundKey": "neutral_home",
+      "presentation": "cutscene",
+      "backgroundAssetId": "bedroom",
+      "castRoles": [
+        "player",
+        "fish"
+      ],
+      "wardrobeByRole": {
+        "player": "home",
+        "fish": "tank"
+      },
+      "speakers": [
+        "Player"
+      ],
+      "continuityFlags": [
+        "BACKGROUND_PROP_AND_TIME_REVIEW_REQUIRED"
+      ]
+    },
+    {
+      "sceneId": "W1_HOME_DOORWAY",
+      "storyBackgroundKey": "neutral_home",
+      "presentation": "cutscene",
+      "backgroundAssetId": "bedroom",
+      "castRoles": [
+        "player",
+        "caregiver"
+      ],
+      "wardrobeByRole": {
+        "player": "home",
+        "caregiver": "home"
+      },
+      "speakers": [
+        "Caregiver"
+      ],
+      "continuityFlags": [
+        "BACKGROUND_PROP_AND_TIME_REVIEW_REQUIRED"
+      ]
+    },
+    {
+      "sceneId": "W1_SCHOOL_01",
+      "storyBackgroundKey": "neutral_school",
+      "presentation": "cutscene",
+      "backgroundAssetId": "school",
+      "castRoles": [
+        "player",
+        "jordan"
+      ],
+      "wardrobeByRole": {
+        "player": "school",
+        "jordan": "school"
+      },
+      "speakers": [
+        "Jordan",
+        "Player"
+      ],
+      "continuityFlags": [
+        "COURTYARD_REFERENCE_NOT_AN_INDOOR_CORRIDOR"
+      ]
+    },
+    {
+      "sceneId": "W1_SCHOOL_02",
+      "storyBackgroundKey": "neutral_school",
+      "presentation": "cutscene",
+      "backgroundAssetId": "school",
+      "castRoles": [
+        "player",
+        "jordan",
+        "blake"
+      ],
+      "wardrobeByRole": {
+        "player": "school",
+        "jordan": "school",
+        "blake": "school"
+      },
+      "speakers": [
+        "Blake",
+        "Jordan"
+      ],
+      "continuityFlags": []
+    },
+    {
+      "sceneId": "W1_CROSSBAR",
+      "storyBackgroundKey": "neutral_school",
+      "presentation": "activity_handoff",
+      "backgroundAssetId": null,
+      "castRoles": [],
+      "wardrobeByRole": {},
+      "speakers": [
+        "System"
+      ],
+      "continuityFlags": []
+    },
+    {
+      "sceneId": "W1_CROSSBAR_REACTION",
+      "storyBackgroundKey": "neutral_school",
+      "presentation": "cutscene",
+      "backgroundAssetId": "school",
+      "castRoles": [
+        "player",
+        "jordan"
+      ],
+      "wardrobeByRole": {
+        "player": "school",
+        "jordan": "school"
+      },
+      "speakers": [
+        "Jordan"
+      ],
+      "continuityFlags": []
+    },
+    {
+      "sceneId": "W1_TRAINING_CONNECTION",
+      "storyBackgroundKey": "neutral_pitch",
+      "presentation": "system_panel",
+      "backgroundAssetId": null,
+      "castRoles": [],
+      "wardrobeByRole": {},
+      "speakers": [
+        "System"
+      ],
+      "continuityFlags": []
+    },
+    {
+      "sceneId": "INIT_FOCUS",
+      "storyBackgroundKey": "neutral_school",
+      "presentation": "system_panel",
+      "backgroundAssetId": null,
+      "castRoles": [],
+      "wardrobeByRole": {},
+      "speakers": [
+        "System"
+      ],
+      "continuityFlags": []
+    },
+    {
+      "sceneId": "W1_TRAINING_ARRIVAL",
+      "storyBackgroundKey": "neutral_pitch",
+      "presentation": "cutscene",
+      "backgroundAssetId": "training-ground",
+      "castRoles": [
+        "player",
+        "coach",
+        "alex"
+      ],
+      "wardrobeByRole": {
+        "player": "training",
+        "coach": "club",
+        "alex": "training"
+      },
+      "speakers": [
+        "Coach Code",
+        "Alex"
+      ],
+      "continuityFlags": []
+    },
+    {
+      "sceneId": "W1_PRACTICE",
+      "storyBackgroundKey": "neutral_pitch",
+      "presentation": "activity_handoff",
+      "backgroundAssetId": null,
+      "castRoles": [],
+      "wardrobeByRole": {},
+      "speakers": [
+        "System"
+      ],
+      "continuityFlags": []
+    },
+    {
+      "sceneId": "W1_TRAINING_REFLECTION",
+      "storyBackgroundKey": "neutral_pitch",
+      "presentation": "cutscene",
+      "backgroundAssetId": "training-ground",
+      "castRoles": [
+        "player",
+        "alex"
+      ],
+      "wardrobeByRole": {
+        "player": "training",
+        "alex": "training"
+      },
+      "speakers": [
+        "Alex"
+      ],
+      "continuityFlags": []
+    },
+    {
+      "sceneId": "W1_MATCH_PRE",
+      "storyBackgroundKey": "neutral_pitch",
+      "presentation": "cutscene",
+      "backgroundAssetId": "match-ground",
+      "castRoles": [
+        "player",
+        "coach"
+      ],
+      "wardrobeByRole": {
+        "player": "match",
+        "coach": "club"
+      },
+      "speakers": [
+        "Coach Code"
+      ],
+      "continuityFlags": []
+    },
+    {
+      "sceneId": "W1_MATCH",
+      "storyBackgroundKey": "neutral_pitch",
+      "presentation": "activity_handoff",
+      "backgroundAssetId": null,
+      "castRoles": [],
+      "wardrobeByRole": {},
+      "speakers": [
+        "System"
+      ],
+      "continuityFlags": []
+    },
+    {
+      "sceneId": "W1_MATCH_POST",
+      "storyBackgroundKey": "neutral_pitch",
+      "presentation": "cutscene",
+      "backgroundAssetId": "match-ground",
+      "castRoles": [
+        "player",
+        "coach"
+      ],
+      "wardrobeByRole": {
+        "player": "match",
+        "coach": "club"
+      },
+      "speakers": [
+        "Coach Code"
+      ],
+      "continuityFlags": []
+    },
+    {
+      "sceneId": "W1_HOME_CLOSE",
+      "storyBackgroundKey": "neutral_home",
+      "presentation": "cutscene",
+      "backgroundAssetId": "bedroom",
+      "castRoles": [
+        "player",
+        "fish"
+      ],
+      "wardrobeByRole": {
+        "player": "home",
+        "fish": "tank"
+      },
+      "speakers": [
+        "Player"
+      ],
+      "continuityFlags": [
+        "BACKGROUND_PROP_AND_TIME_REVIEW_REQUIRED"
+      ]
+    },
+    {
+      "sceneId": "CLOSE_WEEK",
+      "storyBackgroundKey": "neutral_school",
+      "presentation": "system_panel",
+      "backgroundAssetId": null,
+      "castRoles": [],
+      "wardrobeByRole": {},
+      "speakers": [
+        "System"
+      ],
+      "continuityFlags": []
+    },
+    {
+      "sceneId": "W2_SCHOOL_CALLBACK",
+      "storyBackgroundKey": "neutral_school",
+      "presentation": "cutscene",
+      "backgroundAssetId": "school",
+      "castRoles": [
+        "player",
+        "jordan"
+      ],
+      "wardrobeByRole": {
+        "player": "school",
+        "jordan": "school"
+      },
+      "speakers": [
+        "Jordan"
+      ],
+      "continuityFlags": []
+    }
+  ],
+  "rules": [
+    "Use this map only with matching 0.7 scene IDs; produce a coverage diff for the actual repository. Unknown scene IDs need an explicit mapping.",
+    "CastRoles is an authored cast, not every character with an outfit at this location.",
+    "System panels do not relocate characters; they retain the current location behind a neutral overlay if appropriate.",
+    "Activity handoffs show the existing real activity; this pack supplies no fake gameplay or result.",
+    "Schoolyard playable outfits must not become club membership evidence.",
+    "Training arrival is one occurrence per real scheduled session; do not duplicate it for a portrait swap.",
+    "The authoritative story handles transitions, evidence, adverse budget, knowledge, focus and week closure."
+  ]
+}

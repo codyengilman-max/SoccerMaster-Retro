@@ -1,0 +1,48 @@
+{
+  "graphicsRevision": "1.1",
+  "story": {
+    "title": "SoccerMaster_Devin_Plain_Text_Review_v0.7.txt",
+    "libraryFileId": "libfile_42df99f6d14c81919f7198936934c206",
+    "version": 4,
+    "authority": [
+      "10_V07_CORRECTIONS_AND_INTEGRATION.txt",
+      "week_one_scenes.json"
+    ],
+    "sceneOrder": [
+      "INIT_IDENTITY",
+      "W1_HOME_01",
+      "W1_HOME_DOORWAY",
+      "W1_SCHOOL_01",
+      "W1_SCHOOL_02",
+      "W1_CROSSBAR",
+      "W1_CROSSBAR_REACTION",
+      "W1_TRAINING_CONNECTION",
+      "INIT_FOCUS",
+      "W1_TRAINING_ARRIVAL",
+      "W1_PRACTICE",
+      "W1_TRAINING_REFLECTION",
+      "W1_MATCH_PRE",
+      "W1_MATCH",
+      "W1_MATCH_POST",
+      "W1_HOME_CLOSE",
+      "CLOSE_WEEK",
+      "W2_SCHOOL_CALLBACK"
+    ]
+  },
+  "controls": {
+    "title": "SoccerMaster_Devin_Controls_SOW_v1.0.md",
+    "libraryFileId": "libfile_b07c7af96b1c8191bd63c6a14693e580",
+    "modifiedAt": "2026-10-15T19:28:39.948948Z",
+    "lockedActions": [
+      "PASS",
+      "SHOOT",
+      "SLIDE TACKLE",
+      "BLOCK"
+    ],
+    "movement": "left analog joystick; attribute-derived speed; no sprint"
+  },
+  "art": {
+    "approvedSourceCommit": "1a927dd3d78d14413eaff3655d636a880fd043a8",
+    "repositoryWasInspected": false
+  }
+}

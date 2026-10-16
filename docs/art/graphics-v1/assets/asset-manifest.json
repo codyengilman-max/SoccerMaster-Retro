@@ -1,0 +1,628 @@
+{
+  "schemaVersion": 1,
+  "packageVersion": "1.0.0",
+  "styleApproval": "OWNER_APPROVED_2026_10_15",
+  "description": "Paths are package-root-relative. Characters/locations are package IDs; map them to real game IDs. New designs are draft visual extensions.",
+  "assets": [
+    {
+      "assetId": "alex-match",
+      "path": "assets/cutscenes/alex-match.png",
+      "type": "portrait",
+      "characterId": "alex",
+      "label": "Alex — teammate / match",
+      "outfitId": "match",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "64b204411ab9e862dc0e6d668e7141045aea022ca5d9b62822c2460e90f713dc",
+      "sizeBytes": 1589734,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": "single authored pose",
+      "continuityFlags": [
+        "CLUB_PALETTE_UNBOUND",
+        "UNIFORM_TRIM_REVIEW_REQUIRED"
+      ],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "alex-school",
+      "path": "assets/cutscenes/alex-school.png",
+      "type": "portrait",
+      "characterId": "alex",
+      "label": "Alex — teammate / school",
+      "outfitId": "school",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "656b0b98804d3f029f2bad7bc767a520aafd146ee43a4d35901da660d959f9f1",
+      "sizeBytes": 1642156,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": "single authored pose",
+      "continuityFlags": [],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "alex-training",
+      "path": "assets/cutscenes/alex-training.png",
+      "type": "portrait",
+      "characterId": "alex",
+      "label": "Alex — teammate / training",
+      "outfitId": "training",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "0c8907f720763c30fd81ba1d8f3db8e40b3a85d1ab58b93d56ab7fc2795fdf7f",
+      "sizeBytes": 1576102,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": "single authored pose",
+      "continuityFlags": [
+        "CLUB_PALETTE_UNBOUND",
+        "UNIFORM_TRIM_REVIEW_REQUIRED"
+      ],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "bedroom",
+      "path": "assets/cutscenes/bedroom.png",
+      "type": "background",
+      "characterId": null,
+      "label": "Bedroom",
+      "outfitId": null,
+      "width": 1536,
+      "height": 1024,
+      "hasAlpha": false,
+      "alphaExtrema": null,
+      "sha256": "07792cb31689b2b5847ee2c04ca9c369019f0a3cd3c011d21783512ab9b80ddb",
+      "sizeBytes": 2123346,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": null,
+      "continuityFlags": [
+        "UNEXPLAINED_TROPHY_PROP",
+        "NEW_MOVE_BOXES_NOT_PRESENT",
+        "SUNSET_LIGHT_NOT_TIME_NEUTRAL"
+      ],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "blake-match",
+      "path": "assets/cutscenes/blake-match.png",
+      "type": "portrait",
+      "characterId": "blake",
+      "label": "Blake — rival schoolmate / match",
+      "outfitId": "match",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "daba3d6e6449b90aae5f4d36efe5101081877a3815c36b4d0a450e80a2ff546e",
+      "sizeBytes": 1574498,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": "single authored pose",
+      "continuityFlags": [
+        "CLUB_PALETTE_UNBOUND",
+        "UNIFORM_TRIM_REVIEW_REQUIRED"
+      ],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "blake-training",
+      "path": "assets/cutscenes/blake-training.png",
+      "type": "portrait",
+      "characterId": "blake",
+      "label": "Blake — rival schoolmate / training",
+      "outfitId": "training",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "bddf0ffe5f46ce463502fa6dc4f0d6aebc18998743a1666a63ef7dae23634305",
+      "sizeBytes": 1575763,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": "single authored pose",
+      "continuityFlags": [
+        "CLUB_PALETTE_UNBOUND",
+        "UNIFORM_TRIM_REVIEW_REQUIRED"
+      ],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "blake",
+      "path": "assets/cutscenes/blake.png",
+      "type": "portrait",
+      "characterId": "blake",
+      "label": "Blake — rival schoolmate / school",
+      "outfitId": "school",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "e2270b0000f83d44dcfdc9407a39d4eab146caec6725b9d7bbbfe1cc33db0abc",
+      "sizeBytes": 1666798,
+      "status": "REFERENCE_APPROVED",
+      "expression": "single authored pose",
+      "continuityFlags": [],
+      "productionArtAccepted": true
+    },
+    {
+      "assetId": "boy-home",
+      "path": "assets/cutscenes/boy-home.png",
+      "type": "portrait",
+      "characterId": "boy",
+      "label": "Player — boy / home",
+      "outfitId": "home",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "50957db7bba177154008ded82d0758409cabb0b36cd2ff1f42c5aa823b680d6b",
+      "sizeBytes": 1571069,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": "single authored pose",
+      "continuityFlags": [],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "boy-match",
+      "path": "assets/cutscenes/boy-match.png",
+      "type": "portrait",
+      "characterId": "boy",
+      "label": "Player — boy / match",
+      "outfitId": "match",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "04eb66daf0398087a10f42853ce1c92d7a464db57c828ebda8cd464d58237423",
+      "sizeBytes": 1579921,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": "single authored pose",
+      "continuityFlags": [
+        "CLUB_PALETTE_UNBOUND",
+        "UNIFORM_TRIM_REVIEW_REQUIRED"
+      ],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "boy-training",
+      "path": "assets/cutscenes/boy-training.png",
+      "type": "portrait",
+      "characterId": "boy",
+      "label": "Player — boy / training",
+      "outfitId": "training",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "cd61ab9c4055255b987b3da9e10a0c70c702b4f16d5247cabcc332aa8f505b42",
+      "sizeBytes": 1550351,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": "single authored pose",
+      "continuityFlags": [
+        "CLUB_PALETTE_UNBOUND",
+        "UNIFORM_TRIM_REVIEW_REQUIRED"
+      ],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "boy",
+      "path": "assets/cutscenes/boy.png",
+      "type": "portrait",
+      "characterId": "boy",
+      "label": "Player — boy / school",
+      "outfitId": "school",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "9079ce120afc25e08ead7ca465110ab4b6f7ddb55c567dc21f402385cbc4bfe5",
+      "sizeBytes": 1719409,
+      "status": "REFERENCE_APPROVED",
+      "expression": "single authored pose",
+      "continuityFlags": [],
+      "productionArtAccepted": true
+    },
+    {
+      "assetId": "caregiver-home",
+      "path": "assets/cutscenes/caregiver-home.png",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Caregiver / home",
+      "outfitId": "home",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "19afde82083b5f6bd5735809b90ebb5f1e259fb132d5c8bf000c56bdf1b49e08",
+      "sizeBytes": 1706620,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": "single authored pose",
+      "continuityFlags": [],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "coach-club",
+      "path": "assets/cutscenes/coach-club.png",
+      "type": "portrait",
+      "characterId": "coach",
+      "label": "Coach Code / club",
+      "outfitId": "club",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "2cd0a5013c465ee1e7bf8540683832a5a2db2c54c2edc5f3a6c888acd9367625",
+      "sizeBytes": 1700268,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": "single authored pose",
+      "continuityFlags": [],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "fish-tank",
+      "path": "assets/cutscenes/fish-tank.png",
+      "type": "portrait",
+      "characterId": "fish",
+      "label": "Clownfish / tank",
+      "outfitId": "tank",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "81363a8f1b1c6fad2d16c8e2db0cf78e50a6257cee5d95a864941adf5c2d000d",
+      "sizeBytes": 1139318,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": "single authored pose",
+      "continuityFlags": [
+        "FANTASY_ILLUSTRATION_WITH_BAKED_PELLET",
+        "NOT_A_TANK_CUP_PHYSICS_SPRITE"
+      ],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "girl-home",
+      "path": "assets/cutscenes/girl-home.png",
+      "type": "portrait",
+      "characterId": "girl",
+      "label": "Player — girl / home",
+      "outfitId": "home",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "0702a851d16194d3c96f5bd2cb2c8745ee593c32e670108e26e42c2f79e46f02",
+      "sizeBytes": 1639238,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": "single authored pose",
+      "continuityFlags": [],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "girl-match",
+      "path": "assets/cutscenes/girl-match.png",
+      "type": "portrait",
+      "characterId": "girl",
+      "label": "Player — girl / match",
+      "outfitId": "match",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "f811a34a1246f9ae8aaca2c88e3162d283c32801ac673b0bbc9d44f65131491c",
+      "sizeBytes": 1626829,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": "single authored pose",
+      "continuityFlags": [
+        "CLUB_PALETTE_UNBOUND",
+        "UNIFORM_TRIM_REVIEW_REQUIRED"
+      ],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "girl-training",
+      "path": "assets/cutscenes/girl-training.png",
+      "type": "portrait",
+      "characterId": "girl",
+      "label": "Player — girl / training",
+      "outfitId": "training",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "28e95a245f8706a250fe65ff32013457f09600c4958bbb3e16fb6afaba122edd",
+      "sizeBytes": 1655557,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": "single authored pose",
+      "continuityFlags": [
+        "CLUB_PALETTE_UNBOUND",
+        "UNIFORM_TRIM_REVIEW_REQUIRED"
+      ],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "girl",
+      "path": "assets/cutscenes/girl.png",
+      "type": "portrait",
+      "characterId": "girl",
+      "label": "Player — girl / school",
+      "outfitId": "school",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "502faf2ac0d1dfcf55d26cfeb1327d986233778dea0d000cab70e0eef6a53001",
+      "sizeBytes": 1959461,
+      "status": "REFERENCE_APPROVED",
+      "expression": "single authored pose",
+      "continuityFlags": [],
+      "productionArtAccepted": true
+    },
+    {
+      "assetId": "jordan",
+      "path": "assets/cutscenes/jordan.png",
+      "type": "portrait",
+      "characterId": "jordan",
+      "label": "Jordan — school friend / school",
+      "outfitId": "school",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "b84bb123349074ce5ceaff86669a0676d0fadf8fa9a938e4f6c8523967e6cf9f",
+      "sizeBytes": 1580324,
+      "status": "REFERENCE_APPROVED",
+      "expression": "single authored pose",
+      "continuityFlags": [],
+      "productionArtAccepted": true
+    },
+    {
+      "assetId": "match-ground",
+      "path": "assets/cutscenes/match-ground.png",
+      "type": "background",
+      "characterId": null,
+      "label": "Match Ground",
+      "outfitId": null,
+      "width": 1536,
+      "height": 1024,
+      "hasAlpha": false,
+      "alphaExtrema": null,
+      "sha256": "f854c3ad107a843c40ea313e9254381cf4c6066d7e7bdebc471b93b19c2c102f",
+      "sizeBytes": 2425963,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": null,
+      "continuityFlags": [],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "riley-match",
+      "path": "assets/cutscenes/riley-match.png",
+      "type": "portrait",
+      "characterId": "riley",
+      "label": "Riley — rival-team friend / match",
+      "outfitId": "match",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "dcdf8f826a134ed6329b33ee075f219f7497ef9bd789441a17cdb8b885717cdd",
+      "sizeBytes": 1570886,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": "single authored pose",
+      "continuityFlags": [
+        "CLUB_PALETTE_UNBOUND",
+        "UNIFORM_TRIM_REVIEW_REQUIRED"
+      ],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "riley-school",
+      "path": "assets/cutscenes/riley-school.png",
+      "type": "portrait",
+      "characterId": "riley",
+      "label": "Riley — rival-team friend / school",
+      "outfitId": "school",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "e8d14230da56e72772b669bc13a0cce6337fba2550b3fbc92cb739f2c922ca6d",
+      "sizeBytes": 1816403,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": "single authored pose",
+      "continuityFlags": [],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "riley-training",
+      "path": "assets/cutscenes/riley-training.png",
+      "type": "portrait",
+      "characterId": "riley",
+      "label": "Riley — rival-team friend / training",
+      "outfitId": "training",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "90b746329ae2e8bc2b75c516e36a4dd29b2897f277d295bcc5870c50c344bb08",
+      "sizeBytes": 1599174,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": "single authored pose",
+      "continuityFlags": [
+        "CLUB_PALETTE_UNBOUND",
+        "UNIFORM_TRIM_REVIEW_REQUIRED"
+      ],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "sam-match",
+      "path": "assets/cutscenes/sam-match.png",
+      "type": "portrait",
+      "characterId": "sam",
+      "label": "Sam — teammate / match",
+      "outfitId": "match",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "6cc5f8b2747514bb873c4914ae5f34890cccab875d2255904125ccfe675deeed",
+      "sizeBytes": 1457033,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": "single authored pose",
+      "continuityFlags": [
+        "CLUB_PALETTE_UNBOUND",
+        "UNIFORM_TRIM_REVIEW_REQUIRED"
+      ],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "sam-school",
+      "path": "assets/cutscenes/sam-school.png",
+      "type": "portrait",
+      "characterId": "sam",
+      "label": "Sam — teammate / school",
+      "outfitId": "school",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "1a842e83294f7ab6a48bc84490de57cee3170ffc11a99caa712932a9ab32d030",
+      "sizeBytes": 1768820,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": "single authored pose",
+      "continuityFlags": [],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "sam-training",
+      "path": "assets/cutscenes/sam-training.png",
+      "type": "portrait",
+      "characterId": "sam",
+      "label": "Sam — teammate / training",
+      "outfitId": "training",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "alphaExtrema": [
+        0,
+        254
+      ],
+      "sha256": "8a0903e62b07548753540b6205b6f7c52ed8a50cc1733bbdc66d00ed4cd1ea98",
+      "sizeBytes": 1435345,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": "single authored pose",
+      "continuityFlags": [
+        "CLUB_PALETTE_UNBOUND",
+        "UNIFORM_TRIM_REVIEW_REQUIRED"
+      ],
+      "productionArtAccepted": false
+    },
+    {
+      "assetId": "school",
+      "path": "assets/cutscenes/school.png",
+      "type": "background",
+      "characterId": null,
+      "label": "School",
+      "outfitId": null,
+      "width": 1536,
+      "height": 1024,
+      "hasAlpha": false,
+      "alphaExtrema": null,
+      "sha256": "039fd1d35b3e5d040eb8f5d90902aa61a0522534912ca4e71bbeb95488805444",
+      "sizeBytes": 2278943,
+      "status": "REFERENCE_APPROVED",
+      "expression": null,
+      "continuityFlags": [],
+      "productionArtAccepted": true
+    },
+    {
+      "assetId": "training-ground",
+      "path": "assets/cutscenes/training-ground.png",
+      "type": "background",
+      "characterId": null,
+      "label": "Training Ground",
+      "outfitId": null,
+      "width": 1536,
+      "height": 1024,
+      "hasAlpha": false,
+      "alphaExtrema": null,
+      "sha256": "677fe0c4c3129385ea1938a3ff1f6ba96ef457e1af5afd88f4ede3f3a174fe24",
+      "sizeBytes": 2502916,
+      "status": "NEW_ART_REVIEW_PENDING",
+      "expression": null,
+      "continuityFlags": [],
+      "productionArtAccepted": false
+    }
+  ],
+  "packageRevision": "1.1"
+}
