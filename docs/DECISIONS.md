@@ -92,3 +92,10 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - The engine has no squad numbers, club kits or named gameplay characters: numbers are formation slot + 1, kits are home/away/keeper reference colours, hair is fixed per roster slot. The career player uses the saved boy/girl look on their career slot.
 - Cutscene portraits are static: entrance slide/fade and a tint-only speaker highlight, disabled under `prefers-reduced-motion`. Art never writes story, saves, rewards or input; dialogue, names and choices stay live text.
 - New character/outfit art stays `NEW_ART_REVIEW_PENDING` in the Art Gallery until the owner reviews each image.
+
+## Story weeks 2–4, Jungle Ball, league (2026-10-16)
+- Week one stays byte-identical to package v0.7. The weeks 2–4 draft is a separate catalog (`docs/story/weeks-2-4/weeks_2_4_draft.json`, version `w24-draft-1`) that may use code-resolved `branch` nodes. `mergeCatalogs` links the two catalogs, and the save `contentVersion` stays `0.7`, so existing story saves and run keys stay valid.
+- Relationship consequences come from committed facts (choices and resolved runs) through code-owned predicates, never from effect operations in content. That makes them idempotent by construction.
+- League results move through the story database: `matchresult:<runId>` is written once at full time, and `league:<careerId>` holds the table. This keeps `MatchScene` unaware of careers and leagues beyond one result key.
+- Jungle Ball is a separate framework-free sim, so the 9v9 engine and its tests are untouched.
+

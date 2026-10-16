@@ -6,6 +6,7 @@ import { LabScene } from './scenes/LabScene';
 import { StoryScene } from './scenes/StoryScene';
 import { ArtGalleryScene } from './scenes/ArtGalleryScene';
 import { MatchScene } from './scenes/MatchScene';
+import { JungleScene } from './scenes/JungleScene';
 import { StartScene } from './scenes/StartScene';
 
 export function createGameConfig(parent: HTMLElement): Phaser.Types.Core.GameConfig {
@@ -28,6 +29,6 @@ export function createGameConfig(parent: HTMLElement): Phaser.Types.Core.GameCon
       activePointers: 2,
     },
     // First scene auto-starts; the rest wait for scene.start().
-    scene: [StartScene, AttackScene, FormationScene, MatchScene, CareerScene, LabScene, StoryScene, ArtGalleryScene],
+    scene: [StartScene, AttackScene, FormationScene, MatchScene, CareerScene, LabScene, StoryScene, ArtGalleryScene, JungleScene],
   };
 }

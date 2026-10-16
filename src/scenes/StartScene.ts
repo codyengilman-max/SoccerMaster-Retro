@@ -20,6 +20,7 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
   private sandboxButton!: Button;
   private reviewButton!: Button;
   private storyButton!: Button;
+  private jungleButton!: Button;
   private navigating = false;
 
   constructor() {
@@ -100,11 +101,20 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
     });
     this.storyButton = new Button(this, 0, 0, {
       name: 'story-button',
-      label: 'Story: Week 1',
+      label: 'Story',
       width: 220,
       height: 48,
       fontSize: 18,
       onClick: () => this.openStory(),
+    });
+
+    this.jungleButton = new Button(this, 0, 0, {
+      name: 'jungle-button',
+      label: 'Jungle Ball',
+      width: 220,
+      height: 48,
+      fontSize: 18,
+      onClick: () => this.openJungle(),
     });
 
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this);
@@ -129,8 +139,15 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
         'sandbox-button': this.sandboxButton.getButtonBounds(),
         'review-button': this.reviewButton.getButtonBounds(),
         'story-button': this.storyButton.getButtonBounds(),
+        'jungle-button': this.jungleButton.getButtonBounds(),
       },
     };
+  }
+
+  private openJungle(): void {
+    if (this.navigating) return;
+    this.navigating = true;
+    this.scene.start(SceneKeys.Jungle);
   }
 
   private playAttackDrill(): void {
@@ -193,7 +210,7 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
       .setPosition(width / 2, this.title.y + this.title.displayHeight / 2 + subtitleSize * 1.1);
 
     // Portrait stacks the buttons; landscape puts them side by side.
-    const buttons = [this.sandboxButton, this.careerButton, this.playButton];
+    const buttons = [this.sandboxButton, this.careerButton, this.playButton, this.jungleButton];
     const n = buttons.length;
     const buttonWidth = Math.round(portrait ? Math.min(width * 0.84, 460) : Math.min((width - 24 - 12 * n) / n, 300));
     const buttonHeight = Math.round(Math.max(56, Math.min(height * (portrait ? 0.085 : 0.2), 88)));

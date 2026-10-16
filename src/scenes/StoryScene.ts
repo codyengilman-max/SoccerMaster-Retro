@@ -1,4 +1,7 @@
 import Phaser from 'phaser';
+import { fixtureForWeek, newLeague, parseLeague, recordPlayed, simulateThrough, table } from '../game/league/league';
+import { DRAFT_SCENES } from '../game/story/content';
+import { CLUB_WORLD } from '../game/story/clubs';
 import type { Rect } from '../game';
 import { POSITION_SLOT } from '../game/career/player';
 import type { CareerSave } from '../game/career/state';
@@ -69,6 +72,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private aimFrom: { x: number; y: number } | null = null;
   private pull: Pull | null = null;
   private crossbarSummary = '';
+  private leagueSummary = '';
   private bg!: Phaser.GameObjects.Graphics;
   private stage!: Phaser.GameObjects.Graphics;
   private speaker!: Phaser.GameObjects.Text;
@@ -323,8 +327,17 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       await this.store.putRecord(`run:${run}`, snap);
     }
     this.navigating = true;
-    if (kind === 'match') this.scene.start(SceneKeys.Formation, { career: true, returnTo: 'story' });
+    if (kind === 'match') this.scene.start(SceneKeys.Formation, { career: true, returnTo: 'story', resultKey: run });
     else this.scene.start(SceneKeys.Career, { returnTo: 'story' });
+  }
+
+  private async openJungle(): Promise<void> {
+    if (!this.fresh() || !this.store) return;
+    this.busy = true;
+    const run = await this.launch();
+    if (!run) return void ((this.busy = false), this.render());
+    this.navigating = true;
+    this.scene.start(SceneKeys.Jungle, { runId: run, returnTo: 'story', look: this.save?.player?.gender === 'girl' ? 'girl' : 'boy' });
   }
 
   /** On return from Home Training or a match, decide the outcome only from what the career save shows. */
@@ -334,17 +347,56 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     const run = Object.values(this.state.runs).find((r) => r.sceneId === this.state!.sceneId && r.nodeId === n.id && r.state === 'launched');
     if (!run) return;
     if (n.adapter === 'crossbar') return this.enterCrossbar(run.runId);
+    if (n.adapter === 'jungle') {
+      const rec = (await this.store.getRecord(`jungle:${run.runId}`)) as { status?: string } | undefined;
+      if (rec) await this.complete(run.runId, rec.status === 'completed' ? 'completed' : 'abandoned');
+      else this.message = 'Not finished yet. Nothing was recorded.';
+      return;
+    }
     if (!(CAREER_ADAPTERS as readonly string[]).includes(n.adapter)) return;
     const snap = (await this.store.getRecord(`run:${run.runId}`)) as Snapshot | undefined;
     const s = (this.save = await this.career.load());
     if (!snap) return;
+    // A story match counts only once it reaches full time; growth evidence alone does not finish it.
+    const full = n.adapter === 'match' ? await this.fullTimeScore(run.runId) : null;
     const done =
       n.adapter === 'training_arrangement' ? s.revision > snap.revision && s.player !== null
       : n.adapter === 'weekly_focus' ? s.focusId !== null
       : n.adapter === 'practice' ? s.completedSessions.length > snap.sessions
-      : s.batches.length > snap.batches;
+      : full !== null;
+    if (full) await this.recordLeague(full);
     if (done) await this.complete(run.runId, 'completed');
-    else this.message = 'Not finished yet. Nothing was recorded.';
+    else this.message = n.adapter === 'match' ? 'No full-time result yet, so nothing was recorded. Play the match again to finish it.' : 'Not finished yet. Nothing was recorded.';
+  }
+
+  /** The story week of the current match scene (W2_MATCH → 2), never the separately advancing career week. */
+  private storyWeek(): number | null {
+    const m = /^W(\d)_MATCH$/.exec(this.state?.sceneId ?? '');
+    return m ? Number(m[1]) : null;
+  }
+
+  private async fullTimeScore(runId: string): Promise<{ home: number; away: number } | null> {
+    const res = (await this.store?.getRecord(`matchresult:${runId}`)) as { home?: unknown; away?: unknown } | undefined;
+    return res && Number.isInteger(res.home) && Number.isInteger(res.away) ? { home: res.home as number, away: res.away as number } : null;
+  }
+
+  /** League table: a full-time score counts once for this story week's Batavia fixture (null = skipped: no Batavia result); other clubs are simulated through the round either way. */
+  private async recordLeague(score: { home: number; away: number } | null): Promise<void> {
+    const store = this.store;
+    const week = this.storyWeek();
+    const f = week === null ? null : fixtureForWeek(week);
+    if (!store || !this.state || !f) return;
+    const careerId = this.state.careerId;
+    const saved = parseLeague(await store.getRecord(`league:${careerId}`));
+    let seed = 0;
+    for (const ch of careerId) seed = (Math.imul(seed, 31) + ch.charCodeAt(0)) >>> 0;
+    let league = saved.ok ? saved.value : newLeague(careerId, seed);
+    if (score) {
+      const r = recordPlayed(league, f.id, score.home, score.away);
+      if (!r.ok) return;
+      league = r.state;
+    }
+    await store.putRecord(`league:${careerId}`, simulateThrough(league, f.round));
   }
 
   private async closeWeek(): Promise<void> {
@@ -458,6 +510,11 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
 
   private async loadSummaries(): Promise<void> {
     if (!this.state || !this.store) return;
+    const league = parseLeague(await this.store.getRecord(`league:${this.state.careerId}`));
+    const names = Object.fromEntries(CLUB_WORLD.clubs.map((c) => [c.id, c.displayName]));
+    this.leagueSummary = league.ok
+      ? `League table (other clubs' games are simulated):\n${table(league.value, names).map((r) => `${r.position}. ${names[r.club] ?? r.club}  P${r.played} ${r.points} pts`).join('\n')}`
+      : 'League table: no league result recorded yet (a match left early counts for nobody).';
     const run = outcomeOf(this.state, 'W1_CROSSBAR');
     if (!run) return void (this.crossbarSummary = '');
     if (run.outcome === 'completed' && run.runId) {
@@ -472,12 +529,16 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private recap(): string {
     const s = this.state;
     if (!s) return '';
+    const draft = 'Draft dialogue (weeks 2–4), awaiting owner review.';
+    if (/^W[234]_(MATCH_POST|FINAL)$/.test(s.sceneId)) return `${this.leagueSummary}\n${draft}`;
+    if (DRAFT_SCENES.has(s.sceneId)) return draft;
     if (s.sceneId === 'W1_CROSSBAR_REACTION' || s.sceneId === 'W1_TRAINING_CONNECTION') return this.crossbarSummary;
     if (s.sceneId === 'W1_TRAINING_REFLECTION' || s.sceneId === 'W1_MATCH_POST' || s.sceneId === 'W1_HOME_CLOSE' || s.sceneId === 'W2_SCHOOL_CALLBACK') {
       const practice = outcomeOf(s, 'W1_PRACTICE');
       const match = outcomeOf(s, 'W1_MATCH');
       const parts = [practice ? `Practice: ${practice.outcome === 'completed' ? 'one scheduled session logged' : 'not done'}` : '', match ? `Match: ${match.outcome === 'completed' ? 'played' : 'not played'}` : ''].filter(Boolean);
-      return parts.join(' · ');
+      const recap = parts.join(' · ');
+      return s.sceneId === 'W1_MATCH_POST' ? `${recap}\n${this.leagueSummary}` : recap;
     }
     return '';
   }
@@ -570,7 +631,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       acts.push({ name: 'crossbar-leave', label: 'Leave (no result)', onClick: () => void this.leaveCrossbar() });
     } else if (n && this.state) {
       if (this.state.complete) {
-        body = `Week-one story complete. ${this.recap()}`;
+        body = `Chapter complete (weeks 1–4). ${this.recap()}`;
         acts.push({ name: 'story-done', label: 'Back to menu', onClick: () => this.goStart() });
       } else if (n.type === 'line') {
         this.speaker.setText(n.speaker === 'System' ? '' : n.speaker === 'Player' ? this.name() : n.speaker);
@@ -640,13 +701,23 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         acts.push({ name: 'handoff-continue', label: 'Got it', onClick: () => void this.assignment() });
         return;
       case 'match':
-        setBody('Week-one match: a full 9v9 game with your usual controls. Your play becomes evidence for growth, as always.');
+        {
+          const week = this.storyWeek() ?? this.save?.week ?? 1;
+          const f = fixtureForWeek(week);
+          const club = (id: string): string => CLUB_WORLD.clubs.find((c) => c.id === id)?.displayName ?? id;
+          setBody(`${f ? `Week ${week} league match: ${club(f.home)} vs ${club(f.away)}.` : `Week ${week} match.`} A full 9v9 game with your usual controls. Your play becomes evidence for growth, as always.`);
+        }
         acts.push({ name: 'handoff-match', label: 'Play the match', onClick: () => void this.openCareer('match') });
         acts.push({ name: 'handoff-skip', label: 'Skip the match', onClick: () => void this.skipRun('declined') });
         return;
+      case 'jungle':
+        setBody('Jungle Ball at lunch: one goal, a neutral keeper, you against Alex, Blake and Sam. Just for fun: scores never count as match growth.');
+        acts.push({ name: 'handoff-jungle', label: 'Play Jungle Ball', onClick: () => void this.openJungle() });
+        acts.push({ name: 'handoff-skip', label: 'Not today', onClick: () => void this.skipRun('declined') });
+        return;
       case 'week_close':
-        setBody('Finish week 1: your week review is saved and week 2 opens.');
-        acts.push({ name: 'handoff-week', label: 'Finish week 1', onClick: () => void this.closeWeek() });
+        setBody(`Finish week ${this.save?.week ?? 1}: your week review is saved and week ${(this.save?.week ?? 1) + 1} opens.`);
+        acts.push({ name: 'handoff-week', label: `Finish week ${this.save?.week ?? 1}`, onClick: () => void this.closeWeek() });
         return;
     }
   }
@@ -655,6 +726,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     if (!this.fresh()) return;
     this.busy = true;
     const run = await this.launch();
+    if (run && this.node()?.type === 'activity_handoff' && (this.node() as { adapter?: string }).adapter === 'match') await this.recordLeague(null);
     if (run) await this.complete(run, outcome);
     this.busy = false;
     this.render();
@@ -728,7 +800,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       // Code-drawn portrait: head, hair and a coloured shirt per speaker.
       const cx = width * 0.5;
       const r = Math.min(stageH * 0.22, width * 0.14);
-      const cy = stageH - r * 1.6;
+      // Shirt bottom rests on the panel's top edge so the figure never covers the dialogue.
+      const cy = stageH - r * 2.25;
       s.fillStyle(SPEAKER_COLOR[n.speaker] ?? PALETTE.blueDark, 1).fillRoundedRect(cx - r * 1.2, cy + r * 0.8, r * 2.4, r * 1.4, r * 0.4);
       s.fillStyle(PALETTE.skin, 1).fillCircle(cx, cy, r);
       s.fillStyle(PALETTE.hair, 1).fillEllipse(cx, cy - r * 0.6, r * 2, r * 0.9);

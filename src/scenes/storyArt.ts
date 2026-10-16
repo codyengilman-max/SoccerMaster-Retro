@@ -21,7 +21,7 @@ export interface StoryArtFrame {
 }
 
 type CastState = 'shown' | 'loading' | 'gap' | 'failed';
-interface Slot { role: CastRole; assetId: string | null; img: Phaser.GameObjects.Image | null; box: Phaser.GameObjects.Graphics; label: Phaser.GameObjects.Text; state: CastState; x: number }
+interface Slot { role: CastRole; assetId: string | null; img: Phaser.GameObjects.Image | null; box: Phaser.GameObjects.Graphics; label: Phaser.GameObjects.Text; state: CastState; x: number; placed: boolean }
 
 /**
  * Cutscene backdrop + static portraits for StoryScene. Presentation only: reads the scene id, the saved
@@ -169,7 +169,7 @@ export class StoryArt {
         .setOrigin(0.5)
         .setDepth(-1)
         .setVisible(false);
-      const s: Slot = { role: c.role, assetId: c.assetId, img: null, box, label, state: c.assetId ? 'loading' : 'gap', x: 0 };
+      const s: Slot = { role: c.role, assetId: c.assetId, img: null, box, label, state: c.assetId ? 'loading' : 'gap', x: 0, placed: false };
       this.bindImage(s, false);
       return s;
     });
@@ -186,6 +186,7 @@ export class StoryArt {
     }
     if (s.img || !this.scene.textures.exists(key)) return;
     s.img = this.scene.add.image(0, 0, key).setOrigin(0.5, 1).setDepth(-1).setName(`story-art-${s.role}`);
+    s.placed = false;
     s.state = 'shown';
     if (fadeIn && !this.reducedMotion) {
       s.img.setAlpha(0);
@@ -253,7 +254,10 @@ export class StoryArt {
           s.img.setX(s.x);
           this.scene.tweens.add({ targets: s.img, y: ty, alpha, duration: LIFT_MS, ease: 'Sine.easeOut' });
         } else if (!this.scene.tweens.isTweening(s.img)) s.img.setPosition(s.x, ty).setAlpha(alpha);
+        // Still fading in after a late load: it has never been placed, so position it now (the fade keeps running).
+        else if (!s.placed) s.img.setPosition(s.x, ty);
         else s.img.setDisplaySize(w, h);
+        s.placed = true;
       } else {
         // Labelled neutral fallback: never another character's art.
         const bw = Math.min(w * 0.7, 120);

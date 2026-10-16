@@ -1,5 +1,5 @@
 import { STORY, nodeById, sceneById } from './content';
-import { STORY_SCHEMA, newStory, reduceStory, type StoryCommand, type StoryOutcome, type StoryState } from './runtime';
+import { STORY_SCHEMA, migrateStory, newStory, reduceStory, type StoryCommand, type StoryOutcome, type StoryState } from './runtime';
 
 const STORE = 'story';
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -14,7 +14,7 @@ export function parseStoryState(raw: unknown): { ok: true; value: StoryState } |
   if (!scene || !nodeById(scene, raw.nodeId)) return { ok: false, error: `story position ${raw.sceneId}.${raw.nodeId} is missing` };
   for (const k of ['revision', 'lastSeq', 'openedBy']) if (!Number.isInteger(raw[k])) return { ok: false, error: `bad ${k}` };
   if (!isObj(raw.decisions) || !isObj(raw.runs) || !Array.isArray(raw.transcript) || !Array.isArray(raw.completedScenes)) return { ok: false, error: 'bad story fields' };
-  return { ok: true, value: raw as unknown as StoryState };
+  return { ok: true, value: migrateStory(raw as unknown as StoryState) };
 }
 
 export interface StoryStoreOptions {
