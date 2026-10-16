@@ -43,7 +43,7 @@ const CAREER_FLUSH_SECONDS = 30;
 import { SceneKeys } from './keys';
 import { Button } from './ui/Button';
 import { COACH_OVERLAY_DEPTH, CoachOverlay } from './ui/CoachOverlay';
-import { PlayerArt } from '../render/art/playerArt';
+import { PLAYER_ART, PlayerArt } from '../render/art/playerArt';
 import { sideLooks, type ProtagonistLook, type RosterLook } from '../render/art/roster';
 import { SPRITE_FRAME, dirFromScreen, type PoseKind } from '../render/art/spriteFactory';
 
@@ -1710,7 +1710,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     u.lineStyle(3, PALETTE.mustard, hasBall ? 1 : 0.5);
     u.strokeEllipse(ring.x, ring.y, ring.w, ring.h);
     const head = toScreen(L, ctrl.pos);
-    const top = head.y - playerH - 5;
+    // Above the oversized sprite's visible head, not the old placeholder height.
+    const top = head.y - playerH * PLAYER_ART.bodyScale - 5;
     const tri = Math.max(6, playerH * 0.16);
     o.fillStyle(PALETTE.mustard, hasBall ? 1 : 0.5);
     o.lineStyle(2, PALETTE.ink, 1);

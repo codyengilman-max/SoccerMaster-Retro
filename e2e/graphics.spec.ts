@@ -107,6 +107,9 @@ test('Art Gallery is reachable from Review & Lab, lists every asset with its sta
       return v!;
     })();
     if (g.page.kind === 'assets') g.shown.forEach((id) => seen.add(id));
+    // Only the visible page stays decoded (no textures from pages already left).
+    const resident = ((await diagnostics(page)).textureKeys as readonly string[]).filter((k) => k.startsWith('art-v1:'));
+    expect(resident.length).toBeLessThanOrEqual(g.page.kind === 'assets' ? 6 : 0);
     if (g.page.kind === 'gaps') expect(g.gaps).toBeGreaterThan(0);
     await press(page, 'gallery-next', mode);
   }

@@ -70,7 +70,18 @@ export class ArtGalleryScene extends Phaser.Scene {
   private onLoaded(key: string): void {
     if (this.loadedKeys.has(key) || !key.startsWith('art-v1:')) return;
     this.loadedKeys.add(key);
-    this.render();
+    if (this.shown.some((id) => artTextureKey(id) === key)) this.render();
+    else this.evictOffPage();
+  }
+
+  /** Keep only the visible asset page decoded; a finished request for a page already left is dropped. */
+  private evictOffPage(): void {
+    const keep = new Set(this.shown.map(artTextureKey));
+    for (const k of [...this.loadedKeys]) {
+      if (keep.has(k)) continue;
+      if (this.textures.exists(k)) this.textures.remove(k);
+      this.loadedKeys.delete(k);
+    }
   }
 
   private clear(): void {
@@ -115,9 +126,13 @@ export class ArtGalleryScene extends Phaser.Scene {
       this.title.setText(`Art Gallery · ${ART_REVISION} · cutscene art ${p.index + 1}/${Math.ceil(ART_ASSETS.length / PER_PAGE)} · review only`);
       this.drawAssets(list, area, portrait ? 2 : 3, fs);
     } else if (p.kind === 'gameplay') {
+      this.shown = [];
+      this.evictOffPage();
       this.title.setText(`Art Gallery · gameplay players (STYLE_APPROVED look, ported reference factory)`);
       this.drawGameplay(area, fs);
     } else {
+      this.shown = [];
+      this.evictOffPage();
       this.title.setText('Art Gallery · known gaps (not invented)');
       this.body.setFontSize(fs).setWordWrapWidth(area.width, true).setPosition(area.x, area.y).setText(ART_GAPS.map((s) => `• ${s}`).join('\n\n'));
     }
@@ -146,6 +161,7 @@ export class ArtGalleryScene extends Phaser.Scene {
     for (const id of want) this.load.image(artTextureKey(id), artUrl(id)!);
     if (want.length && !this.load.isLoading()) this.load.start();
     this.shown = list.map((a) => a.assetId);
+    this.evictOffPage();
   }
 
   private drawGameplay(area: Rect, fs: number): void {
