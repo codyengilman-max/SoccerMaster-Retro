@@ -64,3 +64,20 @@ describe('FIFA feel measurements', () => {
     expect(Object.values(m).every(Number.isFinite)).toBe(true);
   });
 });
+
+describe('FIFA locomotion targets (set before tuning)', () => {
+  const m = measure();
+  it('close control: slow, tight turns, quick reversals', () => {
+    expect(m['speed@0.3']).toBeGreaterThanOrEqual(1.2);
+    expect(m['speed@0.3']).toBeLessThanOrEqual(2.4);
+    expect(m['turn90s@0.3']).toBeLessThanOrEqual(0.12);
+    expect(m['reverse@0.3']).toBeLessThanOrEqual(0.25);
+  });
+  it('running: same top speed, momentum-limited turns and a braking reversal', () => {
+    expect(Math.abs(m['speed@1']! - 5.2)).toBeLessThanOrEqual(0.1);
+    expect(m['turn90s@1']).toBeGreaterThanOrEqual(0.38 - 1e-9);
+    expect(m['turn90s@1']).toBeLessThanOrEqual(0.6);
+    expect(m['reverse@1']).toBeGreaterThanOrEqual(0.7);
+    expect(m['reverse@1']).toBeLessThanOrEqual(1.0);
+  });
+});
