@@ -83,6 +83,8 @@ export interface PadState {
   phase: PadPhase;
   /** Mid-reversal brake at running pace (FIFA-style momentum); cleared when slow enough or the turn eases. */
   braking: boolean;
+  /** BLOCK held near an opponent carrier: auto-tracking goal-side of them. */
+  jockeying: boolean;
   actor: MatchPlayerId | null;
   since: number;
   /** controlEpoch and ownedSince when the action began: any change invalidates a kick. */

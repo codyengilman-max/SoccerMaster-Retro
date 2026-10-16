@@ -214,6 +214,19 @@ export const MATCH_TUNING = {
     pressureRadius: 3.5,
     blockSpeedFactor: 0.55,
     blockTurnRate: 5,
+    /** BLOCK held near an opponent carrier: FIFA-style jockey (goal-side, lateral mirror, speed matched to the carrier). */
+    jockey: {
+      radius: 7,
+      /** Yards kept between defender and carrier, on the carrier-to-own-goal line. */
+      gap: 1.8,
+      /** Seconds of carrier velocity the defender mirrors ahead. */
+      lookahead: 0.25,
+      /** Yards the stick can shade the defender off that line (left/right of the carrier). */
+      stickShade: 1.2,
+      gain: 3,
+      /** Speed floor so a stationary carrier can still be closed down slowly. */
+      minSpeed: 1.5,
+    },
     blockHalfWidth: 1.1,
     blockDepth: 0.6,
     blockRestitution: 0.45,

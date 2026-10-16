@@ -597,7 +597,8 @@ export class MatchSim {
 
   private newPad(): PadState {
     return {
-      stick: vec(0, 0), facing: vec(1, 0), phase: 'ready', braking: false, actor: null, since: 0, epoch: -1, ownedSince: -1, chargeStart: 0,
+      stick: vec(0, 0), facing: vec(1, 0), phase: 'ready', braking: false,
+      jockeying: false, actor: null, since: 0, epoch: -1, ownedSince: -1, chargeStart: 0,
       receiver: null, locked: null, slideDir: null, ballTouchedAt: null, bodyResolved: false, lastCmdId: 0, readyAt: 0,
     };
   }
@@ -895,6 +896,45 @@ export class MatchSim {
   }
 
   /** Stick-driven velocity for the controlled player: pace caps speed, acceleration and agility shape how it is reached. */
+  /**
+   * Jockey: hold a point goal-side of the opponent carrier (mirroring their run a beat ahead), shaded by the stick,
+   * never closer than the gap, at no more than the carrier's speed. Null when no opponent carrier is in range.
+   */
+  private jockeyVelocity(p: MatchPlayer): { desired: MutableVec2; accel: number } | null {
+    const s = this.s;
+    const pad = s.pad;
+    const T = this.tuning;
+    const J = T.pad.jockey;
+    const owner = s.ball.owner ? s.players[s.ball.owner] : null;
+    if (!owner || owner.team === p.team || distance(owner.pos, p.pos) > J.radius) {
+      pad.jockeying = false;
+      return null;
+    }
+    pad.jockeying = true;
+    const P = T.pitch;
+    const goal = toWorld(p.team, vec(0, P.goalCenterY), T);
+    const cx = owner.pos.x + owner.vel.x * J.lookahead;
+    const cy = owner.pos.y + owner.vel.y * J.lookahead;
+    let gx = goal.x - cx;
+    let gy = goal.y - cy;
+    const gl = Math.hypot(gx, gy) || 1;
+    gx /= gl;
+    gy /= gl;
+    // Stick shades the line sideways only (perpendicular to carrier→goal), so pushing at the carrier can't overcommit.
+    const side = pad.stick.x * -gy + pad.stick.y * gx;
+    const tx = cx + gx * J.gap + -gy * side * J.stickShade;
+    const ty = cy + gy * J.gap + gx * side * J.stickShade;
+    let dx = (tx - p.pos.x) * J.gain;
+    let dy = (ty - p.pos.y) * J.gain;
+    const cap = Math.min(T.movement.chaseSpeed * p.attrs.pace, Math.max(J.minSpeed, length(owner.vel)));
+    const want = Math.hypot(dx, dy);
+    if (want > cap) {
+      dx *= cap / want;
+      dy *= cap / want;
+    }
+    return { desired: vec(dx, dy), accel: T.movement.sprintAccel * p.attrs.accel * p.attrs.agility };
+  }
+
   private padVelocity(p: MatchPlayer): { desired: MutableVec2; accel: number } {
     const s = this.s;
     const T = this.tuning;
@@ -907,7 +947,12 @@ export class MatchSim {
     if (mine && pad.phase === 'slideRecovery') return { desired: vec(0, 0), accel: 25 };
     const carrying = s.ball.owner === p.id;
     let top = (carrying ? T.carrier.speed * (0.85 + 0.15 * A.control) : T.movement.chaseSpeed) * A.pace;
-    if (mine && pad.phase === 'blocking') top *= T.pad.blockSpeedFactor;
+    if (p.id === s.controlledId && pad.phase !== 'blocking') pad.jockeying = false;
+    if (mine && pad.phase === 'blocking') {
+      const j = this.jockeyVelocity(p);
+      if (j) return j;
+      top *= T.pad.blockSpeedFactor;
+    }
     const desired = scale(pad.stick, top);
     if (carrying) {
       if (length(pad.stick) > 0.05) s.dribbleDir = normalize(pad.stick);

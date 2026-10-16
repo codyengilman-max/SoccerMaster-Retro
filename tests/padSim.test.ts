@@ -467,3 +467,73 @@ describe('pad review fixes', () => {
     expect(sim.state.players.H5.attrs.pace).toBe(1);
   });
 });
+
+describe('BLOCK-hold jockeying (FIFA-style)', () => {
+  // A6 carries laterally (+y) at a fixed pace; H4 is the user's defender, goal-side (home defends x = 0).
+  function jockey(hold: boolean, stickX = 0, stickY = 0, laneSpeed = 3) {
+    const sim = padSim();
+    for (const id of TEAM_PLAYER_IDS.home) if (id !== 'H1') place(sim, id, { x: 3, y: 3 + Number(id.slice(1)) * 4 });
+    give(sim, 'A6', { x: 30, y: 18 }, 'H4');
+    place(sim, 'H4', { x: 27, y: 18 });
+    stick(sim, stickX, stickY);
+    if (hold) expect(press(sim, 'block')).toBe(true);
+    let maxSpeed = 0;
+    let minGap = Infinity;
+    for (let i = 0; i < 90; i++) {
+      sim.arrange((s) => {
+        const c = s.players.A6;
+        c.pos = { x: 30, y: 18 + laneSpeed * (i * F) };
+        c.vel = { x: 0, y: laneSpeed };
+        s.ball.pos = { x: c.pos.x - 0.6, y: c.pos.y };
+        s.ball.vel = { x: 0, y: laneSpeed };
+        s.ball.owner = 'A6';
+        s.protectUntil = s.simTime + 5;
+        s.nextDecisionAt = s.simTime + 5;
+      });
+      sim.step(F);
+      if (i > 20) maxSpeed = Math.max(maxSpeed, speed(sim, 'H4'));
+      minGap = Math.min(minGap, Math.hypot(sim.state.players.H4.pos.x - sim.state.players.A6.pos.x, sim.state.players.H4.pos.y - sim.state.players.A6.pos.y));
+    }
+    const d = sim.state.players.H4.pos;
+    const c = sim.state.players.A6.pos;
+    return { sim, dx: c.x - d.x, dy: Math.abs(c.y - d.y), maxSpeed, minGap };
+  }
+
+  it('tracks goal-side and mirrors a lateral run with the stick neutral', () => {
+    const r = jockey(true);
+    expect(r.sim.state.pad.jockeying).toBe(true);
+    expect(r.dx).toBeGreaterThan(0.8); // between the carrier and the home goal
+    expect(r.dy).toBeLessThan(1.2); // mirrored the 4.5-yard lateral run
+    // Without the modifier the same neutral stick leaves the defender behind.
+    expect(jockey(false).dy).toBeGreaterThan(3);
+  });
+
+  it("caps the defender's speed at the carrier's", () => {
+    const r = jockey(true, 0, 0, 2.5);
+    expect(r.maxSpeed).toBeLessThan(2.5 + 0.15);
+  });
+
+  it('pushing the stick at the carrier shades sideways but never overcommits', () => {
+    const r = jockey(true, 1, 0);
+    expect(r.minGap).toBeGreaterThan(T.pad.jockey.gap * 0.7);
+    expect(r.dx).toBeGreaterThan(0.8);
+    // Against a standing carrier, stick +y shades the defender to the +y side of the line, bounded by stickShade.
+    const side = jockey(true, 0, 1, 0);
+    const c = side.sim.state.players.A6.pos;
+    const d = side.sim.state.players.H4.pos;
+    const g = { x: 0 - c.x, y: T.pitch.goalCenterY - c.y };
+    const gl = Math.hypot(g.x, g.y);
+    // Signed distance off the carrier→goal line, on the +y side.
+    const off = ((d.x - c.x) * -g.y + (d.y - c.y) * g.x) / gl;
+    expect(Math.abs(off)).toBeGreaterThan(0.6);
+    expect(Math.abs(off)).toBeLessThan(T.pad.jockey.stickShade + 0.2);
+    expect(d.y).toBeGreaterThan(c.y);
+  });
+
+  it('turns off when the carrier is out of range or BLOCK is released', () => {
+    const r = jockey(true);
+    expect(release(r.sim, 'block')).toBe(true);
+    r.sim.step(F);
+    expect(r.sim.state.pad.jockeying).toBe(false);
+  });
+});
