@@ -107,6 +107,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private fieldKey = '';
   private fps = 0;
   private toastMessage = '';
+  /** Team Training feedback is not replaced by routine notices ("You control …") until it expires. */
+  private toastPriorityUntil = 0;
   private toastUntil = 0;
   private bannerMessage = '';
   private field!: Phaser.GameObjects.Graphics;
@@ -179,6 +181,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.fieldKey = '';
     this.viewLen = 0;
     this.toastMessage = '';
+    this.toastPriorityUntil = 0;
     this.toastUntil = 0;
     const params = new URLSearchParams(window.location.search);
     const seed = Number(params.get('seed') ?? '1') || 1;
@@ -1004,7 +1007,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       if (!save.player) {
         team.phase = 'done';
         team.message = 'Create your player first.';
-        this.toast(team.message);
+        this.toast(team.message, 60_000, true);
         return;
       }
       team.week = save.week;
@@ -1029,7 +1032,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     t.observer = new SituationObserver(sit, this.sim.state);
     this.snapCamera();
     this.lastSeq = 0;
-    this.toast(`${prefix}Team Training ${t.index + 1}/${t.situations.length}: ${sit.title}. ${sit.goal}`, 4500);
+    this.toast(`${prefix}Team Training ${t.index + 1}/${t.situations.length}: ${sit.title}. ${sit.goal}`, 4500, true);
   }
 
   private updateTeamTraining(): void {
@@ -1053,7 +1056,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       if (this.team !== t || !this.sys.isActive()) return;
       t.phase = 'done';
       t.message = out.ok ? out.message : out.error;
-      this.toast(`${last}${t.message}  Press Menu to return.`, 60_000);
+      this.toast(`${last}${t.message}  Press Menu to return.`, 60_000, true);
     });
   }
 
@@ -1243,7 +1246,10 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     store.close();
   }
 
-  private toast(message: string, ms = 1500): void {
+  private toast(message: string, ms = 1500, priority = false): void {
+    const now = performance.now();
+    if (!priority && this.toastPriorityUntil > now) return;
+    if (priority) this.toastPriorityUntil = now + ms;
     this.toastMessage = message;
     this.toastUntil = performance.now() + ms;
   }
@@ -1794,7 +1800,12 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.bannerText.setVisible(banner !== '' && !s.paused).setText(banner).setPosition(width / 2, height / 2);
     const toastOn = this.toastUntil > performance.now() && !s.paused;
     this.toastText.setVisible(toastOn);
-    if (toastOn) this.toastText.setText(this.toastMessage).setPosition(width / 2, Math.max(this.viewRect().y, this.minimapRect().y + this.minimapRect().height) + 18);
+    if (toastOn) {
+      // Long Team Training feedback wraps inside the screen instead of running off both edges.
+      this.toastText.setWordWrapWidth(Math.max(120, width - 32), true).setAlign('center').setText(this.toastMessage);
+      const top = Math.max(this.viewRect().y, this.minimapRect().y + this.minimapRect().height) + 8;
+      this.toastText.setPosition(width / 2, top + this.toastText.height / 2);
+    }
     this.drawMinimap(g);
     const portrait = orientationOf({ width, height }) === 'portrait';
     const mm = this.minimapRect();
