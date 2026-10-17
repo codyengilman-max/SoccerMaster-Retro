@@ -6,14 +6,16 @@ export interface CamPoint {
 }
 
 /**
- * Fixed close framing for the ball-focused dribbling camera (owner request 2026-10-17): short range,
- * low viewing angle, close zoom. Landscape shows this many yards of pitch length; portrait this many
+ * Fixed framing for the ball-focused dribbling camera (owner request 2026-10-17, FIFA "Dynamic" reference):
+ * short range, low viewing angle with real perspective, close zoom. Landscape shows this many yards of pitch length; portrait this many
  * across. `tilt` foreshortens the depth axis on screen to suggest a low camera height.
  */
 export const CAMERA_VIEW = {
-  landscapeLength: 22,
-  portraitCross: 16,
-  landscapeTilt: 0.42,
+  landscapeLength: 32,
+  portraitCross: 22,
+  landscapeTilt: 0.5,
+  /** Perspective strength: the far screen edge is drawn at about 1 / (1 + perspective) of the anchor size. */
+  perspective: 0.3,
 } as const;
 
 /** Visible span in yards: pitch length in landscape, pitch width (across) in portrait. */

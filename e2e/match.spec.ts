@@ -178,8 +178,8 @@ test('close ball camera: fixed span, ball-centred, never compounds over resets a
     const errors = trackConsoleErrors(page);
     const mode = modeFor(info);
     const expectSpan = (r: MatchReport) => {
-      if (r.layout.orientation === 'landscape') expect(r.camera.viewLength).toBeCloseTo(22, 6);
-      else expect(r.camera.viewCross).toBeCloseTo(16, 6);
+      if (r.layout.orientation === 'landscape') expect(r.camera.viewLength).toBeCloseTo(32, 6);
+      else expect(r.camera.viewCross).toBeCloseTo(22, 6);
     };
     {
       let r = await openSandbox(page, mode, '1-3-2-3', '&sandbox&zoom=1.4');

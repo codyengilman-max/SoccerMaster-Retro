@@ -10,7 +10,11 @@ import {
   pitchVectorToScreen,
   rectToScreen,
   screenVectorToPitch,
-  fromScreen, toScreen,
+  depthScaleAt,
+  fromScreen,
+  quadToScreen,
+  toScreen,
+  withPerspective,
   type Insets,
   type PitchLayout,
 } from '../render/layout';
@@ -1231,6 +1235,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       0,
       f.portrait ? 1 : SIDELINE_SQUASH,
     );
+    // Low camera: perspective anchored on the camera focus (the ball), scaled to the view height.
+    const availH = Math.max(1, height - f.insets.top - f.insets.bottom);
+    this.pitchLayout = withPerspective(this.pitchLayout, toScreen(this.pitchLayout, c), CAMERA_VIEW.perspective / (availH / 2));
   }
 
   /** On-screen part of the pitch (the follow camera crops it). */
@@ -1395,20 +1402,18 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const L = this.pitchLayout;
     const m = this.markings;
     const P = U11_9V9_PITCH;
-    const key = `${width}x${height}:${L.orientation}:${L.originX.toFixed(2)},${L.originY.toFixed(2)},${L.scale.toFixed(4)},${L.crossScale.toFixed(4)},${L.pitchLength.toFixed(3)},${L.pitchWidth.toFixed(3)}`;
+    const key = `${width}x${height}:${L.orientation}:${L.originX.toFixed(2)},${L.originY.toFixed(2)},${L.scale.toFixed(4)},${L.crossScale.toFixed(4)},${L.pitchLength.toFixed(3)},${(L.persp ?? 0).toFixed(6)},${(L.anchorX ?? 0).toFixed(2)},${(L.anchorY ?? 0).toFixed(2)},${L.pitchWidth.toFixed(3)}`;
     if (key === this.fieldKey) return;
     this.fieldKey = key;
     g.clear();
     g.fillStyle(PALETTE.track, 1);
     g.fillRect(0, 0, width, height);
-    const surround = rectToScreen(L, { x: -3, y: -2, width: P.length + 6, height: P.width + 4 });
     g.fillStyle(PALETTE.surround, 1);
-    g.fillRect(surround.x, surround.y, surround.width, surround.height);
+    g.fillPoints(quadToScreen(L, { x: -3, y: -2, width: P.length + 6, height: P.width + 4 }), true);
     const stripes = 15;
     for (let i = 0; i < stripes; i++) {
-      const r = rectToScreen(L, { x: (i * P.length) / stripes, y: 0, width: P.length / stripes, height: P.width });
       g.fillStyle(i % 2 === 0 ? PALETTE.grassLight : PALETTE.grassDark, 1);
-      g.fillRect(r.x, r.y, r.width, r.height);
+      g.fillPoints(quadToScreen(L, { x: (i * P.length) / stripes, y: 0, width: P.length / stripes, height: P.width }), true);
     }
     const lw = Math.max(2, L.scale * 0.2);
     const line = (points: readonly Vec2[]): void => {
@@ -1436,16 +1441,16 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     g.fillStyle(PALETTE.line, 1);
     for (const p of [...m.penaltyMarks, m.centerSpot]) {
       const sp = toScreen(L, p);
-      g.fillCircle(sp.x, sp.y, Math.max(2, L.scale * 0.22));
+      g.fillCircle(sp.x, sp.y, Math.max(2, L.scale * 0.22 * depthScaleAt(L, sp.y)));
     }
     for (const goal of m.goals) {
-      const r = rectToScreen(L, goal);
+      const q = quadToScreen(L, goal);
       g.fillStyle(PALETTE.net, 0.45);
-      g.fillRect(r.x, r.y, r.width, r.height);
+      g.fillPoints(q, true);
       g.lineStyle(lw + 3, PALETTE.ink, 1);
-      g.strokeRect(r.x, r.y, r.width, r.height);
+      g.strokePoints(q, true);
       g.lineStyle(lw + 1, PALETTE.cream, 1);
-      g.strokeRect(r.x, r.y, r.width, r.height);
+      g.strokePoints(q, true);
     }
   }
 
@@ -1484,12 +1489,14 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const o = this.over;
     u.clear();
     o.clear();
-    const playerH = Phaser.Math.Clamp(L.scale * 2.7, 24, 120);
+    // Ball camera: players smaller relative to the pitch than the old close framing (FIFA Dynamic reference).
+    const playerH = Phaser.Math.Clamp(L.scale * 2.1, 22, 100);
     const ballSize = Phaser.Math.Clamp(L.scale * 0.85, 9, 32);
     const ellipse = (center: Vec2, r: number): { x: number; y: number; w: number; h: number } => {
       const sp = toScreen(L, center);
       const v = pitchVectorToScreen(L, { x: r, y: r });
-      return { x: sp.x, y: sp.y, w: Math.abs(v.x) * 2, h: Math.abs(v.y) * 2 };
+      const k = depthScaleAt(L, sp.y);
+      return { x: sp.x, y: sp.y, w: Math.abs(v.x) * 2 * k, h: Math.abs(v.y) * 2 * k };
     };
     const artScale = PlayerArt.scaleFor(playerH);
     // Run cycle advances with sim time, so pauses, Coach cards and slow motion freeze/slow it with play.
@@ -1499,7 +1506,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       const p = s.players[id];
       const sp = toScreen(L, p.pos);
       const img = this.sprites[id];
-      img.setTexture(this.artFrame(id, L, simDt)).setScale(artScale.x, artScale.y).setPosition(sp.x, sp.y).setDepth(100 + sp.y).setAngle(0);
+      const k = depthScaleAt(L, sp.y);
+      img.setTexture(this.artFrame(id, L, simDt)).setScale(artScale.x * k, artScale.y * k).setPosition(sp.x, sp.y).setDepth(100 + sp.y).setAngle(0);
       const e = ellipse(p.pos, 0.85);
       u.fillStyle(PALETTE.shadow, 0.3);
       u.fillEllipse(e.x, e.y, e.w, e.h);
@@ -1514,8 +1522,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     u.strokeEllipse(ring.x, ring.y, ring.w, ring.h);
     const head = toScreen(L, ctrl.pos);
     // Above the oversized sprite's visible head, not the old placeholder height.
-    const top = head.y - playerH * PLAYER_ART.bodyScale - 5;
-    const tri = Math.max(6, playerH * 0.16);
+    const headK = depthScaleAt(L, head.y);
+    const top = head.y - playerH * headK * PLAYER_ART.bodyScale - 5;
+    const tri = Math.max(6, playerH * headK * 0.16);
     o.fillStyle(PALETTE.mustard, hasBall ? 1 : 0.5);
     o.lineStyle(2, PALETTE.ink, 1);
     o.fillTriangle(head.x - tri, top - tri * 1.2, head.x + tri, top - tri * 1.2, head.x, top);
@@ -1525,7 +1534,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const be = ellipse(s.ball.pos, 0.45);
     u.fillStyle(PALETTE.shadow, 0.35);
     u.fillEllipse(be.x, be.y, be.w, be.h);
-    this.ball.setScale(ballSize / BALL_TEXTURE_SIZE.width).setPosition(bp.x, bp.y - ballSize * 0.45).setDepth(100 + bp.y + 0.5);
+    const bk = depthScaleAt(L, bp.y);
+    this.ball.setScale((ballSize * bk) / BALL_TEXTURE_SIZE.width).setPosition(bp.x, bp.y - ballSize * bk * 0.45).setDepth(100 + bp.y + 0.5);
 
     this.drawAimGuide(playerH);
     this.drawCoach(playerH);

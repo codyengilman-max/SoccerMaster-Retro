@@ -10,7 +10,7 @@ import {
   viewSpan,
   type CameraInput,
 } from '../src/render/camera';
-import { fitRegion, screenVectorToPitch, type PitchLayout } from '../src/render/layout';
+import { depthScaleAt, fitRegion, fromScreen, screenVectorToPitch, toScreen, withPerspective, type PitchLayout } from '../src/render/layout';
 
 const { MatchSim } = match;
 const VIEW = { width: 844, height: 390 };
@@ -46,12 +46,13 @@ const unit = (v: { x: number; y: number }) => {
 };
 
 describe('close ball camera framing', () => {
-  it('is one fixed, close span with a low (foreshortened) landscape angle; nothing compounds', () => {
-    // Closer than the previous default framing (40/1.5 yards landscape, 28/1.5 portrait).
+  it('is one fixed, short-range span with a low (foreshortened, perspective) angle; nothing compounds', () => {
+    // Shorter range than the old 40-yard baseline, with real perspective.
     expect(viewSpan('landscape')).toBe(CAMERA_VIEW.landscapeLength);
-    expect(viewSpan('landscape')).toBeLessThan(40 / 1.5);
-    expect(viewSpan('portrait')).toBeLessThan(28 / 1.5);
-    expect(CAMERA_VIEW.landscapeTilt).toBeLessThan(0.55);
+    expect(viewSpan('landscape')).toBeLessThan(40);
+    expect(viewSpan('portrait')).toBeLessThan(28);
+    expect(CAMERA_VIEW.landscapeTilt).toBeLessThan(1);
+    expect(CAMERA_VIEW.perspective).toBeGreaterThan(0);
     const first = viewSpan('landscape');
     for (let i = 0; i < 50; i++) expect(viewSpan('landscape')).toBe(first);
   });
@@ -253,5 +254,46 @@ describe('off-screen aim guide', () => {
     const d = clipToRect({ x: 400, y: 200 }, { x: 400 - 1000, y: 200 - 1000 }, rect);
     expect(d.end.y).toBeCloseTo(8, 9);
     expect(d.end.x).toBeCloseTo(208, 9);
+  });
+});
+
+describe('low-camera perspective projection', () => {
+  const flat = layoutAt({ x: 40, y: 25 });
+  const anchor = toScreen(flat, { x: 40, y: 25 });
+  const L = withPerspective(flat, anchor, CAMERA_VIEW.perspective / (VIEW.height / 2));
+
+  it('is the identity at the anchor and round-trips through fromScreen', () => {
+    const a = toScreen(L, { x: 40, y: 25 });
+    expect(a.x).toBeCloseTo(anchor.x, 9);
+    expect(a.y).toBeCloseTo(anchor.y, 9);
+    expect(depthScaleAt(L, anchor.y)).toBe(1);
+    for (const p of [{ x: 30, y: 15 }, { x: 52, y: 33 }, { x: 41, y: 20 }]) {
+      const back = fromScreen(L, toScreen(L, p));
+      expect(back.x).toBeCloseTo(p.x, 6);
+      expect(back.y).toBeCloseTo(p.y, 6);
+    }
+  });
+
+  it('draws the far side narrower and smaller than the near side, and keeps pitch lines straight', () => {
+    const far = [toScreen(L, { x: 30, y: 15 }), toScreen(L, { x: 50, y: 15 })];
+    const near = [toScreen(L, { x: 30, y: 35 }), toScreen(L, { x: 50, y: 35 })];
+    expect(far[1]!.x - far[0]!.x).toBeLessThan(near[1]!.x - near[0]!.x);
+    expect(depthScaleAt(L, far[0]!.y)).toBeLessThan(1);
+    expect(depthScaleAt(L, near[0]!.y)).toBeGreaterThan(1);
+    // A touchline-to-touchline line stays straight: its midpoint lies on the projected segment.
+    const a = toScreen(L, { x: 35, y: 15 });
+    const b = toScreen(L, { x: 45, y: 35 });
+    const m = toScreen(L, { x: 40, y: 25 });
+    const cross = (b.x - a.x) * (m.y - a.y) - (b.y - a.y) * (m.x - a.x);
+    expect(Math.abs(cross)).toBeLessThan(1e-6 * Math.hypot(b.x - a.x, b.y - a.y) ** 2 + 1e-6);
+  });
+
+  it('the joystick direction at the ball is unchanged by perspective', () => {
+    for (const v of [{ x: 1, y: 0 }, { x: 0.6, y: -0.8 }, { x: -0.3, y: 0.95 }]) {
+      const a = unit(screenVectorToPitch(flat, v));
+      const b = unit(screenVectorToPitch(L, v));
+      expect(b.x).toBeCloseTo(a.x, 9);
+      expect(b.y).toBeCloseTo(a.y, 9);
+    }
   });
 });
