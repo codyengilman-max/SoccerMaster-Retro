@@ -87,6 +87,34 @@ describe('weekly Team Training from the soccer-logic catalog', () => {
     expect(played.score).toBeGreaterThan(idle.score);
   });
 
+  it('defending by hand (staying close and goal-side) beats letting the engine do it', () => {
+    const sit = TEAM_TRAINING_SITUATIONS.find((s) => s.id === 'CB04')!;
+    const idle = run(sit);
+    let ids = 0;
+    const played = run(sit, 3, (sim) => {
+      // Step goal-side of the ball and hold BLOCK when the carrier is close, as a player would.
+      const s = sim.state;
+      const owner = s.ball.owner;
+      const me = s.players[s.controlledId];
+      const at = owner ? s.players[owner].pos : s.ball.pos;
+      const dx = at.x - 2 - me.pos.x;
+      const dy = at.y - me.pos.y;
+      const m = Math.hypot(dx, dy) || 1;
+      sim.command({ type: 'padMove', x: dx / m, y: dy / m });
+      const near = !!owner && s.players[owner].team === 'away' && Math.hypot(at.x - me.pos.x, at.y - me.pos.y) < 6;
+      if (near && s.pad.phase === 'ready') sim.command({ type: 'padPress', id: ++ids, action: 'block' });
+      if (!near && s.pad.phase === 'blocking') sim.command({ type: 'padRelease', id: ++ids, action: 'block' });
+    });
+    expect(played.score).toBeGreaterThan(idle.score + 0.2);
+  });
+
+  it('a player who does nothing has a poor week in every situation', () => {
+    for (const sit of TEAM_TRAINING_SITUATIONS) {
+      for (const seed of [3, 11]) expect(run(sit, seed).score, `${sit.id} seed ${seed}`).toBeLessThan(0.5);
+    }
+    for (const pos of POSITIONS) expect(weekDelta(selectSituations(pos, 1).map((s) => run(s).score))).toBe(-1);
+  });
+
   it('maps the week average to +2 / +1 / 0 / -1', () => {
     expect(weekDelta([1, 0.8, 0.75])).toBe(2);
     expect(weekDelta([0.6, 0.5, 0.4])).toBe(1);

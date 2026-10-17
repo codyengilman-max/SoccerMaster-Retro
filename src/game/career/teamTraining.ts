@@ -37,7 +37,7 @@ export const TEAM_TRAINING_SITUATIONS: readonly TeamTrainingSituation[] = [
   S({ id: 'DEF01', kind: 'defend', title: 'Press a poor touch', goal: 'Win the ball when their touch gets away. Back off if they control it first.', positions: ['DEF', 'FWD'], attributes: ['defending', 'awareness'], seconds: 8,
     fixture: { place: { A8: [33, 30], H4: [25, 28] }, carrier: null, ball: [31, 30], ballVel: [-3, 0] } }),
   S({ id: 'DT01', kind: 'defend', title: 'Win it straight back', goal: 'You just lost the ball. Press at once while it is close.', positions: ['DEF', 'MID'], attributes: ['defending', 'awareness'], seconds: 8,
-    fixture: { place: { A6: [36, 25], H6: [33.5, 24], H8: [40, 31] }, carrier: 'A6' } }),
+    fixture: { place: { A6: [36, 25], H6: [30.5, 23], H8: [41, 32] }, carrier: 'A6' } }),
   S({ id: 'SIX01', kind: 'attack', title: 'Receive under pressure', goal: 'A defender is right behind you. Shield, bounce it back or turn if it is safe.', positions: ['MID'], attributes: ['firstTouch', 'passing'], seconds: 10,
     fixture: { place: { H6: [30, 25], A8: [32.5, 25.5], H7: [40, 36], H9: [44, 19] }, carrier: 'H6' } }),
   S({ id: 'SIX04', kind: 'attack', title: 'Win it and play forward', goal: 'Get to the loose ball first, then play forward if there is a chance.', positions: ['MID'], attributes: ['passing', 'awareness'], seconds: 10,
@@ -84,6 +84,8 @@ const OPEN_YARDS = 3;
 const SENSIBLE_SHOT_YARDS = 20;
 const PROGRESS_YARDS = 6;
 const SETTLE_SECONDS = 1;
+const DEFEND_YARDS = 6;
+const ACTIVE_SECONDS = 1;
 
 const dist = (a: { x: number; y: number }, b: { x: number; y: number }): number => Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -110,6 +112,9 @@ export class SituationObserver {
   private awayShots = 0;
   private turnover = false;
   private wonBack = false;
+  private teamWonBack = false;
+  private prevControlled: MatchPlayerId;
+  private activeAt = -Infinity;
   private goalFor = false;
   private goalAgainst = false;
   private sideN = 0;
@@ -124,6 +129,7 @@ export class SituationObserver {
     this.startScore = { home: s.score.home, away: s.score.away };
     this.lastSeq = s.events.reduce((m, e) => Math.max(m, e.seq), 0);
     this.owner = s.ball.owner;
+    this.prevControlled = s.controlledId;
   }
 
   get finished(): boolean {
@@ -139,6 +145,10 @@ export class SituationObserver {
   step(s: MatchState): boolean {
     if (this.done) return true;
     const attack = this.situation.kind === 'attack';
+    // Defending credit needs the user's own input (stick, BLOCK or a slide), not the engine's assists.
+    const pad = s.pad;
+    if (Math.hypot(pad.stick.x, pad.stick.y) > 0.2 || pad.jockeying || pad.phase === 'blocking' || pad.phase === 'slideStart' || pad.phase === 'slideActive') this.activeAt = s.simTime;
+    const active = s.simTime - this.activeAt <= ACTIVE_SECONDS;
     // Progress only counts while the home team still has the ball.
     if (!this.turnover && s.possession === 'home') this.maxBallX = Math.max(this.maxBallX, s.ball.pos.x);
     for (const e of s.events) {
@@ -184,16 +194,22 @@ export class SituationObserver {
           this.pendingShot = null;
         }
         if (p.team === 'away' && attack) this.turnover = true;
-        if (p.team === 'home' && !attack) this.wonBack = true;
+        // Only the player the user was controlling earns the win; a computer teammate's win is part credit.
+        if (p.team === 'home' && !attack) {
+          if (owner === this.prevControlled && active) this.wonBack = true;
+          else this.teamWonBack = true;
+        }
       }
     }
     if (!attack && owner && s.players[owner].team === 'away') {
       const me = s.players[s.controlledId];
       const carrier = s.players[owner];
       this.sideN += 1;
-      if (me && me.pos.x < carrier.pos.x - 0.5) this.sideHit += 1;
+      // Goal-side and close enough to matter: standing still far away is not defending.
+      if (active && me && me.pos.x < carrier.pos.x - 0.5 && dist(me.pos, carrier.pos) <= DEFEND_YARDS) this.sideHit += 1;
     }
-    const over = attack ? this.turnover || this.goalFor || (this.shots > 0 && !this.pendingShot) : this.wonBack || this.goalAgainst;
+    this.prevControlled = s.controlledId;
+    const over = attack ? this.turnover || this.goalFor || (this.shots > 0 && !this.pendingShot) : this.wonBack || this.teamWonBack || this.goalAgainst;
     if (over && this.endAt === null) this.endAt = s.simTime + SETTLE_SECONDS;
     if (s.simTime - this.startTime >= this.situation.seconds || (this.endAt !== null && s.simTime >= this.endAt)) this.done = true;
     return this.done;
@@ -218,11 +234,13 @@ export class SituationObserver {
       score = secure + progress + product;
     } else {
       const side = this.sideN > 0 ? this.sideHit / this.sideN : this.wonBack ? 1 : 0;
-      notes.push(`Goal-side ${Math.round(side * 100)}% of the time.`);
-      const noGoal = this.goalAgainst ? 0 : 0.25;
+      notes.push(`Close and goal-side ${Math.round(side * 100)}% of the time.`);
+      // Not conceding and stopping shots only count when you were part of it.
+      const involved = this.wonBack || side >= 0.5;
+      const noGoal = this.goalAgainst ? 0 : involved ? 0.25 : 0.05;
       if (this.goalAgainst) notes.push('They scored.');
-      const win = this.wonBack ? 0.25 : this.awayShots === 0 && !this.goalAgainst ? 0.125 : 0;
-      notes.push(this.wonBack ? 'Won the ball back.' : win > 0 ? 'Kept them from shooting.' : 'They got a shot away.');
+      const win = this.wonBack ? 0.25 : this.teamWonBack ? 0.05 : involved && this.awayShots === 0 && !this.goalAgainst ? 0.125 : 0;
+      notes.push(this.wonBack ? 'Won the ball back.' : this.teamWonBack ? 'A teammate won it back.' : win > 0 ? 'Kept them from shooting.' : 'They got a shot away.');
       score = 0.5 * side + noGoal + win;
     }
     return { id: this.situation.id, score: Math.round(Math.min(1, Math.max(0, score)) * 1000) / 1000, notes };
