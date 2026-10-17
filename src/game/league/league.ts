@@ -4,7 +4,7 @@
  * Next Horizon is NOT ENTERED (package §08). Batavia's fixtures are the story's weekly matches;
  * other fixtures are simulated from a seed and labelled as such. Framework-free and deterministic.
  */
-import { createRng } from '../attack/rng';
+import { createRng } from '../rng';
 
 export const LEAGUE_VERSION = 1;
 export const LEAGUE_CLUBS = ['batavia', 'royal_salt', 'valley_rising', 'desert_tuzon', 'sol_vista'] as const;

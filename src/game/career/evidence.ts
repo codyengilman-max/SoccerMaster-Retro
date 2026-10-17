@@ -76,7 +76,7 @@ export class EvidenceCollector {
       const awayBy = e.by !== null && state.players[e.by]?.team === 'away';
       if (e.type === 'received' && mine) this.reception = { kind: 'firstTouch', at: e.at, situation: `recv-${zone}` };
       if (e.type === 'deflected' && mine) give({ kind: 'firstTouch', at: e.at, situation: `recv-${zone}` }, 0, 'Ball came off you');
-      if ((e.type === 'dribble' || e.type === 'feint') && mine && !this.carry && state.ball.owner === this.careerId)
+      if (e.type === 'dribble' && mine && !this.carry && state.ball.owner === this.careerId)
         this.carry = { kind: 'dribbling', at: e.at, situation: `carry-${zone}` };
       if ((e.type === 'pass' || e.type === 'shot') && mine) {
         if (this.reception) give(this.reception, 1, 'Kept it and played on'), (this.reception = null);

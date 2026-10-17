@@ -5,6 +5,16 @@
 - Weeks 2–4 dialogue approved: the on-screen "draft, awaiting review" line is gone (`WEEKS_2_4_OWNER_APPROVED`). `DRAFT_SCENES` stays as provenance (Devin wrote it from the outline).
 - All 28 Graphics v1.1 images approved (`OWNER_ART_APPROVAL`); the Gallery shows "Owner approved 2026-10-16". The package's `asset-manifest.json` is unchanged.
 
+## FIFA brief in full (branch `devin/1792190415-fifa-full`, PR #16, not merged, not deployed)
+
+- **Team Training feedback:** stage banners show the previous situation's score with `n/3`, wrap inside the screen, and the week result stays visible until Menu (routine "You control …" notices no longer replace it). Runtime-checked in phone emulation, portrait and landscape.
+- **CI note:** two GitHub runs each timed out on a different unchanged spec (desktop `match.spec` :49/:72, then phone-landscape `pad.spec` A03). Locally, `pad.spec` A03 fails the same way on `main` and on this branch when 4 workers share 2 cores (4/6 each), and passes 8/8 on both with one worker, so these are runner-load timeouts rather than a regression.
+
+- **Old gameplay removed:** the 3v2 Attack drill (`AttackScene`, `src/game/attack`), swipe/gesture controls, slow-motion aiming, the feint and the Lab's aim toggle. The 9v9 match runs only on the joystick plus PASS / SHOOT / SLIDE TACKLE / BLOCK. The story crossbar challenge keeps its own pull-back shot (`src/input/pull.ts`).
+- **Allocations:** state vectors updated in place, pooled AI scratch, regression test for vector identity and pool size. Measured about 3.3–5.5 KB per step against 29–91 KB before; not zero (see `docs/FIFA_MECHANICS.md`).
+- **Training library in Home Training:** all 100 draft options can be swapped into a scheduled session of the same focus or logged as extra practice, labelled "enabled by owner, not coach-certified". Credit rules unchanged (1 per scheduled session, max 3 a week, no attribute points).
+- **Weekly Team Training (soccer-logic catalog):** Career → Team Training plays three position-based catalog situations a week on the real match engine with the normal controls (12 of the 40 entries have typed fixtures and grading in `src/game/career/teamTraining.ts`; the 28 set-piece, aerial, goalkeeping and multi-runner entries stay inactive). The week's average gives +2 / +1 / 0 / −1 attribute points, never above potential or below the starting value 40, counted once per week (replays are practice only, leaving early counts nothing, saves validate the record). Grading thresholds are a first pass and need owner playtesting.
+
 ## FIFA-style mechanics (branch `feature/fifa-gameplay-mechanics`; merged to `main` once CI passes, not deployed to production)
 
 - **Locomotion:** a light stick push is close control (slow, tight turns); a full push runs with momentum; a sharp reversal brakes first, shorter with higher agility.
@@ -71,7 +81,7 @@ One build containing the gameplay-feel revision (PR #8), the training library v1
 
 Dribbling, passing, receiving and shooting feel: off-ball control, shared kick prediction, receivers that meet passes, aim-assist modes, follow camera and minimap, and a Gameplay Lab. See `docs/GAMEPLAY_FEEL.md`.
 
-Closer camera (pending the owner's iPhone pick): gameplay zoom 1.5× over the previous framing by default (landscape shows about 26.7 yd of pitch length instead of 40); 1.4× and 1.6× are selectable in the Lab (`Zoom` button) or with `?zoom=1.4|1.5|1.6`. Off-screen pass endpoints show an edge arrow.
+Ball camera (owner request, replaces the zoom-choice follow camera): one fixed close view centred on the ball, led a little along the ball's motion (≤ 4 yd) with a 2.5 yd attacking look-ahead while carried. Low camera with real perspective, after the owner's FIFA "Dynamic" reference: pitch lines converge toward the top of the screen and players, ball and shadows shrink with distance (`perspective` 0.3, anchored on the ball). Landscape shows 32 yd of pitch length (depth squash 0.5); portrait 22 yd across. Players are drawn smaller relative to the pitch (2.1 yd tall, was 2.7). The 1.4/1.5/1.6 zoom choices, `?zoom` and the Lab zoom toggle are removed. Owner iPhone check pending.
 
 ## Release integration: M4 core match flow + M5 + M6
 

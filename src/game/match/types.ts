@@ -1,5 +1,5 @@
 import type { Vec2 } from '../vec';
-import type { MutableVec2 } from '../attack/math';
+import type { MutableVec2 } from '../math';
 import type { FormationId, RoleId } from './formations';
 
 export type TeamId = 'home' | 'away';
@@ -120,7 +120,7 @@ export interface MatchBall {
 }
 
 /** `halftime` and `fulltime` exist only in a timed match (M4); the open-ended sandbox never reaches them. */
-export type MatchPhase = 'kickoff' | 'live' | 'aiming' | 'stopped' | 'halftime' | 'fulltime';
+export type MatchPhase = 'kickoff' | 'live' | 'stopped' | 'halftime' | 'fulltime';
 
 /** Formal match clock. Counts sim seconds, so user pauses, backgrounding and Coach Moments stop it. */
 export interface MatchClock {
@@ -152,15 +152,6 @@ export interface TeamRun {
   cooldownUntil: number;
 }
 
-export interface FeintState {
-  readonly by: MatchPlayerId;
-  readonly start: number;
-  readonly until: number;
-  /** Side of the shoulder drop (+1/-1 across the carrier's heading). */
-  readonly side: number;
-  /** Exit direction chosen by a swipe during the feint (world unit vector). */
-  exitDir: Vec2 | null;
-}
 
 export type MatchEventType =
   | 'kickoff'
@@ -187,17 +178,13 @@ export type MatchEventType =
   | 'out'
   | 'restart'
   | 'dribble'
-  | 'feint'
   | 'quickShot'
   | 'rejected'
   | 'swipeRejected'
-  | 'aimStart'
-  | 'aimCancel'
   | 'paused'
   | 'resumed'
   | 'formation'
   | 'reset'
-  | 'slowMoSpent'
   | 'coachHold'
   | 'coachRelease'
   | 'coachIntent'
@@ -248,32 +235,18 @@ export interface MatchState {
   controlledId: MatchPlayerId;
   /** Sim time control last moved to another player (off-ball selection hysteresis). */
   controlSince: number;
-  /** Off-ball steer from a swipe (world unit vector) until sim time `until`; null = AI movement. */
-  userSteer: { dir: Vec2; until: number; epoch: number } | null;
   /** A swipe made just before our pass arrives, applied to that receiver's first controlled touch only. */
   /** The player control last moved away from, so it cannot bounce straight back (offBall.returnHoldSeconds). */
   prevControlledId: MatchPlayerId | null;
-  bufferedDribble: { dir: Vec2; receiver: MatchPlayerId; until: number } | null;
   /** Stable team-possession sequence: bumps only when a team establishes possession. */
   possessionSeq: number;
   /** Team whose current spell is established (see aimAllowance.establishSeconds), or null. */
   establishedTeam: TeamId | null;
   /** Bumped whenever user control changes hands; an aim started under an older epoch is void. */
   controlEpoch: number;
-  aim: { direction: Vec2 | null; power: number; epoch: number } | null;
-  /** Real seconds of aiming slow motion left for each team's current possession spell. */
-  aimAllowance: Record<TeamId, number>;
-  /** Set when the opponent secured the ball; the next recovery refills this team's aim allowance. */
-  allowanceRefillPending: Record<TeamId, boolean>;
   control: number;
-  swipeCooldown: number;
   /** Direction (world unit vector) the user's carrier keeps dribbling in until redirected. */
   dribbleDir: MutableVec2;
-  feint: FeintState | null;
-  /** Sim time a new feint may start. */
-  feintReadyAt: number;
-  /** A defender who bit on the feint drifts the wrong way until `until`. */
-  feintBought: { id: MatchPlayerId; until: number; dir: Vec2 } | null;
   touchPhase: number;
   /** New carrier is safe from tackles until this sim time. */
   protectUntil: number;

@@ -71,10 +71,18 @@ Holding **BLOCK** with an opponent carrier within 7 yd replaces normal block mov
 
 - All new code runs inside `MatchSim.step`'s fixed step and uses only state and seeded RNG. A 60 Hz and a 120 Hz
   render-rate run give the same path within 0.05 yd (asserted).
-- The target search writes into pre-allocated slots and the intercept loop allocates nothing. **Limit:** the engine's
-  existing vector helpers (`vec`, `sub`, `scale`, `normalize`) return small new objects throughout the simulation,
-  including `padVelocity`'s result. A strict zero-allocation engine would mean rewriting that whole vector layer and is
-  not claimed here.
+- **Allocations (branch `devin/1792190415-fifa-full`):** the match core now updates state vectors in place (ball,
+  players, pad facing/slide, press read, keeper target, restarts and kick-off placement), reuses one pad-velocity
+  result, and the team AI plans with a pooled scratch-vector set reset every step, pooled team arrays, a bitmask for
+  marking and no per-step closures. `tests/fifaMeasure.test.ts` asserts that across 6,000 steps, restarts included,
+  every state vector keeps its identity and the AI scratch pool doesn't grow.
+- **Measured, not zero.** True allocation was measured as the young-generation growth over 600-step windows after a
+  forced GC (20,000 warm-up steps, 64 MB semi-space so no scavenge runs inside a window, seeded match with scripted
+  stick and button input). Pre-change engine (`f7f2c39`): about 29–91 KB per step. This branch: about 3.3–5.5 KB per
+  step, with some windows under 100 B per step. The remainder comes from boxed numbers in non-inlined helpers,
+  `for…of` iterators, rare-event code (kicks, saves, deflections) and V8 de-optimising on mixed object shapes. JavaScript
+  cannot guarantee zero heap allocation; that is not claimed. Earlier "bytes per step" figures from heap-used deltas
+  were wrong (scavenges hid the garbage) and are withdrawn.
 
 ## Tests
 

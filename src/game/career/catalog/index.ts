@@ -6,6 +6,7 @@ import { FINISHING } from './finishing';
 import { FIRST_TOUCH } from './firstTouch';
 import { JUGGLING } from './juggling';
 import { PASSING } from './passing';
+import { DRAFT_ACTIVITIES } from '../curriculum/drafts';
 
 /** Official pages checked (HTTP 200, relevant content) before attribution. Activities are original adaptations. */
 export const SOURCES: Readonly<Record<SourceId, { readonly title: string; readonly url: string }>> = {
@@ -20,7 +21,10 @@ export const CORE_ACTIVITIES: readonly Activity[] = [...FIRST_TOUCH, ...PASSING,
 export const JUGGLING_LADDER: readonly Activity[] = JUGGLING;
 export const ALL_ACTIVITIES: readonly Activity[] = [...CORE_ACTIVITIES, ...JUGGLING];
 
-const byId = new Map(ALL_ACTIVITIES.map((a) => [a.id, a]));
+/** Everything a plan, swap or journal entry may reference: the 92 originals plus the owner-enabled v1.1 drafts. */
+export const HOME_ACTIVITIES: readonly Activity[] = [...ALL_ACTIVITIES, ...DRAFT_ACTIVITIES];
+
+const byId = new Map(HOME_ACTIVITIES.map((a) => [a.id, a]));
 export function activityById(id: string): Activity | undefined {
   return byId.get(id);
 }

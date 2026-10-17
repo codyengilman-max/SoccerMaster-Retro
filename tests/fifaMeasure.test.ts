@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { match } from '../src/game';
+import { aiScratchSize } from '../src/game/match/ai';
 
 // Seeded feel measurements for the FIFA-style locomotion/passing work (printed; thresholds asserted in padSim tests).
 const { MatchSim, MATCH_TUNING: T } = match;
@@ -7,7 +8,7 @@ type Sim = InstanceType<typeof MatchSim>;
 const F = 1 / 60;
 const run = (sim: Sim, s: number, f = F) => { for (let i = 0; i < Math.round(s / f); i++) sim.step(f); };
 function setup(): Sim {
-  const sim = new MatchSim({ seed: 7, controls: 'pad' });
+  const sim = new MatchSim({ seed: 7 });
   run(sim, T.kickoff.countdownSeconds + 2 * F);
   sim.arrange((s) => {
     const p = s.players.H7;
@@ -188,5 +189,43 @@ describe('FIFA assisted passing', () => {
     const b = sim.state.ball.vel;
     // Aimed well ahead of the receiver (towards +y): more than the old 0.14 rad lead cap allowed.
     expect(Math.atan2(b.y, b.x)).toBeGreaterThan(0.2);
+  });
+});
+
+describe('FIFA allocation-free core', () => {
+  it('updates state vectors in place and keeps the AI scratch pool flat during active play', () => {
+    const sim = new MatchSim({ seed: 3, halfSeconds: null });
+    let id = 0;
+    const drive = (i: number) => {
+      if (i % 50 === 0) sim.command({ type: 'padMove', x: Math.cos(i), y: Math.sin(i) });
+      const action = sim.userHasBall() ? 'pass' : 'block';
+      if (i % 120 === 0) sim.command({ type: 'padPress', id: ++id, action });
+      if (i % 120 === 20) sim.command({ type: 'padRelease', id: ++id, action });
+    };
+    for (let i = 0; i < 3000; i++) {
+      drive(i);
+      sim.step(F);
+    }
+    const s = sim.state;
+    const refs = () => [
+      s.pressRead,
+      s.pad.facing,
+      s.ball.pos,
+      s.ball.vel,
+      ...Object.values(s.players).flatMap((p) => [p.pos, p.vel, p.target, p.anchor]),
+    ];
+    const before = refs();
+    const pool = aiScratchSize();
+    let stops = 0;
+    for (let i = 3000; i < 9000; i++) {
+      drive(i);
+      sim.step(F);
+      if (s.phase === 'stopped') stops++;
+    }
+    // Covers restarts too (balls out, kick-offs), not just open play.
+    expect(stops).toBeGreaterThan(0);
+    expect(refs().filter((r, i) => r !== before[i])).toEqual([]);
+    expect(aiScratchSize()).toBe(pool);
+    expect(pool).toBeGreaterThan(0);
   });
 });

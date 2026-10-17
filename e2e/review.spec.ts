@@ -39,7 +39,7 @@ test('Review & Lab hub reaches Training Review and the catalog-only Soccer Logic
   await waitForScene(page, 'start');
   const start = await diagnostics(page);
   const els = start.layout!.elements as Record<string, Rect>;
-  for (const other of ['play-button', 'sandbox-button', 'career-button', 'footer', 'subtitle']) expect(overlaps(els['review-button']!, els[other]!), other).toBe(false);
+  for (const other of ['sandbox-button', 'jungle-button', 'career-button', 'footer', 'subtitle']) expect(overlaps(els['review-button']!, els[other]!), other).toBe(false);
   expect(els['review-button']!.height).toBeGreaterThanOrEqual(44);
 
   await press(page, 'review-button', mode);
@@ -70,7 +70,7 @@ test('Review & Lab hub reaches Training Review and the catalog-only Soccer Logic
   await until(page, (x) => x.screen === 'reviewHub', 'hub again');
   await press(page, 'hub-training', mode);
   c = await until(page, (x) => x.screen === 'drafts', 'drafts');
-  expect(c.text).toContain('REVIEW ONLY');
+  expect(c.text).toContain('ENABLED BY OWNER, NOT COACH-CERTIFIED');
   expect(c.text).toContain('published: 0');
   await fits(page);
   expect(c.credit).toBe(0);

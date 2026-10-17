@@ -91,7 +91,7 @@ test('coached session: freeze, answer, feedback, Continue once, through to the s
     if (q.coach!.overlay === 'summary') break;
     expect(q.paused).toBe(true);
     expect(q.pauseReasons).toEqual({ user: false, coach: true });
-    expect(q.input).toBe('idle');
+    expect(q.pad.pressed).toBeNull();
     const v = q.coach!.view!;
     expect(v.options.length).toBeGreaterThanOrEqual(3);
     expect(v.options.length).toBeLessThanOrEqual(4);
@@ -141,7 +141,7 @@ test('coached session: freeze, answer, feedback, Continue once, through to the s
     expect(coachEvents.length).toBeGreaterThan(0);
     coachEvents.forEach((t, i) => i > 0 && expect(t, `coach events ${coachEvents.join(',')}`).not.toBe(coachEvents[i - 1]));
     expect(coachEvents.at(-1)).toBe(resumed.coach!.overlay === 'hidden' ? 'coachRelease' : 'coachHold');
-    expect(resumed.input).toBe('idle');
+    expect(resumed.pad.pressed).toBeNull();
     done++;
     const entry = resumed.coach!.entries[done - 1]!;
     expect(entry.selectedOptionId).toBe(v.options[pick]!.id);
@@ -191,7 +191,7 @@ test('backgrounding and rotation during a Coach Moment keep the pause and the mo
   const back = await waitFor(page, (r) => r.coach!.overlay === 'question');
   expect(back.simTime).toBe(q.simTime);
   expect(back.coach!.view!.momentId).toBe(q.coach!.view!.momentId);
-  expect(back.aimAllowance).toEqual(q.aimAllowance);
+  expect(back.pad.phase).toBe(q.pad.phase);
   await expectCardFits(page);
   // Answer, then background again before Continue: Continue releases only the coach hold.
   await pressElement(page, 'coach-option-0', mode);

@@ -31,6 +31,43 @@ export interface PitchLayout {
   readonly originY: number;
   readonly pitchLength: number;
   readonly pitchWidth: number;
+  /**
+   * Optional low-camera perspective (1/px): a screen-space homography about (anchorX, anchorY), so
+   * straight pitch lines stay straight but converge toward the top of the screen and the far side is
+   * drawn smaller. Identity (and unit Jacobian) at the anchor.
+   */
+  readonly persp?: number;
+  readonly anchorX?: number;
+  readonly anchorY?: number;
+}
+
+/** Adds the low-camera perspective to a flat layout, anchored at a screen point (usually the ball). */
+export function withPerspective(layout: PitchLayout, anchor: Vec2, persp: number): PitchLayout {
+  return { ...layout, persp, anchorX: anchor.x, anchorY: anchor.y };
+}
+
+/** Size multiplier for something drawn at screen row `y` (1 at the anchor, <1 far, >1 near). */
+export function depthScaleAt(layout: PitchLayout, y: number): number {
+  if (!layout.persp) return 1;
+  return Math.max(0.2, 1 + layout.persp * (y - (layout.anchorY ?? 0)));
+}
+
+function project(layout: PitchLayout, x: number, y: number): Vec2 {
+  if (!layout.persp) return { x, y };
+  const ax = layout.anchorX ?? 0;
+  const ay = layout.anchorY ?? 0;
+  const d = y - ay;
+  // Keep the denominator positive so points far below the screen never flip over the horizon.
+  const k = 1 / Math.max(0.15, 1 - layout.persp * d);
+  return { x: ax + (x - ax) * k, y: ay + d * k };
+}
+
+function unproject(layout: PitchLayout, x: number, y: number): Vec2 {
+  if (!layout.persp) return { x, y };
+  const ax = layout.anchorX ?? 0;
+  const ay = layout.anchorY ?? 0;
+  const k = Math.max(0.15, 1 + layout.persp * (y - ay));
+  return { x: ax + (x - ax) / k, y: ay + (y - ay) / k };
 }
 
 export function orientationOf(viewport: Viewport): Orientation {
@@ -95,16 +132,27 @@ export function fitRegion(viewport: Viewport, region: Rect, insets: Insets = NO_
 
 export function toScreen(layout: PitchLayout, point: Vec2): Vec2 {
   if (layout.orientation === 'landscape') {
-    return { x: layout.originX + point.x * layout.scale, y: layout.originY + point.y * layout.crossScale };
+    return project(layout, layout.originX + point.x * layout.scale, layout.originY + point.y * layout.crossScale);
   }
-  return { x: layout.originX + point.y * layout.crossScale, y: layout.originY + (layout.pitchLength - point.x) * layout.scale };
+  return project(layout, layout.originX + point.y * layout.crossScale, layout.originY + (layout.pitchLength - point.x) * layout.scale);
 }
 
-export function fromScreen(layout: PitchLayout, point: Vec2): Vec2 {
+export function fromScreen(layout: PitchLayout, screen: Vec2): Vec2 {
+  const point = unproject(layout, screen.x, screen.y);
   if (layout.orientation === 'landscape') {
     return { x: (point.x - layout.originX) / layout.scale, y: (point.y - layout.originY) / layout.crossScale };
   }
   return { x: layout.pitchLength - (point.y - layout.originY) / layout.scale, y: (point.x - layout.originX) / layout.crossScale };
+}
+
+/** The four screen corners of a pitch rectangle (a trapezoid under perspective). */
+export function quadToScreen(layout: PitchLayout, rect: Rect): Vec2[] {
+  return [
+    toScreen(layout, { x: rect.x, y: rect.y }),
+    toScreen(layout, { x: rect.x + rect.width, y: rect.y }),
+    toScreen(layout, { x: rect.x + rect.width, y: rect.y + rect.height }),
+    toScreen(layout, { x: rect.x, y: rect.y + rect.height }),
+  ];
 }
 
 /** Converts a screen-space direction/offset (pixels) into pitch yards. */
@@ -118,12 +166,14 @@ export function pitchVectorToScreen(layout: PitchLayout, v: Vec2): Vec2 {
   return { x: v.y * layout.crossScale, y: -v.x * layout.scale };
 }
 
+/** Screen bounding box of a pitch rectangle. */
 export function rectToScreen(layout: PitchLayout, rect: Rect): Rect {
-  const a = toScreen(layout, { x: rect.x, y: rect.y });
-  const b = toScreen(layout, { x: rect.x + rect.width, y: rect.y + rect.height });
-  const x = Math.min(a.x, b.x);
-  const y = Math.min(a.y, b.y);
-  return { x, y, width: Math.abs(b.x - a.x), height: Math.abs(b.y - a.y) };
+  const q = quadToScreen(layout, rect);
+  const xs = q.map((p) => p.x);
+  const ys = q.map((p) => p.y);
+  const x = Math.min(...xs);
+  const y = Math.min(...ys);
+  return { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y };
 }
 
 /** Points along a circular arc in pitch space (angles in radians). */

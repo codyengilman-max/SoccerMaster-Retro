@@ -1,7 +1,6 @@
 import type { Vec2 } from '../vec';
 import {
   add,
-  approach,
   clamp,
   copy,
   distance,
@@ -11,17 +10,17 @@ import {
   normalize,
   rotate,
   scale,
-  seek,
   sub,
   vec,
   type MutableVec2,
-} from '../attack/math';
-import { createRng } from '../attack/rng';
-import { passSpeedFor } from '../attack/sim';
+  approachInPlace,
+  seekInto,
+} from '../math';
+import { createRng } from '../rng';
 import { DEFAULT_FORMATION, FORMATIONS, roleDef, type FormationId } from './formations';
 import { MATCH_TUNING, type MatchTuning } from './tuning';
-import { isShotOnGoal, planUserPass } from './predict';
-import { ballFocus, computeAnchor, decideCarrier, planTeams, toTeam, toWorld, velToTeam, type AiContext } from './ai';
+import { planUserPass } from './predict';
+import { computeAnchor, decideCarrier, planTeams, toTeam, toWorld, velToTeam, type AiContext } from './ai';
 import {
   AWAY_IDS,
   HOME_IDS,
@@ -39,19 +38,10 @@ import {
 import type { PadAction, PadState, PassScan, PlayerAttrs } from './types';
 
 export type MatchCommand =
-  /** Sets the user carrier's dribble direction (world/pitch vector; its length is ignored). */
-  | { readonly type: 'dribble'; readonly direction: Vec2 }
   | { readonly type: 'padMove'; readonly x: number; readonly y: number }
   | { readonly type: 'padPress'; readonly id: number; readonly action: PadAction }
   | { readonly type: 'padRelease'; readonly id: number; readonly action: PadAction }
   | { readonly type: 'padCancel'; readonly id: number; readonly reason: string }
-  | { readonly type: 'feint' }
-  /** Double-tap: an immediate shot at the opponent goal, fast but with seeded placement error. */
-  | { readonly type: 'quickShot' }
-  | { readonly type: 'aimStart' }
-  | { readonly type: 'aimUpdate'; readonly direction: Vec2 | null; readonly power: number }
-  | { readonly type: 'aimRelease' }
-  | { readonly type: 'aimCancel'; readonly reason: string }
   | { readonly type: 'pause' }
   | { readonly type: 'resume' }
   | { readonly type: 'reset'; readonly seed?: number }
@@ -74,21 +64,9 @@ export interface MatchSimOptions {
   readonly awayFormation?: FormationId;
   /** Sim seconds per half for a timed match. Omitted or null: the open-ended sandbox (no clock). */
   readonly halfSeconds?: number | null;
-  /**
-   * Aim assistance, fixed for the life of the sim (a match locks it at kickoff):
-   * 'slow' = short slow motion while aiming (aimAllowance real seconds per established possession);
-   * 'normal' = aiming at full speed, no allowance spent.
-   */
-  readonly aimAssist?: AimAssistMode;
-  /** 'pad' = joystick + four buttons (controls brief); 'gesture' keeps the swipe / pull-back controls. */
-  readonly controls?: ControlScheme;
   /** Per-player movement attributes (multipliers, clamped to tuning.pad.attrRange); missing = 1. */
   readonly attributes?: Partial<Record<MatchPlayerId, Partial<PlayerAttrs>>>;
 }
-
-export type ControlScheme = 'gesture' | 'pad';
-
-export type AimAssistMode = 'slow' | 'normal';
 
 const MAX_EVENTS = 40;
 
@@ -97,6 +75,13 @@ const MAX_EVENTS = 40;
  * carrier with the M2 gestures), away is AI. Deterministic for a seed, a sequence of step durations
  * and commands: the fixed step (tuning.stepSeconds) decides every outcome, never the frame rate.
  */
+/** Desired velocity, acceleration and optional speed cap for the controlled player this step. */
+interface PadVelocity {
+  desired: MutableVec2;
+  accel: number;
+  cap: number | undefined;
+}
+
 export class MatchSim {
   readonly tuning: MatchTuning;
   private readonly seed: number;
@@ -106,8 +91,6 @@ export class MatchSim {
   private seq = 0;
   private readonly halfSeconds: number | null;
 
-  readonly aimAssist: AimAssistMode;
-  readonly controls: ControlScheme;
   /**
    * Last assisted-pass target search, for live debugging (?debug&passlog). Pre-allocated and overwritten in place;
    * never read by the simulation itself.
@@ -119,13 +102,23 @@ export class MatchSim {
     chosen: null,
     entries: Array.from({ length: 9 }, () => ({ id: 'H1' as MatchPlayerId, angle: 0, perp: 0, dist: 0, score: 0, inCone: false })),
   };
+  /** Per-step scratch vectors (overwritten in place; never stored in state). */
+  private readonly focusScratch: MutableVec2 = { x: 0, y: 0 };
+  private readonly keeperRes = { target: { x: 0, y: 0 } as MutableVec2, speed: 0 };
+  private readonly kbT: MutableVec2 = { x: 0, y: 0 };
+  private readonly kvT: MutableVec2 = { x: 0, y: 0 };
+  private readonly kgT: MutableVec2 = { x: 0, y: 0 };
+  private readonly padVel: PadVelocity = { desired: { x: 0, y: 0 }, accel: 0, cap: undefined };
+  private readonly desired: MutableVec2 = { x: 0, y: 0 };
+  private readonly mePrev: MutableVec2 = { x: 0, y: 0 };
+  private readonly ballPrev: MutableVec2 = { x: 0, y: 0 };
+  private readonly aiCtx: AiContext = { s: null as unknown as MatchState, T: MATCH_TUNING, rng: () => 0 };
   private readonly attrOverrides: Partial<Record<MatchPlayerId, Partial<PlayerAttrs>>>;
 
   constructor(options: MatchSimOptions = {}) {
     this.tuning = options.tuning ?? MATCH_TUNING;
-    this.controls = options.controls === 'pad' ? 'pad' : 'gesture';
+    (this.aiCtx as { T: MatchTuning }).T = this.tuning;
     this.attrOverrides = { ...(options.attributes ?? {}) };
-    this.aimAssist = options.aimAssist === 'normal' ? 'normal' : 'slow';
     this.seed = options.seed ?? 1;
     this.rng = createRng(this.seed);
     const hs = options.halfSeconds;
@@ -165,11 +158,9 @@ export class MatchSim {
         return this.startSecondHalf();
       case 'pause':
         if (s.pauseReasons.user) return false;
-        if (s.phase === 'aiming') this.cancelAim('paused');
         this.padReset('paused');
         s.pauseReasons.user = true;
         s.paused = true;
-        s.bufferedDribble = null;
         this.emit('paused', null, '');
         return true;
       case 'resume':
@@ -180,7 +171,6 @@ export class MatchSim {
         return true;
       case 'coachHold':
         if (s.pauseReasons.coach) return false;
-        if (s.phase === 'aiming') this.cancelAim('coach moment');
         s.pauseReasons.coach = true;
         s.paused = true;
         this.emit('coachHold', null, '');
@@ -220,42 +210,6 @@ export class MatchSim {
         return this.padRelease(cmd.id, cmd.action);
       case 'padCancel':
         return this.padCancel(cmd.id, cmd.reason);
-      case 'dribble':
-        return this.dribble(cmd.direction);
-      case 'feint':
-        return this.feint();
-      case 'quickShot':
-        return this.quickShot();
-      case 'aimStart':
-        if (s.paused || s.phase !== 'live' || !this.userHasBall()) return false;
-        s.phase = 'aiming';
-        s.aim = { direction: null, power: 0, epoch: s.controlEpoch };
-        this.emit('aimStart', s.controlledId, s.aimAllowance.home > 0 ? 'slow' : 'normal');
-        return true;
-      case 'aimUpdate': {
-        if (s.phase !== 'aiming' || !s.aim) return false;
-        if (!Number.isFinite(cmd.power) || (cmd.direction && !finiteVec(cmd.direction))) return this.reject('aim', 'non-finite');
-        const dir = cmd.direction && length(cmd.direction) > 1e-6 ? normalize(cmd.direction) : null;
-        s.aim = { direction: dir, power: clamp(cmd.power, 0, 1), epoch: s.aim.epoch };
-        return true;
-      }
-      case 'aimRelease': {
-        if (s.phase !== 'aiming') return false;
-        const aim = s.aim;
-        s.phase = 'live';
-        s.aim = null;
-        // An aim started for another carrier (or before a turnover) never fires for the new one.
-        if (!aim?.direction || aim.epoch !== s.controlEpoch || !this.userHasBall()) {
-          this.emit('aimCancel', s.controlledId, aim?.direction ? 'control changed' : 'no aim');
-          return false;
-        }
-        this.userKick(aim.direction, aim.power);
-        return true;
-      }
-      case 'aimCancel':
-        if (s.phase !== 'aiming') return false;
-        this.cancelAim(cmd.reason);
-        return true;
     }
   }
 
@@ -275,11 +229,6 @@ export class MatchSim {
     }
     if (s.phase === 'kickoff' || s.phase === 'stopped') {
       s.timeScale = 1;
-    } else if (s.phase === 'aiming' && this.aimAssist === 'slow' && s.aimAllowance.home > 0) {
-      // The allowance is spent in real time and never refills from releasing, cancelling or passing.
-      s.timeScale = T.aim.slowMoScale;
-      s.aimAllowance.home = Math.max(0, s.aimAllowance.home - dt);
-      if (s.aimAllowance.home === 0) this.emit('slowMoSpent', s.controlledId, '');
     } else {
       s.timeScale = 1;
     }
@@ -315,14 +264,12 @@ export class MatchSim {
     if (!c) return;
     const label = c.half === 1 ? 'half-time' : 'full-time';
     c.elapsed = c.halfSeconds;
-    if (s.phase === 'aiming') this.cancelAim(label);
+    this.padReset(label);
     if (s.coachIntent) this.clearCoachIntent(label);
-    s.aim = null;
-    s.feint = null;
     s.stoppage = null;
-    s.ball.vel = vec(0, 0);
+    zero(s.ball.vel);
     s.ball.kick = null;
-    for (const p of Object.values(s.players)) p.vel = vec(0, 0);
+    for (const p of Object.values(s.players)) zero(p.vel);
     s.phase = c.half === 1 ? 'halftime' : 'fulltime';
     s.phaseTime = 0;
     s.timeScale = 0;
@@ -331,7 +278,6 @@ export class MatchSim {
   }
 
   private startSecondHalf(): boolean {
-    const T = this.tuning;
     const s = this.s;
     if (s.phase !== 'halftime' || !s.clock || s.paused) return false;
     s.clock.half = 2;
@@ -340,8 +286,6 @@ export class MatchSim {
     s.phase = 'kickoff';
     s.phaseTime = 0;
     s.timeScale = 1;
-    s.aimAllowance = { home: T.aimAllowance.seconds, away: T.aimAllowance.seconds };
-    s.allowanceRefillPending = { home: false, away: false };
     this.accumulator = 0;
     this.emit('secondHalf', null, 'away kick off');
     return true;
@@ -380,47 +324,7 @@ export class MatchSim {
     return true;
   }
 
-  private dribble(direction: Vec2): boolean {
-    const T = this.tuning;
-    const s = this.s;
-    if (s.paused || s.phase !== 'live') return false;
-    if (!finiteVec(direction) || length(direction) < 1e-6) return this.reject('dribble', 'invalid direction');
-    if (s.swipeCooldown > 0) return this.reject('dribble', 'cooldown');
-    const k = s.ball.kick;
-    if (!s.ball.owner && k?.team === 'home' && k.kind === 'pass' && k.receiver) {
-      const r = s.players[k.receiver];
-      if (distance(r.pos, s.ball.pos) <= T.carrier.bufferReach) {
-        s.swipeCooldown = T.carrier.redirectSeconds;
-        s.bufferedDribble = { dir: normalize(direction), receiver: k.receiver, until: s.simTime + T.carrier.bufferSeconds };
-        this.emit('dribble', k.receiver, 'buffered');
-        return true;
-      }
-    }
-    if (!this.userHasBall()) return this.steerOffBall(direction);
-    s.swipeCooldown = T.carrier.redirectSeconds;
-    const dir = normalize(direction);
-    // Only the direction changes; speed stays bounded by carrier.speed, acceleration and turn rate.
-    s.dribbleDir = vec(dir.x, dir.y);
-    const f = s.feint;
-    if (f && f.by === s.controlledId && s.simTime < f.until && !f.exitDir) f.exitDir = copy(dir);
-    this.emit('dribble', s.controlledId, `${dir.x.toFixed(2)},${dir.y.toFixed(2)}`);
-    return true;
-  }
 
-  /** Off the ball a swipe steers the controlled home outfielder for a short spell (normal speed caps, no boost). */
-  private steerOffBall(direction: Vec2): boolean {
-    const T = this.tuning;
-    const s = this.s;
-    const p = s.players[s.controlledId];
-    if (!p || p.team !== 'home' || p.isKeeper || s.ball.owner === p.id) return this.reject('dribble', 'no ball');
-    const owner = s.ball.owner ? s.players[s.ball.owner] : null;
-    if (owner && owner.team === 'home') return this.reject('dribble', 'teammate has the ball');
-    s.swipeCooldown = T.carrier.redirectSeconds;
-    const dir = normalize(direction);
-    s.userSteer = { dir: vec(dir.x, dir.y), until: s.simTime + T.offBall.steerSeconds, epoch: s.controlEpoch };
-    this.emit('dribble', p.id, `steer ${dir.x.toFixed(2)},${dir.y.toFixed(2)}`);
-    return true;
-  }
 
   /**
    * Off-ball control policy. Opponent ball: the home presser. Loose ball: the home chaser, except
@@ -433,16 +337,15 @@ export class MatchSim {
     const s = this.s;
     const owner = s.ball.owner ? s.players[s.ball.owner] : null;
     if (owner && owner.team === 'home') return;
-    if (s.phase !== 'live' && s.phase !== 'aiming') return;
+    if (s.phase !== 'live') return;
     const kick = s.ball.kick;
     if (!owner && kick && kick.team === 'home' && kick.kind !== 'touch') return;
     const pick = owner ? s.defense.home.presserId : s.chaser.home.id;
     if (!pick || pick === s.controlledId || s.players[pick].isKeeper) return;
     if (s.simTime - s.controlSince < T.offBall.minHoldSeconds) return;
     // A slide or block in progress is never handed to another player.
-    if (this.controls === 'pad' && s.pad.phase !== 'ready') return;
-    // Never yank control from a player the user is steering right now, and never bounce straight back.
-    if (s.userSteer && s.simTime < s.userSteer.until) return;
+    if (s.pad.phase !== 'ready') return;
+    // Never bounce straight back.
     if (pick === s.prevControlledId && s.simTime - s.controlSince < T.offBall.returnHoldSeconds) return;
     this.setControl(pick, owner ? 'defend' : 'loose ball');
   }
@@ -450,64 +353,13 @@ export class MatchSim {
   private setControl(id: MatchPlayerId, why: string): void {
     const s = this.s;
     s.controlEpoch += 1;
-    if (s.phase === 'aiming') this.cancelAim('control changed');
     if (s.controlledId !== id) s.prevControlledId = s.controlledId;
     s.controlledId = id;
     s.controlSince = s.simTime;
-    s.userSteer = null;
-    s.bufferedDribble = null;
     this.emit('control', id, why);
   }
 
-  /** Same rules as an aimed kick (live play, user carrier owns the ball); only the aim is automatic. */
-  private quickShot(): boolean {
-    const T = this.tuning;
-    const s = this.s;
-    if (s.paused || s.phase !== 'live') return false;
-    if (!this.userHasBall()) return this.reject('quickShot', 'no ball');
-    const P = T.pitch;
-    const ball = s.ball.pos;
-    const target = vec(P.length, P.goalCenterY + (this.rng() * 2 - 1) * T.quickShot.spread * P.goalHalfWidth);
-    const dir = normalize(vec(target.x - ball.x, target.y - ball.y));
-    if (!finiteVec(dir) || length(dir) < 0.5) return this.reject('quickShot', 'no angle');
-    this.emit('quickShot', s.controlledId, target.y.toFixed(1));
-    this.userKick(dir, T.quickShot.power);
-    return true;
-  }
 
-  private feint(): boolean {
-    const T = this.tuning;
-    const s = this.s;
-    if (s.paused || s.phase !== 'live') return false;
-    if (!this.userHasBall()) return this.reject('feint', 'no ball');
-    if (s.feint || s.simTime < s.feintReadyAt) return this.reject('feint', 'cooldown');
-    const carrier = s.players[s.controlledId];
-    const heading = length(carrier.vel) > 0.3 ? normalize(carrier.vel) : normalize(s.dribbleDir);
-    const side = this.rng() < 0.5 ? 1 : -1;
-    s.feint = { by: carrier.id, start: s.simTime, until: s.simTime + T.feint.seconds, side, exitDir: null };
-    s.feintReadyAt = s.simTime + T.feint.cooldownSeconds;
-    // The nearest opponent may (or may not) bite on the shoulder drop. Nothing else is granted.
-    let nearest: MatchPlayer | null = null;
-    let best = T.feint.biteRange;
-    for (const id of AWAY_IDS) {
-      const o = s.players[id];
-      if (o.isKeeper) continue;
-      const d = distance(o.pos, carrier.pos);
-      if (d <= best) {
-        best = d;
-        nearest = o;
-      }
-    }
-    let detail = 'no defender';
-    if (nearest) {
-      if (this.rng() < T.feint.biteChance) {
-        s.feintBought = { id: nearest.id, until: s.simTime + T.feint.seconds + T.feint.biteSeconds, dir: vec(-heading.y * side, heading.x * side) };
-        detail = `bit ${nearest.id}`;
-      } else detail = `read ${nearest.id}`;
-    }
-    this.emit('feint', carrier.id, detail);
-    return true;
-  }
 
   private setCoachIntent(cmd: Extract<MatchCommand, { type: 'coachIntent' }>): boolean {
     const T = this.tuning;
@@ -543,38 +395,7 @@ export class MatchSim {
     return false;
   }
 
-  private cancelAim(reason: string): void {
-    const s = this.s;
-    if (s.phase !== 'aiming') return;
-    s.phase = 'live';
-    s.aim = null;
-    this.emit('aimCancel', s.controlledId, reason);
-  }
 
-  /** One ground kick for passes and shots: the ball leaves the current ball position along `direction`. */
-  private userKick(direction: Vec2, power: number): void {
-    const T = this.tuning;
-    const s = this.s;
-    const carrier = s.players[s.controlledId];
-    const dir = normalize(direction);
-    const speed = kickSpeed(power, T);
-    const ball = s.ball.pos;
-    // A kick is a shot whenever it is on target and rolls far enough, from any range.
-    if (isShotOnGoal(ball, dir, speed, T)) {
-      this.kickBall(carrier, scale(dir, speed), 'shot', null, null);
-      s.stats.shots.home += 1;
-      this.emit('shot', carrier.id, speed.toFixed(1));
-    } else {
-      // Where a ground ball of this speed slows to a receivable pace; teammates read it, nothing is redirected.
-      const plan = planUserPass(s, carrier.id, ball, dir, speed, T);
-      const target = plan.target;
-      const receiver = plan.receiver;
-      this.kickBall(carrier, scale(dir, speed), 'pass', target, receiver);
-      this.afterPass(carrier, target);
-      this.emit('pass', carrier.id, receiver ?? '');
-    }
-    s.feint = null;
-  }
 
 
   // ---- joystick + four-button controls (controls=pad) --------------------------------------------
@@ -607,7 +428,7 @@ export class MatchSim {
   padAvailability(): Record<PadAction, boolean> {
     const s = this.s;
     const none = { pass: false, shoot: false, slide: false, block: false };
-    if (this.controls !== 'pad' || s.paused || s.phase !== 'live') return none;
+    if (s.paused || s.phase !== 'live') return none;
     const me = s.players[s.controlledId];
     if (!me || me.team !== 'home' || me.isKeeper) return none;
     const ph = s.pad.phase;
@@ -627,7 +448,6 @@ export class MatchSim {
   }
 
   private padMove(x: number, y: number): boolean {
-    if (this.controls !== 'pad') return false;
     if (!Number.isFinite(x) || !Number.isFinite(y)) return this.reject('padMove', 'non-finite');
     const m = Math.hypot(x, y);
     const k = m > 1 ? 1 / m : 1;
@@ -643,7 +463,7 @@ export class MatchSim {
   }
 
   private padPress(id: number, action: PadAction): boolean {
-    if (this.controls !== 'pad' || !this.padCmdId(id, 'padPress')) return false;
+    if (!this.padCmdId(id, 'padPress')) return false;
     const s = this.s;
     const pad = s.pad;
     if (!(['pass', 'shoot', 'slide', 'block'] as const).includes(action)) return this.reject('padPress', 'unknown action');
@@ -674,7 +494,7 @@ export class MatchSim {
   }
 
   private padRelease(id: number, action: PadAction): boolean {
-    if (this.controls !== 'pad' || !this.padCmdId(id, 'padRelease')) return false;
+    if (!this.padCmdId(id, 'padRelease')) return false;
     const s = this.s;
     const pad = s.pad;
     const T = this.tuning.pad;
@@ -709,7 +529,7 @@ export class MatchSim {
 
   /** Pointer cancel, lost focus, layout rebuild: never a kick. */
   private padCancel(id: number, reason: string): boolean {
-    if (this.controls !== 'pad' || !this.padCmdId(id, 'padCancel')) return false;
+    if (!this.padCmdId(id, 'padCancel')) return false;
     const ph = this.s.pad.phase;
     if (ph !== 'chargingPass' && ph !== 'chargingShoot' && ph !== 'kickPrep' && ph !== 'blocking') return false;
     this.padReset(String(reason).slice(0, 40));
@@ -747,9 +567,15 @@ export class MatchSim {
     const me = s.players[s.controlledId];
     const sliding = pad.phase === 'slideStart' || pad.phase === 'slideActive' || pad.phase === 'slideRecovery';
     if (pad.phase === 'blocking') {
-      const to = sub(s.ball.pos, me.pos);
-      if (length(to) > 0.05) pad.facing = turnToward(pad.facing, normalize(to), T.blockTurnRate * h);
-    } else if (!sliding && length(me.vel) > 0.5) pad.facing = normalize(me.vel);
+      const tx = s.ball.pos.x - me.pos.x;
+      const ty = s.ball.pos.y - me.pos.y;
+      const tl = Math.sqrt(tx * tx + ty * ty);
+      if (tl > 0.05) turnTowardInto(pad.facing, tx / tl, ty / tl, T.blockTurnRate * h);
+    } else if (!sliding && length(me.vel) > 0.5) {
+      const vl = length(me.vel);
+      pad.facing.x = me.vel.x / vl;
+      pad.facing.y = me.vel.y / vl;
+    }
     const t = s.simTime - pad.since;
     switch (pad.phase) {
       case 'chargingPass':
@@ -780,7 +606,10 @@ export class MatchSim {
         return;
       case 'slideActive':
         if (pad.actor !== s.controlledId) return this.padToReady(S.cooldownSeconds);
-        if (pad.slideDir && length(pad.stick) > 0.2) pad.slideDir = turnToward(pad.slideDir, normalize(pad.stick), S.steerRate * h);
+        if (pad.slideDir && length(pad.stick) > 0.2) {
+          const sl = length(pad.stick);
+          turnTowardInto(pad.slideDir, pad.stick.x / sl, pad.stick.y / sl, S.steerRate * h);
+        }
         if (t >= S.activeSeconds - 1e-9) {
           pad.phase = 'slideRecovery';
           pad.since = s.simTime;
@@ -834,7 +663,6 @@ export class MatchSim {
       s.stats.shots.home += 1;
       this.emit('shot', me.id, speed.toFixed(1));
     }
-    s.feint = null;
     pad.phase = 'kickRecovery';
     pad.since = s.simTime;
     pad.locked = null;
@@ -900,7 +728,7 @@ export class MatchSim {
    * Jockey: hold a point goal-side of the opponent carrier (mirroring their run a beat ahead), shaded by the stick,
    * never closer than the gap, at no more than the carrier's speed. Null when no opponent carrier is in range.
    */
-  private jockeyVelocity(p: MatchPlayer): { desired: MutableVec2; accel: number; cap: number } | null {
+  private jockeyVelocity(p: MatchPlayer): PadVelocity | null {
     const s = this.s;
     const pad = s.pad;
     const T = this.tuning;
@@ -912,11 +740,12 @@ export class MatchSim {
     }
     pad.jockeying = true;
     const P = T.pitch;
-    const goal = toWorld(p.team, vec(0, P.goalCenterY), T);
+    const goalX = p.team === 'home' ? 0 : P.length;
+    const goalY = p.team === 'home' ? P.goalCenterY : P.width - P.goalCenterY;
     const cx = owner.pos.x + owner.vel.x * J.lookahead;
     const cy = owner.pos.y + owner.vel.y * J.lookahead;
-    let gx = goal.x - cx;
-    let gy = goal.y - cy;
+    let gx = goalX - cx;
+    let gy = goalY - cy;
     const gl = Math.hypot(gx, gy) || 1;
     gx /= gl;
     gy /= gl;
@@ -932,19 +761,35 @@ export class MatchSim {
       dx *= cap / want;
       dy *= cap / want;
     }
-    return { desired: vec(dx, dy), accel: T.movement.sprintAccel * p.attrs.accel * p.attrs.agility, cap };
+    return this.padResult(dx, dy, T.movement.sprintAccel * p.attrs.accel * p.attrs.agility, cap);
   }
 
-  private padVelocity(p: MatchPlayer): { desired: MutableVec2; accel: number; cap?: number } {
+  /** Fills the single reused movement result (callers read it before the next call). */
+  private padResult(dx: number, dy: number, accel: number, cap?: number): PadVelocity {
+    const r = this.padVel;
+    r.desired.x = dx;
+    r.desired.y = dy;
+    r.accel = accel;
+    r.cap = cap;
+    return r;
+  }
+
+  private padVelocity(p: MatchPlayer): PadVelocity {
     const s = this.s;
     const T = this.tuning;
     const pad = s.pad;
     const A = p.attrs;
     const S = T.pad.slide;
     const mine = pad.actor === p.id;
-    if (mine && pad.phase === 'slideActive' && pad.slideDir) return { desired: scale(pad.slideDir, Math.min(S.speed, T.movement.chaseSpeed) * A.pace), accel: 60 };
-    if (mine && pad.phase === 'slideStart' && pad.slideDir) return { desired: scale(pad.slideDir, Math.max(length(p.vel), T.movement.chaseSpeed * 0.6)), accel: 30 };
-    if (mine && pad.phase === 'slideRecovery') return { desired: vec(0, 0), accel: 25 };
+    if (mine && pad.phase === 'slideActive' && pad.slideDir) {
+      const k = Math.min(S.speed, T.movement.chaseSpeed) * A.pace;
+      return this.padResult(pad.slideDir.x * k, pad.slideDir.y * k, 60);
+    }
+    if (mine && pad.phase === 'slideStart' && pad.slideDir) {
+      const k = Math.max(length(p.vel), T.movement.chaseSpeed * 0.6);
+      return this.padResult(pad.slideDir.x * k, pad.slideDir.y * k, 30);
+    }
+    if (mine && pad.phase === 'slideRecovery') return this.padResult(0, 0, 25);
     const carrying = s.ball.owner === p.id;
     let top = (carrying ? T.carrier.speed * (0.85 + 0.15 * A.control) : T.movement.chaseSpeed) * A.pace;
     if (p.id === s.controlledId && pad.phase !== 'blocking') pad.jockeying = false;
@@ -953,9 +798,13 @@ export class MatchSim {
       if (j) return j;
       top *= T.pad.blockSpeedFactor;
     }
-    const desired = scale(pad.stick, top);
+    const desired = this.padResult(pad.stick.x * top, pad.stick.y * top, 0).desired;
     if (carrying) {
-      if (length(pad.stick) > 0.05) s.dribbleDir = normalize(pad.stick);
+      if (length(pad.stick) > 0.05) {
+        const sl = length(pad.stick);
+        s.dribbleDir.x = pad.stick.x / sl;
+        s.dribbleDir.y = pad.stick.y / sl;
+      }
       const P = T.pitch;
       if (desired.x > 0) desired.x *= clamp((P.length - T.dribble.stopShort - p.pos.x) / T.dribble.slowZone, 0, 1);
       if (desired.x < 0) desired.x *= clamp((p.pos.x - 1.5) / 3, 0, 1);
@@ -976,14 +825,15 @@ export class MatchSim {
       const cos = dot2(p.vel, desired) / (v * want);
       // Momentum: a sharp reversal at running pace brakes (agility shortens it) before accelerating the new way.
       if (user && cos < L.brakeCos && v > top * L.brakeMinSpeedFrac * Math.max(band, 0.01)) pad.braking = true;
-      if (pad.braking && user && v > top * L.brakeDoneFrac && cos < 0) return { desired: vec(0, 0), accel: L.brakeAccel * A.agility * A.accel };
+      if (pad.braking && user && v > top * L.brakeDoneFrac && cos < 0) return this.padResult(0, 0, L.brakeAccel * A.agility * A.accel);
       pad.braking = false;
       // Nearly stopped (e.g. after a brake): turning is free, momentum no longer applies.
       const turn = v < top * L.brakeDoneFrac * 1.5 ? 0 : (1 - cos) / 2;
       const factor = lerp(L.closeTurnFactor, L.runTurnFactor, band);
       accel = base * Math.max(0.15, 1 - T.pad.agilityTurnPenalty * factor * turn * (2 - A.agility));
     } else if (user) pad.braking = false;
-    return { desired, accel };
+    this.padVel.accel = accel;
+    return this.padVel;
   }
 
   /**
@@ -1023,7 +873,7 @@ export class MatchSim {
             s.beatenUntil[owner.id] = s.simTime + this.tuning.tackle.beatenSeconds;
           }
           ball.owner = null;
-          ball.vel = add(scale(pad.slideDir, S.pokeSpeed), scale(carried, 0.3));
+          setXY(ball.vel, pad.slideDir.x * S.pokeSpeed + carried.x * 0.3, pad.slideDir.y * S.pokeSpeed + carried.y * 0.3);
           ball.kick = { by: me.id, team: me.team, kind: 'touch', at: s.simTime, target: null, receiver: null };
           ball.lastTouch = me.team;
           ball.ignore.push({ id: me.id, until: s.simTime + S.sliderIgnoreSeconds });
@@ -1062,8 +912,8 @@ export class MatchSim {
       const hit = segmentHit(ballPrev, ball.pos, a, b) ?? (near <= T.blockBallRadius ? vec(ballPrev.x + (ball.pos.x - ballPrev.x) * t, ballPrev.y + (ball.pos.y - ballPrev.y) * t) : null);
       if (!hit) return null;
       const vn = dot2(ball.vel, n);
-      ball.vel = scale(sub(ball.vel, scale(n, 2 * vn)), T.blockRestitution);
-      ball.pos = add(hit, scale(n, 0.25));
+      setXY(ball.vel, (ball.vel.x - n.x * (2 * vn)) * T.blockRestitution, (ball.vel.y - n.y * (2 * vn)) * T.blockRestitution);
+      setXY(ball.pos, hit.x + n.x * 0.25, hit.y + n.y * 0.25);
       ball.kick = { by: me.id, team: me.team, kind: 'touch', at: s.simTime, target: null, receiver: null };
       ball.lastTouch = me.team;
       if (speed > T.blockHardSpeed) ball.ignore.push({ id: me.id, until: s.simTime + T.blockIgnoreSeconds });
@@ -1080,11 +930,11 @@ export class MatchSim {
     const s = this.s;
     s.simTime += h;
     s.phaseTime += h;
-    s.swipeCooldown = Math.max(0, s.swipeCooldown - h);
     s.control = Math.min(T.control.max, s.control + T.control.regenPerSecond * h);
-    if (s.feint && (s.ball.owner !== s.feint.by || s.simTime >= s.feint.until + T.feint.exitSeconds)) s.feint = null;
-    if (s.feintBought && s.simTime >= s.feintBought.until) s.feintBought = null;
-    s.ball.ignore = s.ball.ignore.filter((e) => e.until > s.simTime);
+    const ig = s.ball.ignore;
+    let keep = 0;
+    for (let i = 0; i < ig.length; i++) if (ig[i]!.until > s.simTime) ig[keep++] = ig[i]!;
+    ig.length = keep;
 
     this.expireCoachIntent();
     this.establishPossession();
@@ -1092,16 +942,18 @@ export class MatchSim {
     this.updatePressRead(h);
     planTeams(this.ctx());
     this.updateUserControl();
-    if (s.userSteer && (s.simTime >= s.userSteer.until || s.userSteer.epoch !== s.controlEpoch)) s.userSteer = null;
-    if (s.bufferedDribble && s.simTime > s.bufferedDribble.until) s.bufferedDribble = null;
-    if (this.controls === 'pad') this.tickPad(h);
+    this.tickPad(h);
     this.aiCarrier();
     const me = s.players[s.controlledId];
-    const mePrev = copy(me.pos);
+    const mePrev = this.mePrev;
+    mePrev.x = me.pos.x;
+    mePrev.y = me.pos.y;
     for (const id of MATCH_PLAYER_IDS) this.movePlayer(s.players[id], h);
-    let prev: Vec2 = copy(s.ball.pos);
+    let prev: Vec2 = this.ballPrev;
+    this.ballPrev.x = s.ball.pos.x;
+    this.ballPrev.y = s.ball.pos.y;
     this.moveBall(h);
-    if (this.controls === 'pad') {
+    {
       const r = this.resolvePadContacts(me, mePrev, prev);
       if (r === 'stopped') return;
       if (r) prev = r;
@@ -1109,25 +961,16 @@ export class MatchSim {
     this.resolveContacts(prev, h);
   }
 
-  /**
-   * A possession spell is established once a team has held the ball for aimAllowance.establishSeconds.
-   * Only then does the other team's aim allowance become refillable, so deflections, ownership
-   * flicker and instant steals never refill it.
-   */
+  /** A possession spell is established once a team has held the ball for possessionEstablishSeconds. */
   private establishPossession(): void {
     const T = this.tuning;
     const s = this.s;
     const o = s.ball.owner;
     if (!o) return;
     const team = s.players[o].team;
-    if (s.establishedTeam === team || s.simTime - s.ownedSince < T.aimAllowance.establishSeconds - 1e-9) return;
+    if (s.establishedTeam === team || s.simTime - s.ownedSince < T.possessionEstablishSeconds - 1e-9) return;
     s.establishedTeam = team;
     s.possessionSeq += 1;
-    s.allowanceRefillPending[otherTeam(team)] = true;
-    if (s.allowanceRefillPending[team]) {
-      s.allowanceRefillPending[team] = false;
-      s.aimAllowance[team] = T.aimAllowance.seconds;
-    }
     this.emit('possession', o, `established ${team} #${s.possessionSeq}`);
   }
 
@@ -1150,7 +993,10 @@ export class MatchSim {
   }
 
   private ctx(): AiContext {
-    return { s: this.s, T: this.tuning, rng: this.rng };
+    const c = this.aiCtx as { s: MatchState; T: MatchTuning; rng: () => number };
+    c.s = this.s;
+    c.rng = this.rng;
+    return this.aiCtx;
   }
 
   /** Opponent carriers and both keepers decide on a bounded cadence after a reaction delay. */
@@ -1172,7 +1018,8 @@ export class MatchSim {
     s.nextDecisionAt = s.simTime + T.ai.decisionSeconds;
     const d = decideCarrier(this.ctx(), p);
     if (d.type === 'carry') {
-      p.target = d.target;
+      p.target.x = d.target.x;
+      p.target.y = d.target.y;
       return;
     }
     const noise = (k: number): number => (this.rng() * 2 - 1) * k;
@@ -1186,7 +1033,7 @@ export class MatchSim {
       return;
     }
     const dist = clamp(length(raw), T.pass.minDistance, T.pass.maxDistance);
-    const speed = kickSpeed(powerForSpeed(passSpeedFor(dist), T) * (1 + noise(T.ai.powerNoise)), T);
+    const speed = kickSpeed(powerForSpeed(passSpeedFor(dist, T), T) * (1 + noise(T.ai.powerNoise)), T);
     const target = add(s.ball.pos, scale(dir, dist));
     this.kickBall(p, scale(dir, speed), p.isKeeper && d.why === 'long' ? 'clearance' : 'pass', target, d.receiver === p.id ? null : d.receiver);
     this.afterPass(p, target);
@@ -1210,67 +1057,76 @@ export class MatchSim {
     const spot = blocked ? vec(clamp(tT.x - 2, 2, T.shape.maxAttackX), clamp(pT.y, 3, T.pitch.width - 3)) : ahead;
     passer.intent = 'giveAndGo';
     passer.intentUntil = s.simTime + G.seconds;
-    passer.target = toWorld(team, spot, T);
+    const w = toWorld(team, spot, T);
+    passer.target.x = w.x;
+    passer.target.y = w.y;
     passer.speed = T.movement.runSpeed;
   }
 
   /** Pressers react to the carrier's cuts after a short lag instead of mirroring them instantly. */
   private updatePressRead(h: number): void {
     const s = this.s;
-    const focus = ballFocus(s);
+    const b = s.ball;
+    const owner = b.owner ? s.players[b.owner] : null;
+    const focus = this.focusScratch;
+    focus.x = owner ? owner.pos.x : b.pos.x + b.vel.x * 0.35;
+    focus.y = owner ? owner.pos.y : b.pos.y + b.vel.y * 0.35;
     const r = s.pressRead;
     // First tick, or the ball was teleported (restart, Lab staging): no lag to carry over.
     if (!finiteVec(r) || distance(r, focus) > 12) {
-      s.pressRead = copy(focus);
+      r.x = focus.x;
+      r.y = focus.y;
       return;
     }
     const k = 1 - Math.exp(-h / Math.max(1e-3, this.tuning.defense.readSeconds));
-    s.pressRead = vec(r.x + (focus.x - r.x) * k, r.y + (focus.y - r.y) * k);
+    r.x = r.x + (focus.x - r.x) * k;
+    r.y = r.y + (focus.y - r.y) * k;
   }
 
   private movePlayer(p: MatchPlayer, h: number): void {
     const T = this.tuning;
     const s = this.s;
     const M = T.movement;
-    let desired: MutableVec2;
+    let desired: MutableVec2 = this.desired;
     let accel = M.accel;
-    if (this.controls === 'pad' && p.id === s.controlledId && p.team === 'home' && !p.isKeeper) {
+    if (p.id === s.controlledId && p.team === 'home' && !p.isKeeper) {
       if (s.ball.owner === p.id) p.intent = 'carry';
       const v = this.padVelocity(p);
-      p.vel = approach(p.vel, v.desired, v.accel * h);
+      approachInPlace(p.vel, v.desired.x, v.desired.y, v.accel * h);
       // Jockey caps the actual speed, so entering it at a sprint can't carry the defender through the gap.
       if (v.cap !== undefined) {
         const sp = Math.hypot(p.vel.x, p.vel.y);
-        if (sp > v.cap) p.vel = scale(p.vel, v.cap / sp);
+        if (sp > v.cap) {
+          p.vel.x *= v.cap / sp;
+          p.vel.y *= v.cap / sp;
+        }
       }
       p.pos.x = clamp(p.pos.x + p.vel.x * h, 0.3, T.pitch.length - 0.3);
       p.pos.y = clamp(p.pos.y + p.vel.y * h, 0.5, T.pitch.width - 0.5);
       return;
     }
     if (s.ball.owner === p.id) {
-      if (p.isKeeper) desired = vec(0, 0);
+      if (p.isKeeper) {
+        desired.x = 0;
+        desired.y = 0;
+      }
       else if (p.team === 'home') {
         p.intent = 'carry';
         desired = this.userCarrierVelocity(p);
         accel = T.carrier.accel;
       } else {
-        desired = seek(p.pos, p.target, M.carrySpeed, 0.6);
+        seekInto(desired, p.pos, p.target, M.carrySpeed, 0.6);
         accel = T.dribble.accel;
       }
     } else if (p.isKeeper) {
       const k = this.keeperTarget(p);
-      desired = seek(p.pos, k.target, k.speed, 0.4);
+      seekInto(desired, p.pos, k.target, k.speed, 0.4);
       accel = T.keeper.accel;
-    } else if (s.userSteer && p.id === s.controlledId && p.team === 'home') {
-      desired = scale(s.userSteer.dir, M.chaseSpeed);
-      accel = M.sprintAccel;
     } else {
-      desired = seek(p.pos, p.target, p.speed, p.intent === 'chase' || p.intent === 'receive' ? 0.4 : 1.5);
+      seekInto(desired, p.pos, p.target, p.speed, p.intent === 'chase' || p.intent === 'receive' ? 0.4 : 1.5);
       if (p.intent === 'chase' || p.intent === 'press' || p.intent === 'run' || p.intent === 'recover') accel = M.sprintAccel;
     }
-    const bit = s.feintBought;
-    if (bit && bit.id === p.id && s.ball.owner !== p.id && s.simTime < bit.until) desired = scale(bit.dir, M.pressSpeed);
-    p.vel = approach(p.vel, desired, accel * h);
+    approachInPlace(p.vel, desired.x, desired.y, accel * h);
     p.pos.x = clamp(p.pos.x + p.vel.x * h, 0.3, T.pitch.length - 0.3);
     p.pos.y = clamp(p.pos.y + p.vel.y * h, 0.5, T.pitch.width - 0.5);
   }
@@ -1281,12 +1137,7 @@ export class MatchSim {
     const C = T.carrier;
     const s = this.s;
     const want = normalize(s.dribbleDir);
-    let top = C.speed * (want.x < -0.3 ? C.backSpeedFactor : 1);
-    const f = s.feint;
-    if (f && f.by === p.id) {
-      if (s.simTime < f.until) top *= T.feint.speedFactor;
-      else if (f.exitDir) top *= T.feint.exitSpeedFactor;
-    }
+    const top = C.speed * (want.x < -0.3 ? C.backSpeedFactor : 1);
     // Steer straight at the requested direction; movePlayer's accel cap is the only limit on cuts and reversals.
     let vx = want.x * top;
     let vy = want.y * top;
@@ -1305,9 +1156,16 @@ export class MatchSim {
     const P = T.pitch;
     const team = gk.team;
     const ball = s.ball;
-    const bT = toTeam(team, ball.pos, T);
-    const vT = velToTeam(team, ball.vel);
-    const gT = toTeam(team, gk.pos, T);
+    const home = team === 'home';
+    const bT = this.kbT;
+    bT.x = home ? ball.pos.x : P.length - ball.pos.x;
+    bT.y = home ? ball.pos.y : P.width - ball.pos.y;
+    const vT = this.kvT;
+    vT.x = home ? ball.vel.x : -ball.vel.x;
+    vT.y = home ? ball.vel.y : -ball.vel.y;
+    const gT = this.kgT;
+    gT.x = home ? gk.pos.x : P.length - gk.pos.x;
+    gT.y = home ? gk.pos.y : P.width - gk.pos.y;
     const kick = ball.kick;
     // Any opponent ball on target counts, whatever it was labelled (long passes, deflections), so range never skips the dive.
     const shotIncoming =
@@ -1317,19 +1175,29 @@ export class MatchSim {
       const t = (gT.x - bT.x) / vT.x;
       const y = t > 0 ? bT.y + vT.y * t : bT.y;
       s.keeperDiving[team] = true;
-      return { target: toWorld(team, vec(gT.x, clamp(y, P.goalCenterY - P.goalHalfWidth - 1, P.goalCenterY + P.goalHalfWidth + 1)), T), speed: K.diveSpeed };
+      return this.keeperResult(team, gT.x, clamp(y, P.goalCenterY - P.goalHalfWidth - 1, P.goalCenterY + P.goalHalfWidth + 1), K.diveSpeed);
     }
     s.keeperDiving[team] = false;
     // A slow loose ball inside the box that the keeper reaches first is his to collect.
     if (!ball.owner && length(ball.vel) < 5 && this.inBox(team, ball.pos) && this.keeperFirst(gk)) {
-      return { target: copy(ball.pos), speed: K.speed };
+      this.keeperRes.target.x = ball.pos.x;
+      this.keeperRes.target.y = ball.pos.y;
+      this.keeperRes.speed = K.speed;
+      return this.keeperRes;
     }
     const depth = K.depth;
     const y = P.goalCenterY + (bT.y - P.goalCenterY) * K.shade;
-    return {
-      target: toWorld(team, vec(depth, clamp(y, P.goalCenterY - P.goalHalfWidth + 0.5, P.goalCenterY + P.goalHalfWidth - 0.5)), T),
-      speed: K.speed,
-    };
+    return this.keeperResult(team, depth, clamp(y, P.goalCenterY - P.goalHalfWidth + 0.5, P.goalCenterY + P.goalHalfWidth - 0.5), K.speed);
+  }
+
+  /** Fills the reused keeper result with a team-frame point mirrored to world yards. */
+  private keeperResult(team: TeamId, x: number, y: number, speed: number): { target: MutableVec2; speed: number } {
+    const P = this.tuning.pitch;
+    const r = this.keeperRes;
+    r.target.x = team === 'home' ? x : P.length - x;
+    r.target.y = team === 'home' ? y : P.width - y;
+    r.speed = speed;
+    return r;
   }
 
   /** True if a loose ball (team coordinates, own goal line at x = 0) would roll into the goal mouth (+1 yd). */
@@ -1355,8 +1223,9 @@ export class MatchSim {
 
   private inBox(team: TeamId, p: Vec2): boolean {
     const P = this.tuning.pitch;
-    const t = toTeam(team, p, this.tuning);
-    return t.x <= P.boxDepth && Math.abs(t.y - P.goalCenterY) <= P.boxHalfWidth;
+    const tx = team === 'home' ? p.x : P.length - p.x;
+    const ty = team === 'home' ? p.y : P.width - p.y;
+    return tx <= P.boxDepth && Math.abs(ty - P.goalCenterY) <= P.boxHalfWidth;
   }
 
   private moveBall(h: number): void {
@@ -1366,21 +1235,27 @@ export class MatchSim {
     if (ball.owner) {
       const o = s.players[ball.owner];
       if (o.isKeeper) {
-        ball.pos = copy(o.pos);
-        ball.vel = vec(0, 0);
+        setXY(ball.pos, o.pos.x, o.pos.y);
+        zero(ball.vel);
         return;
       }
       s.touchPhase = (s.touchPhase + h / T.dribble.touchSeconds) % 1;
       const t = s.touchPhase;
       const k = t < 0.25 ? t / 0.25 : 1 - (t - 0.25) / 0.75;
-      const heading = length(o.vel) > 0.3 ? normalize(o.vel) : vec(o.team === 'home' ? 1 : -1, 0);
-      ball.pos = add(o.pos, scale(heading, lerp(T.dribble.minLead, T.dribble.maxLead, k)));
-      ball.vel = copy(o.vel);
+      const hl = length(o.vel);
+      const hx = hl > 0.3 ? o.vel.x / hl : o.team === 'home' ? 1 : -1;
+      const hy = hl > 0.3 ? o.vel.y / hl : 0;
+      const lead = lerp(T.dribble.minLead, T.dribble.maxLead, k);
+      setXY(ball.pos, o.pos.x + hx * lead, o.pos.y + hy * lead);
+      setXY(ball.vel, o.vel.x, o.vel.y);
       return;
     }
-    ball.pos = add(ball.pos, scale(ball.vel, h));
+    setXY(ball.pos, ball.pos.x + ball.vel.x * h, ball.pos.y + ball.vel.y * h);
     const speed = length(ball.vel);
-    if (speed > 0) ball.vel = scale(ball.vel, Math.max(0, speed - T.ball.friction * h) / speed);
+    if (speed > 0) {
+      const k = Math.max(0, speed - T.ball.friction * h) / speed;
+      setXY(ball.vel, ball.vel.x * k, ball.vel.y * k);
+    }
   }
 
   private resolveContacts(prev: Vec2, h: number): void {
@@ -1435,14 +1310,14 @@ export class MatchSim {
     const speed = length(ball.vel);
     const shot = ball.kick?.kind === 'shot' && ball.kick.team !== team;
     if (speed <= T.keeper.catchSpeed) {
-      ball.pos = copy(gk.pos);
+      setXY(ball.pos, gk.pos.x, gk.pos.y);
       this.take(gk, shot ? 'saved' : 'received', shot ? `keeper caught it (${speed.toFixed(1)} yd/s)` : 'keeper collected');
       if (shot) s.stats.saves[team] += 1;
       return true;
     }
     const vT = velToTeam(team, ball.vel);
     const side = toTeam(team, ball.pos, T).y >= toTeam(team, gk.pos, T).y ? 1 : -1;
-    ball.vel = toWorldVel(team, vec(Math.abs(vT.x) * T.keeper.parryFactor, side * speed * 0.3));
+    copyInto(ball.vel, toWorldVel(team, vec(Math.abs(vT.x) * T.keeper.parryFactor, side * speed * 0.3)));
     ball.ignore.push({ id: gk.id, until: s.simTime + T.keeper.ignoreSeconds });
     ball.lastTouch = team;
     s.keeperDiving[team] = false;
@@ -1502,7 +1377,7 @@ export class MatchSim {
     if (friendly) {
       if (speed <= T.receive.maxSpeed) this.take(p, 'received', '');
       else {
-        ball.vel = scale(ball.vel, T.receive.hotTouchFactor);
+        setXY(ball.vel, ball.vel.x * T.receive.hotTouchFactor, ball.vel.y * T.receive.hotTouchFactor);
         ball.ignore.push({ id: p.id, until: s.simTime + T.intercept.ignoreSeconds });
         ball.lastTouch = p.team;
         this.emit('deflected', p.id, 'too fast to control');
@@ -1517,7 +1392,7 @@ export class MatchSim {
     if (d <= T.intercept.deflectRadius) {
       const toBall = sub(ball.pos, p.pos);
       const cross = ball.vel.x * toBall.y - ball.vel.y * toBall.x;
-      ball.vel = scale(rotate(ball.vel, (cross >= 0 ? 1 : -1) * T.intercept.deflectAngle), T.intercept.deflectSpeedFactor);
+      copyInto(ball.vel, scale(rotate(ball.vel, (cross >= 0 ? 1 : -1) * T.intercept.deflectAngle), T.intercept.deflectSpeedFactor));
       ball.ignore.push({ id: p.id, until: s.simTime + T.intercept.ignoreSeconds });
       ball.lastTouch = p.team;
       ball.kick = { by: p.id, team: p.team, kind: 'touch', at: s.simTime, target: null, receiver: null };
@@ -1531,13 +1406,15 @@ export class MatchSim {
     const s = this.s;
     const ball = s.ball;
     const changed = s.possession !== p.team;
-    const buffered = s.bufferedDribble;
-    s.bufferedDribble = null;
     ball.owner = p.id;
-    ball.vel = p.isKeeper ? vec(0, 0) : copy(p.vel);
+    if (p.isKeeper) zero(ball.vel);
+    else setXY(ball.vel, p.vel.x, p.vel.y);
     // Control brings the ball to the receiver's feet (it was within reach), so ownership and ball position agree.
-    const heading = length(p.vel) > 0.3 ? normalize(p.vel) : vec(p.team === 'home' ? 1 : -1, 0);
-    ball.pos = p.isKeeper ? copy(p.pos) : add(p.pos, scale(heading, T.dribble.minLead));
+    const hl = length(p.vel);
+    const hx = hl > 0.3 ? p.vel.x / hl : p.team === 'home' ? 1 : -1;
+    const hy = hl > 0.3 ? p.vel.y / hl : 0;
+    if (p.isKeeper) setXY(ball.pos, p.pos.x, p.pos.y);
+    else setXY(ball.pos, p.pos.x + hx * T.dribble.minLead, p.pos.y + hy * T.dribble.minLead);
     ball.kick = null;
     ball.ignore = [];
     ball.lastTouch = p.team;
@@ -1546,7 +1423,6 @@ export class MatchSim {
     s.protectUntil = s.simTime + T.tackle.protectSeconds;
     s.nextDecisionAt = s.simTime + T.ai.reactionSeconds;
     s.touchPhase = 0;
-    s.feint = null;
     for (const id of MATCH_PLAYER_IDS) s.contact[id] = 0;
     for (const t of ['home', 'away'] as const) s.chaser[t].id = null;
     const run = s.runs[p.team];
@@ -1559,15 +1435,13 @@ export class MatchSim {
     if (userControl ? s.controlledId !== p.id || changed : s.controlledId !== null) {
       // Any half-finished aim belonged to the previous carrier: void it.
       s.controlEpoch += 1;
-      if (s.phase === 'aiming') this.cancelAim(changed ? 'possession lost' : 'control changed');
     }
     if (userControl) {
+      if (s.controlledId !== p.id) s.prevControlledId = s.controlledId;
       s.controlledId = p.id;
       s.controlSince = s.simTime;
-      s.userSteer = null;
       // Keep the receiver's own momentum (any direction); only a standing receiver defaults to facing upfield.
       s.dribbleDir = length(p.vel) > 0.3 ? normalize(p.vel) : vec(1, 0);
-      if (buffered && how === 'received' && buffered.receiver === p.id && s.simTime <= buffered.until) s.dribbleDir = copy(buffered.dir);
       this.emit('control', p.id, '');
     }
     if (changed) {
@@ -1581,7 +1455,7 @@ export class MatchSim {
   private kickBall(by: MatchPlayer, velocity: Vec2, kind: MatchKick['kind'], target: Vec2 | null, receiver: MatchPlayerId | null): void {
     const s = this.s;
     s.ball.owner = null;
-    s.ball.vel = copy(velocity);
+    setXY(s.ball.vel, velocity.x, velocity.y);
     s.ball.kick = { by: by.id, team: by.team, kind, at: s.simTime, target, receiver };
     s.ball.ignore = [{ id: by.id, until: s.simTime + this.tuning.ball.kickerIgnoreSeconds }];
     s.ball.lastTouch = by.team;
@@ -1592,15 +1466,12 @@ export class MatchSim {
     const T = this.tuning;
     const s = this.s;
     if (s.phase === 'stopped') return;
-    if (s.phase === 'aiming') this.cancelAim('play stopped');
     this.padReset('play stopped');
     s.phase = 'stopped';
     s.phaseTime = 0;
-    s.aim = null;
-    s.feint = null;
     s.timeScale = 1;
     s.stoppage = { reason, scorer, detail, restartTeam, spot: copy(spot), until: reason === 'goal' ? T.stoppage.goalSeconds : T.stoppage.outSeconds };
-    s.ball.vel = vec(0, 0);
+    zero(s.ball.vel);
     if (s.coachIntent) this.clearCoachIntent('play stopped');
     this.emit(reason, s.ball.kick?.by ?? null, detail);
   }
@@ -1620,9 +1491,9 @@ export class MatchSim {
         : TEAM_PLAYER_IDS[st.restartTeam].map((id) => s.players[id]).filter((p) => !p.isKeeper)
             .sort((a, b) => distance(a.pos, st.spot) - distance(b.pos, st.spot))[0];
       if (!taker) return;
-      taker.pos = copy(st.spot);
-      taker.vel = vec(0, 0);
-      s.ball.pos = copy(st.spot);
+      setXY(taker.pos, st.spot.x, st.spot.y);
+      zero(taker.vel);
+      setXY(s.ball.pos, st.spot.x, st.spot.y);
       s.ball.owner = null;
       this.take(taker, 'restart', st.reason);
       s.protectUntil = s.simTime + 1.5;
@@ -1642,18 +1513,21 @@ export class MatchSim {
         const a = p.isKeeper ? vec(role.base.x, role.base.y) : computeAnchor(role, toTeam(t, centre, T), t === team, T);
         a.x = Math.min(a.x, T.pitch.length / 2 - (t === team ? 0.5 : 6));
         const jitter = t === 'away' ? (this.rng() * 2 - 1) * 0.5 : 0;
-        p.pos = toWorld(t, vec(a.x, a.y + jitter), T);
-        p.vel = vec(0, 0);
-        p.target = copy(p.pos);
-        p.anchor = copy(p.pos);
+        const w = toWorld(t, vec(a.x, a.y + jitter), T);
+        setXY(p.pos, w.x, w.y);
+        zero(p.vel);
+        p.target.x = p.pos.x;
+        p.target.y = p.pos.y;
+        setXY(p.anchor, p.pos.x, p.pos.y);
         p.intent = p.isKeeper ? 'keeper' : 'hold';
         p.intentUntil = 0;
       }
     }
     const kicker = s.players[team === 'home' ? 'H8' : 'A8'];
-    kicker.pos = toWorld(team, vec(T.pitch.length / 2 - 1, T.pitch.goalCenterY), T);
-    s.ball.pos = copy(centre);
-    s.ball.vel = vec(0, 0);
+    const k = toWorld(team, vec(T.pitch.length / 2 - 1, T.pitch.goalCenterY), T);
+    setXY(kicker.pos, k.x, k.y);
+    setXY(s.ball.pos, centre.x, centre.y);
+    zero(s.ball.vel);
     s.ball.owner = null;
     s.ball.kick = null;
     s.runs = { home: { runnerId: null, until: 0, cooldownUntil: 0 }, away: { runnerId: null, until: 0, cooldownUntil: 0 } };
@@ -1713,22 +1587,13 @@ export class MatchSim {
       possession: 'home',
       controlledId: 'H8',
       controlSince: 0,
-      userSteer: null,
-      bufferedDribble: null,
       prevControlledId: null,
       possessionSeq: 0,
       establishedTeam: null,
       controlEpoch: 0,
-      aim: null,
-      aimAllowance: { home: T.aimAllowance.seconds, away: T.aimAllowance.seconds },
-      allowanceRefillPending: { home: false, away: false },
       control: T.control.max,
-      swipeCooldown: 0,
       dribbleDir: vec(1, 0),
       pad: this.newPad(),
-      feint: null,
-      feintReadyAt: 0,
-      feintBought: null,
       touchPhase: 0,
       protectUntil: 0,
       ownedSince: 0,
@@ -1756,6 +1621,12 @@ export class MatchSim {
 
 function toWorldVel(team: TeamId, v: Vec2): MutableVec2 {
   return team === 'home' ? vec(v.x, v.y) : vec(-v.x, -v.y);
+}
+
+/** Ground-pass launch speed that arrives at `pass.arriveSpeed` after rolling `distanceYards` under friction. */
+function passSpeedFor(distanceYards: number, T: MatchTuning): number {
+  const { arriveSpeed, maxSpeed } = T.pass;
+  return Math.min(maxSpeed, Math.sqrt(arriveSpeed * arriveSpeed + 2 * T.ball.friction * distanceYards));
 }
 
 /** Structural checks that must hold after every step. Returns human-readable violations. */
@@ -1829,6 +1700,24 @@ export function powerForSpeed(speed: number, T: MatchTuning = MATCH_TUNING): num
 const dot2 = (a: Vec2, b: Vec2): number => a.x * b.x + a.y * b.y;
 
 /** Rotates unit vector `from` toward `to` by at most `max` radians. */
+function setXY(v: MutableVec2, x: number, y: number): void {
+  v.x = x;
+  v.y = y;
+}
+const zero = (v: MutableVec2): void => setXY(v, 0, 0);
+const copyInto = (v: MutableVec2, a: Vec2): void => setXY(v, a.x, a.y);
+
+/** In-place turnToward: rotates the unit vector `v` toward the unit direction (tx, ty) by at most `max` radians. */
+function turnTowardInto(v: MutableVec2, tx: number, ty: number, max: number): void {
+  const a = Math.atan2(v.y, v.x);
+  let d = Math.atan2(ty, tx) - a;
+  while (d > Math.PI) d -= 2 * Math.PI;
+  while (d < -Math.PI) d += 2 * Math.PI;
+  const r = a + clamp(d, -max, max);
+  v.x = Math.cos(r);
+  v.y = Math.sin(r);
+}
+
 function turnToward(from: Vec2, to: Vec2, max: number): MutableVec2 {
   const a = Math.atan2(from.y, from.x);
   let d = Math.atan2(to.y, to.x) - a;
