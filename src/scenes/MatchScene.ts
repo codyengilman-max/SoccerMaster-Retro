@@ -1016,7 +1016,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   }
 
   /** Stage the current situation from scratch (also on Reset, which replays it without a result). */
-  private stageTeamSituation(): void {
+  private stageTeamSituation(prefix = ''): void {
     const t = this.team;
     if (!t || t.phase === 'done' || t.phase === 'saving') return;
     const sit = t.situations[t.index];
@@ -1029,7 +1029,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     t.observer = new SituationObserver(sit, this.sim.state);
     this.snapCamera();
     this.lastSeq = 0;
-    this.toast(`Team Training ${t.index + 1}/${t.situations.length}: ${sit.title}. ${sit.goal}`);
+    this.toast(`${prefix}Team Training ${t.index + 1}/${t.situations.length}: ${sit.title}. ${sit.goal}`);
   }
 
   private updateTeamTraining(): void {
@@ -1040,9 +1040,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     t.results.push(r);
     t.observer = null;
     t.index += 1;
+    const last = `${Math.round(r.score * 100)}%: ${r.notes.join(' ')}  `;
     if (t.index < t.situations.length) {
-      this.stageTeamSituation();
-      this.toast(`${Math.round(r.score * 100)}%: ${r.notes.join(' ')}  Next: ${t.situations[t.index]!.title}.`);
+      this.stageTeamSituation(last);
       return;
     }
     t.phase = 'saving';
@@ -1053,7 +1053,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       if (this.team !== t || !this.sys.isActive()) return;
       t.phase = 'done';
       t.message = out.ok ? out.message : out.error;
-      this.toast(`${t.message}  Press Menu to return.`);
+      this.toast(`${last}${t.message}  Press Menu to return.`);
     });
   }
 
