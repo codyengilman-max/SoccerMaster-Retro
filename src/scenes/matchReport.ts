@@ -19,6 +19,8 @@ export interface MatchPlayerReport {
 
 /** Plain-data snapshot of the 9v9 sandbox exposed through `window.__SMR__` (debug builds only). */
 export interface MatchReport {
+  /** Career Team Training progress, or null outside Team Training. */
+  readonly teamTraining?: { readonly phase: string; readonly week: number; readonly index: number; readonly ids: readonly string[]; readonly scores: readonly number[]; readonly message: string } | null;
   /** M6: career evidence recording for the career player's slot, or null outside career play. */
   readonly career?: { readonly slot: string; readonly pending: number; readonly batches: number; readonly recorded: number; readonly missed: number } | null;
   readonly phase: match.MatchPhase;

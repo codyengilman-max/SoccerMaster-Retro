@@ -9,6 +9,7 @@ import { CATEGORY_SKILL_AREA, COACHING_REVIEW, CURRICULUM, EMPTY_STATE, FAMILY_M
 import { prototypeFor, resolveSteps, stepAt } from '../game/career/curriculum/demos';
 import { DRAFT_PREFIX, DRAFT_STATUS, draftActivityId } from '../game/career/curriculum/drafts';
 import { LOGIC_CATALOG, LOGIC_GROUPS, SCENARIO_GOAL, activeLogicScenarios, currentText, type LogicGroup } from '../game/logic/catalog';
+import { describeChanges, selectSituations } from '../game/career/teamTraining';
 import { orientationOf } from '../render/layout';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspectable';
@@ -26,6 +27,7 @@ type Screen =
   | { kind: 'log'; id: string; sessionId: string | null }
   | { kind: 'journal' }
   | { kind: 'review' }
+  | { kind: 'team' }
   | { kind: 'player' }
   | { kind: 'drafts' }
   | { kind: 'draftFamily'; id: string }
@@ -90,7 +92,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.navigating = false;
     this.reducedMotion = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.demoPaused = this.reducedMotion;
-    this.screen = data?.open === 'reviewHub' ? { kind: 'reviewHub' } : { kind: 'home' };
+    this.screen = data?.open === 'reviewHub' ? { kind: 'reviewHub' } : data?.open === 'team' ? { kind: 'team' } : { kind: 'home' };
     this.history = [];
     this.page = 0;
     this.textPage = 0;
@@ -247,6 +249,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
                 { name: 'nav-sessions', label: 'My Home Sessions', onClick: () => this.go({ kind: 'sessions' }) },
                 { name: 'nav-library', label: 'Training Library', onClick: () => this.go({ kind: 'library', family: null }) },
                 { name: 'nav-journal', label: 'Practice Journal', onClick: () => this.go({ kind: 'journal' }) },
+                { name: 'nav-team', label: 'Team Training (this week)', onClick: () => this.go({ kind: 'team' }) },
                 { name: 'nav-play', label: 'Play a 9v9 match (records game moments)', onClick: () => this.playSandbox() },
                 { name: 'nav-review', label: 'Weekly Review', onClick: () => this.go({ kind: 'review' }) },
                 { name: 'nav-player', label: 'Character Development', onClick: () => this.go({ kind: 'player' }) },
@@ -518,12 +521,38 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           actions: [{ name: 'end-week', label: `Finish Week ${s.week}`, onClick: () => void this.act({ type: 'endWeek' }) }],
         };
       }
+      case 'team': {
+        if (!p) return { title: 'Team Training', body: 'No player yet.', actions: [] };
+        const rec = s.teamTraining.find((r) => r.week === s.week);
+        const rows = selectSituations(p.position, s.week).map((x, i) => {
+          const c = LOGIC_CATALOG.scenarios.find((sc) => sc.id === x.id);
+          const score = rec ? `  ${Math.round((rec.scores[i] ?? 0) * 100)}%` : '';
+          return `${i + 1}. ${x.title} (${x.id}${c ? `: ${c.original.situation}` : ''})${score}\n   ${x.goal}\n   Trains: ${x.attributes.map((a) => ATTRIBUTE_LABELS[a]).join(', ')}`;
+        });
+        return {
+          title: `Team Training · Week ${s.week}`,
+          body: [
+            ...rows,
+            rec
+              ? `\nCounted for week ${s.week}: ${describeChanges(rec.changes)}. Playing again is practice only.`
+              : '\nPlay all three with the normal controls. A good week adds up to +2 attribute points, a poor week costs 1 (never below the starting value). Leaving early counts nothing.',
+            'Situations come from the soccer-logic catalog draft (not coach-certified).',
+          ].join('\n'),
+          actions: [{ name: 'team-play', label: rec ? 'Practise again' : 'Play Team Training', onClick: () => this.playTeamTraining() }],
+        };
+      }
       case 'player': {
         if (!p) return { title: 'Character Development', body: 'No player yet.', actions: [] };
         const rows = ATTRIBUTES.map((a) => `${ATTRIBUTE_LABELS[a]}: ${p.attributes[a]} / ${p.potential[a]}\n   grows from: ${ATTRIBUTE_EVIDENCE[a]}`);
         return { title: `${p.name} (${p.position})`, body: rows.join('\n'), actions: [] };
       }
     }
+  }
+
+  private playTeamTraining(): void {
+    if (this.navigating) return;
+    this.navigating = true;
+    this.scene.start(SceneKeys.Match, { teamTraining: true });
   }
 
   private playSandbox(): void {

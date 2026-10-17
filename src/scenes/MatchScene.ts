@@ -35,6 +35,7 @@ import { EvidenceCollector, coachEvidence } from '../game/career/evidence';
 import type { EvidenceItem } from '../game/career/progression';
 import { matchAttrsFromCareer } from '../game/career/player';
 import { CareerStore } from '../game/career/store';
+import { SituationObserver, selectSituations, type SituationResult, type TeamTrainingSituation } from '../game/career/teamTraining';
 import type { Position } from '../game/career/types';
 import { MATCH_TUNING } from '../game/match/tuning';
 
@@ -67,6 +68,8 @@ export interface MatchSceneData {
   readonly career?: boolean;
   /** Gameplay Lab scenario (lab builds only): untimed, no Coach, no career evidence. */
   readonly lab?: string;
+  /** Career Team Training: this week's three logic-catalog situations, counted once on completion. */
+  readonly teamTraining?: boolean;
   /** Story handoff: Menu returns to the story instead of the start screen. */
   readonly returnTo?: 'story';
   /** Story run id: the full-time score is kept once under `matchresult:<key>` for the league table. */
@@ -187,7 +190,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     // Only the Lab picker launches a scenario; `?lab` itself just opens the picker.
     const labId = __LAB__ ? data.lab : null;
     this.labId = match.isLabScenarioId(labId) ? labId : null;
-    const halfSeconds = params.has('sandbox') || this.labId
+    const teamTraining = data.teamTraining === true && !this.labId;
+    const halfSeconds = params.has('sandbox') || this.labId || teamTraining
       ? null
       : shouldExposeDebug(window.location) && Number.isFinite(halfParam) && halfParam > 0
         ? halfParam
@@ -199,11 +203,12 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     if (shouldExposeDebug(window.location)) this.applyDebugSetup(params.get('setup'));
     this.passLog = shouldExposeDebug(window.location) && params.has('passlog');
     this.passLogKey = '';
-    this.coachConfig = this.labId ? null : this.readCoachConfig(params, seed);
+    this.coachConfig = this.labId || teamTraining ? null : this.readCoachConfig(params, seed);
     this.coachRun = 0;
     this.coachDirector = this.coachConfig ? new coach.CoachDirector(this.coachConfig) : null;
     this.lastSeq = 0;
-    this.startCareer(data.career === true && !this.labId);
+    this.startCareer(data.career === true && !this.labId && !teamTraining);
+    this.startTeamTraining(teamTraining, params);
     this.camera = new CameraController(this.sim.state.ball.pos);
     this.snapCamera();
     this.pad = new PadHud(this, this.scale.width, this.scale.height);
@@ -327,6 +332,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.sim.step(dt);
     this.consumeEvents();
     this.observeCareer();
+    this.updateTeamTraining();
     this.updateCoach();
     this.updateBreak();
     this.renderFrame(dt);
@@ -581,6 +587,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       pauseReasons: { ...s.pauseReasons },
       coachIntent: s.coachIntent ? { ...s.coachIntent, target: { ...s.coachIntent.target } } : null,
       coach: this.coachReport(),
+      teamTraining: this.team
+        ? { phase: this.team.phase, week: this.team.week, index: this.team.index, ids: this.team.situations.map((x) => x.id), scores: this.team.results.map((r) => r.score), message: this.team.message }
+        : null,
       career: this.collector ? { slot: this.collector.careerId, pending: this.careerItems.length, batches: this.careerBatch, recorded: this.careerRecorded, missed: this.collector.missed } : null,
     };
   }
@@ -862,6 +871,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     // A Lab reset replays the scenario exactly: same seed, same staging.
     this.sim.command(this.labId ? { type: 'reset', seed: this.labSeed } : { type: 'reset' });
     this.stageLab();
+    this.stageTeamSituation();
     this.snapCamera();
     this.lastSeq = 0;
     this.newCoachSession();
@@ -946,6 +956,10 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.navigating = true;
     this.cancelInput('navigation');
     this.coachDirector?.abandon(this.sim);
+    if (this.team) {
+      this.scene.start(SceneKeys.Career, { open: 'team' });
+      return;
+    }
     this.scene.start(this.returnTo === 'story' ? SceneKeys.Story : SceneKeys.Start, this.returnTo === 'story' ? { resume: true } : undefined);
   }
 
@@ -954,6 +968,93 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.layout(size.width, size.height);
     if (this.pad) this.handlePad(this.pad.layout(size.width, size.height));
     this.renderFrame(0);
+  }
+
+  // ---- Team Training ---------------------------------------------------------------------------
+
+  private team: {
+    week: number;
+    situations: TeamTrainingSituation[];
+    index: number;
+    results: SituationResult[];
+    observer: SituationObserver | null;
+    store: CareerStore | null;
+    attrs: ReturnType<typeof matchAttrsFromCareer>;
+    phase: 'loading' | 'playing' | 'saving' | 'done';
+    message: string;
+  } | null = null;
+
+  private startTeamTraining(on: boolean, params: URLSearchParams): void {
+    this.team = null;
+    if (!on) return;
+    const debugSecs = Number(params.get('ttSeconds'));
+    const shorten = shouldExposeDebug(window.location) && Number.isFinite(debugSecs) && debugSecs >= 1;
+    const team = { week: 0, situations: [] as TeamTrainingSituation[], index: 0, results: [] as SituationResult[], observer: null, store: null as CareerStore | null, attrs: {}, phase: 'loading' as 'loading' | 'playing' | 'saving' | 'done', message: '' };
+    this.team = team;
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => team.store?.close());
+    this.toast('Loading Team Training…');
+    void CareerStore.open().then(async (store) => {
+      if (!this.sys.isActive() || this.team !== team) {
+        store.close();
+        return;
+      }
+      team.store = store;
+      const save = await store.load();
+      if (!this.sys.isActive() || this.team !== team) return;
+      if (!save.player) {
+        team.phase = 'done';
+        team.message = 'Create your player first.';
+        this.toast(team.message);
+        return;
+      }
+      team.week = save.week;
+      team.attrs = matchAttrsFromCareer(save.player.attributes);
+      team.situations = selectSituations(save.player.position, save.week).map((x) => (shorten ? { ...x, seconds: Math.min(x.seconds, debugSecs) } : x));
+      if (save.teamTraining.some((r) => r.week === save.week)) team.message = `Week ${save.week} is already counted; this is practice only.`;
+      this.stageTeamSituation();
+    });
+  }
+
+  /** Stage the current situation from scratch (also on Reset, which replays it without a result). */
+  private stageTeamSituation(): void {
+    const t = this.team;
+    if (!t || t.phase === 'done' || t.phase === 'saving') return;
+    const sit = t.situations[t.index];
+    if (!sit) return;
+    t.phase = 'playing';
+    this.cancelInput('team training');
+    this.sim.command({ type: 'reset', seed: 11 + t.index });
+    this.sim.arrange((s) => match.stageFixture(s, sit.fixture, MATCH_TUNING.pitch));
+    this.sim.setPlayerAttrs(this.sim.state.controlledId, t.attrs);
+    t.observer = new SituationObserver(sit, this.sim.state);
+    this.snapCamera();
+    this.lastSeq = 0;
+    this.toast(`Team Training ${t.index + 1}/${t.situations.length}: ${sit.title}. ${sit.goal}`);
+  }
+
+  private updateTeamTraining(): void {
+    const t = this.team;
+    if (!t || t.phase !== 'playing' || !t.observer) return;
+    if (!t.observer.step(this.sim.state)) return;
+    const r = t.observer.result();
+    t.results.push(r);
+    t.observer = null;
+    t.index += 1;
+    if (t.index < t.situations.length) {
+      this.stageTeamSituation();
+      this.toast(`${Math.round(r.score * 100)}%: ${r.notes.join(' ')}  Next: ${t.situations[t.index]!.title}.`);
+      return;
+    }
+    t.phase = 'saving';
+    this.sim.command({ type: 'pause' });
+    const store = t.store;
+    if (!store) return;
+    void store.dispatch({ type: 'teamTraining', week: t.week, results: t.results }).then((out) => {
+      if (this.team !== t || !this.sys.isActive()) return;
+      t.phase = 'done';
+      t.message = out.ok ? out.message : out.error;
+      this.toast(`${t.message}  Press Menu to return.`);
+    });
   }
 
   private startCareer(on: boolean): void {
