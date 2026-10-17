@@ -2,6 +2,8 @@
 
 ## Owner approvals (2026-10-16)
 
+- **CI note:** GitHub runs of this branch timed out on a different unchanged spec each time (`jungle.spec` :49 by 0.002 yd, `pad.spec` A03, `coach.spec` :82, `match.spec` :72). The same specs pass locally (8/8 jungle + coach in portrait and desktop), and this PR changes only approval labels and text.
+
 - Weeks 2–4 dialogue approved: the on-screen "draft, awaiting review" line is gone (`WEEKS_2_4_OWNER_APPROVED`). `DRAFT_SCENES` stays as provenance (Devin wrote it from the outline).
 - All 28 Graphics v1.1 images approved (`OWNER_ART_APPROVAL`); the Gallery shows "Owner approved 2026-10-16". The package's `asset-manifest.json` is unchanged.
 
