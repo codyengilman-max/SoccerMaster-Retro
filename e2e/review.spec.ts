@@ -70,7 +70,7 @@ test('Review & Lab hub reaches Training Review and the catalog-only Soccer Logic
   await until(page, (x) => x.screen === 'reviewHub', 'hub again');
   await press(page, 'hub-training', mode);
   c = await until(page, (x) => x.screen === 'drafts', 'drafts');
-  expect(c.text).toContain('REVIEW ONLY');
+  expect(c.text).toContain('ENABLED BY OWNER, NOT COACH-CERTIFIED');
   expect(c.text).toContain('published: 0');
   await fits(page);
   expect(c.credit).toBe(0);

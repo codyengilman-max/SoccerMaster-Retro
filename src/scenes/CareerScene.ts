@@ -7,6 +7,7 @@ import { CareerStore } from '../game/career/store';
 import { ATTRIBUTES, ATTRIBUTE_LABELS, LEVEL_NAMES, POSITIONS, SKILL_FAMILY_LABELS, type Activity, type Foot, type Position, type Rating } from '../game/career/types';
 import { CATEGORY_SKILL_AREA, COACHING_REVIEW, CURRICULUM, EMPTY_STATE, FAMILY_MAPPING, publishedLevels } from '../game/career/curriculum';
 import { prototypeFor, resolveSteps, stepAt } from '../game/career/curriculum/demos';
+import { DRAFT_PREFIX, DRAFT_STATUS, draftActivityId } from '../game/career/curriculum/drafts';
 import { LOGIC_CATALOG, LOGIC_GROUPS, SCENARIO_GOAL, activeLogicScenarios, currentText, type LogicGroup } from '../game/logic/catalog';
 import { orientationOf } from '../render/layout';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
@@ -319,7 +320,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             body: `${ALL_ACTIVITIES.length} activities. All are original home adaptations awaiting coaching review.`,
             actions: [
               ...fams.map((fam) => ({ name: `lib-${fam}`, label: `${SKILL_FAMILY_LABELS[fam]} (${ALL_ACTIVITIES.filter((a) => a.skillFamilyId === fam).length})`, onClick: () => this.go({ kind: 'library', family: fam }) })),
-              { name: 'lib-drafts', label: 'Draft library v1.1 (review only)', onClick: () => this.go({ kind: 'drafts' }) },
+              { name: 'lib-drafts', label: 'Draft library v1.1 (owner-enabled)', onClick: () => this.go({ kind: 'drafts' }) },
             ],
           };
         return {
@@ -389,7 +390,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         const m = CURRICULUM.manifest;
         return {
           title: 'Draft library v1.1',
-          body: `REVIEW ONLY. ${m.families.length} exercise families, ${m.families.length * 5} practice options, version ${m.contentVersion}. None is coach-approved, so none appears in your plan, journal or credit (published: ${publishedLevels().length}).\nFamilies organize practice inside the seven skill areas; your levels do not change.\nIn your plan: ${EMPTY_STATE}`,
+          body: `${DRAFT_STATUS.toUpperCase()}. ${m.families.length} exercise families, ${m.families.length * 5} practice options, version ${m.contentVersion}. Swap an option into a scheduled Home Training session with the same focus, or log it as extra practice. Credit rules are unchanged: one per scheduled session, at most three a week, never game attributes. Coach-certified options (published: ${publishedLevels().length}).\nFamilies organize practice inside the seven skill areas; your levels do not change.\nAutomatic recommendations: ${EMPTY_STATE}`,
           actions: m.families.map((f) => ({ name: `draft-${f.id}`, label: `${f.id} ${f.title} · ${SKILL_FAMILY_LABELS[CATEGORY_SKILL_AREA[f.category]]}`, onClick: () => this.go({ kind: 'draftFamily', id: f.id }) })),
         };
       }
@@ -419,7 +420,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         const proto = prototypeFor(l.id);
         const claims = m.claims.filter((c) => l.claimIds.includes(c.id));
         const body = [
-          'DRAFT · REVIEW ONLY · not in your plan, journal or credit.',
+          `DRAFT · ${DRAFT_STATUS}. Counts toward ${SKILL_FAMILY_LABELS[CATEGORY_SKILL_AREA[f.category]]}; swap it into a scheduled session or log it as extra practice.`,
           `Setup: ${l.setup}`,
           ...l.steps.map((x, i) => `${i + 1}. ${x}`),
           `Foot: ${l.footMode}`,
@@ -437,6 +438,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
               { name: 'demo-replay', label: 'Replay', onClick: () => ((this.demoT = 0), this.render()) },
             ]
           : [];
+        actions.unshift({ name: 'draft-log', label: 'Log as extra practice', onClick: () => this.openLog(draftActivityId(l.id), null) });
         return { title: `DRAFT · ${l.id} ${f.title}`, body, actions };
       }
       case 'activity': {
@@ -463,7 +465,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         if (sc.sessionId && s.plan && !s.completedSessions.includes(sc.sessionId))
           for (const alt of substitutes(s.plan, sc.sessionId, sc.index).slice(0, 3))
             actions.push({ name: `swap-${alt.id}`, label: `Swap for ${alt.title}`, onClick: () => void this.act({ type: 'substitute', sessionId: sc.sessionId!, index: sc.index, activityId: alt.id }, { kind: 'activity', id: alt.id, sessionId: sc.sessionId, index: sc.index }) });
-        return { title: a.title, body, actions, demo: a };
+        return { title: a.title, body, actions, ...(a.id.startsWith(DRAFT_PREFIX) ? {} : { demo: a }) };
       }
       case 'log': {
         const a = activityById(sc.id)!;

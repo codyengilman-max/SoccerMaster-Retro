@@ -1,5 +1,5 @@
 import { CAREER_CONFIG } from './config';
-import { ALL_ACTIVITIES, FOCUSES, activityById } from './catalog';
+import { FOCUSES, HOME_ACTIVITIES, activityById } from './catalog';
 import type { PlannedItem, PlannedSession, PlannerInput, WeekPlan } from './planner';
 import { cleanText, type CareerPlayer } from './player';
 import type { AttributeOutcome, EvidenceItem } from './progression';
@@ -36,7 +36,7 @@ const bool = (v: unknown, what: string): boolean => {
   if (typeof v !== 'boolean') throw new Invalid(`${what}: expected true/false`);
   return v;
 };
-const ACTIVITY_IDS = ALL_ACTIVITIES.map((a) => a.id);
+const ACTIVITY_IDS = HOME_ACTIVITIES.map((a) => a.id);
 const FOCUS_IDS = FOCUSES.map((f) => f.id);
 const level = (v: unknown, what: string) => int(v, what, 1, 5) as Level;
 

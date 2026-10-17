@@ -1,5 +1,5 @@
 import { CAREER_CONFIG } from './config';
-import { ALL_ACTIVITIES, FOCUSES, focusById } from './catalog';
+import { ALL_ACTIVITIES, FOCUSES, HOME_ACTIVITIES, activityById, focusById } from './catalog';
 import { LEVEL_NAMES, SKILL_FAMILY_LABELS, type Activity, type Level } from './types';
 
 export interface PlannerInput {
@@ -64,8 +64,8 @@ function needsBallOnly(a: Activity): boolean {
   return a.equipment.optional.some((q) => q !== 'audio');
 }
 
-function poolFor(focusId: string, level: Level, input: PlannerInput): Activity[] {
-  return ALL_ACTIVITIES.filter((a) => a.focusId === focusId && a.entryLevel <= Math.min(5, level + 1) && suitable(a, input)).sort(
+function poolFor(focusId: string, level: Level, input: PlannerInput, list: readonly Activity[] = ALL_ACTIVITIES): Activity[] {
+  return list.filter((a) => a.focusId === focusId && a.entryLevel <= Math.min(5, level + 1) && suitable(a, input)).sort(
     (a, b) => a.entryLevel - b.entryLevel || a.id.localeCompare(b.id),
   );
 }
@@ -178,8 +178,9 @@ export function substitutes(plan: WeekPlan, sessionIdValue: string, index: numbe
   const s = plan.sessions.find((x) => x.id === sessionIdValue);
   const current = s?.items[index];
   if (!s || !current) return [];
-  const usedGroups = new Set(s.items.map((i) => ALL_ACTIVITIES.find((a) => a.id === i.activityId)?.variantGroupId));
-  return poolFor(plan.focusId, plan.level, plan.input).filter((a) => !usedGroups.has(a.variantGroupId));
+  const usedGroups = new Set(s.items.map((i) => activityById(i.activityId)?.variantGroupId));
+  // Plans are built from the originals only; owner-enabled v1.1 drafts are offered as swaps in the same focus.
+  return poolFor(plan.focusId, plan.level, plan.input, HOME_ACTIVITIES).filter((a) => !usedGroups.has(a.variantGroupId));
 }
 
 export function substitute(plan: WeekPlan, sessionIdValue: string, index: number, activityId: string): WeekPlan | null {
