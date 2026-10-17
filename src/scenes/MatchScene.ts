@@ -1029,7 +1029,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     t.observer = new SituationObserver(sit, this.sim.state);
     this.snapCamera();
     this.lastSeq = 0;
-    this.toast(`${prefix}Team Training ${t.index + 1}/${t.situations.length}: ${sit.title}. ${sit.goal}`);
+    this.toast(`${prefix}Team Training ${t.index + 1}/${t.situations.length}: ${sit.title}. ${sit.goal}`, 4500);
   }
 
   private updateTeamTraining(): void {
@@ -1045,15 +1045,15 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       this.stageTeamSituation(last);
       return;
     }
+    // Play carries on as an untimed sandbox, so the HUD (and the result toast) stays visible.
     t.phase = 'saving';
-    this.sim.command({ type: 'pause' });
     const store = t.store;
     if (!store) return;
     void store.dispatch({ type: 'teamTraining', week: t.week, results: t.results }).then((out) => {
       if (this.team !== t || !this.sys.isActive()) return;
       t.phase = 'done';
       t.message = out.ok ? out.message : out.error;
-      this.toast(`${last}${t.message}  Press Menu to return.`);
+      this.toast(`${last}${t.message}  Press Menu to return.`, 60_000);
     });
   }
 
@@ -1243,9 +1243,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     store.close();
   }
 
-  private toast(message: string): void {
+  private toast(message: string, ms = 1500): void {
     this.toastMessage = message;
-    this.toastUntil = performance.now() + 1500;
+    this.toastUntil = performance.now() + ms;
   }
 
   // ---- layout + drawing -----------------------------------------------------------------------
