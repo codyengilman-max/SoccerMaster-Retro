@@ -3,6 +3,7 @@
 ## FIFA brief in full (branch `devin/1792190415-fifa-full`, PR #16, not merged, not deployed)
 
 - **Team Training feedback:** stage banners show the previous situation's score with `n/3`, wrap inside the screen, and the week result stays visible until Menu (routine "You control …" notices no longer replace it). Runtime-checked in phone emulation, portrait and landscape.
+- **CI note:** two GitHub runs each timed out on a different unchanged spec (desktop `match.spec` :49/:72, then phone-landscape `pad.spec` A03). Locally, `pad.spec` A03 fails the same way on `main` and on this branch when 4 workers share 2 cores (4/6 each), and passes 8/8 on both with one worker, so these are runner-load timeouts rather than a regression.
 
 - **Old gameplay removed:** the 3v2 Attack drill (`AttackScene`, `src/game/attack`), swipe/gesture controls, slow-motion aiming, the feint and the Lab's aim toggle. The 9v9 match runs only on the joystick plus PASS / SHOOT / SLIDE TACKLE / BLOCK. The story crossbar challenge keeps its own pull-back shot (`src/input/pull.ts`).
 - **Allocations:** state vectors updated in place, pooled AI scratch, regression test for vector identity and pool size. Measured about 3.3–5.5 KB per step against 29–91 KB before; not zero (see `docs/FIFA_MECHANICS.md`).
