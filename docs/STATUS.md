@@ -1,5 +1,13 @@
 # Status
 
+
+## Referee (branch `devin/1792274864-referee`, not merged, not deployed)
+
+- `src/game/match/referee.ts` (+ `src/modules/RefereeSystem.ts`): throw-ins, goal kicks vs corners from the last touch, offside at the kick instance, slide fouls with free kicks and penalties, indirect free kicks. See D28.
+- Match banners: THROW-IN, GOAL KICK, CORNER, OFFSIDE!, FOUL! Free kick, FOUL! PENALTY.
+- Tests: `tests/referee.test.ts` (17), including 60 Hz vs 120 Hz identical calls and a seeded no-stuck-restart sweep.
+- Limits: no advantage, cards, handball, aerial corners or build-out line. Not tested on a real iPhone.
+
 ## FIFA brief in full (branch `devin/1792190415-fifa-full`, PR #16, not merged, not deployed)
 
 - **Team Training feedback:** stage banners show the previous situation's score with `n/3`, wrap inside the screen, and the week result stays visible until Menu (routine "You control …" notices no longer replace it). Runtime-checked in phone emulation, portrait and landscape.

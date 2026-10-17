@@ -1,3 +1,4 @@
+import type { RestartKind } from './referee';
 import type { Vec2 } from '../vec';
 import type { MutableVec2 } from '../math';
 import type { FormationId, RoleId } from './formations';
@@ -131,7 +132,11 @@ export interface MatchClock {
 }
 
 export interface Stoppage {
-  readonly reason: 'goal' | 'out' | 'foul';
+  readonly reason: 'goal' | 'out' | 'foul' | 'offside';
+  /** Formal restart the referee awarded (see referee.ts). */
+  readonly restart: RestartKind;
+  /** Named taker (the fouled player for a penalty), else the referee picks the nearest player. */
+  readonly taker: MatchPlayerId | null;
   readonly scorer: TeamId | null;
   readonly detail: string;
   /** Team that restarts after the sandbox reset. */
@@ -162,6 +167,7 @@ export type MatchEventType =
   | 'block'
   | 'deflect'
   | 'foul'
+  | 'offside'
   | 'live'
   | 'pass'
   | 'shot'
@@ -267,6 +273,8 @@ export interface MatchState {
   keeperDiving: Record<TeamId, boolean>;
   score: Record<TeamId, number>;
   stoppage: Stoppage | null;
+  /** Throw-in or penalty waiting to be taken: the taker (and for a penalty everyone) is held until the ball is played. */
+  setPiece: { readonly kind: RestartKind; readonly taker: MatchPlayerId; readonly since: number } | null;
   /** Two-half match clock, or null in the open-ended sandbox. */
   clock: MatchClock | null;
   stats: { passes: Record<TeamId, number>; shots: Record<TeamId, number>; saves: Record<TeamId, number>; turnovers: number };
