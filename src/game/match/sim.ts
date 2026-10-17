@@ -21,6 +21,7 @@ import { DEFAULT_FORMATION, FORMATIONS, roleDef, type FormationId } from './form
 import { MATCH_TUNING, type MatchTuning } from './tuning';
 import { planUserPass } from './predict';
 import { Referee, type RestartKind } from './referee';
+import { U11_9V9_PITCH } from '../pitch';
 import { computeAnchor, decideCarrier, planTeams, toTeam, toWorld, velToTeam, type AiContext } from './ai';
 import {
   AWAY_IDS,
@@ -115,7 +116,7 @@ export class MatchSim {
   private readonly mePrev: MutableVec2 = { x: 0, y: 0 };
   private readonly ballPrev: MutableVec2 = { x: 0, y: 0 };
   /** Laws of the Game calls: out of play, offside, slide fouls. */
-  readonly referee = new Referee(MATCH_TUNING.pitch.ballRadius);
+  readonly referee: Referee;
   private readonly slideFront: MutableVec2 = { x: 0, y: 0 };
   private slideFrontOf: MatchPlayerId | null = null;
   private readonly aiCtx: AiContext = { s: null as unknown as MatchState, T: MATCH_TUNING, rng: () => 0 };
@@ -123,6 +124,8 @@ export class MatchSim {
 
   constructor(options: MatchSimOptions = {}) {
     this.tuning = options.tuning ?? MATCH_TUNING;
+    const tp = this.tuning.pitch;
+    this.referee = new Referee(tp.ballRadius, { ...U11_9V9_PITCH, length: tp.length, width: tp.width, goalWidth: tp.goalHalfWidth * 2 });
     (this.aiCtx as { T: MatchTuning }).T = this.tuning;
     this.attrOverrides = { ...(options.attributes ?? {}) };
     this.seed = options.seed ?? 1;
@@ -968,6 +971,8 @@ export class MatchSim {
       if (this.heldForSetPiece(p)) zero(p.vel);
       else this.movePlayer(p, h);
     }
+    const waiting = s.setPiece;
+    if (waiting && s.ball.owner === waiting.taker) this.referee.holdOff(waiting.kind, s.players[waiting.taker].team, s.ball.pos, s.players);
     let prev: Vec2 = this.ballPrev;
     this.ballPrev.x = s.ball.pos.x;
     this.ballPrev.y = s.ball.pos.y;
@@ -1359,8 +1364,8 @@ export class MatchSim {
     if (R.isGoalMouth(prev, p, P.goalCenterY, P.goalHalfWidth)) {
       const defending: TeamId = p.x < P.length / 2 ? 'home' : 'away';
       if (R.directGoalDisallowed()) {
-        const c = R.callOut(prev, p, otherTeam(defending));
-        this.stop('out', null, 'no goal straight from an indirect restart: goal kick', c.team, c.spot, c.kind);
+        const c = R.callOut(prev, p, s.ball.lastTouch);
+        this.stop('out', null, `no goal straight from an indirect restart: ${c.kind === 'corner' ? 'corner' : 'goal kick'}`, c.team, c.spot, c.kind);
         return true;
       }
       const scorer = otherTeam(defending);
@@ -1532,7 +1537,7 @@ export class MatchSim {
       s.ball.owner = null;
       this.take(taker, 'restart', st.restart);
       this.referee.restartTaken(st.restart, taker.id);
-      s.setPiece = st.restart === 'throwIn' || st.restart === 'penalty' ? { kind: st.restart, taker: taker.id, since: s.simTime } : null;
+      s.setPiece = { kind: st.restart, taker: taker.id, since: s.simTime };
       s.protectUntil = s.simTime + 1.5;
     }
     s.phase = 'kickoff';
@@ -1557,14 +1562,14 @@ export class MatchSim {
     return best;
   }
 
-  /** A throw-in taker, and everyone during a penalty, stays put until the ball is played. */
+  /** A restart taker, and everyone during a penalty, stays put until the ball is played. */
   private heldForSetPiece(p: MatchPlayer): boolean {
     const sp = this.s.setPiece;
     if (!sp || this.s.ball.owner !== sp.taker) return false;
     return sp.kind === 'penalty' || p.id === sp.taker;
   }
 
-  /** Takes a waiting throw-in or penalty: AI takers shortly after the restart, the user's after a grace period. */
+  /** Takes a waiting restart: AI takers shortly after the restart, the user's after a grace period. */
   private setPieceAct(): void {
     const s = this.s;
     const sp = s.setPiece;
@@ -1605,13 +1610,13 @@ export class MatchSim {
       }
     }
     if (!mate) return;
-    const dist = clamp(best, T.pass.minDistance, R.throwRange);
+    const dist = clamp(best, T.pass.minDistance, sp.kind === 'throwIn' ? R.throwRange : R.setPieceRange);
     const dx = mate.pos.x - s.ball.pos.x;
     const dy = mate.pos.y - s.ball.pos.y;
     const d = Math.hypot(dx, dy) || 1;
     const speed = kickSpeed(powerForSpeed(passSpeedFor(dist, T), T), T);
     this.kickBall(p, vec((dx / d) * speed, (dy / d) * speed), 'pass', vec(s.ball.pos.x + (dx / d) * dist, s.ball.pos.y + (dy / d) * dist), mate.id);
-    this.emit('pass', p.id, `${mate.id} throw-in`);
+    this.emit('pass', p.id, `${mate.id} ${sp.kind === 'throwIn' ? 'throw-in' : sp.kind}`);
   }
 
   private placeForKickoff(team: TeamId): void {

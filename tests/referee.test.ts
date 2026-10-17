@@ -323,3 +323,89 @@ describe('referee: determinism', () => {
     expect(restarts).toBeGreaterThan(0);
   });
 });
+
+describe('referee: restarts wait for the kick (review fixes)', () => {
+  const stopAt = (sim: Sim, team: match.TeamId, spot: { x: number; y: number }, kind: match.RestartKind, reason = 'out'): void =>
+    (sim as unknown as { stop: (...a: unknown[]) => void }).stop(reason, null, 'test', team, spot, kind, null);
+  const toLive = (sim: Sim): void => {
+    run(sim, T.stoppage.outSeconds + 0.1);
+    run(sim, 2, (x) => x.state.phase === 'live');
+  };
+
+  it('free kick, indirect free kick, corner and goal kick: ball stays on the spot until the taker plays it', () => {
+    const cases = [
+      ['freeKick', { x: 40, y: 20 }],
+      ['indirectFreeKick', { x: 50, y: 30 }],
+      ['corner', { x: 0.5, y: 0.5 }],
+      ['goalKick', { x: P.length - P.goalAreaDepth, y: 25 - P.goalAreaWidth / 2 }],
+    ] as const;
+    for (const [kind, spot] of cases) {
+      const sim = new MatchSim({ seed: 9 });
+      live(sim);
+      stopAt(sim, 'away', spot, kind, kind === 'freeKick' || kind === 'indirectFreeKick' ? 'foul' : 'out');
+      toLive(sim);
+      const s = sim.state;
+      const taker = s.ball.owner!;
+      expect(s.setPiece).toMatchObject({ kind, taker });
+      const at = { x: s.ball.pos.x, y: s.ball.pos.y };
+      let drift = 0;
+      for (let t = 0; t < RT.aiTakeSeconds - 0.1; t += T.stepSeconds) {
+        sim.step(T.stepSeconds);
+        drift = Math.max(drift, Math.hypot(s.ball.pos.x - at.x, s.ball.pos.y - at.y));
+      }
+      expect(s.ball.owner, kind).toBe(taker);
+      expect(drift, kind).toBeLessThan(1e-6);
+      const seq = s.events.at(-1)!.seq;
+      run(sim, 0.5, (x) => x.state.ball.owner !== taker);
+      expect(s.events.some((e) => e.seq > seq && e.type === 'pass' && e.by === taker && e.detail.endsWith(kind)), kind).toBe(true);
+    }
+  });
+
+  it('while a throw-in waits, opponents stay the restart distance from the ball', () => {
+    const sim = new MatchSim({ seed: 4 });
+    live(sim);
+    stopAt(sim, 'home', { x: 40, y: P.width }, 'throwIn');
+    toLive(sim);
+    const s = sim.state;
+    const taker = s.ball.owner!;
+    expect(taker.startsWith('H')).toBe(true);
+    let closest = Infinity;
+    for (let t = 0; t < RT.userTakeSeconds - 0.5; t += T.stepSeconds) {
+      sim.step(T.stepSeconds);
+      for (const id of TEAM_PLAYER_IDS.away) {
+        if (s.players[id].isKeeper) continue;
+        closest = Math.min(closest, Math.hypot(s.players[id].pos.x - s.ball.pos.x, s.players[id].pos.y - s.ball.pos.y));
+      }
+    }
+    expect(s.ball.owner).toBe(taker);
+    expect(closest).toBeGreaterThanOrEqual(RT.restartDistance - 1e-6);
+  });
+
+  it('a throw-in straight into the thrower’s own goal is a corner to the opponents, not a goal kick', () => {
+    const sim = new MatchSim({ seed: 2 });
+    live(sim);
+    stopAt(sim, 'home', { x: 3, y: 0 }, 'throwIn');
+    toLive(sim);
+    const taker = sim.state.ball.owner!;
+    expect(taker.startsWith('H')).toBe(true);
+    sim.arrange((s) => {
+      s.players.H1.pos.x = 12;
+      s.players.H1.pos.y = 45;
+      s.players[taker].pos.x = 2.1;
+      s.players[taker].pos.y = 25;
+      s.ball.pos.x = 1.5;
+      s.ball.pos.y = 25;
+    });
+    (sim as unknown as { kickBall: (...a: unknown[]) => void }).kickBall(sim.state.players[taker], { x: -15, y: 0 }, 'pass', null, null);
+    run(sim, 1, stopped);
+    expect(sim.state.score).toEqual({ home: 0, away: 0 });
+    expect(sim.state.stoppage).toMatchObject({ reason: 'out', restart: 'corner', restartTeam: 'away' });
+  });
+
+  it('a custom pitch from the match tuning drives the calls', () => {
+    const sim = new MatchSim({ seed: 1, tuning: { ...T, pitch: { ...T.pitch, length: 60 } } });
+    expect(sim.referee.isOut({ x: 60.5, y: 25 })).toBe(true);
+    expect(sim.referee.isOut({ x: 59.9, y: 25 })).toBe(false);
+    expect(sim.referee.inPenaltyArea({ x: 55, y: 25 }, 'away')).toBe(true);
+  });
+});

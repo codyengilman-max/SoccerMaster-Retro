@@ -29,6 +29,8 @@ export interface RefereeTuning {
   readonly userTakeSeconds: number;
   /** Longest throw-in the auto throw aims at (yards). */
   readonly throwRange: number;
+  /** Longest automatic short pass from a free kick, corner or goal kick (yd). */
+  readonly setPieceRange: number;
 }
 
 export const REFEREE_TUNING: RefereeTuning = {
@@ -40,6 +42,7 @@ export const REFEREE_TUNING: RefereeTuning = {
   aiTakeSeconds: 0.6,
   userTakeSeconds: 4,
   throwRange: 15,
+  setPieceRange: 25,
 };
 
 export interface RefereeCall {
@@ -354,6 +357,33 @@ export class Referee {
         p.pos.x = clampN(spot.x + ux * R, 1, P.length - 1);
         p.pos.y = clampN(spot.y + uy * R, 1, P.width - 1);
       }
+    }
+  }
+
+  /**
+   * While a restart waits to be taken, opponents stay `restartDistance` from the ball
+   * (outside the area for a goal kick). Positions only, no allocation. Penalties are fully held.
+   */
+  holdOff(kind: RestartKind, team: TeamId, ball: Vec2, players: Readonly<Record<MatchPlayerId, MatchPlayer>>): void {
+    if (kind === 'penalty' || kind === 'kickoff') return;
+    const P = this.pitch;
+    const R = this.tuning.restartDistance;
+    const opp = other(team);
+    for (const id of TEAM_PLAYER_IDS[opp]) {
+      const p = players[id];
+      if (kind === 'goalKick') {
+        if (this.inPenaltyArea(p.pos, team)) this.outsideArea(p, team, P.penaltyAreaDepth + 1);
+        continue;
+      }
+      if (p.isKeeper) continue;
+      const dx = p.pos.x - ball.x;
+      const dy = p.pos.y - ball.y;
+      const d = Math.hypot(dx, dy);
+      if (d >= R) continue;
+      const ux = d > 1e-6 ? dx / d : opp === 'home' ? -1 : 1;
+      const uy = d > 1e-6 ? dy / d : 0;
+      p.pos.x = clampN(ball.x + ux * R, 1, P.length - 1);
+      p.pos.y = clampN(ball.y + uy * R, 1, P.width - 1);
     }
   }
 
