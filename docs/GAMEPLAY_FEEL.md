@@ -73,7 +73,14 @@ No save schema change. The new state is per-match and never persisted. Career sa
 - **Trajectory:** one ground kick for every pass and shot (no lofted pass gesture). Aim assist never redirects a kick; a shot on target never turns into a pass.
 - **Lab setups for controls comparison:** `dribble-1v1` (direction changes), `pass-unpressured` (short pass to a stationary teammate), `through-ball` (moving runner), `receive-turn`, `finish-centre` (both corners), `quick-shot` (rebound), `cancel-pressure`.
 
-## Closer camera (zoom revision)
+## Ball camera (replaces the zoom revision below)
+
+- One fixed close framing, no zoom choice: landscape 22 yd of length with a lower viewing angle (depth squash 0.42); portrait 16 yd across.
+- The camera aims at the **ball**, not the carrier, plus `ballVel × 0.35 s` (capped at 4 yd) and, while the ball is carried, a 2.5 yd look-ahead toward the attacking direction. Smoothing rates 6/s along and 5.5/s across, so the ball stays near the centre while dribbling.
+- Hold (pause, break cards) still freezes the camera; bounds still keep goals and run-off in view.
+- Portrait has no tilt yet (`fitRegion` only foreshortens in landscape).
+
+## Closer camera (zoom revision, superseded)
 
 The chosen zoom is SoccerMaster tuning inspired by Retro Goal's close mobile framing; it is not a measured Retro Goal value. The final value waits for the owner's iPhone test.
 
