@@ -4,7 +4,8 @@
 
 - **Old gameplay removed:** the 3v2 Attack drill (`AttackScene`, `src/game/attack`), swipe/gesture controls, slow-motion aiming, the feint and the Lab's aim toggle. The 9v9 match runs only on the joystick plus PASS / SHOOT / SLIDE TACKLE / BLOCK. The story crossbar challenge keeps its own pull-back shot (`src/input/pull.ts`).
 - **Allocations:** state vectors updated in place, pooled AI scratch, regression test for vector identity and pool size. Measured about 3.3–5.5 KB per step against 29–91 KB before; not zero (see `docs/FIFA_MECHANICS.md`).
-- **Not done yet:** the training library as Home Training choices, and weekly Team Training from the logic catalog.
+- **Training library in Home Training:** all 100 draft options can be swapped into a scheduled session of the same focus or logged as extra practice, labelled "enabled by owner, not coach-certified". Credit rules unchanged (1 per scheduled session, max 3 a week, no attribute points).
+- **Weekly Team Training (soccer-logic catalog):** Career → Team Training plays three position-based catalog situations a week on the real match engine with the normal controls (12 of the 40 entries have typed fixtures and grading in `src/game/career/teamTraining.ts`; the 28 set-piece, aerial, goalkeeping and multi-runner entries stay inactive). The week's average gives +2 / +1 / 0 / −1 attribute points, never above potential or below the starting value 40, counted once per week (replays are practice only, leaving early counts nothing, saves validate the record). Grading thresholds are a first pass and need owner playtesting.
 
 ## FIFA-style mechanics (branch `feature/fifa-gameplay-mechanics`; merged to `main` once CI passes, not deployed to production)
 

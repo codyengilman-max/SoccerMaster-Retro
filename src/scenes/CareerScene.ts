@@ -112,8 +112,14 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         store.close();
         return;
       }
+      // Load before exposing the store, so nothing reads the previous visit's save as current.
+      const loaded = await store.load();
+      if (!this.sys.isActive() && !this.sys.isPaused()) {
+        store.close();
+        return;
+      }
+      this.save = loaded;
       this.store = store;
-      this.save = await store.load();
       this.unsub = store.onChange((s) => {
         this.save = s;
         this.render();

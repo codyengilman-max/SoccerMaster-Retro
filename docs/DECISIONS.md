@@ -100,3 +100,10 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - League results move through the story database: `matchresult:<runId>` is written once at full time, and `league:<careerId>` holds the table. This keeps `MatchScene` unaware of careers and leagues beyond one result key.
 - Jungle Ball is a separate framework-free sim, so the 9v9 engine and its tests are untouched.
 
+
+## D27. Weekly Team Training from the soccer-logic catalog (owner request 2026-10-17)
+
+- Catalog text is never executed. Each active entry has a hand-written typed fixture (`StageFixture`, shared with the Gameplay Lab via `stageFixture`) and observable grading in `SituationObserver`: possession kept or lost, ball progress during possession, completed passes, shots on target, goal-side time, ball won back. An open-teammate pass or a sensible-range shot earns part credit even when it fails, so decisions count more than luck.
+- Three situations per week from a fixed per-position rotation (`selectSituations`), so every save sees the same week and results can be validated on load.
+- Average score → +2 (≥0.75), +1 (≥0.5), 0 (≥0.3), −1 otherwise. Gains go one point each to the best-played trained attributes up to potential; a loss takes one point from the worst-played attribute and never below `CAREER_CONFIG.attributes.start`.
+- The `teamTraining` reducer action is idempotent per week and rejects foreign weeks, wrong situation lists and out-of-range scores; `parseSave` rejects duplicate weeks and deltas that do not match the stored scores. Older saves load with no records (no schema bump).

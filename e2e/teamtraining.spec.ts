@@ -65,7 +65,7 @@ test('team training: three catalog situations, counted once, leaving early count
   await waitForScene(page, 'match');
   await team(page, (t) => t.phase === 'playing', 'first situation');
   await pressAny(page, 'menu-button', mode);
-  c = await career(page, (x) => x.screen === 'team', 'back on team screen');
+  c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'back on team screen');
   expect(c.text).toContain('Leaving early counts nothing');
   expect(total(c.attributes)).toBe(before);
 
@@ -73,12 +73,12 @@ test('team training: three catalog situations, counted once, leaving early count
   await press(page, 'team-play', mode);
   await waitForScene(page, 'match');
   const done = await team(page, (t) => t.phase === 'done', 'three situations');
-  expect(done.ids).toEqual(['WING01', 'NINE02', 'AT01']);
+  expect(done.ids).toEqual(['DEF01', 'WING01', 'NINE02']);
   expect(done.scores).toHaveLength(3);
-  expect(done.message).toMatch(/Team Training week 1/);
+  expect(done.message, JSON.stringify(done)).toMatch(/Team Training week 1/);
   await pressAny(page, 'menu-button', mode);
-  c = await career(page, (x) => x.screen === 'team', 'counted');
-  expect(c.text).toContain('Counted for week 1');
+  c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'counted');
+  expect(c.text, JSON.stringify({ toast: c.toast, status: c.status, attrs: c.attributes, done })).toContain('Counted for week 1');
   const after = total(c.attributes);
   expect(Math.abs(after - before)).toBeLessThanOrEqual(2);
   for (const v of Object.values(c.attributes ?? {})) expect(v).toBeGreaterThanOrEqual(40);
@@ -94,7 +94,7 @@ test('team training: three catalog situations, counted once, leaving early count
   await waitForScene(page, 'career');
   await career(page, (x) => x.status !== 'loading' && x.screen === 'home', 'reloaded');
   await press(page, 'nav-team', mode);
-  c = await career(page, (x) => x.screen === 'team', 'team after reload');
+  c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'team after reload');
   expect(c.text).toContain('Counted for week 1');
   expect(total(c.attributes)).toBe(after);
   expect(errors).toEqual([]);

@@ -130,3 +130,7 @@ Owner decisions (2026-10-15): Retro keeps one credit per scheduled session (the 
 - Coach evidence is used only when the match is opened with `?coach`.
 - Optional audio cues are described as an option for a helper; the game doesn't play audio.
 - Physical iPhone testing not done; browser tests use Chromium emulation.
+
+## Weekly Team Training
+
+Career → **Team Training** shows this week's three situations from the soccer-logic catalog (draft, not coach-certified) and plays them in the 9v9 match with the joystick and PASS / SHOOT / SLIDE TACKLE / BLOCK. Each situation lasts 8–12 seconds or ends once the outcome is clear. The week's result changes attributes by at most +2 or −1, only once per week; Home Training credit is separate and unchanged. `?debug&ttSeconds=N` shortens situations for browser tests.
