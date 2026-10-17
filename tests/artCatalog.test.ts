@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import story from '../docs/story/v0.7/week_one_scenes.json';
-import { ART_ASSETS, MAPPED_SCENE_IDS, RUNTIME_IMAGES, SPEAKER_ROLE, isAllowedAsset, sceneVisual, unmappedScenes, variantAsset } from '../src/render/art/catalog';
+import { ART_ASSETS, OWNER_ART_APPROVAL, MAPPED_SCENE_IDS, RUNTIME_IMAGES, SPEAKER_ROLE, isAllowedAsset, sceneVisual, unmappedScenes, variantAsset } from '../src/render/art/catalog';
 
 const storyIds = (story.scenes as { id: string }[]).map((s) => s.id);
 
@@ -22,6 +22,7 @@ describe('Graphics v1 catalog', () => {
     }
     expect(ART_ASSETS.filter((a) => a.status === 'REFERENCE_APPROVED').map((a) => a.assetId).sort()).toEqual(['blake', 'boy', 'girl', 'jordan', 'school']);
     expect(ART_ASSETS.filter((a) => a.status === 'NEW_ART_REVIEW_PENDING')).toHaveLength(23);
+    expect(OWNER_ART_APPROVAL).toBe('2026-10-16');
   });
 
   it('pins one outfit per scene and swaps only the player appearance', () => {

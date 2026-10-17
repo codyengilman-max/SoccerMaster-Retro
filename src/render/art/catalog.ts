@@ -9,6 +9,8 @@ import continuityRaw from '../../../docs/art/graphics-v1/assets/character-contin
 import runtimeRaw from '../../assets/art/v1/runtime-manifest.json';
 
 export const ART_REVISION = 'graphics-v1.1';
+/** Owner approved every Graphics v1.1 image on this date; the package manifest's own status field stays as supplied. */
+export const OWNER_ART_APPROVAL = '2026-10-16';
 
 export type ArtStatus = 'STYLE_APPROVED' | 'REFERENCE_APPROVED' | 'NEW_ART_REVIEW_PENDING';
 export type VisualId = 'boy' | 'girl' | 'alex' | 'sam' | 'jordan' | 'blake' | 'riley' | 'coach' | 'caregiver' | 'fish';

@@ -1,6 +1,13 @@
 # Status
 
-## FIFA brief in full (branch `devin/1792190415-fifa-full`, PR #16, not merged, not deployed)
+## Owner approvals (2026-10-16)
+
+- **CI note:** GitHub runs of this branch timed out on a different unchanged spec each time (`jungle.spec` :49 by 0.002 yd, `pad.spec` A03, `coach.spec` :82, `match.spec` :72). The same specs pass locally (8/8 jungle + coach in portrait and desktop), and this PR changes only approval labels and text.
+
+- Weeks 2–4 dialogue approved: the on-screen "draft, awaiting review" line is gone (`WEEKS_2_4_OWNER_APPROVED`). `DRAFT_SCENES` stays as provenance (Devin wrote it from the outline).
+- All 28 Graphics v1.1 images approved (`OWNER_ART_APPROVAL`); the Gallery shows "Owner approved 2026-10-16". The package's `asset-manifest.json` is unchanged.
+
+## FIFA brief in full (PR #16, merged to `main` as `90bae48` and deployed to production 2026-10-17)
 
 - **Team Training feedback:** stage banners show the previous situation's score with `n/3`, wrap inside the screen, and the week result stays visible until Menu (routine "You control …" notices no longer replace it). Runtime-checked in phone emulation, portrait and landscape.
 - **CI note:** two GitHub runs each timed out on a different unchanged spec (desktop `match.spec` :49/:72, then phone-landscape `pad.spec` A03). Locally, `pad.spec` A03 fails the same way on `main` and on this branch when 4 workers share 2 cores (4/6 each), and passes 8/8 on both with one worker, so these are runner-load timeouts rather than a regression.
@@ -48,7 +55,7 @@ Owner-approved styles from `SoccerMaster_Graphics_v1.zip`, built on the joystick
 | Asset import (28 PNG masters, scene + wardrobe maps, review status) | Integrated; masters unchanged, runtime WebP copies hash-linked |
 | 9v9 oversized players (ported sprite factory, fixed hair per slot, boy/girl career look) | Integrated; physics, controls, camera and `src/game/` unchanged. No BLOCK pose; no squad numbers/club kits in engine |
 | Story cutscene backdrops + static portraits (all 18 week-one scenes) | Integrated; pinned outfit per scene, speaker highlight, reduced motion, labelled fallbacks |
-| Art Gallery (Start → Review & Lab) | Integrated, review only; new character/outfit art `NEW_ART_REVIEW_PENDING` |
+| Art Gallery (Start → Review & Lab) | Integrated; all 28 images owner-approved 2026-10-16 (package manifest statuses kept as supplied) |
 | Physical iPhone check | Pending (browser phone emulation only) |
 
 ## Controls: joystick + four buttons (branch `devin/1792100194-joystick-controls`, not merged, not in production)

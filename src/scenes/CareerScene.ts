@@ -347,8 +347,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             `Training Review: draft library v1.1, review only, not in player plans.`,
             `Soccer Logic Review: ${n} research outlines, catalog only, none drives the game (goal ${SCENARIO_GOAL}+).`,
             `Coach Moments: play a 9v9 match from a link ending in ?coach.`,
-            'Art Gallery: Graphics v1.1 cutscene and player art with review status; most new character/outfit art is awaiting your individual review.',
-            'Story & RPG: Start → Story plays week one (package v0.7) and weeks 2–4 (DRAFT dialogue awaiting review) with Jungle Ball and a 5-club local league (Next Horizon not entered). Pacific Wave Cup and Lone Star International Cup: U12, coming later. Transfers are not implemented.',
+            'Art Gallery: Graphics v1.1 cutscene and player art with review status; all 28 images approved by the owner on 2026-10-16.',
+            'Story & RPG: Start → Story plays week one (package v0.7) and weeks 2–4 (owner-approved dialogue) with Jungle Ball and a 5-club local league (Next Horizon not entered). Pacific Wave Cup and Lone Star International Cup: U12, coming later. Transfers are not implemented.',
           ].join('\n'),
           actions: [
             ...(__LAB__ ? [{ name: 'hub-lab', label: 'Gameplay Lab', onClick: () => this.openLab() }] : []),
