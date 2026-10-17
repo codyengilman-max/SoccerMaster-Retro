@@ -5,7 +5,7 @@
 - Weeks 2–4 dialogue approved: the on-screen "draft, awaiting review" line is gone (`WEEKS_2_4_OWNER_APPROVED`). `DRAFT_SCENES` stays as provenance (Devin wrote it from the outline).
 - All 28 Graphics v1.1 images approved (`OWNER_ART_APPROVAL`); the Gallery shows "Owner approved 2026-10-16". The package's `asset-manifest.json` is unchanged.
 
-## FIFA brief in full (branch `devin/1792190415-fifa-full`, PR #16, not merged, not deployed)
+## FIFA brief in full (PR #16, merged to `main` as `90bae48` and deployed to production 2026-10-17)
 
 - **Team Training feedback:** stage banners show the previous situation's score with `n/3`, wrap inside the screen, and the week result stays visible until Menu (routine "You control …" notices no longer replace it). Runtime-checked in phone emulation, portrait and landscape.
 - **CI note:** two GitHub runs each timed out on a different unchanged spec (desktop `match.spec` :49/:72, then phone-landscape `pad.spec` A03). Locally, `pad.spec` A03 fails the same way on `main` and on this branch when 4 workers share 2 cores (4/6 each), and passes 8/8 on both with one worker, so these are runner-load timeouts rather than a regression.
