@@ -265,7 +265,15 @@ describe('referee: slide fouls', () => {
       expect(Math.abs(s.players[keeper].pos.x - (defending === 'home' ? 0.3 : P.length - 0.3))).toBeLessThan(1e-6);
       const before = MATCH_PLAYER_IDS.map((id) => ({ ...s.players[id].pos }));
       const seq = s.events.at(-1)!.seq;
-      run(sim, T.kickoff.countdownSeconds + auto - 0.1);
+      run(sim, 2, (x) => x.state.phase === 'live');
+      expect(s.phase).toBe('live');
+      let drift = 0;
+      for (let t = 0; t < auto - 0.1; t += T.stepSeconds) {
+        sim.step(T.stepSeconds);
+        drift = Math.max(drift, Math.hypot(s.ball.pos.x - spotX, s.ball.pos.y - 25));
+      }
+      expect(s.ball.owner).toBe(victim);
+      expect(drift).toBeLessThan(1e-6);
       MATCH_PLAYER_IDS.forEach((id, i) => expect(Math.hypot(s.players[id].pos.x - before[i]!.x, s.players[id].pos.y - before[i]!.y)).toBeLessThan(0.01));
       run(sim, 0.4, (x) => x.state.ball.owner !== victim);
       expect(s.events.some((e) => e.seq > seq && e.type === 'shot' && e.by === victim && e.detail === 'penalty')).toBe(true);

@@ -1259,6 +1259,10 @@ export class MatchSim {
         zero(ball.vel);
         return;
       }
+      if (this.heldForSetPiece(o)) {
+        zero(ball.vel);
+        return;
+      }
       s.touchPhase = (s.touchPhase + h / T.dribble.touchSeconds) % 1;
       const t = s.touchPhase;
       const k = t < 0.25 ? t / 0.25 : 1 - (t - 0.25) / 0.75;
