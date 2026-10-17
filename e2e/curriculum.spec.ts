@@ -69,7 +69,7 @@ test('draft library is review-only: cards and demo prototypes, never in the plan
   await until(page, (c) => c.screen === 'library', 'library');
   await press(page, 'lib-drafts', mode);
   let c = await until(page, (x) => x.screen === 'drafts', 'drafts');
-  expect(c.text).toContain('REVIEW ONLY');
+  expect(c.text).toContain('ENABLED BY OWNER, NOT COACH-CERTIFIED');
   expect(c.text).toContain('published: 0');
   expect(c.text).toContain('No eligible reviewed activity');
   await fits(page);

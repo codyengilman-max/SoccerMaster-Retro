@@ -17,18 +17,25 @@ const staged = (id: Parameters<typeof stageLabScenario>[1], seed = 1): MatchSim 
   return sim;
 };
 const angleDeg = (a: V, b: V): number => (Math.abs(Math.atan2(a.x * b.y - a.y * b.x, a.x * b.x + a.y * b.y)) * 180) / Math.PI;
-const kick = (sim: MatchSim, dir: V, power: number): boolean => {
-  sim.command({ type: 'aimStart' });
-  sim.command({ type: 'aimUpdate', direction: dir, power });
-  return sim.command({ type: 'aimRelease' });
+let padId = 0;
+/** Joystick pass: stick along `dir`, hold PASS for `hold` sim seconds, release, centre the stick. */
+const padPass = (sim: MatchSim, dir: V, hold: number): boolean => {
+  const carrier = sim.state.ball.owner;
+  if (!sim.command({ type: 'padPress', id: ++padId, action: 'pass' })) return false;
+  run(sim, hold);
+  sim.command({ type: 'padMove', x: dir.x, y: dir.y });
+  const ok = sim.command({ type: 'padRelease', id: ++padId, action: 'pass' });
+  run(sim, 0.5, () => sim.state.ball.owner !== carrier);
+  sim.command({ type: 'padMove', x: 0, y: 0 });
+  return ok;
 };
-/** Scripted swipes at sim times; returns true if H8 still has the ball and is past A5 after 4 s. */
+/** Scripted stick directions at sim times; returns true if H8 still has the ball and is past A5 after 4 s. */
 function oneVsOne(plan: readonly (readonly [number, V])[]): boolean {
   const sim = staged('dribble-1v1');
   let t = 0;
   let k = 0;
   for (let i = 0; i < 240; i++) {
-    while (k < plan.length && t >= plan[k]![0]) sim.command({ type: 'dribble', direction: plan[k++]![1] });
+    while (k < plan.length && t >= plan[k]![0]) { const d = plan[k++]![1]; const m = Math.hypot(d.x, d.y); sim.command({ type: 'padMove', x: d.x / m, y: d.y / m }); }
     sim.step(F);
     t += F;
     if (sim.state.ball.owner !== 'H8') return false;
@@ -83,7 +90,7 @@ describe('ball-carrier movement after receiving', () => {
     const from = sim.state.ball.pos;
     const to = sim.state.players.H6.pos;
     const L = Math.hypot(to.x - from.x, to.y - from.y);
-    kick(sim, { x: (to.x - from.x) / L, y: (to.y - from.y) / L }, powerForSpeed(Math.sqrt(36 + 2 * T.ball.friction * L)));
+    padPass(sim, { x: (to.x - from.x) / L, y: (to.y - from.y) / L }, 0.4 * T.pad.passChargeSeconds);
     run(sim, 6, () => sim.state.ball.owner !== null);
     expect(sim.state.ball.owner).toBe('H6');
     return { sim, id: 'H6' };
@@ -96,9 +103,12 @@ describe('ball-carrier movement after receiving', () => {
     ['back', { x: -1, y: 0 }],
     ['diagonal', { x: Math.SQRT1_2, y: -Math.SQRT1_2 }],
   ] as const) {
-    it(`a swipe ${name} right after the first touch is obeyed within 0.45 s and keeps the ball`, () => {
+    // FIFA locomotion: a turn of up to 90 deg is obeyed within 0.45 s; a reversal brakes first (agility-scaled), within 0.7 s.
+    it(`a stick push ${name} right after the first touch is obeyed promptly and keeps the ball`, () => {
       const { sim, id } = receive(1);
-      expect(sim.command({ type: 'dribble', direction: dir })).toBe(true);
+      const v0 = sim.state.players[id].vel;
+      const limit = angleDeg(v0, dir) > 90 ? 0.7 : 0.45;
+      expect(sim.command({ type: 'padMove', x: dir.x, y: dir.y })).toBe(true);
       let turned = -1;
       for (let i = 1; i <= 90; i++) {
         sim.step(F);
@@ -106,7 +116,7 @@ describe('ball-carrier movement after receiving', () => {
         if (turned < 0 && Math.hypot(v.x, v.y) > 2 && angleDeg(v, dir) < 20) turned = i * F;
       }
       expect(turned).toBeGreaterThan(0);
-      expect(turned).toBeLessThanOrEqual(0.45);
+      expect(turned).toBeLessThanOrEqual(limit);
       expect(sim.state.ball.owner).toBe(id);
     });
   }
@@ -116,7 +126,7 @@ describe('ball-carrier movement after receiving', () => {
     sim.arrange((s) => {
       s.players.H6.vel = { x: -4, y: 0 };
     });
-    kick(sim, { x: 0.894, y: -0.447 }, 0.05);
+    padPass(sim, { x: 0.894, y: -0.447 }, 0);
     run(sim, 4, () => sim.state.ball.owner !== null);
     const s = sim.state;
     expect(s.ball.owner).toBe('H6');
@@ -136,71 +146,6 @@ describe('beating a presser 1v1 is possible but not free', () => {
   });
   it('a cut left until he is on top of you is too late', () => {
     expect(oneVsOne([[0, { x: 1, y: 0 }], [0.7, { x: 0.2, y: -1 }], [1.15, { x: 1, y: 0 }]])).toBe(false);
-  });
-});
-
-describe('a swipe just before the ball arrives carries into the first touch', () => {
-  const passToH6 = (seed = 1): MatchSim => {
-    const sim = staged('pass-range', seed);
-    const from = sim.state.ball.pos;
-    const to = sim.state.players.H6.pos;
-    const L = Math.hypot(to.x - from.x, to.y - from.y);
-    kick(sim, { x: (to.x - from.x) / L, y: (to.y - from.y) / L }, powerForSpeed(Math.sqrt(36 + 2 * T.ball.friction * L)));
-    return sim;
-  };
-  const near = (sim: MatchSim): boolean => {
-    const s = sim.state;
-    const r = s.players.H6.pos;
-    return Math.hypot(r.x - s.ball.pos.x, r.y - s.ball.pos.y) <= T.carrier.bufferReach - 0.5;
-  };
-
-  it('buffered direction becomes the receiver dribble direction, with no kick', () => {
-    const sim = passToH6();
-    run(sim, 6, () => near(sim));
-    const passes = sim.state.stats.passes.home;
-    expect(sim.command({ type: 'dribble', direction: { x: 0, y: 1 } })).toBe(true);
-    expect(sim.state.bufferedDribble?.receiver).toBe('H6');
-    run(sim, 2, () => sim.state.ball.owner !== null);
-    expect(sim.state.ball.owner).toBe('H6');
-    expect(sim.state.dribbleDir).toEqual({ x: 0, y: 1 });
-    expect(sim.state.bufferedDribble).toBeNull();
-    expect(sim.state.stats.passes.home).toBe(passes);
-  });
-
-  it('far from the receiver a swipe is not buffered (it steers the passer as before)', () => {
-    const sim = passToH6();
-    sim.step(F);
-    sim.command({ type: 'dribble', direction: { x: 0, y: 1 } });
-    expect(sim.state.bufferedDribble).toBeNull();
-  });
-
-  it('a stale buffer, a pause, or an opponent touch never reaches the receiver', () => {
-    const stale = passToH6();
-    run(stale, 6, () => near(stale));
-    stale.command({ type: 'dribble', direction: { x: 0, y: 1 } });
-    stale.arrange((s) => {
-      if (s.bufferedDribble) s.bufferedDribble.until = s.simTime - 0.01;
-    });
-    run(stale, 2, () => stale.state.ball.owner !== null);
-    expect(stale.state.dribbleDir).not.toEqual({ x: 0, y: 1 });
-
-    const paused = passToH6();
-    run(paused, 6, () => near(paused));
-    paused.command({ type: 'dribble', direction: { x: 0, y: 1 } });
-    paused.command({ type: 'pause' });
-    expect(paused.state.bufferedDribble).toBeNull();
-
-    const stolen = passToH6();
-    run(stolen, 6, () => near(stolen));
-    stolen.command({ type: 'dribble', direction: { x: 0, y: 1 } });
-    stolen.arrange((s) => {
-      const a = s.players.A5;
-      a.pos = { x: s.ball.pos.x + s.ball.vel.x * 0.05, y: s.ball.pos.y + s.ball.vel.y * 0.05 };
-      a.vel = { x: 0, y: 0 };
-    });
-    run(stolen, 2, () => stolen.state.ball.owner !== null);
-    expect(stolen.state.ball.owner).not.toBe('H6');
-    expect(stolen.state.bufferedDribble).toBeNull();
   });
 });
 

@@ -1,6 +1,5 @@
 export const SceneKeys = {
   Start: 'start',
-  Attack: 'attack',
   Formation: 'formation',
   Match: 'match',
   Career: 'career',

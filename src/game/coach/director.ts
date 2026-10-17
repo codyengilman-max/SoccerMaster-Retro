@@ -1,6 +1,6 @@
 import type { MatchSim } from '../match/sim';
 import type { MatchPlayerId, MatchState } from '../match/types';
-import { createRng } from '../attack/rng';
+import { createRng } from '../rng';
 import { extractFacts, type CoachFacts } from './facts';
 import { buildMoment } from './moment';
 import { makeNames } from './names';
@@ -167,7 +167,7 @@ export class CoachDirector {
   /** Never interrupt an active gesture, a shot in flight, a goal, another overlay, or a paused game. */
   safeToInterrupt(s: MatchState, host: HostContext): boolean {
     if (s.paused || host.gestureActive || host.overlayOpen) return false;
-    if (s.phase === 'aiming' || s.phase === 'kickoff' || s.aim) return false;
+    if (s.phase === 'kickoff') return false;
     if (s.phase === 'stopped') return s.stoppage?.reason === 'out';
     if (!s.ball.owner && s.ball.kick) return false;
     return s.phase === 'live';
@@ -291,7 +291,6 @@ export class CoachDirector {
       if (it?.kind === 'onBall' && e.by === carrier && !o) {
         if (e.type === 'pass') entry.observed = { action: 'pass', detail: e.detail ? `to ${e.detail}` : '', outcome: '' };
         else if (e.type === 'shot') entry.observed = { action: 'shot', detail: '', outcome: '' };
-        else if (e.type === 'feint') entry.observed = { action: 'feint', detail: '', outcome: '' };
         else if (e.type === 'dribble') entry.observed = { action: 'carry', detail: '', outcome: '' };
       }
       if (e.type === 'received' && entry.observed?.action === 'pass') return this.closeObs(s, 'pass', entry.observed.detail, `pass completed to ${e.by ?? ''}`.trim());

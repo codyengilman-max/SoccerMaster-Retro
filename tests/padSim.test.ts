@@ -17,7 +17,7 @@ const since = (sim: Sim, after: number) => sim.state.events.filter((e) => e.seq 
 const speed = (sim: Sim, id: Id) => Math.hypot(sim.state.players[id].vel.x, sim.state.players[id].vel.y);
 
 function padSim(attributes?: match.MatchSimOptions['attributes']): Sim & { id: () => number } {
-  const sim = new MatchSim({ seed: 7, controls: 'pad', ...(attributes ? { attributes } : {}) }) as Sim & { id: () => number };
+  const sim = new MatchSim({ seed: 7, ...(attributes ? { attributes } : {}) }) as Sim & { id: () => number };
   let n = 0;
   sim.id = () => ++n;
   run(sim, T.kickoff.countdownSeconds + 2 * F);

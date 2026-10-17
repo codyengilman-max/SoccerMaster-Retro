@@ -7,7 +7,9 @@ import { CareerStore } from '../game/career/store';
 import { ATTRIBUTES, ATTRIBUTE_LABELS, LEVEL_NAMES, POSITIONS, SKILL_FAMILY_LABELS, type Activity, type Foot, type Position, type Rating } from '../game/career/types';
 import { CATEGORY_SKILL_AREA, COACHING_REVIEW, CURRICULUM, EMPTY_STATE, FAMILY_MAPPING, publishedLevels } from '../game/career/curriculum';
 import { prototypeFor, resolveSteps, stepAt } from '../game/career/curriculum/demos';
+import { DRAFT_PREFIX, DRAFT_STATUS, draftActivityId } from '../game/career/curriculum/drafts';
 import { LOGIC_CATALOG, LOGIC_GROUPS, SCENARIO_GOAL, activeLogicScenarios, currentText, type LogicGroup } from '../game/logic/catalog';
+import { describeChanges, selectSituations } from '../game/career/teamTraining';
 import { orientationOf } from '../render/layout';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspectable';
@@ -25,6 +27,7 @@ type Screen =
   | { kind: 'log'; id: string; sessionId: string | null }
   | { kind: 'journal' }
   | { kind: 'review' }
+  | { kind: 'team' }
   | { kind: 'player' }
   | { kind: 'drafts' }
   | { kind: 'draftFamily'; id: string }
@@ -89,7 +92,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.navigating = false;
     this.reducedMotion = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.demoPaused = this.reducedMotion;
-    this.screen = data?.open === 'reviewHub' ? { kind: 'reviewHub' } : { kind: 'home' };
+    this.screen = data?.open === 'reviewHub' ? { kind: 'reviewHub' } : data?.open === 'team' ? { kind: 'team' } : { kind: 'home' };
     this.history = [];
     this.page = 0;
     this.textPage = 0;
@@ -109,8 +112,14 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         store.close();
         return;
       }
+      // Load before exposing the store, so nothing reads the previous visit's save as current.
+      const loaded = await store.load();
+      if (!this.sys.isActive() && !this.sys.isPaused()) {
+        store.close();
+        return;
+      }
+      this.save = loaded;
       this.store = store;
-      this.save = await store.load();
       this.unsub = store.onChange((s) => {
         this.save = s;
         this.render();
@@ -246,6 +255,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
                 { name: 'nav-sessions', label: 'My Home Sessions', onClick: () => this.go({ kind: 'sessions' }) },
                 { name: 'nav-library', label: 'Training Library', onClick: () => this.go({ kind: 'library', family: null }) },
                 { name: 'nav-journal', label: 'Practice Journal', onClick: () => this.go({ kind: 'journal' }) },
+                { name: 'nav-team', label: 'Team Training (this week)', onClick: () => this.go({ kind: 'team' }) },
                 { name: 'nav-play', label: 'Play a 9v9 match (records game moments)', onClick: () => this.playSandbox() },
                 { name: 'nav-review', label: 'Weekly Review', onClick: () => this.go({ kind: 'review' }) },
                 { name: 'nav-player', label: 'Character Development', onClick: () => this.go({ kind: 'player' }) },
@@ -319,7 +329,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             body: `${ALL_ACTIVITIES.length} activities. All are original home adaptations awaiting coaching review.`,
             actions: [
               ...fams.map((fam) => ({ name: `lib-${fam}`, label: `${SKILL_FAMILY_LABELS[fam]} (${ALL_ACTIVITIES.filter((a) => a.skillFamilyId === fam).length})`, onClick: () => this.go({ kind: 'library', family: fam }) })),
-              { name: 'lib-drafts', label: 'Draft library v1.1 (review only)', onClick: () => this.go({ kind: 'drafts' }) },
+              { name: 'lib-drafts', label: 'Draft library v1.1 (owner-enabled)', onClick: () => this.go({ kind: 'drafts' }) },
             ],
           };
         return {
@@ -389,7 +399,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         const m = CURRICULUM.manifest;
         return {
           title: 'Draft library v1.1',
-          body: `REVIEW ONLY. ${m.families.length} exercise families, ${m.families.length * 5} practice options, version ${m.contentVersion}. None is coach-approved, so none appears in your plan, journal or credit (published: ${publishedLevels().length}).\nFamilies organize practice inside the seven skill areas; your levels do not change.\nIn your plan: ${EMPTY_STATE}`,
+          body: `${DRAFT_STATUS.toUpperCase()}. ${m.families.length} exercise families, ${m.families.length * 5} practice options, version ${m.contentVersion}. Swap an option into a scheduled Home Training session with the same focus, or log it as extra practice. Credit rules are unchanged: one per scheduled session, at most three a week, never game attributes. Coach-certified options (published: ${publishedLevels().length}).\nFamilies organize practice inside the seven skill areas; your levels do not change.\nAutomatic recommendations: ${EMPTY_STATE}`,
           actions: m.families.map((f) => ({ name: `draft-${f.id}`, label: `${f.id} ${f.title} · ${SKILL_FAMILY_LABELS[CATEGORY_SKILL_AREA[f.category]]}`, onClick: () => this.go({ kind: 'draftFamily', id: f.id }) })),
         };
       }
@@ -419,7 +429,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         const proto = prototypeFor(l.id);
         const claims = m.claims.filter((c) => l.claimIds.includes(c.id));
         const body = [
-          'DRAFT · REVIEW ONLY · not in your plan, journal or credit.',
+          `DRAFT · ${DRAFT_STATUS}. Counts toward ${SKILL_FAMILY_LABELS[CATEGORY_SKILL_AREA[f.category]]}; swap it into a scheduled session or log it as extra practice.`,
           `Setup: ${l.setup}`,
           ...l.steps.map((x, i) => `${i + 1}. ${x}`),
           `Foot: ${l.footMode}`,
@@ -437,6 +447,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
               { name: 'demo-replay', label: 'Replay', onClick: () => ((this.demoT = 0), this.render()) },
             ]
           : [];
+        actions.unshift({ name: 'draft-log', label: 'Log as extra practice', onClick: () => this.openLog(draftActivityId(l.id), null) });
         return { title: `DRAFT · ${l.id} ${f.title}`, body, actions };
       }
       case 'activity': {
@@ -463,7 +474,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         if (sc.sessionId && s.plan && !s.completedSessions.includes(sc.sessionId))
           for (const alt of substitutes(s.plan, sc.sessionId, sc.index).slice(0, 3))
             actions.push({ name: `swap-${alt.id}`, label: `Swap for ${alt.title}`, onClick: () => void this.act({ type: 'substitute', sessionId: sc.sessionId!, index: sc.index, activityId: alt.id }, { kind: 'activity', id: alt.id, sessionId: sc.sessionId, index: sc.index }) });
-        return { title: a.title, body, actions, demo: a };
+        return { title: a.title, body, actions, ...(a.id.startsWith(DRAFT_PREFIX) ? {} : { demo: a }) };
       }
       case 'log': {
         const a = activityById(sc.id)!;
@@ -516,12 +527,38 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           actions: [{ name: 'end-week', label: `Finish Week ${s.week}`, onClick: () => void this.act({ type: 'endWeek' }) }],
         };
       }
+      case 'team': {
+        if (!p) return { title: 'Team Training', body: 'No player yet.', actions: [] };
+        const rec = s.teamTraining.find((r) => r.week === s.week);
+        const rows = selectSituations(p.position, s.week).map((x, i) => {
+          const c = LOGIC_CATALOG.scenarios.find((sc) => sc.id === x.id);
+          const score = rec ? `  ${Math.round((rec.scores[i] ?? 0) * 100)}%` : '';
+          return `${i + 1}. ${x.title} (${x.id}${c ? `: ${c.original.situation}` : ''})${score}\n   ${x.goal}\n   Trains: ${x.attributes.map((a) => ATTRIBUTE_LABELS[a]).join(', ')}`;
+        });
+        return {
+          title: `Team Training · Week ${s.week}`,
+          body: [
+            ...rows,
+            rec
+              ? `\nCounted for week ${s.week}: ${describeChanges(rec.changes)}. Playing again is practice only.`
+              : '\nPlay all three with the normal controls. A good week adds up to +2 attribute points, a poor week costs 1 (never below the starting value). Leaving early counts nothing.',
+            'Situations come from the soccer-logic catalog draft (not coach-certified).',
+          ].join('\n'),
+          actions: [{ name: 'team-play', label: rec ? 'Practise again' : 'Play Team Training', onClick: () => this.playTeamTraining() }],
+        };
+      }
       case 'player': {
         if (!p) return { title: 'Character Development', body: 'No player yet.', actions: [] };
         const rows = ATTRIBUTES.map((a) => `${ATTRIBUTE_LABELS[a]}: ${p.attributes[a]} / ${p.potential[a]}\n   grows from: ${ATTRIBUTE_EVIDENCE[a]}`);
         return { title: `${p.name} (${p.position})`, body: rows.join('\n'), actions: [] };
       }
     }
+  }
+
+  private playTeamTraining(): void {
+    if (this.navigating) return;
+    this.navigating = true;
+    this.scene.start(SceneKeys.Match, { teamTraining: true });
   }
 
   private playSandbox(): void {
