@@ -72,7 +72,7 @@ One build containing the gameplay-feel revision (PR #8), the training library v1
 
 Dribbling, passing, receiving and shooting feel: off-ball control, shared kick prediction, receivers that meet passes, aim-assist modes, follow camera and minimap, and a Gameplay Lab. See `docs/GAMEPLAY_FEEL.md`.
 
-Ball camera (owner request, replaces the zoom-choice follow camera): one fixed close view centred on the ball, led a little along the ball's motion (≤ 4 yd) with a 2.5 yd attacking look-ahead while carried. Landscape shows 22 yd of pitch length with a lower camera angle (depth squash 0.42, was 0.55); portrait shows 16 yd across (portrait has no tilt yet). The 1.4/1.5/1.6 zoom choices, `?zoom` and the Lab zoom toggle are removed. Owner iPhone check pending.
+Ball camera (owner request, replaces the zoom-choice follow camera): one fixed close view centred on the ball, led a little along the ball's motion (≤ 4 yd) with a 2.5 yd attacking look-ahead while carried. Low camera with real perspective, after the owner's FIFA "Dynamic" reference: pitch lines converge toward the top of the screen and players, ball and shadows shrink with distance (`perspective` 0.3, anchored on the ball). Landscape shows 32 yd of pitch length (depth squash 0.5); portrait 22 yd across. Players are drawn smaller relative to the pitch (2.1 yd tall, was 2.7). The 1.4/1.5/1.6 zoom choices, `?zoom` and the Lab zoom toggle are removed. Owner iPhone check pending.
 
 ## Release integration: M4 core match flow + M5 + M6
 

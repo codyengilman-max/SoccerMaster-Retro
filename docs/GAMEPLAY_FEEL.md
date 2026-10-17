@@ -75,10 +75,12 @@ No save schema change. The new state is per-match and never persisted. Career sa
 
 ## Ball camera (replaces the zoom revision below)
 
-- One fixed close framing, no zoom choice: landscape 22 yd of length with a lower viewing angle (depth squash 0.42); portrait 16 yd across.
+- One fixed framing, no zoom choice: landscape 32 yd of length (depth squash 0.5); portrait 22 yd across.
+- Real low-camera perspective (owner's FIFA "Dynamic" reference): a homography about the ball's screen point makes lines converge toward the top and scales players, ball and shadows by depth (`perspective` 0.3: far edge ≈ 0.77×, near edge ≈ 1.4×). Straight pitch lines stay straight; at the ball the mapping is the identity, so stick directions are unchanged.
+- Players are 2.1 yd tall on screen (was 2.7) so more space around the ball is readable.
 - The camera aims at the **ball**, not the carrier, plus `ballVel × 0.35 s` (capped at 4 yd) and, while the ball is carried, a 2.5 yd look-ahead toward the attacking direction. Smoothing rates 6/s along and 5.5/s across, so the ball stays near the centre while dribbling.
 - Hold (pause, break cards) still freezes the camera; bounds still keep goals and run-off in view.
-- Portrait has no tilt yet (`fitRegion` only foreshortens in landscape).
+- Portrait has no depth squash, but gets the same perspective (a behind-the-attack view).
 
 ## Closer camera (zoom revision, superseded)
 
