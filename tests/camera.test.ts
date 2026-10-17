@@ -2,14 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { match, U11_9V9_PITCH } from '../src/game';
 import { MATCH_TUNING } from '../src/game/match/tuning';
 import {
-  BASELINE_VIEW,
+  CAMERA_TUNING,
+  CAMERA_VIEW,
   CameraController,
-  DEFAULT_ZOOM,
-  ZOOM_CHOICES,
   clampFocus,
   clipToRect,
-  nextZoom,
-  parseZoom,
   viewSpan,
   type CameraInput,
 } from '../src/render/camera';
@@ -17,13 +14,13 @@ import { fitRegion, screenVectorToPitch, type PitchLayout } from '../src/render/
 
 const { MatchSim } = match;
 const VIEW = { width: 844, height: 390 };
-const SQUASH = 0.55;
+const SQUASH = CAMERA_VIEW.landscapeTilt;
 
-/** Same framing math as MatchScene (landscape): span from the baseline / zoom, centred on a focus. */
-function layoutAt(zoom: number, focus: { x: number; y: number }, viewport = VIEW): PitchLayout {
+/** Same framing math as MatchScene: the fixed close span, centred on a focus. */
+function layoutAt(focus: { x: number; y: number }, viewport = VIEW): PitchLayout {
   const portrait = viewport.height > viewport.width;
   if (portrait) {
-    const cross = viewSpan('portrait', zoom);
+    const cross = viewSpan('portrait');
     const len = (cross * viewport.height) / viewport.width;
     return fitRegion(
       viewport,
@@ -38,7 +35,7 @@ function layoutAt(zoom: number, focus: { x: number; y: number }, viewport = VIEW
       1,
     );
   }
-  const len = viewSpan('landscape', zoom);
+  const len = viewSpan('landscape');
   const hv = (len * viewport.height) / (viewport.width * SQUASH);
   return fitRegion(viewport, { x: focus.x - len / 2, y: focus.y - hv / 2, width: len, height: hv }, undefined, 0, SQUASH);
 }
@@ -48,41 +45,43 @@ const unit = (v: { x: number; y: number }) => {
   return { x: v.x / n, y: v.y / n };
 };
 
-describe('zoom choice', () => {
-  it('derives every span from the fixed baseline, never from a previous zoom', () => {
-    expect(DEFAULT_ZOOM).toBe(1.5);
-    expect(viewSpan('landscape', 1.5)).toBeCloseTo(BASELINE_VIEW.landscapeLength / 1.5, 9);
-    expect(viewSpan('portrait', 1.6)).toBeCloseTo(BASELINE_VIEW.portraitCross / 1.6, 9);
-    // 50 "restarts/resizes": identical every time.
-    const first = viewSpan('landscape', 1.4);
-    for (let i = 0; i < 50; i++) expect(viewSpan('landscape', parseZoom(String(1.4)))).toBe(first);
+describe('close ball camera framing', () => {
+  it('is one fixed, close span with a low (foreshortened) landscape angle; nothing compounds', () => {
+    // Closer than the previous default framing (40/1.5 yards landscape, 28/1.5 portrait).
+    expect(viewSpan('landscape')).toBe(CAMERA_VIEW.landscapeLength);
+    expect(viewSpan('landscape')).toBeLessThan(40 / 1.5);
+    expect(viewSpan('portrait')).toBeLessThan(28 / 1.5);
+    expect(CAMERA_VIEW.landscapeTilt).toBeLessThan(0.55);
+    const first = viewSpan('landscape');
+    for (let i = 0; i < 50; i++) expect(viewSpan('landscape')).toBe(first);
   });
 
-  it('rejects invalid stored or URL values to the default', () => {
-    for (const bad of [null, undefined, '', 'abc', 'NaN', 'Infinity', '9', '0', '-1.5', '1.45', 1e9, Number.NaN, {}, '1.5x'])
-      expect(parseZoom(bad)).toBe(DEFAULT_ZOOM);
-    expect(parseZoom('1.4')).toBe(1.4);
-    expect(parseZoom(1.6)).toBe(1.6);
-    expect(ZOOM_CHOICES.map((z) => nextZoom(z))).toEqual([1.5, 1.6, 1.4]);
+  it('frames the ball, not the carrier, led a little along its motion', () => {
+    const c = new CameraController({ x: 30, y: 25 });
+    const t = c.target(input({ ball: { x: 31, y: 24 }, carrier: { x: 30, y: 24 }, ballVel: { x: 4, y: 2 } }));
+    expect(t.x).toBeGreaterThan(31);
+    expect(t.x - 31).toBeLessThanOrEqual(CAMERA_TUNING.ballLeadMax);
+    expect(t.y).toBeCloseTo(24 + 2 * CAMERA_TUNING.ballLead, 9);
+    for (let i = 0; i < 120; i++) c.update(input({ ball: { x: 40, y: 20 }, carrier: { x: 39, y: 20 } }), 1 / 60, BOUNDS);
+    expect(Math.hypot(c.x - 40, c.y - 20)).toBeLessThan(CAMERA_TUNING.lookAhead + 0.3);
   });
 });
 
 describe('aiming is independent of the camera', () => {
-  it('the same screen gesture gives the same world direction at every zoom and camera position', () => {
+  it('the same screen gesture gives the same world direction at every camera position', () => {
     for (const viewport of [VIEW, { width: 390, height: 844 }, { width: 568, height: 320 }]) {
       const ref = unit(
-        screenVectorToPitch(layoutAt(1.5, { x: 30, y: 25 }, viewport), {
+        screenVectorToPitch(layoutAt({ x: 30, y: 25 }, viewport), {
           x: 0.6,
           y: -0.8,
         }),
       );
-      for (const z of ZOOM_CHOICES)
-        for (const focus of [
+      for (const focus of [
           { x: 20, y: 10 },
           { x: 60, y: 40 },
         ]) {
           const d = unit(
-            screenVectorToPitch(layoutAt(z, focus, viewport), {
+            screenVectorToPitch(layoutAt(focus, viewport), {
               x: 0.6,
               y: -0.8,
             }),
@@ -93,11 +92,11 @@ describe('aiming is independent of the camera', () => {
     }
   });
 
-  it('the same screen stick across zooms produces the same kick and the same simulation result', () => {
-    const run = (zoom: number) => {
+  it('the same screen stick at different camera positions produces the same kick and the same simulation result', () => {
+    const run = (focus: { x: number; y: number }) => {
       const sim = new MatchSim({ seed: 7 });
       sim.arrange((s) => match.stageLabScenario(s, 'through-ball', MATCH_TUNING.pitch));
-      const L = layoutAt(zoom, { x: 40, y: 25 });
+      const L = layoutAt(focus);
       const kicks: { x: number; y: number; power: number }[] = [];
       for (let i = 0; i < Math.round((MATCH_TUNING.kickoff.countdownSeconds + 0.1) * 60); i++) sim.step(1 / 60);
       const direction = screenVectorToPitch(L, { x: 120 / 130, y: -50 / 130 });
@@ -114,10 +113,10 @@ describe('aiming is independent of the camera', () => {
         events: s.events.map((e) => `${e.type}:${e.by}`),
       };
     };
-    const ref = run(1.5);
+    const ref = run({ x: 40, y: 25 });
     expect(ref.kicks).toHaveLength(1);
-    for (const z of [1.4, 1.6]) {
-      const r = run(z);
+    for (const f of [{ x: 20, y: 10 }, { x: 60, y: 40 }]) {
+      const r = run(f);
       expect(r.kicks).toHaveLength(1);
       expect(r.kicks[0]!.x).toBeCloseTo(ref.kicks[0]!.x, 9);
       expect(r.kicks[0]!.y).toBeCloseTo(ref.kicks[0]!.y, 9);
@@ -181,7 +180,7 @@ describe('camera controller', () => {
     const c = new CameraController({ x: 30, y: 25 });
     c.snap({ x: 30, y: 25 }, 1, BOUNDS);
     for (let i = 0; i < 60; i++) c.update(input({ carrier: { x: 30 - i * 0.08, y: 25 } }), 1 / 60, BOUNDS);
-    expect(c.look).toBeCloseTo(6, 5);
+    expect(c.look).toBeCloseTo(CAMERA_TUNING.lookAhead, 5);
   });
 
   it('rapid contested possession does not make the camera oscillate', () => {
@@ -205,7 +204,7 @@ describe('camera controller', () => {
         ballVel: { x: 60, y: 0 },
       }),
     );
-    expect(t.x).toBeCloseTo(32 + 7, 9);
+    expect(t.x).toBeCloseTo(32 + CAMERA_TUNING.ballLeadMax, 9);
     for (let i = 0; i < 30; i++)
       c.update(
         input({

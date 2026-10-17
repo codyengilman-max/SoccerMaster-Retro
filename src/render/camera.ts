@@ -5,37 +5,20 @@ export interface CamPoint {
   readonly y: number;
 }
 
-/** Selectable gameplay zoom multipliers (owner picks after the iPhone test). Project tuning, not a measurement. */
-export const ZOOM_CHOICES = [1.4, 1.5, 1.6] as const;
-export type ZoomChoice = (typeof ZOOM_CHOICES)[number];
-export const DEFAULT_ZOOM: ZoomChoice = 1.5;
-
 /**
- * Baseline framing (zoom 1x): the follow camera before the closer-camera revision. Landscape shows
- * 40 yards of pitch length; portrait shows 28 yards across. Every zoom is derived from these constants,
- * never from the previous zoom, so resizes, resets and scene entries cannot compound it.
+ * Fixed close framing for the ball-focused dribbling camera (owner request 2026-10-17): short range,
+ * low viewing angle, close zoom. Landscape shows this many yards of pitch length; portrait this many
+ * across. `tilt` foreshortens the depth axis on screen to suggest a low camera height.
  */
-export const BASELINE_VIEW = {
-  landscapeLength: 40,
-  portraitCross: 28,
+export const CAMERA_VIEW = {
+  landscapeLength: 22,
+  portraitCross: 16,
+  landscapeTilt: 0.42,
 } as const;
 
-/** Accepts only the listed multipliers (number or URL string); anything else is the default. */
-export function parseZoom(raw: unknown): ZoomChoice {
-  const n = typeof raw === 'number' ? raw : typeof raw === 'string' && raw.trim() !== '' ? Number(raw) : Number.NaN;
-  if (!Number.isFinite(n)) return DEFAULT_ZOOM;
-  return ZOOM_CHOICES.find((z) => Math.abs(z - n) < 1e-9) ?? DEFAULT_ZOOM;
-}
-
-export function nextZoom(z: ZoomChoice): ZoomChoice {
-  const i = ZOOM_CHOICES.indexOf(z);
-  return ZOOM_CHOICES[(i + 1) % ZOOM_CHOICES.length] ?? DEFAULT_ZOOM;
-}
-
 /** Visible span in yards: pitch length in landscape, pitch width (across) in portrait. */
-export function viewSpan(orientation: 'landscape' | 'portrait', zoom: unknown): number {
-  const z = parseZoom(zoom);
-  return (orientation === 'landscape' ? BASELINE_VIEW.landscapeLength : BASELINE_VIEW.portraitCross) / z;
+export function viewSpan(orientation: 'landscape' | 'portrait'): number {
+  return orientation === 'landscape' ? CAMERA_VIEW.landscapeLength : CAMERA_VIEW.portraitCross;
 }
 
 /**
@@ -63,18 +46,17 @@ export interface CameraBounds {
 }
 
 export const CAMERA_TUNING = {
-  /** Yards of look-ahead toward the attacking direction. */
-  lookAhead: 6,
-  /** Look-ahead eases at this rate (1/s); slow, so a turnover or contested ball cannot swing the view. */
-  lookRate: 1.1,
-  /** Position smoothing rates (1/s) along and across the pitch. */
-  followRate: 2.8,
-  crossRate: 2.2,
-  /** While the ball travels, aim this many seconds of ball travel ahead of it, capped. */
-  travelLead: 0.4,
-  travelLeadMax: 7,
+  /** Small yards of look-ahead toward the attacking direction while the ball is carried. */
+  lookAhead: 2.5,
+  lookRate: 1.6,
+  /** Position smoothing rates (1/s): tight, so the ball stays near the centre of a close view. */
+  followRate: 6,
+  crossRate: 5.5,
+  /** Aim this many seconds of ball travel ahead of the ball (dribbled or free), capped in yards. */
+  ballLead: 0.35,
+  ballLeadMax: 4,
   /** A change of attacking direction must last this long (s) before the look-ahead turns: no flip-flop on contested balls. */
-  turnHold: 0.45,
+  turnHold: 0.35,
   /** Longest frame step the camera integrates; a hitch cannot jump or overshoot. */
   maxDt: 0.1,
 } as const;
@@ -82,7 +64,7 @@ export const CAMERA_TUNING = {
 const finite = (p: CamPoint | null): p is CamPoint => p !== null && Number.isFinite(p.x) && Number.isFinite(p.y);
 const clamp = (v: number, lo: number, hi: number): number => (lo > hi ? (lo + hi) / 2 : Math.min(hi, Math.max(lo, v)));
 
-/** One follow camera for the 9v9 match: pure, frame-rate independent (exponential smoothing). */
+/** Ball-focused dribbling camera for the 9v9 match: pure, frame-rate independent (exponential smoothing). */
 export class CameraController {
   x: number;
   y: number;
@@ -111,19 +93,18 @@ export class CameraController {
     if (bounds) this.clampTo(bounds);
   }
 
-  /** Focus this frame wants, before smoothing. */
+  /** Focus this frame wants, before smoothing: always the ball, led along its motion. */
   target(input: CameraInput): CamPoint {
     const T = this.tuning;
-    if (input.mode === 'possession' && finite(input.carrier)) return { x: input.carrier.x + this.look, y: input.carrier.y };
-    if (input.mode === 'travel' && finite(input.ball)) {
-      const vx = Number.isFinite(input.ballVel.x) ? input.ballVel.x : 0;
-      const vy = Number.isFinite(input.ballVel.y) ? input.ballVel.y : 0;
-      const lx = clamp(vx * T.travelLead, -T.travelLeadMax, T.travelLeadMax);
-      const ly = clamp(vy * T.travelLead, -T.travelLeadMax, T.travelLeadMax);
-      return { x: input.ball.x + lx, y: input.ball.y + ly };
-    }
-    if (finite(input.ball)) return { x: input.ball.x + this.look * 0.5, y: input.ball.y };
-    return { x: this.x, y: this.y };
+    const base = finite(input.ball) ? input.ball : input.mode === 'possession' && finite(input.carrier) ? input.carrier : null;
+    if (!base) return { x: this.x, y: this.y };
+    const vx = Number.isFinite(input.ballVel.x) ? input.ballVel.x : 0;
+    const vy = Number.isFinite(input.ballVel.y) ? input.ballVel.y : 0;
+    const look = input.mode === 'possession' ? this.look : 0;
+    return {
+      x: base.x + clamp(vx * T.ballLead + look, -T.ballLeadMax, T.ballLeadMax),
+      y: base.y + clamp(vy * T.ballLead, -T.ballLeadMax, T.ballLeadMax),
+    };
   }
 
   update(input: CameraInput, dtRaw: number, bounds?: CameraBounds): CamPoint {

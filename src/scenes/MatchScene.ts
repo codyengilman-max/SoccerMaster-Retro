@@ -17,13 +17,11 @@ import {
 import { shouldExposeDebug } from '../debug/diagnostics';
 import {
   CameraController,
-  DEFAULT_ZOOM,
   clampFocus,
-  parseZoom,
+  CAMERA_VIEW,
   viewSpan,
   type CameraBounds,
   type CameraMode,
-  type ZoomChoice,
 } from '../render/camera';
 import { BALL_TEXTURE_SIZE, TEXTURES, ensurePlaceholderTextures } from '../render/textures';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
@@ -54,7 +52,7 @@ type FormationId = match.FormationId;
 
 const EDGE = 8;
 const HUD_HEIGHT = 40;
-const SIDELINE_SQUASH = 0.55;
+const SIDELINE_SQUASH = CAMERA_VIEW.landscapeTilt;
 /** Mouse presses this soon after a touch are browser compatibility events, not a second input. */
 const COMPAT_MOUSE_MS = 800;
 const HELP_PAD = 'Left stick: move  |  PASS / SHOOT: hold to charge, release to kick  |  SLIDE TACKLE: tap  |  BLOCK: hold';
@@ -65,8 +63,6 @@ export interface MatchSceneData {
   readonly career?: boolean;
   /** Gameplay Lab scenario (lab builds only): untimed, no Coach, no career evidence. */
   readonly lab?: string;
-  /** Gameplay zoom multiplier over the baseline framing (1.4, 1.5 or 1.6; anything else is 1.5). */
-  readonly zoom?: number;
   /** Story handoff: Menu returns to the story instead of the start screen. */
   readonly returnTo?: 'story';
   /** Story run id: the full-time score is kept once under `matchresult:<key>` for the league table. */
@@ -94,9 +90,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private lastSeq = 0;
   private camX = 37.5;
   private camY = 25;
-  private zoom: ZoomChoice = DEFAULT_ZOOM;
   private camera = new CameraController({ x: 37.5, y: 25 });
-  /** Visible pitch length/width in yards for the current viewport and zoom. */
+  /** Visible pitch length/width in yards for the current viewport (fixed close ball camera). */
   private viewLen = 0;
   private viewCross = 0;
   /** The aim guide's rest point is off screen: an edge arrow is drawn instead of an endpoint. */
@@ -205,7 +200,6 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.coachDirector = this.coachConfig ? new coach.CoachDirector(this.coachConfig) : null;
     this.lastSeq = 0;
     this.startCareer(data.career === true && !this.labId);
-    this.zoom = parseZoom(data.zoom ?? params.get('zoom'));
     this.camera = new CameraController(this.sim.state.ball.pos);
     this.snapCamera();
     this.pad = new PadHud(this, this.scale.width, this.scale.height);
@@ -557,7 +551,6 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       ball: { x: s.ball.pos.x, y: s.ball.pos.y, vx: s.ball.vel.x, vy: s.ball.vel.y, sx: bs.x, sy: bs.y },
       layout: { ...L },
       camera: {
-        zoom: this.zoom,
         viewLength: this.viewLen,
         viewCross: this.viewCross,
         mode: this.camera.mode,
@@ -1162,7 +1155,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
 
   /**
    * Visible region (yards) and camera-centre limits for this viewport. The span comes from the fixed
-   * baseline divided by the zoom choice, so it never compounds. Limits keep goals and a run-off margin
+   * fixed close ball-camera view (CAMERA_VIEW), so it never compounds. Limits keep goals and a run-off margin
    * in view; physics boundaries are separate and unaffected.
    */
   private frame(): {
@@ -1179,7 +1172,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     if (!portrait) {
       // Landscape: an angled follow camera; the compact HUD floats over the pitch.
       const available = Math.max(1, width - insets.left - insets.right);
-      const len = viewSpan('landscape', this.zoom);
+      const len = viewSpan('landscape');
       const availH = Math.max(1, height - insets.top - insets.bottom);
       const hv = Math.min(P.width + 6, (len * availH) / (available * SIDELINE_SQUASH));
       // Run-off margins keep a touchline player clear of the floating HUD (top) and the tip line (bottom).
@@ -1200,10 +1193,10 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         },
       };
     }
-    // Portrait: the zoomed width across the pitch; the visible length fills the height.
+    // Portrait: the close ball-camera width across the pitch; the visible length fills the height.
     const available = Math.max(1, height - insets.top - insets.bottom);
     const availW = Math.max(1, width - insets.left - insets.right);
-    const cross = Math.min(P.width + 4, viewSpan('portrait', this.zoom));
+    const cross = Math.min(P.width + 4, viewSpan('portrait'));
     const len = Math.min(P.length + 6, (cross * available) / availW);
     const fullX = len >= P.length + 6 - 1e-6;
     return {

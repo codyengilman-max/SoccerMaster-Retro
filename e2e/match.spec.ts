@@ -174,23 +174,16 @@ test('Start -> sandbox -> Menu repeated keeps one canvas and stable listeners', 
   expect(errors).toEqual([]);
 });
 
-for (const [query, zoom] of [
-  ['&zoom=1.4', 1.4],
-  ['&zoom=abc', 1.5],
-  ['&zoom=9', 1.5],
-  ['&zoom=1.6', 1.6],
-] as const)
-  test(`camera zoom ${query}: span comes from the baseline (${zoom}x) and never compounds over resets and resizes`, async ({ page }, info) => {
+test('close ball camera: fixed span, ball-centred, never compounds over resets and resizes', async ({ page }, info) => {
     const errors = trackConsoleErrors(page);
     const mode = modeFor(info);
-    const expectSpan = (r: MatchReport, zoom: number) => {
-      expect(r.camera.zoom).toBe(zoom);
-      if (r.layout.orientation === 'landscape') expect(r.camera.viewLength).toBeCloseTo(40 / zoom, 6);
-      else expect(r.camera.viewCross).toBeCloseTo(Math.min(54, 28 / zoom), 6);
+    const expectSpan = (r: MatchReport) => {
+      if (r.layout.orientation === 'landscape') expect(r.camera.viewLength).toBeCloseTo(22, 6);
+      else expect(r.camera.viewCross).toBeCloseTo(16, 6);
     };
     {
-      let r = await openSandbox(page, mode, '1-3-2-3', `&sandbox${query}`);
-      expectSpan(r, zoom);
+      let r = await openSandbox(page, mode, '1-3-2-3', '&sandbox&zoom=1.4');
+      expectSpan(r);
       const vp = page.viewportSize()!;
       for (let i = 0; i < 2; i++) {
         await page.keyboard.press('KeyR');
@@ -200,7 +193,10 @@ for (const [query, zoom] of [
         await page.waitForTimeout(150);
       }
       r = await report(page);
-      expectSpan(r, zoom);
+      expectSpan(r);
+      // The ball sits in the close view (the camera may stop at the pitch edge, never lose the ball).
+      expect(Math.abs(r.camera.x - r.ball.x)).toBeLessThan(r.camera.viewLength / 2);
+      expect(Math.abs(r.camera.y - r.ball.y)).toBeLessThan(r.camera.viewCross / 2);
     }
     expect(errors).toEqual([]);
   });

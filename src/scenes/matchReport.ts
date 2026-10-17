@@ -44,9 +44,8 @@ export interface MatchReport {
   readonly players: Readonly<Record<match.MatchPlayerId, MatchPlayerReport>>;
   readonly ball: { x: number; y: number; vx: number; vy: number; sx: number; sy: number };
   readonly layout: PitchLayout;
-  /** Follow camera: zoom choice, visible span (yards), controller mode and focus. */
+  /** Ball camera: visible span (yards), controller mode and focus. */
   readonly camera: {
-    readonly zoom: number;
     readonly viewLength: number;
     readonly viewCross: number;
     readonly mode: 'possession' | 'travel' | 'loose' | 'hold';
