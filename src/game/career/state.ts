@@ -3,6 +3,7 @@ import { FOCUSES, activityById, focusById } from './catalog';
 import { DEFAULT_INPUT, normalizeInput, planWeek, substitute, workableFocuses, type PlannerInput, type WeekPlan } from './planner';
 import { cleanName, cleanText, createPlayer, type CareerPlayer } from './player';
 import { applyGrowth, computeGrowth, type AttributeOutcome, type EvidenceItem } from './progression';
+import { selectSituations, teamTrainingChanges, describeChanges, weekDelta, type AttributeChange, type SituationResult } from './teamTraining';
 import { SKILL_FAMILIES, type AttributeId, type Foot, type Level, type Position, type Rating, type SkillFamilyId } from './types';
 
 export const SAVE_SCHEMA = 2;
@@ -46,6 +47,15 @@ export interface WeekReview {
   readonly suggestedFocus: string | null;
 }
 
+/** One week's Team Training, counted once. */
+export interface TeamTrainingRecord {
+  readonly week: number;
+  readonly situations: readonly string[];
+  readonly scores: readonly number[];
+  readonly delta: number;
+  readonly changes: readonly AttributeChange[];
+}
+
 export interface CareerSave {
   readonly schema: typeof SAVE_SCHEMA;
   readonly revision: number;
@@ -62,6 +72,8 @@ export interface CareerSave {
   readonly batches: readonly string[];
   readonly missedEvents: number;
   readonly history: readonly WeekReview[];
+  /** Weekly Team Training results; at most one per week (older saves: empty). */
+  readonly teamTraining: readonly TeamTrainingRecord[];
 }
 
 export type Action =
@@ -73,6 +85,7 @@ export type Action =
   | { readonly type: 'log'; readonly entry: Omit<JournalEntry, 'credited' | 'week'> }
   | { readonly type: 'evidence'; readonly batchId: string; readonly items: readonly EvidenceItem[]; readonly missed: number }
   | { readonly type: 'acceptLevel'; readonly family: SkillFamilyId }
+  | { readonly type: 'teamTraining'; readonly week: number; readonly results: readonly SituationResult[] }
   | { readonly type: 'endWeek' };
 
 export type Outcome = { readonly ok: true; readonly save: CareerSave; readonly message: string; readonly changed: boolean } | { readonly ok: false; readonly error: string };
@@ -94,6 +107,7 @@ export function emptySave(): CareerSave {
     batches: [],
     missedEvents: 0,
     history: [],
+    teamTraining: [],
   };
 }
 
@@ -212,6 +226,23 @@ export function reduce(save: CareerSave, action: Action): Outcome {
       if (!sug) return fail('No level change suggested.');
       const next = { ...save, levels: { ...save.levels, [action.family]: { level: sug, comfortable: [] } } };
       return ok(next, 'Level up for next week\'s plan. Game attributes are unchanged.');
+    }
+    case 'teamTraining': {
+      if (!save.player) return fail('No career player.');
+      if (action.week !== save.week) return fail('That Team Training belongs to another week.');
+      if (save.teamTraining.some((r) => r.week === save.week)) return same(save, `Team Training for week ${save.week} is already counted.`);
+      const expected = selectSituations(save.player.position, save.week).map((x) => x.id);
+      const results = action.results;
+      if (results.length !== expected.length || results.some((r, i) => r.id !== expected[i])) return fail('Team Training results do not match this week.');
+      if (results.some((r) => typeof r.score !== 'number' || !Number.isFinite(r.score) || r.score < 0 || r.score > 1)) return fail('Team Training score out of range.');
+      const changes = teamTrainingChanges(save.player, results);
+      const attributes = { ...save.player.attributes };
+      for (const c of changes) attributes[c.attribute] = c.to;
+      const record: TeamTrainingRecord = { week: save.week, situations: expected, scores: results.map((r) => r.score), delta: weekDelta(results.map((r) => r.score)), changes };
+      return ok(
+        { ...save, player: { ...save.player, attributes }, teamTraining: [...save.teamTraining, record].slice(-L.historyMax) },
+        `Team Training week ${save.week}: ${describeChanges(changes)}`,
+      );
     }
     case 'endWeek': {
       if (!save.player) return fail('No career player.');

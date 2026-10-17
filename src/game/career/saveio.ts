@@ -3,7 +3,8 @@ import { FOCUSES, HOME_ACTIVITIES, activityById } from './catalog';
 import type { PlannedItem, PlannedSession, PlannerInput, WeekPlan } from './planner';
 import { cleanText, type CareerPlayer } from './player';
 import type { AttributeOutcome, EvidenceItem } from './progression';
-import { SAVE_SCHEMA, emptySave, type CareerSave, type FamilyLevel, type JournalEntry, type WeekReview } from './state';
+import { SAVE_SCHEMA, emptySave, type CareerSave, type FamilyLevel, type JournalEntry, type TeamTrainingRecord, type WeekReview } from './state';
+import { TEAM_TRAINING_IDS, weekDelta } from './teamTraining';
 import { ATTRIBUTES, LEVELS, POSITIONS, RATINGS, SKILL_FAMILIES, type AttributeId, type Level, type SkillFamilyId } from './types';
 
 type R<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -149,6 +150,30 @@ function review(v: unknown, week: number): WeekReview {
   };
 }
 
+function teamTraining(v: unknown, week: number): TeamTrainingRecord {
+  const o = obj(v, 'teamTraining');
+  const A = CAREER_CONFIG.attributes;
+  const scores = arr(o.scores, 'scores', 3).map((x) => {
+    if (typeof x !== 'number' || !Number.isFinite(x) || x < 0 || x > 1) throw new Invalid('team training score: out of range');
+    return x;
+  });
+  const delta = int(o.delta, 'delta', -1, 2);
+  if (delta !== weekDelta(scores)) throw new Invalid('team training delta does not match scores');
+  return {
+    week: int(o.week, 'team training week', 1, week),
+    situations: arr(o.situations, 'situations', 3).map((x) => oneOf(x, 'situation', TEAM_TRAINING_IDS)),
+    scores,
+    delta,
+    changes: arr(o.changes, 'changes', 2).map((c) => {
+      const x = obj(c, 'change');
+      const from = int(x.from, 'change.from', A.min, A.max);
+      const to = int(x.to, 'change.to', A.min, A.max);
+      if (Math.abs(to - from) !== 1) throw new Invalid('team training change: out of range');
+      return { attribute: oneOf(x.attribute, 'attribute', ATTRIBUTES), from, to };
+    }),
+  };
+}
+
 /** Schema 1 (pre-release M6 draft) had no missed-event counter and stored levels as plain numbers. */
 function migrate(o: Record<string, unknown>): Record<string, unknown> {
   if (o.schema === 1) {
@@ -193,7 +218,9 @@ export function parseSave(raw: unknown): R<CareerSave> {
       batches: arr(o.batches, 'batches', L.batchesPerWeekMax).map((b) => str(b, 'batch', 64)),
       missedEvents: int(o.missedEvents, 'missedEvents', 0, 1e9),
       history: arr(o.history, 'history', L.historyMax).map((h) => review(h, week)),
+      teamTraining: arr(o.teamTraining ?? [], 'teamTraining', L.historyMax).map((t) => teamTraining(t, week)),
     };
+    if (new Set(save.teamTraining.map((t) => t.week)).size !== save.teamTraining.length) throw new Invalid('team training counted twice for a week');
     return { ok: true, value: save };
   } catch (e) {
     if (e instanceof Invalid) return { ok: false, error: e.message };

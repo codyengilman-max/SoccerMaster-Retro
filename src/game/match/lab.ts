@@ -150,7 +150,14 @@ export function isLabScenarioId(id: string | null | undefined): id is LabScenari
 
 /** Stage `id` on a freshly created state (call through MatchSim.arrange). Deterministic. */
 export function stageLabScenario(s: MatchState, id: LabScenarioId, pitch: { length: number; width: number }): void {
-  const sc = LAB_SCENARIOS[id];
+  stageFixture(s, LAB_SCENARIOS[id], pitch);
+}
+
+/** Placement part of a lab scenario; also used by career Team Training situations. */
+export type StageFixture = Pick<LabScenario, 'place' | 'carrier' | 'ball' | 'ballVel' | 'run'>;
+
+/** Stage a fixture on a freshly created state (call through MatchSim.arrange). Deterministic. */
+export function stageFixture(s: MatchState, sc: StageFixture, pitch: { length: number; width: number }): void {
   const ids = [...HOME_IDS, ...AWAY_IDS];
   ids.forEach((pid, i) => {
     const p = s.players[pid];
