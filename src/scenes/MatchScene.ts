@@ -201,7 +201,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         : MATCH_TUNING.match.halfSeconds;
     this.breakKey = '';
     this.breakMode = '';
-    this.sim = new MatchSim({ seed, homeFormation: formation, halfSeconds, });
+    const tacticsParam = params.get('tactics');
+    const tactics = tacticsParam === 'v05' || tacticsParam === 'classic' ? tacticsParam : undefined;
+    this.sim = new MatchSim({ seed, homeFormation: formation, halfSeconds, ...(tactics ? { tactics } : {}) });
     this.stageLab();
     if (shouldExposeDebug(window.location)) this.applyDebugSetup(params.get('setup'));
     this.passLog = shouldExposeDebug(window.location) && params.has('passlog');

@@ -1,5 +1,11 @@
 # Status
 
+## v0.5 tactical engine for computer attacks (branch `devin/1792339383-tactical-v05`, not merged, not deployed)
+
+- v0.5 research package added under `research/logic/v0.5`; engine ported to `src/game/match/tactical.ts` with its 17 tests.
+- `?tactics=v05` lets the engine run the computer team's attacking possessions (movement of outfielders, carrier carry/pass/shot through the existing kick path). Default stays the classic AI because the seeded comparison came out worse (see D28).
+- 60 Hz and 120 Hz give the identical v0.5 match; 18 players and match invariants hold; human players never get engine orders.
+
 ## FIFA brief in full (branch `devin/1792190415-fifa-full`, PR #16, not merged, not deployed)
 
 - **Team Training feedback:** stage banners show the previous situation's score with `n/3`, wrap inside the screen, and the week result stays visible until Menu (routine "You control …" notices no longer replace it). Runtime-checked in phone emulation, portrait and landscape.
