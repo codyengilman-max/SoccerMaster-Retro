@@ -7,7 +7,8 @@ export interface ButtonOptions {
   readonly width: number;
   readonly height: number;
   readonly fontSize: number;
-  readonly onClick: () => void;
+  /** Receives the press's pointer-down time (event clock, same base as performance.now()). */
+  readonly onClick: (downAt: number) => void;
   readonly fill?: number;
   readonly fillPressed?: number;
 }
@@ -19,7 +20,8 @@ export interface ButtonOptions {
 export class Button extends Phaser.GameObjects.Container {
   private readonly bg: Phaser.GameObjects.Graphics;
   private readonly label: Phaser.GameObjects.Text;
-  private readonly onClick: () => void;
+  private readonly onClick: (downAt: number) => void;
+  private downAt = 0;
   private fill: number;
   private fillPressed: number;
   private buttonWidth: number;
@@ -59,15 +61,16 @@ export class Button extends Phaser.GameObjects.Container {
       this.pressed = false;
       this.setHover(false);
     });
-    this.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => {
+    this.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, (pointer: Phaser.Input.Pointer) => {
       this.pressed = true;
+      this.downAt = pointer.downTime > 0 ? pointer.downTime : performance.now();
       this.redraw();
     });
     this.on(Phaser.Input.Events.GAMEOBJECT_POINTER_UP, () => {
       const wasPressed = this.pressed;
       this.pressed = false;
       this.redraw();
-      if (wasPressed) this.onClick();
+      if (wasPressed) this.onClick(this.downAt);
     });
 
     scene.add.existing(this);

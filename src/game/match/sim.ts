@@ -36,7 +36,8 @@ import {
   type MatchState,
   type TeamId,
 } from './types';
-import type { PadAction, PadState, PassScan, PlayerAttrs } from './types';
+import type { MatchPlayer as KickPlayer, PadAction, PadLock, PadState, PassScan, PlayerAttrs } from './types';
+import * as K11 from './kicking';
 
 export type MatchCommand =
   | { readonly type: 'padMove'; readonly x: number; readonly y: number }
@@ -69,7 +70,32 @@ export interface MatchSimOptions {
   readonly attributes?: Partial<Record<MatchPlayerId, Partial<PlayerAttrs>>>;
   /** Computer-player tactics: 'v05' runs the v0.5 decision engine for attacking possessions (tacticalDirector.ts). */
   readonly tactics?: TacticsMode;
+  /** Passing/shooting model: 'v11' (default, brief v1.1) or 'classic' (the previous behaviour, for rollback). */
+  readonly kicking?: KickingMode;
 }
+
+export type KickingMode = 'v11' | 'classic';
+
+/** One released pad kick, from release to contact (diagnostics for tests and ?debug; never read by the sim). */
+export interface KickRecord {
+  readonly id: number;
+  readonly kind: 'pass' | 'shot';
+  readonly by: MatchPlayerId;
+  readonly receiver: MatchPlayerId | null;
+  readonly charge: number;
+  readonly speed: number;
+  /** Raw requested aim, assisted intended direction and actual launch direction (radians). */
+  readonly aimAngle: number;
+  readonly intendedAngle: number;
+  readonly actualAngle: number;
+  readonly releaseAt: number;
+  readonly contactAt: number;
+  readonly fallback: boolean;
+}
+
+export type AimPreview =
+  | { readonly kind: 'pass'; readonly charge: number; readonly receiver: MatchPlayerId | null; readonly origin: Vec2; readonly plan: K11.PassPlan }
+  | { readonly kind: 'shot'; readonly charge: number; readonly origin: Vec2; readonly speed: number; readonly shot: K11.ShotAimPreview };
 
 const MAX_EVENTS = 40;
 
@@ -118,10 +144,19 @@ export class MatchSim {
   private readonly ballPrev: MutableVec2 = { x: 0, y: 0 };
   private readonly aiCtx: AiContext = { s: null as unknown as MatchState, T: MATCH_TUNING, rng: () => 0 };
   private readonly attrOverrides: Partial<Record<MatchPlayerId, Partial<PlayerAttrs>>>;
+  readonly kickingMode: KickingMode;
+  /** Last 64 released pad kicks (diagnostics only). */
+  readonly kickLog: KickRecord[] = [];
+  /** Highlighted-receiver changes while a pass charges (diagnostics only). */
+  targetSwitches = 0;
+  /** Last friendly receiving contact (diagnostics only). */
+  lastTouch: { id: MatchPlayerId; outcome: K11.TouchOutcome; quality: number; relativeSpeed: number } | null = null;
+  private readonly receiverCands: KickPlayer[] = [];
 
   constructor(options: MatchSimOptions = {}) {
     this.tuning = options.tuning ?? MATCH_TUNING;
     this.tactics = new TacticalDirector(options.tactics ?? 'classic', this.tuning);
+    this.kickingMode = options.kicking === 'classic' ? 'classic' : 'v11';
     (this.aiCtx as { T: MatchTuning }).T = this.tuning;
     this.attrOverrides = { ...(options.attributes ?? {}) };
     this.seed = options.seed ?? 1;
@@ -409,7 +444,7 @@ export class MatchSim {
     const R = this.tuning.pad.attrRange;
     const o = this.attrOverrides[id] ?? {};
     const f = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? clamp(v, R.min, R.max) : 1);
-    return { pace: f(o.pace), accel: f(o.accel), agility: f(o.agility), control: f(o.control) };
+    return { pace: f(o.pace), accel: f(o.accel), agility: f(o.agility), control: f(o.control), passing: f(o.passing), finishing: f(o.finishing) };
   }
 
   /** Late attribute source (e.g. a career save loaded after the sim was built); values are clamped like constructor ones. */
@@ -425,7 +460,7 @@ export class MatchSim {
     return {
       stick: vec(0, 0), facing: vec(1, 0), phase: 'ready', braking: false,
       jockeying: false, actor: null, since: 0, epoch: -1, ownedSince: -1, chargeStart: 0,
-      receiver: null, locked: null, slideDir: null, ballTouchedAt: null, bodyResolved: false, lastCmdId: 0, readyAt: 0,
+      receiver: null, locked: null, aim: vec(1, 0), aimSet: false, slideDir: null, ballTouchedAt: null, bodyResolved: false, lastCmdId: 0, readyAt: 0,
     };
   }
 
@@ -480,6 +515,8 @@ export class MatchSim {
     pad.ownedSince = s.ownedSince;
     pad.locked = null;
     pad.receiver = null;
+    pad.aimSet = false;
+    this.sampleAim();
     if (action === 'pass' || action === 'shoot') {
       pad.phase = action === 'pass' ? 'chargingPass' : 'chargingShoot';
       pad.chargeStart = s.simTime;
@@ -516,6 +553,7 @@ export class MatchSim {
       return false;
     }
     const me = s.players[pad.actor!];
+    if (this.kickingMode === 'v11') return this.padReleaseV11(me, action);
     const P = action === 'pass' ? T.passPower : T.shotPower;
     const full = action === 'pass' ? T.passChargeSeconds : T.shotChargeSeconds;
     const power = lerp(P.min, P.max, clamp((s.simTime - pad.chargeStart) / full, 0, 1));
@@ -524,7 +562,19 @@ export class MatchSim {
     else if (action === 'shoot') dir = normalize(sub(this.attackingGoal('home'), s.ball.pos));
     else dir = copy(pad.facing);
     const receiver = action === 'pass' ? this.pickReceiver(me, pad.receiver) : null;
-    pad.locked = { kind: action === 'pass' ? 'pass' : 'shot', dir, power, receiver };
+    pad.locked = {
+      kind: action === 'pass' ? 'pass' : 'shot',
+      dir,
+      power,
+      receiver,
+      charge: clamp((s.simTime - pad.chargeStart) / full, 0, 1),
+      speed: kickSpeed(power, this.tuning),
+      target: null,
+      id: pad.lastCmdId,
+      at: s.simTime,
+      aim: dir,
+      fallback: false,
+    };
     pad.receiver = receiver;
     pad.phase = 'kickPrep';
     pad.since = s.simTime;
@@ -586,6 +636,7 @@ export class MatchSim {
       case 'chargingPass':
       case 'chargingShoot':
         if (!this.padKickValid()) return this.padReset('possession lost');
+        this.sampleAim();
         if (pad.phase === 'chargingPass') pad.receiver = this.pickReceiver(me, pad.receiver);
         return;
       case 'kickPrep':
@@ -640,6 +691,7 @@ export class MatchSim {
     const me = pad.actor ? s.players[pad.actor] : null;
     if (!L || !me) return this.padReset('nothing locked');
     if (distance(me.pos, s.ball.pos) > T.contactReach) return this.padReset('ball out of reach');
+    if (this.kickingMode === 'v11') return this.padContactV11(me, L);
     const speed = kickSpeed(L.power, this.tuning);
     let dir: Vec2 = L.dir;
     if (L.kind === 'pass') {
@@ -674,6 +726,253 @@ export class MatchSim {
     pad.receiver = null;
   }
 
+  // ---- passing and shooting accuracy (brief v1.1; kicking.ts) ------------------------------------------
+
+  /** Keep the last meaningful stick direction of the charge: a neutral stick never resets a deliberate aim. */
+  private sampleAim(): void {
+    const pad = this.s.pad;
+    const m = length(pad.stick);
+    if (m > this.tuning.pad.deadZone && Number.isFinite(m)) {
+      setXY(pad.aim, pad.stick.x / m, pad.stick.y / m);
+      pad.aimSet = true;
+    }
+  }
+
+  private chargeOf(kind: 'pass' | 'shot'): number {
+    const T = this.tuning.pad;
+    return clamp((this.s.simTime - this.s.pad.chargeStart) / (kind === 'pass' ? T.passChargeSeconds : T.shotChargeSeconds), 0, 1);
+  }
+
+  /** Aim for this charge: last meaningful stick, else body facing (pass) or the attacking-goal centre (shot). */
+  private aimOf(kind: 'pass' | 'shot', team: TeamId = 'home'): Vec2 {
+    const s = this.s;
+    if (s.pad.aimSet) return s.pad.aim;
+    if (kind === 'shot') return normalize(sub(this.attackingGoal(team), s.ball.pos));
+    return s.pad.facing;
+  }
+
+  goalPlane(team: TeamId): K11.GoalPlane {
+    const g = this.attackingGoal(team);
+    return { x: g.x, sign: g.x >= this.tuning.pitch.length / 2 ? 1 : -1, centerY: g.y, halfWidth: this.tuning.pitch.goalHalfWidth };
+  }
+
+  private get passBounds(): K11.PassBounds {
+    const P = this.tuning.pitch;
+    return { minX: 0.5, maxX: P.length - 0.5, minY: 0.5, maxY: P.width - 0.5 };
+  }
+
+  /** Where the ball will be at contact: the carrier keeps moving through kick preparation. */
+  private contactOrigin(me: MatchPlayer): Vec2 {
+    const b = this.s.ball.pos;
+    const k = this.tuning.pad.prepSeconds;
+    return vec(b.x + me.vel.x * k, b.y + me.vel.y * k);
+  }
+
+  private passMaxRange(me: MatchPlayer): number {
+    const cap = K11.passSpeedCap(me.attrs.passing, this.tuning.kicking);
+    return (cap * cap) / (2 * this.tuning.ball.friction);
+  }
+
+  private pickReceiverV11(me: MatchPlayer, current: MatchPlayerId | null): MatchPlayerId | null {
+    const s = this.s;
+    const K = this.tuning.kicking;
+    const aim = this.aimOf('pass', me.team);
+    const origin = this.contactOrigin(me);
+    const maxRange = this.passMaxRange(me);
+    const cands = this.receiverCands;
+    cands.length = 0;
+    const scan = this.passScan;
+    scan.aimX = aim.x;
+    scan.aimY = aim.y;
+    scan.count = 0;
+    for (const id of TEAM_PLAYER_IDS[me.team]) {
+      const p = s.players[id];
+      if (id === me.id || p.isKeeper) continue;
+      cands.push(p);
+      if (scan.count < scan.entries.length) {
+        const e = scan.entries[scan.count++]!;
+        const dx = p.pos.x - origin.x;
+        const dy = p.pos.y - origin.y;
+        const dist = Math.hypot(dx, dy);
+        const ang = dist > 0 ? Math.acos(clamp((dx * aim.x + dy * aim.y) / dist, -1, 1)) : 0;
+        const r = K11.receiverAngle(origin, aim, p.pos, maxRange, K);
+        e.id = id;
+        e.angle = ang;
+        e.perp = dist * Math.sin(ang);
+        e.dist = dist;
+        e.score = ang;
+        e.inCone = !!r;
+      }
+    }
+    const best = K11.selectReceiver(origin, aim, cands, current, maxRange, K) as MatchPlayerId | null;
+    if (current !== null && best !== null && best !== current) this.targetSwitches += 1;
+    scan.chosen = best;
+    return best;
+  }
+
+  private passPlan(me: MatchPlayer, receiver: MatchPlayerId | null, q: number, aim: Vec2, origin: Vec2): K11.PassPlan {
+    const T = this.tuning;
+    const r = receiver ? this.s.players[receiver] : null;
+    if (r) return K11.solvePassDelivery(origin, r.pos, r.vel, q, me.attrs.passing, T.ball.friction, this.passBounds, T.kicking, aim);
+    return K11.directionalPass(origin, aim, q, me.attrs.passing, T.ball.friction, T.kicking);
+  }
+
+  /** Release: lock aim, charge, target identity and launch plan; later stick movement cannot change them. */
+  private padReleaseV11(me: MatchPlayer, action: 'pass' | 'shoot'): boolean {
+    const s = this.s;
+    const pad = s.pad;
+    const T = this.tuning;
+    const kind = action === 'pass' ? 'pass' : 'shot';
+    this.sampleAim();
+    const q = this.chargeOf(kind);
+    const aim = copy(this.aimOf(kind, me.team));
+    if (kind === 'pass') {
+      const receiver = this.pickReceiver(me, pad.receiver);
+      const plan = this.passPlan(me, receiver, q, aim, this.contactOrigin(me));
+      pad.locked = { kind, dir: plan.dir, power: q, receiver, charge: q, speed: plan.launchSpeed, target: plan.target, id: pad.lastCmdId, at: s.simTime, aim, fallback: plan.fallback };
+      pad.receiver = receiver;
+    } else {
+      const pv = K11.computeShotAim(s.ball.pos, aim, this.goalPlane(me.team), T.kicking);
+      const speed = lerp(T.shot.minSpeed, T.shot.maxSpeed, q);
+      pad.locked = { kind, dir: pv.dir, power: q, receiver: null, charge: q, speed, target: pv.hit, id: pad.lastCmdId, at: s.simTime, aim, fallback: false };
+      pad.receiver = null;
+    }
+    pad.phase = 'kickPrep';
+    pad.since = s.simTime;
+    this.emit('padRelease', me.id, `${action} ${q.toFixed(2)}`);
+    return true;
+  }
+
+  /** Contact: one impulse. A pass may re-aim only slightly toward the same receiver; a shot gets one execution error. */
+  private padContactV11(me: MatchPlayer, L: PadLock): void {
+    const s = this.s;
+    const pad = s.pad;
+    const T = this.tuning;
+    let dir: Vec2 = L.dir;
+    let receiver: MatchPlayerId | null = null;
+    if (L.kind === 'pass') {
+      const r = L.receiver ? s.players[L.receiver] : null;
+      if (r && r.team === me.team && !r.isKeeper && L.target) {
+        const fresh = K11.solvePassDelivery(s.ball.pos, r.pos, r.vel, L.charge, me.attrs.passing, T.ball.friction, this.passBounds, T.kicking, L.dir);
+        dir = K11.boundedContactDir(L.dir, L.target, s.ball.pos, fresh.target, T.kicking);
+        receiver = r.id;
+      }
+      const dist = L.target ? Math.hypot(L.target.x - s.ball.pos.x, L.target.y - s.ball.pos.y) : T.kicking.directionalMin;
+      const target = vec(s.ball.pos.x + dir.x * dist, s.ball.pos.y + dir.y * dist);
+      this.kickBall(me, scale(dir, L.speed), 'pass', target, receiver);
+      this.afterPass(me, target);
+      this.emit('pass', me.id, receiver ?? '');
+    } else {
+      const misalign = (1 - dot2(pad.facing, L.dir)) / 2;
+      const spread = K11.shotErrorSpread({ pressure: this.pressureOn(me), misalign, charge: L.charge, finishing: me.attrs.finishing }, T.kicking);
+      dir = rotate(L.dir, K11.shotError(spread, this.rng(), this.rng()));
+      this.kickBall(me, scale(dir, L.speed), 'shot', null, null);
+      s.stats.shots[me.team] += 1;
+      this.emit('shot', me.id, L.speed.toFixed(1));
+    }
+    if (this.kickLog.length >= 64) this.kickLog.shift();
+    this.kickLog.push({
+      id: L.id,
+      kind: L.kind,
+      by: me.id,
+      receiver,
+      charge: L.charge,
+      speed: L.speed,
+      aimAngle: Math.atan2(L.aim.y, L.aim.x),
+      intendedAngle: Math.atan2(L.dir.y, L.dir.x),
+      actualAngle: Math.atan2(dir.y, dir.x),
+      releaseAt: L.at,
+      contactAt: s.simTime,
+      fallback: L.fallback,
+    });
+    pad.phase = 'kickRecovery';
+    pad.since = s.simTime;
+    pad.locked = null;
+    pad.receiver = null;
+  }
+
+  /** Same execution physics as the user: assisted aim, one bounded error, speed from power. AI chooses only the intent. */
+  private aiShotV11(p: MatchPlayer, target: Vec2, power: number): void {
+    const s = this.s;
+    const T = this.tuning;
+    const pv = K11.computeShotAim(s.ball.pos, normalize(sub(target, s.ball.pos)), this.goalPlane(p.team), T.kicking);
+    const vl = length(p.vel);
+    const misalign = vl > 0.5 ? (1 - (p.vel.x * pv.dir.x + p.vel.y * pv.dir.y) / vl) / 2 : 0;
+    const q = clamp(Number.isFinite(power) ? power : 0, 0, 1);
+    const spread = K11.shotErrorSpread({ pressure: this.pressureOn(p), misalign, charge: q, finishing: p.attrs.finishing }, T.kicking);
+    const dir = rotate(pv.dir, K11.shotError(spread, this.rng(), this.rng()));
+    const speed = lerp(T.shot.minSpeed, T.shot.maxSpeed, q);
+    this.kickBall(p, scale(dir, speed), 'shot', null, null);
+    s.stats.shots[p.team] += 1;
+    this.emit('shot', p.id, speed.toFixed(1));
+  }
+
+  private facingOf(p: MatchPlayer): Vec2 {
+    const s = this.s;
+    if (p.team === 'home' && p.id === s.controlledId) return s.pad.facing;
+    const vl = length(p.vel);
+    if (vl > 0.5) return vec(p.vel.x / vl, p.vel.y / vl);
+    const d = sub(s.ball.pos, p.pos);
+    return length(d) > 1e-6 ? normalize(d) : vec(p.team === 'home' ? 1 : -1, 0);
+  }
+
+  /** Friendly receiving contact: secure control, a heavy touch that runs loose ahead, or a deflection. */
+  private receiveV11(p: MatchPlayer): void {
+    const s = this.s;
+    const T = this.tuning;
+    const K = T.kicking;
+    const ball = s.ball;
+    const r = K11.resolveReceivingContact(ball.vel, p.vel, this.facingOf(p), p.attrs.control, this.pressureOn(p), K);
+    this.lastTouch = { id: p.id, outcome: r.outcome, quality: r.quality, relativeSpeed: r.relativeSpeed };
+    if (r.outcome === 'secure') {
+      // Cushioning touch: the part of the run that was carrying the receiver into the ball is checked.
+      const bl = length(ball.vel);
+      if (bl > 1e-6) {
+        const into = -(p.vel.x * ball.vel.x + p.vel.y * ball.vel.y) / bl;
+        if (into > 0) {
+          const k = into * K.touchCushion;
+          setXY(p.vel, p.vel.x + (ball.vel.x / bl) * k, p.vel.y + (ball.vel.y / bl) * k);
+        }
+      }
+      return this.take(p, 'received', '');
+    }
+    if (r.outcome === 'heavy') {
+      const bl = length(ball.vel);
+      const ux = bl > 1e-6 ? ball.vel.x / bl : 0;
+      const uy = bl > 1e-6 ? ball.vel.y / bl : 0;
+      const extra = (K.heavyTouchSpeed * (K.secureQuality - r.quality)) / (K.secureQuality - K.deflectQuality);
+      setXY(ball.vel, p.vel.x + ux * extra, p.vel.y + uy * extra);
+      ball.ignore.push({ id: p.id, until: s.simTime + K.heavyTouchIgnoreSeconds });
+      ball.lastTouch = p.team;
+      ball.kick = { by: p.id, team: p.team, kind: 'touch', at: s.simTime, target: null, receiver: p.id };
+      this.emit('deflected', p.id, 'heavy touch');
+      return;
+    }
+    setXY(ball.vel, ball.vel.x * T.receive.hotTouchFactor, ball.vel.y * T.receive.hotTouchFactor);
+    ball.ignore.push({ id: p.id, until: s.simTime + T.intercept.ignoreSeconds });
+    ball.lastTouch = p.team;
+    this.emit('deflected', p.id, 'too fast to control');
+  }
+
+  /** Pre-release feedback for the renderer: intended (assisted) direction, receiver, firmness, goal-plane hit. */
+  aimPreview(): AimPreview | null {
+    const s = this.s;
+    const pad = s.pad;
+    if (this.kickingMode !== 'v11' || !pad.actor) return null;
+    const me = s.players[pad.actor];
+    if (pad.phase === 'chargingPass') {
+      const q = this.chargeOf('pass');
+      const origin = this.contactOrigin(me);
+      return { kind: 'pass', charge: q, receiver: pad.receiver, origin, plan: this.passPlan(me, pad.receiver, q, this.aimOf('pass', me.team), origin) };
+    }
+    if (pad.phase === 'chargingShoot') {
+      const q = this.chargeOf('shot');
+      const shot = K11.computeShotAim(s.ball.pos, this.aimOf('shot', me.team), this.goalPlane(me.team), this.tuning.kicking);
+      return { kind: 'shot', charge: q, origin: copy(s.ball.pos), speed: lerp(this.tuning.shot.minSpeed, this.tuning.shot.maxSpeed, q), shot };
+    }
+    return null;
+  }
+
   private pressureOn(p: MatchPlayer): number {
     let d = Infinity;
     for (const id of TEAM_PLAYER_IDS[otherTeam(p.team)]) d = Math.min(d, distance(this.s.players[id].pos, p.pos));
@@ -682,6 +981,7 @@ export class MatchSim {
 
   /** Receiver by intended direction first, then distance; a highlighted receiver is kept unless clearly beaten. */
   private pickReceiver(me: MatchPlayer, current: MatchPlayerId | null): MatchPlayerId | null {
+    if (this.kickingMode === 'v11') return this.pickReceiverV11(me, current);
     const s = this.s;
     const T = this.tuning.pad;
     const aim = length(s.pad.stick) > 0 ? normalize(s.pad.stick) : s.pad.facing;
@@ -1029,6 +1329,7 @@ export class MatchSim {
       p.target.y = d.target.y;
       return;
     }
+    if (d.type === 'shoot' && this.kickingMode === 'v11') return this.aiShotV11(p, d.target, d.power);
     const noise = (k: number): number => (this.rng() * 2 - 1) * k;
     const raw = sub(d.target, s.ball.pos);
     const dir = rotate(normalize(raw), noise(T.ai.aimNoise));
@@ -1059,6 +1360,7 @@ export class MatchSim {
     }
     s.nextDecisionAt = s.simTime + T.ai.decisionSeconds;
     const aim = this.tactics.toWorld(p.team, a.aim.x, a.aim.y, vec(0, 0));
+    if (a.type === 'SHOOT' && this.kickingMode === 'v11') return this.aiShotV11(p, aim, a.power);
     const noise = (k: number): number => (this.rng() * 2 - 1) * k;
     const raw = sub(aim, s.ball.pos);
     const dir = rotate(normalize(raw), noise(T.ai.aimNoise));
@@ -1413,6 +1715,7 @@ export class MatchSim {
     if (!best) return;
     const { p, d, friendly } = best;
     if (friendly) {
+      if (this.kickingMode === 'v11') return this.receiveV11(p);
       if (speed <= T.receive.maxSpeed) this.take(p, 'received', '');
       else {
         setXY(ball.vel, ball.vel.x * T.receive.hotTouchFactor, ball.vel.y * T.receive.hotTouchFactor);

@@ -7,4 +7,5 @@ export * from './tacticalDirector';
 export * from './sim';
 export * from './clock';
 export * from './predict';
+export * from './kicking';
 export * from './lab';
