@@ -201,7 +201,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         : MATCH_TUNING.match.halfSeconds;
     this.breakKey = '';
     this.breakMode = '';
-    this.sim = new MatchSim({ seed, homeFormation: formation, halfSeconds, });
+    // `?kick=classic` restores the previous passing/shooting model (rollback switch; no save changes).
+    const kicking = params.get('kick') === 'classic' ? 'classic' : 'v11';
+    this.sim = new MatchSim({ seed, homeFormation: formation, halfSeconds, kicking });
     this.stageLab();
     if (shouldExposeDebug(window.location)) this.applyDebugSetup(params.get('setup'));
     this.passLog = shouldExposeDebug(window.location) && params.has('passlog');
@@ -539,6 +541,14 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     ) as MatchReport['players'];
     const bs = toScreen(L, s.ball.pos);
     return {
+      kick: {
+        mode: this.sim.kickingMode,
+        preview: this.sim.aimPreview(),
+        last: this.sim.kickLog.at(-1) ?? null,
+        kicks: this.sim.kickLog.length,
+        touch: this.sim.lastTouch ? { ...this.sim.lastTouch } : null,
+        targetSwitches: this.sim.targetSwitches,
+      },
       phase: s.phase,
       clock: s.clock ? { half: s.clock.half, elapsed: s.clock.elapsed, halfSeconds: s.clock.halfSeconds, label: match.clockLabel(s.clock) } : null,
       result: s.phase === 'fulltime' ? match.matchResult(s) : null,
@@ -1710,6 +1720,52 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const y = p.y - playerH * 1.6;
     o.fillStyle(PALETTE.ink, 0.6).fillRect(p.x - w / 2, y, w, 6);
     o.fillStyle(pad.phase === 'chargingPass' ? PALETTE.grassLight : PALETTE.tomato, 1).fillRect(p.x - w / 2, y, w * f, 6);
+    this.drawKickPreview(playerH);
+  }
+
+  /** v1.1 pre-release feedback, drawn only from the sim's own preview: pass line to the receiving point, shot aim line and goal-line marker. */
+  private drawKickPreview(playerH: number): void {
+    const pv = this.sim.aimPreview();
+    if (!pv) return;
+    const L = this.pitchLayout;
+    const o = this.over;
+    const from = toScreen(L, pv.origin);
+    if (pv.kind === 'pass') {
+      const t = toScreen(L, pv.plan.target);
+      o.lineStyle(2, PALETTE.cream, 0.55);
+      o.lineBetween(from.x, from.y, t.x, t.y);
+      o.fillStyle(pv.plan.capped ? PALETTE.tomato : PALETTE.cream, 0.9);
+      o.fillCircle(t.x, t.y, Math.max(3, playerH * 0.12));
+      return;
+    }
+    const sh = pv.shot;
+    const reach = 7;
+    const end = toScreen(L, { x: pv.origin.x + sh.dir.x * reach, y: pv.origin.y + sh.dir.y * reach });
+    o.lineStyle(3, PALETTE.tomato, 0.85);
+    o.lineBetween(from.x, from.y, end.x, end.y);
+    if (!sh.hit) return;
+    const m = toScreen(L, sh.hit);
+    const W = this.scale.width;
+    const H = this.scale.height;
+    const r = Math.max(4, playerH * 0.18);
+    const inside = m.x >= 0 && m.x <= W && m.y >= 0 && m.y <= H;
+    if (inside) {
+      o.lineStyle(3, sh.onTarget ? PALETTE.mustard : PALETTE.tomato, 1);
+      o.lineBetween(m.x - r, m.y - r, m.x + r, m.y + r);
+      o.lineBetween(m.x - r, m.y + r, m.x + r, m.y - r);
+      return;
+    }
+    // Marker off-screen: a chevron on the screen edge, pointing the way the goal-line hit lies.
+    this.guideOffscreen = true;
+    const ex = Phaser.Math.Clamp(m.x, r * 2, W - r * 2);
+    const ey = Phaser.Math.Clamp(m.y, r * 2, H - r * 2);
+    const a = Math.atan2(m.y - ey, m.x - ex);
+    o.fillStyle(sh.onTarget ? PALETTE.mustard : PALETTE.tomato, 1);
+    o.fillTriangle(
+      ex + Math.cos(a) * r * 1.6, ey + Math.sin(a) * r * 1.6,
+      ex + Math.cos(a + 2.4) * r, ey + Math.sin(a + 2.4) * r,
+      ex + Math.cos(a - 2.4) * r, ey + Math.sin(a - 2.4) * r,
+    );
   }
 
   private drawAimGuide(playerH: number): void {

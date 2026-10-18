@@ -39,7 +39,8 @@ export const POSITION_SLOT: Readonly<Record<Position, string>> = { DEF: 'H3', MI
 
 /**
  * Career ratings (1-99) to match multipliers around the starting rating. The career has no pace or
- * acceleration rating, so those stay neutral; control follows first touch and dribbling, agility dribbling.
+ * acceleration rating, so those stay neutral; control follows first touch and dribbling, agility dribbling,
+ * passing caps pass speed and finishing sets shot precision.
  */
 export function matchAttrsFromCareer(attributes: Readonly<Record<AttributeId, number>>): Partial<PlayerAttrs> {
   const A = CAREER_CONFIG.attributes;
@@ -47,5 +48,10 @@ export function matchAttrsFromCareer(attributes: Readonly<Record<AttributeId, nu
     const x = typeof v === 'number' && Number.isFinite(v) ? Math.min(A.max, Math.max(A.min, v)) : A.start;
     return x >= A.start ? 1 + (0.2 * (x - A.start)) / (A.max - A.start) : 1 - (0.2 * (A.start - x)) / (A.start - A.min);
   };
-  return { control: m((attributes.firstTouch + attributes.dribbling) / 2), agility: m(attributes.dribbling) };
+  return {
+    control: m((attributes.firstTouch + attributes.dribbling) / 2),
+    agility: m(attributes.dribbling),
+    passing: m(attributes.passing),
+    finishing: m(attributes.finishing),
+  };
 }

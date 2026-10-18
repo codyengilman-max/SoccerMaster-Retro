@@ -23,6 +23,15 @@ export interface MatchReport {
   readonly teamTraining?: { readonly phase: string; readonly week: number; readonly index: number; readonly ids: readonly string[]; readonly scores: readonly number[]; readonly message: string } | null;
   /** M6: career evidence recording for the career player's slot, or null outside career play. */
   readonly career?: { readonly slot: string; readonly pending: number; readonly batches: number; readonly recorded: number; readonly missed: number } | null;
+  /** Passing/shooting model (v1.1 or `?kick=classic`), live pre-release preview and the last released kick and first touch. */
+  readonly kick: {
+    readonly mode: match.KickingMode;
+    readonly preview: match.AimPreview | null;
+    readonly last: match.KickRecord | null;
+    readonly kicks: number;
+    readonly touch: { readonly id: string; readonly outcome: string; readonly quality: number; readonly relativeSpeed: number } | null;
+    readonly targetSwitches: number;
+  };
   readonly phase: match.MatchPhase;
   /** M4 timed match clock; null in the open-ended sandbox (`?sandbox`). */
   readonly clock: { readonly half: 1 | 2; readonly elapsed: number; readonly halfSeconds: number; readonly label: string } | null;

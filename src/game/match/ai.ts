@@ -46,7 +46,7 @@ const outfield = (s: MatchState, team: TeamId): readonly MatchPlayer[] => {
 
 // Plan-time scratch vectors, handed out from a pool that planTeams resets each step. They never outlive one plan:
 // anything kept in state (anchors, targets) is copied out.
-const POOL: MutableVec2[] = [];
+const POOL: MutableVec2[] = Array.from({ length: 192 }, () => ({ x: 0, y: 0 }));
 let poolTop = 0;
 function tv(x: number, y: number): MutableVec2 {
   let v = POOL[poolTop];

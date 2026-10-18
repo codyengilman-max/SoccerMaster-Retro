@@ -150,6 +150,44 @@ export const MATCH_TUNING = {
     recoverBeyond: 3,
   },
   /**
+   * Passing and shooting accuracy (brief v1.1, `kicking.ts`). Yards, seconds, radians. Provisional playtest values
+   * calibrated against this engine's constant ground deceleration (ball.friction 3.5 yd/s^2), not proven optimal.
+   */
+  kicking: {
+    passAimCone: 0.349,
+    passMinRange: 3,
+    collinearAngle: 0.07,
+    switchAngle: 0.105,
+    arrivalSpeed: 8,
+    firmnessTap: 1,
+    firmnessFull: 1.25,
+    passMaxSpeed: 18,
+    passMinSpeed: 5.3,
+    directionalMin: 8,
+    directionalMax: 22,
+    leadHorizon: 0.35,
+    leadMaxDistance: 3,
+    leadIterations: 3,
+    contactMaxCorrection: 0.07,
+    contactMaxShift: 1.5,
+    shotAssistMax: 0.0524,
+    shotPostInset: 0.4,
+    shotErrorBase: 0.05,
+    shotErrorPressure: 0.06,
+    shotErrorMisalign: 0.05,
+    shotErrorEffort: 0.03,
+    shotErrorMax: 0.14,
+    touchCleanSpeed: 13,
+    touchHardSpeed: 22,
+    touchBehindPenalty: 0.3,
+    touchPressurePenalty: 0.2,
+    secureQuality: 0.5,
+    deflectQuality: 0.15,
+    heavyTouchSpeed: 5,
+    touchCushion: 0.5,
+    heavyTouchIgnoreSeconds: 0.15,
+  },
+  /**
    * Joystick + four-button controls (controls brief §15). Provisional playtest values, not proven optimal.
    * Charge times are sim seconds; speeds yd/s; angles radians.
    */
