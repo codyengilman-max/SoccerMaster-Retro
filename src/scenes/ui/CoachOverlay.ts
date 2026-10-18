@@ -49,17 +49,17 @@ export class CoachOverlay {
       scene.add.text(0, 0, '', { fontFamily: FONT_FAMILY, fontStyle: 'bold', fontSize: `${size}px`, color: CSS.ink, align: 'left' }).setResolution(res).setDepth(DEPTH + 2);
     this.title = txt(16).setName('coach-title');
     this.body = txt(14).setName('coach-body');
-    const btn = (name: string, label: string, onClick: () => void, cream = true): Button =>
+    const btn = (name: string, label: string, onClick: (downAt: number) => void, cream = true): Button =>
       new Button(scene, 0, 0, { name, label, width: 200, height: 36, fontSize: 14, ...(cream ? { fill: PALETTE.cream, fillPressed: PALETTE.sand } : {}), onClick }).setDepth(DEPTH + 3);
     this.options = Array.from({ length: MAX_OPTIONS }, (_, i) =>
-      btn(`coach-option-${i}`, '', () => {
+      btn(`coach-option-${i}`, '', (at) => {
         const id = this.optionIds[i];
-        if (this.mode === 'question' && id && this.armed()) handlers.onAnswer(id);
+        if (this.mode === 'question' && id && this.armed(at)) handlers.onAnswer(id);
       }),
     );
-    this.continueButton = btn('coach-continue', 'Continue ▶', () => this.mode === 'feedback' && this.armed() && handlers.onContinue(), false);
-    this.againButton = btn('coach-again', 'Play again', () => this.mode === 'summary' && this.armed() && handlers.onAgain(), false);
-    this.menuButton = btn('coach-menu', 'Menu', () => this.mode === 'summary' && this.armed() && handlers.onMenu());
+    this.continueButton = btn('coach-continue', 'Continue ▶', (at) => this.mode === 'feedback' && this.armed(at) && handlers.onContinue(), false);
+    this.againButton = btn('coach-again', 'Play again', (at) => this.mode === 'summary' && this.armed(at) && handlers.onAgain(), false);
+    this.menuButton = btn('coach-menu', 'Menu', (at) => this.mode === 'summary' && this.armed(at) && handlers.onMenu());
     this.apply();
   }
 
@@ -72,8 +72,9 @@ export class CoachOverlay {
   }
 
   /** The user pause panel replaces the card while it is open; the moment itself stays frozen. */
-  private armed(): boolean {
-    return performance.now() - this.armedAt >= ARM_MS;
+  /** A press counts only if it began ARM_MS after the card changed; a laggy frame can't turn a quick double tap into two. */
+  private armed(downAt: number): boolean {
+    return downAt - this.armedAt >= ARM_MS && performance.now() - this.armedAt >= ARM_MS;
   }
 
   /** Landscape cards start below this y so the HUD (score and Coach counter) stays visible. */
