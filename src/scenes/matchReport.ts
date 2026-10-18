@@ -39,7 +39,7 @@ export interface MatchReport {
   readonly userHasBall: boolean;
   readonly dribbleDir: { readonly x: number; readonly y: number };
   readonly score: Readonly<Record<match.TeamId, number>>;
-  readonly stoppage: { readonly reason: string; readonly scorer: match.TeamId | null; readonly restartTeam: match.TeamId } | null;
+  readonly stoppage: { readonly reason: string; readonly scorer: match.TeamId | null; readonly restartTeam: match.TeamId; readonly restart?: string } | null;
   readonly defense: Readonly<Record<match.TeamId, { presserId: string | null; coverId: string | null }>>;
   readonly stats: match.MatchState['stats'];
   readonly events: readonly { readonly seq: number; readonly type: match.MatchEventType; readonly by: string | null; readonly detail: string; readonly at: number }[];
