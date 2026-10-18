@@ -15,6 +15,8 @@ const MAX_OPTIONS = 4;
 const DEPTH = 7400;
 /** A tap that arrives this soon after the card changes belongs to the previous card (e.g. a double tap on an answer landing on Continue). */
 const ARM_MS = 350;
+/** The summary replaces the card unbidden at session end; a longer guard keeps a late Continue tap off Menu. */
+const SUMMARY_ARM_MS = 1000;
 export const COACH_OVERLAY_DEPTH = DEPTH;
 
 type Mode = 'hidden' | 'question' | 'feedback' | 'summary';
@@ -58,8 +60,8 @@ export class CoachOverlay {
       }),
     );
     this.continueButton = btn('coach-continue', 'Continue ▶', (at) => this.mode === 'feedback' && this.armed(at) && handlers.onContinue(), false);
-    this.againButton = btn('coach-again', 'Play again', (at) => this.mode === 'summary' && this.armed(at) && handlers.onAgain(), false);
-    this.menuButton = btn('coach-menu', 'Menu', (at) => this.mode === 'summary' && this.armed(at) && handlers.onMenu());
+    this.againButton = btn('coach-again', 'Play again', (at) => this.mode === 'summary' && this.armed(at, SUMMARY_ARM_MS) && handlers.onAgain(), false);
+    this.menuButton = btn('coach-menu', 'Menu', (at) => this.mode === 'summary' && this.armed(at, SUMMARY_ARM_MS) && handlers.onMenu());
     this.apply();
   }
 
@@ -73,8 +75,8 @@ export class CoachOverlay {
 
   /** The user pause panel replaces the card while it is open; the moment itself stays frozen. */
   /** A press counts only if it began ARM_MS after the card changed; a laggy frame can't turn a quick double tap into two. */
-  private armed(downAt: number): boolean {
-    return downAt - this.armedAt >= ARM_MS && performance.now() - this.armedAt >= ARM_MS;
+  private armed(downAt: number, ms = ARM_MS): boolean {
+    return downAt - this.armedAt >= ms && performance.now() - this.armedAt >= ms;
   }
 
   /** Landscape cards start below this y so the HUD (score and Coach counter) stays visible. */

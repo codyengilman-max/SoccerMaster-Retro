@@ -99,7 +99,7 @@ test('connected flow: create player, training credit, career match with Coach Mo
   const end = (await diagnostics(page)).gameplay as Match;
   expect(end.coach!.entries.filter((e) => e.selectedOptionId !== null).length).toBe(answered);
   expect(answered).toBeGreaterThanOrEqual(3);
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(1100);
   await pressAny(page, 'coach-menu', mode);
   await waitForScene(page, 'start');
   await page.waitForTimeout(1000);
