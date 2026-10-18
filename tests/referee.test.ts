@@ -212,6 +212,29 @@ describe('referee: offside', () => {
   });
 });
 
+describe('referee: offside with v1.1 first touch', () => {
+  it('a heavy or deflected first touch from an offside position is still offside', () => {
+    const sim = new MatchSim({ seed: 4, kicking: 'v11' });
+    live(sim);
+    sim.arrange((s) => {
+      for (const id of TEAM_PLAYER_IDS.away) put(s.players[id], 50, 10);
+      put(s.players.A1, 74, 25);
+      put(s.players.A2, 60, 10);
+      put(s.players.H6, 45, 25);
+      put(s.players.H9, 66, 25, -4, 0);
+      sim.referee.notePass(s.players.H6, s.players, { x: 45, y: 25 });
+      s.ball.owner = null;
+      s.ball.pos = { x: 63, y: 25 };
+      s.ball.vel = { x: 25, y: 0 };
+      s.ball.lastTouch = 'home';
+      s.ball.kick = { by: 'H6', team: 'home', kind: 'pass', at: s.simTime - 1, target: { x: 66, y: 25 }, receiver: 'H9' };
+    });
+    run(sim, 1, stopped);
+    expect(sim.state.stoppage).toMatchObject({ reason: 'offside', restart: 'indirectFreeKick', restartTeam: 'away' });
+    expect(sim.state.events.some((e) => e.type === 'offside' && /H9 offside/.test(e.detail))).toBe(true);
+  });
+});
+
 describe('referee: slide fouls', () => {
   it('a fast slide from behind is a foul even when it reaches the ball; free kick at the contact point', () => {
     const R = new Referee(T.pitch.ballRadius);
@@ -282,23 +305,35 @@ describe('referee: slide fouls', () => {
 });
 
 describe('referee: determinism', () => {
-  const calls = (sim: Sim) =>
-    sim.state.events.filter((e) => ['out', 'foul', 'offside', 'goal', 'restart'].includes(e.type)).map((e) => `${e.type}@${e.at.toFixed(4)}:${e.by}:${e.detail}`);
+  // The sim keeps only its last 40 events, so calls are collected after every step rather than read at the end.
+  const CALLS = ['out', 'foul', 'offside', 'goal', 'restart'];
+  const record = (sim: Sim, seconds: number, log: string[], frame = F): void => {
+    let seq = sim.state.events.at(-1)?.seq ?? -1;
+    for (let i = 0; i < Math.round(seconds / frame); i++) {
+      sim.step(frame);
+      for (const e of sim.state.events) {
+        if (e.seq <= seq) continue;
+        seq = e.seq;
+        if (CALLS.includes(e.type)) log.push(`${e.type}@${e.at.toFixed(4)}:${e.by}:${e.detail}`);
+      }
+    }
+  };
 
   it('the same match gives the same calls at 60 Hz and 120 Hz', () => {
-    const play = (frame: number): Sim => {
+    const play = (frame: number): { sim: Sim; log: string[] } => {
       const sim = new MatchSim({ seed: 7 });
-      run(sim, T.kickoff.countdownSeconds + 0.1, undefined, frame);
+      const log: string[] = [];
+      record(sim, T.kickoff.countdownSeconds + 0.1, log, frame);
       looseBall(sim, { x: 40, y: 49.5 }, { x: 0, y: 6 }, 'H6');
-      run(sim, 20, undefined, frame);
+      record(sim, 20, log, frame);
       looseBall(sim, { x: 74.5, y: 10 }, { x: 6, y: 0 }, 'A3');
-      run(sim, 20, undefined, frame);
-      return sim;
+      record(sim, 20, log, frame);
+      return { sim, log };
     };
-    const a = play(1 / 60);
-    const b = play(1 / 120);
-    expect(calls(a).length).toBeGreaterThanOrEqual(2);
-    expect(calls(b)).toEqual(calls(a));
+    const { sim: a, log: la } = play(1 / 60);
+    const { sim: b, log: lb } = play(1 / 120);
+    expect(la.length).toBeGreaterThanOrEqual(2);
+    expect(lb).toEqual(la);
     for (const id of MATCH_PLAYER_IDS) {
       expect(b.state.players[id].pos.x).toBeCloseTo(a.state.players[id].pos.x, 6);
       expect(b.state.players[id].pos.y).toBeCloseTo(a.state.players[id].pos.y, 6);
@@ -311,14 +346,17 @@ describe('referee: determinism', () => {
       const sim = new MatchSim({ seed });
       let stoppedFor = 0;
       let heldFor = 0;
+      let seq = -1;
+      const seen: string[] = [];
       for (let i = 0; i < 120 / F; i++) {
         sim.step(F);
+        for (const e of sim.state.events) if (e.seq > seq) (seq = e.seq), seen.push(e.type);
         stoppedFor = sim.state.phase === 'stopped' ? stoppedFor + F : 0;
         heldFor = sim.state.setPiece ? heldFor + F : 0;
         expect(stoppedFor).toBeLessThan(T.stoppage.goalSeconds + 0.5);
         expect(heldFor).toBeLessThan(T.kickoff.countdownSeconds + RT.userTakeSeconds + 0.5);
       }
-      restarts += sim.state.events.filter((e) => e.type === 'restart').length;
+      restarts += seen.filter((t) => t === 'restart').length;
     }
     expect(restarts).toBeGreaterThan(0);
   });

@@ -61,6 +61,10 @@ export interface PlayerAttrs {
   readonly accel: number;
   readonly agility: number;
   readonly control: number;
+  /** Pass speed cap (career passing); 1 when unknown. */
+  readonly passing: number;
+  /** Shot execution precision (career finishing); 1 when unknown. */
+  readonly finishing: number;
 }
 
 export type PadAction = 'pass' | 'shoot' | 'slide' | 'block';
@@ -76,6 +80,25 @@ export type PadPhase =
   | 'slideRecovery';
 
 /** Joystick + four-button control state (controls=pad). */
+/** Immutable snapshot of a released kick: what was asked for, locked until contact (or cancellation). */
+export interface PadLock {
+  readonly kind: 'pass' | 'shot';
+  /** Intended (assisted) direction; execution error is applied once at contact. */
+  readonly dir: Vec2;
+  readonly power: number;
+  readonly receiver: MatchPlayerId | null;
+  /** 0..1 charge fraction, launch speed (yd/s), receiving point or goal-plane hit. */
+  readonly charge: number;
+  readonly speed: number;
+  readonly target: Vec2 | null;
+  /** Command id of the release and its sim time. */
+  readonly id: number;
+  readonly at: number;
+  /** Raw requested aim before assistance. */
+  readonly aim: Vec2;
+  readonly fallback: boolean;
+}
+
 export interface PadState {
   /** Pitch-space stick vector, length 0..1. */
   stick: MutableVec2;
@@ -93,7 +116,10 @@ export interface PadState {
   ownedSince: number;
   chargeStart: number;
   receiver: MatchPlayerId | null;
-  locked: { readonly kind: 'pass' | 'shot'; readonly dir: Vec2; readonly power: number; readonly receiver: MatchPlayerId | null } | null;
+  /** Last meaningful (outside the dead zone) stick direction during the current charge. */
+  aim: MutableVec2;
+  aimSet: boolean;
+  locked: PadLock | null;
   slideDir: MutableVec2 | null;
   ballTouchedAt: number | null;
   bodyResolved: boolean;

@@ -41,6 +41,7 @@ async function doubleTap(page: Page, name: string, mode: PointerMode): Promise<n
 
 /** CoachOverlay ignores taps for this long after a card changes (src/scenes/ui/CoachOverlay.ts). */
 const ARM_MS = 350;
+const SUMMARY_ARM_MS = 1000;
 
 async function openCoached(page: Page, mode: PointerMode, query = ''): Promise<MatchReport> {
   await page.goto(`/?debug=1&coach&coachSeconds=40${query}`);
@@ -158,6 +159,7 @@ test('coached session: freeze, answer, feedback, Continue once, through to the s
   await expectCardFits(page);
   await page.screenshot({ path: info.outputPath('coach-summary.png') });
   await linger(page);
+  await page.waitForTimeout(SUMMARY_ARM_MS);
   // Play again restarts the scene with a fresh session and no leaked canvases.
   await pressElement(page, 'coach-again', mode);
   await waitFor(page, (r) => r.coach !== null && r.coach.entries.length === 0 && r.phase === 'live');
