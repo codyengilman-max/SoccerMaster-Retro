@@ -6,6 +6,16 @@
 - `?tactics=v05` lets the engine run the computer team's attacking possessions (movement of outfielders, carrier carry/pass/shot through the existing kick path). Default stays the classic AI because the seeded comparison came out worse (see D28).
 - 60 Hz and 120 Hz give the identical v0.5 match; 18 players and match invariants hold; human players never get engine orders.
 
+## Season One — 18 weeks + all supplied graphics (branch `devin/1792370575-season-one`, review preview only, not merged, not in production)
+
+- **Story:** Start → Story runs the Season One package: prologue, 81 featured weekly scenes (Monday Cloudy, school, Coach Code, after-training Cloudy, parent every even week), match/tournament scenes and the epilogue, 127 scenes in `docs/story/season-one/season_one_scenes.json`, compiled from `docs/story/season-one/src/*.story` by `scripts/story/build-season-one.py`. Checklist: `docs/story/season-one/COVERAGE.md`.
+- **Competition:** 12 league games against the 5-club local league (triple round robin, `src/game/season/league.ts`) in weeks 3–8 and 13–18, and two 4-team cups in weeks 9 and 11 (`src/game/season/tournament.ts`: 3 group games, then championship or placement). Every game is the real 9v9 match; the result is recorded once and conflicting duplicates are rejected. Cups never touch the league table. Skipped or interrupted games stay unplayed, never losses. A drawn final is a shared result (no shoot-out).
+- **Saves:** an older story save is archived unchanged under `legacy-story-<career>` and the career starts the prologue; unreadable saves are kept under `broken-<career>-<time>`. Player, levels and training stay in the career save.
+- **Graphics:** 17 new screen images imported to `docs/art/season-one/` (14 shown in game, 3 Tank Cup images kept but not shown because no Tank Cup activity exists). Home screen, departure/arrival plates for the chosen boy/girl, aquarium with the chosen player looking at Cloudy, recess, Jungle Ball, a standings board with live table text, and goal/referee art shown only on the match engine's own goal and foul stoppages.
+- **Review fixes (D28):** league and cup results are written in one read-check-write transaction, cup games are bound to their fixture at launch (`tfix:<run>`), a failed save keeps the story handoff open, a skipped league game still plays the other clubs' round, a declined Season One crossbar challenge offers Continue, and the epilogue's complete-season line needs all 12 league results and both cup finishes. Team Training keeps the career save's own week (shown as "career week N").
+- **Tests:** unit 620 passed, 0 failed; Playwright 114 passed, 0 failed, 8 skipped by design (touch-only or desktop-only). Browser runs are Chrome phone emulation, not a physical iPhone.
+- **Open decisions:** departure region (story Northeast vs art Northwest: captions name no region), Mom portrait, Casey portrait, cup club working names.
+
 ## FIFA brief in full (branch `devin/1792190415-fifa-full`, PR #16, not merged, not deployed)
 
 - **Team Training feedback:** stage banners show the previous situation's score with `n/3`, wrap inside the screen, and the week result stays visible until Menu (routine "You control …" notices no longer replace it). Runtime-checked in phone emulation, portrait and landscape.

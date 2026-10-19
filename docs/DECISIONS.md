@@ -108,7 +108,15 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Average score → +2 (≥0.75), +1 (≥0.5), 0 (≥0.3), −1 otherwise. Gains go one point each to the best-played trained attributes up to potential; a loss takes one point from the worst-played attribute and never below `CAREER_CONFIG.attributes.start`.
 - The `teamTraining` reducer action is idempotent per week and rejects foreign weeks, wrong situation lists and out-of-range scores; `parseSave` rejects duplicate weeks and deltas that do not match the stored scores. Older saves load with no records (no schema bump).
 
-## D28. v0.5 tactical decision engine for computer attacks, off by default (owner choice B, 2026-10-18)
+## D28. Season One competition and save migration (owner package v1.0, 2026-10-19)
+
+- League: the same 5 clubs in a triple round robin (30 fixtures, 12 for Batavia) in `src/game/season/league.ts`. Other clubs' games are simulated from the career seed through each round, including a round Batavia skipped. A skipped Batavia game stays pending, never a loss.
+- Cups: `src/game/season/tournament.ts`, 4 entrants, a 3-round round robin, then a final (top 2) and a placement game (bottom 2). Group ties are broken by points, head-to-head, goal difference, goals for, then seeded lots. There is no shoot-out engine, so a drawn final or placement game is a shared result. Cup results are stored per cup (`tourney-s1:<career>:<cup>`) and never enter the league table.
+- Results are written with `StoryStore.updateRecord` (read, check and write in one transaction), and a cup game's fixture is bound to its story run when it launches (`tfix:<run>`). A second tab finishing the same run cannot overwrite the result or move on to the next game. A failed write leaves the story handoff pending.
+- The season ending calls the season complete only when all 12 league results and both cup placings exist (`detail:S1_END_FIELD=season_complete`).
+- Save migration: an older story record is archived unchanged under `legacy-story-<career>`, and Season One starts at its prologue. The career save (identity, levels, training, career week) is not touched, so the career week keeps counting from where it was.
+
+## D35. v0.5 tactical decision engine for computer attacks, off by default (owner choice B, 2026-10-18)
 
 - The v0.5 logic package is kept as research in `research/logic/v0.5` (its bundled git history is not imported). `src/game/match/tactical.ts` is a TypeScript port of `engine/decision-engine.mjs`; its 17 standalone tests are ported in `tests/tactical.test.ts`.
 - `tacticalDirector.ts` adapts the match to the engine: each team is observed in its own frame (own goal at x = 0, direction +1, away mirrored as in `ai.ts`), yards are converted to metres (0.9144) on the configured pitch, and the 1-3-2-3 slots map to GK/LB/CB/RB/6 (LCM)/8 (RCM)/LW/9 (ST)/RW. Other formations stay on the classic AI.

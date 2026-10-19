@@ -1,5 +1,5 @@
-import { STORY, nodeById, sceneById } from './content';
-import { STORY_SCHEMA, migrateStory, newStory, reduceStory, type StoryCommand, type StoryOutcome, type StoryState } from './runtime';
+import { SEASON_ONE, catalogFor, nodeById, sceneById } from './content';
+import { STORY_SCHEMA, migrateStory, newSeasonStory, reduceStory, type StoryCommand, type StoryOutcome, type StoryState } from './runtime';
 
 const STORE = 'story';
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -9,12 +9,25 @@ export function parseStoryState(raw: unknown): { ok: true; value: StoryState } |
   if (!isObj(raw)) return { ok: false, error: 'not an object' };
   if (raw.schema !== STORY_SCHEMA) return { ok: false, error: `unknown story schema ${String(raw.schema)}` };
   if (typeof raw.careerId !== 'string' || typeof raw.sceneId !== 'string' || typeof raw.nodeId !== 'string') return { ok: false, error: 'missing cursor' };
-  if (raw.contentVersion !== STORY.version) return { ok: false, error: `story content ${String(raw.contentVersion)} is not in this build` };
+  if (typeof raw.contentVersion !== 'string' || !catalogFor(raw.contentVersion)) return { ok: false, error: `story content ${String(raw.contentVersion)} is not in this build` };
   const scene = sceneById(raw.sceneId);
   if (!scene || !nodeById(scene, raw.nodeId)) return { ok: false, error: `story position ${raw.sceneId}.${raw.nodeId} is missing` };
   for (const k of ['revision', 'lastSeq', 'openedBy']) if (!Number.isInteger(raw[k])) return { ok: false, error: `bad ${k}` };
   if (!isObj(raw.decisions) || !isObj(raw.runs) || !Array.isArray(raw.transcript) || !Array.isArray(raw.completedScenes)) return { ok: false, error: 'bad story fields' };
   return { ok: true, value: migrateStory(raw as unknown as StoryState) };
+}
+
+/** Key of the archived pre-season story for a career (kept read-only, never deleted). */
+export const legacyKey = (careerId: string): string => `legacy-story-${careerId}`;
+
+/**
+ * Season One supersedes the older four-week slice: a valid older story is archived unchanged under
+ * `legacyKey` and the career starts Season One at the prologue. Player identity, levels and training
+ * live in the career save and are untouched; the old four-week ending can no longer be reached.
+ */
+function toSeason(careerId: string, p: StoryState, raw: unknown): { state: StoryState; archive: unknown } {
+  // The archive is the record exactly as stored, never the in-memory migrated copy.
+  return p.contentVersion === SEASON_ONE.version ? { state: p, archive: null } : { state: newSeasonStory(careerId), archive: raw };
 }
 
 export interface StoryStoreOptions {
@@ -54,6 +67,7 @@ export class StoryStore {
   private run<T>(fn: (st: IDBObjectStore, finish: (v: T) => void, abort: (v: T) => void) => void, fallback: T): Promise<T> {
     return new Promise((resolve) => {
       let result = fallback;
+      let aborted = false;
       let t: IDBTransaction;
       try {
         t = this.db!.transaction(STORE, 'readwrite');
@@ -66,6 +80,7 @@ export class StoryStore {
         (v) => (result = v),
         (v) => {
           result = v;
+          aborted = true;
           try {
             t.abort();
           } catch {
@@ -74,8 +89,9 @@ export class StoryStore {
         },
       );
       t.oncomplete = () => resolve(result);
-      t.onabort = () => resolve(result);
-      t.onerror = () => resolve(result);
+      // A transaction that failed on its own never reports the success value it had prepared.
+      t.onabort = () => resolve(aborted ? result : fallback);
+      t.onerror = () => resolve(aborted ? result : fallback);
     });
   }
 
@@ -84,16 +100,18 @@ export class StoryStore {
     type R = { ok: true; state: StoryState } | { ok: false; error: string };
     if (!this.db) {
       const cur = this.memory.get(careerId);
-      const p = cur === undefined ? { ok: true as const, value: newStory(careerId) } : parseStoryState(cur);
+      const p = cur === undefined ? { ok: true as const, value: newSeasonStory(careerId) } : parseStoryState(cur);
       if (!p.ok) return Promise.resolve({ ok: false, error: p.error });
-      this.memory.set(careerId, p.value);
-      return Promise.resolve({ ok: true, state: p.value });
+      const m = toSeason(careerId, p.value, cur);
+      if (m.archive) this.memory.set(legacyKey(careerId), m.archive);
+      this.memory.set(careerId, m.state);
+      return Promise.resolve({ ok: true, state: m.state });
     }
     return this.run<R>((st, finish) => {
       const req = st.get(careerId);
       req.onsuccess = () => {
         if (req.result === undefined) {
-          const s = newStory(careerId);
+          const s = newSeasonStory(careerId);
           st.put(s, careerId);
           finish({ ok: true, state: s });
           return;
@@ -105,9 +123,25 @@ export class StoryStore {
           finish({ ok: false, error: `Story save could not be resumed (${p.error}). A copy was kept.` });
           return;
         }
-        finish({ ok: true, state: p.value });
+        const m = toSeason(careerId, p.value, req.result);
+        if (m.archive) {
+          // Archive and switch in the same transaction: either both are written or neither.
+          st.put(m.archive, legacyKey(careerId));
+          st.put(m.state, careerId);
+        }
+        finish({ ok: true, state: m.state });
       };
     }, { ok: false, error: 'Story save failed to open.' });
+  }
+
+  /** The archived older story for this career, if Season One replaced one (read-only). */
+  loadLegacy(careerId: string): Promise<StoryState | null> {
+    if (!this.db) return Promise.resolve((this.memory.get(legacyKey(careerId)) as StoryState | undefined) ?? null);
+    return new Promise((resolve) => {
+      const req = this.db!.transaction(STORE, 'readonly').objectStore(STORE).get(legacyKey(careerId));
+      req.onsuccess = () => resolve((req.result as StoryState | undefined) ?? null);
+      req.onerror = () => resolve(null);
+    });
   }
 
   load(careerId: string): Promise<StoryState | null> {
@@ -180,6 +214,27 @@ export class StoryStore {
       st.put(value, `rec:${key}`);
       finish(true);
     }, false);
+  }
+
+  /**
+   * Read-modify-write of one record in a single transaction, so two tabs cannot interleave: `fn` sees the
+   * stored value and returns the new value plus a result, or null to leave the record untouched.
+   */
+  updateRecord<T>(key: string, fn: (cur: unknown) => { value: unknown; out: T } | null): Promise<T | null> {
+    if (!this.db) {
+      const r = fn(this.memory.get(`rec:${key}`));
+      if (r) this.memory.set(`rec:${key}`, r.value);
+      return Promise.resolve(r ? r.out : null);
+    }
+    return this.run<T | null>((st, finish) => {
+      const req = st.get(`rec:${key}`);
+      req.onsuccess = () => {
+        const r = fn(req.result);
+        if (!r) return finish(null);
+        st.put(r.value, `rec:${key}`);
+        finish(r.out);
+      };
+    }, null);
   }
 
   close(): void {

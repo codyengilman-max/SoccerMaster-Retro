@@ -15,9 +15,12 @@ pkg = root / 'docs/art/graphics-v1'
 out = root / 'src/assets/art/v1'
 out.mkdir(parents=True, exist_ok=True)
 manifest = json.loads((pkg / 'assets/asset-manifest.json').read_text())
+s1 = root / 'docs/art/season-one'
+s1_manifest = json.loads((s1 / 'asset-manifest.json').read_text())
 rows = []
-for a in manifest['assets']:
-    src = pkg / a['path']
+sources = [(pkg, a) for a in manifest['assets']] + [(s1, a) for a in s1_manifest['assets'] if a['runtime']]
+for base, a in sources:
+    src = base / a['path']
     raw = src.read_bytes()
     assert hashlib.sha256(raw).hexdigest() == a['sha256'], a['assetId']
     im = Image.open(src)
@@ -32,5 +35,5 @@ for a in manifest['assets']:
         dst = out / f"{a['assetId']}.webp"
         small.save(dst, 'WEBP', quality=88, method=6)
     rows.append({'assetId': a['assetId'], 'file': dst.name, 'width': w, 'height': h, 'masterSha256': a['sha256'], 'bytes': dst.stat().st_size})
-(out / 'runtime-manifest.json').write_text(json.dumps({'schemaVersion': 1, 'source': 'docs/art/graphics-v1/assets/asset-manifest.json', 'packageRevision': manifest.get('packageRevision'), 'assets': rows}, indent=2) + '\n')
+(out / 'runtime-manifest.json').write_text(json.dumps({'schemaVersion': 1, 'source': ['docs/art/graphics-v1/assets/asset-manifest.json', 'docs/art/season-one/asset-manifest.json'], 'packageRevision': manifest.get('packageRevision'), 'assets': rows}, indent=2) + '\n')
 print(len(rows), 'runtime images,', sum(r['bytes'] for r in rows), 'bytes')

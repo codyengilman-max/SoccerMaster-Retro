@@ -2,8 +2,11 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import story from '../docs/story/v0.7/week_one_scenes.json';
+import s1Manifest from '../docs/art/season-one/asset-manifest.json';
+import { SEASON_ONE } from '../src/game/story/content';
 import { ART_ASSETS, MAPPED_SCENE_IDS, RUNTIME_IMAGES, SPEAKER_ROLE, isAllowedAsset, sceneVisual, unmappedScenes, variantAsset } from '../src/render/art/catalog';
 
+const S1_IDS = new Set(s1Manifest.assets.map((a) => a.assetId));
 const storyIds = (story.scenes as { id: string }[]).map((s) => s.id);
 
 describe('Graphics v1 catalog', () => {
@@ -14,14 +17,15 @@ describe('Graphics v1 catalog', () => {
   });
 
   it('keeps original masters byte-identical to the manifest and derives every runtime image', () => {
-    expect(ART_ASSETS).toHaveLength(28);
-    for (const a of ART_ASSETS) {
+    const v1 = ART_ASSETS.filter((a) => !S1_IDS.has(a.assetId));
+    expect(v1).toHaveLength(28);
+    for (const a of v1) {
       const sha = createHash('sha256').update(readFileSync(`docs/art/graphics-v1/assets/${a.type === 'background' || a.characterId ? 'cutscenes' : ''}/${a.assetId}.png`)).digest('hex');
       expect(sha, a.assetId).toBe(a.sha256);
       expect(RUNTIME_IMAGES.get(a.assetId)?.masterSha256).toBe(a.sha256);
     }
-    expect(ART_ASSETS.filter((a) => a.status === 'REFERENCE_APPROVED').map((a) => a.assetId).sort()).toEqual(['blake', 'boy', 'girl', 'jordan', 'school']);
-    expect(ART_ASSETS.filter((a) => a.status === 'NEW_ART_REVIEW_PENDING')).toHaveLength(23);
+    expect(v1.filter((a) => a.status === 'REFERENCE_APPROVED').map((a) => a.assetId).sort()).toEqual(['blake', 'boy', 'girl', 'jordan', 'school']);
+    expect(v1.filter((a) => a.status === 'NEW_ART_REVIEW_PENDING')).toHaveLength(23);
   });
 
   it('pins one outfit per scene and swaps only the player appearance', () => {
@@ -73,5 +77,45 @@ describe('Graphics v1 catalog', () => {
     for (const bad of ['W1_NOPE', '../W1_HOME_01', 'constructor', '__proto__', 3]) expect(sceneVisual(bad, 'boy')).toBeNull();
     expect(variantAsset('jordan', 'match')).toBeNull();
     expect(variantAsset('alex', 'home')).toBeNull();
+  });
+
+  it('Season One screen art: 17 masters byte-identical, 14 runtime images, Tank Cup kept out of the game', () => {
+    expect(s1Manifest.assets).toHaveLength(17);
+    for (const a of s1Manifest.assets) {
+      const sha = createHash('sha256').update(readFileSync(`docs/art/season-one/${a.path}`)).digest('hex');
+      expect(sha, a.assetId).toBe(a.sha256);
+      expect(isAllowedAsset(a.assetId), a.assetId).toBe(a.runtime);
+      if (a.runtime) expect(RUNTIME_IMAGES.get(a.assetId)?.masterSha256).toBe(a.sha256);
+    }
+    expect(s1Manifest.assets.filter((a) => !a.runtime).map((a) => a.assetId).sort()).toEqual(['tank-mini-goal', 'tank-pellet', 'tank-underwater']);
+    // no duplicate of an existing core image
+    const v1Sha = new Set(ART_ASSETS.filter((a) => !S1_IDS.has(a.assetId)).map((a) => a.sha256));
+    expect(s1Manifest.assets.some((a) => v1Sha.has(a.sha256))).toBe(false);
+  });
+
+  it('maps every Season One scene; the player is always the saved boy/girl, never a fixed illustration', () => {
+    expect(unmappedScenes(SEASON_ONE.order)).toEqual([]);
+    for (const look of ['boy', 'girl'] as const) {
+      const other = look === 'boy' ? 'girl' : 'boy';
+      expect(sceneVisual('S1_PRO_DEPART', look)!.backgroundAssetId).toBe(`departure-${look}`);
+      expect(sceneVisual('S1_PRO_ARRIVE', look)!.backgroundAssetId).toBe(`arrival-${look}`);
+      const tank = sceneVisual('S1_W01_M', look)!;
+      expect(tank.backgroundAssetId).toBe('s1-bedroom-tank');
+      expect(tank.cast.map((c) => c.assetId)).toEqual([`player-${look}-down`, 'clownfish']);
+      for (const id of SEASON_ONE.order) {
+        const v = sceneVisual(id, look)!;
+        expect(v, id).not.toBeNull();
+        expect(v.backgroundAssetId === null || isAllowedAsset(v.backgroundAssetId), id).toBe(true);
+        expect(v.backgroundAssetId ?? '', id).not.toContain(other);
+        for (const c of v.cast) {
+          if (c.role === 'player') expect(c.visualId, id).toBe(look);
+          expect(c.assetId ?? '', `${id} ${c.role}`).not.toMatch(new RegExp(`^${other}`));
+        }
+      }
+    }
+    // before a look is chosen the departure plate is an explicit gap, not a guessed protagonist
+    expect(sceneVisual('S1_PRO_DEPART', null)!.backgroundAssetId).toBeNull();
+    expect(sceneVisual('S1_W03_G', 'boy')!.backgroundAssetId).toBe('match-ground');
+    expect(SEASON_ONE.order.filter((id) => sceneVisual(id, 'boy')!.backgroundAssetId === 'recess-goal').length).toBeGreaterThan(0);
   });
 });
