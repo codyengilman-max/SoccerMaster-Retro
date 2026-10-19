@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 150" shape-rendering="crispEdges">
+ <defs><pattern id="net" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M0 0H12V12" fill="none" stroke="#e8f1df" stroke-opacity=".7" stroke-width="2"/></pattern></defs>
+ <path d="M36 136H178L194 143H16Z" fill="#153b43" opacity=".28"/>
+ <path d="M31 36L75 16H169V113L132 134H31Z" fill="#103e55" fill-opacity=".25" stroke="#11313f" stroke-width="8"/>
+ <path d="M31 36L75 16H169V113L132 134H31Z" fill="url(#net)"/>
+ <path d="M31 36L75 16H169V113M132 36L169 16M132 134L169 113" fill="none" stroke="#b7dacb" stroke-width="6"/>
+ <path d="M31 136V36H132V136" fill="none" stroke="#15313c" stroke-width="14"/>
+ <path d="M31 136V36H132V136" fill="none" stroke="#fff2ce" stroke-width="8"/>
+</svg>

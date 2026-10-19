@@ -39,7 +39,7 @@ const KITS = {
   blake: { shirt: '#e15554', shade: '#a83a3a', light: '#f08080' },
   sam: { shirt: '#7768ae', shade: '#52487d', light: '#9d90cc' },
 } as const;
-const BG_ASSET = 'school';
+const BG_ASSET = 'jungle-ball';
 const MAX_CHARGE_MS = 900;
 const HITSTOP_MS = 70;
 

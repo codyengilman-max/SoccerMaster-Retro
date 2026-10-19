@@ -108,7 +108,15 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Average score → +2 (≥0.75), +1 (≥0.5), 0 (≥0.3), −1 otherwise. Gains go one point each to the best-played trained attributes up to potential; a loss takes one point from the worst-played attribute and never below `CAREER_CONFIG.attributes.start`.
 - The `teamTraining` reducer action is idempotent per week and rejects foreign weeks, wrong situation lists and out-of-range scores; `parseSave` rejects duplicate weeks and deltas that do not match the stored scores. Older saves load with no records (no schema bump).
 
-## D28. Referee: Laws of the Game calls in the match engine (owner request 2026-10-17)
+## D28. Season One competition and save migration (owner package v1.0, 2026-10-19)
+
+- League: the same 5 clubs in a triple round robin (30 fixtures, 12 for Batavia) in `src/game/season/league.ts`. Other clubs' games are simulated from the career seed through each round, including a round Batavia skipped. A skipped Batavia game stays pending, never a loss.
+- Cups: `src/game/season/tournament.ts`, 4 entrants, a 3-round round robin, then a final (top 2) and a placement game (bottom 2). Group ties are broken by points, head-to-head, goal difference, goals for, then seeded lots. There is no shoot-out engine, so a drawn final or placement game is a shared result. Cup results are stored per cup (`tourney-s1:<career>:<cup>`) and never enter the league table.
+- Results are written with `StoryStore.updateRecord` (read, check and write in one transaction), and a cup game's fixture is bound to its story run when it launches (`tfix:<run>`). A second tab finishing the same run cannot overwrite the result or move on to the next game. A failed write leaves the story handoff pending.
+- The season ending calls the season complete only when all 12 league results and both cup placings exist (`detail:S1_END_FIELD=season_complete`).
+- Save migration: an older story record is archived unchanged under `legacy-story-<career>`, and Season One starts at its prologue. The career save (identity, levels, training, career week) is not touched, so the career week keeps counting from where it was.
+
+## D34. Referee: Laws of the Game calls in the match engine (owner request 2026-10-17)
 
 - Rules live in `src/game/match/referee.ts` (framework-free, unit tested); `src/modules/RefereeSystem.ts` re-exports it under the name the spec asked for. Scenes only show the call banner.
 - Pitch yards on the U11 markings (`U11_9V9_PITCH`), with length, width, goal width and ball radius taken from the match tuning. Not pixels: the perspective camera changes pixel sizes every frame, so pixel boundaries would change calls.

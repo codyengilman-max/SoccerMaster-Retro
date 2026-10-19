@@ -558,7 +558,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private playTeamTraining(): void {
     if (this.navigating) return;
     this.navigating = true;
-    this.scene.start(SceneKeys.Match, { teamTraining: true });
+    this.scene.start(SceneKeys.Match, { teamTraining: true, ...(this.returnTo === 'story' ? { returnTo: 'story' as const } : {}) });
   }
 
   private playSandbox(): void {

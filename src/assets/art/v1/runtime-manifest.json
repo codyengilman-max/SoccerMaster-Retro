@@ -1,6 +1,9 @@
 {
   "schemaVersion": 1,
-  "source": "docs/art/graphics-v1/assets/asset-manifest.json",
+  "source": [
+    "docs/art/graphics-v1/assets/asset-manifest.json",
+    "docs/art/season-one/asset-manifest.json"
+  ],
   "packageRevision": "1.1",
   "assets": [
     {
@@ -226,6 +229,118 @@
       "height": 512,
       "masterSha256": "677fe0c4c3129385ea1938a3ff1f6ba96ef457e1af5afd88f4ede3f3a174fe24",
       "bytes": 132528
+    },
+    {
+      "assetId": "home-screen",
+      "file": "home-screen.webp",
+      "width": 836,
+      "height": 470,
+      "masterSha256": "c0da82ac1ca477f21328c650b52010e92c2ac3f27af15d31791fa54940bad0b0",
+      "bytes": 119578
+    },
+    {
+      "assetId": "s1-bedroom-tank",
+      "file": "s1-bedroom-tank.webp",
+      "width": 836,
+      "height": 470,
+      "masterSha256": "457cd6b42316244175ceb3dd0ab57fde54724b91bedbf868ad8a9668558abb8f",
+      "bytes": 67040
+    },
+    {
+      "assetId": "clownfish",
+      "file": "clownfish.webp",
+      "width": 768,
+      "height": 512,
+      "masterSha256": "ff7c50442ba252282833500ce836338247c6d59495e79ed011547a6b6b4e6822",
+      "bytes": 46526
+    },
+    {
+      "assetId": "player-boy-down",
+      "file": "player-boy-down.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "55345eaf3062c08f5346f30c154ebff39ed92802e795ab1a2ada91893079d38e",
+      "bytes": 75654
+    },
+    {
+      "assetId": "player-girl-down",
+      "file": "player-girl-down.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "addd6c06846007ce671a163c12e611e65f490b6c11ec2d5cc6d973e29e2c8ed7",
+      "bytes": 83054
+    },
+    {
+      "assetId": "goal-banner",
+      "file": "goal-banner.webp",
+      "width": 887,
+      "height": 443,
+      "masterSha256": "97f6823da79fc41f1a08a24d15c192b972b6453b21723714ab592545f7038ff3",
+      "bytes": 50850
+    },
+    {
+      "assetId": "league-standings",
+      "file": "league-standings.webp",
+      "width": 836,
+      "height": 470,
+      "masterSha256": "58bb8c4bd5d7aa3ff63191f1990ed146c20d341bb387a283578514304bc4bdb1",
+      "bytes": 75710
+    },
+    {
+      "assetId": "recess-goal",
+      "file": "recess-goal.webp",
+      "width": 836,
+      "height": 470,
+      "masterSha256": "d1721e22bf20b9949930d35eff1e924619db0d66bd0e05a7456e98c469bfd915",
+      "bytes": 164370
+    },
+    {
+      "assetId": "referee-foul",
+      "file": "referee-foul.webp",
+      "width": 627,
+      "height": 627,
+      "masterSha256": "74d933e0024fdaab6c9aa7b77f0b2d64ff98a344fab7f74ea6a3a43cae4c02e1",
+      "bytes": 62156
+    },
+    {
+      "assetId": "arrival-boy",
+      "file": "arrival-boy.webp",
+      "width": 836,
+      "height": 470,
+      "masterSha256": "2b08ab1b20728268bad1a9afe01698afc4082142c5054bc9d1b9fddcbcc6302c",
+      "bytes": 86736
+    },
+    {
+      "assetId": "arrival-girl",
+      "file": "arrival-girl.webp",
+      "width": 836,
+      "height": 470,
+      "masterSha256": "3be612b7be7262f2e5f213c9eab4e0ff2acefc9cb8e958d466444b59143cd051",
+      "bytes": 88754
+    },
+    {
+      "assetId": "jungle-ball",
+      "file": "jungle-ball.webp",
+      "width": 836,
+      "height": 470,
+      "masterSha256": "cb5236c1d1b94efeb8a8278d5ba22db6bfef0e50f3047ccbc01937eaf8accaad",
+      "bytes": 218634
+    },
+    {
+      "assetId": "departure-boy",
+      "file": "departure-boy.webp",
+      "width": 836,
+      "height": 470,
+      "masterSha256": "0210a77e41118637f3b2613fbfb39b8bb195dcca2414c9e2cbe5c0917afb219d",
+      "bytes": 91522
+    },
+    {
+      "assetId": "departure-girl",
+      "file": "departure-girl.webp",
+      "width": 836,
+      "height": 470,
+      "masterSha256": "7d175e16394fed5bf3ec80464b04b16d29fe2fb6ca48523f9d28748c448fc285",
+      "bytes": 95278
     }
   ]
 }
