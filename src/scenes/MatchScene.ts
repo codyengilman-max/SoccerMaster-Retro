@@ -978,7 +978,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.cancelInput('navigation');
     this.coachDirector?.abandon(this.sim);
     if (this.team) {
-      this.scene.start(SceneKeys.Career, { open: 'team' });
+      this.scene.start(SceneKeys.Career, { open: 'team', ...(this.returnTo === 'story' ? { returnTo: 'story' as const } : {}) });
       return;
     }
     this.scene.start(this.returnTo === 'story' ? SceneKeys.Story : SceneKeys.Start, this.returnTo === 'story' ? { resume: true } : undefined);
@@ -1179,6 +1179,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   }
 
   private handleShutdown(): void {
+    for (const id of ['goal-banner', 'referee-foul']) if (this.textures.exists(artTextureKey(id))) this.textures.remove(artTextureKey(id));
+    this.eventArt = null;
     this.art?.destroy();
     const store = this.careerStore;
     void this.flushCareer(true).finally(() => store?.close());

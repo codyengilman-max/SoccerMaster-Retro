@@ -172,6 +172,9 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
   }
 
   private handleShutdown(): void {
+    this.homeArt?.destroy();
+    this.homeArt = null;
+    if (this.textures.exists(artTextureKey('home-screen'))) this.textures.remove(artTextureKey('home-screen'));
     this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this);
     this.input.keyboard?.off('keydown-T', this.openSandbox, this);
   }

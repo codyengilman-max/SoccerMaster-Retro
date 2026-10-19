@@ -3,8 +3,8 @@ import { idealPower } from '../src/game/story/crossbar';
 import { thresholdsFor } from '../src/input';
 import { Finger, diagnostics, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
 
-// Story v0.7 week one on one isolated save: identity -> cutscenes/choices -> crossbar -> home training
-// handoffs -> career match -> week close -> W2 callback, then reload.
+// Season One on one isolated save: identity -> prologue -> week one (aquarium, recess, Coach Code with the
+// real Team Training handoff) -> week close -> week 2, then reload. Later weeks: tests/season-story.test.ts.
 
 type Story = {
   mode: string; scene: string | null; node: string | null; type: string | null; adapter: string | null; revision: number; complete: boolean;
@@ -59,7 +59,7 @@ async function layout(page: Page): Promise<Layout> {
   return (await diagnostics(page)).layout as unknown as Layout;
 }
 async function openStory(page: Page, mode: 'touch' | 'mouse'): Promise<Story> {
-  await page.goto('/?debug=1&halfSeconds=8');
+  await page.goto('/?debug=1&halfSeconds=8&ttSeconds=2');
   await waitForScene(page, 'start');
   await pressAny(page, 'story-button', mode);
   return story(page, () => true, 'story loaded');
@@ -87,7 +87,7 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
   for (let i = 0; i < 400; i++) {
     const s = await story(page, () => true, 'story');
     // Week one ends at the callback; the story now continues into the weeks 2–4 draft (covered by unit tests).
-    if (s.complete) return s;
+    if (s.complete || s.scene === 'S1_W02_M') return s;
     if (s.scene === 'W2_SCHOOL_CALLBACK') return story(page, (x) => `${x.text}\n${x.hint ?? ''}`.includes('Match:'), 'week one recap');
     if (s.mode === 'crossbar') {
       if (s.crossbar?.ready) {
@@ -149,6 +149,27 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
       await page.waitForTimeout(300);
       await press(page, 'career-menu', mode);
       await story(page, resolved(s), `${s.adapter} completed`);
+    } else if (s.adapter === 'team_training') {
+      const team = (phase: string) => (g: Record<string, unknown>) => (g.teamTraining as { phase?: string } | null | undefined)?.phase === phase;
+      await pressStory(page, 'handoff-career', mode);
+      await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'team', 'team screen');
+      // Leaving during the first situation counts nothing and the story handoff stays open.
+      await press(page, 'team-play', mode);
+      await scene(page, 'match', team('playing'), 'first situation', 60_000);
+      await pressAny(page, 'menu-button', mode);
+      await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'team', 'back on team screen');
+      await press(page, 'career-menu', mode);
+      const early = await story(page, (x) => x.mode === 'story', 'story after leaving early');
+      expect(resolved(s)(early)).toBe(false);
+      await pressStory(page, 'handoff-career', mode);
+      await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'team', 'team screen again');
+      await press(page, 'team-play', mode);
+      await scene(page, 'match', team('done'), 'three situations', 120_000);
+      await pressAny(page, 'menu-button', mode);
+      await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'team', 'counted');
+      await page.waitForTimeout(300);
+      await press(page, 'career-menu', mode);
+      await story(page, resolved(s), 'team training completed');
     } else if (s.adapter === 'match') {
       await pressStory(page, 'handoff-match', mode);
       await waitForScene(page, 'formation');
@@ -177,34 +198,31 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
   throw new Error('story did not finish');
 }
 
-test('story week one: identity, cutscenes, crossbar, training, match, week close, reload', async ({ page }, info) => {
+test('Season One week one: identity, prologue, aquarium, recess, Team Training handoff, week close, reload', async ({ page }, info) => {
   const mode = modeFor(info);
   const errors = trackConsoleErrors(page);
   page.on('dialog', (d) => void d.accept('Zoë'));
   const finger = new Finger(page, mode);
   const first = await openStory(page, mode);
-  expect(first).toMatchObject({ scene: 'INIT_IDENTITY', complete: false });
+  expect(first).toMatchObject({ scene: 'S1_PRO_IDENTITY', complete: false });
 
   const end = await playWeek(page, mode, finger);
+  expect(end.scene).toBe('S1_W02_M');
   expect(end.player).toEqual({ name: 'Zoë', gender: 'girl' });
   const by = (id: string) => end.outcomes.find((o) => o.scene === id);
-  expect(by('W1_CROSSBAR')).toMatchObject({ state: 'resolved', outcome: 'completed' });
-  expect(['WIN', 'LOSS', 'DRAW']).toContain(by('W1_CROSSBAR')!.result);
-  for (const id of ['INIT_IDENTITY', 'W1_PRACTICE', 'W1_MATCH', 'CLOSE_WEEK']) expect(by(id), id).toMatchObject({ outcome: 'completed' });
-  const recapText = `${end.text}\n${end.hint ?? ''}`;
-  expect(recapText).toContain('Practice: one scheduled session logged');
-  expect(recapText).toContain('Match: played');
+  for (const id of ['S1_PRO_IDENTITY', 'S1_W01_C', 'S1_W01_E']) expect(by(id), id).toMatchObject({ state: 'resolved', outcome: 'completed' });
+  expect(end.outcomes.filter((o) => o.scene === 'S1_W01_C')).toHaveLength(1);
 
-  // Reload: the finished story, outcomes and identity persist; the career is in week 2 with one logged session.
+  // Reload: cursor, outcomes and identity persist; the career is in week 2 with week 1's Team Training counted once.
   const again = await openStory(page, mode);
-  expect(again).toMatchObject({ scene: 'W2_SCHOOL_CALLBACK', complete: false, revision: end.revision, player: end.player });
+  expect(again).toMatchObject({ scene: 'S1_W02_M', complete: false, revision: end.revision, player: end.player });
   expect(again.outcomes).toEqual(end.outcomes);
   await pressAny(page, 'story-menu', mode);
   await waitForScene(page, 'start');
   await pressAny(page, 'career-button', mode);
   await scene(page, 'career', (g) => g.status !== 'loading', 'career');
-  const c = (await diagnostics(page)).gameplay as { week: number; journal: number; player: string };
-  expect(c).toMatchObject({ week: 2, journal: 1, player: 'Zoë' });
+  const c = (await diagnostics(page)).gameplay as { week: number; player: string };
+  expect(c).toMatchObject({ week: 2, player: 'Zoë' });
   expect(errors).toEqual([]);
 });
 
@@ -225,7 +243,7 @@ test('story: reload restores the cursor and an answered choice is never re-appli
   await story(page, (x) => x.text.includes('Kai'), 'name');
   await page.waitForTimeout(120);
   await pressAny(page, 'id-confirm', mode);
-  s = await story(page, (x) => x.scene !== 'INIT_IDENTITY', 'identity');
+  s = await story(page, (x) => x.scene !== 'S1_PRO_IDENTITY', 'identity');
   expect(s.player).toEqual({ name: 'Kai', gender: 'boy' });
   for (let i = 0; i < 30 && s.type !== 'choice'; i++) {
     const l = await layout(page);
