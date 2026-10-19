@@ -25,7 +25,7 @@ Riley: Hey. Have you seen the notice? I drew it.
   @if chose:S1_W04_S.riley_route=crush
   System: You notice you've been smiling the whole time.
   @end
-* later | Join the group, but set a real time to talk later
+* later | Join the group; set a time to talk later
   Player: Can I see it properly at lunch tomorrow?
   Riley: Okay. Tomorrow at lunch.
 * distracted | Say you're distracted

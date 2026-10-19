@@ -10,7 +10,7 @@ Cloudy: What did you need to hear when you first got here?
   Cloudy: Carry that into this week. Not a prediction. Just a thought.
 * not_alone | "You don't have to face everything alone."
   Cloudy: Carry that into this week.
-* teammate | "You still have to decide what kind of teammate to be."
+* teammate | "Decide what kind of teammate to be."
   Cloudy: Carry that into this week.
 === S1_W18_S recess
 System: Recess, back at the schoolyard goal from week 1.

@@ -4787,7 +4787,7 @@
       },
       {
        "id": "later",
-       "label": "Join the group, but set a real time to talk later",
+       "label": "Join the group; set a time to talk later",
        "predicate": "always",
        "effects": [
         {
@@ -12556,7 +12556,7 @@
       },
       {
        "id": "teammate",
-       "label": "\"You still have to decide what kind of teammate to be.\"",
+       "label": "\"Decide what kind of teammate to be.\"",
        "predicate": "always",
        "effects": [
         {

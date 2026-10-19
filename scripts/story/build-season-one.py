@@ -53,6 +53,8 @@ def parse_block(lines, i, stops):
             i += 1
             while i < len(lines) and lines[i][1].startswith('* '):
                 oid, label = [x.strip() for x in lines[i][1][2:].split('|', 1)]
+                if len(label) > 48:
+                    die(f'{lines[i][0]}: option label over 48 characters: {label!r}')
                 i += 1
                 sub = []
                 while i < len(lines) and lines[i][1].startswith('  '):
