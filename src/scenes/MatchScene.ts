@@ -2000,6 +2000,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       const second = s.clock?.half === 2 && s.clock.elapsed === 0;
       banner = s.simTime < 0.01 ? kickoffs[0]! : second ? kickoffs[1]! : kickoffs[2]!;
     }
+    // Team Training has its own attempt cards; no match/sandbox restart banners.
+    if (this.team) banner = '';
     this.showEventArt(s.phase === 'stopped' && st && (st.reason === 'goal' || st.reason === 'foul') ? st : null, width, height);
     this.bannerMessage = banner;
     this.bannerText.setVisible(banner !== '' && !s.paused).setText(banner).setPosition(width / 2, height / 2);
