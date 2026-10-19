@@ -21,7 +21,7 @@ test('Jungle Ball opens from Start, fits the screen, runs, and Leave returns wit
     await pressElement(page, 'jungle-button', i % 2 === 0 ? 'touch' : 'mouse');
     const d = await waitForScene(page, 'jungle');
     expect(d.canvases).toBe(1);
-    for (const name of ['pen', 'title', 'back-button', 'stick', 'shoot', 'slide', 'push']) expectInside(name, d.layout?.elements[name], viewport);
+    for (const name of ['pen', 'title', 'back-button', 'stick', 'turbo', 'shoot', 'slide', 'push']) expectInside(name, d.layout?.elements[name], viewport);
     await page.waitForFunction(() => (window.__SMR__?.diagnostics().gameplay as { phase?: string } | null)?.phase === 'live');
     const t0 = (await snap(page)).t;
     await page.waitForFunction((t) => ((window.__SMR__?.diagnostics().gameplay as { t?: number } | null)?.t ?? 0) > t + 0.5, t0, { timeout: 8000 });
@@ -32,6 +32,14 @@ test('Jungle Ball opens from Start, fits the screen, runs, and Leave returns wit
       await page.waitForTimeout(700);
       await pressElement(page, 'slide', 'touch');
       await page.waitForFunction(() => ((window.__SMR__?.diagnostics().gameplay as { hits?: { kind: string } | null } | null)?.hits?.kind) === 'slide');
+      // TURBO is held: the sim sees it while the finger is down and drops it on release.
+      const box = d.layout!.elements.turbo!;
+      await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.waitForFunction(() => (window.__SMR__?.diagnostics().gameplay as { turbo?: { held: boolean } } | null)?.turbo?.held === true);
+      await page.mouse.up();
+      await page.waitForFunction(() => (window.__SMR__?.diagnostics().gameplay as { turbo?: { held: boolean } } | null)?.turbo?.held === false);
       await page.screenshot({ path: `test-results/jungle-${viewport.width}x${viewport.height}.png` });
     }
     await pressElement(page, 'back-button', 'touch');
@@ -65,7 +73,7 @@ test('keyboard moves the Jungle Ball player and rotation keeps the pen on screen
   await page.setViewportSize(rotated);
   await page.waitForFunction((v) => window.__SMR__?.diagnostics().layout?.viewport.width === v.width, rotated);
   const after = await diagnostics(page);
-  for (const name of ['pen', 'title', 'back-button', 'stick', 'shoot', 'slide', 'push']) expectInside(name, after.layout?.elements[name], rotated);
+  for (const name of ['pen', 'title', 'back-button', 'stick', 'turbo', 'shoot', 'slide', 'push']) expectInside(name, after.layout?.elements[name], rotated);
   await page.keyboard.press('Escape');
   await waitForScene(page, 'start');
   expect(errors).toEqual([]);

@@ -125,3 +125,11 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Retry drops the attempt's result and replays it; only Continue records it. The weekly credit stays the D27 reducer (idempotent per week).
 - The career has DEF/MID/FWD roles only; drill families without a role-appropriate drill are listed as deferred in `TRAINING_RELEASE_COVERAGE.md`, not remapped.
 - The Bell94 image is imported as a reference (`training-bell94`) and is not stretched under play; the venue is code-drawn around the pitch.
+
+## D30. Jungle Ball v2 plays like an arcade football game (owner request, 2026-10-19)
+
+- Reference: NFL Blitz 2001. The owner sent the game's ROM; it is copyrighted, so it was not unpacked, run or mined. Only publicly known play ideas are used: turbo meter, turbo moves, big knockdowns, ON FIRE.
+- TURBO is a 4th Jungle Ball button in the PASS slot (PASS is unused in Jungle Ball). The 9v9 controls are unchanged: no sprint there.
+- All rules live in `src/game/jungle/sim.ts` (`JUNGLE.turbo*`, `bigKnock`, `knockdownSeconds`, `dive*`, `turboShot`, `fireStreak`); the scene only draws and sends `turbo` press/release commands. AI and player share the same meter and costs.
+- Big hits keep the existing stun protection (protection starts after the knockdown ends), so the no-stun-lock rule still holds.
+

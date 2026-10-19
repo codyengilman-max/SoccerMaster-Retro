@@ -42,10 +42,11 @@ const KITS = {
 const BG_ASSET = 'jungle-ball';
 const MAX_CHARGE_MS = 900;
 const HITSTOP_MS = 70;
+const BIG_HITSTOP_MS = 140;
 
 /**
  * Jungle Ball mini-game: one shared goal, a neutral keeper, the player and three AI competitors.
- * The scene only draws `JungleState` and turns the joystick + SHOOT button into sim commands.
+ * The scene only draws `JungleState` and turns the joystick + TURBO / SHOOT / SLIDE / PUSH into sim commands.
  */
 export class JungleScene extends Phaser.Scene implements InspectableScene, GameplayScene {
   private sim!: JungleState;
@@ -145,7 +146,7 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     this.continueButton.setVisible(false);
     this.backButton.setDepth(5003);
     this.continueButton.setDepth(5003);
-    this.pad = new PadHud(this, this.scale.width, this.scale.height, { labels: { slide: 'SLIDE', block: 'PUSH' }, hidden: ['pass'] });
+    this.pad = new PadHud(this, this.scale.width, this.scale.height, { labels: { pass: 'TURBO', slide: 'SLIDE', block: 'PUSH' } });
 
     this.input.addPointer(2);
     this.input.on(Phaser.Input.Events.POINTER_DOWN, this.onDown, this);
@@ -164,15 +165,17 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     const now = performance.now();
     if (this.sim.phase !== 'ended' && now >= this.freezeUntil) {
       const me = this.sim.competitors.player;
-      this.handlePad(this.pad.controls.setAvailable({ pass: false, shoot: this.sim.ball.owner === 'player', slide: canMove(this.sim, me, 'slide'), block: canMove(this.sim, me, 'push') }));
+      this.handlePad(this.pad.controls.setAvailable({ pass: true, shoot: this.sim.ball.owner === 'player', slide: canMove(this.sim, me, 'slide'), block: canMove(this.sim, me, 'push') }));
       step(this.sim, Math.min(delta, 100) / 1000);
       for (const e of drainEvents(this.sim)) {
         if (e.type === 'hit') {
           // Arcade hit-stop + shake; the sim itself is untouched (it just is not stepped for a few frames).
-          this.freezeUntil = now + HITSTOP_MS;
-          this.cameras.main.shake(110, 0.006);
-          this.showBanner(e.kind === 'slide' ? 'SMASH!' : 'WHAM!', 450, 34);
-        } else if (e.type === 'shot') this.kickedAt[e.by] = this.sim.t;
+          this.freezeUntil = now + (e.big ? BIG_HITSTOP_MS : HITSTOP_MS);
+          this.cameras.main.shake(e.big ? 220 : 110, e.big ? 0.014 : 0.006);
+          const word = e.carrier && e.kind === 'push' ? 'STIFF ARM!' : e.big ? (e.kind === 'slide' ? 'CRUSHED!' : 'BOOM!') : e.kind === 'slide' ? 'SMASH!' : 'WHAM!';
+          this.showBanner(word, e.big ? 650 : 450, e.big ? 40 : 34);
+        } else if (e.type === 'fire') this.showBanner(e.on ? `${NAMES[e.by].toUpperCase()}\n${e.by === 'player' ? 'ARE' : 'IS'} ON FIRE!` : 'FIRE OUT!', e.on ? 1400 : 700, e.on ? 40 : 30);
+        else if (e.type === 'shot') this.kickedAt[e.by] = this.sim.t;
         else if (e.type === 'goal') this.showBanner(`GOAL!\n${NAMES[e.by].toUpperCase()}`, 1100);
         else if (e.type === 'save') (this.savedAt = this.sim.t), this.showBanner('SAVED!', 600, 34);
       }
@@ -206,6 +209,7 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
         stick: { x: L.stick.x - L.stick.r, y: L.stick.y - L.stick.r, width: L.stick.r * 2, height: L.stick.r * 2 },
         shoot: { x: L.buttons.shoot.x - L.buttons.shoot.r, y: L.buttons.shoot.y - L.buttons.shoot.r, width: L.buttons.shoot.r * 2, height: L.buttons.shoot.r * 2 },
         slide: { x: L.buttons.slide.x - L.buttons.slide.r, y: L.buttons.slide.y - L.buttons.slide.r, width: L.buttons.slide.r * 2, height: L.buttons.slide.r * 2 },
+        turbo: { x: L.buttons.pass.x - L.buttons.pass.r, y: L.buttons.pass.y - L.buttons.pass.r, width: L.buttons.pass.r * 2, height: L.buttons.pass.r * 2 },
         push: { x: L.buttons.block.x - L.buttons.block.r, y: L.buttons.block.y - L.buttons.block.r, width: L.buttons.block.r * 2, height: L.buttons.block.r * 2 },
         title: bounds(this.title),
         ...(this.continueButton.visible ? { 'continue-button': this.continueButton.getButtonBounds() } : {}),
@@ -224,6 +228,9 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
       scores: { ...s.scores },
       charging: this.chargeStart !== null,
       hits: this.sim.competitors.player.lastMove,
+      turbo: { held: s.turbo, meter: s.competitors.player.turbo },
+      fire: s.fire,
+      down: Object.fromEntries(COMPETITORS.map((id) => [id, s.t < s.competitors[id].downUntil])),
       stunned: Object.fromEntries(COMPETITORS.map((id) => [id, s.t < s.competitors[id].stunUntil])),
       saved: this.saved,
       runId: this.runId,
@@ -281,6 +288,11 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
       const k = s.scores[id] / lead;
       g.fillStyle(0xffd23f, 1).fillRect(i < 2 ? x : x + barW * (1 - k), y, barW * k, 14);
       g.fillStyle(COLORS[id], 1).fillRect(i < 2 ? x : x + barW - 8, y + 18, 8, 8);
+      // Turbo meter under each score bar (gold while ON FIRE).
+      const tw = barW - 12;
+      const tx = i < 2 ? x + 10 : x;
+      g.fillStyle(0x1b1b1b, 1).fillRect(tx, y + 19, tw, 6);
+      g.fillStyle(s.fire === id ? 0xff7a1a : 0x4fc3f7, 1).fillRect(tx, y + 19, tw * s.competitors[id].turbo, 6);
       const lbl = this.labels[id];
       lbl?.setText(`${NAMES[id].toUpperCase()} ${s.scores[id]}`).setPosition(x + barW / 2, y + 30);
     });
@@ -323,7 +335,7 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     const c = s.competitors[id];
     const speed = Math.hypot(c.vel.x, c.vel.y);
     let kind: PoseKind = speed > 0.6 ? 'run' : 'idle';
-    if (s.t < c.slideUntil || (s.t < c.lagUntil && c.lastMove?.kind === 'slide')) kind = 'slide';
+    if (s.t < c.downUntil || s.t < c.slideUntil || (s.t < c.lagUntil && c.lastMove?.kind === 'slide')) kind = 'slide';
     else if (c.lastMove?.kind === 'push' && s.t - c.lastMove.t < 0.2) kind = 'kick';
     else if (this.kickedAt[id] !== undefined && s.t - this.kickedAt[id]! < 0.25) kind = 'kick';
     if (Math.hypot(c.facing.x, c.facing.y) > 1e-6) this.artDir[id] = dirFromScreen(c.facing.x * this.kx, c.facing.y * this.ky);
@@ -359,6 +371,11 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
       const f = this.toScreen(c.pos.x, c.pos.y);
       const ph = bodyH(c.pos.y);
       g.fillStyle(0x000000, 0.3).fillEllipse(f.x, f.y, ph * 0.9, ph * 0.25);
+      if (s.fire === id) for (let i = 0; i < 5; i++) {
+        const a = s.t * 7 + i * 1.3;
+        g.fillStyle(i % 2 ? 0xffd23f : 0xff5a1a, 0.75).fillTriangle(f.x - ph * 0.3 + i * ph * 0.15 - 5, f.y, f.x - ph * 0.3 + i * ph * 0.15 + 5, f.y, f.x - ph * 0.3 + i * ph * 0.15, f.y - ph * (0.25 + 0.12 * Math.sin(a)));
+      }
+      else if (c.turboOn && Math.hypot(c.vel.x, c.vel.y) > JUNGLE.runSpeed * 0.9) for (let i = 1; i <= 3; i++) g.lineStyle(2, 0xffffff, 0.5 - i * 0.12).lineBetween(f.x - c.vel.x * this.kx * 0.04 * i - 8, f.y - ph * 0.3 * i, f.x - c.vel.x * this.kx * 0.04 * i + 8, f.y - ph * 0.3 * i);
       const sc = PlayerArt.scaleFor(ph);
       this.sprites[id]!.setTexture(this.frameFor(id, dt)).setScale(sc.x, sc.y).setPosition(f.x, f.y).setDepth(100 + f.y).setAlpha(s.t < c.stunUntil ? 0.75 : 1);
       const top = f.y - ph * PLAYER_ART.bodyScale - 4;
@@ -376,6 +393,8 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     const b = this.toScreen(s.ball.pos.x, s.ball.pos.y);
     const br = Math.max(9, this.scale1 * 0.55);
     g.fillStyle(0x000000, 0.3).fillEllipse(b.x, b.y, br * 1.2, br * 0.4);
+    // ON FIRE: the ball trails flame while the burning competitor has it or just shot it.
+    if (s.fire && s.ball.lastTouch === s.fire) for (let i = 1; i <= 4; i++) g.fillStyle(i % 2 ? 0xff7a1a : 0xffd23f, 0.6 - i * 0.12).fillCircle(b.x - s.ball.vel.x * this.kx * 0.02 * i, b.y - br * 0.45 - s.ball.vel.y * this.ky * 0.02 * i, br * (1 - i * 0.15));
     this.ballImg.setScale(br / BALL_TEXTURE_SIZE.width).setPosition(b.x, b.y - br * 0.45).setDepth(100 + b.y + 0.5);
     if (this.chargeStart !== null) {
       const k = Math.min(1, (performance.now() - this.chargeStart) / MAX_CHARGE_MS);
@@ -404,6 +423,7 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
       if (e.type === 'move') command(this.sim, { type: 'move', x: e.x, y: e.y });
       else if (e.type === 'press' && e.action === 'slide') command(this.sim, { type: 'slide' });
       else if (e.type === 'press' && e.action === 'block') command(this.sim, { type: 'push' });
+      else if (e.action === 'pass') command(this.sim, { type: 'turbo', on: e.type === 'press' });
       else if (e.action !== 'shoot') continue;
       else if (e.type === 'press') this.chargeStart = performance.now();
       else if (e.type === 'release') this.releaseShot();
@@ -427,7 +447,8 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     if (dirs[e.code]) {
       this.keys.add(e.code);
       this.sendKeys(dirs);
-    } else if (e.code === 'KeyJ' && !e.repeat) command(this.sim, { type: 'push' });
+    } else if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyI') && !e.repeat) command(this.sim, { type: 'turbo', on: true });
+    else if (e.code === 'KeyJ' && !e.repeat) command(this.sim, { type: 'push' });
     else if (e.code === 'KeyL' && !e.repeat) command(this.sim, { type: 'slide' });
     else if ((e.code === 'Space' || e.code === 'KeyK') && !e.repeat && this.sim.ball.owner === 'player') this.chargeStart = performance.now();
   }
@@ -437,6 +458,7 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
       this.keys.delete(e.code);
       this.sendKeys(dirs);
     } else if (e.code === 'Space' || e.code === 'KeyK') this.releaseShot();
+    else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyI') command(this.sim, { type: 'turbo', on: false });
   }
   private sendKeys(dirs: Record<string, readonly [number, number]>): void {
     let x = 0;
@@ -450,6 +472,7 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     this.chargeStart = null;
     this.keys.clear();
     command(this.sim, { type: 'move', x: 0, y: 0 });
+    command(this.sim, { type: 'turbo', on: false });
     this.handlePad(this.pad.controls.cancelAll('blur'));
   }
   private onResize(size: Phaser.Structs.Size): void {
