@@ -3,6 +3,7 @@
 
 ## Referee (branch `devin/1792274864-referee`, not merged, not deployed)
 
+- **CI note (merge of `main` 4c3a81f):** a 60 min GitHub run timed out on phone-landscape `jungle.spec:11`, `pad.spec:88` A03, and `match.spec:72` (phone-landscape and desktop). Under 4-worker load locally, these passed 12/12 on this branch and 12/12 on `main`.
 - `src/game/match/referee.ts` (+ `src/modules/RefereeSystem.ts`): throw-ins, goal kicks vs corners from the last touch, offside at the kick instance, slide fouls with free kicks and penalties, indirect free kicks. See D28.
 - Match banners: THROW-IN, GOAL KICK, CORNER, OFFSIDE!, FOUL! Free kick, FOUL! PENALTY.
 - Tests: `tests/referee.test.ts` (21), including 60 Hz vs 120 Hz identical calls, a seeded no-stuck-restart sweep, and regressions for penalty ball drift, every restart held until the kick, 8 yd kept while a set piece waits, own-goal-from-throw-in corner, and custom pitch geometry.
