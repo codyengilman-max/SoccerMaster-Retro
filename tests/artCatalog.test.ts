@@ -3,10 +3,11 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import story from '../docs/story/v0.7/week_one_scenes.json';
 import s1Manifest from '../docs/art/season-one/asset-manifest.json';
+import t12Manifest from '../docs/training/v1.2/asset-manifest.json';
 import { SEASON_ONE } from '../src/game/story/content';
 import { ART_ASSETS, OWNER_ART_APPROVAL, MAPPED_SCENE_IDS, RUNTIME_IMAGES, SPEAKER_ROLE, isAllowedAsset, sceneVisual, unmappedScenes, variantAsset } from '../src/render/art/catalog';
 
-const S1_IDS = new Set(s1Manifest.assets.map((a) => a.assetId));
+const S1_IDS = new Set([...s1Manifest.assets, ...t12Manifest.assets].map((a) => a.assetId));
 const storyIds = (story.scenes as { id: string }[]).map((s) => s.id);
 
 describe('Graphics v1 catalog', () => {
@@ -27,6 +28,16 @@ describe('Graphics v1 catalog', () => {
     expect(v1.filter((a) => a.status === 'REFERENCE_APPROVED').map((a) => a.assetId).sort()).toEqual(['blake', 'boy', 'girl', 'jordan', 'school']);
     expect(v1.filter((a) => a.status === 'NEW_ART_REVIEW_PENDING')).toHaveLength(23);
     expect(OWNER_ART_APPROVAL).toBe('2026-10-16');
+  });
+
+  it('Training/Schoolyard v1.2 masters are byte-identical and each has a derived runtime image', () => {
+    expect(t12Manifest.assets.map((a) => a.assetId)).toEqual(['crossbar-schoolyard', 'training-bell94']);
+    for (const a of t12Manifest.assets) {
+      const sha = createHash('sha256').update(readFileSync(`docs/training/v1.2/${a.path}`)).digest('hex');
+      expect(sha, a.assetId).toBe(a.sha256);
+      expect(RUNTIME_IMAGES.get(a.assetId)?.masterSha256).toBe(a.sha256);
+      expect(isAllowedAsset(a.assetId)).toBe(true);
+    }
   });
 
   it('pins one outfit per scene and swaps only the player appearance', () => {

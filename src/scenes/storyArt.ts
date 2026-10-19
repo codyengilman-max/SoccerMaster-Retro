@@ -20,6 +20,8 @@ export interface StoryArtFrame {
   readonly panelY: number;
   /** Event-bound backdrop (e.g. live standings) replacing the scene's own; must be allowlisted. */
   readonly backgroundOverride?: string | null;
+  /** Exact backdrop placement (top-left, uniform scale) when a scene shares one transform with its stage. */
+  readonly backdropPlacement?: { readonly x: number; readonly y: number; readonly scale: number } | null;
 }
 
 type CastState = 'shown' | 'loading' | 'gap' | 'failed';
@@ -216,6 +218,11 @@ export class StoryArt {
       return;
     }
     if (this.bgImage.texture.key !== key) this.bgImage.setTexture(key);
+    const at = f.backdropPlacement;
+    if (at) {
+      this.bgImage.setScale((at.scale * (artAsset(id)?.width ?? this.bgImage.width)) / this.bgImage.width).setPosition(at.x + (this.bgImage.displayWidth / 2), at.y + this.bgImage.displayHeight / 2).setVisible(true);
+      return;
+    }
     // Cover the area above the panel; the panel itself is near-opaque.
     const h = Math.max(1, f.panelY);
     const k = Math.max(f.width / this.bgImage.width, h / this.bgImage.height);

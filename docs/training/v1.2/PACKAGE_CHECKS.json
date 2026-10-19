@@ -1,0 +1,51 @@
+{
+  "revision": "1.2",
+  "scope": "static_handoff_only_not_game_source",
+  "package_file_count": 24,
+  "checksum_record_count": 23,
+  "html_local_references": 7,
+  "duplicate_html_ids": 0,
+  "scripts_in_preview": 0,
+  "external_preview_dependencies": 0,
+  "strict_json_files": 4,
+  "tactical_seed_count": 17,
+  "source_catalog_seed_count": 40,
+  "draft_flags_preserved": true,
+  "seed_records_match_original": true,
+  "coverage_families": 8,
+  "coverage_runtime_activation_flags": false,
+  "coverage_runtime_ids": "UNBOUND",
+  "coverage_source_mappings": "PASS",
+  "brief_characters": 26823,
+  "devin_prompt_characters": 2382,
+  "image_files": 2,
+  "images": [
+    {
+      "path": "assets/schoolyard_crossbar_background_v2.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB"
+    },
+    {
+      "path": "assets/team_training_bell94_environment_reference.png",
+      "width": 1672,
+      "height": 941,
+      "mode": "RGB"
+    }
+  ],
+  "svg_goal_files": 1,
+  "prior_assets_and_reference_bytes_preserved": true,
+  "historical_audit_preserved": true,
+  "source_dependency_hashes": "PASS",
+  "audit_findings_addressed_in_handoff": 6,
+  "runtime_acceptance_cases_added": 21,
+  "archive_path_crc_and_checksums": "PASS_POST_BUILD_VERIFIED",
+  "secret_pattern_matches": 0,
+  "browser_rendering": "NOT RUN",
+  "game_integration": "NOT RUN",
+  "runtime_failure_injection": "NOT RUN",
+  "coaching_review": "NOT RUN",
+  "physical_iPhone": "NOT RUN",
+  "deployment": "NOT RUN",
+  "venue_art": "Bell94-inspired reference; live-camera adaptation required"
+}

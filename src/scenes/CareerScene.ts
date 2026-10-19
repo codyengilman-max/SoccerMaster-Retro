@@ -28,6 +28,8 @@ type Screen =
   | { kind: 'journal' }
   | { kind: 'review' }
   | { kind: 'team' }
+  | { kind: 'practice' }
+  | { kind: 'progress' }
   | { kind: 'player' }
   | { kind: 'drafts' }
   | { kind: 'draftFamily'; id: string }
@@ -247,22 +249,38 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         return {
           title: p ? `${p.name} · Week ${s.week}` : 'Home Training',
           body: p
-            ? `Focus: ${f ? f.label : 'not chosen yet'}\nHome sessions done: ${s.completedSessions.length} of 3 (optional)\nGame moments recorded this week: ${s.evidence.length}\n\nHome practice is your own log. Game attributes only change from what you do in 9v9 matches.`
+            ? 'Team Training is your weekly session with the club. Home Practice is optional. Game attributes only change from what you do in 9v9 play.'
             : 'Create your player to start.',
           actions: p
             ? [
-                { name: 'nav-focus', label: 'Weekly Focus', onClick: () => this.go({ kind: 'focus' }) },
-                { name: 'nav-sessions', label: 'My Home Sessions', onClick: () => this.go({ kind: 'sessions' }) },
-                { name: 'nav-library', label: 'Training Library', onClick: () => this.go({ kind: 'library', family: null }) },
-                { name: 'nav-journal', label: 'Practice Journal', onClick: () => this.go({ kind: 'journal' }) },
-                { name: 'nav-team', label: 'Team Training (this week)', onClick: () => this.go({ kind: 'team' }) },
-                { name: 'nav-play', label: 'Play a 9v9 match (records game moments)', onClick: () => this.playSandbox() },
-                { name: 'nav-review', label: 'Weekly Review', onClick: () => this.go({ kind: 'review' }) },
-                { name: 'nav-player', label: 'Character Development', onClick: () => this.go({ kind: 'player' }) },
+                { name: 'nav-focus', label: `This week: ${f ? f.label : 'choose a focus'}`, onClick: () => this.go({ kind: 'focus' }) },
+                { name: 'nav-team', label: `Team Training · ${s.teamTraining.some((r) => r.week === s.week) ? 'Complete' : 'Not started'}`, onClick: () => this.go({ kind: 'team' }) },
+                { name: 'nav-practice', label: `Home Practice (optional) · ${s.completedSessions.length} of 3`, onClick: () => this.go({ kind: 'practice' }) },
+                { name: 'nav-progress', label: 'Progress', onClick: () => this.go({ kind: 'progress' }) },
               ]
             : [{ name: 'nav-create', label: 'Create Player', onClick: () => this.go({ kind: 'create' }) }],
         };
       }
+      case 'practice':
+        return {
+          title: 'Home Practice',
+          body: `Optional practice on your own, separate from Team Training.\nHome sessions done this week: ${s.completedSessions.length} of 3.`,
+          actions: [
+            { name: 'nav-sessions', label: 'My Home Sessions', onClick: () => this.go({ kind: 'sessions' }) },
+            { name: 'nav-library', label: 'Browse the Training Library', onClick: () => this.go({ kind: 'library', family: null }) },
+            { name: 'nav-journal', label: 'Practice Journal', onClick: () => this.go({ kind: 'journal' }) },
+          ],
+        };
+      case 'progress':
+        return {
+          title: 'Progress',
+          body: `Week ${s.week}. Game moments recorded this week: ${s.evidence.length}.\nOpening these pages never changes your attributes.`,
+          actions: [
+            { name: 'nav-review', label: 'Weekly Review', onClick: () => this.go({ kind: 'review' }) },
+            { name: 'nav-player', label: 'Character Development', onClick: () => this.go({ kind: 'player' }) },
+            { name: 'nav-play', label: 'Play a 9v9 match (records game moments)', onClick: () => this.playSandbox() },
+          ],
+        };
       case 'create':
         return {
           title: 'Create Your Player',
