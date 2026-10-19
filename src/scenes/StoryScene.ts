@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 import { fixtureForWeek, newLeague, parseLeague, recordPlayed, simulateThrough, table } from '../game/league/league';
 import { DRAFT_SCENES } from '../game/story/content';
+import { seasonWeek, type TournamentId } from '../game/season/calendar';
+import { bataviaRecord, fixtureForSeasonWeek, newSeasonLeague, opponentOf, parseSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough } from '../game/season/league';
+import { TOURNAMENTS, bataviaFinish, groupTable, nextBataviaFixture, newTournament, parseTournament, playoffs, recordTournamentPlayed, type TournamentState } from '../game/season/tournament';
 import { CLUB_WORLD } from '../game/story/clubs';
 import type { Rect } from '../game';
 import { POSITION_SLOT } from '../game/career/player';
@@ -24,7 +27,8 @@ import { StoryArt } from './storyArt';
 const CAREER_ID = 'main';
 const POSITION_LABEL: Record<Position, string> = { DEF: 'Defender', MID: 'Midfielder', FWD: 'Forward' };
 const SPEAKER_COLOR: Record<string, number> = { System: PALETTE.ink, Jordan: PALETTE.blue, Blake: PALETTE.tomato, Caregiver: PALETTE.purple, Coach: PALETTE.mustardDark };
-const CAREER_ADAPTERS = ['training_arrangement', 'weekly_focus', 'practice', 'match'] as const;
+const CAREER_ADAPTERS = ['training_arrangement', 'weekly_focus', 'practice', 'match', 'team_training', 'league_match', 'tournament_match'] as const;
+const MATCH_ADAPTERS: readonly string[] = ['match', 'league_match', 'tournament_match'];
 type CareerAdapter = (typeof CAREER_ADAPTERS)[number];
 interface Snapshot { readonly revision: number; readonly sessions: number; readonly batches: number; readonly week: number }
 type Mode = 'loading' | 'error' | 'story' | 'crossbar' | 'transcript';
@@ -32,6 +36,10 @@ type Cmd = StoryCommand extends infer C ? (C extends StoryCommand ? Omit<C, 'rev
 interface Action { readonly name: string; readonly label: string; readonly onClick: () => void }
 
 let instantText = false;
+
+const FINISH_LABEL: Record<string, string> = { champion: 'Champions', shared_champion: 'Shared champions (drawn final, no shoot-out)', runner_up: 'Runners-up', third: 'Third', shared_third: 'Shared third (drawn placement game)', fourth: 'Fourth' };
+const clubName = (id: string): string => CLUB_WORLD.clubs.find((c) => c.id === id)?.displayName ?? id;
+const resultOf = (s: { home: number; away: number }): 'WIN' | 'DRAW' | 'LOSS' => (s.home > s.away ? 'WIN' : s.home < s.away ? 'LOSS' : 'DRAW');
 
 function newRunId(): string {
   const c = globalThis.crypto;
@@ -73,6 +81,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private pull: Pull | null = null;
   private crossbarSummary = '';
   private leagueSummary = '';
+  private seasonSummary = '';
+  private tournamentSummary = '';
   private bg!: Phaser.GameObjects.Graphics;
   private stage!: Phaser.GameObjects.Graphics;
   private speaker!: Phaser.GameObjects.Text;
@@ -262,8 +272,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     return r.ok && r.runId ? r.runId : null;
   }
 
-  private async complete(runId: string, outcome: 'completed' | 'declined' | 'abandoned' | 'interrupted', result: 'WIN' | 'LOSS' | 'DRAW' | null = null): Promise<void> {
-    await this.send({ type: 'complete', runId, outcome, result });
+  private async complete(runId: string, outcome: 'completed' | 'declined' | 'abandoned' | 'interrupted', result: 'WIN' | 'LOSS' | 'DRAW' | null = null, detail: string | null = null): Promise<void> {
+    await this.send({ type: 'complete', runId, outcome, result, ...(detail ? { detail } : {}) });
     this.mode = 'story';
     this.contest = null;
     await this.loadSummaries();
@@ -327,8 +337,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       await this.store.putRecord(`run:${run}`, snap);
     }
     this.navigating = true;
-    if (kind === 'match') this.scene.start(SceneKeys.Formation, { career: true, returnTo: 'story', resultKey: run });
-    else this.scene.start(SceneKeys.Career, { returnTo: 'story' });
+    if (MATCH_ADAPTERS.includes(kind)) this.scene.start(SceneKeys.Formation, { career: true, returnTo: 'story', resultKey: run });
+    else this.scene.start(SceneKeys.Career, { returnTo: 'story', ...(kind === 'team_training' ? { open: 'team' } : {}) });
   }
 
   private async openJungle(): Promise<void> {
@@ -358,21 +368,91 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     const s = (this.save = await this.career.load());
     if (!snap) return;
     // A story match counts only once it reaches full time; growth evidence alone does not finish it.
-    const full = n.adapter === 'match' ? await this.fullTimeScore(run.runId) : null;
+    const isMatch = MATCH_ADAPTERS.includes(n.adapter);
+    const full = isMatch ? await this.fullTimeScore(run.runId) : null;
     const done =
       n.adapter === 'training_arrangement' ? s.revision > snap.revision && s.player !== null
       : n.adapter === 'weekly_focus' ? s.focusId !== null
       : n.adapter === 'practice' ? s.completedSessions.length > snap.sessions
+      : n.adapter === 'team_training' ? s.teamTraining.some((r) => r.week === snap.week)
       : full !== null;
-    if (full) await this.recordLeague(full);
-    if (done) await this.complete(run.runId, 'completed');
-    else this.message = n.adapter === 'match' ? 'No full-time result yet, so nothing was recorded. Play the match again to finish it.' : 'Not finished yet. Nothing was recorded.';
+    if (!done) {
+      this.message = isMatch ? 'No full-time result yet, so nothing was recorded. Play the match again to finish it.' : 'Not finished yet. Nothing was recorded.';
+      return;
+    }
+    if (n.adapter === 'match' && full) await this.recordLeague(full);
+    if (n.adapter === 'league_match' && full) {
+      if (!(await this.recordSeasonLeague(full))) return void (this.message = 'This league result could not be recorded. Nothing was changed.');
+      return this.complete(run.runId, 'completed', resultOf(full));
+    }
+    if (n.adapter === 'tournament_match' && full) {
+      const t = await this.recordTournament(full);
+      if (!t) return void (this.message = 'This tournament result could not be recorded. Nothing was changed.');
+      return this.complete(run.runId, 'completed', resultOf(full), t.detail);
+    }
+    await this.complete(run.runId, 'completed');
   }
 
   /** The story week of the current match scene (W2_MATCH → 2), never the separately advancing career week. */
   private storyWeek(): number | null {
     const m = /^W(\d)_MATCH$/.exec(this.state?.sceneId ?? '');
     return m ? Number(m[1]) : null;
+  }
+
+  /** Season One calendar week of the current scene (S1_W09_G2 -> 9), never the career week. */
+  private seasonWeekNo(): number | null {
+    const m = /^S1_W(\d\d)_/.exec(this.state?.sceneId ?? '');
+    return m ? Number(m[1]) : null;
+  }
+
+  private seasonSeed(): number {
+    let seed = 0;
+    for (const ch of this.state?.careerId ?? '') seed = (Math.imul(seed, 31) + ch.charCodeAt(0)) >>> 0;
+    return seed;
+  }
+
+  private async seasonLeague() {
+    const id = this.state!.careerId;
+    const saved = parseSeasonLeague(await this.store!.getRecord(`league-s1:${id}`));
+    return saved.ok ? saved.value : newSeasonLeague(id, this.seasonSeed());
+  }
+
+  /** This week's Batavia league fixture counts once; other clubs are simulated through its round. */
+  private async recordSeasonLeague(score: { home: number; away: number }): Promise<boolean> {
+    const week = this.seasonWeekNo();
+    const f = week === null ? null : fixtureForSeasonWeek(week);
+    if (!f || !this.store || !this.state) return false;
+    const r = recordSeasonPlayed(await this.seasonLeague(), f.id, score.home, score.away);
+    if (!r.ok) return false;
+    await this.store.putRecord(`league-s1:${this.state.careerId}`, simulateSeasonThrough(r.state, f.round));
+    return true;
+  }
+
+  private tournamentId(): TournamentId | null {
+    const w = this.seasonWeekNo();
+    return w === null ? null : seasonWeek(w)?.tournament ?? null;
+  }
+
+  private async tournament(): Promise<TournamentState | null> {
+    const tid = this.tournamentId();
+    if (!tid || !this.store || !this.state) return null;
+    const saved = parseTournament(await this.store.getRecord(`tourney-s1:${this.state.careerId}:${tid}`), tid);
+    return saved.ok ? saved.value : newTournament(tid, this.state.careerId, this.seasonSeed());
+  }
+
+  /** Batavia's next due tournament game counts once; detail = playoff assignment or final place. */
+  private async recordTournament(score: { home: number; away: number }): Promise<{ detail: string | null } | null> {
+    const t = await this.tournament();
+    const f = t ? nextBataviaFixture(t) : null;
+    if (!t || !f || !this.store || !this.state) return null;
+    const r = recordTournamentPlayed(t, f.id, score.home, score.away);
+    if (!r.ok) return null;
+    await this.store.putRecord(`tourney-s1:${this.state.careerId}:${t.id}`, r.state);
+    const finish = bataviaFinish(r.state);
+    if (finish) return { detail: finish };
+    const po = playoffs(r.state);
+    if (po) return { detail: po.final.home === 'batavia' || po.final.away === 'batavia' ? 'final' : 'placement' };
+    return { detail: null };
   }
 
   private async fullTimeScore(runId: string): Promise<{ home: number; away: number } | null> {
@@ -515,6 +595,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     this.leagueSummary = league.ok
       ? `League table (other clubs' games are simulated):\n${table(league.value, names).map((r) => `${r.position}. ${names[r.club] ?? r.club}  P${r.played} ${r.points} pts`).join('\n')}`
       : 'League table: no league result recorded yet (a match left early counts for nobody).';
+    if (this.state.contentVersion !== 'w24-draft-1' && this.state.sceneId.startsWith('S1_')) await this.loadSeasonSummaries();
     const run = outcomeOf(this.state, 'W1_CROSSBAR');
     if (!run) return void (this.crossbarSummary = '');
     if (run.outcome === 'completed' && run.runId) {
@@ -523,6 +604,28 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       const b = c ? points(c, 'blake') : 0;
       this.crossbarSummary = `Crossbar result: ${this.name()} ${p}, Blake ${b} (${run.result === 'WIN' ? 'you won' : run.result === 'LOSS' ? 'Blake won' : 'a draw'}).`;
     } else this.crossbarSummary = `Crossbar challenge: ${run.outcome === 'declined' ? 'you declined; no score' : run.outcome === 'abandoned' ? 'left before the end; no result' : 'interrupted; no result'}.`;
+  }
+
+  /** Live standings text from the season league and the current week's tournament (never from story text). */
+  private async loadSeasonSummaries(): Promise<void> {
+    const lg = await this.seasonLeague();
+    const rec = bataviaRecord(lg);
+    const rows = seasonTable(lg).map((r) => `${r.position}. ${clubName(r.club)}  P${r.played} W${r.won} D${r.drawn} L${r.lost} ${r.points} pts`);
+    const pending = rec.pending > 0 ? ` · ${rec.pending} unplayed` : '';
+    const lines = [`League (Batavia W${rec.won} D${rec.drawn} L${rec.lost}${pending}):`, ...rows];
+    const t = await this.tournament();
+    this.tournamentSummary = '';
+    if (t) {
+      const g = groupTable(t);
+      const next = nextBataviaFixture(t);
+      const finish = bataviaFinish(t);
+      const tname = (id: string): string => TOURNAMENTS[t.id].names[id] ?? id;
+      lines.push('', `${TOURNAMENTS[t.id].name} group:`, ...g.rows.map((r) => `${r.position}. ${tname(r.team)}  P${r.played} ${r.points} pts GD ${r.goalsFor - r.goalsAgainst}`));
+      if (finish) lines.push(`Final place: ${FINISH_LABEL[finish]}`);
+      if (next) this.tournamentSummary = `${next.stage === 'final' ? 'Championship game' : next.stage === 'placement' ? 'Placement game (3rd/4th)' : `Group game ${next.stage.slice(2)}`} vs ${tname(next.home === 'batavia' ? next.away : next.home)}.`;
+      lines.push('Tournament results do not count in the league.');
+    }
+    this.seasonSummary = lines.join('\n');
   }
 
   /** Factual recap from committed evidence only (shown on result scenes). */
@@ -710,6 +813,31 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         acts.push({ name: 'handoff-match', label: 'Play the match', onClick: () => void this.openCareer('match') });
         acts.push({ name: 'handoff-skip', label: 'Skip the match', onClick: () => void this.skipRun('declined') });
         return;
+      case 'team_training':
+        setBody(`Team Training for week ${this.save?.week ?? 1}: three situations from the team's logic catalog. Same rules as always: up to +2 attribute points for a good week, one per week.`);
+        acts.push({ name: 'handoff-career', label: 'Open Team Training', onClick: () => void this.openCareer('team_training') });
+        acts.push({ name: 'handoff-skip', label: 'Not this week', onClick: () => void this.skipRun('declined') });
+        return;
+      case 'league_match': {
+        const week = this.seasonWeekNo() ?? 0;
+        const f = fixtureForSeasonWeek(week);
+        const game = seasonWeek(week)?.leagueGame ?? 0;
+        setBody(`${f ? `League game ${game} of 12: Batavia vs ${clubName(opponentOf(f))} (${f.home === 'batavia' ? 'home' : 'away'}).` : 'League match.'} A full 9v9 game with your usual controls. Skipping leaves the game unplayed, never a loss.`);
+        acts.push({ name: 'handoff-match', label: 'Play the match', onClick: () => void this.openCareer('league_match') });
+        acts.push({ name: 'handoff-skip', label: 'Skip the match', onClick: () => void this.skipRun('declined') });
+        return;
+      }
+      case 'tournament_match': {
+        const tid = this.tournamentId();
+        setBody(`${tid ? TOURNAMENTS[tid].name : 'Tournament'}: ${this.tournamentSummary || 'next game'}\nA full 9v9 game. Tournament results never count in the league table.`);
+        acts.push({ name: 'handoff-match', label: 'Play the game', onClick: () => void this.openCareer('tournament_match') });
+        acts.push({ name: 'handoff-skip', label: 'Withdraw', onClick: () => void this.skipRun('declined') });
+        return;
+      }
+      case 'standings':
+        setBody(this.standingsText());
+        acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.finishStandings() });
+        return;
       case 'jungle':
         setBody('Jungle Ball at lunch: one goal, a neutral keeper, you against Alex, Blake and Sam. Just for fun: scores never count as match growth.');
         acts.push({ name: 'handoff-jungle', label: 'Play Jungle Ball', onClick: () => void this.openJungle() });
@@ -720,6 +848,19 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         acts.push({ name: 'handoff-week', label: `Finish week ${this.save?.week ?? 1}`, onClick: () => void this.closeWeek() });
         return;
     }
+  }
+
+  private async finishStandings(): Promise<void> {
+    if (!this.fresh()) return;
+    this.busy = true;
+    const run = await this.launch();
+    if (run) await this.complete(run, 'completed');
+    this.busy = false;
+    this.render();
+  }
+
+  private standingsText(): string {
+    return this.seasonSummary || 'No league result recorded yet.';
   }
 
   private async skipRun(outcome: 'declined'): Promise<void> {
