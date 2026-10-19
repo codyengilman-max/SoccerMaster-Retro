@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { fixtureForWeek, newLeague, parseLeague, recordPlayed, simulateThrough, table } from '../game/league/league';
-import { DRAFT_SCENES } from '../game/story/content';
+import { DRAFT_SCENES, sceneById } from '../game/story/content';
 import { seasonWeek, type TournamentId } from '../game/season/calendar';
 import { bataviaRecord, fixtureForSeasonWeek, newSeasonLeague, opponentOf, parseSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough } from '../game/season/league';
 import { TOURNAMENTS, bataviaFinish, groupTable, nextBataviaFixture, newTournament, parseTournament, playoffs, recordTournamentPlayed, type TournamentState } from '../game/season/tournament';
@@ -887,6 +887,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     const n = this.state ? currentNode(this.state) : null;
     void n;
     const id = this.state?.sceneId ?? '';
+    const authored = id.startsWith('S1_') ? sceneById(id)?.background : undefined;
+    if (authored) return authored === 'aquarium' ? 'neutral_home' : authored === 'neutral_pitch' || authored === 'neutral_home' ? authored : 'neutral_school';
     if (/HOME|CLOSE_WEEK/.test(id)) return 'neutral_home';
     if (/TRAINING|PRACTICE|MATCH|FOCUS/.test(id)) return 'neutral_pitch';
     return 'neutral_school';
@@ -909,6 +911,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       height: this.scale.height,
       top: 58,
       panelY: this.panel.y,
+      backgroundOverride: this.mode === 'story' && n?.type === 'activity_handoff' && n.adapter === 'standings' ? 'league-standings' : null,
     });
     if (art.hasBackdrop) {
       // Supplied Graphics v1 backdrop is on screen; the code-drawn one is only the fallback.

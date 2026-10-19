@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { artTextureKey, artUrl } from '../render/art/urls';
 import type { Rect } from '../game';
 import { orientationOf } from '../render/layout';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
@@ -12,6 +13,7 @@ let labOpened = false;
 
 export class StartScene extends Phaser.Scene implements InspectableScene {
   private background!: Phaser.GameObjects.Graphics;
+  private homeArt: Phaser.GameObjects.Image | null = null;
   private title!: Phaser.GameObjects.Text;
   private subtitle!: Phaser.GameObjects.Text;
   private footer!: Phaser.GameObjects.Text;
@@ -37,6 +39,8 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
     const resolution = textResolution();
 
     this.background = this.add.graphics();
+    this.homeArt = null;
+    this.loadHomeArt();
     this.title = this.add
       .text(0, 0, GAME_TITLE, {
         fontFamily: FONT_FAMILY,
@@ -175,6 +179,7 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
   private layout(width: number, height: number): void {
     const portrait = orientationOf({ width, height }) === 'portrait';
     this.drawBackground(width, height);
+    this.fitHomeArt(width, height);
 
     const titleSize = Math.round(
       portrait ? Math.min(width * 0.13, height * 0.08, 76) : Math.min(width * 0.075, height * 0.16, 84),
@@ -219,6 +224,30 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
     }
 
     this.footer.setFontSize(Math.max(11, Math.round(Math.min(width, height) * 0.032))).setPosition(width / 2, height - 10);
+  }
+
+  /** Supplied home-screen illustration over the code-drawn sky; menu text stays live on top. */
+  private loadHomeArt(): void {
+    const key = artTextureKey('home-screen');
+    const show = (): void => {
+      if (!this.sys.isActive()) return;
+      this.homeArt?.destroy();
+      this.homeArt = this.add.image(0, 0, key).setDepth(-1);
+      this.background.setDepth(-2);
+      this.fitHomeArt(this.scale.width, this.scale.height);
+    };
+    if (this.textures.exists(key)) return show();
+    const url = artUrl('home-screen');
+    if (!url) return;
+    this.load.image(key, url);
+    this.load.once(`filecomplete-image-${key}`, show);
+    if (!this.load.isLoading()) this.load.start();
+  }
+
+  private fitHomeArt(width: number, height: number): void {
+    if (!this.homeArt) return;
+    const k = Math.max(width / this.homeArt.width, height / this.homeArt.height);
+    this.homeArt.setScale(k).setPosition(width / 2, height / 2);
   }
 
   private drawBackground(width: number, height: number): void {
