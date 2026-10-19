@@ -142,7 +142,7 @@ function goTo(s: StoryState, nodeId: string, seq: number): StoryState {
 function enter(s: StoryState, sceneId: string, nodeId: string, seq: number): StoryState {
   const n = nodeById(sceneById(sceneId)!, nodeId);
   // Branch nodes are code-resolved on arrival from committed facts; missing evidence takes the default.
-  if (n?.type === 'branch') return enter(s, sceneId, n.cases.find((c) => evaluatePredicate({ ...s, sceneId }, c.predicate) === true)?.next ?? n.default, seq);
+  if (n?.type === 'branch') return goTo({ ...s, sceneId }, n.cases.find((c) => evaluatePredicate({ ...s, sceneId }, c.predicate) === true)?.next ?? n.default, seq);
   const transcript = [...s.transcript, { sceneId, nodeId }].slice(-MAX_TRANSCRIPT);
   return { ...s, sceneId, nodeId, revealed: false, openedBy: seq, transcript };
 }
