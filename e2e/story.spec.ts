@@ -1,7 +1,7 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { idealPower } from '../src/game/story/crossbar';
 import { thresholdsFor } from '../src/input';
-import { Finger, diagnostics, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
+import { Finger, diagnostics, finishTeamTraining, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
 
 // Season One on one isolated save: identity -> prologue -> week one (aquarium, recess, Coach Code with the
 // real Team Training handoff) -> week close -> week 2, then reload. Later weeks: tests/season-story.test.ts.
@@ -168,6 +168,7 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
       await pressStory(page, 'handoff-career', mode);
       await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'team', 'team screen again');
       await press(page, 'team-play', mode);
+      await finishTeamTraining(page, mode);
       await scene(page, 'match', team('done'), 'three situations', 120_000);
       await pressAny(page, 'menu-button', mode);
       await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'team', 'counted');

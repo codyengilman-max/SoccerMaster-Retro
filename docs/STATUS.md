@@ -1,5 +1,12 @@
 # Status
 
+## Training / Schoolyard revision v1.2 (branch `devin/1792431040-training-schoolyard`, PR only, not merged, not deployed)
+
+- **My Training hub:** Career home shows the week's focus card, Team Training (Not started / Complete), Home Practice (optional: sessions, library, journal) and Progress (weekly review, character development, 9v9 match). Nothing was removed; opening a card never changes attributes.
+- **Team Training:** the real 9v9 engine on one half (the half holding the staged ball), camera 1.3× closer, HUD "Team Training · drill · Attempt n/3 · time", Back/Pause, no score or SANDBOX tag, Bell94-style park drawn outside the pitch. Each attempt ends on its objective, turnover, goal, out of play or time, then Retry / Continue; the week is written in one transaction before "Complete". Coverage per drill family: `TRAINING_RELEASE_COVERAGE.md`.
+- **Crossbar Challenge:** new schoolyard backdrop (`crossbar-schoolyard`) and one grounded goal drawn from the same `CROSSBAR` model the simulation scores (`src/render/crossbarView.ts`); one-row HUD; Pause holds help, shot log, text speed and Leave; launches and results are compare-and-commit (`commitLaunch` / `commitResolve`), so a stale tab or double tap cannot launch twice. `?debug&hitbox` draws the scoring band.
+- **Not tested on a physical iPhone.**
+
 ## Season One — 18 weeks + all supplied graphics (branch `devin/1792370575-season-one`, review preview only, not merged, not in production)
 
 - **Story:** Start → Story runs the Season One package: prologue, 81 featured weekly scenes (Monday Cloudy, school, Coach Code, after-training Cloudy, parent every even week), match/tournament scenes and the epilogue, 127 scenes in `docs/story/season-one/season_one_scenes.json`, compiled from `docs/story/season-one/src/*.story` by `scripts/story/build-season-one.py`. Checklist: `docs/story/season-one/COVERAGE.md`.

@@ -262,3 +262,19 @@ export class Finger {
   }
 }
 
+
+/** Team Training: press Continue after each attempt until the week is saved (phase 'done'). */
+export async function finishTeamTraining(page: Page, via: 'mouse' | 'touch', ms = 120_000): Promise<void> {
+  const start = Date.now();
+  for (;;) {
+    const d = await diagnostics(page);
+    const t = (d.gameplay as { teamTraining?: { phase: string } | null } | null)?.teamTraining;
+    if (t?.phase === 'done') return;
+    if (t?.phase === 'review' && d.layout?.elements['tt-continue']) {
+      await pressElement(page, 'tt-continue', via);
+      await page.waitForTimeout(150);
+    }
+    if (Date.now() - start > ms) throw new Error(`team training did not finish: ${JSON.stringify(t)}`);
+    await page.waitForTimeout(100);
+  }
+}
