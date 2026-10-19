@@ -6,7 +6,7 @@ Source format (one statement per line, '#' comments):
   === SCENE_ID background          start a scene (scenes chain in file order)
   Speaker: text                    a dialogue line
   ? key                            a choice; options follow as  * id | Label
-    Speaker: text                  (indented) reply lines for the option above
+    Speaker: text                  (indented) statements for the option above (lines, @if blocks)
   @activity adapter [predicate]    an activity handoff; every outcome continues to the next statement
   @if predicate / @elif / @else / @end   code-resolved branch on saved facts (missing facts -> else)
 Run: python3 scripts/story/build-season-one.py
@@ -54,10 +54,11 @@ def parse_block(lines, i, stops):
             while i < len(lines) and lines[i][1].startswith('* '):
                 oid, label = [x.strip() for x in lines[i][1][2:].split('|', 1)]
                 i += 1
-                replies = []
+                sub = []
                 while i < len(lines) and lines[i][1].startswith('  '):
-                    replies.append(line_item(lines[i][0], lines[i][1].strip()))
+                    sub.append((lines[i][0], lines[i][1][2:]))
                     i += 1
+                replies, _ = parse_block(sub, 0, set())
                 opts.append({'id': oid, 'label': label, 'replies': replies})
             if not opts:
                 die(f'{where}: choice without options')
