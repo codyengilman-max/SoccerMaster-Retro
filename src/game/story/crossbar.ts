@@ -166,7 +166,8 @@ export function nextSlot(c: Contest): { round: Round; participant: Participant; 
   if (c.warmup) plan.push(['warmup', 1]);
   plan.push(['main', MAIN_SHOTS]);
   const mainDone = PARTICIPANTS.every((p) => count('main', p) === MAIN_SHOTS);
-  if (mainDone && points(c, 'player') === points(c, 'blake')) plan.push(['sudden', 1]);
+  // Sudden death is one pair: once the player has shot, Blake always replies, so both have equal attempts.
+  if (mainDone && (points(c, 'player') === points(c, 'blake') || count('sudden', 'player') !== count('sudden', 'blake'))) plan.push(['sudden', 1]);
   for (const [round, n] of plan) {
     for (let i = 0; i < n; i++) for (const who of PARTICIPANTS) if (count(round, who) === i) return { round, participant: who, index: i };
   }
