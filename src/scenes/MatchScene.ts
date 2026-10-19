@@ -1564,7 +1564,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.bannerText.setFontSize(compact ? 18 : 24).setWordWrapWidth(width - 40, true);
     this.panelNote.setWordWrapWidth(Math.min(380, width - 60), true);
     this.computeLayout();
-    this.showPanel(this.sim.state.pauseReasons.user);
+    this.showPanel(this.sim.state.pauseReasons.user && (!this.team || this.team.phase === 'playing'));
     this.coachOverlay.setSuspended(this.sim.state.pauseReasons.user);
   }
 
