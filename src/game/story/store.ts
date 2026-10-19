@@ -25,8 +25,9 @@ export const legacyKey = (careerId: string): string => `legacy-story-${careerId}
  * `legacyKey` and the career starts Season One at the prologue. Player identity, levels and training
  * live in the career save and are untouched; the old four-week ending can no longer be reached.
  */
-function toSeason(careerId: string, p: StoryState): { state: StoryState; archive: StoryState | null } {
-  return p.contentVersion === SEASON_ONE.version ? { state: p, archive: null } : { state: newSeasonStory(careerId), archive: p };
+function toSeason(careerId: string, p: StoryState, raw: unknown): { state: StoryState; archive: unknown } {
+  // The archive is the record exactly as stored, never the in-memory migrated copy.
+  return p.contentVersion === SEASON_ONE.version ? { state: p, archive: null } : { state: newSeasonStory(careerId), archive: raw };
 }
 
 export interface StoryStoreOptions {
@@ -66,6 +67,7 @@ export class StoryStore {
   private run<T>(fn: (st: IDBObjectStore, finish: (v: T) => void, abort: (v: T) => void) => void, fallback: T): Promise<T> {
     return new Promise((resolve) => {
       let result = fallback;
+      let aborted = false;
       let t: IDBTransaction;
       try {
         t = this.db!.transaction(STORE, 'readwrite');
@@ -78,6 +80,7 @@ export class StoryStore {
         (v) => (result = v),
         (v) => {
           result = v;
+          aborted = true;
           try {
             t.abort();
           } catch {
@@ -86,8 +89,9 @@ export class StoryStore {
         },
       );
       t.oncomplete = () => resolve(result);
-      t.onabort = () => resolve(result);
-      t.onerror = () => resolve(result);
+      // A transaction that failed on its own never reports the success value it had prepared.
+      t.onabort = () => resolve(aborted ? result : fallback);
+      t.onerror = () => resolve(aborted ? result : fallback);
     });
   }
 
@@ -98,7 +102,7 @@ export class StoryStore {
       const cur = this.memory.get(careerId);
       const p = cur === undefined ? { ok: true as const, value: newSeasonStory(careerId) } : parseStoryState(cur);
       if (!p.ok) return Promise.resolve({ ok: false, error: p.error });
-      const m = toSeason(careerId, p.value);
+      const m = toSeason(careerId, p.value, cur);
       if (m.archive) this.memory.set(legacyKey(careerId), m.archive);
       this.memory.set(careerId, m.state);
       return Promise.resolve({ ok: true, state: m.state });
@@ -119,7 +123,7 @@ export class StoryStore {
           finish({ ok: false, error: `Story save could not be resumed (${p.error}). A copy was kept.` });
           return;
         }
-        const m = toSeason(careerId, p.value);
+        const m = toSeason(careerId, p.value, req.result);
         if (m.archive) {
           // Archive and switch in the same transaction: either both are written or neither.
           st.put(m.archive, legacyKey(careerId));
@@ -210,6 +214,27 @@ export class StoryStore {
       st.put(value, `rec:${key}`);
       finish(true);
     }, false);
+  }
+
+  /**
+   * Read-modify-write of one record in a single transaction, so two tabs cannot interleave: `fn` sees the
+   * stored value and returns the new value plus a result, or null to leave the record untouched.
+   */
+  updateRecord<T>(key: string, fn: (cur: unknown) => { value: unknown; out: T } | null): Promise<T | null> {
+    if (!this.db) {
+      const r = fn(this.memory.get(`rec:${key}`));
+      if (r) this.memory.set(`rec:${key}`, r.value);
+      return Promise.resolve(r ? r.out : null);
+    }
+    return this.run<T | null>((st, finish) => {
+      const req = st.get(`rec:${key}`);
+      req.onsuccess = () => {
+        const r = fn(req.result);
+        if (!r) return finish(null);
+        st.put(r.value, `rec:${key}`);
+        finish(r.out);
+      };
+    }, null);
   }
 
   close(): void {

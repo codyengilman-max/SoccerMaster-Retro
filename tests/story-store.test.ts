@@ -2,6 +2,7 @@ import { IDBFactory } from 'fake-indexeddb';
 import { describe, expect, it } from 'vitest';
 import { StoryStore, legacyKey } from '../src/game/story/store';
 import { currentNode, newStory } from '../src/game/story/runtime';
+import { STORY } from '../src/game/story/content';
 
 describe('story store (IndexedDB, one transaction per command)', () => {
   it('creates the story once and persists the cursor across reopen', async () => {
@@ -70,5 +71,27 @@ describe('story store (IndexedDB, one transaction per command)', () => {
     expect(again.ok && again.state).toEqual(r.ok && r.state);
     const keys = await new Promise<IDBValidKey[]>((res) => { const q = db.transaction('story').objectStore('story').getAllKeys(); q.onsuccess = () => res(q.result); });
     expect(keys.filter((k) => String(k) === legacyKey('c3'))).toHaveLength(1);
+  });
+});
+
+describe('story store: Season One review fixes', () => {
+  it('archives a finished legacy save exactly as stored, not its migrated cursor', async () => {
+    const f = new IDBFactory();
+    const a = await StoryStore.open(f, 'st2');
+    const sc = STORY.scenes.find((x) => x.nodes.some((n) => n.type === 'end' && n.next_scene))!;
+    const end = sc.nodes.find((n) => n.type === 'end' && n.next_scene)!;
+    const old = { ...newStory('c5'), sceneId: sc.id, nodeId: end.id, complete: true };
+    const db = await new Promise<IDBDatabase>((res) => { const q = f.open('st2', 1); q.onsuccess = () => res(q.result); });
+    await new Promise<void>((res) => { const t = db.transaction('story', 'readwrite'); t.objectStore('story').put(old, 'c5'); t.oncomplete = () => res(); });
+    const r = await a.begin('c5');
+    expect(r.ok && r.state.sceneId).toBe('S1_PRO_IDENTITY');
+    expect(await a.loadLegacy('c5')).toEqual(old);
+  });
+
+  it('updateRecord reads, checks and writes in one transaction and leaves the record alone on refusal', async () => {
+    const a = await StoryStore.open(new IDBFactory(), 'st3');
+    expect(await a.updateRecord('k', (cur) => (cur === undefined ? { value: { goals: 2 }, out: 'first' } : null))).toBe('first');
+    expect(await a.updateRecord('k', (cur) => (cur === undefined ? { value: { goals: 0 }, out: 'second' } : null))).toBeNull();
+    expect(await a.getRecord('k')).toEqual({ goals: 2 });
   });
 });

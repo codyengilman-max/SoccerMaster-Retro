@@ -13,7 +13,7 @@ import type { Position } from '../game/career/types';
 import { type Background, type StoryNode } from '../game/story/content';
 import { attemptKey, contestResult, launchAttempt, newContest, nextSlot, opponentKick, points, resolveAttempt, restoreContest, simulateShot, type Contest, type KickInput, type Participant } from '../game/story/crossbar';
 import { PRONOUNS, renderText, validateName, type Gender } from '../game/story/identity';
-import { createSession, currentNode, outcomeOf, type StoryCommand, type StoryOutcome, type StorySession, type StoryState } from '../game/story/runtime';
+import { createSession, currentNode, evaluatePredicate, outcomeOf, type StoryCommand, type StoryOutcome, type StorySession, type StoryState } from '../game/story/runtime';
 import { StoryStore } from '../game/story/store';
 import { pullFor, thresholdsFor, type Pull } from '../input';
 import { orientationOf } from '../render/layout';
@@ -331,6 +331,12 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     this.busy = true;
     const run = await this.launch();
     if (!run) return void ((this.busy = false), this.render());
+    if (kind === 'tournament_match' && (await this.store.getRecord(`tfix:${run}`)) === undefined) {
+      // The cup fixture is fixed when the run launches, so a second tab finishing the same run cannot move on to the next game.
+      const t = await this.tournament();
+      const f = t ? nextBataviaFixture(t) : null;
+      if (!f || !(await this.store.putRecord(`tfix:${run}`, f.id))) return void ((this.busy = false), (this.message = 'This tournament game could not be prepared. Nothing was changed.'), this.render());
+    }
     if ((await this.store.getRecord(`run:${run}`)) === undefined) {
       const s = this.save;
       const snap: Snapshot = { revision: s.revision, sessions: s.completedSessions.length, batches: s.batches.length, week: s.week };
@@ -386,7 +392,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       return this.complete(run.runId, 'completed', resultOf(full));
     }
     if (n.adapter === 'tournament_match' && full) {
-      const t = await this.recordTournament(full);
+      const t = await this.recordTournament(run.runId, full);
       if (!t) return void (this.message = 'This tournament result could not be recorded. Nothing was changed.');
       return this.complete(run.runId, 'completed', resultOf(full), t.detail);
     }
@@ -422,9 +428,38 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     const week = this.seasonWeekNo();
     const f = week === null ? null : fixtureForSeasonWeek(week);
     if (!f || !this.store || !this.state) return false;
-    const r = recordSeasonPlayed(await this.seasonLeague(), f.id, score.home, score.away);
-    if (!r.ok) return false;
-    await this.store.putRecord(`league-s1:${this.state.careerId}`, simulateSeasonThrough(r.state, f.round));
+    const id = this.state.careerId;
+    const seed = this.seasonSeed();
+    const out = await this.store.updateRecord(`league-s1:${id}`, (cur) => {
+      const saved = parseSeasonLeague(cur);
+      const r = recordSeasonPlayed(saved.ok ? saved.value : newSeasonLeague(id, seed), f.id, score.home, score.away);
+      return r.ok ? { value: simulateSeasonThrough(r.state, f.round), out: true } : null;
+    });
+    return out === true;
+  }
+
+  /** A skipped league game stays pending for Batavia; the other clubs still play their round. */
+  private async skipSeasonLeague(): Promise<boolean> {
+    const week = this.seasonWeekNo();
+    const f = week === null ? null : fixtureForSeasonWeek(week);
+    if (!f || !this.store || !this.state) return false;
+    const id = this.state.careerId;
+    const seed = this.seasonSeed();
+    const out = await this.store.updateRecord(`league-s1:${id}`, (cur) => {
+      const saved = parseSeasonLeague(cur);
+      return { value: simulateSeasonThrough(saved.ok ? saved.value : newSeasonLeague(id, seed), f.round), out: true };
+    });
+    return out === true;
+  }
+
+  /** Every league game has a result and both cups have a final placing. */
+  private async seasonComplete(): Promise<boolean> {
+    if (!this.store || !this.state) return false;
+    if (bataviaRecord(await this.seasonLeague()).pending > 0) return false;
+    for (const tid of Object.keys(TOURNAMENTS) as TournamentId[]) {
+      const t = parseTournament(await this.store.getRecord(`tourney-s1:${this.state.careerId}:${tid}`), tid);
+      if (!t.ok || bataviaFinish(t.value) === null) return false;
+    }
     return true;
   }
 
@@ -441,18 +476,24 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   }
 
   /** Batavia's next due tournament game counts once; detail = playoff assignment or final place. */
-  private async recordTournament(score: { home: number; away: number }): Promise<{ detail: string | null } | null> {
-    const t = await this.tournament();
-    const f = t ? nextBataviaFixture(t) : null;
-    if (!t || !f || !this.store || !this.state) return null;
-    const r = recordTournamentPlayed(t, f.id, score.home, score.away);
-    if (!r.ok) return null;
-    await this.store.putRecord(`tourney-s1:${this.state.careerId}:${t.id}`, r.state);
-    const finish = bataviaFinish(r.state);
-    if (finish) return { detail: finish };
-    const po = playoffs(r.state);
-    if (po) return { detail: po.final.home === 'batavia' || po.final.away === 'batavia' ? 'final' : 'placement' };
-    return { detail: null };
+  private async recordTournament(runId: string, score: { home: number; away: number }): Promise<{ detail: string | null } | null> {
+    const tid = this.tournamentId();
+    if (!tid || !this.store || !this.state) return null;
+    const bound = await this.store.getRecord(`tfix:${runId}`);
+    const id = this.state.careerId;
+    const seed = this.seasonSeed();
+    // Read, check and write in one transaction; a conflicting second result for the same fixture is refused.
+    return this.store.updateRecord(`tourney-s1:${id}:${tid}`, (cur) => {
+      const saved = parseTournament(cur, tid);
+      const t = saved.ok ? saved.value : newTournament(tid, id, seed);
+      const fid = typeof bound === 'string' ? bound : nextBataviaFixture(t)?.id;
+      if (!fid) return null;
+      const r = recordTournamentPlayed(t, fid, score.home, score.away);
+      if (!r.ok) return null;
+      const finish = bataviaFinish(r.state);
+      const po = playoffs(r.state);
+      return { value: r.state, out: { detail: finish ?? (po ? (po.final.home === 'batavia' || po.final.away === 'batavia' ? 'final' : 'placement') : null) } };
+    });
   }
 
   private async fullTimeScore(runId: string): Promise<{ home: number; away: number } | null> {
@@ -515,11 +556,19 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     this.render();
   }
 
+  /** Week one's invitation, or the Season One challenge answer in the current scene (only `warmup` adds one). */
+  private crossbarWarmup(): boolean {
+    const s = this.state;
+    if (!s) return false;
+    if (s.sceneId.startsWith('S1_')) return s.decisions[s.sceneId]?.challenge === 'warmup';
+    const inv = s.decisions.W1_SCHOOL_02?.invitation;
+    return inv === 'accept' || inv === 'shared_warmup';
+  }
+
   private async enterCrossbar(runId: string): Promise<void> {
     if (!this.store || !this.state) return;
     this.runId = runId;
-    const inv = this.state.decisions.W1_SCHOOL_02?.invitation;
-    let c = restoreContest(await this.store.getRecord(`crossbar:${runId}`)) ?? newContest(runId, inv === 'accept' || inv === 'shared_warmup');
+    let c = restoreContest(await this.store.getRecord(`crossbar:${runId}`)) ?? newContest(runId, this.crossbarWarmup());
     if (c.status === 'interrupted') return this.complete(runId, 'interrupted');
     if (c.attempts.some((a) => a.state === 'launched')) {
       const r = resolveAttempt(c);
@@ -776,12 +825,12 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         return;
       }
       case 'crossbar': {
-        const inv = s.decisions.W1_SCHOOL_02?.invitation;
-        if (inv === 'decline') {
+        const declined = s.sceneId.startsWith('S1_') ? evaluatePredicate(s, n.predicate) === false : s.decisions.W1_SCHOOL_02?.invitation === 'decline';
+        if (declined) {
           setBody('You head back with Jordan. No score is recorded.');
           acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.decline() });
         } else {
-          setBody(`Three counted shots each from the same spot.${inv === 'equal_attempts' ? '' : ' One warm-up shot each first (does not count).'} Hit the crossbar to score.`);
+          setBody(`Three counted shots each from the same spot.${this.crossbarWarmup() ? ' One warm-up shot each first (does not count).' : ''} Hit the crossbar to score.`);
           acts.push({ name: 'crossbar-start', label: 'Play crossbar challenge', onClick: () => void this.startCrossbar() });
         }
         return;
@@ -814,7 +863,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         acts.push({ name: 'handoff-skip', label: 'Skip the match', onClick: () => void this.skipRun('declined') });
         return;
       case 'team_training':
-        setBody(`Team Training for week ${this.save?.week ?? 1}: three situations from the team's logic catalog. Same rules as always: up to +2 attribute points for a good week, one per week.`);
+        setBody(`This week's Team Training (career week ${this.save?.week ?? 1}): three situations from the team's logic catalog. Same rules as always: up to +2 attribute points for a good week, one per week.`);
         acts.push({ name: 'handoff-career', label: 'Open Team Training', onClick: () => void this.openCareer('team_training') });
         acts.push({ name: 'handoff-skip', label: 'Not this week', onClick: () => void this.skipRun('declined') });
         return;
@@ -854,7 +903,9 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     if (!this.fresh()) return;
     this.busy = true;
     const run = await this.launch();
-    if (run) await this.complete(run, 'completed');
+    // The season ending reads this detail, so "complete" always means all 12 league results and both cup placings.
+    const detail = run && this.state?.sceneId.startsWith('S1_') ? ((await this.seasonComplete()) ? 'season_complete' : 'season_incomplete') : null;
+    if (run) await this.complete(run, 'completed', null, detail);
     this.busy = false;
     this.render();
   }
@@ -867,7 +918,13 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     if (!this.fresh()) return;
     this.busy = true;
     const run = await this.launch();
-    if (run && this.node()?.type === 'activity_handoff' && (this.node() as { adapter?: string }).adapter === 'match') await this.recordLeague(null);
+    const adapter = this.node()?.type === 'activity_handoff' ? (this.node() as { adapter?: string }).adapter : undefined;
+    if (run && adapter === 'match') await this.recordLeague(null);
+    if (run && adapter === 'league_match' && !(await this.skipSeasonLeague())) {
+      this.message = 'The league table could not be saved. Nothing was changed.';
+      this.busy = false;
+      return this.render();
+    }
     if (run) await this.complete(run, outcome);
     this.busy = false;
     this.render();

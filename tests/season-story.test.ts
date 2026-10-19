@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SEASON_ONE } from '../src/game/story/content';
 import { currentNode, newSeasonStory, outcomeOf, reduceStory, type StoryCommand, type StoryState } from '../src/game/story/runtime';
 import { SEASON_LENGTH, seasonWeek, slotIds } from '../src/game/season/calendar';
-import { bataviaFinish, newTournament, nextBataviaFixture, playoffs, recordTournamentPlayed, type TournamentState } from '../src/game/season/tournament';
+import { TOURNAMENTS, bataviaFinish, newTournament, nextBataviaFixture, playoffs, recordTournamentPlayed, type TournamentState } from '../src/game/season/tournament';
 import { bataviaRecord, fixtureForSeasonWeek, newSeasonLeague, recordSeasonPlayed, simulateSeasonThrough, type SeasonLeagueState } from '../src/game/season/league';
 
 type Score = { home: number; away: number };
@@ -61,6 +61,10 @@ function season(p: Policy = {}) {
           detail = bataviaFinish(rec.state) ?? (po ? (po.final.home === 'batavia' || po.final.away === 'batavia' ? 'final' : 'placement') : null);
         }
         s = step(s, { type: 'complete', runId: r.runId, outcome: 'completed', result: res(sc), detail });
+      } else if (n.adapter === 'standings') {
+        // Same rule as StoryScene.seasonComplete: all 12 league results and both cup placings.
+        const done = bataviaRecord(league).pending === 0 && Object.keys(TOURNAMENTS).every((tid) => cups[tid] && bataviaFinish(cups[tid]!) !== null);
+        s = step(s, { type: 'complete', runId: r.runId, outcome: 'completed', detail: done ? 'season_complete' : 'season_incomplete' });
       } else s = step(s, { type: 'complete', runId: r.runId, outcome: 'completed' });
     }
   }
@@ -68,6 +72,15 @@ function season(p: Policy = {}) {
 }
 
 describe('Season One story', () => {
+  it('a skipped league game keeps the season ending neutral instead of calling the season complete', () => {
+    const { s, league, said } = season({ score: (id) => (id.startsWith('S1_W05_') ? null : { home: 2, away: 1 }) });
+    expect(s.complete).toBe(true);
+    expect(bataviaRecord(league).pending).toBe(1);
+    expect(outcomeOf(s, 'S1_END_FIELD')!.detail).toBe('season_incomplete');
+    expect(said).toMatch(/season is incomplete/);
+    expect(said).not.toMatch(/Twelve league games, two tournaments/);
+  });
+
   it('contains the prologue, all 81 featured weekly slots and the epilogue', () => {
     const ids = new Set(SEASON_ONE.order);
     let featured = 0;
@@ -95,6 +108,7 @@ describe('Season One story', () => {
       if (name === 'all-win') expect(outcomeOf(s, 'S1_W09_G4')!.detail).toBe('champion');
       if (name === 'all-loss') expect(outcomeOf(s, 'S1_W09_G4')!.detail).toBe('fourth');
       if (name === 'all-draw') expect(said).toMatch(/shared/);
+      expect(said).toMatch(/Twelve league games, two tournaments/);
     });
   }
 

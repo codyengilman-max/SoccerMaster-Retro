@@ -13317,7 +13317,7 @@
      "type": "branch",
      "cases": [
       {
-       "predicate": "done:S1_W18_G",
+       "predicate": "detail:S1_END_FIELD=season_complete",
        "next": "n11"
       }
      ],

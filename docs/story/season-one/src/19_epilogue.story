@@ -3,7 +3,7 @@
 === S1_END_FIELD neutral_pitch
 System: Final whistle on the season.
 @activity standings
-@if done:S1_W18_G
+@if detail:S1_END_FIELD=season_complete
 Coach Code: Twelve league games, two tournaments. The table is the table. I saw real contributions from you this season.
 @else
 Coach Code: Some games are still unplayed, so the season is incomplete. I'd need more evidence before saying more.
