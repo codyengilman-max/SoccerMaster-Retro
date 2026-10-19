@@ -28,8 +28,21 @@ async function tapStage(page: Page, mode: 'touch' | 'mouse'): Promise<void> {
   if (mode === 'touch') await page.touchscreen.tap(p.x, p.y);
   else await page.mouse.click(p.x, p.y);
 }
-/** Start the story, choose girl + a name, and stop on the first bedroom line. */
-async function toBedroom(page: Page, mode: 'touch' | 'mouse'): Promise<Story> {
+/** Tap lines and take the first choice until `pred` holds. */
+async function advanceTo(page: Page, mode: 'touch' | 'mouse', pred: (s: Story) => boolean, what: string): Promise<Story> {
+  for (let i = 0; i < 60; i++) {
+    const s = await story(page, (x) => x.mode === 'story', 'story');
+    if (pred(s)) return s;
+    if (s.type === 'line') await tapStage(page, mode);
+    else if (s.type === 'choice') await press(page, s.buttons[0]!, mode);
+    else throw new Error(`unexpected node before ${what}: ${JSON.stringify(s)}`);
+    await story(page, (x) => x.revision !== s.revision, `advance towards ${what}`);
+    await page.waitForTimeout(80);
+  }
+  throw new Error(`never reached ${what}`);
+}
+/** Start Season One, choose girl + a name, and stop on the first moving-day line. */
+async function toDeparture(page: Page, mode: 'touch' | 'mouse'): Promise<Story> {
   page.on('dialog', (d) => void d.accept('Zoë'));
   await page.goto('/?debug=1');
   await waitForScene(page, 'start');
@@ -45,41 +58,51 @@ async function toBedroom(page: Page, mode: 'touch' | 'mouse'): Promise<Story> {
   await press(page, 'id-name', mode);
   await page.waitForTimeout(200);
   await press(page, 'id-confirm', mode);
-  return story(page, (s) => s.scene === 'W1_HOME_01' && s.type === 'line', 'bedroom line');
+  await story(page, (s) => s.scene !== 'S1_PRO_IDENTITY', 'identity confirmed');
+  return advanceTo(page, mode, (s) => s.scene === 'S1_PRO_DEPART' && s.type === 'line', 'departure line');
+}
+async function toAquarium(page: Page, mode: 'touch' | 'mouse'): Promise<Story> {
+  await toDeparture(page, mode);
+  return advanceTo(page, mode, (s) => s.scene === 'S1_PRO_ROOM' && s.type === 'line', 'aquarium line');
 }
 
-test('cutscenes show the mapped backdrop and pinned home outfit, highlight the speaker, and never write story state', async ({ page }, info) => {
+test('Season One cutscenes: departure plate and aquarium for the chosen girl, speaker highlight, never write story state', async ({ page }, info) => {
   const errors = trackConsoleErrors(page);
-  const s = await toBedroom(page, modeFor(info));
+  await toDeparture(page, modeFor(info));
+  const depart = await story(page, (x) => x.art?.backgroundShown === true, 'departure art loaded');
+  expect(depart.art!.background).toBe('departure-girl');
+  expect(depart.art!.cast).toEqual([]);
+  const s = await advanceTo(page, modeFor(info), (x) => x.scene === 'S1_PRO_ROOM' && x.type === 'line', 'aquarium line');
   const ready = await story(page, (x) => x.art?.backgroundShown === true && (x.art?.cast.every((c) => c.state === 'shown') ?? false), 'art loaded');
-  expect(ready.art!.background).toBe('bedroom');
-  expect(ready.art!.cast.map((c) => [c.role, c.assetId])).toEqual([['player', 'girl-home'], ['fish', 'fish-tank']]);
+  expect(ready.art!.background).toBe('s1-bedroom-tank');
+  expect(ready.art!.cast.map((c) => [c.role, c.assetId])).toEqual([['player', 'player-girl-down'], ['fish', 'clownfish']]);
   const speaking = ready.art!.cast.filter((c) => c.speaking).map((c) => c.role);
   expect(speaking).toEqual(ready.art!.speakerRole ? [ready.art!.speakerRole] : []);
   // Image loading and idle time do not advance or rewrite the story.
   await page.waitForTimeout(1200);
   const idle = (await diagnostics(page)).gameplay as Story;
   expect(idle.revision).toBe(s.revision);
-  expect(idle.scene).toBe('W1_HOME_01');
+  expect(idle.scene).toBe('S1_PRO_ROOM');
   expect(errors).toEqual([]);
 });
 
 test.describe('reduced motion', () => {
   test('reduced motion is honoured and the art textures are released on leaving the story', async ({ page }, info) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await toBedroom(page, modeFor(info));
+    await toAquarium(page, modeFor(info));
     const s = await story(page, (x) => x.art?.backgroundShown === true, 'art loaded');
     expect(s.art!.reducedMotion).toBe(true);
     await press(page, 'story-menu', modeFor(info));
     await waitForScene(page, 'start');
     const keys = (await diagnostics(page)).textureKeys as readonly string[];
-    expect(keys.filter((k) => k.startsWith('art-v1:'))).toEqual([]);
+    // Only the start screen's own illustration may be resident once the story has shut down.
+    expect(keys.filter((k) => k.startsWith('art-v1:'))).toEqual(keys.includes('art-v1:home-screen') ? ['art-v1:home-screen'] : []);
   });
 });
 
 test('missing art falls back to labelled placeholders and the story still advances', async ({ page }, info) => {
   await page.route('**/*.webp', (r) => r.abort());
-  const s = await toBedroom(page, modeFor(info));
+  const s = await toAquarium(page, modeFor(info));
   const failed = await story(page, (x) => (x.art?.cast.length ?? 0) > 0 && x.art!.cast.every((c) => c.state === 'failed'), 'fallback');
   expect(failed.art!.backgroundShown).toBe(false);
   expect(failed.art!.cast.every((c) => c.assetId !== null)).toBe(true);
@@ -97,7 +120,7 @@ test('Art Gallery is reachable from Review & Lab, lists every asset with its sta
   await press(page, 'hub-art', mode);
   await waitForScene(page, 'gallery');
   const seen = new Set<string>();
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 9; i++) {
     const g = await (async () => {
       let v: { page: { kind: string }; shown: string[]; loaded: string[]; title: string; gaps: number } | null = null;
       await expect.poll(async () => {
@@ -113,7 +136,7 @@ test('Art Gallery is reachable from Review & Lab, lists every asset with its sta
     if (g.page.kind === 'gaps') expect(g.gaps).toBeGreaterThan(0);
     await press(page, 'gallery-next', mode);
   }
-  expect(seen.size).toBe(28);
+  expect(seen.size).toBe(42);
   await press(page, 'gallery-back', mode);
   await waitForScene(page, 'career');
   const career = (await diagnostics(page)).gameplay as { player: string | null; screen: string };

@@ -7,8 +7,8 @@ const { MatchSim, MATCH_TUNING: T } = match;
 type Sim = InstanceType<typeof MatchSim>;
 const F = 1 / 60;
 const run = (sim: Sim, s: number, f = F) => { for (let i = 0; i < Math.round(s / f); i++) sim.step(f); };
-function setup(): Sim {
-  const sim = new MatchSim({ seed: 7 });
+function setup(kicking: match.KickingMode = 'v11'): Sim {
+  const sim = new MatchSim({ seed: 7, kicking });
   run(sim, T.kickoff.countdownSeconds + 2 * F);
   sim.arrange((s) => {
     const p = s.players.H7;
@@ -122,8 +122,8 @@ describe('FIFA assisted passing', () => {
   let n = 1000;
   const press = (sim: Sim, action: match.PadAction) => sim.command({ type: 'padPress', id: ++n, action });
   const release = (sim: Sim, action: match.PadAction) => sim.command({ type: 'padRelease', id: ++n, action });
-  const stage = (mates: Record<string, { x: number; y: number }>, vel: Record<string, { x: number; y: number }> = {}) => {
-    const sim = setup();
+  const stage = (mates: Record<string, { x: number; y: number }>, vel: Record<string, { x: number; y: number }> = {}, kicking: match.KickingMode = 'v11') => {
+    const sim = setup(kicking);
     sim.arrange((s) => {
       for (const id of match.TEAM_PLAYER_IDS.home) {
         if (id === 'H7' || s.players[id].isKeeper) continue;
@@ -146,9 +146,9 @@ describe('FIFA assisted passing', () => {
     expect(press(sim, 'pass')).toBe(true);
     expect(sim.state.pad.receiver).toBe('H9');
   });
-  it('prefers a near teammate close to the line over a far one at a smaller angle', () => {
+  it('classic (?kick=classic): prefers a near teammate close to the line over a far one at a smaller angle', () => {
     // H8: 8 yd away, 20° off (2.7 yd from the line). H9: 25 yd away, 10° off (4.3 yd from the line).
-    const sim = stage({ H8: { x: 47.5, y: 27.74 }, H9: { x: 64.6, y: 29.34 } });
+    const sim = stage({ H8: { x: 47.5, y: 27.74 }, H9: { x: 64.6, y: 29.34 } }, {}, 'classic');
     sim.command({ type: 'padMove', x: 1, y: 0 });
     expect(press(sim, 'pass')).toBe(true);
     expect(sim.state.pad.receiver).toBe('H8');
@@ -159,8 +159,8 @@ describe('FIFA assisted passing', () => {
     expect(press(sim, 'pass')).toBe(true);
     expect(sim.state.pad.receiver).toBeNull();
   });
-  it('records the target search for ?debug&passlog in pre-allocated slots', () => {
-    const sim = stage({ H8: { x: 47.5, y: 27.74 }, H9: { x: 64.6, y: 29.34 } });
+  it('classic (?kick=classic): records the target search for ?debug&passlog in pre-allocated slots', () => {
+    const sim = stage({ H8: { x: 47.5, y: 27.74 }, H9: { x: 64.6, y: 29.34 } }, {}, 'classic');
     const slots = [...sim.passScan.entries];
     sim.command({ type: 'padMove', x: 1, y: 0 });
     press(sim, 'pass');
@@ -171,6 +171,15 @@ describe('FIFA assisted passing', () => {
     expect(h8.inCone).toBe(true);
     expect(h8.perp).toBeCloseTo(2.74, 1);
     expect(scan.entries.every((e, i) => e === slots[i])).toBe(true);
+  });
+  it('v1.1: ranks angular alignment first, so the teammate nearer the aim wins over a near one 20 deg off', () => {
+    const sim = stage({ H8: { x: 47.5, y: 27.74 }, H9: { x: 64.6, y: 29.34 } });
+    const slots = [...sim.passScan.entries];
+    sim.command({ type: 'padMove', x: 1, y: 0 });
+    expect(press(sim, 'pass')).toBe(true);
+    expect(sim.state.pad.receiver).toBe('H9');
+    expect(sim.passScan.chosen).toBe('H9');
+    expect(sim.passScan.entries.every((e, i) => e === slots[i])).toBe(true);
   });
   it('leads the selected receiver onto their run', () => {
     const sim = stage({ H9: { x: 55, y: 25 } }, { H9: { x: 0, y: 4 } });

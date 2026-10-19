@@ -4,15 +4,24 @@
  */
 import raw from '../../../docs/story/v0.7/week_one_scenes.json';
 import rawExt from '../../../docs/story/weeks-2-4/weeks_2_4_draft.json';
+import rawSeason from '../../../docs/story/season-one/season_one_scenes.json';
 
-export const ADAPTERS = ['identity', 'crossbar', 'training_arrangement', 'weekly_focus', 'practice', 'assignment', 'match', 'week_close', 'jungle'] as const;
+export const ADAPTERS = ['identity', 'crossbar', 'training_arrangement', 'weekly_focus', 'practice', 'assignment', 'match', 'week_close', 'jungle', 'team_training', 'league_match', 'tournament_match', 'standings'] as const;
 export type AdapterKind = (typeof ADAPTERS)[number];
 export const PREDICATES = ['always', 'crossbar_accepted', 'jungle_accepted', 'promise_made', 'promise_kept', 'promise_cancelled', 'promise_missed', 'promise_repaired'] as const;
-export type PredicateId = (typeof PREDICATES)[number];
+export type LegacyPredicateId = (typeof PREDICATES)[number];
+/**
+ * Season One adds parametric predicates, still code-evaluated (no expressions):
+ * `chose:SCENE.key=a|b` (a saved choice), `result:SCENE=WIN|DRAW|LOSS` (a completed match/challenge),
+ * `detail:SCENE=x|y` (a completed activity's recorded detail, e.g. a tournament finish),
+ * `done:SCENE` (an activity in that scene completed). Missing facts are never true.
+ */
+export type PredicateId = string;
+const PARAM_PREDICATE = /^(chose:[A-Za-z0-9_]{1,64}\.[A-Za-z0-9_]{1,64}=[A-Za-z0-9_|]{1,128}|result:[A-Za-z0-9_]{1,64}=(WIN|DRAW|LOSS)(\|(WIN|DRAW|LOSS)){0,2}|detail:[A-Za-z0-9_]{1,64}=[A-Za-z0-9_|]{1,128}|done:[A-Za-z0-9_]{1,64})$/;
 export const OUTCOMES = ['completed', 'declined', 'abandoned', 'interrupted'] as const;
 export type Outcome = (typeof OUTCOMES)[number];
-const FULL_OUTCOMES: readonly AdapterKind[] = ['crossbar', 'practice', 'match', 'jungle'];
-export const BACKGROUNDS = ['neutral_school', 'neutral_home', 'neutral_pitch'] as const;
+const FULL_OUTCOMES: readonly AdapterKind[] = ['crossbar', 'practice', 'match', 'jungle', 'team_training', 'league_match', 'tournament_match'];
+export const BACKGROUNDS = ['neutral_school', 'neutral_home', 'neutral_pitch', 'aquarium', 'recess', 'prologue'] as const;
 export type Background = (typeof BACKGROUNDS)[number];
 
 export interface Effect { readonly op: 'remember_choice'; readonly key: string; readonly value: string }
@@ -55,8 +64,9 @@ function oneOf<T extends string>(v: J, list: readonly T[], w: string): T {
 
 export const SUPPORTED_VERSION = '0.7';
 export const EXTENSION_VERSION = 'w24-draft-1';
+export const SEASON_VERSION = 's1-v1.0';
 
-export function parseCatalog(input: J, opts: { version?: string; branches?: boolean; allowOpenLinks?: boolean } = {}): StoryCatalog {
+export function parseCatalog(input: J, opts: { version?: string; branches?: boolean; allowOpenLinks?: boolean; season?: boolean } = {}): StoryCatalog {
   const version = opts.version ?? SUPPORTED_VERSION;
   if (!isObj(input)) fail('catalog: expected object');
   const c = input as Record<string, J>;
@@ -64,6 +74,7 @@ export function parseCatalog(input: J, opts: { version?: string; branches?: bool
   if (c.version !== version) fail(`catalog: unsupported version ${String(c.version)}`);
   if (!Array.isArray(c.scenes) || c.scenes.length === 0 || c.scenes.length > 200) fail('catalog: scenes');
   const scenes: StoryScene[] = [];
+  const pred = (v: J, w: string): string => (opts.season && typeof v === 'string' && PARAM_PREDICATE.test(v) ? v : oneOf(v, PREDICATES, w));
   const sceneIds = new Set<string>();
   const links = new Map<string, string | null>();
   for (const [i, s] of (c.scenes as J[]).entries()) {
@@ -123,7 +134,7 @@ export function parseCatalog(input: J, opts: { version?: string; branches?: bool
       } else if (t === 'activity_handoff') {
         keys(no, ['id', 'type', 'adapter', 'predicate', 'on_false', 'outcomes'], nw);
         const adapter = oneOf(no.adapter, ADAPTERS, `${sid}.${nid}.adapter`);
-        const predicate = oneOf(no.predicate, PREDICATES, `${sid}.${nid}.predicate`);
+        const predicate = pred(no.predicate, `${sid}.${nid}.predicate`);
         if (!isObj(no.outcomes)) fail(`${sid}.${nid}: outcomes`);
         const oc = no.outcomes as Record<string, J>;
         const required: readonly Outcome[] = FULL_OUTCOMES.includes(adapter) ? OUTCOMES : ['completed'];
@@ -141,7 +152,7 @@ export function parseCatalog(input: J, opts: { version?: string; branches?: bool
           if (!isObj(cv)) fail(`${sid}.${nid}.cases[${ci}]: expected object`);
           const co = cv as Record<string, J>;
           keys(co, ['predicate', 'next'], `${sid}.${nid}.cases[${ci}]`);
-          return { predicate: oneOf(co.predicate, PREDICATES, `${sid}.${nid}.cases[${ci}].predicate`), next: id(co.next, `${sid}.${nid}.cases[${ci}].next`) };
+          return { predicate: pred(co.predicate, `${sid}.${nid}.cases[${ci}].predicate`), next: id(co.next, `${sid}.${nid}.cases[${ci}].next`) };
         });
         const dflt = id(no.default, `${sid}.${nid}.default`);
         nodes.push({ id: nid, type: 'branch', cases, default: dflt });
@@ -183,7 +194,29 @@ export function parseCatalog(input: J, opts: { version?: string; branches?: bool
     order.push(s);
   }
   if (order.length !== sceneIds.size) fail('catalog: unreachable scene');
+  if (opts.season) checkReferences(scenes, order);
   return { version: c.version as string, entry, scenes, order };
+}
+
+/** Every parametric predicate must name an earlier scene (and, for `chose:`, a real choice and option). */
+function checkReferences(scenes: readonly StoryScene[], order: readonly string[]): void {
+  const at = new Map(order.map((sid, i) => [sid, i]));
+  for (const sc of scenes) {
+    const preds = sc.nodes.flatMap((n) => (n.type === 'branch' ? n.cases.map((c) => c.predicate) : n.type === 'activity_handoff' ? [n.predicate] : []));
+    for (const p of preds) {
+      if (p === 'always' || !p.includes(':')) continue;
+      const [kind, rest] = p.split(':') as [string, string];
+      const target = rest.split(/[.=]/)[0]!;
+      const tScene = scenes.find((x) => x.id === target);
+      if (!tScene || at.get(target)! > at.get(sc.id)!) fail(`${sc.id}: predicate ${p} names a missing or later scene`);
+      if (kind === 'chose') {
+        const [key, values] = rest.slice(target.length + 1).split('=') as [string, string];
+        const node = tScene!.nodes.find((n) => n.id === key);
+        if (node?.type !== 'choice') fail(`${sc.id}: predicate ${p} names a missing choice`);
+        for (const v of values.split('|')) if (node?.type === 'choice' && !node.options.some((o) => o.id === v)) fail(`${sc.id}: predicate ${p} names a missing option ${v}`);
+      }
+    }
+  }
 }
 
 /** Week one stays byte-identical to the package; only its final callback now leads into week 2. */
@@ -196,12 +229,16 @@ export function mergeCatalogs(week1: StoryCatalog, ext: StoryCatalog): StoryCata
 export const WEEK_ONE: StoryCatalog = parseCatalog(raw);
 export const WEEKS_2_4: StoryCatalog = parseCatalog(rawExt, { version: EXTENSION_VERSION, branches: true });
 export const STORY: StoryCatalog = mergeCatalogs(WEEK_ONE, WEEKS_2_4);
+/** Season One (story package v1.0): prologue, 18 weeks (81 featured slots plus match/week-close steps) and the epilogue. */
+export const SEASON_ONE: StoryCatalog = parseCatalog(rawSeason, { version: SEASON_VERSION, branches: true, season: true });
+export const CATALOGS: readonly StoryCatalog[] = [STORY, SEASON_ONE];
+export const catalogFor = (version: string): StoryCatalog | undefined => CATALOGS.find((c) => c.version === version);
 /** Scene ids whose dialogue Devin drafted from the outline (provenance); the owner approved it on WEEKS_2_4_OWNER_APPROVED. */
 export const WEEKS_2_4_OWNER_APPROVED = '2026-10-16';
 export const DRAFT_SCENES: ReadonlySet<string> = new Set(WEEKS_2_4.order);
 
 export function sceneById(sid: string): StoryScene | undefined {
-  return STORY.scenes.find((s) => s.id === sid);
+  return STORY.scenes.find((s) => s.id === sid) ?? SEASON_ONE.scenes.find((s) => s.id === sid);
 }
 export function nodeById(scene: StoryScene, nid: string): StoryNode | undefined {
   return scene.nodes.find((n) => n.id === nid);

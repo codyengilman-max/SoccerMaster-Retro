@@ -43,6 +43,7 @@ import { MATCH_TUNING } from '../game/match/tuning';
 const CAREER_SLOT: Readonly<Record<Position, 'H3' | 'H5' | 'H8'>> = { DEF: 'H3', MID: 'H5', FWD: 'H8' };
 const CAREER_FLUSH_SECONDS = 30;
 import { SceneKeys } from './keys';
+import { artTextureKey, artUrl } from '../render/art/urls';
 import { Button } from './ui/Button';
 import { COACH_OVERLAY_DEPTH, CoachOverlay } from './ui/CoachOverlay';
 import { PLAYER_ART, PlayerArt } from '../render/art/playerArt';
@@ -133,6 +134,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private helpText!: Phaser.GameObjects.Text;
   private toastText!: Phaser.GameObjects.Text;
   private bannerText!: Phaser.GameObjects.Text;
+  private eventArt: Phaser.GameObjects.Image | null = null;
+  private eventArtFor: unknown = null;
+  private eventArtShown = { goal: 0, foul: 0 };
   private devText!: Phaser.GameObjects.Text;
   private panel!: Phaser.GameObjects.Graphics;
   private panelTitle!: Phaser.GameObjects.Text;
@@ -201,7 +205,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         : MATCH_TUNING.match.halfSeconds;
     this.breakKey = '';
     this.breakMode = '';
-    this.sim = new MatchSim({ seed, homeFormation: formation, halfSeconds, });
+    // `?kick=classic` restores the previous passing/shooting model (rollback switch; no save changes).
+    const kicking = params.get('kick') === 'classic' ? 'classic' : 'v11';
+    this.sim = new MatchSim({ seed, homeFormation: formation, halfSeconds, kicking });
     this.stageLab();
     if (shouldExposeDebug(window.location)) this.applyDebugSetup(params.get('setup'));
     this.passLog = shouldExposeDebug(window.location) && params.has('passlog');
@@ -253,6 +259,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.toastText = text(15).setOrigin(0.5, 0.5).setDepth(6002);
     this.rotateText = text(11, CSS.cream).setOrigin(0, 0.5).setDepth(6001).setText('Turn sideways for\na closer view');
     this.bannerText = text(24).setOrigin(0.5, 0.5).setDepth(6002);
+    this.eventArt = null;
+    this.eventArtFor = null;
+    this.eventArtShown = { goal: 0, foul: 0 };
 
     const hudButton = (name: string, label: string, onClick: () => void, cream = false): Button =>
       new Button(this, 0, 0, {
@@ -539,6 +548,14 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     ) as MatchReport['players'];
     const bs = toScreen(L, s.ball.pos);
     return {
+      kick: {
+        mode: this.sim.kickingMode,
+        preview: this.sim.aimPreview(),
+        last: this.sim.kickLog.at(-1) ?? null,
+        kicks: this.sim.kickLog.length,
+        touch: this.sim.lastTouch ? { ...this.sim.lastTouch } : null,
+        targetSwitches: this.sim.targetSwitches,
+      },
       phase: s.phase,
       clock: s.clock ? { half: s.clock.half, elapsed: s.clock.elapsed, halfSeconds: s.clock.halfSeconds, label: match.clockLabel(s.clock) } : null,
       result: s.phase === 'fulltime' ? match.matchResult(s) : null,
@@ -554,6 +571,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       dribbleDir: { x: s.dribbleDir.x, y: s.dribbleDir.y },
       score: { ...s.score },
       stoppage: s.stoppage ? { reason: s.stoppage.reason, scorer: s.stoppage.scorer, restartTeam: s.stoppage.restartTeam } : null,
+      eventArt: { ...this.eventArtShown, visible: this.eventArt?.visible ?? false },
       defense: {
         home: { presserId: s.defense.home.presserId, coverId: s.defense.home.coverId },
         away: { presserId: s.defense.away.presserId, coverId: s.defense.away.coverId },
@@ -960,7 +978,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.cancelInput('navigation');
     this.coachDirector?.abandon(this.sim);
     if (this.team) {
-      this.scene.start(SceneKeys.Career, { open: 'team' });
+      this.scene.start(SceneKeys.Career, { open: 'team', ...(this.returnTo === 'story' ? { returnTo: 'story' as const } : {}) });
       return;
     }
     this.scene.start(this.returnTo === 'story' ? SceneKeys.Story : SceneKeys.Start, this.returnTo === 'story' ? { resume: true } : undefined);
@@ -1161,6 +1179,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   }
 
   private handleShutdown(): void {
+    for (const id of ['goal-banner', 'referee-foul']) if (this.textures.exists(artTextureKey(id))) this.textures.remove(artTextureKey(id));
+    this.eventArt = null;
     this.art?.destroy();
     const store = this.careerStore;
     void this.flushCareer(true).finally(() => store?.close());
@@ -1184,6 +1204,38 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     window.removeEventListener('blur', this.onWindowBlur);
     this.pad?.destroy();
     this.pad = null;
+  }
+
+  /**
+   * Goal banner / referee art bound to the sim's own stoppage: shown only for a confirmed goal or a
+   * foul decision, counted once per stoppage object, hidden when play restarts. Presentation only.
+   */
+  private showEventArt(st: { reason: string } | null, width: number, height: number): void {
+    if (!st) {
+      this.eventArt?.setVisible(false);
+      return;
+    }
+    const id = st.reason === 'goal' ? 'goal-banner' : 'referee-foul';
+    if (this.eventArtFor !== st) {
+      this.eventArtFor = st;
+      this.eventArtShown[st.reason === 'goal' ? 'goal' : 'foul']++;
+    }
+    const key = artTextureKey(id);
+    if (!this.textures.exists(key)) {
+      const url = artUrl(id);
+      if (url && !this.load.isLoading()) {
+        this.load.image(key, url);
+        this.load.start();
+      }
+      this.eventArt?.setVisible(false);
+      return;
+    }
+    if (!this.eventArt) this.eventArt = this.add.image(0, 0, key).setDepth(6001);
+    if (this.eventArt.texture.key !== key) this.eventArt.setTexture(key);
+    const box = id === 'goal-banner' ? { w: width * 0.7, h: height * 0.32 } : { w: width * 0.32, h: height * 0.38 };
+    const k = Math.min(box.w / this.eventArt.width, box.h / this.eventArt.height);
+    const y = id === 'goal-banner' ? height / 2 - (this.eventArt.height * k) / 2 - 18 : height / 2 - (this.eventArt.height * k) / 2 - 22;
+    this.eventArt.setScale(k).setPosition(width / 2, Math.max(this.eventArt.height * k * 0.5 + 4, y)).setVisible(true);
   }
 
   // ---- sim events ----------------------------------------------------------------------------
@@ -1710,6 +1762,52 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const y = p.y - playerH * 1.6;
     o.fillStyle(PALETTE.ink, 0.6).fillRect(p.x - w / 2, y, w, 6);
     o.fillStyle(pad.phase === 'chargingPass' ? PALETTE.grassLight : PALETTE.tomato, 1).fillRect(p.x - w / 2, y, w * f, 6);
+    this.drawKickPreview(playerH);
+  }
+
+  /** v1.1 pre-release feedback, drawn only from the sim's own preview: pass line to the receiving point, shot aim line and goal-line marker. */
+  private drawKickPreview(playerH: number): void {
+    const pv = this.sim.aimPreview();
+    if (!pv) return;
+    const L = this.pitchLayout;
+    const o = this.over;
+    const from = toScreen(L, pv.origin);
+    if (pv.kind === 'pass') {
+      const t = toScreen(L, pv.plan.target);
+      o.lineStyle(2, PALETTE.cream, 0.55);
+      o.lineBetween(from.x, from.y, t.x, t.y);
+      o.fillStyle(pv.plan.capped ? PALETTE.tomato : PALETTE.cream, 0.9);
+      o.fillCircle(t.x, t.y, Math.max(3, playerH * 0.12));
+      return;
+    }
+    const sh = pv.shot;
+    const reach = 7;
+    const end = toScreen(L, { x: pv.origin.x + sh.dir.x * reach, y: pv.origin.y + sh.dir.y * reach });
+    o.lineStyle(3, PALETTE.tomato, 0.85);
+    o.lineBetween(from.x, from.y, end.x, end.y);
+    if (!sh.hit) return;
+    const m = toScreen(L, sh.hit);
+    const W = this.scale.width;
+    const H = this.scale.height;
+    const r = Math.max(4, playerH * 0.18);
+    const inside = m.x >= 0 && m.x <= W && m.y >= 0 && m.y <= H;
+    if (inside) {
+      o.lineStyle(3, sh.onTarget ? PALETTE.mustard : PALETTE.tomato, 1);
+      o.lineBetween(m.x - r, m.y - r, m.x + r, m.y + r);
+      o.lineBetween(m.x - r, m.y + r, m.x + r, m.y - r);
+      return;
+    }
+    // Marker off-screen: a chevron on the screen edge, pointing the way the goal-line hit lies.
+    this.guideOffscreen = true;
+    const ex = Phaser.Math.Clamp(m.x, r * 2, W - r * 2);
+    const ey = Phaser.Math.Clamp(m.y, r * 2, H - r * 2);
+    const a = Math.atan2(m.y - ey, m.x - ex);
+    o.fillStyle(sh.onTarget ? PALETTE.mustard : PALETTE.tomato, 1);
+    o.fillTriangle(
+      ex + Math.cos(a) * r * 1.6, ey + Math.sin(a) * r * 1.6,
+      ex + Math.cos(a + 2.4) * r, ey + Math.sin(a + 2.4) * r,
+      ex + Math.cos(a - 2.4) * r, ey + Math.sin(a - 2.4) * r,
+    );
   }
 
   private drawAimGuide(playerH: number): void {
@@ -1796,6 +1894,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       const second = s.clock?.half === 2 && s.clock.elapsed === 0;
       banner = s.simTime < 0.01 ? kickoffs[0]! : second ? kickoffs[1]! : kickoffs[2]!;
     }
+    this.showEventArt(s.phase === 'stopped' && st && (st.reason === 'goal' || st.reason === 'foul') ? st : null, width, height);
     this.bannerMessage = banner;
     this.bannerText.setVisible(banner !== '' && !s.paused).setText(banner).setPosition(width / 2, height / 2);
     const toastOn = this.toastUntil > performance.now() && !s.paused;

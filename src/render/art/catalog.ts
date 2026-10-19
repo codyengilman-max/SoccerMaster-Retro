@@ -7,6 +7,8 @@ import sceneMapRaw from '../../../docs/art/graphics-v1/assets/scene-visual-map.j
 import wardrobeRaw from '../../../docs/art/graphics-v1/assets/wardrobe-map.json';
 import continuityRaw from '../../../docs/art/graphics-v1/assets/character-continuity.json';
 import runtimeRaw from '../../assets/art/v1/runtime-manifest.json';
+import seasonOneRaw from '../../../docs/art/season-one/asset-manifest.json';
+import { SEASON_ONE, sceneById } from '../../game/story/content';
 
 export const ART_REVISION = 'graphics-v1.1';
 /** Owner approved every Graphics v1.1 image on this date; the package manifest's own status field stays as supplied. */
@@ -19,7 +21,7 @@ export type Presentation = 'cutscene' | 'system_panel' | 'activity_handoff';
 
 export interface ArtAsset {
   readonly assetId: string;
-  readonly type: 'portrait' | 'background';
+  readonly type: 'portrait' | 'background' | 'overlay';
   readonly characterId: VisualId | null;
   readonly label: string;
   readonly outfitId: string | null;
@@ -52,7 +54,7 @@ const ID_RE = /^[a-z0-9-]{1,40}$/;
 const SCENE_RE = /^[A-Z0-9_]{1,40}$/;
 
 export const ART_ASSETS: readonly ArtAsset[] = Object.freeze(
-  (manifestRaw.assets as unknown as ArtAsset[]).map((a) => {
+  ([...manifestRaw.assets, ...seasonOneRaw.assets] as unknown as ArtAsset[]).map((a) => {
     if (!ID_RE.test(a.assetId)) throw new Error(`art manifest: bad asset id ${a.assetId}`);
     return Object.freeze({ ...a });
   }),
@@ -145,6 +147,8 @@ export const SPEAKER_ROLE: Readonly<Record<string, CastRole>> = Object.freeze({
   'Coach Code': 'coach',
   Alex: 'alex',
   Sam: 'sam',
+  Riley: 'riley',
+  Cloudy: 'fish',
 });
 
 export function variantAsset(visualId: VisualId, outfit: string): string | null {
@@ -156,7 +160,7 @@ export function variantAsset(visualId: VisualId, outfit: string): string | null 
 export function sceneVisual(sceneId: unknown, appearance: 'boy' | 'girl' | null): SceneVisual | null {
   if (typeof sceneId !== 'string' || !SCENE_RE.test(sceneId)) return null;
   const s = SCENES.get(sceneId);
-  if (!s) return null;
+  if (!s) return seasonOneVisual(sceneId, appearance);
   const cast = s.castRoles.map((role): CastMember => {
     const outfit = s.wardrobeByRole[role]!;
     const visualId: VisualId | null = role === 'player' ? appearance : role;
@@ -167,4 +171,47 @@ export function sceneVisual(sceneId: unknown, appearance: 'boy' | 'girl' | null)
 }
 
 /** Story scene IDs with no visual binding (reported, never invented). */
-export const unmappedScenes = (storySceneIds: readonly string[]): string[] => storySceneIds.filter((id) => !SCENES.has(id));
+export const unmappedScenes = (storySceneIds: readonly string[]): string[] => storySceneIds.filter((id) => !SCENES.has(id) && !SEASON_ONE.order.includes(id));
+
+/** Scene order used to prefetch the next scene's art. */
+export const PREFETCH_ORDER: readonly string[] = [...MAPPED_SCENE_IDS, ...SEASON_ONE.order];
+
+/**
+ * Season One: backdrop from the scene's authored location; the player is always the saved boy/girl
+ * (never a fixed illustrated character); Mom and Casey have no confirmed portrait, so they are not cast.
+ */
+function seasonOneVisual(sceneId: string, appearance: 'boy' | 'girl' | null): SceneVisual | null {
+  if (!SEASON_ONE.order.includes(sceneId)) return null;
+  const sc = sceneById(sceneId)!;
+  const allowed = (id: string | null): string | null => (id && isAllowedAsset(id) ? id : null);
+  const visual = (bg: string | null, cast: CastMember[], flags: string[] = []): SceneVisual => ({ sceneId, presentation: 'cutscene', backgroundAssetId: allowed(bg), cast, continuityFlags: ['season_one', ...flags], revision: ART_REVISION });
+  if (sc.background === 'prologue') {
+    const kind = sceneId === 'S1_PRO_DEPART' ? 'departure' : 'arrival';
+    return visual(appearance ? `${kind}-${appearance}` : null, [], kind === 'departure' ? ['neutral_departure_region'] : []);
+  }
+  if (sc.background === 'aquarium') {
+    return visual('s1-bedroom-tank', [
+      { role: 'player', visualId: appearance, outfit: 'tank', assetId: appearance ? allowed(`player-${appearance}-down`) : null },
+      { role: 'fish', visualId: 'fish', outfit: 'tank', assetId: allowed('clownfish') },
+    ]);
+  }
+  const loc: Exclude<Location, 'handoff'> =
+    sc.background === 'neutral_home' ? 'home'
+    : sc.background === 'neutral_pitch' ? (/_G\d?$|^S1_END_FIELD$/.test(sceneId) ? 'match' : 'training')
+    : 'school';
+  const bg = sc.background === 'recess' ? 'recess-goal' : LOCATION[loc].bg;
+  const roles: CastRole[] = ['player'];
+  if (loc !== 'home') {
+    for (const n of sc.nodes) {
+      const r = n.type === 'line' ? SPEAKER_ROLE[n.speaker] : undefined;
+      if (r && r !== 'fish' && r !== 'caregiver' && !roles.includes(r) && roles.length < 3) roles.push(r);
+    }
+  }
+  const cast = roles.flatMap((role): CastMember[] => {
+    const outfit = outfitFor(role, loc);
+    if (!outfit) return [];
+    const visualId: VisualId | null = role === 'player' ? appearance : role;
+    return [{ role, visualId, outfit, assetId: visualId ? variantAsset(visualId, outfit) : null }];
+  });
+  return visual(bg, cast);
+}

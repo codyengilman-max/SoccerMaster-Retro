@@ -1,5 +1,8 @@
 import Phaser from 'phaser';
-import { ART_ASSETS, ART_REVISION, type ArtAsset, OWNER_ART_APPROVAL } from '../render/art/catalog';
+import { ART_ASSETS as ALL_ASSETS, ART_REVISION, isAllowedAsset, type ArtAsset, OWNER_ART_APPROVAL } from '../render/art/catalog';
+
+/** Every image the game can show (Graphics v1 + Season One screens); masters with no runtime use are listed as gaps. */
+const ART_ASSETS = ALL_ASSETS.filter((a) => isAllowedAsset(a.assetId));
 import { artTextureKey, artUrl } from '../render/art/urls';
 import { PlayerArt } from '../render/art/playerArt';
 import { sideLooks } from '../render/art/roster';
@@ -18,7 +21,8 @@ export const ART_GAPS: readonly string[] = [
   'No squad numbers or club kits in the match engine: numbers are formation slot + 1, kits are home/away/keeper reference colours (match sides, not clubs).',
   'No corridor, moving-box arrival or night bedroom art: the bedroom map is used for all home scenes (time/props awaiting review).',
   'Static portraits only: no expression or lip-sync frames; motion is entrance and speaker highlight.',
-  'Sam and Riley art is in the gallery only: no v0.7 week-one scene casts them.',
+  'Season One: no Mom or Casey portrait (their lines are text only); no daytime aquarium; no classroom or lunch room.',
+  'Season One: the Tank Cup images (underwater, mini goal, pellet) are kept but not shown, because no Tank Cup activity exists.',
 ];
 
 type Page = { kind: 'assets'; index: number } | { kind: 'gameplay' } | { kind: 'gaps' };

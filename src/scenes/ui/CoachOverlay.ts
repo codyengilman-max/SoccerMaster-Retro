@@ -15,6 +15,8 @@ const MAX_OPTIONS = 4;
 const DEPTH = 7400;
 /** A tap that arrives this soon after the card changes belongs to the previous card (e.g. a double tap on an answer landing on Continue). */
 const ARM_MS = 350;
+/** The summary replaces the card unbidden at session end; a longer guard keeps a late Continue tap off Menu. */
+const SUMMARY_ARM_MS = 1000;
 export const COACH_OVERLAY_DEPTH = DEPTH;
 
 type Mode = 'hidden' | 'question' | 'feedback' | 'summary';
@@ -49,17 +51,17 @@ export class CoachOverlay {
       scene.add.text(0, 0, '', { fontFamily: FONT_FAMILY, fontStyle: 'bold', fontSize: `${size}px`, color: CSS.ink, align: 'left' }).setResolution(res).setDepth(DEPTH + 2);
     this.title = txt(16).setName('coach-title');
     this.body = txt(14).setName('coach-body');
-    const btn = (name: string, label: string, onClick: () => void, cream = true): Button =>
+    const btn = (name: string, label: string, onClick: (downAt: number) => void, cream = true): Button =>
       new Button(scene, 0, 0, { name, label, width: 200, height: 36, fontSize: 14, ...(cream ? { fill: PALETTE.cream, fillPressed: PALETTE.sand } : {}), onClick }).setDepth(DEPTH + 3);
     this.options = Array.from({ length: MAX_OPTIONS }, (_, i) =>
-      btn(`coach-option-${i}`, '', () => {
+      btn(`coach-option-${i}`, '', (at) => {
         const id = this.optionIds[i];
-        if (this.mode === 'question' && id && this.armed()) handlers.onAnswer(id);
+        if (this.mode === 'question' && id && this.armed(at)) handlers.onAnswer(id);
       }),
     );
-    this.continueButton = btn('coach-continue', 'Continue ▶', () => this.mode === 'feedback' && this.armed() && handlers.onContinue(), false);
-    this.againButton = btn('coach-again', 'Play again', () => this.mode === 'summary' && this.armed() && handlers.onAgain(), false);
-    this.menuButton = btn('coach-menu', 'Menu', () => this.mode === 'summary' && this.armed() && handlers.onMenu());
+    this.continueButton = btn('coach-continue', 'Continue ▶', (at) => this.mode === 'feedback' && this.armed(at) && handlers.onContinue(), false);
+    this.againButton = btn('coach-again', 'Play again', (at) => this.mode === 'summary' && this.armed(at, SUMMARY_ARM_MS) && handlers.onAgain(), false);
+    this.menuButton = btn('coach-menu', 'Menu', (at) => this.mode === 'summary' && this.armed(at, SUMMARY_ARM_MS) && handlers.onMenu());
     this.apply();
   }
 
@@ -72,8 +74,9 @@ export class CoachOverlay {
   }
 
   /** The user pause panel replaces the card while it is open; the moment itself stays frozen. */
-  private armed(): boolean {
-    return performance.now() - this.armedAt >= ARM_MS;
+  /** A press counts only if it began ARM_MS after the card changed; a laggy frame can't turn a quick double tap into two. */
+  private armed(downAt: number, ms = ARM_MS): boolean {
+    return downAt - this.armedAt >= ms && performance.now() - this.armedAt >= ms;
   }
 
   /** Landscape cards start below this y so the HUD (score and Coach counter) stays visible. */

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { MAPPED_SCENE_IDS, SPEAKER_ROLE, artAsset, sceneVisual, type CastRole, type SceneVisual } from '../render/art/catalog';
+import { PREFETCH_ORDER, SPEAKER_ROLE, artAsset, isAllowedAsset, sceneVisual, type CastRole, type SceneVisual } from '../render/art/catalog';
 import { artTextureKey, artUrl } from '../render/art/urls';
 import { CSS, FONT_FAMILY, PALETTE } from '../render/theme';
 
@@ -18,6 +18,8 @@ export interface StoryArtFrame {
   /** Top of the free stage (below the top bar) and the panel's top edge. */
   readonly top: number;
   readonly panelY: number;
+  /** Event-bound backdrop (e.g. live standings) replacing the scene's own; must be allowlisted. */
+  readonly backgroundOverride?: string | null;
 }
 
 type CastState = 'shown' | 'loading' | 'gap' | 'failed';
@@ -60,11 +62,13 @@ export class StoryArt {
   update(f: StoryArtFrame): void {
     if (this.destroyed) return;
     this.last = f;
-    const key = `${f.sceneId}|${f.appearance}`;
+    const override = f.backgroundOverride && isAllowedAsset(f.backgroundOverride) ? f.backgroundOverride : null;
+    const key = `${f.sceneId}|${f.appearance}|${override}`;
     const entering = key !== this.visualKey;
     if (entering) {
       this.visualKey = key;
-      this.visual = sceneVisual(f.sceneId, f.appearance);
+      const v = sceneVisual(f.sceneId, f.appearance);
+      this.visual = v && override ? { ...v, backgroundAssetId: override, cast: [] } : v;
       this.rebuildSlots();
       this.request();
     }
@@ -107,8 +111,8 @@ export class StoryArt {
   private request(): void {
     // Current scene first, then the next authored scene so its art is ready when the story moves on.
     const cur = this.visual?.sceneId ?? null;
-    const i = cur ? MAPPED_SCENE_IDS.indexOf(cur) : -1;
-    const next = i >= 0 ? sceneVisual(MAPPED_SCENE_IDS[i + 1], this.last?.appearance ?? null) : null;
+    const i = cur ? PREFETCH_ORDER.indexOf(cur) : -1;
+    const next = i >= 0 ? sceneVisual(PREFETCH_ORDER[i + 1], this.last?.appearance ?? null) : null;
     const want = [...new Set([...this.wanted(), ...this.wanted(next)])];
     const keep = new Set(want.map(artTextureKey));
     // Bound residency: drop textures the current scene does not use.
