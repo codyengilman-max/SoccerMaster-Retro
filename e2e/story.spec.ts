@@ -19,6 +19,10 @@ test.describe.configure({ timeout: 300_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 
 async function pressStory(page: Page, name: string, mode: 'touch' | 'mouse'): Promise<void> {
+  // The story re-renders its handoff after an async save read on return; wait for the button to exist.
+  for (let t = Date.now(); Date.now() - t < 15_000; await page.waitForTimeout(50)) {
+    if ((await diagnostics(page)).layout?.elements?.[name]) break;
+  }
   try {
     await pressAny(page, name, mode);
   } catch (e) {
