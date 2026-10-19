@@ -276,6 +276,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   }
 
   /** Pause stops new kicks (and Blake's) and holds Help, the shot log, text speed and Leave. */
+  private lastTick: number | null = null;
+
   private setPaused(on: boolean): void {
     if (this.mode !== 'crossbar') return;
     this.paused = on;
@@ -670,12 +672,24 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     this.message = '';
     this.render();
     // The launch record already makes a reload replay this exact attempt if this write is lost.
-    await this.store.updateRecord(key, (cur) => {
-      const c = commitResolve(cur, att.key);
-      return c ? { value: c, out: true } : null;
-    });
-    if (epoch !== this.epoch) return;
-    this.busy = false;
+    // The turn (and any final story result) waits for a durable result; a failed write is retried, then held for reload.
+    for (let i = 0; i < 3; i++) {
+      const ok = await this.store.updateRecord(key, (cur) => {
+        const c = commitResolve(cur, att.key);
+        return c ? { value: c, out: true } : null;
+      });
+      if (epoch !== this.epoch) return;
+      const stored = ok ? null : restoreContest(await this.store.getRecord(key));
+      if (epoch !== this.epoch) return;
+      if (ok || stored?.attempts.find((x) => x.key === att.key)?.state === 'resolved') {
+        this.busy = false;
+        return this.render();
+      }
+      await new Promise((res) => setTimeout(res, 300));
+      if (epoch !== this.epoch) return;
+    }
+    this.anim = null;
+    this.message = 'Could not save that shot. Leave and come back; it will be replayed exactly.';
     this.render();
   }
 
@@ -684,7 +698,14 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     if (!c) return;
     const result = contestResult(c);
     if (result) {
-      this.time.delayedCall(900, () => void this.complete(this.runId, 'completed', result).then(() => this.render()));
+      const runId = this.runId;
+      // Pause holds the final result screen until Resume.
+      const finish = (): void => {
+        if (runId !== this.runId || this.mode !== 'crossbar') return;
+        if (this.paused) return void this.time.delayedCall(200, finish);
+        void this.complete(runId, 'completed', result).then(() => this.render());
+      };
+      this.time.delayedCall(900, finish);
       return;
     }
     const slot = nextSlot(c);
@@ -775,6 +796,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         this.body.setText(full.slice(0, this.typed));
       }
     }
+    if (this.anim && this.paused) this.anim.start += time - (this.lastTick ?? time);
+    this.lastTick = time;
     if (this.anim) {
       this.drawStage();
       if (time - this.anim.start >= this.anim.dur + 500 && !this.busy) {

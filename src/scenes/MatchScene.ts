@@ -999,6 +999,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.cancelInput('orientation change');
     this.layout(size.width, size.height);
     if (this.pad) this.handlePad(this.pad.layout(size.width, size.height));
+    if (this.team) this.showTeamButtons();
     this.renderFrame(0);
   }
 
@@ -1076,7 +1077,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private updateTeamTraining(): void {
     const t = this.team;
     if (!t || t.phase !== 'playing' || !t.observer) return;
-    if (!t.observer.step(this.sim.state)) return;
+    // The drill area is one half: play that leaves it ends the attempt (out of the drill area).
+    const half = MATCH_TUNING.pitch.length / 2;
+    const bx = this.sim.state.ball.pos.x;
+    const left = t.half === 'own' ? bx > half + 1 : bx < half - 1;
+    if (!t.observer.step(this.sim.state) && !left) return;
     const r = t.observer.result();
     const sit = t.situations[t.index]!;
     t.observer = null;
@@ -1113,8 +1118,17 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     // One transaction commits completion and credit together; "Complete" is shown only after it resolves.
     void store.dispatch({ type: 'teamTraining', week: t.week, results: t.results }).then((out) => {
       if (this.team !== t || !this.sys.isActive()) return;
+      if (!out.ok) {
+        // Keep the three results: Finish tries the same save again.
+        t.last = t.results.pop() ?? null;
+        t.index -= 1;
+        t.phase = 'review';
+        t.message = out.error;
+        this.toast(`${out.error} Tap Finish to try saving again.`, 600_000, true);
+        return this.showTeamButtons();
+      }
       t.phase = 'done';
-      t.message = out.ok ? out.message : out.error;
+      t.message = out.message;
       this.toast(`${out.ok ? 'Complete. ' : ''}${t.message}`, 600_000, true);
       this.showTeamButtons();
     });
