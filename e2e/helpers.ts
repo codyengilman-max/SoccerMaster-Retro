@@ -69,8 +69,17 @@ export async function waitForScene(page: Page, key: string): Promise<Diagnostics
   return diagnostics(page);
 }
 
+/** My Training groups these under Home Practice and Progress; a test asking for one from the hub opens its group first. */
+const HUB_GROUP: Readonly<Record<string, string>> = { 'nav-sessions': 'nav-practice', 'nav-library': 'nav-practice', 'nav-journal': 'nav-practice', 'nav-review': 'nav-progress', 'nav-player': 'nav-progress', 'nav-play': 'nav-progress' };
+
 export async function pressElement(page: Page, name: string, via: 'mouse' | 'touch'): Promise<void> {
-  const d = await diagnostics(page);
+  let d = await diagnostics(page);
+  const group = HUB_GROUP[name];
+  if (group && !d.layout?.elements[name] && d.layout?.elements[group]) {
+    await pressElement(page, group, via);
+    await expect.poll(async () => !!(await diagnostics(page)).layout?.elements[name], { timeout: 5000 }).toBe(true);
+    d = await diagnostics(page);
+  }
   const rect = d.layout?.elements[name];
   if (!rect) throw new Error(`no element ${name} in ${d.activeScenes.join(',')}`);
   const canvas = await page.locator('canvas').boundingBox();
