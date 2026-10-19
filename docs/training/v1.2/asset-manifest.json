@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "package": "SoccerMaster_Training_Schoolyard_Revision_v1.2",
+  "assets": [
+    {
+      "assetId": "crossbar-schoolyard",
+      "path": "assets/schoolyard_crossbar_background_v2.png",
+      "sourcePath": "SoccerMaster_Training_Schoolyard_Revision_v1.2/assets/schoolyard_crossbar_background_v2.png",
+      "type": "background",
+      "characterId": null,
+      "label": "Schoolyard crossbar challenge (no baked goal)",
+      "outfitId": null,
+      "width": 1672,
+      "height": 941,
+      "hasAlpha": false,
+      "sha256": "d64a456cb83244c6cd5254426736bc64b490975f46db634e2c29107da31e6d66",
+      "sizeBytes": 2764339,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [],
+      "use": "StoryScene crossbar challenge backdrop",
+      "runtime": true
+    },
+    {
+      "assetId": "training-bell94",
+      "path": "assets/team_training_bell94_environment_reference.png",
+      "sourcePath": "SoccerMaster_Training_Schoolyard_Revision_v1.2/assets/team_training_bell94_environment_reference.png",
+      "type": "background",
+      "characterId": null,
+      "label": "Team Training venue reference (Bell94 / Scottsdale style)",
+      "outfitId": null,
+      "width": 1672,
+      "height": 941,
+      "hasAlpha": false,
+      "sha256": "aa55a79f3be2f29dd5b638a5593ba2dd6971ca4b04c2f753dab33d9242e3c141",
+      "sizeBytes": 2274810,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [],
+      "use": "Team Training arrival/briefing card backdrop only (art direction, not a pitch texture)",
+      "runtime": true
+    }
+  ]
+}

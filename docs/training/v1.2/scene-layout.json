@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "kind": "presentation_reference_not_physics",
+  "stage": {
+    "width": 1000,
+    "height": 650
+  },
+  "background": {
+    "path": "assets/schoolyard_crossbar_background_v2.png",
+    "fit": "cover"
+  },
+  "goal": {
+    "left": 250,
+    "right": 750,
+    "crossbarY": 274,
+    "groundY": 440,
+    "postThickness": 9,
+    "rear": {
+      "left": 280,
+      "right": 720,
+      "crossbarY": 250,
+      "groundY": 400
+    }
+  },
+  "ball": {
+    "x": 500,
+    "y": 557,
+    "radius": 15
+  },
+  "notes": [
+    "Layout units only. Production world geometry and projection govern goal rendering and collision.",
+    "One complete foreground goal; the background contains none.",
+    "Do not infer hit tests from this static board.",
+    "Portrait and landscape must transform goal, ball and diagnostic hit overlay together."
+  ]
+}

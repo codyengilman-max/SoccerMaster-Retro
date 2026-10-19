@@ -2,7 +2,8 @@
   "schemaVersion": 1,
   "source": [
     "docs/art/graphics-v1/assets/asset-manifest.json",
-    "docs/art/season-one/asset-manifest.json"
+    "docs/art/season-one/asset-manifest.json",
+    "docs/training/v1.2/asset-manifest.json"
   ],
   "packageRevision": "1.1",
   "assets": [
@@ -341,6 +342,22 @@
       "height": 470,
       "masterSha256": "7d175e16394fed5bf3ec80464b04b16d29fe2fb6ca48523f9d28748c448fc285",
       "bytes": 95278
+    },
+    {
+      "assetId": "crossbar-schoolyard",
+      "file": "crossbar-schoolyard.webp",
+      "width": 836,
+      "height": 470,
+      "masterSha256": "d64a456cb83244c6cd5254426736bc64b490975f46db634e2c29107da31e6d66",
+      "bytes": 152718
+    },
+    {
+      "assetId": "training-bell94",
+      "file": "training-bell94.webp",
+      "width": 836,
+      "height": 470,
+      "masterSha256": "aa55a79f3be2f29dd5b638a5593ba2dd6971ca4b04c2f753dab33d9242e3c141",
+      "bytes": 86476
     }
   ]
 }

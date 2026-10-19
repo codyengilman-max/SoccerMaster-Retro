@@ -1,0 +1,13 @@
+Implement the attached SoccerMaster Training + Schoolyard handoff, internal revision 1.2, in codyengilman-max/SoccerMaster-Retro. Inspect current main, active branches and existing modules first; preserve relevant completed work and unrelated pending changes.
+
+Read 00_START_HERE.txt, then 01, 04, 05, 06, 08 and the 07 audit resolution. Make three corrections: Bell94/Scottsdale-style half-field tactical Team Training; a concise My Training hub; and one grounded schoolyard crossbar target with shared visual/physical geometry. Keep the current joystick + PASS / SHOOT / SLIDE TACKLE / BLOCK, career identity, existing save/progression policy and normal match physics/camera.
+
+Revision 1.2 makes these requirements explicit:
+- Commit an immutable crossbar launch and consume its attempt before revealing flight; resume that same shot/seed; commit score/turn once and deliver story effects idempotently. Handle two tabs, interrupted writes and content updates.
+- Bind weekly completion to the existing career/scheduled-session entitlement; use atomic finalization. Retries/seeds/content changes cannot create extra credit or match events.
+- Preserve a working challenge-height model, or use the documented minigame-only fixed-loft/variable-strength fallback. Demonstrate real bar hits and nearby misses with ordinary controls.
+- Map all eight planned drill families to actual role/focus IDs. Report implemented/deferred/unavailable coverage honestly; no role switching, phantom players, automatic draft approval or generic wrong-focus fallback.
+
+The research README is reference-only; its engine code/tests are in a separate prototype archive, not this ZIP. Prefer the current game implementation. Follow the dependency/precedence manifest; do not fabricate missing modules.
+
+Implement and test, not only plan. Run the main T/U/C/R checks plus X/W/A cases in 05 and D cases in 06; fix failures. Record the tested commit, exact crossbar calibration and training release coverage. Follow existing authorization to merge relevant completed work and deploy through the current Cloudflare project after required checks; preserve branch protections and unrelated/unready PRs. Verify the production commit and assets. Return the playable link and honest PASS/FAIL/NOT RUN results. Physical iPhone testing is not established by emulation. Stop feature expansion for Cody's phone playtest.

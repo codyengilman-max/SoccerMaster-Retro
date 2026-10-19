@@ -1,11 +1,11 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
-import { diagnostics, expectInside, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
+import { diagnostics, expectInside, finishTeamTraining, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
 
 test.describe.configure({ timeout: 180_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 
 type Career = { screen: string; week: number; attributes: Record<string, number> | null; status: string; toast: string; text: string };
-type Team = { phase: string; week: number; index: number; ids: string[]; scores: number[]; message: string };
+type Team = { phase: string; week: number; index: number; ids: string[]; scores: number[]; message: string; hud: string; half: string };
 
 async function press(page: Page, name: string, mode: 'touch' | 'mouse'): Promise<void> {
   for (let i = 0; i < 6; i++) {
@@ -69,9 +69,19 @@ test('team training: three catalog situations, counted once, leaving early count
   expect(c.text).toContain('Leaving early counts nothing');
   expect(total(c.attributes)).toBe(before);
 
-  // Play all three: one result for the week.
+  // Play all three: one result for the week. The HUD is training-only and Retry replays without adding a result.
   await press(page, 'team-play', mode);
   await waitForScene(page, 'match');
+  const first = await team(page, (t) => t.phase === 'playing', 'attempt 1');
+  expect(first.hud).toContain('Team Training');
+  expect(first.hud).toContain('Attempt 1/3');
+  expect(first.hud).not.toMatch(/SANDBOX|Home \d|Away/);
+  await team(page, (t) => t.phase === 'review', 'attempt 1 result');
+  await pressAny(page, 'tt-retry', mode);
+  const retried = await team(page, (t) => t.phase === 'playing', 'retry');
+  expect(retried.index).toBe(0);
+  expect(retried.scores).toEqual([]);
+  await finishTeamTraining(page, mode);
   const done = await team(page, (t) => t.phase === 'done', 'three situations');
   expect(done.ids).toEqual(['DEF01', 'WING01', 'NINE02']);
   expect(done.scores).toHaveLength(3);
@@ -86,6 +96,7 @@ test('team training: three catalog situations, counted once, leaving early count
   // Playing again is practice only, and a reload keeps the result.
   await press(page, 'team-play', mode);
   await waitForScene(page, 'match');
+  await finishTeamTraining(page, mode);
   const again = await team(page, (t) => t.phase === 'done', 'practice run');
   expect(again.message).toMatch(/already counted/);
   await page.reload();

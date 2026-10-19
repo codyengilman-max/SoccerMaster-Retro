@@ -10,6 +10,16 @@
 - **CI note:** the `942461a` GitHub run timed out in three unchanged specs (phone-landscape `jungle.spec`, desktop `coach.spec` :82 with sim time only 2.4 s after 45 s, desktop `match.spec` :72). The same three files passed locally, 41 passed / 8 skipped / 0 failed with one worker, and CI was green on `31d2f99` and `5abadfa`, so these are runner-load timeouts.
 - Limits: no advantage, cards, handball, aerial corners or build-out line. Not tested on a real iPhone.
 
+## Training / Schoolyard revision v1.2 (branch `devin/1792431040-training-schoolyard`, PR only, not merged, not deployed)
+
+- **My Training hub:** Career home shows the week's focus card, Team Training (Not started / Complete), Home Practice (optional: sessions, library, journal) and Progress (weekly review, character development, 9v9 match). Nothing was removed; opening a card never changes attributes.
+- **Team Training:** the real 9v9 engine on one half (the half holding the staged ball), camera 1.3× closer, HUD "Team Training · drill · Attempt n/3 · time", Back/Pause, no score or SANDBOX tag, Bell94-style park drawn outside the pitch. Each attempt ends on its objective, turnover, goal, out of play or time, then Retry / Continue; the week is written in one transaction before "Complete". Coverage per drill family: `TRAINING_RELEASE_COVERAGE.md`.
+- **Crossbar Challenge:** new schoolyard backdrop (`crossbar-schoolyard`) and one grounded goal drawn from the same `CROSSBAR` model the simulation scores (`src/render/crossbarView.ts`); one-row HUD; Pause holds help, shot log, text speed and Leave; launches and results are compare-and-commit (`commitLaunch` / `commitResolve`), so a stale tab or double tap cannot launch twice. `?debug&hitbox` draws the scoring band.
+- **Review fixes:** shot results are confirmed saved before the story continues, Pause freezes the flight and the final result, sudden death always gives Blake his reply shot (`tests/crossbar-sudden.test.ts`), Team Training ends an attempt when the ball leaves its half, a failed weekly save keeps the results for Finish to retry, and the result buttons re-layout on rotation.
+- **Tests (`ea1bfad`):** unit 630 passed, 0 failed. Chrome touch emulation, 390×844 and 844×390: 18 checks passed, 1 failed, 4 not run. The failure is the normal-match portrait footer overlapping the bottom buttons, which `main` also has. Not run: the ball leaving the drill half, a failed shot save, a failed weekly save, two tabs.
+- **CI note:** desktop `coach.spec:83` and `match.spec:72` timed out on a 55 min runner. Under 4-worker load locally they passed 8/8 on this branch and 8/8 on `main` (`14094ce`).
+- **Not tested on a physical iPhone.**
+
 ## Season One — 18 weeks + all supplied graphics (branch `devin/1792370575-season-one`, review preview only, not merged, not in production)
 
 - **Story:** Start → Story runs the Season One package: prologue, 81 featured weekly scenes (Monday Cloudy, school, Coach Code, after-training Cloudy, parent every even week), match/tournament scenes and the epilogue, 127 scenes in `docs/story/season-one/season_one_scenes.json`, compiled from `docs/story/season-one/src/*.story` by `scripts/story/build-season-one.py`. Checklist: `docs/story/season-one/COVERAGE.md`.

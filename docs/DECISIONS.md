@@ -125,3 +125,12 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Slide foul when the slide is faster than `maxSafeTackleThreshold` (3.5 yd/s) and comes from behind (victim's front = their ball side, else running direction) or reaches the body before the ball. Slower contact plays on. In the slider's own penalty area: penalty from the 10 yd mark, keeper on the line, everyone else outside the area and held until the kick; else a direct free kick at the contact point.
 - Calls run inside the fixed-step tick and write into preallocated fields, so 60 Hz and 120 Hz give the same calls (tested). The rest of the engine still allocates small objects per step (D-FIFA notes).
 - Not built: advantage, cards, handball, aerial crosses from corners (corners restart on the ground), the 9v9 build-out line, keeper six-second/back-pass rules.
+
+## D29. Training / Schoolyard revision v1.2 (owner package, 2026-10-13)
+
+- Crossbar keeps its existing 3-D fixed-step model (`CROSSBAR_SIM_VERSION = 1`) instead of the package's 2-D fallback. Visual goal, net, ball and aim aids come from `crossbarView` / `goalGeometry`, which read `CROSSBAR`; the backdrop is scaled so its grass line meets the projected goal line. The package `scene-layout.json` is a presentation reference only.
+- Crossbar writes are `StoryStore.updateRecord` read-check-write: launch only from the exact attempt count this client saw, resolve only a still-launched attempt. A reload replays a launched attempt from its frozen input.
+- Team Training reuses MatchScene and `SituationObserver`; the half-field is a camera/drill-area rule (`TEAM_TRAINING_ZOOM = 1.3`, bounds clamped to one half). The physical pitch, players and AI are unchanged, so normal matches are untouched.
+- Retry drops the attempt's result and replays it; only Continue records it. The weekly credit stays the D27 reducer (idempotent per week).
+- The career has DEF/MID/FWD roles only; drill families without a role-appropriate drill are listed as deferred in `TRAINING_RELEASE_COVERAGE.md`, not remapped.
+- The Bell94 image is imported as a reference (`training-bell94`) and is not stretched under play; the venue is code-drawn around the pitch.

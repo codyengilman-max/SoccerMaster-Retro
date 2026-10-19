@@ -1,0 +1,12 @@
+Generated using the built-in image-generation tool.
+Style/location reference: user-supplied IMG_8207.jpeg.
+Output visually inspected: one goal-free background, no UI/ball/player.
+New art is not a claim of owner approval or phone integration testing.
+
+Use case: stylized-concept
+Asset type: production background layer for a 2D retro soccer schoolyard crossbar minigame, wide 16:9 landscape.
+Input image 1 is a STYLE AND LOCATION reference only: an iPhone screenshot of the current game. Do not recreate the phone, interface, goal, crossbar, markers, text or score.
+Create a clean background of the same sunny Scottsdale school recess lawn: low pale sand-colored school building, navy window trim, a few palms and leafy trees at the sides, far purple Arizona mountains and bright sky. Keep crisp 2D illustrated pixel-game texture, warm orange/cream/navy palette and the existing welcoming school setting.
+Composition: camera facing straight toward the far end of a flat, open grass practice field, a level horizon. School, trees and mountains confined mostly to the top 35 percent. Broad unobstructed grass in the central and lower 65 percent, simple readable grass texture. Center and lower field reserved for a separately rendered goal and soccer ball. Keep the central 55 percent usable when composed on a narrow phone. Small natural shadows only at far outer edges.
+Strictly no soccer goal anywhere, no posts, no floating crossbar, no painted goal line, no players, no balls, no cones, no text, no UI, no phone border, no watermark, no grid. The game will draw a SINGLE goal from shared rendering/physics coordinates. Deliver only the environment background, not a mock phone screen.
+
