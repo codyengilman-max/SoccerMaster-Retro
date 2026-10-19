@@ -95,6 +95,8 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
     if (s.scene === 'W2_SCHOOL_CALLBACK') return story(page, (x) => `${x.text}\n${x.hint ?? ''}`.includes('Match:'), 'week one recap');
     if (s.mode === 'crossbar') {
       if (s.crossbar?.ready) {
+        // Optional review captures (CAPTURE_DIR set): the Crossbar screen before each kick.
+        if (process.env.CAPTURE_DIR) await page.screenshot({ path: `${process.env.CAPTURE_DIR}/crossbar-${page.viewportSize()?.width}x${page.viewportSize()?.height}-${s.crossbar.player + s.crossbar.blake}.png` });
         const before = s.crossbar.player + s.crossbar.blake;
         await kick(page, finger);
         await story(page, (x) => x.mode !== 'crossbar' || x.crossbar!.animating || x.crossbar!.next?.participant !== 'player' || x.crossbar!.player + x.crossbar!.blake > before, 'kick taken');

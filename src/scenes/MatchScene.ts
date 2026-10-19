@@ -1539,11 +1539,14 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.scoreText.setFontSize(compact ? 13 : 15).setPosition(portrait ? width - EDGE - (width - EDGE * 2 - bw * 2 - 6) / 2 + 0 : width / 2, y1);
     if (portrait) this.scoreText.setOrigin(1, 0.5).setPosition(width - EDGE, y1);
     else this.scoreText.setOrigin(0.5, 0.5);
+    // Team Training: the objective wraps in the space right of Back/Pause, never under them.
+    this.scoreText.setWordWrapWidth(this.team ? (portrait ? Math.max(120, width - EDGE * 3 - bw * 2) : Math.max(160, width - EDGE * 4 - bw * 4)) : 10_000, true);
     const help = portrait ? HELP_PAD.replaceAll('  |  ', '\n') : HELP_PAD;
     // Landscape keeps the tip line clear of the bottom-right minimap.
     const mmLeft = orientationOf({ width, height }) === 'portrait' ? width : this.minimapRect().x;
     const tipW = Math.max(120, mmLeft - EDGE * 2);
     this.helpText.setText(help).setFontSize(compact ? 10 : 11).setWordWrapWidth(tipW, true).setPosition(EDGE + tipW / 2, height - 4);
+    if (this.team) this.helpText.setVisible(false);
     this.bannerText.setFontSize(compact ? 18 : 24).setWordWrapWidth(width - 40, true);
     this.panelNote.setWordWrapWidth(Math.min(380, width - 60), true);
     this.computeLayout();
@@ -1979,7 +1982,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       const sit = t.situations[Math.min(t.index, t.situations.length - 1)];
       const left = t.observer ? Math.ceil(t.observer.remaining(s)) : null;
       const n = t.situations.length;
-      this.scoreText.setText(`Team Training\n${sit ? sit.title : 'Loading…'}${n ? ` · Attempt ${Math.min(t.index + 1, n)}/${n}` : ''}${left !== null ? ` · 0:${String(left).padStart(2, '0')}` : ''}`);
+      this.scoreText.setText(`Team Training\n${sit ? sit.title : 'Loading…'}${n ? `${this.scale.height > this.scale.width ? '\n' : ' · '}Attempt ${Math.min(t.index + 1, n)}/${n}` : ''}${left !== null ? ` · 0:${String(left).padStart(2, '0')}` : ''}`);
     } else this.scoreText.setText(`Home ${s.score.home} – ${s.score.away} Away${tags}`);
     if (s.timeScale < 1 && s.timeScale > 0) {
       g.lineStyle(8, PALETTE.cream, 0.55);
@@ -2000,7 +2003,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.showEventArt(s.phase === 'stopped' && st && (st.reason === 'goal' || st.reason === 'foul') ? st : null, width, height);
     this.bannerMessage = banner;
     this.bannerText.setVisible(banner !== '' && !s.paused).setText(banner).setPosition(width / 2, height / 2);
-    const toastOn = this.toastUntil > performance.now() && !s.paused;
+    const toastOn = this.toastUntil > performance.now() && (!s.paused || (this.team !== null && this.team.phase !== 'playing'));
     this.toastText.setVisible(toastOn);
     if (toastOn) {
       // Long Team Training feedback wraps inside the screen instead of running off both edges.
