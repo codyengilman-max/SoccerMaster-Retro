@@ -77,6 +77,9 @@ export interface MatchSceneData {
   readonly resultKey?: string;
 }
 
+/** Team Training camera magnification over the match view (brief: 1.25–1.40×). */
+export const TEAM_TRAINING_ZOOM = 1.3;
+
 /** 9v9 team-play sandbox. Reads `MatchSim` state and draws it; owns no soccer rules. */
 export class MatchScene extends Phaser.Scene implements InspectableScene {
   private sim!: InstanceType<typeof MatchSim>;
@@ -277,6 +280,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       }).setDepth(6003);
     this.menuButton = hudButton('menu-button', '‹ Menu', () => this.goToMenu(), true);
     this.pauseButton = hudButton('pause-button', 'Pause', () => this.togglePause(), true);
+    if (this.team) this.menuButton.setLabel('‹ Back');
     this.helpButton = hudButton('help-button', '? Help', () => this.showHelp(), true);
     // Menu and Pause stay usable above the Coach Moment touch blocker (the card never covers the top-left HUD row).
     this.menuButton.setDepth(COACH_HUD_DEPTH);
@@ -290,6 +294,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.resumeButton = panelButton('resume-button', 'Resume ▶', () => this.togglePause());
     this.resetButton = panelButton('reset-button', params.has('sandbox') || this.labId ? 'Reset' : 'New match', () => this.reset(), true);
     this.panelMenuButton = panelButton('panel-menu-button', 'Menu', () => this.goToMenu(), true);
+    this.ttButtons = [
+      panelButton('tt-retry', 'Retry', () => this.retryTeamAttempt(), true),
+      panelButton('tt-continue', 'Continue', () => this.continueTeamTraining()),
+    ];
+    for (const b of this.ttButtons) b.setVisible(false).setEnabled(false).setDepth(7003);
     this.overlayButton = panelButton('overlay-button', 'Dev overlay: off', () => this.toggleOverlay(), true);
     this.formationButtons = Object.fromEntries(
       FORMATION_IDS.map((id) => [id, panelButton(`formation-${id}`, id, () => this.changeFormation(id), true)]),
@@ -386,7 +395,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       this.cancelInput('coach summary');
       this.coachOverlay.showSummary(d.summary());
     }
-    this.helpText.setVisible(!this.coachOverlay.visible);
+    this.helpText.setVisible(!this.coachOverlay.visible && !this.team);
   }
 
   private coachAnswer(id: string): void {
@@ -503,6 +512,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       pitch: this.viewRect(),
       'menu-button': this.menuButton.getButtonBounds(),
       'pause-button': this.pauseButton.getButtonBounds(),
+      ...Object.fromEntries(this.ttButtons.filter((b) => b.visible).map((b) => [b.name, b.getButtonBounds()])),
       'help-button': this.helpButton.getButtonBounds(),
       score: boundsOf(this.scoreText),
       help: boundsOf(this.helpText),
@@ -611,7 +621,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       coachIntent: s.coachIntent ? { ...s.coachIntent, target: { ...s.coachIntent.target } } : null,
       coach: this.coachReport(),
       teamTraining: this.team
-        ? { phase: this.team.phase, week: this.team.week, index: this.team.index, ids: this.team.situations.map((x) => x.id), scores: this.team.results.map((r) => r.score), message: this.team.message }
+        ? { phase: this.team.phase, week: this.team.week, index: this.team.index, ids: this.team.situations.map((x) => x.id), scores: this.team.results.map((r) => r.score), message: this.team.message, hud: this.scoreText.text, half: this.team.half, zoom: TEAM_TRAINING_ZOOM, viewLen: this.viewLen, viewCross: this.viewCross }
         : null,
       career: this.collector ? { slot: this.collector.careerId, pending: this.careerItems.length, batches: this.careerBatch, recorded: this.careerRecorded, missed: this.collector.missed } : null,
     };
@@ -872,6 +882,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
 
   private togglePause(): void {
     if (this.navigating) return;
+    if (this.team && this.team.phase !== 'playing') return;
     if (this.sim.state.pauseReasons.user) {
       this.sim.command({ type: 'resume' });
     } else {
@@ -990,6 +1001,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.cancelInput('orientation change');
     this.layout(size.width, size.height);
     if (this.pad) this.handlePad(this.pad.layout(size.width, size.height));
+    if (this.team) this.showTeamButtons();
     this.renderFrame(0);
   }
 
@@ -1003,16 +1015,19 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     observer: SituationObserver | null;
     store: CareerStore | null;
     attrs: ReturnType<typeof matchAttrsFromCareer>;
-    phase: 'loading' | 'playing' | 'saving' | 'done';
+    phase: 'loading' | 'playing' | 'review' | 'saving' | 'done';
     message: string;
+    half: 'own' | 'attack';
+    last: SituationResult | null;
   } | null = null;
+  private ttButtons: Button[] = [];
 
   private startTeamTraining(on: boolean, params: URLSearchParams): void {
     this.team = null;
     if (!on) return;
     const debugSecs = Number(params.get('ttSeconds'));
     const shorten = shouldExposeDebug(window.location) && Number.isFinite(debugSecs) && debugSecs >= 1;
-    const team = { week: 0, situations: [] as TeamTrainingSituation[], index: 0, results: [] as SituationResult[], observer: null, store: null as CareerStore | null, attrs: {}, phase: 'loading' as 'loading' | 'playing' | 'saving' | 'done', message: '' };
+    const team = { week: 0, situations: [] as TeamTrainingSituation[], index: 0, results: [] as SituationResult[], observer: null, store: null as CareerStore | null, attrs: {}, phase: 'loading' as 'loading' | 'playing' | 'review' | 'saving' | 'done', half: 'attack' as 'own' | 'attack', last: null as SituationResult | null, message: '' };
     this.team = team;
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => team.store?.close());
     this.toast('Loading Team Training…');
@@ -1045,6 +1060,12 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const sit = t.situations[t.index];
     if (!sit) return;
     t.phase = 'playing';
+    t.last = null;
+    const fx = sit.fixture;
+    const x0 = (fx.carrier ? fx.place[fx.carrier]?.[0] : fx.ball?.[0]) ?? MATCH_TUNING.pitch.length / 2;
+    t.half = x0 < MATCH_TUNING.pitch.length / 2 ? 'own' : 'attack';
+    if (this.sim.state.pauseReasons.user) this.sim.command({ type: 'resume' });
+    this.showTeamButtons();
     this.cancelInput('team training');
     this.sim.command({ type: 'reset', seed: 11 + t.index });
     this.sim.arrange((s) => match.stageFixture(s, sit.fixture, MATCH_TUNING.pitch));
@@ -1052,32 +1073,82 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     t.observer = new SituationObserver(sit, this.sim.state);
     this.snapCamera();
     this.lastSeq = 0;
-    this.toast(`${prefix}Team Training ${t.index + 1}/${t.situations.length}: ${sit.title}. ${sit.goal}`, 4500, true);
+    this.toast(`${prefix}Attempt ${t.index + 1}/${t.situations.length}: ${sit.title}. ${sit.goal}`, 4500, true);
   }
 
   private updateTeamTraining(): void {
     const t = this.team;
     if (!t || t.phase !== 'playing' || !t.observer) return;
-    if (!t.observer.step(this.sim.state)) return;
+    // The drill area is one half: play that leaves it ends the attempt (out of the drill area).
+    const half = MATCH_TUNING.pitch.length / 2;
+    const bx = this.sim.state.ball.pos.x;
+    const left = t.half === 'own' ? bx > half + 1 : bx < half - 1;
+    if (!t.observer.step(this.sim.state) && !left) return;
     const r = t.observer.result();
-    t.results.push(r);
+    const sit = t.situations[t.index]!;
     t.observer = null;
+    t.last = r;
+    // The attempt is over: hold play, show one observed point and one cue, and let the player choose.
+    t.phase = 'review';
+    this.cancelInput('team training result');
+    if (!this.sim.state.pauseReasons.user) this.sim.command({ type: 'pause' });
+    this.toast(`Attempt ${t.index + 1}/${t.situations.length} · ${Math.round(r.score * 100)}%\n${r.notes[0] ?? 'Attempt finished.'}\nNext: ${sit.goal}`, 600_000, true);
+    this.showTeamButtons();
+  }
+
+  /** Retry replays the same attempt; its earlier result is dropped, never added. */
+  private retryTeamAttempt(): void {
+    const t = this.team;
+    if (!t || t.phase !== 'review') return;
+    this.stageTeamSituation('Retry. ');
+  }
+
+  private continueTeamTraining(): void {
+    const t = this.team;
+    if (!t) return;
+    if (t.phase === 'done') return this.goToMenu();
+    if (t.phase !== 'review' || !t.last) return;
+    t.results.push(t.last);
+    t.last = null;
     t.index += 1;
-    const last = `${Math.round(r.score * 100)}%: ${r.notes.join(' ')}  `;
-    if (t.index < t.situations.length) {
-      this.stageTeamSituation(last);
-      return;
-    }
-    // Play carries on as an untimed sandbox, so the HUD (and the result toast) stays visible.
+    if (t.index < t.situations.length) return this.stageTeamSituation();
     t.phase = 'saving';
+    this.showTeamButtons();
+    this.toast('Saving Team Training…', 60_000, true);
     const store = t.store;
     if (!store) return;
+    // One transaction commits completion and credit together; "Complete" is shown only after it resolves.
     void store.dispatch({ type: 'teamTraining', week: t.week, results: t.results }).then((out) => {
       if (this.team !== t || !this.sys.isActive()) return;
+      if (!out.ok) {
+        // Keep the three results: Finish tries the same save again.
+        t.last = t.results.pop() ?? null;
+        t.index -= 1;
+        t.phase = 'review';
+        t.message = out.error;
+        this.toast(`${out.error} Tap Finish to try saving again.`, 600_000, true);
+        return this.showTeamButtons();
+      }
       t.phase = 'done';
-      t.message = out.ok ? out.message : out.error;
-      this.toast(`${last}${t.message}  Press Menu to return.`, 60_000, true);
+      t.message = out.message;
+      this.toast(`${out.ok ? 'Complete. ' : ''}${t.message}`, 600_000, true);
+      this.showTeamButtons();
     });
+  }
+
+  private showTeamButtons(): void {
+    const t = this.team;
+    const [retry, cont] = this.ttButtons;
+    if (!retry || !cont) return;
+    const review = t?.phase === 'review';
+    const done = t?.phase === 'done';
+    retry.setVisible(review).setEnabled(review);
+    cont.setVisible(review || done).setEnabled(review || done);
+    cont.setLabel(done ? 'Finish' : t && t.index + 1 >= t.situations.length ? 'Finish' : 'Continue');
+    const { width, height } = this.scale;
+    const y = Math.round(height * 0.68);
+    retry.setPosition(width / 2 - 78, y);
+    cont.setPosition(done ? width / 2 : width / 2 + 78, y);
   }
 
   private startCareer(on: boolean): void {
@@ -1323,7 +1394,20 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
    * fixed close ball-camera view (CAMERA_VIEW), so it never compounds. Limits keep goals and a run-off margin
    * in view; physics boundaries are separate and unaffected.
    */
-  private frame(): {
+  /** Team Training: a closer camera held on the drill's half; world sizes, speeds and collision are unchanged. */
+  private frame(): ReturnType<MatchScene['frameFull']> {
+    const f = this.frameFull();
+    const t = this.team;
+    if (!t) return f;
+    const half = U11_9V9_PITCH.length / 2;
+    const [h0, h1] = t.half === 'own' ? [-3, half + 3] : [half - 3, U11_9V9_PITCH.length + 3];
+    let minX = Math.max(f.bounds.minX, h0 + f.len / 2);
+    let maxX = Math.min(f.bounds.maxX, h1 - f.len / 2);
+    if (minX > maxX) minX = maxX = (h0 + h1) / 2;
+    return { ...f, bounds: { ...f.bounds, minX, maxX } };
+  }
+
+  private frameFull(): {
     portrait: boolean;
     insets: Insets;
     len: number;
@@ -1337,7 +1421,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     if (!portrait) {
       // Landscape: an angled follow camera; the compact HUD floats over the pitch.
       const available = Math.max(1, width - insets.left - insets.right);
-      const len = viewSpan('landscape');
+      const len = viewSpan('landscape') / (this.team ? TEAM_TRAINING_ZOOM : 1);
       const availH = Math.max(1, height - insets.top - insets.bottom);
       const hv = Math.min(P.width + 6, (len * availH) / (available * SIDELINE_SQUASH));
       // Run-off margins keep a touchline player clear of the floating HUD (top) and the tip line (bottom).
@@ -1361,7 +1445,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     // Portrait: the close ball-camera width across the pitch; the visible length fills the height.
     const available = Math.max(1, height - insets.top - insets.bottom);
     const availW = Math.max(1, width - insets.left - insets.right);
-    const cross = Math.min(P.width + 4, viewSpan('portrait'));
+    const cross = Math.min(P.width + 4, viewSpan('portrait') / (this.team ? TEAM_TRAINING_ZOOM : 1));
     const len = Math.min(P.length + 6, (cross * available) / availW);
     const fullX = len >= P.length + 6 - 1e-6;
     return {
@@ -1471,15 +1555,18 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.scoreText.setFontSize(compact ? 13 : 15).setPosition(portrait ? width - EDGE - (width - EDGE * 2 - bw * 2 - 6) / 2 + 0 : width / 2, y1);
     if (portrait) this.scoreText.setOrigin(1, 0.5).setPosition(width - EDGE, y1);
     else this.scoreText.setOrigin(0.5, 0.5);
+    // Team Training: the objective wraps in the space right of Back/Pause, never under them.
+    this.scoreText.setWordWrapWidth(this.team ? (portrait ? Math.max(120, width - EDGE * 3 - bw * 2) : Math.max(160, width - EDGE * 4 - bw * 4)) : 10_000, true);
     const help = portrait ? HELP_PAD.replaceAll('  |  ', '\n') : HELP_PAD;
     // Landscape keeps the tip line clear of the bottom-right minimap.
     const mmLeft = orientationOf({ width, height }) === 'portrait' ? width : this.minimapRect().x;
     const tipW = Math.max(120, mmLeft - EDGE * 2);
     this.helpText.setText(help).setFontSize(compact ? 10 : 11).setWordWrapWidth(tipW, true).setPosition(EDGE + tipW / 2, height - 4);
+    if (this.team) this.helpText.setVisible(false);
     this.bannerText.setFontSize(compact ? 18 : 24).setWordWrapWidth(width - 40, true);
     this.panelNote.setWordWrapWidth(Math.min(380, width - 60), true);
     this.computeLayout();
-    this.showPanel(this.sim.state.pauseReasons.user);
+    this.showPanel(this.sim.state.pauseReasons.user && (!this.team || this.team.phase === 'playing'));
     this.coachOverlay.setSuspended(this.sim.state.pauseReasons.user);
   }
 
@@ -1563,12 +1650,13 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const L = this.pitchLayout;
     const m = this.markings;
     const P = U11_9V9_PITCH;
-    const key = `${width}x${height}:${L.orientation}:${L.originX.toFixed(2)},${L.originY.toFixed(2)},${L.scale.toFixed(4)},${L.crossScale.toFixed(4)},${L.pitchLength.toFixed(3)},${(L.persp ?? 0).toFixed(6)},${(L.anchorX ?? 0).toFixed(2)},${(L.anchorY ?? 0).toFixed(2)},${L.pitchWidth.toFixed(3)}`;
+    const key = `${this.team ? 'tt:' : ''}${width}x${height}:${L.orientation}:${L.originX.toFixed(2)},${L.originY.toFixed(2)},${L.scale.toFixed(4)},${L.crossScale.toFixed(4)},${L.pitchLength.toFixed(3)},${(L.persp ?? 0).toFixed(6)},${(L.anchorX ?? 0).toFixed(2)},${(L.anchorY ?? 0).toFixed(2)},${L.pitchWidth.toFixed(3)}`;
     if (key === this.fieldKey) return;
     this.fieldKey = key;
     g.clear();
     g.fillStyle(PALETTE.track, 1);
     g.fillRect(0, 0, width, height);
+    if (this.team) this.drawTrainingVenue(g, L, P);
     g.fillStyle(PALETTE.surround, 1);
     g.fillPoints(quadToScreen(L, { x: -3, y: -2, width: P.length + 6, height: P.width + 4 }), true);
     const stripes = 15;
@@ -1612,6 +1700,32 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       g.strokePoints(q, true);
       g.lineStyle(lw + 1, PALETTE.cream, 1);
       g.strokePoints(q, true);
+    }
+  }
+
+  /** Bell94-style park around the training pitch (desert edge, path, shade trees, light poles), never under play. */
+  private drawTrainingVenue(g: Phaser.GameObjects.Graphics, L: PitchLayout, P: { length: number; width: number }): void {
+    g.fillStyle(PALETTE.sand, 1);
+    g.fillPoints(quadToScreen(L, { x: -40, y: -40, width: P.length + 80, height: 30 }), true);
+    g.fillPoints(quadToScreen(L, { x: -40, y: P.width + 10, width: P.length + 80, height: 30 }), true);
+    g.fillStyle(PALETTE.cream, 0.55);
+    g.fillPoints(quadToScreen(L, { x: -40, y: -7, width: P.length + 80, height: 1.6 }), true);
+    g.fillPoints(quadToScreen(L, { x: -40, y: P.width + 5.4, width: P.length + 80, height: 1.6 }), true);
+    for (let x = -6; x <= P.length + 6; x += 12) {
+      for (const y of [-9, P.width + 9]) {
+        const c = toScreen(L, { x, y });
+        const k = depthScaleAt(L, c.y);
+        g.fillStyle(PALETTE.shadow, 0.3).fillEllipse(c.x, c.y + 2, L.scale * 3.4 * k, L.scale * 1.2 * k);
+        g.fillStyle(PALETTE.grassDark, 1).fillCircle(c.x, c.y - L.scale * 0.8 * k, L.scale * 1.5 * k);
+      }
+    }
+    for (const x of [-2, P.length / 2, P.length + 2]) {
+      for (const y of [-4.5, P.width + 4.5]) {
+        const b = toScreen(L, { x, y });
+        const h = L.scale * 6 * depthScaleAt(L, b.y);
+        g.lineStyle(Math.max(2, L.scale * 0.25), PALETTE.ink, 1).lineBetween(b.x, b.y, b.x, b.y - h);
+        g.fillStyle(PALETTE.cream, 1).fillRect(b.x - L.scale * 0.7, b.y - h - L.scale * 0.5, L.scale * 1.4, L.scale * 0.6);
+      }
     }
   }
 
@@ -1879,7 +1993,13 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     if (c) tags = `\n${[clockTag, careerTag.replace(' · ', ''), coachCount].filter(Boolean).join(' · ')}`;
     else tags = d ? `${careerTag}\n${coachCount} · ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}` : `${careerTag || (this.labId ? ' · LAB' : ' · SANDBOX')}`;
     this.scoreText.setAlign(this.scoreText.originX === 1 ? 'right' : 'center');
-    this.scoreText.setText(`Home ${s.score.home} – ${s.score.away} Away${tags}`);
+    const t = this.team;
+    if (t) {
+      const sit = t.situations[Math.min(t.index, t.situations.length - 1)];
+      const left = t.observer ? Math.ceil(t.observer.remaining(s)) : null;
+      const n = t.situations.length;
+      this.scoreText.setText(`Team Training\n${sit ? sit.title : 'Loading…'}${n ? `${this.scale.height > this.scale.width ? '\n' : ' · '}Attempt ${Math.min(t.index + 1, n)}/${n}` : ''}${left !== null ? ` · 0:${String(left).padStart(2, '0')}` : ''}`);
+    } else this.scoreText.setText(`Home ${s.score.home} – ${s.score.away} Away${tags}`);
     if (s.timeScale < 1 && s.timeScale > 0) {
       g.lineStyle(8, PALETTE.cream, 0.55);
       g.strokeRect(4, 4, width - 8, height - 8);
@@ -1896,10 +2016,12 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       const second = s.clock?.half === 2 && s.clock.elapsed === 0;
       banner = s.simTime < 0.01 ? kickoffs[0]! : second ? kickoffs[1]! : kickoffs[2]!;
     }
+    // Team Training has its own attempt cards; no match/sandbox restart banners.
+    if (this.team) banner = '';
     this.showEventArt(s.phase === 'stopped' && st && (st.reason === 'goal' || st.reason === 'foul') ? st : null, width, height);
     this.bannerMessage = banner;
     this.bannerText.setVisible(banner !== '' && !s.paused).setText(banner).setPosition(width / 2, height / 2);
-    const toastOn = this.toastUntil > performance.now() && !s.paused;
+    const toastOn = this.toastUntil > performance.now() && (!s.paused || (this.team !== null && this.team.phase !== 'playing'));
     this.toastText.setVisible(toastOn);
     if (toastOn) {
       // Long Team Training feedback wraps inside the screen instead of running off both edges.
@@ -1910,7 +2032,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.drawMinimap(g);
     const portrait = orientationOf({ width, height }) === 'portrait';
     const mm = this.minimapRect();
-    this.rotateText.setVisible(portrait && !s.paused).setPosition(mm.x + mm.width + 8, mm.y + mm.height / 2);
+    this.rotateText.setVisible(portrait && !s.paused && !this.team).setPosition(mm.x + mm.width + 8, mm.y + mm.height / 2);
   }
 }
 

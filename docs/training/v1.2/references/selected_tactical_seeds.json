@@ -1,0 +1,453 @@
+{
+  "schema_version": "0.2",
+  "artifact_kind": "authoring_seed_catalog",
+  "runtime_ready": false,
+  "scenarios": [
+    {
+      "id": "GK01",
+      "schema_version": "0.2",
+      "status": "draft_seed",
+      "production_enabled": false,
+      "calibration_status": "not_calibrated",
+      "original": {
+        "focal_role_and_situation": "GK, short buildup",
+        "cue_candidate_response": "First presser commits: find the freed defender",
+        "counter_response": "Cover shadow still blocks the pass"
+      },
+      "audit_override": null,
+      "evidence_status": "authored_design_not_empirically_validated",
+      "source_ids": [],
+      "required_before_activation": [
+        "typed_entry_and_abort_predicates",
+        "spatial_fixture",
+        "rules_profile",
+        "perception_snapshot",
+        "teammate_and_opponent_responsibilities",
+        "timing_and_feasibility",
+        "outcome_branches",
+        "runtime_acceptance_results",
+        "documented_calibration_or_explicit_prototype_status"
+      ]
+    },
+    {
+      "id": "CB02",
+      "schema_version": "0.2",
+      "status": "draft_seed",
+      "production_enabled": false,
+      "calibration_status": "not_calibrated",
+      "original": {
+        "focal_role_and_situation": "CB, striker screens pivot",
+        "cue_candidate_response": "Change passing angle or find outside defender",
+        "counter_response": "Avoid forcing a pass through the screen"
+      },
+      "audit_override": null,
+      "evidence_status": "authored_design_not_empirically_validated",
+      "source_ids": [],
+      "required_before_activation": [
+        "typed_entry_and_abort_predicates",
+        "spatial_fixture",
+        "rules_profile",
+        "perception_snapshot",
+        "teammate_and_opponent_responsibilities",
+        "timing_and_feasibility",
+        "outcome_branches",
+        "runtime_acceptance_results",
+        "documented_calibration_or_explicit_prototype_status"
+      ]
+    },
+    {
+      "id": "CB04",
+      "schema_version": "0.2",
+      "status": "draft_seed",
+      "production_enabled": false,
+      "calibration_status": "not_calibrated",
+      "original": {
+        "focal_role_and_situation": "CB, defending counterattack",
+        "cue_candidate_response": "Delay and protect goal-side route",
+        "counter_response": "Step to tackle only when support or touch permits"
+      },
+      "audit_override": null,
+      "evidence_status": "authored_design_not_empirically_validated",
+      "source_ids": [],
+      "required_before_activation": [
+        "typed_entry_and_abort_predicates",
+        "spatial_fixture",
+        "rules_profile",
+        "perception_snapshot",
+        "teammate_and_opponent_responsibilities",
+        "timing_and_feasibility",
+        "outcome_branches",
+        "runtime_acceptance_results",
+        "documented_calibration_or_explicit_prototype_status"
+      ]
+    },
+    {
+      "id": "OB01",
+      "schema_version": "0.2",
+      "status": "draft_seed",
+      "production_enabled": false,
+      "calibration_status": "not_calibrated",
+      "original": {
+        "focal_role_and_situation": "Outside back, winger holds width",
+        "cue_candidate_response": "Offer inside support or overlap",
+        "counter_response": "Do not occupy the same running lane"
+      },
+      "audit_override": null,
+      "evidence_status": "authored_design_not_empirically_validated",
+      "source_ids": [],
+      "required_before_activation": [
+        "typed_entry_and_abort_predicates",
+        "spatial_fixture",
+        "rules_profile",
+        "perception_snapshot",
+        "teammate_and_opponent_responsibilities",
+        "timing_and_feasibility",
+        "outcome_branches",
+        "runtime_acceptance_results",
+        "documented_calibration_or_explicit_prototype_status"
+      ]
+    },
+    {
+      "id": "SIX01",
+      "schema_version": "0.2",
+      "status": "draft_seed",
+      "production_enabled": false,
+      "calibration_status": "not_calibrated",
+      "original": {
+        "focal_role_and_situation": "6, receiving under pressure",
+        "cue_candidate_response": "Scan and choose turn, bounce or shield",
+        "counter_response": "Blind-side opponent makes the turn unsafe"
+      },
+      "audit_override": null,
+      "evidence_status": "authored_design_not_empirically_validated",
+      "source_ids": [],
+      "required_before_activation": [
+        "typed_entry_and_abort_predicates",
+        "spatial_fixture",
+        "rules_profile",
+        "perception_snapshot",
+        "teammate_and_opponent_responsibilities",
+        "timing_and_feasibility",
+        "outcome_branches",
+        "runtime_acceptance_results",
+        "documented_calibration_or_explicit_prototype_status"
+      ]
+    },
+    {
+      "id": "SIX02",
+      "schema_version": "0.2",
+      "status": "draft_seed",
+      "production_enabled": false,
+      "calibration_status": "not_calibrated",
+      "original": {
+        "focal_role_and_situation": "6, buildup with marked teammates",
+        "cue_candidate_response": "Move beyond a cover shadow to offer an angle",
+        "counter_response": "Do not retreat into the defender's occupied space"
+      },
+      "audit_override": null,
+      "evidence_status": "authored_design_not_empirically_validated",
+      "source_ids": [],
+      "required_before_activation": [
+        "typed_entry_and_abort_predicates",
+        "spatial_fixture",
+        "rules_profile",
+        "perception_snapshot",
+        "teammate_and_opponent_responsibilities",
+        "timing_and_feasibility",
+        "outcome_branches",
+        "runtime_acceptance_results",
+        "documented_calibration_or_explicit_prototype_status"
+      ]
+    },
+    {
+      "id": "EIGHT01",
+      "schema_version": "0.2",
+      "status": "draft_seed",
+      "production_enabled": false,
+      "calibration_status": "not_calibrated",
+      "original": {
+        "focal_role_and_situation": "8, between lines",
+        "cue_candidate_response": "Receive side-on and progress when space exists",
+        "counter_response": "Bounce pass if pressure arrives before control"
+      },
+      "audit_override": null,
+      "evidence_status": "authored_design_not_empirically_validated",
+      "source_ids": [],
+      "required_before_activation": [
+        "typed_entry_and_abort_predicates",
+        "spatial_fixture",
+        "rules_profile",
+        "perception_snapshot",
+        "teammate_and_opponent_responsibilities",
+        "timing_and_feasibility",
+        "outcome_branches",
+        "runtime_acceptance_results",
+        "documented_calibration_or_explicit_prototype_status"
+      ]
+    },
+    {
+      "id": "EIGHT03",
+      "schema_version": "0.2",
+      "status": "draft_seed",
+      "production_enabled": false,
+      "calibration_status": "not_calibrated",
+      "original": {
+        "focal_role_and_situation": "8, wide attack develops",
+        "cue_candidate_response": "Arrive late into a free finishing lane",
+        "counter_response": "Hold if another runner occupies it or cover is absent"
+      },
+      "audit_override": null,
+      "evidence_status": "authored_design_not_empirically_validated",
+      "source_ids": [],
+      "required_before_activation": [
+        "typed_entry_and_abort_predicates",
+        "spatial_fixture",
+        "rules_profile",
+        "perception_snapshot",
+        "teammate_and_opponent_responsibilities",
+        "timing_and_feasibility",
+        "outcome_branches",
+        "runtime_acceptance_results",
+        "documented_calibration_or_explicit_prototype_status"
+      ]
+    },
+    {
+      "id": "WING01",
+      "schema_version": "0.2",
+      "status": "draft_seed",
+      "production_enabled": false,
+      "calibration_status": "not_calibrated",
+      "original": {
+        "focal_role_and_situation": "Winger, isolated defender",
+        "cue_candidate_response": "Attack space and force commitment",
+        "counter_response": "Recycle when cover converts 1v1 into 1v2"
+      },
+      "audit_override": {
+        "cue_candidate_response": "Attack available space to attempt to provoke commitment; compare dribble, support and shot opportunities",
+        "counter_response": "Keep defender autonomy; cover, angle and execution can favor recycling"
+      },
+      "evidence_status": "authored_design_not_empirically_validated",
+      "source_ids": [],
+      "required_before_activation": [
+        "typed_entry_and_abort_predicates",
+        "spatial_fixture",
+        "rules_profile",
+        "perception_snapshot",
+        "teammate_and_opponent_responsibilities",
+        "timing_and_feasibility",
+        "outcome_branches",
+        "runtime_acceptance_results",
+        "documented_calibration_or_explicit_prototype_status"
+      ]
+    },
+    {
+      "id": "WING02",
+      "schema_version": "0.2",
+      "status": "draft_seed",
+      "production_enabled": false,
+      "calibration_status": "not_calibrated",
+      "original": {
+        "focal_role_and_situation": "Winger, near-side overload",
+        "cue_candidate_response": "Draw pressure and release a switch route",
+        "counter_response": "Keep carrying if defenders refuse to commit"
+      },
+      "audit_override": null,
+      "evidence_status": "authored_design_not_empirically_validated",
+      "source_ids": [],
+      "required_before_activation": [
+        "typed_entry_and_abort_predicates",
+        "spatial_fixture",
+        "rules_profile",
+        "perception_snapshot",
+        "teammate_and_opponent_responsibilities",
+        "timing_and_feasibility",
+        "outcome_branches",
+        "runtime_acceptance_results",
+        "documented_calibration_or_explicit_prototype_status"
+      ]
+    },
+    {
+      "id": "WING03",
+      "schema_version": "0.2",
+      "status": "draft_seed",
+      "production_enabled": false,
+      "calibration_status": "not_calibrated",
+      "original": {
+        "focal_role_and_situation": "Far winger, ball on opposite flank",
+        "cue_candidate_response": "Choose width, blind-side depth or far-post run",
+        "counter_response": "Narrowing too early can destroy switch access"
+      },
+      "audit_override": null,
+      "evidence_status": "authored_design_not_empirically_validated",
+      "source_ids": [],
+      "required_before_activation": [
+        "typed_entry_and_abort_predicates",
+        "spatial_fixture",
+        "rules_profile",
+        "perception_snapshot",
+        "teammate_and_opponent_responsibilities",
+        "timing_and_feasibility",
+        "outcome_branches",
+        "runtime_acceptance_results",
+        "documented_calibration_or_explicit_prototype_status"
+      ]
+    },
+    {
+      "id": "WING04",
+      "schema_version": "0.2",
+      "status": "draft_seed",
+      "production_enabled": false,
+      "calibration_status": "not_calibrated",
+      "original": {
+        "focal_role_and_situation": "Winger, delivery near byline",
+        "cue_candidate_response": "Compare cutback, near-post pass, far-post delivery",
+        "counter_response": "Cancel delivery when every arrival lane is covered"
+      },
+      "audit_override": null,
+      "evidence_status": "authored_design_not_empirically_validated",
+      "source_ids": [],
+      "required_before_activation": [
+        "typed_entry_and_abort_predicates",
+        "spatial_fixture",
+        "rules_profile",
+        "perception_snapshot",
+        "teammate_and_opponent_responsibilities",
+        "timing_and_feasibility",
+        "outcome_branches",
+        "runtime_acceptance_results",
+        "documented_calibration_or_explicit_prototype_status"
+      ]
+    },
+    {
+      "id": "AT01",
+      "schema_version": "0.2",
+      "status": "draft_seed",
+      "production_enabled": false,
+      "calibration_status": "not_calibrated",
+      "original": {
+        "focal_role_and_situation": "Ball winner, attacking transition",
+        "cue_candidate_response": "Exploit temporary numerical/positional advantage",
+        "counter_response": "Recycle when defenders recover or first touch fails"
+      },
+      "audit_override": null,
+      "evidence_status": "authored_design_not_empirically_validated",
+      "source_ids": [],
+      "required_before_activation": [
+        "typed_entry_and_abort_predicates",
+        "spatial_fixture",
+        "rules_profile",
+        "perception_snapshot",
+        "teammate_and_opponent_responsibilities",
+        "timing_and_feasibility",
+        "outcome_branches",
+        "runtime_acceptance_results",
+        "documented_calibration_or_explicit_prototype_status"
+      ]
+    },
+    {
+      "id": "DT01",
+      "schema_version": "0.2",
+      "status": "draft_seed",
+      "production_enabled": false,
+      "calibration_status": "not_calibrated",
+      "original": {
+        "focal_role_and_situation": "Nearest player, immediate loss",
+        "cue_candidate_response": "Counterpress when ball and support are accessible",
+        "counter_response": "Delay/recover if opponent escapes facing forward"
+      },
+      "audit_override": null,
+      "evidence_status": "authored_design_not_empirically_validated",
+      "source_ids": [],
+      "required_before_activation": [
+        "typed_entry_and_abort_predicates",
+        "spatial_fixture",
+        "rules_profile",
+        "perception_snapshot",
+        "teammate_and_opponent_responsibilities",
+        "timing_and_feasibility",
+        "outcome_branches",
+        "runtime_acceptance_results",
+        "documented_calibration_or_explicit_prototype_status"
+      ]
+    },
+    {
+      "id": "DT02",
+      "schema_version": "0.2",
+      "status": "draft_seed",
+      "production_enabled": false,
+      "calibration_status": "not_calibrated",
+      "original": {
+        "focal_role_and_situation": "Cover player, immediate loss",
+        "cue_candidate_response": "Block the most dangerous outlet",
+        "counter_response": "Do not join the ball chase and open the center"
+      },
+      "audit_override": null,
+      "evidence_status": "authored_design_not_empirically_validated",
+      "source_ids": [],
+      "required_before_activation": [
+        "typed_entry_and_abort_predicates",
+        "spatial_fixture",
+        "rules_profile",
+        "perception_snapshot",
+        "teammate_and_opponent_responsibilities",
+        "timing_and_feasibility",
+        "outcome_branches",
+        "runtime_acceptance_results",
+        "documented_calibration_or_explicit_prototype_status"
+      ]
+    },
+    {
+      "id": "DEF01",
+      "schema_version": "0.2",
+      "status": "draft_seed",
+      "production_enabled": false,
+      "calibration_status": "not_calibrated",
+      "original": {
+        "focal_role_and_situation": "First defender, poor opponent touch",
+        "cue_candidate_response": "Press on observable loss of control",
+        "counter_response": "Abandon tackle if opponent regains control first"
+      },
+      "audit_override": null,
+      "evidence_status": "authored_design_not_empirically_validated",
+      "source_ids": [],
+      "required_before_activation": [
+        "typed_entry_and_abort_predicates",
+        "spatial_fixture",
+        "rules_profile",
+        "perception_snapshot",
+        "teammate_and_opponent_responsibilities",
+        "timing_and_feasibility",
+        "outcome_branches",
+        "runtime_acceptance_results",
+        "documented_calibration_or_explicit_prototype_status"
+      ]
+    },
+    {
+      "id": "DEF02",
+      "schema_version": "0.2",
+      "status": "draft_seed",
+      "production_enabled": false,
+      "calibration_status": "not_calibrated",
+      "original": {
+        "focal_role_and_situation": "Cover defender, teammate presses",
+        "cue_candidate_response": "Protect inside and depth at a useful distance",
+        "counter_response": "Shift as the attacker changes angle"
+      },
+      "audit_override": null,
+      "evidence_status": "authored_design_not_empirically_validated",
+      "source_ids": [],
+      "required_before_activation": [
+        "typed_entry_and_abort_predicates",
+        "spatial_fixture",
+        "rules_profile",
+        "perception_snapshot",
+        "teammate_and_opponent_responsibilities",
+        "timing_and_feasibility",
+        "outcome_branches",
+        "runtime_acceptance_results",
+        "documented_calibration_or_explicit_prototype_status"
+      ]
+    }
+  ],
+  "subset_note": "17 unmodified draft seeds selected from the 40-seed v0.5 package. Do not enable by flipping flags. Author and validate concrete drills."
+}

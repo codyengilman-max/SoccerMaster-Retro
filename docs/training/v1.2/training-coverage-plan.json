@@ -1,0 +1,292 @@
+{
+  "schema_version": "1.2",
+  "artifact_kind": "authoring_release_plan",
+  "runtime_ready": false,
+  "instructions": "Not a runtime catalog. Bind actual inspected runtime IDs and record implementation evidence separately; never enable source seeds by editing flags.",
+  "families": [
+    {
+      "family_id": "TT01",
+      "name": "Receive under pressure",
+      "canonical_role_plan": [
+        "LB",
+        "CB",
+        "RB",
+        "6",
+        "8",
+        "LW",
+        "9",
+        "RW"
+      ],
+      "focus_concepts": [
+        "directional first touch",
+        "receiving under pressure"
+      ],
+      "source_seed_ids": [
+        "SIX01",
+        "EIGHT01"
+      ],
+      "source_interaction_ids": [
+        "I08"
+      ],
+      "participants": "controlled receiver + 2 supports vs 1 presser, progressing to 2 defenders",
+      "runtime_role_ids": null,
+      "runtime_focus_ids": null,
+      "runtime_drill_ids": null,
+      "enabled": false,
+      "implementation_status": "NOT_VERIFIED",
+      "runtime_test_status": "NOT_RUN",
+      "coaching_review_status": "authored_adaptation_not_coach_reviewed",
+      "fallback_policy": "compatible_role_and_objective_only_else_unavailable",
+      "weekly_entitlement_policy": "reuse_existing_key_no_new_credit_for_variation",
+      "evidence_contract": "06_DRILL_RELEASE_COVERAGE.md"
+    },
+    {
+      "family_id": "TT02",
+      "name": "Show a passing angle",
+      "canonical_role_plan": [
+        "LB",
+        "CB",
+        "RB",
+        "6",
+        "8",
+        "LW",
+        "9",
+        "RW"
+      ],
+      "focus_concepts": [
+        "off-ball support",
+        "escaping a cover shadow"
+      ],
+      "source_seed_ids": [
+        "CB02",
+        "SIX02"
+      ],
+      "source_interaction_ids": [
+        "I02",
+        "I08"
+      ],
+      "participants": "controlled support + 2 attackers vs 2 defenders",
+      "runtime_role_ids": null,
+      "runtime_focus_ids": null,
+      "runtime_drill_ids": null,
+      "enabled": false,
+      "implementation_status": "NOT_VERIFIED",
+      "runtime_test_status": "NOT_RUN",
+      "coaching_review_status": "authored_adaptation_not_coach_reviewed",
+      "fallback_policy": "compatible_role_and_objective_only_else_unavailable",
+      "weekly_entitlement_policy": "reuse_existing_key_no_new_credit_for_variation",
+      "evidence_contract": "06_DRILL_RELEASE_COVERAGE.md"
+    },
+    {
+      "family_id": "TT03",
+      "name": "Use the overload",
+      "canonical_role_plan": [
+        "LB",
+        "RB",
+        "LW",
+        "RW"
+      ],
+      "focus_concepts": [
+        "wide overload",
+        "combining or carrying in a 2v1"
+      ],
+      "source_seed_ids": [
+        "WING01",
+        "OB01"
+      ],
+      "source_interaction_ids": [
+        "I04",
+        "I08"
+      ],
+      "participants": "2 attackers vs 1 defender + GK",
+      "runtime_role_ids": null,
+      "runtime_focus_ids": null,
+      "runtime_drill_ids": null,
+      "enabled": false,
+      "implementation_status": "NOT_VERIFIED",
+      "runtime_test_status": "NOT_RUN",
+      "coaching_review_status": "authored_adaptation_not_coach_reviewed",
+      "fallback_policy": "compatible_role_and_objective_only_else_unavailable",
+      "weekly_entitlement_policy": "reuse_existing_key_no_new_credit_for_variation",
+      "evidence_contract": "06_DRILL_RELEASE_COVERAGE.md"
+    },
+    {
+      "family_id": "TT04",
+      "name": "Find the other side",
+      "canonical_role_plan": [
+        "LB",
+        "CB",
+        "RB",
+        "6",
+        "8",
+        "LW",
+        "9",
+        "RW"
+      ],
+      "focus_concepts": [
+        "switch of play",
+        "width and reset options"
+      ],
+      "source_seed_ids": [
+        "WING02",
+        "WING03"
+      ],
+      "source_interaction_ids": [
+        "I06",
+        "I08"
+      ],
+      "participants": "4 attackers vs 3 defenders, role-compatible controlled assignment",
+      "runtime_role_ids": null,
+      "runtime_focus_ids": null,
+      "runtime_drill_ids": null,
+      "enabled": false,
+      "implementation_status": "NOT_VERIFIED",
+      "runtime_test_status": "NOT_RUN",
+      "coaching_review_status": "authored_adaptation_not_coach_reviewed",
+      "fallback_policy": "compatible_role_and_objective_only_else_unavailable",
+      "weekly_entitlement_policy": "reuse_existing_key_no_new_credit_for_variation",
+      "evidence_contract": "06_DRILL_RELEASE_COVERAGE.md"
+    },
+    {
+      "family_id": "TT05",
+      "name": "Pressure and cover",
+      "canonical_role_plan": [
+        "LB",
+        "CB",
+        "RB",
+        "6"
+      ],
+      "focus_concepts": [
+        "defensive pressure",
+        "cover",
+        "delaying a counterattack"
+      ],
+      "source_seed_ids": [
+        "CB04",
+        "DEF01",
+        "DEF02"
+      ],
+      "source_interaction_ids": [
+        "I10",
+        "I11"
+      ],
+      "participants": "2 defenders + GK vs 3 attackers",
+      "runtime_role_ids": null,
+      "runtime_focus_ids": null,
+      "runtime_drill_ids": null,
+      "enabled": false,
+      "implementation_status": "NOT_VERIFIED",
+      "runtime_test_status": "NOT_RUN",
+      "coaching_review_status": "authored_adaptation_not_coach_reviewed",
+      "fallback_policy": "compatible_role_and_objective_only_else_unavailable",
+      "weekly_entitlement_policy": "reuse_existing_key_no_new_credit_for_variation",
+      "evidence_contract": "06_DRILL_RELEASE_COVERAGE.md"
+    },
+    {
+      "family_id": "TT06",
+      "name": "React after loss",
+      "canonical_role_plan": [
+        "LB",
+        "CB",
+        "RB",
+        "6",
+        "8",
+        "LW",
+        "9",
+        "RW"
+      ],
+      "focus_concepts": [
+        "transition after loss",
+        "recovery and outlet denial"
+      ],
+      "source_seed_ids": [
+        "DT01",
+        "DT02",
+        "AT01"
+      ],
+      "source_interaction_ids": [
+        "I19",
+        "I20"
+      ],
+      "participants": "3 vs 3 with distinct safe outlet targets",
+      "runtime_role_ids": null,
+      "runtime_focus_ids": null,
+      "runtime_drill_ids": null,
+      "enabled": false,
+      "implementation_status": "NOT_VERIFIED",
+      "runtime_test_status": "NOT_RUN",
+      "coaching_review_status": "authored_adaptation_not_coach_reviewed",
+      "fallback_policy": "compatible_role_and_objective_only_else_unavailable",
+      "weekly_entitlement_policy": "reuse_existing_key_no_new_credit_for_variation",
+      "evidence_contract": "06_DRILL_RELEASE_COVERAGE.md"
+    },
+    {
+      "family_id": "TT07",
+      "name": "Choose the finish",
+      "canonical_role_plan": [
+        "8",
+        "LW",
+        "9",
+        "RW"
+      ],
+      "focus_concepts": [
+        "shot selection",
+        "cutback decision",
+        "arrival timing"
+      ],
+      "source_seed_ids": [
+        "EIGHT03",
+        "WING04"
+      ],
+      "source_interaction_ids": [
+        "I17"
+      ],
+      "participants": "3 attackers vs 2 defenders + GK",
+      "runtime_role_ids": null,
+      "runtime_focus_ids": null,
+      "runtime_drill_ids": null,
+      "enabled": false,
+      "implementation_status": "NOT_VERIFIED",
+      "runtime_test_status": "NOT_RUN",
+      "coaching_review_status": "authored_adaptation_not_coach_reviewed",
+      "fallback_policy": "compatible_role_and_objective_only_else_unavailable",
+      "weekly_entitlement_policy": "reuse_existing_key_no_new_credit_for_variation",
+      "evidence_contract": "06_DRILL_RELEASE_COVERAGE.md"
+    },
+    {
+      "family_id": "TT08",
+      "name": "Build from the keeper",
+      "canonical_role_plan": [
+        "GK",
+        "LB",
+        "CB",
+        "RB",
+        "6"
+      ],
+      "focus_concepts": [
+        "goalkeeper distribution",
+        "buildup outlets",
+        "compatible receiving/passing under a press sub-objective"
+      ],
+      "source_seed_ids": [
+        "GK01",
+        "CB02"
+      ],
+      "source_interaction_ids": [
+        "I01",
+        "I02"
+      ],
+      "participants": "GK + 3 outfield supports vs 2 pressers; controlled actor occupies a compatible real slot",
+      "runtime_role_ids": null,
+      "runtime_focus_ids": null,
+      "runtime_drill_ids": null,
+      "enabled": false,
+      "implementation_status": "NOT_VERIFIED",
+      "runtime_test_status": "NOT_RUN",
+      "coaching_review_status": "authored_adaptation_not_coach_reviewed",
+      "fallback_policy": "compatible_role_and_objective_only_else_unavailable",
+      "weekly_entitlement_policy": "reuse_existing_key_no_new_credit_for_variation",
+      "evidence_contract": "06_DRILL_RELEASE_COVERAGE.md"
+    }
+  ]
+}

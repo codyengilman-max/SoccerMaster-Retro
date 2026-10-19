@@ -1,7 +1,7 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { idealPower } from '../src/game/story/crossbar';
 import { thresholdsFor } from '../src/input';
-import { Finger, diagnostics, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
+import { Finger, diagnostics, finishTeamTraining, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
 
 // Season One on one isolated save: identity -> prologue -> week one (aquarium, recess, Coach Code with the
 // real Team Training handoff) -> week close -> week 2, then reload. Later weeks: tests/season-story.test.ts.
@@ -95,6 +95,8 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
     if (s.scene === 'W2_SCHOOL_CALLBACK') return story(page, (x) => `${x.text}\n${x.hint ?? ''}`.includes('Match:'), 'week one recap');
     if (s.mode === 'crossbar') {
       if (s.crossbar?.ready) {
+        // Optional review captures (CAPTURE_DIR set): the Crossbar screen before each kick.
+        if (process.env.CAPTURE_DIR) await page.screenshot({ path: `${process.env.CAPTURE_DIR}/crossbar-${page.viewportSize()?.width}x${page.viewportSize()?.height}-${s.crossbar.player + s.crossbar.blake}.png` });
         const before = s.crossbar.player + s.crossbar.blake;
         await kick(page, finger);
         await story(page, (x) => x.mode !== 'crossbar' || x.crossbar!.animating || x.crossbar!.next?.participant !== 'player' || x.crossbar!.player + x.crossbar!.blake > before, 'kick taken');
@@ -168,6 +170,7 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
       await pressStory(page, 'handoff-career', mode);
       await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'team', 'team screen again');
       await press(page, 'team-play', mode);
+      await finishTeamTraining(page, mode);
       await scene(page, 'match', team('done'), 'three situations', 120_000);
       await pressAny(page, 'menu-button', mode);
       await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'team', 'counted');
