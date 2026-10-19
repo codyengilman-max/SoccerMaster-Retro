@@ -3,7 +3,7 @@
  * transaction, so cursor, decision, run and revision are written together or not at all.
  * The UI sends only a requested choice id, expected revision and input sequence number.
  */
-import { STORY, nodeById, sceneById, type AdapterKind, type Outcome, type StoryNode } from './content';
+import { SEASON_ONE, STORY, catalogFor, nodeById, sceneById, type AdapterKind, type Outcome, type StoryNode } from './content';
 
 export const STORY_SCHEMA = 1;
 export type CrossbarResult = 'WIN' | 'LOSS' | 'DRAW';
@@ -16,6 +16,8 @@ export interface ActivityRun {
   readonly state: 'launched' | 'resolved';
   readonly outcome: Outcome | null;
   readonly result: CrossbarResult | null;
+  /** Season One: a code-recorded detail of the completed activity (e.g. tournament finish), never free text. */
+  readonly detail?: string | null;
 }
 
 export interface StoryState {
@@ -43,7 +45,7 @@ export type StoryCommand =
   | { readonly type: 'advance'; readonly revision: number; readonly seq: number }
   | { readonly type: 'choose'; readonly revision: number; readonly seq: number; readonly choiceId: string }
   | { readonly type: 'launch'; readonly revision: number; readonly runId: string }
-  | { readonly type: 'complete'; readonly revision: number; readonly runId: string; readonly outcome: Outcome; readonly result?: CrossbarResult | null }
+  | { readonly type: 'complete'; readonly revision: number; readonly runId: string; readonly outcome: Outcome; readonly result?: CrossbarResult | null; readonly detail?: string | null }
   | { readonly type: 'decline'; readonly revision: number; readonly seq: number };
 
 export type StoryOutcome =
@@ -52,10 +54,15 @@ export type StoryOutcome =
 
 export const runKey = (s: Pick<StoryState, 'careerId' | 'contentVersion'>, sceneId: string, nodeId: string): string => JSON.stringify([s.careerId, sceneId, s.contentVersion, nodeId]);
 
-export function newStory(careerId: string): StoryState {
-  const scene = sceneById(STORY.entry)!;
-  return { schema: STORY_SCHEMA, careerId, contentVersion: STORY.version, sceneId: scene.id, nodeId: scene.entry, revealed: false, revision: 0, lastSeq: 0, openedBy: 0, decisions: {}, runs: {}, transcript: [{ sceneId: scene.id, nodeId: scene.entry }], completedScenes: [], complete: false };
+export function newStory(careerId: string, catalog = STORY): StoryState {
+  const scene = sceneById(catalog.entry)!;
+  return { schema: STORY_SCHEMA, careerId, contentVersion: catalog.version, sceneId: scene.id, nodeId: scene.entry, revealed: false, revision: 0, lastSeq: 0, openedBy: 0, decisions: {}, runs: {}, transcript: [{ sceneId: scene.id, nodeId: scene.entry }], completedScenes: [], complete: false };
 }
+
+/** A Season One story from the prologue, for a new career or alongside an archived older story. */
+export const newSeasonStory = (careerId: string): StoryState => newStory(careerId, SEASON_ONE);
+/** Adapters whose completion carries a WIN/DRAW/LOSS result from the real activity. */
+export const RESULT_ADAPTERS: readonly AdapterKind[] = ['crossbar', 'league_match', 'tournament_match'];
 
 /**
  * Saves that finished the old week-one slice (complete at the final callback) continue into week 2.
@@ -79,6 +86,20 @@ export function currentNode(s: StoryState): StoryNode | null {
 export function evaluatePredicate(s: StoryState, predicate: string): boolean | null {
   if (predicate === 'always') return true;
   const run = (sceneId: string, nodeId: string): ActivityRun | undefined => Object.values(s.runs).find((r) => r.sceneId === sceneId && r.nodeId === nodeId && r.state === 'resolved');
+  const param = /^(chose|result|detail|done):([A-Za-z0-9_]+)(?:\.([A-Za-z0-9_]+))?(?:=([A-Za-z0-9_|]+))?$/.exec(predicate);
+  if (param && s.contentVersion === SEASON_ONE.version) {
+    const [, kind, sceneId, key, list] = param as unknown as [string, string, string, string | undefined, string | undefined];
+    const values = (list ?? '').split('|');
+    if (kind === 'chose') {
+      const v = key === undefined ? undefined : s.decisions[sceneId]?.[key];
+      return v === undefined ? null : values.includes(v);
+    }
+    const r = Object.values(s.runs).find((x) => x.sceneId === sceneId && x.state === 'resolved');
+    if (kind === 'done') return r?.outcome === 'completed';
+    if (!r || r.outcome !== 'completed') return false;
+    if (kind === 'result') return r.result !== null && values.includes(r.result);
+    return r.detail != null && values.includes(r.detail);
+  }
   if (predicate === 'jungle_accepted') {
     const v = s.decisions.W2_JUNGLE?.invite;
     return v === undefined ? null : v === 'play';
@@ -127,7 +148,7 @@ function enter(s: StoryState, sceneId: string, nodeId: string, seq: number): Sto
 }
 
 export function reduceStory(s: StoryState, c: StoryCommand): StoryOutcome {
-  if (s.contentVersion !== STORY.version) return fail(`Story content ${s.contentVersion} is not supported by this build.`);
+  if (!catalogFor(s.contentVersion)) return fail(`Story content ${s.contentVersion} is not supported by this build.`);
   if (s.complete) return fail('This story slice is complete.');
   if (c.revision !== s.revision) return fail('stale revision');
   const node = currentNode(s);
@@ -169,9 +190,12 @@ export function reduceStory(s: StoryState, c: StoryCommand): StoryOutcome {
       if (!run || run.runId !== c.runId) return fail('activity run does not belong to this step');
       const target = node.outcomes[c.outcome];
       if (!target) return fail('outcome not allowed here');
-      const result = node.adapter === 'crossbar' && c.outcome === 'completed' ? (c.result ?? null) : null;
-      if (node.adapter === 'crossbar' && c.outcome === 'completed' && result === null) return fail('crossbar completion needs a result');
-      const resolved: ActivityRun = { ...run, state: 'resolved', outcome: c.outcome, result };
+      const needsResult = RESULT_ADAPTERS.includes(node.adapter) && c.outcome === 'completed';
+      const result = needsResult ? (c.result ?? null) : null;
+      if (needsResult && (result === null || !['WIN', 'DRAW', 'LOSS'].includes(result))) return fail(`${node.adapter} completion needs a result`);
+      const detail = c.outcome === 'completed' && typeof c.detail === 'string' ? c.detail : null;
+      if (detail !== null && !/^[a-z_]{1,32}$/.test(detail)) return fail('bad activity detail');
+      const resolved: ActivityRun = s.contentVersion === SEASON_ONE.version ? { ...run, state: 'resolved', outcome: c.outcome, result, detail } : { ...run, state: 'resolved', outcome: c.outcome, result };
       return done(goTo({ ...s, runs: { ...s.runs, [key]: resolved } }, target, s.lastSeq));
     }
     case 'decline': {

@@ -1,6 +1,6 @@
 import { IDBFactory } from 'fake-indexeddb';
 import { describe, expect, it } from 'vitest';
-import { StoryStore } from '../src/game/story/store';
+import { StoryStore, legacyKey } from '../src/game/story/store';
 import { currentNode, newStory } from '../src/game/story/runtime';
 
 describe('story store (IndexedDB, one transaction per command)', () => {
@@ -8,7 +8,8 @@ describe('story store (IndexedDB, one transaction per command)', () => {
     const f = new IDBFactory();
     const a = await StoryStore.open(f, 'st');
     const s0 = await a.begin('c1');
-    expect(s0.ok && s0.state.sceneId).toBe('INIT_IDENTITY');
+    // Season One supersedes the older slice: new careers start at the Season One prologue.
+    expect(s0.ok && s0.state.sceneId).toBe('S1_PRO_IDENTITY');
     const r = await a.dispatch('c1', { type: 'advance', revision: 0, seq: 1 });
     expect(r.ok).toBe(true);
     a.close();
@@ -54,5 +55,20 @@ describe('story store (IndexedDB, one transaction per command)', () => {
     expect(keys.some((k) => String(k).startsWith('broken-c2-'))).toBe(true);
     expect(keys).toContain('c2');
     expect(currentNode(newStory('z'))!.type).toBe('line');
+  });
+  it('an older four-week story is archived unchanged and the career starts Season One once', async () => {
+    const f = new IDBFactory();
+    const a = await StoryStore.open(f, 'st');
+    const old = { ...newStory('c3'), decisions: { W1_MONDAY_01: { feeling: 'nervous' } }, revision: 7 };
+    const db = await new Promise<IDBDatabase>((res) => { const q = f.open('st', 1); q.onsuccess = () => res(q.result); });
+    await new Promise<void>((res) => { const t = db.transaction('story', 'readwrite'); t.objectStore('story').put(old, 'c3'); t.oncomplete = () => res(); });
+    const r = await a.begin('c3');
+    expect(r.ok && r.state.sceneId).toBe('S1_PRO_IDENTITY');
+    expect(r.ok && r.state.contentVersion).toBe('s1-v1.0');
+    expect(await a.loadLegacy('c3')).toEqual(old);
+    const again = await a.begin('c3');
+    expect(again.ok && again.state).toEqual(r.ok && r.state);
+    const keys = await new Promise<IDBValidKey[]>((res) => { const q = db.transaction('story').objectStore('story').getAllKeys(); q.onsuccess = () => res(q.result); });
+    expect(keys.filter((k) => String(k) === legacyKey('c3'))).toHaveLength(1);
   });
 });
