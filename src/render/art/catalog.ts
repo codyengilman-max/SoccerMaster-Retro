@@ -8,6 +8,7 @@ import wardrobeRaw from '../../../docs/art/graphics-v1/assets/wardrobe-map.json'
 import continuityRaw from '../../../docs/art/graphics-v1/assets/character-continuity.json';
 import runtimeRaw from '../../assets/art/v1/runtime-manifest.json';
 import seasonOneRaw from '../../../docs/art/season-one/asset-manifest.json';
+import trainingRaw from '../../../docs/training/v1.2/asset-manifest.json';
 import { SEASON_ONE, sceneById } from '../../game/story/content';
 
 export const ART_REVISION = 'graphics-v1.1';
@@ -52,7 +53,7 @@ const ID_RE = /^[a-z0-9-]{1,40}$/;
 const SCENE_RE = /^[A-Z0-9_]{1,40}$/;
 
 export const ART_ASSETS: readonly ArtAsset[] = Object.freeze(
-  ([...manifestRaw.assets, ...seasonOneRaw.assets] as unknown as ArtAsset[]).map((a) => {
+  ([...manifestRaw.assets, ...seasonOneRaw.assets, ...trainingRaw.assets] as unknown as ArtAsset[]).map((a) => {
     if (!ID_RE.test(a.assetId)) throw new Error(`art manifest: bad asset id ${a.assetId}`);
     return Object.freeze({ ...a });
   }),

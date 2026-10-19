@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="650" viewBox="0 0 1000 650">
+<title>Grounded crossbar goal — layout reference</title>
+<desc>One white goal, with upright bases on the ground, rear net and ground shadow. All positions come from scene-layout.json. Not a collision model.</desc>
+<path d="M240 444L752 444L728 404L282 404Z" fill="#183b28" opacity=".28"/>
+<path d="M280 250H720V400H280Z" fill="#eef7ed" opacity=".14"/>
+<g fill="none" stroke="#f8f4de" stroke-width="1.8" opacity=".70"><path d="M280 250V400"/><path d="M302 250V400"/><path d="M324 250V400"/><path d="M346 250V400"/><path d="M368 250V400"/><path d="M390 250V400"/><path d="M412 250V400"/><path d="M434 250V400"/><path d="M456 250V400"/><path d="M478 250V400"/><path d="M500 250V400"/><path d="M522 250V400"/><path d="M544 250V400"/><path d="M566 250V400"/><path d="M588 250V400"/><path d="M610 250V400"/><path d="M632 250V400"/><path d="M654 250V400"/><path d="M676 250V400"/><path d="M698 250V400"/><path d="M720 250V400"/><path d="M280 250H720"/><path d="M280 268H720"/><path d="M280 286H720"/><path d="M280 304H720"/><path d="M280 322H720"/><path d="M280 340H720"/><path d="M280 358H720"/><path d="M280 376H720"/><path d="M280 394H720"/></g>
+<g fill="none" stroke="#a6bdac" stroke-width="4"><path d="M280 400V250H720V400"/><path d="M250 274L280 250M750 274L720 250M250 440L280 400M750 440L720 400"/></g>
+<path d="M250 440V274H750V440" fill="none" stroke="#34515b" stroke-width="13"/>
+<path d="M250 440V274H750V440" fill="none" stroke="#fff8de" stroke-width="9"/>
+</svg>

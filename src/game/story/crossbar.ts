@@ -108,6 +108,20 @@ export function simulateShot(input: KickInput): ShotResult {
   return { contact: 'miss', scored: false, time: C.maxTime, path };
 }
 
+/** What the player sees after a shot: the first contact, and for a miss whether it went over, wide or fell short. */
+export type ShotOutcome = 'bar' | 'post' | 'under' | 'short' | 'over' | 'wide';
+export function describeShot(r: ShotResult): ShotOutcome {
+  if (r.contact === 'bar') return 'bar';
+  if (r.contact === 'post') return 'post';
+  if (r.contact === 'net') return 'under';
+  // The flight is a straight line in plan view, so its lateral position on the goal line follows from any sample.
+  const gy = CROSSBAR.spotDistance;
+  const last = r.path[r.path.length - 1]!;
+  const xAtGoal = last[1] > 0 ? (last[0] / last[1]) * gy : last[0];
+  if (Math.abs(xAtGoal) > CROSSBAR.goalWidth / 2) return 'wide';
+  return r.contact === 'ground' ? 'short' : 'over';
+}
+
 // ---- Contest (K7 lifecycle) ----
 
 export type Participant = 'player' | 'blake';
@@ -188,6 +202,26 @@ export function resolveAttempt(c: Contest): ContestStep {
   const attempts = c.attempts.slice();
   attempts[i] = { ...a, state: 'resolved', contact: r.contact, scored: r.scored };
   return { ok: true, contest: { ...c, attempts } };
+}
+
+/**
+ * Compare-and-commit a launch against the stored contest: only from the exact state this client saw
+ * (same attempt count, still active). A stale tab, or a second tap after the turn moved, launches nothing.
+ */
+export function commitLaunch(stored: unknown, seen: number, who: Participant, input: KickInput): Contest | null {
+  const c = restoreContest(stored);
+  if (!c || c.status !== 'active' || c.attempts.length !== seen) return null;
+  const l = launchAttempt(c, who, input);
+  return l.ok ? l.contest : null;
+}
+
+/** Compare-and-commit the result of one launched attempt; already resolved (or unknown) leaves the record alone. */
+export function commitResolve(stored: unknown, key: string): Contest | null {
+  const c = restoreContest(stored);
+  const a = c?.attempts.find((x) => x.key === key);
+  if (!c || !a || a.state !== 'launched') return null;
+  const r = resolveAttempt(c);
+  return r.ok ? r.contest : null;
 }
 
 /** Restore after reload: an incompatible simulation version is interrupted, never an invented result. */

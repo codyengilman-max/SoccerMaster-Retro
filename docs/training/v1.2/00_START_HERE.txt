@@ -1,0 +1,27 @@
+SoccerMaster Training + Schoolyard revision 1.2
+19 October 2026 — updated from the revision 1.1 red-team audit
+
+Target: codyengilman-max/SoccerMaster-Retro (Phaser + TypeScript + Vite).
+This is an implementation/art handoff, NOT current game source or a deployed fix.
+
+Read in this order:
+1. 01_DEVIN_IMPLEMENTATION_BRIEF.md — three requested corrections and release scope.
+2. 04_TEAM_TRAINING_VENUE.md — Bell94 primary / Scottsdale Sports Complex alternate.
+3. 05_RUNTIME_INTEGRITY_CONTRACT.md — durable crossbar shots, weekly completion, arc controls and failure tests.
+4. 06_DRILL_RELEASE_COVERAGE.md — eight-family role/focus plan and required actual release inventory.
+5. 08_SOURCE_AND_DEPENDENCY_MANIFEST.md — instruction precedence and reference-only dependencies.
+6. 07_AUDIT_RESOLUTION_AND_ACCEPTANCE.md — all six findings mapped to changes and outstanding game tests.
+
+03_PASTE_TO_DEVIN.txt is the short kickoff prompt.
+02_REVIEW_AND_TEST_STATUS.md records package checks and NOT RUN runtime checks.
+Open review-board.html for the static layout proposal. Its sample data and numbered player markers are illustrative, not a playable game or replacement character sprites.
+
+assets/schoolyard_crossbar_background_v2.png has no baked goal.
+assets/crossbar_goal_reference.svg and scene-layout.json are composition references, not calibrated physics.
+assets/team_training_bell94_environment_reference.png is venue art direction; adapt scenery to the existing live camera and half-field geometry.
+training-coverage-plan.json is non-runtime authoring data. Do not import it as enabled training content or fabricate runtime IDs.
+references/ contains read-only source context and 17 disabled draft seeds.
+references/engine_v0.5_README_REFERENCE_ONLY.md belongs to a separate prototype archive. Its engine code and test commands are not included/runnable here.
+audit/AUDIT_OF_REVISION_1.1.md is historical evidence; use the 1.2 resolution file for current package status.
+
+Preserve current joystick + PASS / SHOOT / SLIDE TACKLE / BLOCK, character identity, existing saves/progression, and normal match behavior. Physical iPhone acceptance and actual game tests remain required work, never claims made by this handoff.

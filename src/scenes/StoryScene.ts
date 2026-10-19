@@ -11,11 +11,12 @@ import type { CareerSave } from '../game/career/state';
 import { CareerStore } from '../game/career/store';
 import type { Position } from '../game/career/types';
 import { type Background, type StoryNode } from '../game/story/content';
-import { attemptKey, contestResult, launchAttempt, newContest, nextSlot, opponentKick, points, resolveAttempt, restoreContest, simulateShot, type Contest, type KickInput, type Participant } from '../game/story/crossbar';
+import { attemptKey, commitLaunch, commitResolve, contestResult, CROSSBAR, describeShot, launchAttempt, newContest, nextSlot, opponentKick, points, resolveAttempt, restoreContest, simulateShot, type Contest, type KickInput, type Participant, type ShotOutcome } from '../game/story/crossbar';
 import { PRONOUNS, renderText, validateName, type Gender } from '../game/story/identity';
 import { createSession, currentNode, evaluatePredicate, outcomeOf, type StoryCommand, type StoryOutcome, type StorySession, type StoryState } from '../game/story/runtime';
 import { StoryStore } from '../game/story/store';
 import { pullFor, thresholdsFor, type Pull } from '../input';
+import { crossbarView, goalGeometry, type CrossbarView } from '../render/crossbarView';
 import { orientationOf } from '../render/layout';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspectable';
@@ -31,6 +32,9 @@ const CAREER_ADAPTERS = ['training_arrangement', 'weekly_focus', 'practice', 'ma
 const MATCH_ADAPTERS: readonly string[] = ['match', 'league_match', 'tournament_match'];
 type CareerAdapter = (typeof CAREER_ADAPTERS)[number];
 interface Snapshot { readonly revision: number; readonly sessions: number; readonly batches: number; readonly week: number }
+const OUTCOME_WORD: Readonly<Record<ShotOutcome, string>> = { bar: 'Crossbar!', post: 'Off the post.', under: 'Under the bar.', short: 'Too short.', over: 'Over the bar.', wide: 'Wide.' };
+const HIT_DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.search).has('debug') && new URLSearchParams(location.search).has('hitbox');
+
 type Mode = 'loading' | 'error' | 'story' | 'crossbar' | 'transcript';
 type Cmd = StoryCommand extends infer C ? (C extends StoryCommand ? Omit<C, 'revision'> : never) : never;
 interface Action { readonly name: string; readonly label: string; readonly onClick: () => void }
@@ -76,7 +80,12 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private pendingName = '';
   private contest: Contest | null = null;
   private runId = '';
-  private anim: { path: readonly (readonly [number, number, number])[]; start: number; dur: number; who: Participant; scored: boolean } | null = null;
+  private anim: { path: readonly (readonly [number, number, number])[]; start: number; dur: number; who: Participant; scored: boolean; outcome: ShotOutcome } | null = null;
+  private lastShot: { who: Participant; outcome: ShotOutcome; scored: boolean } | null = null;
+  private paused = false;
+  private epoch = 0;
+  private pauseBtn: Button | null = null;
+  private xview: CrossbarView | null = null;
   private aimFrom: { x: number; y: number } | null = null;
   private pull: Pull | null = null;
   private crossbarSummary = '';
@@ -106,6 +115,9 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     this.nodeKey = '';
     this.contest = null;
     this.anim = null;
+    this.lastShot = null;
+    this.paused = false;
+    this.epoch++;
     this.aimFrom = null;
     this.pull = null;
     this.actions = [];
@@ -128,6 +140,10 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       topButton('story-skip', 'Skip ›', () => void this.fastForward()),
       topButton('story-speed', instantText ? 'Text: instant' : 'Text: normal', () => this.toggleSpeed()),
     ];
+    this.pauseBtn = topButton('crossbar-pause', 'Pause', () => this.setPaused(!this.paused));
+    this.pauseBtn.setEnabled(false);
+    this.game.events.on(Phaser.Core.Events.BLUR, this.onBlur, this);
+    this.game.events.on(Phaser.Core.Events.HIDDEN, this.onBlur, this);
     this.input.on(Phaser.Input.Events.POINTER_DOWN, this.onDown, this);
     this.input.on(Phaser.Input.Events.POINTER_MOVE, this.onMove, this);
     this.input.on(Phaser.Input.Events.POINTER_UP, this.onUp, this);
@@ -195,7 +211,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       this.pull = null;
       return;
     }
-    if (this.mode === 'crossbar' && this.kickReady() && p.y > 60) this.aimFrom = { x: p.x, y: p.y };
+    if (this.mode === 'crossbar' && this.kickReady() && p.y > 60 && p.y < this.panel.y) this.aimFrom = { x: p.x, y: p.y };
   }
 
   private onMove(p: Phaser.Input.Pointer): void {
@@ -257,6 +273,25 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     instantText = !instantText;
     this.top[3]!.setLabel(instantText ? 'Text: instant' : 'Text: normal');
     this.render();
+  }
+
+  /** Pause stops new kicks (and Blake's) and holds Help, the shot log, text speed and Leave. */
+  private setPaused(on: boolean): void {
+    if (this.mode !== 'crossbar') return;
+    this.paused = on;
+    this.aimFrom = null;
+    this.pull = null;
+    this.render();
+    const slot = this.contest ? nextSlot(this.contest) : null;
+    if (!on && slot?.participant === 'blake' && !this.anim && !this.busy) this.afterShot();
+  }
+
+  /** Losing focus drops any held pull, so a half-drawn kick never fires later; the challenge pauses. */
+  private onBlur(): void {
+    this.aimFrom = null;
+    this.pull = null;
+    this.pointersDown = 0;
+    if (this.mode === 'crossbar' && !this.paused) this.setPaused(true);
   }
 
   private toggleTranscript(): void {
@@ -567,16 +602,24 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
 
   private async enterCrossbar(runId: string): Promise<void> {
     if (!this.store || !this.state) return;
+    const epoch = this.epoch;
     this.runId = runId;
-    let c = restoreContest(await this.store.getRecord(`crossbar:${runId}`)) ?? newContest(runId, this.crossbarWarmup());
+    const warm = this.crossbarWarmup();
+    // One read-modify-write: replay any launched attempt from its frozen input, never a reroll.
+    const c = await this.store.updateRecord(`crossbar:${runId}`, (cur) => {
+      let k = restoreContest(cur) ?? newContest(runId, warm);
+      if (k.status === 'active' && k.attempts.some((a) => a.state === 'launched')) {
+        const r = resolveAttempt(k);
+        if (r.ok) k = r.contest;
+      }
+      return { value: k, out: k };
+    });
+    if (epoch !== this.epoch) return;
+    if (!c) return this.fail('Could not open the crossbar challenge save. Nothing was counted; go back and try again.');
     if (c.status === 'interrupted') return this.complete(runId, 'interrupted');
-    if (c.attempts.some((a) => a.state === 'launched')) {
-      const r = resolveAttempt(c);
-      if (r.ok) c = r.contest;
-    }
-    await this.store.putRecord(`crossbar:${runId}`, c);
     this.contest = c;
     this.mode = 'crossbar';
+    this.paused = false;
     this.message = '';
     this.nodeShownAt = this.time.now;
     this.afterShot();
@@ -587,30 +630,51 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   }
 
   private kickReady(): boolean {
-    return this.mode === 'crossbar' && !this.busy && !this.anim && this.playerTurn();
+    return this.mode === 'crossbar' && !this.paused && !this.busy && !this.anim && this.playerTurn();
   }
 
   private async shoot(who: Participant, input: KickInput): Promise<void> {
-    if (!this.contest || !this.store || this.anim || this.busy) return;
-    const l = launchAttempt(this.contest, who, input);
-    if (!l.ok) return;
+    if (!this.contest || !this.store || this.anim || this.busy || this.mode !== 'crossbar' || this.paused) return;
+    if (!launchAttempt(this.contest, who, input).ok) return;
+    const epoch = this.epoch;
+    const runId = this.runId;
+    const key = `crossbar:${runId}`;
+    const seen = this.contest.attempts.length;
     this.busy = true;
-    // Freeze the launch input before simulating, so a reload replays this exact attempt.
-    if (!(await this.store.putRecord(`crossbar:${this.runId}`, l.contest))) {
+    // Compare-and-commit the frozen launch before any flight is shown; a stale tab or failed save launches nothing.
+    const launched = await this.store.updateRecord(key, (cur) => {
+      const c = commitLaunch(cur, seen, who, input);
+      return c ? { value: c, out: c } : null;
+    });
+    if (epoch !== this.epoch || runId !== this.runId || this.mode !== 'crossbar') return;
+    if (!launched) {
       this.busy = false;
+      const fresh = restoreContest(await this.store.getRecord(key));
+      if (epoch !== this.epoch) return;
+      if (fresh && fresh.attempts.length !== seen) {
+        await this.enterCrossbar(runId);
+        this.message = 'This challenge moved on in another tab; showing the latest shot.';
+        return this.render();
+      }
       this.message = 'Save failed; that kick did not count.';
       return this.render();
     }
-    const r = resolveAttempt(l.contest);
+    const att = launched.attempts[launched.attempts.length - 1]!;
+    const r = resolveAttempt(launched);
     if (!r.ok) return void (this.busy = false);
     // Start the flight before the turn passes, so the next kicker never sees a turn that is not open yet.
-    const shot = simulateShot(input);
-    this.anim = { path: shot.path, start: this.time.now, dur: Math.max(400, shot.time * 1000), who, scored: shot.scored };
+    const shot = simulateShot(att.input);
+    this.anim = { path: shot.path, start: this.time.now, dur: Math.max(400, shot.time * 1000), who, scored: shot.scored, outcome: describeShot(shot) };
+    this.lastShot = null;
     this.contest = r.contest;
     this.message = '';
     this.render();
-    // The launch record above already makes a reload replay this exact attempt if this write is lost.
-    await this.store.putRecord(`crossbar:${this.runId}`, r.contest);
+    // The launch record already makes a reload replay this exact attempt if this write is lost.
+    await this.store.updateRecord(key, (cur) => {
+      const c = commitResolve(cur, att.key);
+      return c ? { value: c, out: true } : null;
+    });
+    if (epoch !== this.epoch) return;
     this.busy = false;
     this.render();
   }
@@ -632,6 +696,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
 
   private async leaveCrossbar(): Promise<void> {
     if (this.busy || this.anim) return;
+    this.paused = false;
     // Leaving before a result is ABANDONED: never a loss, and it cannot be replaced by a reward-bearing retry.
     await this.complete(this.runId, 'abandoned');
     this.render();
@@ -713,6 +778,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     if (this.anim) {
       this.drawStage();
       if (time - this.anim.start >= this.anim.dur + 500 && !this.busy) {
+        this.lastShot = { who: this.anim.who, outcome: this.anim.outcome, scored: this.anim.scored };
         this.anim = null;
         this.afterShot();
       }
@@ -747,9 +813,12 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private render(): void {
     if (!this.bg) return;
     this.panel = { ...this.basePanel };
-    if (this.mode === 'crossbar') {
-      // A short panel leaves the goal and the kicking spot a clear stage under the top bar.
-      const h = Math.round(Math.min(this.basePanel.height, this.scale.height * 0.34));
+    const xbar = this.mode === 'crossbar';
+    for (const b of this.top) b.setEnabled(!xbar);
+    this.pauseBtn?.setEnabled(xbar).setLabel(this.paused ? 'Return' : 'Pause');
+    if (xbar && !this.paused) {
+      // A one-row HUD leaves the goal and the kicking spot a clear stage under the top bar.
+      const h = Math.round(Math.min(this.basePanel.height, Math.max(84, this.scale.height * 0.15)));
       this.panel = { ...this.panel, y: this.basePanel.y + this.basePanel.height - h, height: h };
     }
     const n = this.node();
@@ -774,13 +843,22 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       log = (this.state?.transcript ?? []).map((t) => this.lineFor(t.sceneId, t.nodeId)).filter(Boolean).slice(-8);
       body = log.join('\n');
       acts.push({ name: 'story-log-close', label: 'Close log', onClick: () => this.toggleTranscript() });
+    } else if (this.mode === 'crossbar' && this.contest && this.paused) {
+      body = `Paused\n${this.shotLog()}`;
+      hint = 'Pull back from the ball and let go to kick. Only hitting the crossbar scores; under it, the post, over or wide score nothing.';
+      acts.push({ name: 'crossbar-resume', label: 'Return', onClick: () => this.setPaused(false) });
+      acts.push({ name: 'crossbar-text', label: instantText ? 'Text: instant' : 'Text: normal', onClick: () => this.toggleSpeed() });
+      if (this.busy || this.anim) hint += '\nWait for the ball to land before leaving.';
+      else acts.push({ name: 'crossbar-leave', label: 'Leave (no result)', onClick: () => void this.leaveCrossbar() });
     } else if (this.mode === 'crossbar' && this.contest) {
       const c = this.contest;
       const slot = nextSlot(c);
       const main = c.attempts.filter((a) => a.round === 'main' && a.participant === 'player').length;
-      body = `${this.name()} ${points(c, 'player')} · Blake ${points(c, 'blake')}`;
-      hint = this.anim ? (this.anim.scored ? 'Crossbar! One point.' : 'No point.') : slot?.participant === 'player' ? `${slot.round === 'warmup' ? 'Warm-up shot (does not count)' : slot.round === 'sudden' ? 'Sudden death' : `Your shot ${main + 1} of 3`}: press and pull back, release to kick.` : slot ? 'Blake is shooting…' : 'Done.';
-      acts.push({ name: 'crossbar-leave', label: 'Leave (no result)', onClick: () => void this.leaveCrossbar() });
+      const turn = slot?.round === 'warmup' ? 'Warm-up (does not count)' : slot?.round === 'sudden' ? 'Sudden death' : `Shot ${Math.min(3, main + 1)} of 3`;
+      body = `${this.name()} ${points(c, 'player')} · Blake ${points(c, 'blake')} · ${turn}`;
+      const last = this.lastShot;
+      const said = last ? `${last.who === 'blake' ? 'Blake: ' : ''}${OUTCOME_WORD[last.outcome]}${last.scored ? ' One point.' : ''}` : '';
+      hint = this.anim ? '…' : slot?.participant === 'player' ? `${said ? `${said} ` : ''}Your kick: press, pull back, let go.` : slot ? `${said ? `${said} ` : ''}Blake is shooting…` : said || 'Done.';
     } else if (n && this.state) {
       if (this.state.complete) {
         body = `Chapter complete (weeks 1–4). ${this.recap()}`;
@@ -809,6 +887,14 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       log.shift();
       this.body.setText(log.join('\n'));
     }
+  }
+
+  private shotLog(): string {
+    const c = this.contest;
+    if (!c) return '';
+    const done = c.attempts.filter((a) => a.state === 'resolved').slice(-6);
+    if (!done.length) return 'No shots yet.';
+    return done.map((a) => `${a.participant === 'player' ? this.name() : 'Blake'}${a.round === 'warmup' ? ' (warm-up)' : ''}: ${OUTCOME_WORD[describeShot(simulateShot(a.input))]}`).join('\n');
   }
 
   private handoffUi(n: Extract<StoryNode, { type: 'activity_handoff' }>, acts: Action[], setBody: (t: string) => void): void {
@@ -959,6 +1045,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     const stageH = this.panel.y;
     const n = this.node();
     const art = this.art!;
+    const xbar = this.mode === 'crossbar';
+    this.xview = xbar ? crossbarView({ x: 0, y: 58, width, height: Math.max(80, stageH - 64) }, { x: 0, y: 0, width, height: stageH }) : null;
     art.update({
       sceneId: this.mode === 'story' || this.mode === 'crossbar' ? (this.state?.sceneId ?? null) : null,
       appearance: this.gender,
@@ -968,7 +1056,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       height: this.scale.height,
       top: 58,
       panelY: this.panel.y,
-      backgroundOverride: this.mode === 'story' && n?.type === 'activity_handoff' && n.adapter === 'standings' ? 'league-standings' : null,
+      backgroundOverride: xbar ? 'crossbar-schoolyard' : this.mode === 'story' && n?.type === 'activity_handoff' && n.adapter === 'standings' ? 'league-standings' : null,
+      backdropPlacement: this.xview?.backdrop ?? null,
     });
     if (art.hasBackdrop) {
       // Supplied Graphics v1 backdrop is on screen; the code-drawn one is only the fallback.
@@ -1013,44 +1102,85 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   }
 
   private drawCrossbar(s: Phaser.GameObjects.Graphics, width: number, stageH: number): void {
-    // Fit the goal-to-spot view between the top bar and the panel.
-    const top = 64;
-    const room = Math.max(60, stageH - top);
-    const f = Math.min((width * 0.62 * 15) / 6.4, room * 4);
-    const cx = width / 2;
-    const horizon = top + 0.035 * f + 4;
-    const proj = (x: number, y: number, z: number) => {
-      const d = y + 4;
-      return { x: cx + (x / d) * f * 0.5, y: horizon + ((1.4 - z) / d) * f * 0.5, k: 1 / d };
-    };
-    const tl = proj(-3.2, 11, 2.13);
-    const tr = proj(3.2, 11, 2.13);
-    const bl = proj(-3.2, 11, 0);
-    const br = proj(3.2, 11, 0);
-    s.fillStyle(PALETTE.net, 0.25).fillRect(tl.x, tl.y, tr.x - tl.x, bl.y - tl.y);
-    s.lineStyle(Math.max(4, width * 0.008), PALETTE.cream, 1).lineBetween(bl.x, bl.y, tl.x, tl.y).lineBetween(tl.x, tl.y, tr.x, tr.y).lineBetween(tr.x, tr.y, br.x, br.y);
-    const spot = proj(0, 0, 0);
-    let ball = proj(0, 0, 0.105);
+    const v = this.xview;
+    if (!v) return;
+    const g = goalGeometry(v);
+    const proj = v.proj;
+    const C = CROSSBAR;
+    const half = C.goalWidth / 2;
+    const gy = C.spotDistance;
+    const lw = g.postWidth;
+    // Net first (behind the frame): back frame, side panels and a mesh, all from the same goal model.
+    s.fillStyle(PALETTE.net, 0.18).fillPoints([g.leftTop, g.rightTop, g.rearRightTop, g.rearLeftTop], true);
+    s.fillStyle(PALETTE.net, 0.14).fillPoints([g.rearLeftTop, g.rearRightTop, g.rearRightBase, g.rearLeftBase], true);
+    s.lineStyle(1, PALETTE.cream, 0.45);
+    for (let i = 1; i < 12; i++) {
+      const x = -half + (C.goalWidth * i) / 12;
+      const a = proj(x, gy, C.barHeight);
+      const b = proj(x, gy + 0.8, C.barHeight * 0.85);
+      const c = proj(x, gy + 1.4, 0);
+      s.lineBetween(a.x, a.y, b.x, b.y).lineBetween(b.x, b.y, c.x, c.y);
+    }
+    for (let j = 1; j < 6; j++) {
+      const z = (C.barHeight * 0.85 * j) / 6;
+      const t = j / 6;
+      const l = proj(-half, gy + 1.4 - 0.6 * t, z);
+      const r = proj(half, gy + 1.4 - 0.6 * t, z);
+      s.lineBetween(l.x, l.y, r.x, r.y);
+    }
+    s.lineStyle(Math.max(2, lw * 0.5), PALETTE.cream, 0.8)
+      .lineBetween(g.leftTop.x, g.leftTop.y, g.rearLeftTop.x, g.rearLeftTop.y)
+      .lineBetween(g.rightTop.x, g.rightTop.y, g.rearRightTop.x, g.rearRightTop.y)
+      .lineBetween(g.rearLeftTop.x, g.rearLeftTop.y, g.rearRightTop.x, g.rearRightTop.y)
+      .lineBetween(g.rearLeftTop.x, g.rearLeftTop.y, g.rearLeftBase.x, g.rearLeftBase.y)
+      .lineBetween(g.rearRightTop.x, g.rearRightTop.y, g.rearRightBase.x, g.rearRightBase.y)
+      .lineBetween(g.leftBase.x, g.leftBase.y, g.rearLeftBase.x, g.rearLeftBase.y)
+      .lineBetween(g.rightBase.x, g.rightBase.y, g.rearRightBase.x, g.rearRightBase.y);
+    // Grounded front frame: contact shadows where the posts meet the grass, then posts and the bar joined at the corners.
+    s.fillStyle(PALETTE.shadow, 0.35).fillEllipse(g.leftBase.x, g.leftBase.y, lw * 3.2, lw * 1.1).fillEllipse(g.rightBase.x, g.rightBase.y, lw * 3.2, lw * 1.1);
+    s.lineStyle(lw + 3, PALETTE.ink, 0.85)
+      .lineBetween(g.leftBase.x, g.leftBase.y, g.leftTop.x, g.leftTop.y)
+      .lineBetween(g.leftTop.x, g.leftTop.y, g.rightTop.x, g.rightTop.y)
+      .lineBetween(g.rightTop.x, g.rightTop.y, g.rightBase.x, g.rightBase.y);
+    s.lineStyle(lw, PALETTE.cream, 1)
+      .lineBetween(g.leftBase.x, g.leftBase.y, g.leftTop.x, g.leftTop.y)
+      .lineBetween(g.leftTop.x, g.leftTop.y, g.rightTop.x, g.rightTop.y)
+      .lineBetween(g.rightTop.x, g.rightTop.y, g.rightBase.x, g.rightBase.y);
+    s.fillStyle(PALETTE.cream, 1).fillCircle(g.leftTop.x, g.leftTop.y, lw / 2).fillCircle(g.rightTop.x, g.rightTop.y, lw / 2);
+    if (HIT_DEBUG) {
+      // Diagnostic only (?debug&hitbox): the simulation's crossbar scoring band and goal-line span.
+      s.fillStyle(PALETTE.tomato, 0.35).fillRect(g.leftTop.x, g.barBand.top, g.rightTop.x - g.leftTop.x, g.barBand.bottom - g.barBand.top);
+      s.lineStyle(1, PALETTE.tomato, 1).lineBetween(g.leftBase.x, g.leftBase.y, g.rightBase.x, g.rightBase.y);
+    }
+    const spot = g.spot;
+    let at: readonly [number, number, number] = [0, 0, C.ballRadius];
     if (this.anim) {
       const a = this.anim;
-      const i = Math.min(a.path.length - 1, Math.floor(((this.time.now - a.start) / a.dur) * (a.path.length - 1)));
-      const pt = a.path[Math.max(0, i)]!;
-      ball = proj(pt[0], pt[1], pt[2]);
-      const sh = proj(pt[0], pt[1], 0);
-      s.fillStyle(PALETTE.shadow, 0.3).fillEllipse(sh.x, sh.y, 30 * sh.k * 8, 10 * sh.k * 8);
-      s.fillStyle(a.who === 'blake' ? PALETTE.tomato : PALETTE.blue, 1).fillCircle(width * 0.08, top + 10, 8);
+      // Presentation only: the result was decided by the fixed-step simulation before the flight started.
+      const u = Math.min(1, (this.time.now - a.start) / a.dur) * (a.path.length - 1);
+      const i = Math.min(a.path.length - 2, Math.floor(u));
+      const p0 = a.path[Math.max(0, i)]!;
+      const p1 = a.path[Math.max(0, i + 1)] ?? p0;
+      const f = Math.max(0, Math.min(1, u - i));
+      at = [p0[0] + (p1[0] - p0[0]) * f, p0[1] + (p1[1] - p0[1]) * f, p0[2] + (p1[2] - p0[2]) * f];
     }
-    s.fillStyle(PALETTE.line, 1).fillCircle(spot.x, spot.y, 5);
-    s.fillStyle(PALETTE.cream, 1).fillCircle(ball.x, ball.y, Math.max(4, 0.105 * f * 0.5 * ball.k * 2));
-    s.lineStyle(2, PALETTE.ink, 1).strokeCircle(ball.x, ball.y, Math.max(4, 0.105 * f * 0.5 * ball.k * 2));
+    const ball = proj(at[0], at[1], at[2]);
+    const sh = proj(at[0], at[1], 0);
+    const br = Math.max(4, C.ballRadius * ball.k);
+    s.fillStyle(PALETTE.line, 0.9).fillEllipse(spot.x, spot.y, br * 2.6, br * 0.9);
+    s.fillStyle(PALETTE.shadow, 0.35).fillEllipse(sh.x, sh.y + br * 0.3, br * 2.2, br * 0.8);
+    // A ball in front of the goal line is drawn over the frame; behind it, the bar already sits in front.
+    s.fillStyle(PALETTE.cream, 1).fillCircle(ball.x, ball.y, br);
+    s.lineStyle(2, PALETTE.ink, 1).strokeCircle(ball.x, ball.y, br);
     const p = this.pull;
     if (p && !p.inCancel && this.aimFrom) {
-      const len = 40 + p.power * room * 0.5;
+      const room = Math.max(60, stageH - 64);
+      const len = 40 + p.power * room * 0.4;
       s.lineStyle(5, PALETTE.mustard, 1).lineBetween(spot.x, spot.y, spot.x + p.dirX * len, spot.y + p.dirY * len);
-      const mTop = top + room * 0.1;
+      const mTop = 64 + room * 0.1;
       const mH = room * 0.8;
-      s.fillStyle(PALETTE.mustardDark, 1).fillRect(width * 0.9, mTop + mH * (1 - p.power), width * 0.04, mH * p.power);
-      s.lineStyle(2, PALETTE.ink, 1).strokeRect(width * 0.9, mTop, width * 0.04, mH);
+      s.fillStyle(PALETTE.mustardDark, 1).fillRect(width * 0.92, mTop + mH * (1 - p.power), width * 0.035, mH * p.power);
+      s.lineStyle(2, PALETTE.ink, 1).strokeRect(width * 0.92, mTop, width * 0.035, mH);
     }
   }
 
@@ -1061,6 +1191,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     const topH = 44;
     const tw = Math.round(Math.min((width - pad * 5) / 4, 140));
     this.top.forEach((b, i) => b.resize(tw, 40, Math.round(Math.max(13, Math.min(tw * 0.13, 16)))).setPosition(pad + tw / 2 + i * (tw + pad), pad + topH / 2 - 2));
+    this.pauseBtn?.resize(Math.max(tw, 96), 44, Math.round(Math.max(14, Math.min(tw * 0.14, 17)))).setPosition(pad + Math.max(tw, 96) / 2, pad + topH / 2);
     const ph = Math.round(portrait ? height * 0.5 : height * 0.46);
     this.panel = { x: pad, y: height - ph - pad, width: width - 2 * pad, height: ph };
     if (this.panel.y < topH + pad * 2) this.panel = { ...this.panel, y: topH + pad * 2, height: height - topH - pad * 3 };
@@ -1115,6 +1246,10 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     this.input.off(Phaser.Input.Events.POINTER_MOVE, this.onMove, this);
     this.input.off(Phaser.Input.Events.POINTER_UP, this.onUp, this);
     this.scale.off(Phaser.Scale.Events.RESIZE, this.onResize, this);
+    this.game.events.off(Phaser.Core.Events.BLUR, this.onBlur, this);
+    this.game.events.off(Phaser.Core.Events.HIDDEN, this.onBlur, this);
+    this.epoch++;
+    this.paused = false;
     this.clearActions();
     this.art?.destroy();
     this.art = null;
@@ -1126,7 +1261,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     const top = this.body.y;
     const bottom = Math.max(this.body.y + this.body.height, this.hint.y + (this.hint.text ? this.hint.height : 0));
     const elements: Record<string, Rect> = { panel: this.panel, 'story-text': { x: this.body.x, y: top, width: this.panel.width - 32, height: bottom - top } };
-    for (const b of [...this.top, ...this.actions]) elements[b.name] = b.getButtonBounds();
+    for (const b of [...this.top, ...(this.pauseBtn ? [this.pauseBtn] : []), ...this.actions]) if (b.visible) elements[b.name] = b.getButtonBounds();
     return { orientation: orientationOf(this.scale), viewport: { width: this.scale.width, height: this.scale.height }, elements };
   }
 
@@ -1154,7 +1289,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       completedScenes: s?.completedScenes.length ?? 0,
       transcript: s?.transcript.length ?? 0,
       player: this.save?.player ? { name: this.save.player.name, gender: this.save.player.gender ?? null } : null,
-      crossbar: c ? { status: c.status, next: nextSlot(c), player: points(c, 'player'), blake: points(c, 'blake'), attempts: c.attempts.length, animating: this.anim !== null, ready: this.kickReady() } : null,
+      crossbar: c ? { status: c.status, next: nextSlot(c), player: points(c, 'player'), blake: points(c, 'blake'), attempts: c.attempts.length, animating: this.anim !== null, ready: this.kickReady(), paused: this.paused, last: this.lastShot, goal: this.xview ? goalGeometry(this.xview) : null } : null,
     };
   }
 }
