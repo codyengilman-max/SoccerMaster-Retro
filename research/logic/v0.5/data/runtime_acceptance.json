@@ -1,0 +1,118 @@
+{
+  "schema_version": "0.2",
+  "status": "requirements_not_executed",
+  "cases": [
+    {
+      "id": "T01",
+      "contract": "C01",
+      "setup": "Two worlds identical to the player observation but differing in hidden opponent position",
+      "expected": "With identical seed and observation, the tactical choice is identical until a legitimate cue differs",
+      "status": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T02",
+      "contract": "C02",
+      "setup": "Activate a switch-outlet scenario and far-post-run scenario for the same winger",
+      "expected": "One compatible primary assignment; coverage handover is explicit; small score fluctuations do not alternate the role each frame",
+      "status": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T03",
+      "contract": "C03",
+      "setup": "Ball crosses a defender between physics endpoints",
+      "expected": "Swept interception detects contact; no endpoint tunneling",
+      "status": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T04",
+      "contract": "C03",
+      "setup": "Two players and keeper reach the loose ball together",
+      "expected": "One consistent resolution; no duplicate possession; resulting motion and ball state persist",
+      "status": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T05",
+      "contract": "C04",
+      "setup": "Replay identical simulation-timestamped inputs at 30/60/120 render FPS and across pause/resume",
+      "expected": "Same supported-runtime simulation result; no extra actions, movement or fatigue from pause",
+      "status": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T06",
+      "contract": "C05",
+      "setup": "Duplicate, cancel, spam and resend kick/skill commands across possession loss",
+      "expected": "No duplicate kick, free reaction reset or action by a player unable to contact the ball",
+      "status": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T07",
+      "contract": "C06",
+      "setup": "Missing rules profile and unsupported restart configuration",
+      "expected": "Competitive start blocked with actionable error; supported profile uses its documented restart/offside rules",
+      "status": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T08",
+      "contract": "C10",
+      "setup": "Keep pre-action state fixed but vary shot outcome seed",
+      "expected": "Stored pre-action quality remains fixed; execution outcome is separately recorded",
+      "status": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T09",
+      "contract": "C10",
+      "setup": "Repeated safe pass-switch loop with no net situational gain",
+      "expected": "No unbounded tactical reward; event credit deduplicated",
+      "status": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T10",
+      "contract": "C09",
+      "setup": "Defender refuses pressure invitation, then alternate case where defender overcommits",
+      "expected": "Attacker can carry/recycle in first case and exploit space in second; no forced defensive response",
+      "status": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T11",
+      "contract": "C03",
+      "setup": "Mirror the complete fixture and reverse attack direction at halftime",
+      "expected": "Symmetric geometry and rules evaluation; no left/right or coordinate-sign advantage",
+      "status": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T12",
+      "contract": "C08",
+      "setup": "Use the same tactical case with different measured ability/range profiles",
+      "expected": "Choices/execution respect each profile; no universal adult range or speed",
+      "status": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T13",
+      "contract": "C12",
+      "setup": "Load unknown predicate, script text, duplicate ID, nonfinite coordinate and excessive candidates",
+      "expected": "Reject invalid production inputs; never execute text; candidate processing remains bounded",
+      "status": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T14",
+      "contract": "C13",
+      "setup": "Blocked shot, reachable cutback, then defended cutback and open shot",
+      "expected": "Evaluate actual feasible alternatives; no always-shoot or always-cutback policy; save/rebound state persists",
+      "status": "not_run",
+      "evidence": null
+    }
+  ]
+}

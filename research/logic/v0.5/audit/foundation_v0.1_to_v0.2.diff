@@ -1,0 +1,60 @@
+--- archive/SoccerMaster_Logic_Foundation_v0.1.md
++++ docs/SoccerMaster_Logic_Foundation_v0.2.md
+@@ -1,6 +1,19 @@
+-# SoccerMaster — Tactical Intelligence Foundation v0.1
+-
+-Research date: 13 October 2026. Status: initial source review, proposed engine architecture and 40 authored scenario seeds. No match dataset has been ingested, no probabilities fitted, and no game code changed. This is not a completed ten-season statistical study.
++# SoccerMaster — Tactical Intelligence Foundation v0.2
++
++Research date: 13 October 2026. Audit revision: v0.2. Status: initial source review, proposed engine architecture and 40 authored scenario seeds. No match dataset has been ingested, no probabilities fitted, and no game code changed. This is not a completed ten-season statistical study.
++
++
++## Audit authority and activation gate
++
++This revision preserves the original research structure and corrects four
++scenario statements. The full normative corrections are in
++[ENGINE_CONTRACT.md](../contracts/ENGINE_CONTRACT.md); its requirements govern
++where an older general statement is ambiguous.
++
++All 40 seeds remain drafts with production activation disabled. Source support
++is not statistical calibration. The ten-season coverage ledger records missing
++research explicitly. The audit is of this specification, not unseen game code.
++See [AUDIT.md](../audit/AUDIT.md) for all 24 findings and residual gates.
+ 
+ ## 1. Objective and scope
+ 
+@@ -118,14 +131,14 @@
+ | GK02 | GK, opponent overloads short options | Evaluate lofted outlet and second-ball support | Receiver isolated or delivery beyond kicking range |
+ | GK03 | GK, ball behind defense | Compare interception arrival against attacker | Drop and set if attacker arrives first |
+ | GK04 | GK, defending cross | Claim, punch or hold according to trajectory and traffic | Do not advance through bodies or unseen flight |
+-| CB01 | CB, unopposed possession | Carry forward until a defender must choose | Protect ball if a second presser closes |
++| CB01 | CB, unopposed possession | Carry while control and space permit; reassess as cues change | Protect ball if a second presser closes |
+ | CB02 | CB, striker screens pivot | Change passing angle or find outside defender | Avoid forcing a pass through the screen |
+ | CB03 | CB, opponent striker checks short | Hold, hand over or follow with cover | Runner threatens the space behind |
+ | CB04 | CB, defending counterattack | Delay and protect goal-side route | Step to tackle only when support or touch permits |
+ | OB01 | Outside back, winger holds width | Offer inside support or overlap | Do not occupy the same running lane |
+ | OB02 | Outside back, winger moves inside | Provide width when defensive cover exists | Hold if advancing leaves a direct counter route |
+ | OB03 | Outside back, wide 1v1 defending | Approach under control and protect dangerous route | Opponent's support changes the preferred direction |
+-| OB04 | Far outside back, opposite-side attack | Tuck and scan far-post runner | Re-expand if a switch travels across |
++| OB04 | Far outside back, opposite-side attack | Tuck and scan far-post runner | Adjust to observed switch cues while retaining central and far-post protection |
+ | SIX01 | 6, receiving under pressure | Scan and choose turn, bounce or shield | Blind-side opponent makes the turn unsafe |
+ | SIX02 | 6, buildup with marked teammates | Move beyond a cover shadow to offer an angle | Do not retreat into the defender's occupied space |
+ | SIX03 | 6, teammate attacks forward | Protect central counter route | Shift if opponent outlet changes sides |
+@@ -134,7 +147,7 @@
+ | EIGHT02 | 8, third-player combination | Move as the wall player receives | Delay if the wall pass is unavailable |
+ | EIGHT03 | 8, wide attack develops | Arrive late into a free finishing lane | Hold if another runner occupies it or cover is absent |
+ | EIGHT04 | 8, defending their pivot | Screen pass while supporting pressure | Hand over marking when another threat becomes urgent |
+-| WING01 | Winger, isolated defender | Attack space and force commitment | Recycle when cover converts 1v1 into 1v2 |
++| WING01 | Winger, isolated defender | Attack space to attempt to provoke commitment | Recycle when cover converts 1v1 into 1v2 |
+ | WING02 | Winger, near-side overload | Draw pressure and release a switch route | Keep carrying if defenders refuse to commit |
+ | WING03 | Far winger, ball on opposite flank | Choose width, blind-side depth or far-post run | Narrowing too early can destroy switch access |
+ | WING04 | Winger, delivery near byline | Compare cutback, near-post pass, far-post delivery | Cancel delivery when every arrival lane is covered |
+@@ -143,7 +156,7 @@
+ | NINE03 | 9, pass in behind possible | Curve run and time acceleration | Delay when passer is pressured or not ready |
+ | NINE04 | 9, opposition buildup | Curve press to remove a return or pivot lane | Recover if the first line is bypassed |
+ | AT01 | Ball winner, attacking transition | Exploit temporary numerical/positional advantage | Recycle when defenders recover or first touch fails |
+-| AT02 | Supporting runner, 3v2 break | Separate lanes and time support | Avoid becoming level with the carrier too early |
++| AT02 | Supporting runner, 3v2 break | Separate lanes and time support | Level support is valid when its angle and timing preserve useful access |
+ | DT01 | Nearest player, immediate loss | Counterpress when ball and support are accessible | Delay/recover if opponent escapes facing forward |
+ | DT02 | Cover player, immediate loss | Block the most dangerous outlet | Do not join the ball chase and open the center |
+ | DEF01 | First defender, poor opponent touch | Press on observable loss of control | Abandon tackle if opponent regains control first |
