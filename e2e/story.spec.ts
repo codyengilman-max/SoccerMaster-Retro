@@ -88,7 +88,8 @@ async function textClearsButtons(page: Page, buttons: string[]): Promise<void> {
   for (const b of buttons) expect(t.y + t.height, `text vs ${b}`).toBeLessThanOrEqual(l.elements[b]!.y + 1);
 }
 async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Promise<Story> {
-  for (let i = 0; i < 400; i++) {
+  // Owner weeks 1–2 are long (~175 lines in week one alone, each revealed then advanced).
+  for (let i = 0; i < 1500; i++) {
     const s = await story(page, () => true, 'story');
     // Week one ends at the callback; the story now continues into the weeks 2–4 draft (covered by unit tests).
     if (s.complete || s.scene === 'S1_W02_M') return s;
@@ -206,6 +207,7 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
 }
 
 test('Season One week one: identity, prologue, aquarium, recess, Team Training handoff, week close, reload', async ({ page }, info) => {
+  test.setTimeout(900_000);
   const mode = modeFor(info);
   const errors = trackConsoleErrors(page);
   page.on('dialog', (d) => void d.accept('Zoë'));
