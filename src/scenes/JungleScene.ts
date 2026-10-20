@@ -147,6 +147,8 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     this.backButton.setDepth(5003);
     this.continueButton.setDepth(5003);
     this.pad = new PadHud(this, this.scale.width, this.scale.height, { labels: { pass: 'TURBO', slide: 'SLIDE', block: 'PUSH' } });
+    // TURBO is held with another finger on SHOOT / SLIDE / PUSH, so it gets its own touch slot.
+    this.pad.controls.setModifier('pass');
 
     this.input.addPointer(2);
     this.input.on(Phaser.Input.Events.POINTER_DOWN, this.onDown, this);

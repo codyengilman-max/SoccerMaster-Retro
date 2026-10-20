@@ -3,7 +3,7 @@
 ## Jungle Ball v2: arcade football feel (branch `devin/1792453098-jungle-blitz`, PR only, not merged, not deployed)
 
 - **Owner request:** "jungle ball to play like the NFL game attached" (NFL Blitz 2001). The attachment was only the game's N64 ROM; nothing was extracted from it or run, and no art, sound or code from it is used. The feel is copied from how that game is publicly known to play.
-- **TURBO** (new 4th button, in the empty PASS slot; Shift / I on a keyboard): held, it makes the competitor 1.3× faster while a meter drains (≈2.2 s full); released, the meter refills (≈3.3 s). The three AI competitors follow the same meter rules.
+- **TURBO** (new 4th button, in the empty PASS slot; Shift / I on a keyboard; it has its own finger slot (`JoystickControls.setModifier`), so it can be held while pressing SHOOT / SLIDE / PUSH): held, it makes the competitor 1.3× faster while a meter drains (≈2.2 s full); released, the meter refills (≈3.3 s). The three AI competitors follow the same meter rules.
 - **Turbo moves** cost a quarter of the meter: turbo + PUSH knocks the victim down for 0.9 s and 2 yd (normal push: 0.45 s stun, 1.1 yd); turbo + SLIDE is a 0.5 s dive at 10 yd/s; turbo + SHOOT adds 3 yd/s. A carrier's PUSH shows STIFF ARM!. Protection after a hit is unchanged, so nobody is knocked down twice in a row.
 - **ON FIRE:** three goals in a row by one competitor gives unlimited turbo (all moves big) until anyone else scores. Banners BOOM! / CRUSHED! / ON FIRE! / FIRE OUT!, longer hit-stop and shake on big hits, flame trail on the ball, turbo meters under the score bars.
 - **Unchanged:** scoring, keeper, 75 s round, the story's Jungle Ball record (scores and place), and Jungle Ball never counting toward match growth. `JUNGLE_SIM_VERSION` is now 2.

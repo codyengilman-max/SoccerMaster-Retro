@@ -131,6 +131,9 @@ export class JoystickControls {
   private stickOrigin = { x: 0, y: 0 };
   private vec = { x: 0, y: 0 };
   private act: ActionTouch | null = null;
+  /** Optional hold-modifier button (Jungle Ball TURBO): its own finger slot, so another action can be pressed while it is held. */
+  private modifier: ActionButton | null = null;
+  private mod: ActionTouch | null = null;
   /** Fingers that began on nothing usable: ignored until lifted. */
   private ignored = new Set<number>();
 
@@ -145,6 +148,24 @@ export class JoystickControls {
   get stickOriginPoint(): { x: number; y: number } | null {
     return this.stickId === null ? null : { ...this.stickOrigin };
   }
+  /** Makes `b` a hold modifier tracked apart from the single action slot (null turns it off). */
+  setModifier(b: ActionButton | null): PadEvent[] {
+    const out = this.dropMod('modifier changed');
+    this.modifier = b;
+    return out;
+  }
+  get modifierHeld(): boolean {
+    return !!this.mod?.live;
+  }
+
+  private dropMod(reason: string): PadEvent[] {
+    const m = this.mod;
+    this.mod = null;
+    if (!m) return [];
+    this.ignored.add(m.id);
+    return m.live ? [{ type: 'cancel', action: m.action, reason }] : [];
+  }
+
   get pressed(): ActionButton | null {
     return this.act?.live ? this.act.action : null;
   }
@@ -166,12 +187,17 @@ export class JoystickControls {
   /** A held action whose availability is lost (e.g. possession changed) is cancelled, never released. */
   setAvailable(a: Availability): PadEvent[] {
     this.avail = { ...a };
+    const out: PadEvent[] = [];
+    if (this.mod?.live && !a[this.mod.action]) {
+      this.mod.live = false;
+      out.push({ type: 'cancel', action: this.mod.action, reason: 'unavailable' });
+    }
     const t = this.act;
     if (t?.live && !a[t.action]) {
       t.live = false;
-      return [{ type: 'cancel', action: t.action, reason: 'unavailable' }];
+      out.push({ type: 'cancel', action: t.action, reason: 'unavailable' });
     }
-    return [];
+    return out;
   }
 
   buttonAt(x: number, y: number): ActionButton | null {
@@ -188,8 +214,16 @@ export class JoystickControls {
   }
 
   pointerDown(id: number, x: number, y: number): PadEvent[] {
-    if (!Number.isFinite(x) || !Number.isFinite(y) || id === this.stickId || id === this.act?.id || this.ignored.has(id)) return [];
+    if (!Number.isFinite(x) || !Number.isFinite(y) || id === this.stickId || id === this.act?.id || id === this.mod?.id || this.ignored.has(id)) return [];
     const b = this.buttonAt(x, y);
+    if (b && b === this.modifier) {
+      if (this.mod) {
+        this.ignored.add(id);
+        return [];
+      }
+      this.mod = { id, action: b, live: this.avail[b] };
+      return this.mod.live ? [{ type: 'press', action: b }] : [];
+    }
     if (b) {
       if (this.act) {
         this.ignored.add(id);
@@ -220,6 +254,11 @@ export class JoystickControls {
   pointerUp(id: number): PadEvent[] {
     this.ignored.delete(id);
     if (id === this.stickId) return this.releaseStick();
+    if (this.mod?.id === id) {
+      const m = this.mod;
+      this.mod = null;
+      return m.live ? [{ type: 'release', action: m.action }] : [];
+    }
     const t = this.act;
     if (!t || t.id !== id) return [];
     this.act = null;
@@ -230,6 +269,11 @@ export class JoystickControls {
   pointerCancel(id: number, reason = 'pointer cancelled'): PadEvent[] {
     this.ignored.delete(id);
     if (id === this.stickId) return this.releaseStick();
+    if (this.mod?.id === id) {
+      const m = this.mod;
+      this.mod = null;
+      return m.live ? [{ type: 'cancel', action: m.action, reason }] : [];
+    }
     const t = this.act;
     if (!t || t.id !== id) return [];
     this.act = null;
@@ -238,7 +282,7 @@ export class JoystickControls {
 
   /** Pause, exit, focus/visibility loss, reassignment, rotation: drop every touch with no kick. */
   cancelAll(reason: string): PadEvent[] {
-    const out: PadEvent[] = [];
+    const out: PadEvent[] = this.dropMod(reason);
     const t = this.act;
     if (t?.live) out.push({ type: 'cancel', action: t.action, reason });
     // A lifted-and-cancelled action finger stays inert until it lifts.
