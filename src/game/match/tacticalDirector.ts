@@ -8,6 +8,7 @@ import {
   type TacticalRole,
   type TacticalTask,
 } from './tactical';
+import { REFEREE_TUNING } from './referee';
 import type { MatchTuning } from './tuning';
 import { TEAM_PLAYER_IDS, otherTeam, type Intent, type MatchPlayer, type MatchPlayerId, type MatchState, type TeamId } from './types';
 
@@ -44,7 +45,7 @@ const TASK_INTENT: Partial<Record<TacticalTask, Intent>> = {
 
 interface HeldOrder {
   task: TacticalTask;
-  /** Team-frame yards. */
+  /** Team-frame metres, as the engine issued it. */
   x: number;
   y: number;
   expiresAt: number;
@@ -182,8 +183,8 @@ export class TacticalDirector {
       t.completed.length = 0;
     }
     const obs = this.observe(s, team, t);
-    t.completed.length = 0;
     const r = t.engine.step(obs);
+    t.completed.length = 0;
     for (const id of r.cancel) if (t.action?.id === id) t.action = null;
     const ball = obs.ball;
     const owner = ball?.state === 'controlled' ? ball.ownerId : null;
@@ -198,8 +199,8 @@ export class TacticalDirector {
       let h = t.orders.get(id);
       if (!h) t.orders.set(id, (h = { task: o.task, x: 0, y: 0, expiresAt: 0 }));
       h.task = o.task;
-      h.x = o.target.x / YARD_METRES;
-      h.y = o.target.y / YARD_METRES;
+      h.x = o.target.x;
+      h.y = o.target.y;
       h.expiresAt = o.expiresAt;
       if (o.action) t.action = o.action;
     }
@@ -218,6 +219,7 @@ export class TacticalDirector {
     const ids = TEAM_PLAYER_IDS[team];
     const owner = s.ball.owner;
     const live = s.phase === 'live';
+    const line = this.offsideLine(s, team);
     for (let i = 0; i < ids.length; i++) {
       const p = s.players[ids[i]!];
       const m = t.mates[i]!;
@@ -229,7 +231,7 @@ export class TacticalDirector {
       m.human = team === 'home' && s.controlledId === p.id;
       m.speed = T.movement.runSpeed * YARD_METRES;
       m.ready = live && p.id === owner && !p.isKeeper && !m.human && s.simTime >= s.nextDecisionAt;
-      m.passEligible = !p.isKeeper;
+      m.passEligible = !p.isKeeper && this.advance(team, p.pos.x) <= line + REFEREE_TUNING.levelTolerance;
     }
     const oppIds = TEAM_PLAYER_IDS[otherTeam(team)];
     for (let i = 0; i < oppIds.length; i++) {
@@ -262,7 +264,27 @@ export class TacticalDirector {
         receivePoint: ownPass ? t.receivePoint : null,
       },
       completedCommands: t.completed,
+      runLimit: line * YARD_METRES,
     };
+  }
+
+  /** Team-frame yards towards the opponents' goal. */
+  private advance(team: TeamId, x: number): number {
+    return team === 'home' ? x : this.T.pitch.length - x;
+  }
+
+  /** The referee's offside line for `team` now, team-frame yards: second-last opponent, never behind the ball or halfway. */
+  offsideLine(s: MatchState, team: TeamId): number {
+    let first = -Infinity;
+    let second = -Infinity;
+    for (const id of TEAM_PLAYER_IDS[otherTeam(team)]) {
+      const a = this.advance(team, s.players[id].pos.x);
+      if (a > first) {
+        second = first;
+        first = a;
+      } else if (a > second) second = a;
+    }
+    return Math.max(second, this.advance(team, s.ball.pos.x), this.T.pitch.length / 2);
   }
 
   private readonly scratch: MutPoint = { x: 0, y: 0 };
