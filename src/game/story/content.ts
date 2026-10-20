@@ -233,7 +233,8 @@ export const STORY: StoryCatalog = mergeCatalogs(WEEK_ONE, WEEKS_2_4);
 export const SEASON_ONE: StoryCatalog = parseCatalog(rawSeason, { version: SEASON_VERSION, branches: true, season: true });
 export const CATALOGS: readonly StoryCatalog[] = [STORY, SEASON_ONE];
 export const catalogFor = (version: string): StoryCatalog | undefined => CATALOGS.find((c) => c.version === version);
-/** Scene ids whose dialogue is Devin's draft from the outline, awaiting owner review. */
+/** Scene ids whose dialogue Devin drafted from the outline (provenance); the owner approved it on WEEKS_2_4_OWNER_APPROVED. */
+export const WEEKS_2_4_OWNER_APPROVED = '2026-10-16';
 export const DRAFT_SCENES: ReadonlySet<string> = new Set(WEEKS_2_4.order);
 
 export function sceneById(sid: string): StoryScene | undefined {

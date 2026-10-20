@@ -12,6 +12,8 @@ import trainingRaw from '../../../docs/training/v1.2/asset-manifest.json';
 import { SEASON_ONE, sceneById } from '../../game/story/content';
 
 export const ART_REVISION = 'graphics-v1.1';
+/** Owner approved every Graphics v1.1 image on this date; the package manifest's own status field stays as supplied. */
+export const OWNER_ART_APPROVAL = '2026-10-16';
 
 export type ArtStatus = 'STYLE_APPROVED' | 'REFERENCE_APPROVED' | 'NEW_ART_REVIEW_PENDING';
 export type VisualId = 'boy' | 'girl' | 'alex' | 'sam' | 'jordan' | 'blake' | 'riley' | 'coach' | 'caregiver' | 'fish';

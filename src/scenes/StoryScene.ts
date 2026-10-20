@@ -783,9 +783,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private recap(): string {
     const s = this.state;
     if (!s) return '';
-    const draft = 'Draft dialogue (weeks 2–4), awaiting owner review.';
-    if (/^W[234]_(MATCH_POST|FINAL)$/.test(s.sceneId)) return `${this.leagueSummary}\n${draft}`;
-    if (DRAFT_SCENES.has(s.sceneId)) return draft;
+    if (/^W[234]_(MATCH_POST|FINAL)$/.test(s.sceneId)) return this.leagueSummary;
+    if (DRAFT_SCENES.has(s.sceneId)) return '';
     if (s.sceneId === 'W1_CROSSBAR_REACTION' || s.sceneId === 'W1_TRAINING_CONNECTION') return this.crossbarSummary;
     if (s.sceneId === 'W1_TRAINING_REFLECTION' || s.sceneId === 'W1_MATCH_POST' || s.sceneId === 'W1_HOME_CLOSE' || s.sceneId === 'W2_SCHOOL_CALLBACK') {
       const practice = outcomeOf(s, 'W1_PRACTICE');
