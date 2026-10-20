@@ -1,5 +1,11 @@
 # Status
 
+## Merge of all open PRs (#15, #17, #18, #22, #23) into `main` (owner request 2026-10-20)
+- Owner: "23 overrides 15 weeks 2-4 dialogue And merge all remaining prs". #15's approval (`WEEKS_2_4_OWNER_APPROVED`) covers the older weeks 2–4 extension catalog; Season One week 2 plays #23's owner text, so #23 wins wherever the two overlap.
+- Conflicts were docs only, plus `sim.ts` where the referee (#17) and the v0.5 tactics director (#18) both hook the constructor and carrier logic; both kept, set-piece hold first. Tactics stay off by default (`?tactics=v05`).
+- PRs #6 and #13 had no commits that `main` lacks; nothing to merge from them.
+- Not tested on a physical iPhone.
+
 ## Owner approvals (2026-10-16)
 
 - **CI note:** GitHub runs of this branch timed out on a different unchanged spec each time (`jungle.spec` :49 by 0.002 yd, `pad.spec` A03, `coach.spec` :82, `match.spec` :72). The same specs pass locally (8/8 jungle + coach in portrait and desktop), and this PR changes only approval labels and text.
