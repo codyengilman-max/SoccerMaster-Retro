@@ -13,7 +13,7 @@ import type { Position } from '../game/career/types';
 import { type Background, type StoryNode } from '../game/story/content';
 import { attemptKey, commitLaunch, commitResolve, contestResult, CROSSBAR, describeShot, launchAttempt, newContest, nextSlot, opponentKick, points, resolveAttempt, restoreContest, simulateShot, type Contest, type KickInput, type Participant, type ShotOutcome } from '../game/story/crossbar';
 import { PRONOUNS, renderText, validateName, type Gender } from '../game/story/identity';
-import { createSession, currentNode, evaluatePredicate, outcomeOf, type StoryCommand, type StoryOutcome, type StorySession, type StoryState } from '../game/story/runtime';
+import { SEASON_RELEASED_WEEKS, awaitingRelease, createSession, currentNode, evaluatePredicate, outcomeOf, type StoryCommand, type StoryOutcome, type StorySession, type StoryState } from '../game/story/runtime';
 import { StoryStore } from '../game/story/store';
 import { pullFor, thresholdsFor, type Pull } from '../input';
 import { crossbarView, goalGeometry, type CrossbarView } from '../render/crossbarView';
@@ -927,7 +927,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       hint = this.anim ? '…' : slot?.participant === 'player' ? `${said ? `${said} ` : ''}Your kick: press, pull back, let go.` : slot ? `${said ? `${said} ` : ''}${this.opponent()} is shooting…` : said || 'Done.';
     } else if (n && this.state) {
       if (this.state.complete) {
-        body = `Chapter complete (weeks 1–4). ${this.recap()}`;
+        body = awaitingRelease(this.state) ? `Weeks 1–${SEASON_RELEASED_WEEKS} complete. More weeks are coming soon. ${this.recap()}` : `Chapter complete (weeks 1–4). ${this.recap()}`;
         acts.push({ name: 'story-done', label: 'Back to menu', onClick: () => this.goStart() });
       } else if (n.type === 'line') {
         this.speaker.setText(n.speaker === 'System' ? '' : n.speaker === 'Player' ? this.name() : n.speaker);

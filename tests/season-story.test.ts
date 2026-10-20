@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { SEASON_ONE } from '../src/game/story/content';
-import { currentNode, newSeasonStory, outcomeOf, reduceStory, type StoryCommand, type StoryState } from '../src/game/story/runtime';
+import { SEASON_RELEASED_WEEKS, currentNode, newSeasonStory, outcomeOf, reduceStory, setReleasedWeeks, type StoryCommand, type StoryState } from '../src/game/story/runtime';
 import { SEASON_LENGTH, seasonWeek, slotIds } from '../src/game/season/calendar';
 import { TOURNAMENTS, bataviaFinish, newTournament, nextBataviaFixture, playoffs, recordTournamentPlayed, type TournamentState } from '../src/game/season/tournament';
 import { bataviaRecord, fixtureForSeasonWeek, newSeasonLeague, recordSeasonPlayed, simulateSeasonThrough, type SeasonLeagueState } from '../src/game/season/league';
@@ -72,6 +72,9 @@ function season(p: Policy = {}) {
 }
 
 describe('Season One story', () => {
+  // These routes cover the authored later weeks, which the game hides until they are released.
+  beforeAll(() => setReleasedWeeks(99));
+  afterAll(() => setReleasedWeeks(SEASON_RELEASED_WEEKS));
   it('a skipped league game keeps the season ending neutral instead of calling the season complete', () => {
     const { s, league, said } = season({ score: (id) => (id.startsWith('S1_W05_') ? null : { home: 2, away: 1 }) });
     expect(s.complete).toBe(true);

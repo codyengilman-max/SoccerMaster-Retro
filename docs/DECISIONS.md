@@ -176,3 +176,8 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - `{crossbar.score}` renders week 2's saved Crossbar score on the classroom board.
 - Later callbacks to removed choices now read the new ones: week 4 Mom (`S1_W01_P.support=minute`), weeks 10 and 17 (`S1_PRO_DEPART.phone=photo`), week 15 (`S1_W02_S` refusal or played).
 - Missing art uses stand-ins: park → recess goal, kitchen → home, classroom/lunch → school, training complex → pitch, car → departure plate.
+
+## D37. Season One released weeks (owner, 2026-10-20)
+- The owner will send new text for weeks 3–18 later and asked to hide the current ones. `SEASON_RELEASED_WEEKS = 2` in the story runtime: an end node pointing into a later week (or the epilogue) completes the story instead, and `migrateStory` parks a save resting in a hidden week at the last released week's close.
+- The hidden scenes stay in the catalog so saves, art mapping and the season tests keep working; those tests open all weeks with `setReleasedWeeks`. Raising the constant reopens the weeks and a parked save continues from there.
+

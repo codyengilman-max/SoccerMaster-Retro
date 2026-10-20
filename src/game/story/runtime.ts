@@ -6,6 +6,19 @@
 import { SEASON_ONE, STORY, catalogFor, nodeById, sceneById, type AdapterKind, type Outcome, type StoryNode } from './content';
 
 export const STORY_SCHEMA = 1;
+/** Season One weeks open to players (owner, 2026-10-20: weeks 3–18 hidden until the new text arrives). */
+export const SEASON_RELEASED_WEEKS = 2;
+let releasedWeeks = SEASON_RELEASED_WEEKS;
+/** Tests of later-week content open the whole season; the game always uses SEASON_RELEASED_WEEKS. */
+export const setReleasedWeeks = (n: number): void => { releasedWeeks = n; };
+/** Season One week of a scene id (epilogue = 19), 0 for anything outside the weekly season. */
+export const seasonWeek = (sceneId: string): number => {
+  const m = /^S1_W(\d+)_/.exec(sceneId);
+  return m ? Number(m[1]) : sceneId.startsWith('S1_END') ? 19 : 0;
+};
+const releasedNext = (sceneId: string | null): string | null => (sceneId !== null && seasonWeek(sceneId) > releasedWeeks ? null : sceneId);
+/** The story stopped at the last released week's close and more weeks are still to come. */
+export const awaitingRelease = (s: StoryState): boolean => s.complete && s.contentVersion === SEASON_ONE.version && seasonWeek(s.sceneId) >= 1 && seasonWeek(s.sceneId) <= 18;
 export type CrossbarResult = 'WIN' | 'LOSS' | 'DRAW';
 
 export interface ActivityRun {
@@ -89,13 +102,24 @@ function migrateRewritten(s: StoryState): StoryState {
   return enter({ ...s, decisions, runs, complete: false }, scene.id, scene.entry, s.lastSeq);
 }
 
+/** A save already inside a hidden week rests at the last released week's close; its choices and runs are kept. */
+function parkHidden(s: StoryState): StoryState {
+  if (s.contentVersion !== SEASON_ONE.version || seasonWeek(s.sceneId) <= releasedWeeks) return s;
+  const at = sceneById(s.sceneId);
+  if (!at || !nodeById(at, s.nodeId)) return s;
+  const close = sceneById(`S1_W${String(releasedWeeks).padStart(2, '0')}_E`);
+  const end = close?.nodes.find((n) => n.type === 'end');
+  return close && end ? { ...s, sceneId: close.id, nodeId: end.id, revealed: true, complete: true } : s;
+}
+
 export function migrateStory(raw: StoryState): StoryState {
-  const s = migrateRewritten(raw);
+  const s = parkHidden(migrateRewritten(raw));
   if (!s.complete) return s;
   const scene = sceneById(s.sceneId);
   const node = scene ? nodeById(scene, s.nodeId) : undefined;
-  if (node?.type !== 'end' || node.next_scene === null) return s;
-  const next = sceneById(node.next_scene)!;
+  const nextId = node?.type === 'end' ? releasedNext(node.next_scene) : null;
+  if (nextId === null) return s;
+  const next = sceneById(nextId)!;
   return enter({ ...s, complete: false }, next.id, next.entry, s.lastSeq);
 }
 
@@ -155,8 +179,9 @@ function goTo(s: StoryState, nodeId: string, seq: number): StoryState {
   const node = nodeById(scene, nodeId)!;
   if (node.type === 'end') {
     const completedScenes = s.completedScenes.includes(s.sceneId) ? s.completedScenes : [...s.completedScenes, s.sceneId];
-    if (node.next_scene === null) return { ...s, nodeId, revealed: true, openedBy: seq, completedScenes, complete: true };
-    const next = sceneById(node.next_scene)!;
+    const nextId = releasedNext(node.next_scene);
+    if (nextId === null) return { ...s, nodeId, revealed: true, openedBy: seq, completedScenes, complete: true };
+    const next = sceneById(nextId)!;
     return enter({ ...s, completedScenes }, next.id, next.entry, seq);
   }
   return enter(s, s.sceneId, nodeId, seq);

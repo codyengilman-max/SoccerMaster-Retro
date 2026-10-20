@@ -5,6 +5,7 @@
 - Owner: "merge all remaining prs", then "only merge new weeks 1 and 2 stories as we will give you remaining weeks later". #23 (new weeks 1–2) is merged; #15 (approval of the older weeks 2–4 draft) is left out.
 - Conflicts were docs only, plus `sim.ts` where the referee (#17) and the v0.5 tactics director (#18) both hook the constructor and carrier logic; both kept, set-piece hold first. Tactics stay off by default (`?tactics=v05`).
 - PRs #6 and #13 had no commits that `main` lacks; nothing to merge from them.
+- Season One weeks 3–18 are hidden (owner: "hide them") until the new text arrives: the story ends after week 2's close with "Weeks 1–2 complete. More weeks are coming soon." The weeks stay in the catalog; a save already inside them rests at week 2's close with its choices and results kept, and continues into week 3 once more weeks are released (`SEASON_RELEASED_WEEKS` in `src/game/story/runtime.ts`).
 - Not tested on a physical iPhone.
 
 ## Referee (branch `devin/1792274864-referee`, not merged, not deployed)

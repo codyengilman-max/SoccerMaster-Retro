@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { StoryStore, parseStoryState } from '../src/game/story/store';
 import { SEASON_ONE, crossbarRules, sceneById, trainingDetail } from '../src/game/story/content';
 import { contestResult, idealPower, launchAttempt, newContest, nextSlot, resolveAttempt, type Contest, type Participant } from '../src/game/story/crossbar';
-import { currentNode, migrateStory, newSeasonStory, outcomeOf, reduceStory, type StoryCommand, type StoryState } from '../src/game/story/runtime';
+import { SEASON_RELEASED_WEEKS, awaitingRelease, currentNode, migrateStory, setReleasedWeeks, newSeasonStory, outcomeOf, reduceStory, type StoryCommand, type StoryState } from '../src/game/story/runtime';
 import { slotIds } from '../src/game/season/calendar';
 
 // Owner rewrite of Season One weeks 1-2 (2026-10-20): Sam's park Crossbar, Code's first session,
@@ -21,12 +21,12 @@ interface Plan {
   crossbar?: Record<string, 'WIN' | 'DRAW' | 'LOSS'>;
   training?: Record<string, string>; // scene -> detail
 }
-/** Plays from the start until `stop` is reached; returns the state there and every line shown. */
-function play(plan: Plan, stop = 'S1_W03_M') {
+/** Plays from the start until `stop` is reached (default: the end of the released weeks); returns the state there and every line shown. */
+function play(plan: Plan, stop: string | null = null) {
   let s = newSeasonStory('w12');
   const text: string[] = [];
   let runs = 0;
-  for (let i = 0; i < 4000 && s.sceneId !== stop; i++) {
+  for (let i = 0; i < 4000 && (stop === null ? !s.complete : s.sceneId !== stop); i++) {
     const n = currentNode(s)!;
     if (n.type === 'line') { text.push(n.text); s = step(s, { type: 'advance', seq: ++seq }); }
     else if (n.type === 'choice') s = step(s, { type: 'choose', seq: ++seq, choiceId: plan.picks?.[`${s.sceneId}.${n.id}`] ?? n.options[0]!.id });
@@ -41,7 +41,7 @@ function play(plan: Plan, stop = 'S1_W03_M') {
       s = step(s, { type: 'complete', runId, outcome: 'completed', result, detail });
     } else if (n.type === 'end') s = step(s, { type: 'advance', seq: ++seq });
   }
-  expect(s.sceneId).toBe(stop);
+  expect(stop === null ? [s.sceneId, s.complete] : s.sceneId).toEqual(stop === null ? ['S1_W02_E', true] : stop);
   return { s, text: text.join('\n') };
 }
 
@@ -173,5 +173,25 @@ describe('Season One weeks 1-2 rewrite', () => {
       expect(r.ok, JSON.stringify(r.ok ? '' : r.error)).toBe(true);
       store.close();
     }
+  });
+});
+
+describe('Season One weeks 3–18 hidden until released (owner, 2026-10-20)', () => {
+  it('the story ends at the week 2 close and resumes into week 3 once more weeks are released', () => {
+    const { s } = play({});
+    expect(s.complete && s.sceneId).toBe('S1_W02_E');
+    expect(awaitingRelease(s)).toBe(true);
+    expect(migrateStory(s)).toBe(s);
+    setReleasedWeeks(99);
+    try { expect(migrateStory(s).sceneId).toBe('S1_W03_M'); } finally { setReleasedWeeks(SEASON_RELEASED_WEEKS); }
+  });
+
+  it('a save already in a hidden week rests at the week 2 close with its choices and runs kept', () => {
+    const { s } = play({});
+    const w3 = sceneById('S1_W03_M')!;
+    const m = migrateStory({ ...s, complete: false, sceneId: w3.id, nodeId: w3.entry });
+    expect([m.sceneId, m.complete]).toEqual(['S1_W02_E', true]);
+    expect(m.decisions).toEqual(s.decisions);
+    expect(m.runs).toEqual(s.runs);
   });
 });
