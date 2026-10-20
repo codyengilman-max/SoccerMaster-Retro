@@ -1,5 +1,12 @@
 # Status
 
+## Season One weeks 1-2 rewrite (branch `devin/1792522894-story-weeks-1-2`, PR only, not merged, not deployed)
+
+- **Week 1:** Monday move (phone choice), new house, Cloudy settled; Tuesday park with Sam and a playable Crossbar against Sam (one warm-up each, three counted shots, no sudden death) with result-specific lines and Sam's invitation; Thursday first training with Coach Code (real Team Training; his reply follows the real grade) and the receiving assignment; Friday Cloudy; Friday night Mom ("I'm nervous too") with the support choice.
+- **Week 2:** Monday empty chair; Tuesday Crossbar against Blake with the audience choice and a refusal that is remembered as a refusal, real WIN/DRAW/LOSS, ties stand; Wednesday classroom board showing the real score, Riley; Wednesday training "find the passing angle"; Thursday Cloudy with the closing intention. No Mom talk (moved to week 1).
+- **Saves:** content version unchanged. A save in the middle of a rewritten scene restarts that scene; a save in the retired week 2 parent scene continues at the weekend. See D30.
+- **Not done:** no new park, car, kitchen, classroom or training-complex art (stand-ins); Sam has no in-match sprite in the Crossbar screen; Code's "right decision, poor touch" line has no separate grade.
+
 ## Training / Schoolyard revision v1.2 (branch `devin/1792431040-training-schoolyard`, PR only, not merged, not deployed)
 
 - **My Training hub:** Career home shows the week's focus card, Team Training (Not started / Complete), Home Practice (optional: sessions, library, journal) and Progress (weekly review, character development, 9v9 match). Nothing was removed; opening a card never changes attributes.

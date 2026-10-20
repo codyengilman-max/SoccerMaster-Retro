@@ -6,10 +6,10 @@ Player: That's your whole plan?
 Cloudy: I'm revising it. Remember your first recess?
 ? first_recess
 * goal | The occupied goal
-  @if chose:S1_W01_S.recess=ask_next
-  Cloudy: You asked when the next game started. They said "later."
-  @elif chose:S1_W01_S.recess=wall
-  Cloudy: You practised against the wall instead.
+  @if chose:S1_W02_S.audience=refuse
+  Cloudy: Blake wanted an audition. You walked away instead.
+  @elif done:S1_W02_S
+  Cloudy: Blake picked the audience. You put the ball back on the mark.
   @else
   Cloudy: You walked away and found Jordan.
   @end

@@ -142,6 +142,8 @@ export interface Contest {
   readonly contestId: string;
   readonly simVersion: number;
   readonly warmup: boolean;
+  /** False when a tie stands as a draw (Season One weeks 1-2). Absent on older saves: sudden death. */
+  readonly sudden?: boolean;
   readonly attempts: readonly Attempt[];
   readonly status: 'active' | 'resolved' | 'abandoned' | 'interrupted';
 }
@@ -149,8 +151,8 @@ export const MAIN_SHOTS = 3;
 
 export const attemptKey = (contestId: string, round: Round, participant: Participant, index: number): string => JSON.stringify([contestId, round, participant, index]);
 
-export function newContest(contestId: string, warmup: boolean): Contest {
-  return { contestId, simVersion: CROSSBAR_SIM_VERSION, warmup, attempts: [], status: 'active' };
+export function newContest(contestId: string, warmup: boolean, sudden = true): Contest {
+  return { contestId, simVersion: CROSSBAR_SIM_VERSION, warmup, ...(sudden ? {} : { sudden: false }), attempts: [], status: 'active' };
 }
 
 export function points(c: Contest, who: Participant): number {
@@ -167,7 +169,7 @@ export function nextSlot(c: Contest): { round: Round; participant: Participant; 
   plan.push(['main', MAIN_SHOTS]);
   const mainDone = PARTICIPANTS.every((p) => count('main', p) === MAIN_SHOTS);
   // Sudden death is one pair: once the player has shot, Blake always replies, so both have equal attempts.
-  if (mainDone && (points(c, 'player') === points(c, 'blake') || count('sudden', 'player') !== count('sudden', 'blake'))) plan.push(['sudden', 1]);
+  if (mainDone && c.sudden !== false && (points(c, 'player') === points(c, 'blake') || count('sudden', 'player') !== count('sudden', 'blake'))) plan.push(['sudden', 1]);
   for (const [round, n] of plan) {
     for (let i = 0; i < n; i++) for (const who of PARTICIPANTS) if (count(round, who) === i) return { round, participant: who, index: i };
   }

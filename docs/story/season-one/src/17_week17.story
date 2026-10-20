@@ -12,8 +12,8 @@ Cloudy: Pick something from the first week. You tell me.
 * unfinished | Something still difficult
   Cloudy: Still difficult is honest. Not everything finishes in a season.
 === S1_W17_S neutral_school
-@if chose:S1_PRO_DEPART.keepsake=old_shirt
-System: You show Jordan the old team shirt.
+@if chose:S1_PRO_DEPART.phone=photo
+System: You show Jordan the mountain photo from moving day.
 @else
 System: You show Jordan a photo from the old neighbourhood.
 @end

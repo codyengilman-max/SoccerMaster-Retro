@@ -217,7 +217,7 @@ test('Season One week one: identity, prologue, aquarium, recess, Team Training h
   expect(end.scene).toBe('S1_W02_M');
   expect(end.player).toEqual({ name: 'Zoë', gender: 'girl' });
   const by = (id: string) => end.outcomes.find((o) => o.scene === id);
-  for (const id of ['S1_PRO_IDENTITY', 'S1_W01_C', 'S1_W01_E']) expect(by(id), id).toMatchObject({ state: 'resolved', outcome: 'completed' });
+  for (const id of ['S1_PRO_IDENTITY', 'S1_W01_S', 'S1_W01_C', 'S1_W01_E']) expect(by(id), id).toMatchObject({ state: 'resolved', outcome: 'completed' });
   expect(end.outcomes.filter((o) => o.scene === 'S1_W01_C')).toHaveLength(1);
 
   // Reload: cursor, outcomes and identity persist; the career is in week 2 with week 1's Team Training counted once.

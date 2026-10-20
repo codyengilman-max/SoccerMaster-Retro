@@ -125,3 +125,15 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Retry drops the attempt's result and replays it; only Continue records it. The weekly credit stays the D27 reducer (idempotent per week).
 - The career has DEF/MID/FWD roles only; drill families without a role-appropriate drill are listed as deferred in `TRAINING_RELEASE_COVERAGE.md`, not remapped.
 - The Bell94 image is imported as a reference (`training-bell94`) and is not stretched under play; the venue is code-drawn around the pitch.
+
+
+## D30. Season One weeks 1-2 rewrite (owner text, 2026-10-20)
+
+- The owner's week 1 and week 2 text replaces the prologue departure/arrival/room text and the old week 1-2 scenes. Scene ids stay (`S1_PRO_*`, `S1_W01_*`, `S1_W02_*`); `S1_W01_P` and `S1_W02_S2` are new and `S1_W02_P` is retired. The content version stays `s1-v1.0`, so saves are not archived.
+- A rewritten scene's header carries `v2`; the compiler prefixes its node ids (`v2n1`). `migrateStory` restarts a save whose node no longer exists at that scene's entry, dropping only that scene's choices and unresolved runs; a save in `S1_W02_P` continues at `S1_W02_E`.
+- Crossbar rules per scene (`crossbarRules`): week 1 is against Sam with one warm-up each; weeks 1 and 2 have no sudden death (`Contest.sudden = false`), so a tie stays a draw. Older contests and week 13 keep sudden death. The opponent is a display name; the stored participant id stays `blake`, with the same physics.
+- Refusing Blake declines the activity: it is stored as `declined` with no result, never a loss.
+- Code's post-training lines read the week's real Team Training grade as a run detail: `strong` (+2), `steady` (+1), `struggled` (0 or -1). The grade cannot tell "right decision, poor touch" apart, so that line is folded into `steady`/`struggled`.
+- `{crossbar.score}` renders week 2's saved Crossbar score on the classroom board.
+- Later callbacks to removed choices now read the new ones: week 4 Mom (`S1_W01_P.support=minute`), weeks 10 and 17 (`S1_PRO_DEPART.phone=photo`), week 15 (`S1_W02_S` refusal or played).
+- Missing art uses stand-ins: park → recess goal, kitchen → home, classroom/lunch → school, training complex → pitch, car → departure plate.
