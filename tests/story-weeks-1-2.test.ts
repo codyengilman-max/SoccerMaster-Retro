@@ -1,4 +1,6 @@
+import { IDBFactory } from 'fake-indexeddb';
 import { describe, expect, it } from 'vitest';
+import { StoryStore, parseStoryState } from '../src/game/story/store';
 import { SEASON_ONE, crossbarRules, sceneById, trainingDetail } from '../src/game/story/content';
 import { contestResult, idealPower, launchAttempt, newContest, nextSlot, resolveAttempt, type Contest, type Participant } from '../src/game/story/crossbar';
 import { currentNode, migrateStory, newSeasonStory, outcomeOf, reduceStory, type StoryCommand, type StoryState } from '../src/game/story/runtime';
@@ -135,5 +137,37 @@ describe('Season One weeks 1-2 rewrite', () => {
     expect(migrateStory(m)).toBe(m);
     const parent = migrateStory({ ...s, sceneId: 'S1_W02_P', nodeId: 'n4' });
     expect(parent.sceneId).toBe('S1_W02_E');
+  });
+
+  it('the store resumes a save on an old node or the retired parent scene instead of calling it unreadable', async () => {
+    const { s } = play({}, 'S1_W01_C');
+    const oldNode = { ...s, nodeId: 'n10', decisions: { ...s.decisions, S1_W01_C: { code: 'listen' } } };
+    const p = parseStoryState(oldNode);
+    expect(p.ok && [p.value.sceneId, p.value.nodeId]).toEqual(['S1_W01_C', sceneById('S1_W01_C')!.entry]);
+    const parent = parseStoryState({ ...s, sceneId: 'S1_W02_P', nodeId: 'n4' });
+    expect(parent.ok && parent.value.sceneId).toBe('S1_W02_E');
+    expect(parseStoryState({ ...s, sceneId: 'S1_NOPE', nodeId: 'n1' }).ok).toBe(false);
+    for (const raw of [oldNode, { ...s, sceneId: 'S1_W02_P', nodeId: 'n4' }]) {
+      const f = new IDBFactory();
+      (await StoryStore.open(f, 'st')).close();
+      await new Promise<void>((done, fail) => {
+        const req = f.open('st', 1);
+        req.onsuccess = () => {
+          const tx = req.result.transaction('story', 'readwrite');
+          tx.objectStore('story').put(raw, 'w12');
+          tx.oncomplete = () => { req.result.close(); done(); };
+          tx.onerror = () => fail(tx.error);
+        };
+        req.onerror = () => fail(req.error);
+      });
+      const store = await StoryStore.open(f, 'st');
+      const b = await store.begin('w12');
+      expect(b.ok, JSON.stringify(b)).toBe(true);
+      if (!b.ok) continue;
+      expect(currentNode(b.state)).toBeDefined();
+      const r = await store.dispatch('w12', { type: 'advance', revision: b.state.revision, seq: b.state.lastSeq + 1 });
+      expect(r.ok, JSON.stringify(r.ok ? '' : r.error)).toBe(true);
+      store.close();
+    }
   });
 });
