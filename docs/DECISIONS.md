@@ -126,8 +126,21 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - The career has DEF/MID/FWD roles only; drill families without a role-appropriate drill are listed as deferred in `TRAINING_RELEASE_COVERAGE.md`, not remapped.
 - The Bell94 image is imported as a reference (`training-bell94`) and is not stretched under play; the venue is code-drawn around the pitch.
 
+## D30. Owner sprite sheets v2 as runtime atlases (owner package, 2026-10-20)
 
-## D30. Season One weeks 1-2 rewrite (owner text, 2026-10-20)
+- The 14 owner sheets are kept unchanged in `docs/art/sprites-v2/source/`; `scripts/art/build-sprites.py` cuts poses by
+  alpha connectivity (splitting poses that touch), normalises scale per sheet and packs 160×128 cells with the feet on one
+  anchor into WebP atlases plus Phaser JSON. Runtime loads only the atlases a screen shows.
+- Sheets are cosmetic. `RosterLook.set` names the atlas; `PlayerArt.apply` shows the atlas frame or, if the atlas is missing
+  or still loading, the existing code-drawn frame. The sim, controls, AI and saves are unchanged.
+- Club mapping (owner-confirmed): orange/royal blue Batavia, red/navy/gold Royal Salt, black/red Valley Rising, blue-white
+  stripes Desert Tuzon, light blue/white Sol Vista, purple with silver-white sash Next Horizon. Next Horizon stays outside
+  `LEAGUE_CLUBS`.
+- The story passes the fixture's opponent club to Formation → Match (`opponent`); other matches show Royal Salt.
+
+
+
+## D31. Season One weeks 1-2 rewrite (owner text, 2026-10-20)
 
 - The owner's week 1 and week 2 text replaces the prologue departure/arrival/room text and the old week 1-2 scenes. Scene ids stay (`S1_PRO_*`, `S1_W01_*`, `S1_W02_*`); `S1_W01_P` and `S1_W02_S2` are new and `S1_W02_P` is retired. The content version stays `s1-v1.0`, so saves are not archived.
 - A rewritten scene's header carries `v2`; the compiler prefixes its node ids (`v2n1`). `migrateStory` restarts a save whose node no longer exists at that scene's entry, dropping only that scene's choices and unresolved runs; a save in `S1_W02_P` continues at `S1_W02_E`.

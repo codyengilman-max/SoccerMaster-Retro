@@ -3,7 +3,7 @@ import { fixtureForWeek, newLeague, parseLeague, recordPlayed, simulateThrough, 
 import { DRAFT_SCENES, crossbarRules, sceneById, trainingDetail } from '../game/story/content';
 import { seasonWeek, type TournamentId } from '../game/season/calendar';
 import { bataviaRecord, fixtureForSeasonWeek, newSeasonLeague, opponentOf, parseSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough } from '../game/season/league';
-import { TOURNAMENTS, bataviaFinish, groupTable, nextBataviaFixture, newTournament, parseTournament, playoffs, recordTournamentPlayed, type TournamentState } from '../game/season/tournament';
+import { TOURNAMENTS, allFixtures, bataviaFinish, groupTable, nextBataviaFixture, newTournament, parseTournament, playoffs, recordTournamentPlayed, type TournamentState } from '../game/season/tournament';
 import { CLUB_WORLD } from '../game/story/clubs';
 import type { Rect } from '../game';
 import { POSITION_SLOT } from '../game/career/player';
@@ -384,7 +384,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       await this.store.putRecord(`run:${run}`, snap);
     }
     this.navigating = true;
-    if (MATCH_ADAPTERS.includes(kind)) this.scene.start(SceneKeys.Formation, { career: true, returnTo: 'story', resultKey: run });
+    if (MATCH_ADAPTERS.includes(kind)) this.scene.start(SceneKeys.Formation, { career: true, returnTo: 'story', resultKey: run, ...(await this.matchOpponent(kind, run)) });
     else this.scene.start(SceneKeys.Career, { returnTo: 'story', ...(kind === 'team_training' ? { open: 'team' } : {}) });
   }
 
@@ -464,6 +464,22 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     const id = this.state!.careerId;
     const saved = parseSeasonLeague(await this.store!.getRecord(`league-s1:${id}`));
     return saved.ok ? saved.value : newSeasonLeague(id, this.seasonSeed());
+  }
+
+  /** Club the away side wears in this story match (art only; competitions are unchanged). */
+  private async matchOpponent(kind: string, run: string): Promise<{ opponent?: string }> {
+    if (kind === 'league_match') {
+      const week = this.seasonWeekNo();
+      const f = week === null ? null : fixtureForSeasonWeek(week);
+      return f ? { opponent: opponentOf(f) } : {};
+    }
+    if (kind === 'tournament_match') {
+      const id = await this.store?.getRecord(`tfix:${run}`);
+      const t = await this.tournament();
+      const f = t && typeof id === 'string' ? allFixtures(t).find((x) => x.id === id) : undefined;
+      if (f) return { opponent: f.home === 'batavia' ? f.away : f.home };
+    }
+    return {};
   }
 
   /** This week's Batavia league fixture counts once; other clubs are simulated through its round. */
