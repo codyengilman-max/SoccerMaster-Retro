@@ -12,11 +12,11 @@ describe('Season One calendar', () => {
     for (const w of [1, 2, 10, 12]) expect(fixtureForSeasonWeek(w)).toBeNull();
     for (let g = 1; g <= 12; g++) expect(weekOfLeagueGame(g)).not.toBeNull();
   });
-  it('has 81 featured slots: 18 each of M, S, C, F and 9 parent scenes in even weeks', () => {
+  it('has 81 featured slots: 18 each of M, S, C, F and 9 parent scenes (week 1, then even weeks from 4; the owner rewrite of weeks 1-2 moved the week-2 talk to week 1)', () => {
     const all = SEASON_WEEKS.flatMap((w) => slotIds(w.week));
     expect(all).toHaveLength(81);
     expect(new Set(all).size).toBe(81);
-    expect(all.filter((s) => s.endsWith('_P')).map((s) => Number(s.slice(4, 6)))).toEqual([2, 4, 6, 8, 10, 12, 14, 16, 18]);
+    expect(all.filter((s) => s.endsWith('_P')).map((s) => Number(s.slice(4, 6)))).toEqual([1, 4, 6, 8, 10, 12, 14, 16, 18]);
   });
 });
 

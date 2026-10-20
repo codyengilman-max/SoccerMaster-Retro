@@ -111,7 +111,7 @@ describe('Graphics v1 catalog', () => {
       const other = look === 'boy' ? 'girl' : 'boy';
       expect(sceneVisual('S1_PRO_DEPART', look)!.backgroundAssetId).toBe(`departure-${look}`);
       expect(sceneVisual('S1_PRO_ARRIVE', look)!.backgroundAssetId).toBe(`arrival-${look}`);
-      const tank = sceneVisual('S1_W01_M', look)!;
+      const tank = sceneVisual('S1_W01_F', look)!;
       expect(tank.backgroundAssetId).toBe('s1-bedroom-tank');
       expect(tank.cast.map((c) => c.assetId)).toEqual([`player-${look}-down`, 'clownfish']);
       for (const id of SEASON_ONE.order) {

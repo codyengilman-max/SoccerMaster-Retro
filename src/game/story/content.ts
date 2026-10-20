@@ -54,7 +54,7 @@ function text(v: J, w: string, max = 4096): string {
   const s = v as string;
   if (/[<>]/.test(s)) fail(`${w}: markup not permitted`);
   // Only {player.name} is a supported token; any other brace is rejected at build time.
-  if (/[{}]/.test(s.split('{player.name}').join(''))) fail(`${w}: unknown token`);
+  if (/[{}]/.test(s.split('{player.name}').join('').split('{crossbar.score}').join(''))) fail(`${w}: unknown token`);
   return s;
 }
 function oneOf<T extends string>(v: J, list: readonly T[], w: string): T {
@@ -243,3 +243,20 @@ export function sceneById(sid: string): StoryScene | undefined {
 export function nodeById(scene: StoryScene, nid: string): StoryNode | undefined {
   return scene.nodes.find((n) => n.id === nid);
 }
+
+/** Who the Season One crossbar is against and how it is set up. Same physics for every opponent. */
+export interface CrossbarRules {
+  readonly opponent: string;
+  /** 'always': one warm-up each; 'choice': only if the scene's `warmup` choice is `yes` (or the older `challenge=warmup`). */
+  readonly warmup: 'always' | 'choice';
+  /** False: a tie after the counted shots stands as a draw. */
+  readonly sudden: boolean;
+}
+const CROSSBAR_RULES: Readonly<Record<string, CrossbarRules>> = {
+  S1_W01_S: { opponent: 'Sam', warmup: 'always', sudden: false },
+  S1_W02_S: { opponent: 'Blake', warmup: 'choice', sudden: false },
+};
+export const crossbarRules = (sceneId: string): CrossbarRules => CROSSBAR_RULES[sceneId] ?? { opponent: 'Blake', warmup: 'choice', sudden: true };
+
+/** Story detail for a completed Team Training week, from its real grade (weekDelta: +2 / +1 / 0 or -1). */
+export const trainingDetail = (delta: number): 'strong' | 'steady' | 'struggled' => (delta >= 2 ? 'strong' : delta >= 1 ? 'steady' : 'struggled');

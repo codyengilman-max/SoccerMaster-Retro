@@ -3,7 +3,9 @@
 validated scene JSON the game reads (docs/story/season-one/season_one_scenes.json).
 
 Source format (one statement per line, '#' comments):
-  === SCENE_ID background          start a scene (scenes chain in file order)
+  === SCENE_ID background [rev]    start a scene (scenes chain in file order); a rewritten scene
+                                   adds a revision tag (e.g. v2) that prefixes its node ids, so a save
+                                   resting on a node of the old text restarts that scene
   Speaker: text                    a dialogue line
   ? key                            a choice; options follow as  * id | Label
     Speaker: text                  (indented) statements for the option above (lines, @if blocks)
@@ -30,8 +32,10 @@ def parse_scenes():
             if not raw.strip() or raw.lstrip().startswith('#'):
                 continue
             if raw.startswith('=== '):
-                sid, bg = raw[4:].split()
-                scenes.append({'id': sid, 'background': bg, 'lines': []})
+                parts = raw[4:].split()
+                if len(parts) not in (2, 3) or (len(parts) == 3 and not re.fullmatch(r'v[0-9]{1,3}', parts[2])):
+                    die(f'{f.name}:{no}: expected "=== SCENE_ID background [vN]"')
+                scenes.append({'id': parts[0], 'background': parts[1], 'rev': parts[2] if len(parts) == 3 else '', 'lines': []})
             else:
                 if not scenes:
                     die(f'{f.name}:{no}: statement before scene')
@@ -109,7 +113,7 @@ def compile_scene(sc, next_scene):
     counter = [0]
     def nid(prefix='n'):
         counter[0] += 1
-        return f'{prefix}{counter[0]}'
+        return f"{sc['rev']}{prefix}{counter[0]}"
     end_id = 'end'
     def emit(items, cont):
         nxt = cont

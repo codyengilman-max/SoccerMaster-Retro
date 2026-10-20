@@ -34,6 +34,13 @@
 - **Seeded sweep, 60 rounds each, scripted player bot** (v1 `main` → v2): goals per round 9.98 → 11.25 with turbo (10.72 without); bot goals per round 6.50 → 6.85 with turbo (5.22 without, because the AI now has turbo); hits per round 47.9 → 32.6, 15.3 of them big; the bot is stunned 10.8% → 11.6% of the time. Idle player: 0 goals in both.
 - **Tests:** `tests/jungle-blitz.test.ts` (9 new) plus the existing Jungle Ball tests; `e2e/jungle.spec.ts` checks the TURBO button fits the screen and is held/released.
 
+## Season One weeks 1-2 rewrite (branch `devin/1792522894-story-weeks-1-2`, PR only, not merged, not deployed)
+
+- **Week 1:** Monday move (phone choice), new house, Cloudy settled; Tuesday park with Sam and a playable Crossbar against Sam (one warm-up each, three counted shots, no sudden death) with result-specific lines and Sam's invitation; Thursday first training with Coach Code (real Team Training; his reply follows the real grade) and the receiving assignment; Friday Cloudy; Friday night Mom ("I'm nervous too") with the support choice.
+- **Week 2:** Monday empty chair; Tuesday Crossbar against Blake with the audience choice and a refusal that is remembered as a refusal, real WIN/DRAW/LOSS, ties stand; Wednesday classroom board showing the real score, Riley; Wednesday training "find the passing angle"; Thursday Cloudy with the closing intention. No Mom talk (moved to week 1).
+- **Saves:** content version unchanged. A save in the middle of a rewritten scene restarts that scene; a save in the retired week 2 parent scene continues at the weekend. See D30.
+- **Not done:** no new park, car, kitchen, classroom or training-complex art (stand-ins); Sam has no in-match sprite in the Crossbar screen; Code's "right decision, poor touch" line has no separate grade.
+
 ## Sprites v2 — 14 owner sprite sheets (branch `devin/1792525700-sprite-sheets`, PR only, not merged, not deployed)
 
 - **Art:** all 14 sheets kept unchanged (`docs/art/sprites-v2/source/`, SHA256SUMS) and built into 14 WebP atlases (2.6 MB) with frame metadata. Inventory, pose coverage, gaps and rollback: `docs/art/sprites-v2/README.md`.

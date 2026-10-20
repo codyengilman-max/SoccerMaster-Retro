@@ -38,13 +38,18 @@ const RAW: readonly [string, WeekKind, number | null, TournamentId | null][] = [
 ];
 
 export const SEASON_WEEKS: readonly SeasonWeek[] = Object.freeze(
-  RAW.map(([title, kind, leagueGame, tournament], i) => Object.freeze({ week: i + 1, title, kind, leagueGame, tournament, parent: (i + 1) % 2 === 0 })),
+  RAW.map(([title, kind, leagueGame, tournament], i) => Object.freeze({ week: i + 1, title, kind, leagueGame, tournament, parent: parentWeek(i + 1) })),
 );
 export const SEASON_LENGTH = SEASON_WEEKS.length;
 export const seasonWeek = (week: number): SeasonWeek | null => SEASON_WEEKS[week - 1] ?? null;
 /** Week of a league game number (1–12). */
 export const weekOfLeagueGame = (game: number): number | null => SEASON_WEEKS.find((w) => w.leagueGame === game)?.week ?? null;
 /** Stable featured scene-slot IDs for a week: M, S, C, F, and P on even weeks (81 across the season). */
+/** Deeper parent talk: every other week, except the owner's week 1-2 rewrite moved week 2's talk to week 1. */
+function parentWeek(week: number): boolean {
+  return week === 1 || (week !== 2 && week % 2 === 0);
+}
+
 export function slotIds(week: number): readonly string[] {
   const w = seasonWeek(week);
   if (!w) return [];

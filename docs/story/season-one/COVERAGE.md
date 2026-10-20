@@ -8,13 +8,13 @@ Source: `SoccerMaster_Season_One_Devin_v1.0` (story) and `SoccerMaster_All_Graph
 ## Story
 
 Featured slots per week: M (Monday, Cloudy), S (school), C (Coach Code, before training), F (after training,
-Cloudy reflection + preparation), P (parent, even weeks), G (match / tournament games), E (week close).
+Cloudy reflection + preparation), P (parent: week 1, then even weeks from 4; the owner's week 1-2 rewrite moved week 2's talk to week 1), G (match / tournament games), E (week close).
 Prologue: `S1_PRO_IDENTITY`, `S1_PRO_DEPART`, `S1_PRO_ARRIVE`, `S1_PRO_ROOM`. Epilogue: `S1_END_FIELD`, `S1_END_AQUARIUM`.
 
 | Week | Kind | Scenes |
 |---|---|---|
-| 1 | arrival | M, S, C, F, E |
-| 2 | preseason | M, S, C, F, P, E |
+| 1 | arrival (owner rewrite 2026-10-20) | Mon car/house/Cloudy in PRO_DEPART/ARRIVE/ROOM; M Tue park with Sam; S Crossbar vs Sam + invitation; C Thu first training with Code (Team Training); F Fri Cloudy; P Fri Mom; E |
+| 2 | preseason (owner rewrite 2026-10-20) | M Mon empty chair; S Tue Crossbar vs Blake (refusal path, ties stand); S2 Wed classroom board; C Wed training: find the passing angle; F Thu Cloudy; E (no Mom talk) |
 | 3 | league game 1 | M, S, C, F, G, E |
 | 4 | league game 2 | M, S, C, F, P, G, E |
 | 5 | league game 3 | M, S, C, F, G, E |
@@ -39,7 +39,7 @@ Prologue: `S1_PRO_IDENTITY`, `S1_PRO_DEPART`, `S1_PRO_ARRIVE`, `S1_PRO_ROOM`. Ep
 - [x] Drawn final / placement recorded as shared (no shoot-out exists).
 - [x] Skipped or interrupted games stay unplayed, never losses; the epilogue says the season is incomplete.
 - [x] Riley friendship by default; crush lines only after an explicit crush choice; no inference from Boy/Girl.
-- [x] Remembered consequences (Jordan W3→W5, Alex W6→W9/14/18, Sam W8→W10/12, Casey W15→W16/17/18, parent W2→later).
+- [x] Remembered consequences (Jordan W3→W5, Alex W6→W9/14/18, Sam W8→W10/12, Casey W15→W16/17/18, parent W1 support→W4).
 - [x] Goalkeepers can finish the season without scoring.
 - [x] Old 4-week ending no longer runs: an older save is archived to `legacy-story-<career>` unchanged and the
       career starts the Season One prologue. Player, levels and training stay in the career save.

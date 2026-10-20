@@ -73,7 +73,7 @@ Cloudy: You sat at a table. Incredible. I've been training on a rock for years.
 * reuse_cue | Reuse last week's cue
   Cloudy: If it worked, use it again. That's not boring, that's smart.
 === S1_W04_P neutral_home
-@if chose:S1_W02_P.parent=just_listen
+@if chose:S1_W01_P.support=minute
 Mom: Do you want me to just listen tonight? No advice unless you ask.
 @end
 Mom: I want to hear how your day felt, not just whether people liked you.

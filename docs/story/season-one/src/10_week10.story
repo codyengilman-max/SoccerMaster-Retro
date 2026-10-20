@@ -58,8 +58,8 @@ Cloudy: No league game this weekend. A shocking opportunity to become a person w
 * note | Write a short note for the next tournament
   Cloudy: One note. Then put the pen down.
 === S1_W10_P neutral_home
-@if chose:S1_PRO_DEPART.keepsake=old_shirt
-System: Mom holds up your old team shirt.
+@if chose:S1_PRO_DEPART.phone=photo
+System: Mom holds up a print of the mountain photo you sent from the car.
 @else
 System: Mom holds up a photo from the old neighbourhood.
 @end
