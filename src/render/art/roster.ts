@@ -5,6 +5,7 @@
  */
 import appearancesRaw from '../../../docs/art/graphics-v1/assets/gameplay/appearances.json';
 import { REFERENCE_KITS, type SpriteLook } from './spriteFactory';
+import { clubSet, protagonistSet, type Kit, type SpriteClub, type SpriteSetId } from './spriteSets';
 
 interface RawAppearance { readonly id: string; readonly team: number; readonly girl: boolean; readonly hairIndex: number; readonly hairStyle: number }
 const APPEARANCES: ReadonlyMap<string, RawAppearance> = new Map((appearancesRaw as RawAppearance[]).map((a) => [a.id, a]));
@@ -16,6 +17,15 @@ export const PROTAGONIST_SHEET: Readonly<Record<ProtagonistLook, string>> = { bo
 
 export interface RosterLook extends SpriteLook {
   readonly sheetId: string;
+  /** Sprites v2 atlas this player wears; without it (or before it loads) the code-drawn sprite is used. */
+  readonly set?: SpriteSetId;
+  readonly keeper?: boolean;
+}
+
+/** Which club and kit a side wears. Cosmetic only; never read by the simulation or competitions. */
+export interface SideDress {
+  readonly club: SpriteClub;
+  readonly kit?: Kit;
 }
 
 function look(sheetId: string, side: Side, slot: number): RosterLook {
@@ -31,7 +41,7 @@ function look(sheetId: string, side: Side, slot: number): RosterLook {
  * the chosen boy/girl presentation and the slot that owned the boy reference hair takes the displaced hair,
  * so no two players share the protagonist look. Shirt number and kit stay with the slot.
  */
-export function sideLooks(side: Side, protagonist: { slot: number; look: ProtagonistLook } | null = null): RosterLook[] {
+export function sideLooks(side: Side, protagonist: { slot: number; look: ProtagonistLook } | null = null, dress: SideDress | null = null): RosterLook[] {
   const prefix = side === 'home' ? 'team0' : 'team1';
   const sheets = Array.from({ length: 9 }, (_, s) => `${prefix}-slot${s}`);
   if (protagonist && side === 'home' && Number.isInteger(protagonist.slot) && protagonist.slot >= 1 && protagonist.slot <= 8) {
@@ -39,7 +49,15 @@ export function sideLooks(side: Side, protagonist: { slot: number; look: Protago
     if (boySlot >= 0 && boySlot !== protagonist.slot) sheets[boySlot] = sheets[protagonist.slot]!;
     sheets[protagonist.slot] = PROTAGONIST_SHEET[protagonist.look];
   }
-  return sheets.map((id, s) => look(id, side, s));
+  const looks = sheets.map((id, s) => look(id, side, s));
+  if (!dress) return looks;
+  const kit = dress.kit ?? 'match';
+  return looks.map((l, s) => {
+    const mine = protagonist && side === 'home' && s === protagonist.slot && protagonist.slot >= 1 && protagonist.slot <= 8;
+    // Batavia's training sheet has no keeper row, so its keeper keeps the match sheet's keeper poses.
+    const set = mine ? protagonistSet(protagonist.look, kit, false) : clubSet(dress.club, s === 0 ? 'match' : kit);
+    return { ...l, set, keeper: s === 0 };
+  });
 }
 
 export const lookKey = (l: SpriteLook): string => [l.kit.shirt, l.kit.shade, l.kit.light, l.number, l.girl ? 1 : 0, l.hairIndex, l.hairStyle].join('_').replace(/#/g, '');
