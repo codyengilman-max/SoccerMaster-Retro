@@ -392,7 +392,8 @@ function think(s: JungleState, c: Competitor, rnd: () => number): { move: V; kic
 function moveCompetitor(s: JungleState, c: Competitor, want: V, dt: number): void {
   const r0 = JUNGLE.playerRadius;
   if (s.t < c.slideUntil && c.slideDir) {
-    c.vel = { x: c.slideDir.x * JUNGLE.slideSpeed, y: c.slideDir.y * JUNGLE.slideSpeed };
+    const v = c.lastMove?.kind === 'slide' && c.lastMove.big ? JUNGLE.diveSpeed : JUNGLE.slideSpeed;
+    c.vel = { x: c.slideDir.x * v, y: c.slideDir.y * v };
     c.pos = { x: clamp(c.pos.x + c.vel.x * dt, r0, JUNGLE.length - r0), y: clamp(c.pos.y + c.vel.y * dt, r0, JUNGLE.width - r0) };
     return;
   }

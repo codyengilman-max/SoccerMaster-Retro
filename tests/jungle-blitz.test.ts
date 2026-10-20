@@ -98,7 +98,21 @@ describe('Jungle Ball v2 (arcade football feel)', () => {
     expect(alex.downUntil).toBe(0);
   });
 
-  it('turbo + SLIDE dives further than a plain slide', () => {
+  it('turbo + SLIDE dives faster and further than a plain slide', () => {
+    const speed = (turbo: boolean): number => {
+      const s = live();
+      park(s);
+      const me = s.competitors.player;
+      me.pos = { x: 5, y: 11 };
+      me.facing = { x: 1, y: 0 };
+      s.ball.pos = { x: 25, y: 2 };
+      command(s, { type: 'turbo', on: turbo });
+      command(s, { type: 'slide' });
+      step(s, 1 / 60);
+      return Math.hypot(me.vel.x, me.vel.y);
+    };
+    expect(speed(true)).toBeCloseTo(JUNGLE.diveSpeed, 6);
+    expect(speed(false)).toBeCloseTo(JUNGLE.slideSpeed, 6);
     const dist = (turbo: boolean): number => {
       const s = live();
       park(s);
