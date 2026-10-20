@@ -1060,6 +1060,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       team.attrs = matchAttrsFromCareer(save.player.attributes);
       team.situations = selectSituations(save.player.position, save.week).map((x) => (shorten ? { ...x, seconds: Math.min(x.seconds, debugSecs) } : x));
       if (save.teamTraining.some((r) => r.week === save.week)) team.message = `Week ${save.week} is already counted; this is practice only.`;
+      const gender = save.player.gender;
+      if (gender === 'boy' || gender === 'girl') this.setRosterLooks({ id: CAREER_SLOT[save.player.position], look: gender });
       this.stageTeamSituation();
     });
   }
@@ -1801,6 +1803,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       const k = depthScaleAt(L, sp.y);
       const [kind, dir, pose] = this.artFrame(id, L, simDt);
       this.art.apply(img, this.looks[id], kind, dir, pose, playerH, k).setPosition(sp.x, sp.y).setDepth(100 + sp.y).setAngle(0);
+      // The away keeper tint only distinguishes the drawn placeholder keepers; owner art has its own kit.
+      if (id === 'A1') {
+        if (img.texture.key.startsWith('spr2:')) img.clearTint();
+        else img.setTint(0xb7d3ff);
+      }
       const e = ellipse(p.pos, 0.85);
       u.fillStyle(PALETTE.shadow, 0.3);
       u.fillEllipse(e.x, e.y, e.w, e.h);

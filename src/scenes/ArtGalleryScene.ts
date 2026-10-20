@@ -184,7 +184,9 @@ export class ArtGalleryScene extends Phaser.Scene {
     if (this.load.isLoading()) this.load.once(Phaser.Loader.Events.COMPLETE, () => this.art && this.page.kind === 'gameplay' && this.render());
     const cols = Math.max(4, Math.floor(area.width / 70));
     const cw = area.width / cols;
-    const rows = Math.ceil(looks.length / cols) + 2;
+    const coachBeats = Object.entries(COACH_POSE);
+    const poseRows = Math.ceil(POSE_KINDS.length / cols);
+    const rows = Math.ceil(looks.length / cols) + poseRows + Math.ceil(coachBeats.length / cols);
     const rh = Math.min(110, (area.height - 30) / rows);
     const bodyH = (rh * 0.7) / PLAYER_ART.bodyScale;
     const cell = (i: number, row0: number): { x: number; y: number } => ({ x: area.x + cw * (i % cols) + cw / 2, y: area.y + (row0 + Math.floor(i / cols)) * rh + rh * 0.78 });
@@ -202,8 +204,8 @@ export class ArtGalleryScene extends Phaser.Scene {
     });
     const coach = atlasKey('coach-code');
     if (this.textures.exists(coach)) {
-      Object.entries(COACH_POSE).slice(0, cols).forEach(([beat, frame], i) => {
-        const { x, y } = cell(i, r1 + 1);
+      coachBeats.forEach(([beat, frame], i) => {
+        const { x, y } = cell(i, r1 + poseRows);
         const s = (rh * 0.8) / SPRITE_CELL.bodyHeight;
         this.items.push(this.add.image(x, y, coach, frame).setOrigin(SPRITE_CELL.anchorX / SPRITE_CELL.width, SPRITE_CELL.anchorY / SPRITE_CELL.height).setScale(s));
         this.text(x, y + 4, beat, 10);
