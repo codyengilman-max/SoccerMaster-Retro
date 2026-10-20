@@ -134,3 +134,15 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Retry drops the attempt's result and replays it; only Continue records it. The weekly credit stays the D27 reducer (idempotent per week).
 - The career has DEF/MID/FWD roles only; drill families without a role-appropriate drill are listed as deferred in `TRAINING_RELEASE_COVERAGE.md`, not remapped.
 - The Bell94 image is imported as a reference (`training-bell94`) and is not stretched under play; the venue is code-drawn around the pitch.
+
+## D30. Owner sprite sheets v2 as runtime atlases (owner package, 2026-10-20)
+
+- The 14 owner sheets are kept unchanged in `docs/art/sprites-v2/source/`; `scripts/art/build-sprites.py` cuts poses by
+  alpha connectivity (splitting poses that touch), normalises scale per sheet and packs 160×128 cells with the feet on one
+  anchor into WebP atlases plus Phaser JSON. Runtime loads only the atlases a screen shows.
+- Sheets are cosmetic. `RosterLook.set` names the atlas; `PlayerArt.apply` shows the atlas frame or, if the atlas is missing
+  or still loading, the existing code-drawn frame. The sim, controls, AI and saves are unchanged.
+- Club mapping (owner-confirmed): orange/royal blue Batavia, red/navy/gold Royal Salt, black/red Valley Rising, blue-white
+  stripes Desert Tuzon, light blue/white Sol Vista, purple with silver-white sash Next Horizon. Next Horizon stays outside
+  `LEAGUE_CLUBS`.
+- The story passes the fixture's opponent club to Formation → Match (`opponent`); other matches show Royal Salt.
