@@ -6,6 +6,9 @@
 - Conflicts were docs only, plus `sim.ts` where the referee (#17) and the v0.5 tactics director (#18) both hook the constructor and carrier logic; both kept, set-piece hold first. Tactics stay off by default (`?tactics=v05`).
 - PRs #6 and #13 had no commits that `main` lacks; nothing to merge from them.
 - Season One weeks 3–18 are hidden (owner: "hide them") until the new text arrives: the story ends after week 2's close with "Weeks 1–2 complete. More weeks are coming soon." The weeks stay in the catalog; a save already inside them rests at week 2's close with its choices and results kept, and continues into week 3 once more weeks are released (`SEASON_RELEASED_WEEKS` in `src/game/story/runtime.ts`).
+- Review fixes (Devin Review on PR #25, v0.5 tactical director, off by default): acknowledged kick commands now reach the engine before being cleared, so a carrier is no longer stuck without kick decisions; held orders keep the engine's metres and convert to world yards once (home and away); each observation carries the referee's offside line as `runLimit`, and teammates beyond it are not pass targets. Regression tests in `tests/tacticalDirector.test.ts` fail on the old code.
+- Review hub story line now reads weeks 1–2 (owner rewrite), weeks 3–18 hidden.
+- Checks on this branch: typecheck clean; unit 49 files / 707 tests passed, 0 failed; e2e (phone portrait, landscape, desktop) 114 passed, 0 failed, 8 skipped by design. Not tested on a real iPhone.
 - Not tested on a physical iPhone.
 
 ## Referee (branch `devin/1792274864-referee`, not merged, not deployed)
