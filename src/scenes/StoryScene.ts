@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { fixtureForWeek, newLeague, parseLeague, recordPlayed, simulateThrough, table } from '../game/league/league';
-import { DRAFT_SCENES, sceneById } from '../game/story/content';
+import { DRAFT_SCENES, crossbarRules, sceneById, trainingDetail } from '../game/story/content';
 import { seasonWeek, type TournamentId } from '../game/season/calendar';
 import { bataviaRecord, fixtureForSeasonWeek, newSeasonLeague, opponentOf, parseSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough } from '../game/season/league';
 import { TOURNAMENTS, allFixtures, bataviaFinish, groupTable, nextBataviaFixture, newTournament, parseTournament, playoffs, recordTournamentPlayed, type TournamentState } from '../game/season/tournament';
@@ -89,6 +89,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private aimFrom: { x: number; y: number } | null = null;
   private pull: Pull | null = null;
   private crossbarSummary = '';
+  private crossbarScore = '';
   private leagueSummary = '';
   private seasonSummary = '';
   private tournamentSummary = '';
@@ -166,6 +167,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     if (this.save.player) this.position = this.save.player.position;
     this.mode = 'story';
     await this.loadSummaries();
+    await this.loadCrossbarScore();
     await this.resumeHandoff();
     this.render();
   }
@@ -179,8 +181,10 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private async send(c: Cmd): Promise<StoryOutcome> {
     if (!this.session || !this.state) return { ok: false, error: 'not ready' };
     const r = await this.session.dispatch({ ...c, revision: this.state.revision } as StoryCommand);
-    if (r.ok) this.state = r.state;
-    else {
+    if (r.ok) {
+      this.state = r.state;
+      if (r.state.sceneId === 'S1_W02_S2') await this.loadCrossbarScore();
+    } else {
       // Another tab may have moved on: reload the canonical state rather than guessing.
       const fresh = await this.store!.load(CAREER_ID);
       if (fresh) this.state = fresh;
@@ -433,7 +437,9 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       if (!t) return void (this.message = 'This tournament result could not be recorded. Nothing was changed.');
       return this.complete(run.runId, 'completed', resultOf(full), t.detail);
     }
-    await this.complete(run.runId, 'completed');
+    // Season One reads the week's real Team Training grade so Code's reply follows what happened.
+    const rec = n.adapter === 'team_training' && this.state.sceneId.startsWith('S1_') ? s.teamTraining.find((r) => r.week === snap.week) : undefined;
+    await this.complete(run.runId, 'completed', null, rec ? trainingDetail(rec.delta) : null);
   }
 
   /** The story week of the current match scene (W2_MATCH → 2), never the separately advancing career week. */
@@ -613,9 +619,29 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private crossbarWarmup(): boolean {
     const s = this.state;
     if (!s) return false;
-    if (s.sceneId.startsWith('S1_')) return s.decisions[s.sceneId]?.challenge === 'warmup';
+    if (s.sceneId.startsWith('S1_')) {
+      const d = s.decisions[s.sceneId];
+      return crossbarRules(s.sceneId).warmup === 'always' || d?.warmup === 'yes' || d?.challenge === 'warmup';
+    }
     const inv = s.decisions.W1_SCHOOL_02?.invitation;
     return inv === 'accept' || inv === 'shared_warmup';
+  }
+
+  /** The crossbar opponent's name for this scene (Sam in week 1, otherwise Blake). Same physics either way. */
+  private opponent(): string {
+    const id = this.state?.sceneId ?? '';
+    return id.startsWith('S1_') ? crossbarRules(id).opponent : 'Blake';
+  }
+
+  /** Week 2's real Crossbar score for {crossbar.score} (the classroom board), read from the saved contest. */
+  private async loadCrossbarScore(): Promise<void> {
+    const run = this.state ? Object.values(this.state.runs).find((r) => r.sceneId === 'S1_W02_S' && r.state === 'resolved' && r.outcome === 'completed') : undefined;
+    const c = run && this.store ? restoreContest(await this.store.getRecord(`crossbar:${run.runId}`)) : null;
+    this.crossbarScore = c ? `BLAKE ${points(c, 'blake')}, ${this.name().toUpperCase()} ${points(c, 'player')}` : 'BLAKE WINS';
+  }
+
+  private say(text: string): string {
+    return renderText(text, this.name()).split('{crossbar.score}').join(this.crossbarScore);
   }
 
   private async enterCrossbar(runId: string): Promise<void> {
@@ -623,9 +649,10 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     const epoch = this.epoch;
     this.runId = runId;
     const warm = this.crossbarWarmup();
+    const sudden = this.state.sceneId.startsWith('S1_') ? crossbarRules(this.state.sceneId).sudden : true;
     // One read-modify-write: replay any launched attempt from its frozen input, never a reroll.
     const c = await this.store.updateRecord(`crossbar:${runId}`, (cur) => {
-      let k = restoreContest(cur) ?? newContest(runId, warm);
+      let k = restoreContest(cur) ?? newContest(runId, warm, sudden);
       if (k.status === 'active' && k.attempts.some((a) => a.state === 'launched')) {
         const r = resolveAttempt(k);
         if (r.ok) k = r.contest;
@@ -801,7 +828,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
 
   private fullText(): string {
     const n = this.node();
-    return n?.type === 'line' ? renderText(n.text, this.name()) : '';
+    return n?.type === 'line' ? this.say(n.text) : '';
   }
 
   override update(time: number): void {
@@ -894,10 +921,10 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       const slot = nextSlot(c);
       const main = c.attempts.filter((a) => a.round === 'main' && a.participant === 'player').length;
       const turn = slot?.round === 'warmup' ? 'Warm-up (does not count)' : slot?.round === 'sudden' ? 'Sudden death' : `Shot ${Math.min(3, main + 1)} of 3`;
-      body = `${this.name()} ${points(c, 'player')} · Blake ${points(c, 'blake')} · ${turn}`;
+      body = `${this.name()} ${points(c, 'player')} · ${this.opponent()} ${points(c, 'blake')} · ${turn}`;
       const last = this.lastShot;
-      const said = last ? `${last.who === 'blake' ? 'Blake: ' : ''}${OUTCOME_WORD[last.outcome]}${last.scored ? ' One point.' : ''}` : '';
-      hint = this.anim ? '…' : slot?.participant === 'player' ? `${said ? `${said} ` : ''}Your kick: press, pull back, let go.` : slot ? `${said ? `${said} ` : ''}Blake is shooting…` : said || 'Done.';
+      const said = last ? `${last.who === 'blake' ? `${this.opponent()}: ` : ''}${OUTCOME_WORD[last.outcome]}${last.scored ? ' One point.' : ''}` : '';
+      hint = this.anim ? '…' : slot?.participant === 'player' ? `${said ? `${said} ` : ''}Your kick: press, pull back, let go.` : slot ? `${said ? `${said} ` : ''}${this.opponent()} is shooting…` : said || 'Done.';
     } else if (n && this.state) {
       if (this.state.complete) {
         body = `Chapter complete (weeks 1–4). ${this.recap()}`;
@@ -933,7 +960,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     if (!c) return '';
     const done = c.attempts.filter((a) => a.state === 'resolved').slice(-6);
     if (!done.length) return 'No shots yet.';
-    return done.map((a) => `${a.participant === 'player' ? this.name() : 'Blake'}${a.round === 'warmup' ? ' (warm-up)' : ''}: ${OUTCOME_WORD[describeShot(simulateShot(a.input))]}`).join('\n');
+    return done.map((a) => `${a.participant === 'player' ? this.name() : this.opponent()}${a.round === 'warmup' ? ' (warm-up)' : ''}: ${OUTCOME_WORD[describeShot(simulateShot(a.input))]}`).join('\n');
   }
 
   private handoffUi(n: Extract<StoryNode, { type: 'activity_handoff' }>, acts: Action[], setBody: (t: string) => void): void {
@@ -952,7 +979,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       case 'crossbar': {
         const declined = s.sceneId.startsWith('S1_') ? evaluatePredicate(s, n.predicate) === false : s.decisions.W1_SCHOOL_02?.invitation === 'decline';
         if (declined) {
-          setBody('You head back with Jordan. No score is recorded.');
+          setBody(this.state?.sceneId.startsWith('S1_') ? 'You walk away from the goal. No score is recorded.' : 'You head back with Jordan. No score is recorded.');
           acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.decline() });
         } else {
           setBody(`Three counted shots each from the same spot.${this.crossbarWarmup() ? ' One warm-up shot each first (does not count).' : ''} Hit the crossbar to score.`);
@@ -1058,7 +1085,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private lineFor(sceneId: string, nodeId: string): string {
     const s = this.state && sceneId ? this.sceneNode(sceneId, nodeId) : null;
     if (!s || s.type !== 'line') return '';
-    return `${s.speaker === 'System' ? '' : `${s.speaker === 'Player' ? this.name() : s.speaker}: `}${renderText(s.text, this.name())}`;
+    return `${s.speaker === 'System' ? '' : `${s.speaker === 'Player' ? this.name() : s.speaker}: `}${this.say(s.text)}`;
   }
 
   private sceneNode(sceneId: string, nodeId: string): StoryNode | null {

@@ -68,7 +68,29 @@ export const RESULT_ADAPTERS: readonly AdapterKind[] = ['crossbar', 'league_matc
  * Saves that finished the old week-one slice (complete at the final callback) continue into week 2.
  * Pure and deterministic; nothing already decided is touched.
  */
-export function migrateStory(s: StoryState): StoryState {
+/** Season One scenes removed by a rewrite, mapped to the scene a save resting there continues from. */
+const RETIRED_SCENES: Readonly<Record<string, string>> = { S1_W02_P: 'S1_W02_E' };
+
+/**
+ * A save resting in a rewritten Season One scene (its node no longer exists) restarts that scene: the
+ * scene's old choices and unfinished-text runs are dropped so the new text can be answered once.
+ * Everything outside that scene is untouched.
+ */
+function migrateRewritten(s: StoryState): StoryState {
+  if (s.contentVersion !== SEASON_ONE.version) return s;
+  const retired = RETIRED_SCENES[s.sceneId];
+  if (retired) return enter({ ...s, complete: false }, retired, sceneById(retired)!.entry, s.lastSeq);
+  const scene = sceneById(s.sceneId);
+  // Only a scene revised by the compiler (`v2n1`-style ids) whose saved node has the pre-revision shape
+  // (`n10`, `a3`) is restarted; any other unknown position stays unknown and is kept aside by the store.
+  if (!scene || nodeById(scene, s.nodeId) || !/^v\d+/.test(scene.entry) || !/^[a-z]\d+$/.test(s.nodeId)) return s;
+  const { [scene.id]: _dropped, ...decisions } = s.decisions;
+  const runs = Object.fromEntries(Object.entries(s.runs).filter(([, r]) => r.sceneId !== scene.id || nodeById(scene, r.nodeId)));
+  return enter({ ...s, decisions, runs, complete: false }, scene.id, scene.entry, s.lastSeq);
+}
+
+export function migrateStory(raw: StoryState): StoryState {
+  const s = migrateRewritten(raw);
   if (!s.complete) return s;
   const scene = sceneById(s.sceneId);
   const node = scene ? nodeById(scene, s.nodeId) : undefined;

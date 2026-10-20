@@ -10,11 +10,14 @@ export function parseStoryState(raw: unknown): { ok: true; value: StoryState } |
   if (raw.schema !== STORY_SCHEMA) return { ok: false, error: `unknown story schema ${String(raw.schema)}` };
   if (typeof raw.careerId !== 'string' || typeof raw.sceneId !== 'string' || typeof raw.nodeId !== 'string') return { ok: false, error: 'missing cursor' };
   if (typeof raw.contentVersion !== 'string' || !catalogFor(raw.contentVersion)) return { ok: false, error: `story content ${String(raw.contentVersion)} is not in this build` };
-  const scene = sceneById(raw.sceneId);
-  if (!scene || !nodeById(scene, raw.nodeId)) return { ok: false, error: `story position ${raw.sceneId}.${raw.nodeId} is missing` };
   for (const k of ['revision', 'lastSeq', 'openedBy']) if (!Number.isInteger(raw[k])) return { ok: false, error: `bad ${k}` };
   if (!isObj(raw.decisions) || !isObj(raw.runs) || !Array.isArray(raw.transcript) || !Array.isArray(raw.completedScenes)) return { ok: false, error: 'bad story fields' };
-  return { ok: true, value: migrateStory(raw as unknown as StoryState) };
+  // Migrate first: a save resting on rewritten Season One text (an old node id, a retired scene) is moved
+  // to a real position here; anything still unknown afterwards is kept aside as unreadable.
+  const value = migrateStory(raw as unknown as StoryState);
+  const scene = sceneById(value.sceneId);
+  if (!scene || !nodeById(scene, value.nodeId)) return { ok: false, error: `story position ${raw.sceneId}.${raw.nodeId} is missing` };
+  return { ok: true, value };
 }
 
 /** Key of the archived pre-season story for a career (kept read-only, never deleted). */
