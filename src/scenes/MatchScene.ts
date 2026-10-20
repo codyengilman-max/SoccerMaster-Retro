@@ -46,7 +46,8 @@ import { SceneKeys } from './keys';
 import { artTextureKey, artUrl } from '../render/art/urls';
 import { Button } from './ui/Button';
 import { COACH_OVERLAY_DEPTH, CoachOverlay } from './ui/CoachOverlay';
-import { PLAYER_ART, PlayerArt } from '../render/art/playerArt';
+import { PLAYER_ART, PlayerArt, atlasKey } from '../render/art/playerArt';
+import { COACH_POSE, SPRITE_CELL, isSpriteClub, type SpriteClub } from '../render/art/spriteSets';
 import { sideLooks, type ProtagonistLook, type RosterLook } from '../render/art/roster';
 import { SPRITE_FRAME, dirFromScreen, type PoseKind } from '../render/art/spriteFactory';
 
@@ -75,6 +76,8 @@ export interface MatchSceneData {
   readonly returnTo?: 'story';
   /** Story run id: the full-time score is kept once under `matchresult:<key>` for the league table. */
   readonly resultKey?: string;
+  /** Story fixture opponent (club id): which club sheet the away side wears. Cosmetic only. */
+  readonly opponent?: string;
 }
 
 /** Team Training camera magnification over the match view (brief: 1.25–1.40×). */
@@ -136,6 +139,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private scoreText!: Phaser.GameObjects.Text;
   private helpText!: Phaser.GameObjects.Text;
   private toastText!: Phaser.GameObjects.Text;
+  /** Coach Code beside Team Training cards (sprites v2); the pose follows the card's beat. Cosmetic only. */
+  private coachImg!: Phaser.GameObjects.Image;
+  private coachPose: string = COACH_POSE.idle;
   private bannerText!: Phaser.GameObjects.Text;
   private eventArt: Phaser.GameObjects.Image | null = null;
   private eventArtFor: unknown = null;
@@ -164,6 +170,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private careerStore: CareerStore | null = null;
   private returnTo: 'story' | null = null;
   private resultKey: string | null = null;
+  /** Away side's club sheet; matches outside the story show Royal Salt. Cosmetic only. */
+  private opponent: SpriteClub = 'royal_salt';
   private collector: EvidenceCollector | null = null;
   private careerItems: EvidenceItem[] = [];
   private careerSession = '';
@@ -183,6 +191,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   create(data: MatchSceneData = {}): void {
     this.returnTo = data.returnTo === 'story' ? 'story' : null;
     this.resultKey = this.returnTo && typeof data.resultKey === 'string' ? data.resultKey : null;
+    this.opponent = isSpriteClub(data.opponent) && data.opponent !== 'batavia' ? data.opponent : 'royal_salt';
     this.navigating = false;
     this.overlayOn = false;
     this.fieldKey = '';
@@ -260,6 +269,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.scoreText = text(15).setOrigin(0.5, 0.5).setDepth(6001);
     this.helpText = text(11, CSS.ink, false).setOrigin(0.5, 1).setDepth(6001).setAlpha(0.9);
     this.toastText = text(15).setOrigin(0.5, 0.5).setDepth(6002);
+    this.coachImg = this.add.image(0, 0, '__DEFAULT').setOrigin(SPRITE_CELL.anchorX / SPRITE_CELL.width, SPRITE_CELL.anchorY / SPRITE_CELL.height).setDepth(6002).setVisible(false);
     this.rotateText = text(11, CSS.cream).setOrigin(0, 0.5).setDepth(6001).setText('Turn sideways for\na closer view');
     this.bannerText = text(24).setOrigin(0.5, 0.5).setDepth(6002);
     this.eventArt = null;
@@ -1028,6 +1038,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const team = { week: 0, situations: [] as TeamTrainingSituation[], index: 0, results: [] as SituationResult[], observer: null, store: null as CareerStore | null, attrs: {}, phase: 'loading' as 'loading' | 'playing' | 'review' | 'saving' | 'done', half: 'attack' as 'own' | 'attack', last: null as SituationResult | null, message: '' };
     this.team = team;
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => team.store?.close());
+    this.art.ensure(['coach-code']);
+    this.coachPose = COACH_POSE.walk;
     this.toast('Loading Team Training…');
     void CareerStore.open().then(async (store) => {
       if (!this.sys.isActive() || this.team !== team) {
@@ -1071,6 +1083,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     t.observer = new SituationObserver(sit, this.sim.state);
     this.snapCamera();
     this.lastSeq = 0;
+    this.coachPose = COACH_POSE.instruct;
     this.toast(`${prefix}Attempt ${t.index + 1}/${t.situations.length}: ${sit.title}. ${sit.goal}`, 4500, true);
   }
 
@@ -1090,6 +1103,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     t.phase = 'review';
     this.cancelInput('team training result');
     if (!this.sim.state.pauseReasons.user) this.sim.command({ type: 'pause' });
+    this.coachPose = r.score >= 0.7 ? COACH_POSE.encourage : r.score < 0.4 ? COACH_POSE.correct : COACH_POSE.observe;
     this.toast(`Attempt ${t.index + 1}/${t.situations.length} · ${Math.round(r.score * 100)}%\n${r.notes[0] ?? 'Attempt finished.'}\nNext: ${sit.goal}`, 600_000, true);
     this.showTeamButtons();
   }
@@ -1112,6 +1126,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     if (t.index < t.situations.length) return this.stageTeamSituation();
     t.phase = 'saving';
     this.showTeamButtons();
+    this.coachPose = COACH_POSE.clipboard;
     this.toast('Saving Team Training…', 60_000, true);
     const store = t.store;
     if (!store) return;
@@ -1129,6 +1144,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       }
       t.phase = 'done';
       t.message = out.message;
+      this.coachPose = out.ok ? COACH_POSE.point : COACH_POSE.clipboard;
       this.toast(`${out.ok ? 'Complete. ' : ''}${t.message}`, 600_000, true);
       this.showTeamButtons();
     });
@@ -1210,16 +1226,19 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   /** Cosmetic roster looks (stable per side + slot); the career player shows the chosen boy/girl presentation. */
   private setRosterLooks(protagonist: { id: Id; look: ProtagonistLook } | null): void {
     const slot = protagonist ? this.sim.state.players[protagonist.id].slot : -1;
-    const home = sideLooks('home', protagonist ? { slot, look: protagonist.look } : null);
-    const away = sideLooks('away');
+    // Team Training: Batavia's blue training kit against teammates in the orange match kit.
+    const training = this.team !== null;
+    const home = sideLooks('home', protagonist ? { slot, look: protagonist.look } : null, { club: 'batavia', kit: training ? 'training' : 'match' });
+    const away = sideLooks('away', null, { club: training ? 'batavia' : this.opponent, kit: 'match' });
     this.looks = Object.fromEntries(MATCH_PLAYER_IDS.map((id) => {
       const p = this.sim.state.players[id];
       return [id, (p.team === 'home' ? home : away)[p.slot]!];
     })) as Record<Id, RosterLook>;
+    this.art?.ensure(Object.values(this.looks).map((l) => l.set));
   }
 
   /** Pick a frame from what the sim says the player is doing. Read-only: the sim never sees art state. */
-  private artFrame(id: Id, L: PitchLayout, simDt: number): string {
+  private artFrame(id: Id, L: PitchLayout, simDt: number): readonly [PoseKind, number, number] {
     const s = this.sim.state;
     const p = s.players[id];
     const speed = Math.hypot(p.vel.x, p.vel.y);
@@ -1246,7 +1265,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       this.artDir[id] = dirFromScreen(v.x, v.y);
     }
     this.artDist[id] = (this.artDist[id] + speed * simDt) % 1000;
-    return this.art.frame(this.looks[id], kind, this.artDir[id], Math.floor(this.artDist[id] / 0.55));
+    return [kind, this.artDir[id], Math.floor(this.artDist[id] / 0.55)];
   }
 
   private handleShutdown(): void {
@@ -1771,7 +1790,6 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       const k = depthScaleAt(L, sp.y);
       return { x: sp.x, y: sp.y, w: Math.abs(v.x) * 2 * k, h: Math.abs(v.y) * 2 * k };
     };
-    const artScale = PlayerArt.scaleFor(playerH);
     // Run cycle advances with sim time, so pauses, Coach cards and slow motion freeze/slow it with play.
     const simDt = Phaser.Math.Clamp(s.simTime - this.artSimTime, 0, 0.1);
     this.artSimTime = s.simTime;
@@ -1780,7 +1798,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       const sp = toScreen(L, p.pos);
       const img = this.sprites[id];
       const k = depthScaleAt(L, sp.y);
-      img.setTexture(this.artFrame(id, L, simDt)).setScale(artScale.x * k, artScale.y * k).setPosition(sp.x, sp.y).setDepth(100 + sp.y).setAngle(0);
+      const [kind, dir, pose] = this.artFrame(id, L, simDt);
+      this.art.apply(img, this.looks[id], kind, dir, pose, playerH, k).setPosition(sp.x, sp.y).setDepth(100 + sp.y).setAngle(0);
       const e = ellipse(p.pos, 0.85);
       u.fillStyle(PALETTE.shadow, 0.3);
       u.fillEllipse(e.x, e.y, e.w, e.h);
@@ -2023,10 +2042,19 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.toastText.setVisible(toastOn);
     if (toastOn) {
       // Long Team Training feedback wraps inside the screen instead of running off both edges.
-      this.toastText.setWordWrapWidth(Math.max(120, width - 32), true).setAlign('center').setText(this.toastMessage);
+      const coachKey = atlasKey('coach-code');
+      const coachOn = this.team !== null && this.textures.exists(coachKey) && this.textures.get(coachKey).has(this.coachPose);
+      const coachW = coachOn ? 64 : 0;
+      this.toastText.setWordWrapWidth(Math.max(120, width - 32 - coachW), true).setAlign('center').setText(this.toastMessage);
       const top = Math.max(this.viewRect().y, this.minimapRect().y + this.minimapRect().height) + 8;
-      this.toastText.setPosition(width / 2, top + this.toastText.height / 2);
-    }
+      this.toastText.setPosition(width / 2 + coachW / 2, top + this.toastText.height / 2);
+      if (coachOn) {
+        const h = Math.max(56, this.toastText.height);
+        const x = Math.max(16 + coachW / 2, width / 2 + coachW / 2 - this.toastText.width / 2 - coachW / 2);
+        this.coachImg.setTexture(coachKey, this.coachPose).setScale(h / SPRITE_CELL.bodyHeight).setPosition(x, top + h);
+      }
+      this.coachImg.setVisible(coachOn);
+    } else this.coachImg.setVisible(false);
     this.drawMinimap(g);
     const portrait = orientationOf({ width, height }) === 'portrait';
     const mm = this.minimapRect();

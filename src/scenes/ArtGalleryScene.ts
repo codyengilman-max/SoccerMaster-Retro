@@ -4,9 +4,10 @@ import { ART_ASSETS as ALL_ASSETS, ART_REVISION, isAllowedAsset, type ArtAsset }
 /** Every image the game can show (Graphics v1 + Season One screens); masters with no runtime use are listed as gaps. */
 const ART_ASSETS = ALL_ASSETS.filter((a) => isAllowedAsset(a.assetId));
 import { artTextureKey, artUrl } from '../render/art/urls';
-import { PlayerArt } from '../render/art/playerArt';
-import { sideLooks } from '../render/art/roster';
-import { HAIR_STYLES, POSE_KINDS, SPRITE_FRAME } from '../render/art/spriteFactory';
+import { PLAYER_ART, PlayerArt, atlasKey } from '../render/art/playerArt';
+import { COACH_POSE, SPRITE_CELL, SPRITE_CLUBS, protagonistSet } from '../render/art/spriteSets';
+import { sideLooks, type RosterLook } from '../render/art/roster';
+import { POSE_KINDS } from '../render/art/spriteFactory';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import { orientationOf } from '../render/layout';
 import type { Rect } from '../game';
@@ -132,8 +133,8 @@ export class ArtGalleryScene extends Phaser.Scene {
     } else if (p.kind === 'gameplay') {
       this.shown = [];
       this.evictOffPage();
-      this.title.setText(`Art Gallery · gameplay players (STYLE_APPROVED look, ported reference factory)`);
-      this.drawGameplay(area, fs);
+      this.title.setText('Art Gallery · gameplay players (owner sprite sheets v2)');
+      this.drawGameplay(area);
     } else {
       this.shown = [];
       this.evictOffPage();
@@ -168,28 +169,46 @@ export class ArtGalleryScene extends Phaser.Scene {
     this.evictOffPage();
   }
 
-  private drawGameplay(area: Rect, fs: number): void {
+  /** Sprites v2: every owner sheet's standing pose, the girl's pose kinds, and Coach Code's training beats. */
+  private drawGameplay(area: Rect): void {
     const art = this.art!;
-    const home = sideLooks('home');
-    const away = sideLooks('away');
-    const looks = [...home.slice(1), ...away.slice(1, 4), sideLooks('home', { slot: 7, look: 'girl' })[7]!, home[0]!];
-    const cols = Math.min(looks.length, Math.max(4, Math.floor(area.width / 70)));
+    const prot = (look: 'boy' | 'girl', kit: 'match' | 'training'): RosterLook => sideLooks('home', { slot: 7, look }, { club: 'batavia', kit })[7]!;
+    const looks: { l: RosterLook; label: string }[] = [];
+    for (const look of ['boy', 'girl'] as const) {
+      looks.push({ l: prot(look, 'match'), label: `${look} match` }, { l: prot(look, 'training'), label: `${look} train` });
+      looks.push({ l: { ...prot(look, 'match'), set: protagonistSet(look, 'match', true) }, label: `${look} GK` });
+    }
+    looks.push({ l: sideLooks('home', null, { club: 'batavia', kit: 'training' })[5]!, label: 'batavia train' });
+    for (const c of SPRITE_CLUBS) looks.push({ l: sideLooks('away', null, { club: c })[5]!, label: c.replace('_', ' ') });
+    art.ensure([...looks.map((x) => x.l.set), 'coach-code']);
+    if (this.load.isLoading()) this.load.once(Phaser.Loader.Events.COMPLETE, () => this.art && this.page.kind === 'gameplay' && this.render());
+    const cols = Math.max(4, Math.floor(area.width / 70));
     const cw = area.width / cols;
-    const rows = Math.ceil(looks.length / cols) + 1;
-    const k = Math.min(cw / (SPRITE_FRAME.width * SPRITE_FRAME.scaleX * 0.5), (area.height - 30) / (rows * 100 + 10), 1.6);
-    looks.forEach((l, i) => {
-      const x = area.x + cw * (i % cols) + cw / 2;
-      const y = area.y + Math.floor(i / cols) * 100 * k + 80 * k;
-      this.items.push(this.add.image(x, y, art.frame(l, 'idle', 2, 0)).setOrigin(0.5, SPRITE_FRAME.anchorY / SPRITE_FRAME.height).setScale(k * SPRITE_FRAME.scaleX * 0.45, k * SPRITE_FRAME.scaleY * 0.45));
-      this.text(x, y + 6 * k, l.girl ? 'ponytail' : HAIR_STYLES[l.hairStyle]!, 10);
+    const rows = Math.ceil(looks.length / cols) + 2;
+    const rh = Math.min(110, (area.height - 30) / rows);
+    const bodyH = (rh * 0.7) / PLAYER_ART.bodyScale;
+    const cell = (i: number, row0: number): { x: number; y: number } => ({ x: area.x + cw * (i % cols) + cw / 2, y: area.y + (row0 + Math.floor(i / cols)) * rh + rh * 0.78 });
+    looks.forEach(({ l, label }, i) => {
+      const { x, y } = cell(i, 0);
+      this.items.push(art.apply(this.add.image(x, y, '__DEFAULT'), l, 'idle', 2, 0, bodyH));
+      this.text(x, y + 4, label, 10);
     });
-    const rowY = area.y + Math.ceil(looks.length / cols) * 100 * k + 40 * k;
+    const r1 = Math.ceil(looks.length / cols);
+    const girl = prot('girl', 'match');
     POSE_KINDS.forEach((kind, i) => {
-      const x = area.x + (area.width / POSE_KINDS.length) * (i + 0.5);
-      this.items.push(this.add.image(x, rowY + 70 * k, art.frame(home[5]!, kind, 0, 1)).setOrigin(0.5, SPRITE_FRAME.anchorY / SPRITE_FRAME.height).setScale(k * SPRITE_FRAME.scaleX * 0.45, k * SPRITE_FRAME.scaleY * 0.45));
-      this.text(x, rowY + 76 * k, kind, 11);
+      const { x, y } = cell(i, r1);
+      this.items.push(art.apply(this.add.image(x, y, '__DEFAULT'), girl, kind, 0, 1, bodyH));
+      this.text(x, y + 4, kind, 11);
     });
-    this.text(area.x + area.width / 2, rowY + 100 * k, 'No BLOCK pose supplied (gap). Hair is fixed per roster slot.', Math.max(11, fs - 3), CSS.ink, area.width);
+    const coach = atlasKey('coach-code');
+    if (this.textures.exists(coach)) {
+      Object.entries(COACH_POSE).slice(0, cols).forEach(([beat, frame], i) => {
+        const { x, y } = cell(i, r1 + 1);
+        const s = (rh * 0.8) / SPRITE_CELL.bodyHeight;
+        this.items.push(this.add.image(x, y, coach, frame).setOrigin(SPRITE_CELL.anchorX / SPRITE_CELL.width, SPRITE_CELL.anchorY / SPRITE_CELL.height).setScale(s));
+        this.text(x, y + 4, beat, 10);
+      });
+    }
   }
 
   describeLayout(): SceneLayoutReport {
