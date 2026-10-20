@@ -17,6 +17,16 @@
 - `?tactics=v05` lets the engine run the computer team's attacking possessions (movement of outfielders, carrier carry/pass/shot through the existing kick path). Default stays the classic AI because the seeded comparison came out worse (see D28).
 - 60 Hz and 120 Hz give the identical v0.5 match; 18 players and match invariants hold; human players never get engine orders.
 
+## Jungle Ball v2: arcade football feel (branch `devin/1792453098-jungle-blitz`, PR only, not merged, not deployed)
+
+- **Owner request:** "jungle ball to play like the NFL game attached" (NFL Blitz 2001). The attachment was only the game's N64 ROM; nothing was extracted from it or run, and no art, sound or code from it is used. The feel is copied from how that game is publicly known to play.
+- **TURBO** (new 4th button, in the empty PASS slot; Shift / I on a keyboard; it has its own finger slot (`JoystickControls.setModifier`), so it can be held while pressing SHOOT / SLIDE / PUSH): held, it makes the competitor 1.3× faster while a meter drains (≈2.2 s full); released, the meter refills (≈3.3 s). The three AI competitors follow the same meter rules.
+- **Turbo moves** cost a quarter of the meter: turbo + PUSH knocks the victim down for 0.9 s and 2 yd (normal push: 0.45 s stun, 1.1 yd); turbo + SLIDE is a 0.5 s dive at 10 yd/s; turbo + SHOOT adds 3 yd/s. A carrier's PUSH shows STIFF ARM!. Protection after a hit is unchanged, so nobody is knocked down twice in a row.
+- **ON FIRE:** three goals in a row by one competitor gives unlimited turbo (all moves big) until anyone else scores. Banners BOOM! / CRUSHED! / ON FIRE! / FIRE OUT!, longer hit-stop and shake on big hits, flame trail on the ball, turbo meters under the score bars.
+- **Unchanged:** scoring, keeper, 75 s round, the story's Jungle Ball record (scores and place), and Jungle Ball never counting toward match growth. `JUNGLE_SIM_VERSION` is now 2.
+- **Seeded sweep, 60 rounds each, scripted player bot** (v1 `main` → v2): goals per round 9.98 → 11.25 with turbo (10.72 without); bot goals per round 6.50 → 6.85 with turbo (5.22 without, because the AI now has turbo); hits per round 47.9 → 32.6, 15.3 of them big; the bot is stunned 10.8% → 11.6% of the time. Idle player: 0 goals in both.
+- **Tests:** `tests/jungle-blitz.test.ts` (9 new) plus the existing Jungle Ball tests; `e2e/jungle.spec.ts` checks the TURBO button fits the screen and is held/released.
+
 ## Sprites v2 — 14 owner sprite sheets (branch `devin/1792525700-sprite-sheets`, PR only, not merged, not deployed)
 
 - **Art:** all 14 sheets kept unchanged (`docs/art/sprites-v2/source/`, SHA256SUMS) and built into 14 WebP atlases (2.6 MB) with frame metadata. Inventory, pose coverage, gaps and rollback: `docs/art/sprites-v2/README.md`.

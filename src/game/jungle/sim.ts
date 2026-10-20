@@ -1,11 +1,13 @@
 /**
  * Jungle Ball (story package v0.7 §02 "JUNGLE SOCCER / BULL BALL"): the player and three AI
  * competitors attack one shared goal past a neutral keeper. Individual scores, no elimination.
+ * v2 plays like an arcade football game (owner reference: NFL Blitz 2001): a turbo meter, turbo
+ * shoves that knock players down, diving slides, harder shots, and ON FIRE after three goals in a row.
  * Framework-free and deterministic for a seed. Units: yards, seconds.
  */
 import { createRng } from '../rng';
 
-export const JUNGLE_SIM_VERSION = 1;
+export const JUNGLE_SIM_VERSION = 2;
 export const JUNGLE = {
   length: 32,
   width: 22,
@@ -55,6 +57,23 @@ export const JUNGLE = {
   pokeSpeed: 7,
   aiPushChance: 0.3,
   aiSlideChance: 0.12,
+  /** Turbo (held): faster running while the meter drains; it refills while released. Same rules for the AI. */
+  turboSpeed: 1.3,
+  turboDrain: 0.45,
+  turboRegen: 0.3,
+  /** Turbo + a move spends this much meter for the big version of that move. */
+  turboMoveCost: 0.25,
+  /** Turbo shove: knocked down (no movement) for longer, pushed further; protection still follows. */
+  bigKnock: 2,
+  knockdownSeconds: 0.9,
+  /** Turbo slide: a longer, faster dive. */
+  diveSeconds: 0.5,
+  diveSpeed: 10,
+  /** Turbo shot: extra ball speed (still saveable; pickup limit unchanged). */
+  turboShot: 3,
+  /** Three goals in a row by one competitor sets them ON FIRE until someone else scores. */
+  fireStreak: 3,
+  aiTurboChase: 4,
 } as const;
 
 export type MoveKind = 'push' | 'slide';
@@ -78,7 +97,11 @@ export interface Competitor {
   slideHit: boolean;
   lagUntil: number;
   cooldownUntil: number;
-  lastMove: { kind: MoveKind; t: number } | null;
+  lastMove: { kind: MoveKind; t: number; big: boolean } | null;
+  /** Turbo meter 0..1, whether turbo is held this step, and knocked-down time (a big hit: no movement). */
+  turbo: number;
+  turboOn: boolean;
+  downUntil: number;
   /** AI: target refresh time and current target (perception is only the present state). */
   thinkAt: number;
   target: V;
@@ -89,7 +112,8 @@ export type JungleEvent =
   | { readonly type: 'steal'; readonly by: CompetitorId; readonly from: CompetitorId; readonly t: number }
   | { readonly type: 'bump'; readonly a: CompetitorId; readonly b: CompetitorId; readonly t: number }
   | { readonly type: 'shot'; readonly by: CompetitorId; readonly t: number }
-  | { readonly type: 'hit'; readonly by: CompetitorId; readonly on: CompetitorId; readonly kind: MoveKind; readonly t: number }
+  | { readonly type: 'hit'; readonly by: CompetitorId; readonly on: CompetitorId; readonly kind: MoveKind; readonly big: boolean; readonly carrier: boolean; readonly t: number }
+  | { readonly type: 'fire'; readonly by: CompetitorId; readonly on: boolean; readonly t: number }
   | { readonly type: 'whiff'; readonly by: CompetitorId; readonly kind: MoveKind; readonly t: number }
   | { readonly type: 'end'; readonly t: number };
 
@@ -102,18 +126,24 @@ export interface JungleState {
   ball: { pos: V; vel: V; owner: CompetitorId | null; lastTouch: CompetitorId | null; inGoal: boolean; graceUntil: number };
   keeper: { y: number };
   scores: Record<CompetitorId, number>;
+  /** Consecutive goals by one competitor; `fire` is whoever is ON FIRE (unlimited turbo). */
+  streak: { by: CompetitorId | null; n: number };
+  fire: CompetitorId | null;
   events: JungleEvent[];
   /** Player stick (−1..1 each axis) and a pending kick request; the scene writes only through commands. */
   stick: V;
   kick: { dir: V; power: number } | null;
   move: MoveKind | null;
+  /** Player turbo held (the scene sends press/release). */
+  turbo: boolean;
 }
 
 export type JungleCommand =
   | { readonly type: 'move'; readonly x: number; readonly y: number }
   | { readonly type: 'kick'; readonly x: number; readonly y: number; readonly power: number }
   | { readonly type: 'push' }
-  | { readonly type: 'slide' };
+  | { readonly type: 'slide' }
+  | { readonly type: 'turbo'; readonly on: boolean };
 
 const len = (v: V): number => Math.hypot(v.x, v.y);
 const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
@@ -137,7 +167,7 @@ const ballSpot = (): V => ({ x: JUNGLE.length * 0.38, y: JUNGLE.width / 2 });
 export function newJungle(seed: number): JungleState {
   const spots = restartSpots();
   const competitors = Object.fromEntries(
-    COMPETITORS.map((id) => [id, { id, pos: { ...spots[id] }, vel: { x: 0, y: 0 }, stunUntil: 0, protectedUntil: 0, noPickupUntil: 0, facing: { x: 1, y: 0 }, slideDir: null, slideUntil: 0, slideHit: false, lagUntil: 0, cooldownUntil: 0, lastMove: null, thinkAt: 0, target: ballSpot() }]),
+    COMPETITORS.map((id) => [id, { id, pos: { ...spots[id] }, vel: { x: 0, y: 0 }, stunUntil: 0, protectedUntil: 0, noPickupUntil: 0, facing: { x: 1, y: 0 }, slideDir: null, slideUntil: 0, slideHit: false, lagUntil: 0, cooldownUntil: 0, lastMove: null, turbo: 1, turboOn: false, downUntil: 0, thinkAt: 0, target: ballSpot() }]),
   ) as Record<CompetitorId, Competitor>;
   return {
     seed,
@@ -148,16 +178,24 @@ export function newJungle(seed: number): JungleState {
     ball: { pos: ballSpot(), vel: { x: 0, y: 0 }, owner: null, lastTouch: null, inGoal: false, graceUntil: 0 },
     keeper: { y: JUNGLE.width / 2 },
     scores: { player: 0, alex: 0, blake: 0, sam: 0 },
+    streak: { by: null, n: 0 },
+    fire: null,
     events: [],
     stick: { x: 0, y: 0 },
     kick: null,
     move: null,
+    turbo: false,
   };
 }
 
 /** Validates and applies one player command; invalid input is ignored. */
 export function command(s: JungleState, c: JungleCommand): boolean {
   if (s.phase === 'ended') return false;
+  if (c.type === 'turbo') {
+    if (typeof c.on !== 'boolean') return false;
+    s.turbo = c.on;
+    return true;
+  }
   if (c.type === 'move') {
     if (!finite(c.x, c.y)) return false;
     const m = Math.hypot(c.x, c.y);
@@ -198,6 +236,8 @@ function resetForRestart(s: JungleState): void {
     c.slideUntil = 0;
     c.lagUntil = 0;
     c.cooldownUntil = 0;
+    c.downUntil = 0;
+    c.turboOn = false;
   }
   s.ball = { pos: ballSpot(), vel: { x: 0, y: 0 }, owner: null, lastTouch: null, inGoal: false, graceUntil: 0 };
   s.keeper.y = JUNGLE.width / 2;
@@ -215,7 +255,8 @@ export function canMove(s: JungleState, c: Competitor, kind: MoveKind): boolean 
 }
 
 /** A landed hit: the victim drops the ball (it pops forward) and is stunned only when not protected. */
-function land(s: JungleState, by: Competitor, on: Competitor, kind: MoveKind): void {
+function land(s: JungleState, by: Competitor, on: Competitor, kind: MoveKind, big: boolean): void {
+  const carrier = s.ball.owner === by.id;
   if (s.ball.owner === on.id) {
     s.ball.owner = null;
     s.ball.lastTouch = by.id;
@@ -224,19 +265,30 @@ function land(s: JungleState, by: Competitor, on: Competitor, kind: MoveKind): v
     s.events.push({ type: 'steal', by: by.id, from: on.id, t: s.t });
   }
   if (s.t >= on.protectedUntil) {
-    on.stunUntil = s.t + JUNGLE.stunSeconds;
-    on.protectedUntil = s.t + JUNGLE.stunSeconds + JUNGLE.protectSeconds;
+    const stun = big ? JUNGLE.knockdownSeconds : JUNGLE.stunSeconds;
+    on.stunUntil = s.t + stun;
+    if (big) on.downUntil = s.t + stun;
+    on.protectedUntil = s.t + stun + JUNGLE.protectSeconds;
     s.events.push({ type: 'bump', a: by.id, b: on.id, t: s.t });
   }
-  s.events.push({ type: 'hit', by: by.id, on: on.id, kind, t: s.t });
+  s.events.push({ type: 'hit', by: by.id, on: on.id, kind, big, carrier, t: s.t });
+}
+
+/** Turbo held with meter to spend (or ON FIRE) turns a move into its big version. */
+function spendTurbo(s: JungleState, c: Competitor): boolean {
+  if (s.fire === c.id) return true;
+  if (!c.turboOn || c.turbo < JUNGLE.turboMoveCost) return false;
+  c.turbo -= JUNGLE.turboMoveCost;
+  return true;
 }
 
 function startMove(s: JungleState, c: Competitor, kind: MoveKind): void {
   if (!canMove(s, c, kind)) return;
-  c.lastMove = { kind, t: s.t };
+  const big = spendTurbo(s, c);
+  c.lastMove = { kind, t: s.t, big };
   if (kind === 'slide') {
     c.slideDir = { ...c.facing };
-    c.slideUntil = s.t + JUNGLE.slideSeconds;
+    c.slideUntil = s.t + (big ? JUNGLE.diveSeconds : JUNGLE.slideSeconds);
     c.slideHit = false;
     c.lagUntil = c.slideUntil + JUNGLE.slideLag;
     c.cooldownUntil = s.t + JUNGLE.slideCooldown;
@@ -254,8 +306,9 @@ function startMove(s: JungleState, c: Competitor, kind: MoveKind): void {
   }
   if (!best) return void s.events.push({ type: 'whiff', by: c.id, kind, t: s.t });
   const r = JUNGLE.playerRadius;
-  best.pos = { x: clamp(best.pos.x + c.facing.x * JUNGLE.pushKnock, r, JUNGLE.length - r), y: clamp(best.pos.y + c.facing.y * JUNGLE.pushKnock, r, JUNGLE.width - r) };
-  land(s, c, best, kind);
+  const knock = big ? JUNGLE.bigKnock : JUNGLE.pushKnock;
+  best.pos = { x: clamp(best.pos.x + c.facing.x * knock, r, JUNGLE.length - r), y: clamp(best.pos.y + c.facing.y * knock, r, JUNGLE.width - r) };
+  land(s, c, best, kind, big);
 }
 
 /** During a slide: one hit on the first competitor touched; a loose ball in reach is poked on. */
@@ -271,14 +324,14 @@ function slideContacts(s: JungleState, c: Competitor): void {
     const o = s.competitors[id];
     if (o === c || Math.hypot(o.pos.x - c.pos.x, o.pos.y - c.pos.y) > JUNGLE.playerRadius * 2 + 0.25) continue;
     c.slideHit = true;
-    land(s, c, o, 'slide');
+    land(s, c, o, 'slide', c.lastMove?.kind === 'slide' && c.lastMove.big);
     return;
   }
 }
 
 function kickBall(s: JungleState, by: CompetitorId, dir: V, power: number): void {
-  const speed = JUNGLE.minShot + (JUNGLE.maxShot - JUNGLE.minShot) * clamp(power, 0, 1);
   const c = s.competitors[by];
+  const speed = JUNGLE.minShot + (JUNGLE.maxShot - JUNGLE.minShot) * clamp(power, 0, 1) + (spendTurbo(s, c) ? JUNGLE.turboShot : 0);
   s.ball.owner = null;
   s.ball.lastTouch = by;
   s.ball.pos = { x: c.pos.x + dir.x * (JUNGLE.carryOffset + 0.1), y: c.pos.y + dir.y * (JUNGLE.carryOffset + 0.1) };
@@ -290,6 +343,10 @@ function kickBall(s: JungleState, by: CompetitorId, dir: V, power: number): void
 /** AI decisions use only the present positions/velocities (declared perception); refreshed every reaction period. */
 function think(s: JungleState, c: Competitor, rnd: () => number): { move: V; kick: { dir: V; power: number } | null; act?: MoveKind } {
   const ball = s.ball;
+  // Turbo like the player: on while carrying with meter to spare or chasing a far ball; off to refill.
+  const far = Math.hypot(ball.pos.x - c.pos.x, ball.pos.y - c.pos.y) > JUNGLE.aiTurboChase;
+  const want = ball.owner === c.id || far;
+  c.turboOn = s.fire === c.id || (want && (c.turboOn ? c.turbo > 0.15 : c.turbo > 0.6));
   if (ball.owner === c.id) {
     const goal = { x: JUNGLE.goalX, y: JUNGLE.width / 2 + (s.keeper.y < JUNGLE.width / 2 ? 1.6 : -1.6) };
     const to = { x: goal.x - c.pos.x, y: goal.y - c.pos.y };
@@ -320,6 +377,8 @@ function think(s: JungleState, c: Competitor, rnd: () => number): { move: V; kic
       if (d > 1e-6) {
         const roll = rnd();
         const face = { x: to.x / d, y: to.y / d };
+        // Big hits only with meter to spend, and not every time.
+        if (roll < Math.max(JUNGLE.aiPushChance, JUNGLE.aiSlideChance) && c.turbo >= JUNGLE.turboMoveCost && rnd() < 0.5) c.turboOn = true;
         if (d <= JUNGLE.pushRange && roll < JUNGLE.aiPushChance) return (c.facing = face), { move: face, kick: null, act: 'push' };
         if (d > JUNGLE.pushRange && d < 3 && roll < JUNGLE.aiSlideChance) return (c.facing = face), { move: face, kick: null, act: 'slide' };
       }
@@ -333,17 +392,19 @@ function think(s: JungleState, c: Competitor, rnd: () => number): { move: V; kic
 function moveCompetitor(s: JungleState, c: Competitor, want: V, dt: number): void {
   const r0 = JUNGLE.playerRadius;
   if (s.t < c.slideUntil && c.slideDir) {
-    c.vel = { x: c.slideDir.x * JUNGLE.slideSpeed, y: c.slideDir.y * JUNGLE.slideSpeed };
+    const v = c.lastMove?.kind === 'slide' && c.lastMove.big ? JUNGLE.diveSpeed : JUNGLE.slideSpeed;
+    c.vel = { x: c.slideDir.x * v, y: c.slideDir.y * v };
     c.pos = { x: clamp(c.pos.x + c.vel.x * dt, r0, JUNGLE.length - r0), y: clamp(c.pos.y + c.vel.y * dt, r0, JUNGLE.width - r0) };
     return;
   }
-  if (s.t < c.lagUntil) {
-    // Recovering from a slide: down on the grass, not moving.
+  if (s.t < c.lagUntil || s.t < c.downUntil) {
+    // Recovering from a slide or knocked down by a big hit: on the grass, not moving.
     c.vel = { x: 0, y: 0 };
     return;
   }
   const stunned = s.t < c.stunUntil;
-  const top = (s.ball.owner === c.id ? JUNGLE.dribbleSpeed : JUNGLE.runSpeed) * (stunned ? JUNGLE.stunSpeedFactor : 1) * (c.id === 'player' ? 1 : JUNGLE.aiSpeedFactor);
+  const boost = c.turboOn && (c.turbo > 0 || s.fire === c.id) && Math.hypot(want.x, want.y) > 0.2 ? JUNGLE.turboSpeed : 1;
+  const top = (s.ball.owner === c.id ? JUNGLE.dribbleSpeed : JUNGLE.runSpeed) * boost * (stunned ? JUNGLE.stunSpeedFactor : 1) * (c.id === 'player' ? 1 : JUNGLE.aiSpeedFactor);
   const tv = { x: want.x * top, y: want.y * top };
   const dv = { x: tv.x - c.vel.x, y: tv.y - c.vel.y };
   const m = len(dv);
@@ -353,6 +414,13 @@ function moveCompetitor(s: JungleState, c: Competitor, want: V, dt: number): voi
   c.pos = { x: clamp(c.pos.x + c.vel.x * dt, r, JUNGLE.length - r), y: clamp(c.pos.y + c.vel.y * dt, r, JUNGLE.width - r) };
   const sp = len(c.vel);
   if (sp > 0.5) c.facing = { x: c.vel.x / sp, y: c.vel.y / sp };
+}
+
+/** Turbo meter: drains while held and moving, refills while released; ON FIRE keeps it full. */
+function stepTurbo(s: JungleState, c: Competitor, want: V, dt: number): void {
+  if (s.fire === c.id) return void (c.turbo = 1);
+  const using = c.turboOn && Math.hypot(want.x, want.y) > 0.2 && s.t >= c.downUntil && s.t >= c.lagUntil;
+  c.turbo = clamp(c.turbo + (using ? -JUNGLE.turboDrain : JUNGLE.turboRegen) * dt, 0, 1);
 }
 
 /** Shoulder contact: bounded separation; the owner may lose the ball; a protected player is never stunned again. */
@@ -411,8 +479,18 @@ function goalPlane(s: JungleState, prevX: number, prevY: number): boolean {
   // One score per crossing: the round restarts before the ball could cross again.
   if (!b.inGoal && b.lastTouch) {
     b.inGoal = true;
-    s.scores[b.lastTouch] += 1;
-    s.events.push({ type: 'goal', by: b.lastTouch, t: s.t });
+    const by = b.lastTouch;
+    s.scores[by] += 1;
+    s.events.push({ type: 'goal', by, t: s.t });
+    s.streak = s.streak.by === by ? { by, n: s.streak.n + 1 } : { by, n: 1 };
+    if (s.fire && s.fire !== by) {
+      s.events.push({ type: 'fire', by: s.fire, on: false, t: s.t });
+      s.fire = null;
+    }
+    if (!s.fire && s.streak.n >= JUNGLE.fireStreak) {
+      s.fire = by;
+      s.events.push({ type: 'fire', by, on: true, t: s.t });
+    }
     resetForRestart(s);
   }
   return true;
@@ -495,6 +573,7 @@ export function step(s: JungleState, seconds: number, rng?: () => number): void 
     }
     intents.player = s.stick;
     const me = s.competitors.player;
+    me.turboOn = s.turbo;
     const sm = len(s.stick);
     if (sm > 0.2 && s.t >= me.slideUntil) me.facing = { x: s.stick.x / sm, y: s.stick.y / sm };
     if (s.kick && s.ball.owner === 'player' && s.t >= me.stunUntil) kickBall(s, 'player', s.kick.dir, s.kick.power);
@@ -502,6 +581,7 @@ export function step(s: JungleState, seconds: number, rng?: () => number): void 
     s.kick = null;
     s.move = null;
     for (const id of COMPETITORS) moveCompetitor(s, s.competitors[id], intents[id]!, dt);
+    for (const id of COMPETITORS) stepTurbo(s, s.competitors[id], intents[id]!, dt);
     for (const id of COMPETITORS) slideContacts(s, s.competitors[id]);
     contacts(s, rnd);
     stepBall(s, dt);
