@@ -4,6 +4,23 @@ import { diagnostics, expectInside, linger, pressElement, trackConsoleErrors, tr
 type JungleSnap = { phase: string; t: number; player: { x: number; y: number }; scores: Record<string, number> };
 const snap = async (page: import('@playwright/test').Page): Promise<JungleSnap> => (await diagnostics(page)).gameplay as JungleSnap;
 
+/** Press a move button until the sim starts that move. A press while the player is stunned (e.g. by an AI turbo hit) is rejected by the sim, as in real play. */
+async function pressMove(page: import('@playwright/test').Page, kind: 'push' | 'slide'): Promise<void> {
+  type Hits = { gameplay: { hits?: { kind: string; t: number } | null } | null };
+  const last = async (): Promise<{ kind: string; t: number } | null> => ((await diagnostics(page)) as unknown as Hits).gameplay?.hits ?? null;
+  const before = (await last())?.t ?? -1;
+  for (let attempt = 0; attempt < 8; attempt++) {
+    await pressElement(page, kind, 'touch');
+    try {
+      await expect.poll(async () => { const h = await last(); return !!h && h.kind === kind && h.t > before; }, { timeout: 2500 }).toBe(true);
+      return;
+    } catch {
+      // Stunned or knocked down: wait for recovery and press again.
+    }
+  }
+  throw new Error(`${kind} never started after 8 presses`);
+}
+
 test.beforeEach(async ({ page }) => {
   await trackDomListeners(page);
 });
@@ -27,11 +44,9 @@ test('Jungle Ball opens from Start, fits the screen, runs, and Leave returns wit
     await page.waitForFunction((t) => ((window.__SMR__?.diagnostics().gameplay as { t?: number } | null)?.t ?? 0) > t + 0.5, t0, { timeout: 8000 });
     if (i === 0) {
       // PUSH and SLIDE are real buttons that start an arcade move.
-      await pressElement(page, 'push', 'touch');
-      await page.waitForFunction(() => ((window.__SMR__?.diagnostics().gameplay as { hits?: { kind: string } | null } | null)?.hits?.kind) === 'push');
+      await pressMove(page, 'push');
       await page.waitForTimeout(700);
-      await pressElement(page, 'slide', 'touch');
-      await page.waitForFunction(() => ((window.__SMR__?.diagnostics().gameplay as { hits?: { kind: string } | null } | null)?.hits?.kind) === 'slide');
+      await pressMove(page, 'slide');
       // TURBO is held: the sim sees it while the finger is down and drops it on release.
       const box = d.layout!.elements.turbo!;
       await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
