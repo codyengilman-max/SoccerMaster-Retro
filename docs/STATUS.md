@@ -10,6 +10,14 @@
 - **Seeded sweep, 60 rounds each, scripted player bot** (v1 `main` → v2): goals per round 9.98 → 11.25 with turbo (10.72 without); bot goals per round 6.50 → 6.85 with turbo (5.22 without, because the AI now has turbo); hits per round 47.9 → 32.6, 15.3 of them big; the bot is stunned 10.8% → 11.6% of the time. Idle player: 0 goals in both.
 - **Tests:** `tests/jungle-blitz.test.ts` (9 new) plus the existing Jungle Ball tests; `e2e/jungle.spec.ts` checks the TURBO button fits the screen and is held/released.
 
+## Sprites v2 — 14 owner sprite sheets (branch `devin/1792525700-sprite-sheets`, PR only, not merged, not deployed)
+
+- **Art:** all 14 sheets kept unchanged (`docs/art/sprites-v2/source/`, SHA256SUMS) and built into 14 WebP atlases (2.6 MB) with frame metadata. Inventory, pose coverage, gaps and rollback: `docs/art/sprites-v2/README.md`.
+- **In game:** match players wear Batavia's match kit (training kit in Team Training), the created boy/girl their own sheet, and story league/cup opponents their club's sheet, including Next Horizon in cups. Next Horizon is still not in the league. Coach Code stands beside Team Training cards with a pose for each beat. Jungle Ball's created player uses their match sheet. The Art Gallery's gameplay page shows every sheet.
+- **Unchanged:** controls, physics, AI, progression and saves. If an atlas is missing or still loading, that player shows the old drawn sprite.
+- **Tests:** `tests/sprites-v2.test.ts` (source hashes, atlas bounds, foot anchors, a frame for every requested pose, club mapping, league membership).
+- **Not tested on a physical iPhone.**
+
 ## Training / Schoolyard revision v1.2 (branch `devin/1792431040-training-schoolyard`, PR only, not merged, not deployed)
 
 - **My Training hub:** Career home shows the week's focus card, Team Training (Not started / Complete), Home Practice (optional: sessions, library, journal) and Progress (weekly review, character development, 9v9 match). Nothing was removed; opening a card never changes attributes.

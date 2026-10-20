@@ -9,8 +9,8 @@ import { SceneKeys } from './keys';
 import { Button } from './ui/Button';
 import { PadHud } from './ui/PadHud';
 import { PLAYER_ART, PlayerArt } from '../render/art/playerArt';
-import { sideLooks } from '../render/art/roster';
-import { REFERENCE_KITS, dirFromScreen, type PoseKind, type SpriteLook } from '../render/art/spriteFactory';
+import { sideLooks, type RosterLook } from '../render/art/roster';
+import { REFERENCE_KITS, dirFromScreen, type PoseKind } from '../render/art/spriteFactory';
 import { artTextureKey, artUrl } from '../render/art/urls';
 import { BALL_TEXTURE_SIZE, TEXTURES, ensurePlaceholderTextures } from '../render/textures';
 
@@ -74,7 +74,7 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
   private floorTop = 0;
   private hudG!: Phaser.GameObjects.Graphics;
   private art!: PlayerArt;
-  private looks!: Record<CompetitorId | 'keeper', SpriteLook>;
+  private looks!: Record<CompetitorId | 'keeper', RosterLook>;
   private sprites: Partial<Record<CompetitorId | 'keeper', Phaser.GameObjects.Image>> = {};
   private artDir: Record<CompetitorId, number> = { player: 0, alex: 4, blake: 4, sam: 4 };
   private artDist: Record<CompetitorId, number> = { player: 0, alex: 0, blake: 0, sam: 0 };
@@ -110,12 +110,13 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     const home = sideLooks('home', { slot: 1, look });
     const away = sideLooks('away');
     this.looks = {
-      player: { ...home[1]!, kit: KITS.player, number: '10' },
+      player: { ...home[1]!, kit: KITS.player, number: '10', set: look === 'girl' ? 'girl-match' : 'boy-match' },
       alex: { ...away[3]!, kit: KITS.alex, number: '7' },
       blake: { ...away[2]!, kit: KITS.blake, number: '9' },
       sam: { ...away[5]!, kit: KITS.sam, number: '4' },
       keeper: home[0]!,
     };
+    this.art.ensure([this.looks.player.set]);
     this.sprites = {};
     for (const id of [...COMPETITORS, 'keeper'] as const) this.sprites[id] = this.add.image(0, 0, TEXTURES.ball).setOrigin(48 / 96, 68 / 96);
     this.ballImg = this.add.image(0, 0, TEXTURES.ball);
@@ -332,7 +333,7 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   /** Factory frame from what the sim says each competitor is doing (read-only). */
-  private frameFor(id: CompetitorId, dt: number): string {
+  private frameFor(id: CompetitorId, dt: number): readonly [PoseKind, number, number] {
     const s = this.sim;
     const c = s.competitors[id];
     const speed = Math.hypot(c.vel.x, c.vel.y);
@@ -342,7 +343,7 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     else if (this.kickedAt[id] !== undefined && s.t - this.kickedAt[id]! < 0.25) kind = 'kick';
     if (Math.hypot(c.facing.x, c.facing.y) > 1e-6) this.artDir[id] = dirFromScreen(c.facing.x * this.kx, c.facing.y * this.ky);
     this.artDist[id] = (this.artDist[id] + speed * dt) % 1000;
-    return this.art.frame(this.looks[id], kind, this.artDir[id], Math.floor(this.artDist[id] / 0.55));
+    return [kind, this.artDir[id], Math.floor(this.artDist[id] / 0.55)] as const;
   }
 
   private draw(): void {
@@ -378,8 +379,8 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
         g.fillStyle(i % 2 ? 0xffd23f : 0xff5a1a, 0.75).fillTriangle(f.x - ph * 0.3 + i * ph * 0.15 - 5, f.y, f.x - ph * 0.3 + i * ph * 0.15 + 5, f.y, f.x - ph * 0.3 + i * ph * 0.15, f.y - ph * (0.25 + 0.12 * Math.sin(a)));
       }
       else if (c.turboOn && Math.hypot(c.vel.x, c.vel.y) > JUNGLE.runSpeed * 0.9) for (let i = 1; i <= 3; i++) g.lineStyle(2, 0xffffff, 0.5 - i * 0.12).lineBetween(f.x - c.vel.x * this.kx * 0.04 * i - 8, f.y - ph * 0.3 * i, f.x - c.vel.x * this.kx * 0.04 * i + 8, f.y - ph * 0.3 * i);
-      const sc = PlayerArt.scaleFor(ph);
-      this.sprites[id]!.setTexture(this.frameFor(id, dt)).setScale(sc.x, sc.y).setPosition(f.x, f.y).setDepth(100 + f.y).setAlpha(s.t < c.stunUntil ? 0.75 : 1);
+      const [kind, dir, pose] = this.frameFor(id, dt);
+      this.art.apply(this.sprites[id]!, this.looks[id], kind, dir, pose, ph).setPosition(f.x, f.y).setDepth(100 + f.y).setAlpha(s.t < c.stunUntil ? 0.75 : 1);
       const top = f.y - ph * PLAYER_ART.bodyScale - 4;
       if (s.t < c.stunUntil) for (let i = 0; i < 3; i++) {
         const a = s.t * 9 + (i * Math.PI * 2) / 3;
