@@ -47,7 +47,8 @@ function setup(opts: { kicking?: match.KickingMode; seed?: number; at?: { x: num
     for (const id of match.TEAM_PLAYER_IDS.away) {
       const p = s.players[id];
       if (p.isKeeper) continue;
-      p.pos = { x: 4 + i++ * 2, y: 48.5 };
+      // Parked goal-side at the far end, so the referee never makes a receiver offside.
+      p.pos = { x: T.pitch.length - 4 - i++ * 2, y: 48.5 };
       p.vel = { x: 0, y: 0 };
     }
     s.ball.owner = 'H7';

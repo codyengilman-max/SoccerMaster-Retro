@@ -48,7 +48,7 @@ export interface MatchReport {
   readonly userHasBall: boolean;
   readonly dribbleDir: { readonly x: number; readonly y: number };
   readonly score: Readonly<Record<match.TeamId, number>>;
-  readonly stoppage: { readonly reason: string; readonly scorer: match.TeamId | null; readonly restartTeam: match.TeamId } | null;
+  readonly stoppage: { readonly reason: string; readonly scorer: match.TeamId | null; readonly restartTeam: match.TeamId; readonly restart?: string } | null;
   /** Goal-banner / referee art shown for real goal and foul stoppages (counted once per stoppage). */
   readonly eventArt?: { readonly goal: number; readonly foul: number; readonly visible: boolean };
   readonly defense: Readonly<Record<match.TeamId, { presserId: string | null; coverId: string | null }>>;

@@ -84,6 +84,20 @@ export interface MatchSceneData {
 export const TEAM_TRAINING_ZOOM = 1.3;
 
 /** 9v9 team-play sandbox. Reads `MatchSim` state and draws it; owns no soccer rules. */
+/** Referee call banner (the call itself comes from the sim's referee). */
+function restartBanner(reason: string, restart: match.RestartKind, side: string): string {
+  if (reason === 'offside') return `OFFSIDE! Indirect free kick — ${side}`;
+  switch (restart) {
+    case 'throwIn': return `THROW-IN — ${side}`;
+    case 'goalKick': return `GOAL KICK — ${side}`;
+    case 'corner': return `CORNER — ${side}`;
+    case 'penalty': return `FOUL! PENALTY — ${side}`;
+    case 'freeKick': return `FOUL! Free kick — ${side}`;
+    case 'indirectFreeKick': return `Indirect free kick — ${side}`;
+    default: return `Restart — ${side}`;
+  }
+}
+
 export class MatchScene extends Phaser.Scene implements InspectableScene {
   private sim!: InstanceType<typeof MatchSim>;
   private markings!: PitchMarkings;
@@ -592,7 +606,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       userHasBall: this.sim.userHasBall(),
       dribbleDir: { x: s.dribbleDir.x, y: s.dribbleDir.y },
       score: { ...s.score },
-      stoppage: s.stoppage ? { reason: s.stoppage.reason, scorer: s.stoppage.scorer, restartTeam: s.stoppage.restartTeam } : null,
+      stoppage: s.stoppage ? { reason: s.stoppage.reason, scorer: s.stoppage.scorer, restartTeam: s.stoppage.restartTeam, restart: s.stoppage.restart } : null,
       eventArt: { ...this.eventArtShown, visible: this.eventArt?.visible ?? false },
       defense: {
         home: { presserId: s.defense.home.presserId, coverId: s.defense.home.coverId },
@@ -2035,7 +2049,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       banner =
         st.reason === 'goal'
           ? `GOAL! ${st.scorer === 'home' ? 'Home' : 'Away'} scores — ${s.clock ? `kick-off to ${st.restartTeam === 'home' ? 'Home' : 'Away'}` : 'sandbox restart'}`
-          : `Out of play — ${s.clock ? 'simplified' : 'sandbox'} restart (${st.restartTeam === 'home' ? 'Home' : 'Away'} ball)`;
+          : restartBanner(st.reason, st.restart, st.restartTeam === 'home' ? 'Home' : 'Away');
     } else if (s.phase === 'kickoff') {
       const kickoffs = s.clock ? ['Kick-off…', 'Second-half kick-off…', 'Restart…'] : ['Sandbox kick-off…', 'Sandbox kick-off…', 'Sandbox restart…'];
       const second = s.clock?.half === 2 && s.clock.elapsed === 0;
