@@ -22,6 +22,7 @@ import { MATCH_TUNING, type MatchTuning } from './tuning';
 import { planUserPass } from './predict';
 import { Referee, type RestartKind } from './referee';
 import { U11_9V9_PITCH } from '../pitch';
+import { TacticalDirector, type TacticsMode } from './tacticalDirector';
 import { computeAnchor, decideCarrier, planTeams, toTeam, toWorld, velToTeam, type AiContext } from './ai';
 import {
   AWAY_IDS,
@@ -70,6 +71,8 @@ export interface MatchSimOptions {
   readonly halfSeconds?: number | null;
   /** Per-player movement attributes (multipliers, clamped to tuning.pad.attrRange); missing = 1. */
   readonly attributes?: Partial<Record<MatchPlayerId, Partial<PlayerAttrs>>>;
+  /** Computer-player tactics: 'v05' runs the v0.5 decision engine for attacking possessions (tacticalDirector.ts). */
+  readonly tactics?: TacticsMode;
   /** Passing/shooting model: 'v11' (default, brief v1.1) or 'classic' (the previous behaviour, for rollback). */
   readonly kicking?: KickingMode;
 }
@@ -113,6 +116,7 @@ interface PadVelocity {
 
 export class MatchSim {
   readonly tuning: MatchTuning;
+  readonly tactics: TacticalDirector;
   private readonly seed: number;
   private rng: () => number;
   private s: MatchState;
@@ -160,6 +164,7 @@ export class MatchSim {
     this.tuning = options.tuning ?? MATCH_TUNING;
     const tp = this.tuning.pitch;
     this.referee = new Referee(tp.ballRadius, { ...U11_9V9_PITCH, length: tp.length, width: tp.width, goalWidth: tp.goalHalfWidth * 2 });
+    this.tactics = new TacticalDirector(options.tactics ?? 'classic', this.tuning);
     this.kickingMode = options.kicking === 'classic' ? 'classic' : 'v11';
     (this.aiCtx as { T: MatchTuning }).T = this.tuning;
     this.attrOverrides = { ...(options.attributes ?? {}) };
@@ -1259,6 +1264,7 @@ export class MatchSim {
     this.releaseMissedReceiver();
     this.updatePressRead(h);
     planTeams(this.ctx());
+    this.tactics.plan(s);
     this.updateUserControl();
     this.tickPad(h);
     this.aiCarrier();
@@ -1333,6 +1339,7 @@ export class MatchSim {
     const p = s.players[id];
     if (p.team === 'home' && !p.isKeeper) return;
     if (s.setPiece?.taker === id) return;
+    if (this.tactics.ownsCarrier(s, p)) return this.tacticalCarrier(p);
     if (p.isKeeper) {
       p.intent = 'distribute';
       const held = s.simTime - s.ownedSince;
@@ -1365,6 +1372,38 @@ export class MatchSim {
     this.kickBall(p, scale(dir, speed), p.isKeeper && d.why === 'long' ? 'clearance' : 'pass', target, d.receiver === p.id ? null : d.receiver);
     this.afterPass(p, target);
     this.emit(p.isKeeper ? 'distributed' : 'pass', p.id, `${d.receiver} ${d.why}`);
+  }
+
+  /** v0.5 carrier: carry toward the engine's target, or execute its PASS/SHOOT through the same AI kick path. */
+  private tacticalCarrier(p: MatchPlayer): void {
+    const T = this.tuning;
+    const s = this.s;
+    p.intent = 'carry';
+    const a = this.tactics.takeAction(s, p.id);
+    if (!a) {
+      this.tactics.heldTarget(s, p, p.target);
+      return;
+    }
+    s.nextDecisionAt = s.simTime + T.ai.decisionSeconds;
+    const aim = this.tactics.toWorld(p.team, a.aim.x, a.aim.y, vec(0, 0));
+    if (a.type === 'SHOOT' && this.kickingMode === 'v11') return this.aiShotV11(p, aim, a.power);
+    const noise = (k: number): number => (this.rng() * 2 - 1) * k;
+    const raw = sub(aim, s.ball.pos);
+    const dir = rotate(normalize(raw), noise(T.ai.aimNoise));
+    if (a.type === 'SHOOT') {
+      const speed = kickSpeed(powerForSpeed(lerp(T.shot.minSpeed, T.shot.maxSpeed, clamp(a.power, 0, 1)), T) + noise(T.ai.powerNoise), T);
+      this.kickBall(p, scale(dir, speed), 'shot', null, null);
+      s.stats.shots[p.team] += 1;
+      this.emit('shot', p.id, `${speed.toFixed(1)} v05`);
+      return;
+    }
+    const receiver = (a.targetId ?? null) as MatchPlayerId | null;
+    const dist = clamp(length(raw), T.pass.minDistance, T.pass.maxDistance);
+    const speed = kickSpeed(powerForSpeed(passSpeedFor(dist, T), T) * (1 + noise(T.ai.powerNoise)), T);
+    const target = add(s.ball.pos, scale(dir, dist));
+    this.kickBall(p, scale(dir, speed), 'pass', target, receiver);
+    this.afterPass(p, target);
+    this.emit('pass', p.id, `${receiver} v05`);
   }
 
   /** Give-and-go: the passer moves on into useful space instead of stopping or sprinting blindly. */

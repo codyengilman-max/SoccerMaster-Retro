@@ -231,9 +231,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         : MATCH_TUNING.match.halfSeconds;
     this.breakKey = '';
     this.breakMode = '';
+    const tacticsParam = params.get('tactics');
+    const tactics = tacticsParam === 'v05' || tacticsParam === 'classic' ? tacticsParam : undefined;
     // `?kick=classic` restores the previous passing/shooting model (rollback switch; no save changes).
     const kicking = params.get('kick') === 'classic' ? 'classic' : 'v11';
-    this.sim = new MatchSim({ seed, homeFormation: formation, halfSeconds, kicking });
+    this.sim = new MatchSim({ seed, homeFormation: formation, halfSeconds, kicking, ...(tactics ? { tactics } : {}) });
     this.stageLab();
     if (shouldExposeDebug(window.location)) this.applyDebugSetup(params.get('setup'));
     this.passLog = shouldExposeDebug(window.location) && params.has('passlog');

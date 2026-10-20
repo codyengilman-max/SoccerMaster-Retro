@@ -18,6 +18,12 @@
 - **CI note:** the `942461a` GitHub run timed out in three unchanged specs (phone-landscape `jungle.spec`, desktop `coach.spec` :82 with sim time only 2.4 s after 45 s, desktop `match.spec` :72). The same three files passed locally, 41 passed / 8 skipped / 0 failed with one worker, and CI was green on `31d2f99` and `5abadfa`, so these are runner-load timeouts.
 - Limits: no advantage, cards, handball, aerial corners or build-out line. Not tested on a real iPhone.
 
+## v0.5 tactical engine for computer attacks (branch `devin/1792339383-tactical-v05`, not merged, not deployed)
+
+- v0.5 research package added under `research/logic/v0.5`; engine ported to `src/game/match/tactical.ts` with its 17 tests.
+- `?tactics=v05` lets the engine run the computer team's attacking possessions (movement of outfielders, carrier carry/pass/shot through the existing kick path). Default stays the classic AI because the seeded comparison came out worse (see D28).
+- 60 Hz and 120 Hz give the identical v0.5 match; 18 players and match invariants hold; human players never get engine orders.
+
 ## Sprites v2 — 14 owner sprite sheets (branch `devin/1792525700-sprite-sheets`, PR only, not merged, not deployed)
 
 - **Art:** all 14 sheets kept unchanged (`docs/art/sprites-v2/source/`, SHA256SUMS) and built into 14 WebP atlases (2.6 MB) with frame metadata. Inventory, pose coverage, gaps and rollback: `docs/art/sprites-v2/README.md`.

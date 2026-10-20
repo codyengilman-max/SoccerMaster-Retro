@@ -2,6 +2,8 @@ export * from './formations';
 export * from './tuning';
 export * from './types';
 export * from './ai';
+export * from './tactical';
+export * from './tacticalDirector';
 export * from './sim';
 export * from './clock';
 export * from './predict';

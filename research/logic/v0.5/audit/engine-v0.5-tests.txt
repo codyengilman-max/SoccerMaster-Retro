@@ -1,0 +1,25 @@
+✔ all nine players receive finite bounded orders without world mutation (3.193741ms)
+✔ human carrier receives no AI commands (0.356448ms)
+✔ one presser, one cover, center preserved (0.391821ms)
+✔ loose ball is contested, never kicked as controlled (0.248108ms)
+✔ stale ball falls back to shape (0.174208ms)
+✔ mirroring preserves intentions and target geometry (1.416478ms)
+✔ roster ordering does not change decisions (0.452451ms)
+✔ duplicate ticks emit no duplicate actions; possession loss cancels (0.358972ms)
+✔ pending kick cannot repeat before executor acknowledgment (0.335407ms)
+✔ pause cancels and reset permits a fresh timeline (0.506991ms)
+✔ invalid geometry, clocks, roster and options are rejected (0.381826ms)
+✔ hidden state fields cannot influence choices (0.549003ms)
+✔ open ground pass selected, receiver does not get ball ownership (0.254457ms)
+✔ ineligible receivers cannot be selected (0.163262ms)
+✔ keeper sweeps loose safe ball; distributes controlled ball (0.380204ms)
+✔ two team instances support eighteen NPCs (0.370168ms)
+✔ friendly flight preserves support and assigns receiver without a kick (0.239225ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 93.446858

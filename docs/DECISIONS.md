@@ -126,6 +126,14 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Calls run inside the fixed-step tick and write into preallocated fields, so 60 Hz and 120 Hz give the same calls (tested). The rest of the engine still allocates small objects per step (D-FIFA notes).
 - Not built: advantage, cards, handball, aerial crosses from corners (corners restart on the ground), the 9v9 build-out line, keeper six-second/back-pass rules.
 
+## D35. v0.5 tactical decision engine for computer attacks, off by default (owner choice B, 2026-10-18)
+
+- The v0.5 logic package is kept as research in `research/logic/v0.5` (its bundled git history is not imported). `src/game/match/tactical.ts` is a TypeScript port of `engine/decision-engine.mjs`; its 17 standalone tests are ported in `tests/tactical.test.ts`.
+- `tacticalDirector.ts` adapts the match to the engine: each team is observed in its own frame (own goal at x = 0, direction +1, away mirrored as in `ai.ts`), yards are converted to metres (0.9144) on the configured pitch, and the 1-3-2-3 slots map to GK/LB/CB/RB/6 (LCM)/8 (RCM)/LW/9 (ST)/RW. Other formations stay on the classic AI.
+- Phase 1 scope is one attacking possession: while a team holds the ball or has its own pass in flight, the engine sets the movement targets of its computer outfielders and decides the AI outfield carrier's carry, PASS or SHOOT. Defending, loose balls, keepers, the user's player, the pass receiver and Coach Moment intentions stay on the classic AI.
+- Engine kicks are revalidated (same owner, possession and control generations, not expired) and go through the sim's own `kickBall` with the same seeded aim and power noise, so physics, first touch, offside and the referee are unchanged. If the engine ever rejects an observation, that sim falls back to classic AI for the rest of the match (`tactics.failure`).
+- Measured over 12 seeded matches (2 × 45 s, scripted user, `tests/tacticalMatch.test.ts`): {"classic":{"passes":446,"completed":398,"shots":74,"goals":16,"conceded":0,"turnovers":81,"failures":0},"v05":{"passes":329,"completed":281,"shots":82,"goals":15,"conceded":0,"turnovers":94,"failures":0}}. The v0.5 attack passes less, completes a lower share (85% vs 89%) and loses the ball more, so it is not the default. `MatchSimOptions.tactics` defaults to `'classic'`; `?tactics=v05` turns it on in the match.
+
 ## D29. Training / Schoolyard revision v1.2 (owner package, 2026-10-13)
 
 - Crossbar keeps its existing 3-D fixed-step model (`CROSSBAR_SIM_VERSION = 1`) instead of the package's 2-D fallback. Visual goal, net, ball and aim aids come from `crossbarView` / `goalGeometry`, which read `CROSSBAR`; the backdrop is scaled so its grass line meets the projected goal line. The package `scene-layout.json` is a presentation reference only.

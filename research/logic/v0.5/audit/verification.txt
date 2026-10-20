@@ -1,0 +1,32 @@
+Repository checks only. Gameplay runtime tests have not been run.
+
+$ python3 tools/validate_repository.py
+{
+  "archive_sha256": "e45f8e5eaff31d2f2781f1109f05f6353aff37c83af9c021ceabb91a010f481b",
+  "scenarios": 40,
+  "sources": 18,
+  "seasons": 10,
+  "runtime_requirements_not_run": 14
+}
+
+exit_code=0
+
+$ python3 -m unittest discover -s tests -v
+test_preservation_and_repository_integrity (test_repository.RepositoryTests.test_preservation_and_repository_integrity) ... ok
+test_reject_duplicate_scenario (test_repository.RepositoryTests.test_reject_duplicate_scenario) ... ok
+test_reject_false_calibration (test_repository.RepositoryTests.test_reject_false_calibration) ... ok
+test_reject_missing_activation_gate (test_repository.RepositoryTests.test_reject_missing_activation_gate) ... ok
+test_reject_nonfinite_and_duplicate_json_keys (test_repository.RepositoryTests.test_reject_nonfinite_and_duplicate_json_keys) ... ok
+test_reject_oversized_override (test_repository.RepositoryTests.test_reject_oversized_override) ... ok
+test_reject_production_activation (test_repository.RepositoryTests.test_reject_production_activation) ... ok
+test_reject_rewritten_original (test_repository.RepositoryTests.test_reject_rewritten_original) ... ok
+test_reject_runtime_ready_flag (test_repository.RepositoryTests.test_reject_runtime_ready_flag) ... ok
+test_reject_unknown_reference (test_repository.RepositoryTests.test_reject_unknown_reference) ... ok
+test_reject_unknown_schema (test_repository.RepositoryTests.test_reject_unknown_schema) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.015s
+
+OK
+
+exit_code=0
