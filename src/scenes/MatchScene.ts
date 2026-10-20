@@ -249,6 +249,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.field = this.add.graphics().setDepth(0);
     this.under = this.add.graphics().setDepth(1);
     this.art = new PlayerArt(this);
+    // Team Training is set up before the art exists; queue Coach Code now.
+    if (this.team) this.art.ensure(['coach-code']);
     this.artSimTime = 0;
     this.setRosterLooks(null);
     this.artDir = Object.fromEntries(MATCH_PLAYER_IDS.map((id) => [id, id.startsWith('H') ? 0 : 4])) as Record<Id, number>;
@@ -1038,7 +1040,6 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const team = { week: 0, situations: [] as TeamTrainingSituation[], index: 0, results: [] as SituationResult[], observer: null, store: null as CareerStore | null, attrs: {}, phase: 'loading' as 'loading' | 'playing' | 'review' | 'saving' | 'done', half: 'attack' as 'own' | 'attack', last: null as SituationResult | null, message: '' };
     this.team = team;
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => team.store?.close());
-    this.art.ensure(['coach-code']);
     this.coachPose = COACH_POSE.walk;
     this.toast('Loading Team Training…');
     void CareerStore.open().then(async (store) => {
