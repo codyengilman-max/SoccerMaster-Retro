@@ -166,7 +166,7 @@ Approved technical choices. Add a new entry rather than silently changing an old
 
 
 
-## D31. Season One weeks 1-2 rewrite (owner text, 2026-10-20)
+## D36. Season One weeks 1-2 rewrite (owner text, 2026-10-20)
 
 - The owner's week 1 and week 2 text replaces the prologue departure/arrival/room text and the old week 1-2 scenes. Scene ids stay (`S1_PRO_*`, `S1_W01_*`, `S1_W02_*`); `S1_W01_P` and `S1_W02_S2` are new and `S1_W02_P` is retired. The content version stays `s1-v1.0`, so saves are not archived.
 - A rewritten scene's header carries `v2`; the compiler prefixes its node ids (`v2n1`). `migrateStory` restarts a save whose node no longer exists at that scene's entry, dropping only that scene's choices and unresolved runs; a save in `S1_W02_P` continues at `S1_W02_E`.

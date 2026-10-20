@@ -1,6 +1,12 @@
 # Status
 
 
+## Merge of open PRs #17, #18, #22 and #23 into `main` (owner request 2026-10-20)
+- Owner: "merge all remaining prs", then "only merge new weeks 1 and 2 stories as we will give you remaining weeks later". #23 (new weeks 1–2) is merged; #15 (approval of the older weeks 2–4 draft) is left out.
+- Conflicts were docs only, plus `sim.ts` where the referee (#17) and the v0.5 tactics director (#18) both hook the constructor and carrier logic; both kept, set-piece hold first. Tactics stay off by default (`?tactics=v05`).
+- PRs #6 and #13 had no commits that `main` lacks; nothing to merge from them.
+- Not tested on a physical iPhone.
+
 ## Referee (branch `devin/1792274864-referee`, not merged, not deployed)
 
 - **CI note (merge of `main` 4c3a81f):** a 60 min GitHub run timed out on phone-landscape `jungle.spec:11`, `pad.spec:88` A03, and `match.spec:72` (phone-landscape and desktop). Under 4-worker load locally, these passed 12/12 on this branch and 12/12 on `main`.
