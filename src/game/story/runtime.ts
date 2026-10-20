@@ -81,7 +81,9 @@ function migrateRewritten(s: StoryState): StoryState {
   const retired = RETIRED_SCENES[s.sceneId];
   if (retired) return enter({ ...s, complete: false }, retired, sceneById(retired)!.entry, s.lastSeq);
   const scene = sceneById(s.sceneId);
-  if (!scene || nodeById(scene, s.nodeId)) return s;
+  // Only a scene revised by the compiler (`v2n1`-style ids) whose saved node has the pre-revision shape
+  // (`n10`, `a3`) is restarted; any other unknown position stays unknown and is kept aside by the store.
+  if (!scene || nodeById(scene, s.nodeId) || !/^v\d+/.test(scene.entry) || !/^[a-z]\d+$/.test(s.nodeId)) return s;
   const { [scene.id]: _dropped, ...decisions } = s.decisions;
   const runs = Object.fromEntries(Object.entries(s.runs).filter(([, r]) => r.sceneId !== scene.id || nodeById(scene, r.nodeId)));
   return enter({ ...s, decisions, runs, complete: false }, scene.id, scene.entry, s.lastSeq);

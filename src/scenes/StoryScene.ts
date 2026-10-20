@@ -963,7 +963,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       case 'crossbar': {
         const declined = s.sceneId.startsWith('S1_') ? evaluatePredicate(s, n.predicate) === false : s.decisions.W1_SCHOOL_02?.invitation === 'decline';
         if (declined) {
-          setBody('You head back with Jordan. No score is recorded.');
+          setBody(this.state?.sceneId.startsWith('S1_') ? 'You walk away from the goal. No score is recorded.' : 'You head back with Jordan. No score is recorded.');
           acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.decline() });
         } else {
           setBody(`Three counted shots each from the same spot.${this.crossbarWarmup() ? ' One warm-up shot each first (does not count).' : ''} Hit the crossbar to score.`);

@@ -147,6 +147,10 @@ describe('Season One weeks 1-2 rewrite', () => {
     const parent = parseStoryState({ ...s, sceneId: 'S1_W02_P', nodeId: 'n4' });
     expect(parent.ok && parent.value.sceneId).toBe('S1_W02_E');
     expect(parseStoryState({ ...s, sceneId: 'S1_NOPE', nodeId: 'n1' }).ok).toBe(false);
+    // Unknown positions outside the rewrite are not silently restarted.
+    expect(parseStoryState({ ...s, sceneId: 'S1_W03_M', nodeId: 'unknown_node' }).ok).toBe(false);
+    expect(parseStoryState({ ...s, sceneId: 'S1_W03_M', nodeId: 'n999' }).ok).toBe(false);
+    expect(parseStoryState({ ...s, nodeId: 'unknown_node' }).ok).toBe(false);
     for (const raw of [oldNode, { ...s, sceneId: 'S1_W02_P', nodeId: 'n4' }]) {
       const f = new IDBFactory();
       (await StoryStore.open(f, 'st')).close();
