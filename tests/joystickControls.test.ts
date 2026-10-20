@@ -141,3 +141,40 @@ describe('preferences (A22)', () => {
     expect(validatePrefs({ size: '1.2' })).toEqual(DEFAULT_PREFS);
   });
 });
+
+describe('hold modifier (Jungle Ball TURBO)', () => {
+  const ALL: Availability = { pass: true, shoot: true, slide: true, block: true };
+  const at = (b: 'pass' | 'block' | 'slide' | 'shoot'): [number, number] => [L.buttons[b].x, L.buttons[b].y];
+  it('a held modifier does not block a second action finger, and each lifts independently', () => {
+    const c = new JoystickControls(L);
+    c.setModifier('pass');
+    c.setAvailable(ALL);
+    expect(c.pointerDown(1, ...at('pass'))).toEqual([{ type: 'press', action: 'pass' }]);
+    expect(c.pointerDown(2, ...at('block'))).toEqual([{ type: 'press', action: 'block' }]);
+    expect(c.modifierHeld).toBe(true);
+    expect(c.pointerUp(2)).toEqual([{ type: 'release', action: 'block' }]);
+    expect(c.pointerDown(3, ...at('slide'))).toEqual([{ type: 'press', action: 'slide' }]);
+    expect(c.pointerUp(1)).toEqual([{ type: 'release', action: 'pass' }]);
+    expect(c.pressed).toBe('slide');
+  });
+  it('a second finger on the modifier is ignored; cancelAll and unavailability cancel it', () => {
+    const c = new JoystickControls(L);
+    c.setModifier('pass');
+    c.setAvailable(ALL);
+    c.pointerDown(1, ...at('pass'));
+    expect(c.pointerDown(2, ...at('pass'))).toEqual([]);
+    expect(c.cancelAll('blur')).toEqual([{ type: 'cancel', action: 'pass', reason: 'blur' }]);
+    expect(c.pointerDown(1, ...at('pass'))).toEqual([]);
+    c.pointerUp(1);
+    c.pointerUp(2);
+    c.pointerDown(4, ...at('pass'));
+    expect(c.setAvailable({ ...ALL, pass: false })).toEqual([{ type: 'cancel', action: 'pass', reason: 'unavailable' }]);
+    expect(c.pointerUp(4)).toEqual([]);
+  });
+  it('without a modifier the single action slot is unchanged', () => {
+    const c = new JoystickControls(L);
+    c.setAvailable(ALL);
+    c.pointerDown(1, ...at('pass'));
+    expect(c.pointerDown(2, ...at('block'))).toEqual([]);
+  });
+});
