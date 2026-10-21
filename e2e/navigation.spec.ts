@@ -79,8 +79,18 @@ test('Start -> Jungle Ball -> Leave repeated keeps one canvas and stable listene
   for (let i = 0; i < ROUND_TRIPS; i++) {
     const via = i % 2 === 0 ? 'touch' : 'mouse';
     await pressElement(page, 'jungle-button', via);
+    await waitForScene(page, 'jungle');
+    // Snapshot once the courtyard and sprite sheets have arrived: until then the loader holds a one-shot listener.
+    await expect
+      .poll(async () => {
+        const a = ((await diagnostics(page)).gameplay as { art?: { background: boolean; loaded: boolean } }).art;
+        return Boolean(a?.background && a.loaded);
+      }, { timeout: 20_000 })
+      .toBe(true);
     const pitch = await waitForScene(page, 'jungle');
     expect(pitch.canvases).toBe(1);
+    // Package sheets are bound by competitor id: the created player (boy by default here), Blake and Sam; Alex has none.
+    expect((pitch.gameplay as { art: { sets: unknown } }).art.sets).toEqual({ player: 'jungle-boy', alex: null, blake: 'jungle-blake', sam: 'jungle-sam' });
     for (const name of ['pen', 'back-button']) {
       expectInside(name, pitch.layout?.elements[name], viewport);
     }

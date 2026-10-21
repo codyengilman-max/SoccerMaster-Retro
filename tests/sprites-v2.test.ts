@@ -18,9 +18,9 @@ const atlas = (id: string): Atlas => JSON.parse(readFileSync(join(ATLAS, `${id}.
 const sha = (path: string): string => createHash('sha256').update(readFileSync(path)).digest('hex');
 
 describe('sprites v2 assets', () => {
-  it('keeps all 14 owner sheets unchanged, matching SHA256SUMS', () => {
+  it('keeps all 18 owner sheets (14 sprites v2 + 4 Jungle Ball) unchanged, matching SHA256SUMS', () => {
     const sums = readFileSync(join(SOURCE, 'SHA256SUMS'), 'utf8').trim().split('\n').map((l) => l.split(/\s+/));
-    expect(sums).toHaveLength(14);
+    expect(sums).toHaveLength(18);
     for (const [hash, file] of sums) expect(sha(join(SOURCE, file!)), file).toBe(hash);
     expect(readdirSync(SOURCE).filter((f) => f.endsWith('.png')).sort()).toEqual(SPRITE_SETS.map((s) => `${s}.png`).sort());
   });
@@ -62,6 +62,24 @@ describe('sprites v2 assets', () => {
         if (j) expect(frames[j], `${id}:${j}`).toBeDefined();
       }
     }
+  });
+});
+
+describe('Jungle Ball package sheets', () => {
+  it('pack only the clip frames the package names, never the main characters\' hand-action frames', () => {
+    for (const id of ['jungle-boy', 'jungle-girl', 'jungle-blake', 'jungle-sam'] as const) {
+      const a = atlas(id);
+      expect(layoutOf(id)).toBe('jungle');
+      const names = Object.keys(a.frames);
+      for (let i = 0; i < 6; i++) expect(names, `${id} run-${i}`).toContain(`run-${i}`);
+      expect(names).toContain('stumble-w');
+      // The main characters have no shoot clip; shooting reuses the pass contact pose.
+      expect(names.some((n) => n.startsWith('shoot-'))).toBe(id === 'jungle-blake' || id === 'jungle-sam');
+      expect(names.some((n) => /catch|throw|header|chest|shoulder/.test(n))).toBe(false);
+    }
+    expect(frameName('jungle', 'kick', 0, 0)).toBe('kick-1');
+    expect(frameName('jungle', 'run', 4, 7)).toBe('run-1-w');
+    expect(frameName('jungle', 'idle', 4, 0)).toBe('idle-w');
   });
 });
 

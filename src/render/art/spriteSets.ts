@@ -14,12 +14,14 @@ export const SPRITE_SETS = [
   'boy-match', 'girl-match', 'boy-training', 'girl-training', 'boy-goalkeeper', 'girl-goalkeeper',
   'club-batavia-match', 'club-batavia-training', 'club-royal_salt', 'club-valley_rising', 'club-desert_tuzon', 'club-sol_vista', 'club-next_horizon',
   'coach-code',
+  'jungle-boy', 'jungle-girl', 'jungle-blake', 'jungle-sam',
 ] as const;
 export type SpriteSetId = (typeof SPRITE_SETS)[number];
-export type SetLayout = 'protagonist' | 'goalkeeper' | 'club' | 'club-training' | 'coach';
+export type SetLayout = 'protagonist' | 'goalkeeper' | 'club' | 'club-training' | 'coach' | 'jungle';
 
 export const layoutOf = (id: SpriteSetId): SetLayout =>
   id === 'coach-code' ? 'coach'
+  : id.startsWith('jungle-') ? 'jungle'
   : id.endsWith('-goalkeeper') ? 'goalkeeper'
   : id === 'club-batavia-training' ? 'club-training'
   : id.startsWith('club-') ? 'club'
@@ -77,6 +79,12 @@ export function frameName(layout: SetLayout, kind: PoseKind, dir: number, pose: 
       return side('ready-0', d);
     case 'coach':
       return 'idle';
+    case 'jungle':
+      // Jungle Ball package clips (side-on schoolyard): run_right x6, pass (kick contact), stumble; no hand-action frames.
+      if (kind === 'run') return side(`run-${cycle(pose, 6)}`, d);
+      if (kind === 'kick') return side('kick-1', d);
+      if (kind === 'slide' || kind === 'dive') return side('stumble', d);
+      return d >= 5 ? 'idle-n' : d >= 1 && d <= 3 ? 'idle-s' : d === 4 ? 'idle-w' : 'idle-e';
   }
 }
 

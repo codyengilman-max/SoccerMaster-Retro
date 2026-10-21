@@ -203,3 +203,8 @@ Approved technical choices. Add a new entry rather than silently changing an old
 ## D41. Protagonist follows control in Team Training; New game archives (owner report, 2026-10-22)
 - Team Training drills choose which Batavia player you control, so the saved look goes on that player each situation. In matches the protagonist stays on the position slot (control can switch to teammates).
 - New game never deletes: old career, story, league and cup records are copied aside in the same databases before the fresh start.
+
+## D42. Owner Mom portraits, painted aquarium scenes, Jungle Ball sheets (owner art, 2026-10-22)
+- Mom is cast wherever she speaks, using the neutral expression until the script carries an expression per line; expressions are not guessed from the text.
+- A backdrop that paints the cast (`cast_in_backdrop`) suppresses both portraits and the code-drawn speaker figure, so Cloudy scenes never show the player twice. The flag only applies once the painting is on screen.
+- Jungle Ball sheets join the sprite-set registry as layout `jungle` (pre-mirrored `-w` frames, same 160×128 cell and (80,120) anchor), so `PlayerArt` and its fallback stay the one sprite path.

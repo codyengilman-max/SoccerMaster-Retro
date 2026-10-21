@@ -105,12 +105,18 @@ test.describe('reduced motion', () => {
 
 test('missing art falls back to labelled placeholders and the story still advances', async ({ page }, info) => {
   await page.route('**/*.webp', (r) => r.abort());
-  const s = await toAquarium(page, modeFor(info));
+  // Departure: Mom's portrait fails to load and shows the labelled placeholder.
+  const s = await toDeparture(page, modeFor(info));
   const failed = await story(page, (x) => (x.art?.cast.length ?? 0) > 0 && x.art!.cast.every((c) => c.state === 'failed'), 'fallback');
   expect(failed.art!.backgroundShown).toBe(false);
   expect(failed.art!.cast.every((c) => c.assetId !== null)).toBe(true);
   await tapStage(page, modeFor(info));
   await story(page, (x) => x.revision !== s.revision, 'advanced past a line with missing art');
+  // Aquarium: the painted backdrop fails, so nothing claims the cast is in the backdrop, and the story still advances.
+  const tank = await advanceTo(page, modeFor(info), (x) => x.scene === 'S1_PRO_ROOM' && x.type === 'line', 'aquarium line');
+  expect(tank.art!.backgroundShown).toBe(false);
+  await tapStage(page, modeFor(info));
+  await story(page, (x) => x.revision !== tank.revision, 'advanced past an aquarium line with missing art');
 });
 
 test('Art Gallery is reachable from Review & Lab, lists every asset with its status, and does not create a player', async ({ page }, info) => {
@@ -139,7 +145,7 @@ test('Art Gallery is reachable from Review & Lab, lists every asset with its sta
     if (g.page.kind === 'gaps') expect(g.gaps).toBeGreaterThan(0);
     await press(page, 'gallery-next', mode);
   }
-  expect(seen.size).toBe(44); // 42 + v1.2 crossbar-schoolyard and training-bell94
+  expect(seen.size).toBe(52); // 42 + v1.2 crossbar-schoolyard and training-bell94 + 6 Mom portraits and 2 aquarium paintings
   await press(page, 'gallery-back', mode);
   await waitForScene(page, 'career');
   const career = (await diagnostics(page)).gameplay as { player: string | null; screen: string };

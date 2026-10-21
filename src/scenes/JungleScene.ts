@@ -8,7 +8,7 @@ import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspe
 import { SceneKeys } from './keys';
 import { Button } from './ui/Button';
 import { PadHud } from './ui/PadHud';
-import { PLAYER_ART, PlayerArt } from '../render/art/playerArt';
+import { PLAYER_ART, PlayerArt, atlasKey } from '../render/art/playerArt';
 import { sideLooks, type RosterLook } from '../render/art/roster';
 import { REFERENCE_KITS, dirFromScreen, type PoseKind } from '../render/art/spriteFactory';
 import { artTextureKey, artUrl } from '../render/art/urls';
@@ -105,18 +105,19 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     this.hudG = this.add.graphics().setDepth(5000);
     ensurePlaceholderTextures(this);
     this.art = new PlayerArt(this);
-    // Graphics v1 factory sprites. Alex, Blake and Sam have no supplied gameplay sheet, so they use reference roster hair (gap noted in STATUS).
+    // Jungle Ball package sheets, bound by competitor id (never by display name): the saved boy/girl, Blake and Sam.
+    // Alex has no supplied sheet and keeps the reference roster look.
     const look = data.look === 'girl' ? 'girl' : 'boy';
     const home = sideLooks('home', { slot: 1, look });
     const away = sideLooks('away');
     this.looks = {
-      player: { ...home[1]!, kit: KITS.player, number: '10', set: look === 'girl' ? 'girl-match' : 'boy-match' },
+      player: { ...home[1]!, kit: KITS.player, number: '10', set: look === 'girl' ? 'jungle-girl' : 'jungle-boy' },
       alex: { ...away[3]!, kit: KITS.alex, number: '7' },
-      blake: { ...away[2]!, kit: KITS.blake, number: '9' },
-      sam: { ...away[5]!, kit: KITS.sam, number: '4' },
+      blake: { ...away[2]!, kit: KITS.blake, number: '9', set: 'jungle-blake' },
+      sam: { ...away[5]!, kit: KITS.sam, number: '4', set: 'jungle-sam' },
       keeper: home[0]!,
     };
-    this.art.ensure([this.looks.player.set]);
+    this.art.ensure([this.looks.player.set, this.looks.blake.set, this.looks.sam.set]);
     this.sprites = {};
     for (const id of [...COMPETITORS, 'keeper'] as const) this.sprites[id] = this.add.image(0, 0, TEXTURES.ball).setOrigin(48 / 96, 68 / 96);
     this.ballImg = this.add.image(0, 0, TEXTURES.ball);
@@ -237,6 +238,11 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
       stunned: Object.fromEntries(COMPETITORS.map((id) => [id, s.t < s.competitors[id].stunUntil])),
       saved: this.saved,
       runId: this.runId,
+      art: {
+        background: this.bg !== null,
+        sets: Object.fromEntries(COMPETITORS.map((id) => [id, this.looks[id].set ?? null])),
+        loaded: COMPETITORS.every((id) => !this.looks[id].set || this.textures.exists(atlasKey(this.looks[id].set!))),
+      },
     };
   }
 
