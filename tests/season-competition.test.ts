@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { HOME_CLUB, LEAGUE_CLUBS } from '../src/game/league/league';
 import { SEASON_WEEKS, slotIds, weekOfLeagueGame } from '../src/game/season/calendar';
 import { BATAVIA_FIXTURES, SEASON_FIXTURES, SEASON_ROUNDS, bataviaRecord, fixtureForSeasonWeek, newSeasonLeague, parseSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough } from '../src/game/season/league';
-import { TOURNAMENTS, bataviaFinish, bataviaFixture, groupTable, newTournament, nextBataviaFixture, parseTournament, playoffs, recordTournamentPlayed, roundRobin, type TournamentState } from '../src/game/season/tournament';
+import { TOURNAMENTS, bataviaFinish, bataviaFixture, finalFixture, groupFixtures, groupTable, matchPoints, newTournament, nextBataviaFixture, parseTournament, recordTournamentPlayed, type TournamentState } from '../src/game/season/tournament';
 
 describe('Season One calendar', () => {
   it('follows the storyboard: 12 league games in weeks 3–8, 10–11 and 13–16, AZ Showcase week 9, Holiday Classic week 12, State Cup weeks 17–18', () => {
@@ -78,48 +78,106 @@ const play = (s: TournamentState, us: number, them: number): TournamentState => 
 };
 
 describe('Season One tournaments', () => {
-  it('each cup has four entrants, three round-robin games each, and Batavia in every round', () => {
+  it('eight teams in two groups of four: Batavia + one league club + two out-of-state; Next Horizon (not a league club) in the other group', () => {
     for (const id of ['az_showcase', 'holiday_classic'] as const) {
-      const rr = roundRobin(id);
-      expect(rr).toHaveLength(6);
-      expect(new Set(TOURNAMENTS[id].entrants).size).toBe(4);
-      for (const t of TOURNAMENTS[id].entrants) expect(rr.filter((f) => f.home === t || f.away === t)).toHaveLength(3);
-      for (const st of ['rr1', 'rr2', 'rr3']) expect(rr.filter((f) => f.stage === st && (f.home === 'batavia' || f.away === 'batavia'))).toHaveLength(1);
-      for (const t of TOURNAMENTS[id].entrants) expect(LEAGUE_CLUBS as readonly string[]).not.toContain(t === 'batavia' ? 'x' : t);
+      const c = TOURNAMENTS[id];
+      const all = c.groups.flat();
+      expect(new Set(all).size).toBe(8);
+      expect(c.groups[0][0]).toBe('batavia');
+      const league = (g: readonly string[]) => g.filter((t) => (LEAGUE_CLUBS as readonly string[]).includes(t));
+      expect(league(c.groups[0])).toHaveLength(2);
+      expect(c.groups[0].filter((t) => c.teams[t]!.outOfState)).toHaveLength(2);
+      expect(c.groups[1].filter((t) => c.teams[t]!.outOfState)).toHaveLength(2);
+      expect(c.groups[1]).toContain('next_horizon');
+      expect(LEAGUE_CLUBS as readonly string[]).not.toContain('next_horizon');
+      const fx = groupFixtures(id);
+      expect(fx).toHaveLength(12);
+      for (const t of all) expect(fx.filter((f) => f.home === t || f.away === t)).toHaveLength(3);
+      for (const st of ['g1', 'g2', 'g3']) expect(fx.filter((f) => f.stage === st && (f.home === 'batavia' || f.away === 'batavia'))).toHaveLength(1);
     }
+    expect(new Set([...TOURNAMENTS.az_showcase.groups.flat(), ...TOURNAMENTS.holiday_classic.groups.flat()].filter((t) => TOURNAMENTS.az_showcase.teams[t]?.outOfState || TOURNAMENTS.holiday_classic.teams[t]?.outOfState)).size).toBe(8);
   });
-  it('the playoff is undecided until all group games have results; winning every game leads to the championship', () => {
+  it('ten-point system: win 6, draw 3, +1 a goal up to three, +1 clean sheet, at most 10', () => {
+    expect(matchPoints(0, 0)).toBe(4);
+    expect(matchPoints(1, 0)).toBe(8);
+    expect(matchPoints(5, 0)).toBe(10);
+    expect(matchPoints(2, 2)).toBe(5);
+    expect(matchPoints(1, 2)).toBe(1);
+    expect(matchPoints(0, 3)).toBe(0);
+    for (let a = 0; a <= 8; a++) for (let b = 0; b <= 8; b++) expect(matchPoints(a, b)).toBeLessThanOrEqual(10);
+  });
+  it('the final is undecided until both groups finish; winning the group reaches the final; a level final has a shoot-out winner', () => {
     let s = newTournament('az_showcase', 'c', 11);
-    expect(playoffs(s)).toBeNull();
+    expect(finalFixture(s)).toBeNull();
     expect(bataviaFixture(s, 4)).toBeNull();
-    s = play(s, 3, 0);
-    s = play(s, 3, 0);
-    expect(playoffs(s)).toBeNull();
-    s = play(s, 3, 0);
-    expect(groupTable(s).complete).toBe(true);
-    expect(groupTable(s).rows[0]!.team).toBe('batavia');
+    s = play(s, 4, 0);
+    s = play(s, 4, 0);
+    expect(finalFixture(s)).toBeNull();
+    s = play(s, 4, 0);
+    expect(groupTable(s, 0).complete && groupTable(s, 1).complete).toBe(true);
+    expect(groupTable(s, 0).rows[0]!.team).toBe('batavia');
+    expect(groupTable(s, 0).rows[0]!.points).toBe(30);
     expect(bataviaFixture(s, 4)!.stage).toBe('final');
     expect(bataviaFinish(s)).toBeNull();
     s = play(s, 1, 1);
-    expect(bataviaFinish(s)).toBe('shared_champion');
+    const fin = finalFixture(s)!;
+    expect(s.results[fin.id]!.shootoutWinner).toMatch(new RegExp(`^(${fin.home}|${fin.away})$`));
+    expect(bataviaFinish(s)).toBe(s.results[fin.id]!.shootoutWinner === 'batavia' ? 'champion' : 'runner_up');
     expect(nextBataviaFixture(s)).toBeNull();
-    expect(Object.keys(s.results)).toHaveLength(8);
+    expect(Object.keys(s.results)).toHaveLength(13);
     expect(parseTournament(s, 'az_showcase').ok).toBe(true);
+    expect(parseTournament({ ...s, results: { ...s.results, [fin.id]: { ...s.results[fin.id]!, shootoutWinner: undefined } } }, 'az_showcase').ok).toBe(false);
   });
-  it('losing every group game leads to the placement game, and results cannot be rewritten or played out of order', () => {
+  it('losing every group game ends after three games with the final simulated; results cannot be rewritten or played out of order', () => {
     let s = newTournament('holiday_classic', 'c', 5);
-    const late = roundRobin('holiday_classic').find((f) => f.stage === 'rr3' && (f.home === 'batavia' || f.away === 'batavia'))!;
+    const late = groupFixtures('holiday_classic').find((f) => f.stage === 'g3' && (f.home === 'batavia' || f.away === 'batavia'))!;
     expect(recordTournamentPlayed(s, late.id, 1, 0)).toMatchObject({ ok: false });
     s = play(s, 0, 4);
     const first = Object.values(s.results).find((r) => r.source === 'played')!;
     expect(recordTournamentPlayed(s, first.fixtureId, 2, 0)).toMatchObject({ ok: false });
+    expect(recordTournamentPlayed(s, first.fixtureId, first.fixtureId.includes('-batavia-') ? 0 : 4, 4)).toMatchObject({ ok: true });
     s = play(s, 0, 4);
     s = play(s, 0, 4);
-    expect(groupTable(s).rows[3]!.team).toBe('batavia');
-    expect(bataviaFixture(s, 4)!.stage).toBe('placement');
-    s = play(s, 2, 1);
-    expect(bataviaFinish(s)).toBe('third');
+    expect(groupTable(s, 0).rows[3]!.team).toBe('batavia');
+    expect(bataviaFinish(s)).toBe('group_4');
+    expect(bataviaFixture(s, 4)).toBeNull();
+    expect(nextBataviaFixture(s)).toBeNull();
+    const fin = finalFixture(s)!;
+    expect(s.results[fin.id]!.source).toBe('simulated');
+    expect(Object.keys(s.results)).toHaveLength(13);
     expect(parseTournament({ ...s, results: { ...s.results, 'holiday_classic-final-x-y': { fixtureId: 'holiday_classic-final-x-y', homeGoals: 1, awayGoals: 0, source: 'simulated' } } }, 'holiday_classic').ok).toBe(false);
+  });
+  it('tiebreakers: points, wins, head-to-head only for a two-team tie, capped goal difference, fewest conceded, then recorded lots; no restart after a partial split', () => {
+    const base = newTournament('az_showcase', 'c', 3);
+    const fx = groupFixtures('az_showcase').filter((f) => f.group === 0);
+    const set = (scores: Record<string, [number, number]>, lots = base.lots): TournamentState => ({ ...base, lots, results: Object.fromEntries(fx.map((f) => [f.id, { fixtureId: f.id, homeGoals: scores[`${f.home}-${f.away}`]![0], awayGoals: scores[`${f.home}-${f.away}`]![1], source: 'simulated' as const }])) });
+    const [a, b, c, d] = TOURNAMENTS.az_showcase.groups[0];
+    const key = (x: string, y: string) => (fx.some((f) => f.home === x && f.away === y) ? `${x}-${y}` : `${y}-${x}`);
+    const sc = (x: string, y: string, gx: number, gy: number): [string, [number, number]] => [key(x, y), fx.some((f) => f.home === x && f.away === y) ? [gx, gy] : [gy, gx]];
+    // All six games 1-1: everyone level on points, wins, capped GD and conceded -> recorded lots decide.
+    const level = set(Object.fromEntries([sc(a, b, 1, 1), sc(a, c, 1, 1), sc(a, d, 1, 1), sc(b, c, 1, 1), sc(b, d, 1, 1), sc(c, d, 1, 1)]));
+    const order = base.lots.filter((t) => [a, b, c, d].includes(t));
+    expect(groupTable(level, 0).rows.map((r) => r.team)).toEqual(order);
+    // Capped goal difference: a 9-0 counts as +3.
+    const capped = set(Object.fromEntries([sc(a, b, 9, 0), sc(a, c, 0, 1), sc(a, d, 1, 1), sc(b, c, 1, 1), sc(b, d, 1, 1), sc(c, d, 0, 0)])) ;
+    expect(groupTable(capped, 0).rows.find((r) => r.team === a)!.cappedGd).toBe(2);
+    // Two-team tie on points and wins: head-to-head decides even against better goal difference.
+    const h2h = set(Object.fromEntries([sc(a, b, 1, 0), sc(a, c, 3, 3), sc(a, d, 2, 3), sc(b, c, 3, 0), sc(b, d, 3, 3), sc(c, d, 0, 0)]));
+    const t = groupTable(h2h, 0).rows;
+    const pa = t.find((r) => r.team === a)!, pb = t.find((r) => r.team === b)!;
+    expect([pa.points, pa.won]).toEqual([16, 1]);
+    expect([pb.points, pb.won]).toEqual([16, 1]);
+    expect(pb.cappedGd).toBeGreaterThan(pa.cappedGd);
+    expect(pa.position).toBeLessThan(pb.position);
+    // Three-way points tie split by wins into 1 + 2: the remaining pair skips head-to-head and goes to capped GD.
+    const multi = set(Object.fromEntries([sc(a, b, 0, 0), sc(a, c, 0, 0), sc(a, d, 0, 0), sc(b, c, 0, 1), sc(b, d, 1, 0), sc(c, d, 0, 2)]));
+    const m = groupTable(multi, 0).rows;
+    const at = (x: string) => m.find((r) => r.team === x)!;
+    expect([at(a).points, at(b).points, at(c).points]).toEqual([12, 12, 12]);
+    expect([at(a).won, at(b).won, at(c).won]).toEqual([0, 1, 1]);
+    // c beat b head-to-head, but b's capped goal difference (0) beats c's (-1): b ranks above c.
+    expect(at(b).position).toBeLessThan(at(c).position);
+    expect(at(c).position).toBeLessThan(at(a).position);
   });
   it('tournament results never change the league table', () => {
     const league = simulateSeasonThrough(newSeasonLeague('c', 1), 5);

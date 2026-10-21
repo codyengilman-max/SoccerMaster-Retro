@@ -5,7 +5,7 @@ import type { CompetitorId } from '../game/jungle/sim';
 import { crossbarRules, sceneById, trainingDetail } from '../game/story/content';
 import { seasonWeek, type TournamentId } from '../game/season/calendar';
 import { bataviaRecord, fixtureForSeasonWeek, newSeasonLeague, opponentOf, parseSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough } from '../game/season/league';
-import { TOURNAMENTS, allFixtures, bataviaFinish, groupTable, nextBataviaFixture, newTournament, parseTournament, playoffs, recordTournamentPlayed, type TournamentState } from '../game/season/tournament';
+import { TOURNAMENTS, allFixtures, bataviaFinish, groupTable, nextBataviaFixture, newTournament, parseTournament, finalFixture, recordTournamentPlayed, type TournamentState } from '../game/season/tournament';
 import { CLUB_WORLD } from '../game/story/clubs';
 import type { Rect } from '../game';
 import { POSITION_SLOT } from '../game/career/player';
@@ -43,7 +43,7 @@ interface Action { readonly name: string; readonly label: string; readonly onCli
 
 let instantText = false;
 
-const FINISH_LABEL: Record<string, string> = { champion: 'Champions', shared_champion: 'Shared champions (drawn final, no shoot-out)', runner_up: 'Runners-up', third: 'Third', shared_third: 'Shared third (drawn placement game)', fourth: 'Fourth' };
+const FINISH_LABEL: Record<string, string> = { champion: 'Champions', runner_up: 'Runners-up', group_2: 'Second in the group', group_3: 'Third in the group', group_4: 'Fourth in the group' };
 const clubName = (id: string): string => CLUB_WORLD.clubs.find((c) => c.id === id)?.displayName ?? id;
 const resultOf = (s: { home: number; away: number }): 'WIN' | 'DRAW' | 'LOSS' => (s.home > s.away ? 'WIN' : s.home < s.away ? 'LOSS' : 'DRAW');
 
@@ -565,8 +565,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       const r = recordTournamentPlayed(t, fid, score.home, score.away);
       if (!r.ok) return null;
       const finish = bataviaFinish(r.state);
-      const po = playoffs(r.state);
-      return { value: r.state, out: { detail: finish ?? (po ? (po.final.home === 'batavia' || po.final.away === 'batavia' ? 'final' : 'placement') : null) } };
+      const fin = finalFixture(r.state);
+      return { value: r.state, out: { detail: finish ?? (fin && (fin.home === 'batavia' || fin.away === 'batavia') ? 'final' : null) } };
     });
   }
 
@@ -804,14 +804,13 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     const t = await this.tournament();
     this.tournamentSummary = '';
     if (t) {
-      const g = groupTable(t);
       const next = nextBataviaFixture(t);
       const finish = bataviaFinish(t);
-      const tname = (id: string): string => TOURNAMENTS[t.id].names[id] ?? id;
-      lines.push('', `${TOURNAMENTS[t.id].name} group:`, ...g.rows.map((r) => `${r.position}. ${tname(r.team)}  P${r.played} ${r.points} pts GD ${r.goalsFor - r.goalsAgainst}`));
-      if (finish) lines.push(`Final place: ${FINISH_LABEL[finish]}`);
-      if (next) this.tournamentSummary = `${next.stage === 'final' ? 'Championship game' : next.stage === 'placement' ? 'Placement game (3rd/4th)' : `Group game ${next.stage.slice(2)}`} vs ${tname(next.home === 'batavia' ? next.away : next.home)}.`;
-      lines.push('Tournament results do not count in the league.');
+      const tname = (id: string): string => TOURNAMENTS[t.id].teams[id]?.name ?? id;
+      for (const gi of [0, 1] as const) lines.push('', `${TOURNAMENTS[t.id].name} group ${gi === 0 ? 'A' : 'B'} (tournament points):`, ...groupTable(t, gi).rows.map((r) => `${r.position}. ${tname(r.team)}  P${r.played} W${r.won} ${r.points} pts`));
+      if (finish) lines.push(`Finish: ${FINISH_LABEL[finish]}`);
+      if (next) this.tournamentSummary = `${next.stage === 'final' ? 'Final' : `Group game ${next.stage.slice(1)}`} vs ${tname(next.home === 'batavia' ? next.away : next.home)}.`;
+      lines.push('Tournament points never become league points.');
     }
     this.seasonSummary = lines.join('\n');
   }

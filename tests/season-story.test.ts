@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SEASON_ONE } from '../src/game/story/content';
 import { SEASON_RELEASED_WEEKS, currentNode, newSeasonStory, outcomeOf, reduceStory, setReleasedWeeks, type StoryCommand, type StoryState } from '../src/game/story/runtime';
 import { SEASON_LENGTH, seasonWeek, slotIds } from '../src/game/season/calendar';
-import { TOURNAMENTS, bataviaFinish, newTournament, nextBataviaFixture, playoffs, recordTournamentPlayed, type TournamentState } from '../src/game/season/tournament';
+import { TOURNAMENTS, bataviaFinish, newTournament, nextBataviaFixture, finalFixture, recordTournamentPlayed, type TournamentState } from '../src/game/season/tournament';
 import { bataviaRecord, fixtureForSeasonWeek, newSeasonLeague, recordSeasonPlayed, simulateSeasonThrough, type SeasonLeagueState } from '../src/game/season/league';
 
 type Score = { home: number; away: number };
@@ -59,8 +59,8 @@ function season(p: Policy = {}) {
           const rec = recordTournamentPlayed(t, f.id, sc.home, sc.away);
           if (!rec.ok) throw new Error(rec.error);
           cups[tid] = rec.state;
-          const po = playoffs(rec.state);
-          detail = bataviaFinish(rec.state) ?? (po ? (po.final.home === 'batavia' || po.final.away === 'batavia' ? 'final' : 'placement') : null);
+          const fin = finalFixture(rec.state);
+          detail = bataviaFinish(rec.state) ?? (fin && (fin.home === 'batavia' || fin.away === 'batavia') ? 'final' : null);
         }
         s = step(s, { type: 'complete', runId: r.runId, outcome: 'completed', result: res(sc), detail });
       } else if (n.adapter === 'standings') {
