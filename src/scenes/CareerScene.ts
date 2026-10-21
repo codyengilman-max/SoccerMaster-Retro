@@ -11,6 +11,9 @@ import { DRAFT_PREFIX, DRAFT_STATUS, draftActivityId } from '../game/career/curr
 import { LOGIC_CATALOG, LOGIC_GROUPS, SCENARIO_GOAL, activeLogicScenarios, currentText, type LogicGroup } from '../game/logic/catalog';
 import { describeChanges, selectSituations } from '../game/career/teamTraining';
 import { orientationOf } from '../render/layout';
+import { PlayerArt, atlasKey } from '../render/art/playerArt';
+import { SPRITE_CELL } from '../render/art/spriteSets';
+import { demoPose, demoSet, isKeeperExercise } from '../render/art/homeDemo';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspectable';
 import { SceneKeys } from './keys';
@@ -71,6 +74,9 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private navigating = false;
   private bg!: Phaser.GameObjects.Graphics;
   private demoG!: Phaser.GameObjects.Graphics;
+  private demoArt!: PlayerArt;
+  private demoImg!: Phaser.GameObjects.Image;
+  private demoBall!: Phaser.GameObjects.Graphics;
   private title!: Phaser.GameObjects.Text;
   private body!: Phaser.GameObjects.Text;
   private note!: Phaser.GameObjects.Text;
@@ -102,6 +108,9 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     const res = textResolution();
     this.bg = this.add.graphics();
     this.demoG = this.add.graphics();
+    this.demoArt = new PlayerArt(this);
+    this.demoImg = this.add.image(0, 0, '__DEFAULT').setVisible(false);
+    this.demoBall = this.add.graphics();
     const style = { fontFamily: FONT_FAMILY, color: CSS.ink } as const;
     this.title = this.add.text(0, 0, '', { ...style, fontStyle: 'bold' }).setOrigin(0.5, 0).setResolution(res);
     this.body = this.add.text(0, 0, '', { ...style }).setOrigin(0, 0).setResolution(res);
@@ -181,6 +190,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.store?.close();
     this.store = null;
     this.buttons = [];
+    this.demoArt.destroy();
   }
 
   private go(s: Screen): void {
@@ -686,6 +696,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       bodyY = top + dh + 8;
     } else this.demoRect = null;
     this.demoG.clear();
+    this.demoBall.clear();
+    this.demoImg.setVisible(false);
     if (!demoOn) this.demoCaption?.setVisible(false);
     if (!portrait) {
       colX = 28 + contentW;
@@ -775,6 +787,10 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         else if (m.kind === 'target') g.lineStyle(3, PALETTE.blue, 1).strokeRect(sx(m.x) - unit * 0.3, sy(m.y) - unit * 0.5, unit * 0.6, unit);
         else g.lineStyle(3, PALETTE.mustardDark, 1).strokeRect(sx(m.x) - unit * 0.6, sy(m.y) - unit * 0.6, unit * 1.2, unit * 1.2);
       }
+      if (this.drawSpriteDemo(a, sx, sy, unit)) {
+        this.demoCaption?.setVisible(false);
+        return;
+      }
       const t = this.demoT % (d.seconds + 1);
       const at = (k: readonly { t: number; x: number; y: number }[]) => {
         let i = 0;
@@ -791,6 +807,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       g.fillStyle(0xffffff, 1).fillCircle(sx(b.x), sy(b.y), unit * 0.16);
       g.lineStyle(2, PALETTE.ink, 1).strokeCircle(sx(b.x), sy(b.y), unit * 0.16);
     } else {
+      if (this.drawSpriteDemo(a, sx, sy, unit)) return;
       const n = d.frames.length;
       const k = Math.floor(this.demoT / 1.4) % n;
       d.frames.forEach((fr, i) => {
@@ -811,6 +828,34 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   private demoCaption: Phaser.GameObjects.Text | null = null;
+
+  /** The created player (saved boy/girl, training kit) demonstrates the exercise; the ball is drawn separately. */
+  private drawSpriteDemo(a: Activity, sx: (x: number) => number, sy: (y: number) => number, unit: number): boolean {
+    const set = demoSet(this.save.player?.gender, isKeeperExercise(a));
+    this.demoArt.ensure([set]);
+    const key = atlasKey(set);
+    const pose = demoPose(a, this.demoT);
+    if (!this.textures.exists(key) || !this.textures.get(key).has(pose.frame)) return false;
+    const r = this.demoRect!;
+    const bodyH = Math.min(unit * 2.2, r.h * 0.62);
+    const s = bodyH / SPRITE_CELL.bodyHeight;
+    const footY = Math.min(sy(pose.py), r.y + r.h - 22);
+    this.demoImg.setTexture(key, pose.frame).setOrigin(SPRITE_CELL.anchorX / SPRITE_CELL.width, SPRITE_CELL.anchorY / SPRITE_CELL.height).setScale(s).setFlipX(pose.flip).setPosition(sx(pose.px), footY).setVisible(true);
+    const g = this.demoBall;
+    g.clear();
+    const bx = sx(pose.ball.x);
+    const ground = footY + (sy(pose.ball.y) - sy(pose.py));
+    const br = Math.max(4, unit * 0.16);
+    g.fillStyle(PALETTE.ink, 0.25).fillEllipse(bx, ground, br * 2.2, br * 0.8);
+    const by = ground - br - pose.ball.h * bodyH * 0.55;
+    g.fillStyle(0xffffff, 1).fillCircle(bx, by, br);
+    g.lineStyle(2, pose.contact === 'none' ? PALETTE.ink : PALETTE.sun, 1).strokeCircle(bx, by, br);
+    if (pose.caption) {
+      if (!this.demoCaption?.active) this.demoCaption = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: CSS.ink, fontStyle: 'bold' }).setOrigin(0.5, 1).setResolution(textResolution());
+      this.demoCaption.setFontSize(Math.round(Math.max(12, Math.min(unit * 0.45, 16)))).setPosition(r.x + r.w / 2, r.y + r.h - 4).setWordWrapWidth(r.w - 16).setText(pose.caption).setVisible(true);
+    } else this.demoCaption?.setVisible(false);
+    return true;
+  }
 
   private stepDemo(proto: NonNullable<ReturnType<typeof prototypeFor>>): void {
     const { index } = stepAt(proto, this.demoT);
