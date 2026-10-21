@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { fixtureForWeek, newLeague, parseLeague, recordPlayed, simulateThrough, table } from '../game/league/league';
+import { fixtureForWeek, newLeague, parseLeague, recordPlayed, simulateThrough } from '../game/league/league';
 import { homeLearningDetail, jungleResult, schoolRewardDetail, trainingLogDetail } from '../game/story/facts';
 import type { CompetitorId } from '../game/jungle/sim';
 import { crossbarRules, sceneById, trainingDetail } from '../game/story/content';
@@ -92,7 +92,6 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private pull: Pull | null = null;
   private crossbarSummary = '';
   private crossbarScore = '';
-  private leagueSummary = '';
   private seasonSummary = '';
   private tournamentSummary = '';
   private bg!: Phaser.GameObjects.Graphics;
@@ -784,11 +783,6 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
 
   private async loadSummaries(): Promise<void> {
     if (!this.state || !this.store) return;
-    const league = parseLeague(await this.store.getRecord(`league:${this.state.careerId}`));
-    const names = Object.fromEntries(CLUB_WORLD.clubs.map((c) => [c.id, c.displayName]));
-    this.leagueSummary = league.ok
-      ? `League table (other clubs' games are simulated):\n${table(league.value, names).map((r) => `${r.position}. ${names[r.club] ?? r.club}  P${r.played} ${r.points} pts`).join('\n')}`
-      : 'League table: no league result recorded yet (a match left early counts for nobody).';
     if (this.state.contentVersion !== 'w24-draft-1' && this.state.sceneId.startsWith('S1_')) await this.loadSeasonSummaries();
     const run = outcomeOf(this.state, 'W1_CROSSBAR');
     if (!run) return void (this.crossbarSummary = '');
@@ -827,7 +821,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     const s = this.state;
     if (!s) return '';
     if (s.sceneId === 'S1_W02_S2') return this.crossbarSummary;
-    if (s.sceneId === 'S1_W03_E' || s.sceneId === 'S1_W04_E') return this.leagueSummary;
+    if (s.sceneId === 'S1_W03_E' || s.sceneId === 'S1_W04_E') return this.seasonSummary;
     return '';
   }
 

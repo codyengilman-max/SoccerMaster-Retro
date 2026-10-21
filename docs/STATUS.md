@@ -13,6 +13,7 @@
   - Weeks 3–4 personal match feedback (strong / mixed / difficult debut / limited time): the match hands back only the team result; no rule maps match evidence to these bands.
   - Week 4 Code's in-match stoppage lines ("They're playing a match. Speak with the adults afterward." / "Set up. Next play."): the match engine has no sideline-pressure events.
 - Choice labels may now be up to 72 characters so the owner's exact answers fit.
+- Fix (found in browser testing): the week 3 and week 4 close screens showed the retired 5-club league ("no league result recorded yet") instead of the Season One table; they now show the live season standings.
 
 
 ## Merge of open PRs #17, #18, #22 and #23 into `main` (owner request 2026-10-20)
