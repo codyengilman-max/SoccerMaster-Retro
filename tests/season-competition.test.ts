@@ -5,18 +5,27 @@ import { BATAVIA_FIXTURES, SEASON_FIXTURES, SEASON_ROUNDS, bataviaRecord, fixtur
 import { TOURNAMENTS, bataviaFinish, bataviaFixture, groupTable, newTournament, nextBataviaFixture, parseTournament, playoffs, recordTournamentPlayed, roundRobin, type TournamentState } from '../src/game/season/tournament';
 
 describe('Season One calendar', () => {
-  it('has 18 weeks: 12 league games in weeks 3–8 and 13–18, cups in weeks 9 and 11, none in 1, 2, 10, 12', () => {
+  it('follows the storyboard: 12 league games in weeks 3–8, 10–11 and 13–16, AZ Showcase week 9, Holiday Classic week 12, State Cup weeks 17–18', () => {
     expect(SEASON_WEEKS).toHaveLength(18);
-    expect(SEASON_WEEKS.filter((w) => w.leagueGame !== null).map((w) => w.week)).toEqual([3, 4, 5, 6, 7, 8, 13, 14, 15, 16, 17, 18]);
-    expect(SEASON_WEEKS.filter((w) => w.tournament).map((w) => [w.week, w.tournament])).toEqual([[9, 'starter_cup'], [11, 'desert_lights']]);
-    for (const w of [1, 2, 10, 12]) expect(fixtureForSeasonWeek(w)).toBeNull();
+    expect(SEASON_WEEKS.filter((w) => w.leagueGame !== null).map((w) => w.week)).toEqual([3, 4, 5, 6, 7, 8, 10, 11, 13, 14, 15, 16]);
+    expect(SEASON_WEEKS.filter((w) => w.leagueGame !== null).map((w) => w.leagueGame)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect(SEASON_WEEKS.filter((w) => w.tournament).map((w) => [w.week, w.tournament])).toEqual([[9, 'az_showcase'], [12, 'holiday_classic']]);
+    expect(SEASON_WEEKS.filter((w) => w.kind === 'state_cup').map((w) => w.week)).toEqual([17, 18]);
+    expect(SEASON_WEEKS.map((w) => w.title)).toEqual([
+      "You Don't Know Anybody Yet", 'Nobody Saved You a Spot', 'When It Counts', 'Everybody Wants Something', 'Starting to Believe', 'People Notice',
+      'Whose Side?', 'Losing the Room', 'Bigger Names', 'New Badge, Same Blake', 'Who Am I Doing This For?', 'What We Can Afford',
+      'Questions Worth Asking', 'Next Horizon', 'Monday Still Comes', 'Finish What You Started', 'Four Teams Left', 'What Comes Next',
+    ]);
+    // Three weeks apart, two league weekends between them.
+    expect(TOURNAMENTS.holiday_classic.week - TOURNAMENTS.az_showcase.week).toBe(3);
+    for (const w of [1, 2, 9, 12, 17, 18]) expect(fixtureForSeasonWeek(w)).toBeNull();
     for (let g = 1; g <= 12; g++) expect(weekOfLeagueGame(g)).not.toBeNull();
   });
-  it('has 81 featured slots: 18 each of M, S, C, F and 9 parent scenes (week 1, then even weeks from 4; the owner rewrite of weeks 1-2 moved the week-2 talk to week 1)', () => {
+  it('has 79 featured slots: 18 each of M, S, C, F and Mom in weeks 1, 4, 7, 9, 12, 16 plus the week 18 family decision', () => {
     const all = SEASON_WEEKS.flatMap((w) => slotIds(w.week));
-    expect(all).toHaveLength(81);
-    expect(new Set(all).size).toBe(81);
-    expect(all.filter((s) => s.endsWith('_P')).map((s) => Number(s.slice(4, 6)))).toEqual([1, 4, 6, 8, 10, 12, 14, 16, 18]);
+    expect(all).toHaveLength(79);
+    expect(new Set(all).size).toBe(79);
+    expect(all.filter((s) => s.endsWith('_P')).map((s) => Number(s.slice(4, 6)))).toEqual([1, 4, 7, 9, 12, 16, 18]);
   });
 });
 
@@ -70,7 +79,7 @@ const play = (s: TournamentState, us: number, them: number): TournamentState => 
 
 describe('Season One tournaments', () => {
   it('each cup has four entrants, three round-robin games each, and Batavia in every round', () => {
-    for (const id of ['starter_cup', 'desert_lights'] as const) {
+    for (const id of ['az_showcase', 'holiday_classic'] as const) {
       const rr = roundRobin(id);
       expect(rr).toHaveLength(6);
       expect(new Set(TOURNAMENTS[id].entrants).size).toBe(4);
@@ -80,7 +89,7 @@ describe('Season One tournaments', () => {
     }
   });
   it('the playoff is undecided until all group games have results; winning every game leads to the championship', () => {
-    let s = newTournament('starter_cup', 'c', 11);
+    let s = newTournament('az_showcase', 'c', 11);
     expect(playoffs(s)).toBeNull();
     expect(bataviaFixture(s, 4)).toBeNull();
     s = play(s, 3, 0);
@@ -95,11 +104,11 @@ describe('Season One tournaments', () => {
     expect(bataviaFinish(s)).toBe('shared_champion');
     expect(nextBataviaFixture(s)).toBeNull();
     expect(Object.keys(s.results)).toHaveLength(8);
-    expect(parseTournament(s, 'starter_cup').ok).toBe(true);
+    expect(parseTournament(s, 'az_showcase').ok).toBe(true);
   });
   it('losing every group game leads to the placement game, and results cannot be rewritten or played out of order', () => {
-    let s = newTournament('desert_lights', 'c', 5);
-    const late = roundRobin('desert_lights').find((f) => f.stage === 'rr3' && (f.home === 'batavia' || f.away === 'batavia'))!;
+    let s = newTournament('holiday_classic', 'c', 5);
+    const late = roundRobin('holiday_classic').find((f) => f.stage === 'rr3' && (f.home === 'batavia' || f.away === 'batavia'))!;
     expect(recordTournamentPlayed(s, late.id, 1, 0)).toMatchObject({ ok: false });
     s = play(s, 0, 4);
     const first = Object.values(s.results).find((r) => r.source === 'played')!;
@@ -110,12 +119,12 @@ describe('Season One tournaments', () => {
     expect(bataviaFixture(s, 4)!.stage).toBe('placement');
     s = play(s, 2, 1);
     expect(bataviaFinish(s)).toBe('third');
-    expect(parseTournament({ ...s, results: { ...s.results, 'desert_lights-final-x-y': { fixtureId: 'desert_lights-final-x-y', homeGoals: 1, awayGoals: 0, source: 'simulated' } } }, 'desert_lights').ok).toBe(false);
+    expect(parseTournament({ ...s, results: { ...s.results, 'holiday_classic-final-x-y': { fixtureId: 'holiday_classic-final-x-y', homeGoals: 1, awayGoals: 0, source: 'simulated' } } }, 'holiday_classic').ok).toBe(false);
   });
   it('tournament results never change the league table', () => {
     const league = simulateSeasonThrough(newSeasonLeague('c', 1), 5);
     const before = seasonTable(league);
-    let t = newTournament('starter_cup', 'c', 1);
+    let t = newTournament('az_showcase', 'c', 1);
     for (let i = 0; i < 4; i++) t = play(t, 2, 0);
     expect(seasonTable(league)).toEqual(before);
   });

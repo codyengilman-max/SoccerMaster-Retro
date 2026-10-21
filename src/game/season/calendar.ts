@@ -1,10 +1,12 @@
 /**
- * Season One calendar (story package v1.0): 18 relative game weeks. Weeks 1–2 arrival/preseason,
- * league games 1–6 in weeks 3–8, Scottsdale Starter Cup in week 9, recovery in week 10, Desert Lights
- * Cup in week 11, reset in week 12, league games 7–12 in weeks 13–18. Parent scenes in even weeks.
+ * Season One calendar (owner storyboard "A Place on the Field", 2026-10-21): 18 relative game weeks.
+ * Weeks 1–2 arrival/preseason, league games 1–6 in weeks 3–8, AZ Showcase in week 9, league games 7–8
+ * in weeks 10–11, Holiday Classic in week 12, league games 9–12 in weeks 13–16, Arizona State Cup
+ * semifinals in week 17 and final in week 18. Mom's deeper talks: weeks 1, 4, 7, 9, 12, 16, then the
+ * week 18 family decision.
  */
-export type WeekKind = 'arrival' | 'preseason' | 'league' | 'tournament' | 'recovery' | 'reset';
-export type TournamentId = 'starter_cup' | 'desert_lights';
+export type WeekKind = 'arrival' | 'preseason' | 'league' | 'tournament' | 'state_cup';
+export type TournamentId = 'az_showcase' | 'holiday_classic';
 
 export interface SeasonWeek {
   readonly week: number;
@@ -16,25 +18,31 @@ export interface SeasonWeek {
   readonly parent: boolean;
 }
 
+/** Mom's deeper conversations (storyboard), followed by the week 18 family decision. */
+export const PARENT_WEEKS: readonly number[] = Object.freeze([1, 4, 7, 9, 12, 16, 18]);
+function parentWeek(week: number): boolean {
+  return PARENT_WEEKS.includes(week);
+}
+
 const RAW: readonly [string, WeekKind, number | null, TournamentId | null][] = [
-  ['Nobody Knows You Here', 'arrival', null, null],
-  ['No Borrowed Reputation', 'preseason', null, null],
-  ['The First Receipt', 'league', 1, null],
-  ['A Seat at the Table', 'league', 2, null],
-  ['The Work Nobody Sees', 'league', 3, null],
-  ['Two Names, One Opportunity', 'league', 4, null],
-  ['Who Gets the Credit?', 'league', 5, null],
-  ['The Cost of Being Seen', 'league', 6, null],
-  ['Everybody Has a Badge', 'tournament', null, 'starter_cup'],
-  ['When the Noise Stops', 'recovery', null, null],
-  ['The Second Test', 'tournament', null, 'desert_lights'],
-  ['The Choice Behind the Choice', 'reset', null, null],
-  ['They Know Your Name Now', 'league', 7, null],
-  ['Say It to My Face', 'league', 8, null],
-  ['Make Room', 'league', 9, null],
-  ['The Honest Conversation', 'league', 10, null],
-  ['One More Week', 'league', 11, null],
-  ['A Place You Earn', 'league', 12, null],
+  ["You Don't Know Anybody Yet", 'arrival', null, null],
+  ['Nobody Saved You a Spot', 'preseason', null, null],
+  ['When It Counts', 'league', 1, null],
+  ['Everybody Wants Something', 'league', 2, null],
+  ['Starting to Believe', 'league', 3, null],
+  ['People Notice', 'league', 4, null],
+  ['Whose Side?', 'league', 5, null],
+  ['Losing the Room', 'league', 6, null],
+  ['Bigger Names', 'tournament', null, 'az_showcase'],
+  ['New Badge, Same Blake', 'league', 7, null],
+  ['Who Am I Doing This For?', 'league', 8, null],
+  ['What We Can Afford', 'tournament', null, 'holiday_classic'],
+  ['Questions Worth Asking', 'league', 9, null],
+  ['Next Horizon', 'league', 10, null],
+  ['Monday Still Comes', 'league', 11, null],
+  ['Finish What You Started', 'league', 12, null],
+  ['Four Teams Left', 'state_cup', null, null],
+  ['What Comes Next', 'state_cup', null, null],
 ];
 
 export const SEASON_WEEKS: readonly SeasonWeek[] = Object.freeze(
@@ -44,11 +52,7 @@ export const SEASON_LENGTH = SEASON_WEEKS.length;
 export const seasonWeek = (week: number): SeasonWeek | null => SEASON_WEEKS[week - 1] ?? null;
 /** Week of a league game number (1–12). */
 export const weekOfLeagueGame = (game: number): number | null => SEASON_WEEKS.find((w) => w.leagueGame === game)?.week ?? null;
-/** Stable featured scene-slot IDs for a week: M, S, C, F, and P on even weeks (81 across the season). */
-/** Deeper parent talk: every other week, except the owner's week 1-2 rewrite moved week 2's talk to week 1. */
-function parentWeek(week: number): boolean {
-  return week === 1 || (week !== 2 && week % 2 === 0);
-}
+/** Stable featured scene-slot IDs for a week: M, S, C, F, and P in parent weeks (79 across the season). */
 
 export function slotIds(week: number): readonly string[] {
   const w = seasonWeek(week);

@@ -31,9 +31,9 @@ export interface TournamentConfig {
 }
 const TIE_RULE = ['points', 'head_to_head', 'goal_difference', 'goals_for', 'lots'] as const;
 export const TOURNAMENTS: Readonly<Record<TournamentId, TournamentConfig>> = Object.freeze({
-  starter_cup: {
-    id: 'starter_cup',
-    name: 'Scottsdale Starter Cup',
+  az_showcase: {
+    id: 'az_showcase',
+    name: 'AZ Showcase',
     week: 9,
     entrants: ['batavia', 'saguaro_hills', 'red_rock_rovers', 'canyon_breeze'],
     names: { batavia: 'FC Batavia', saguaro_hills: 'Saguaro Hills FC', red_rock_rovers: 'Red Rock Rovers', canyon_breeze: 'Canyon Breeze SC' },
@@ -41,10 +41,10 @@ export const TOURNAMENTS: Readonly<Record<TournamentId, TournamentConfig>> = Obj
     drawnPlayoff: 'shared',
     nameStatus: 'working_fictional_name',
   },
-  desert_lights: {
-    id: 'desert_lights',
-    name: 'Desert Lights Cup',
-    week: 11,
+  holiday_classic: {
+    id: 'holiday_classic',
+    name: 'Holiday Classic',
+    week: 12,
     entrants: ['batavia', 'mirage_valley', 'copper_trail', 'sunset_mesa'],
     names: { batavia: 'FC Batavia', mirage_valley: 'Mirage Valley FC', copper_trail: 'Copper Trail SC', sunset_mesa: 'Sunset Mesa United' },
     tieRule: TIE_RULE,
@@ -209,7 +209,7 @@ export function parseTournament(raw: unknown, id: TournamentId): { ok: true; val
   for (const [k, v] of Object.entries(o.results as Record<string, unknown>)) {
     const r = v as Record<string, unknown>;
     if (r?.fixtureId !== k || !goalsOk(r.homeGoals) || !goalsOk(r.awayGoals) || (r.source !== 'played' && r.source !== 'simulated')) return { ok: false, error: `bad result ${k}` };
-    if (!known.has(k) && !/^(starter_cup|desert_lights)-(final|placement)-[a-z_]+-[a-z_]+$/.test(k)) return { ok: false, error: `unknown fixture ${k}` };
+    if (!known.has(k) && !/^(az_showcase|holiday_classic)-(final|placement)-[a-z_]+-[a-z_]+$/.test(k)) return { ok: false, error: `unknown fixture ${k}` };
   }
   const value = raw as TournamentState;
   const po = playoffs(value);
