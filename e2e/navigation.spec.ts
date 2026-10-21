@@ -13,12 +13,17 @@ import {
 
 const ROUND_TRIPS = 5;
 
-function stableSnapshot(d: Diagnostics, dom: DomListenerSummary) {
+/** PlayerArt's drawn-fallback frames (`pa:`): a bounded LRU cache filled as players move, removed on shutdown. */
+const DRAWN_FRAME = /^pa:/;
+const DRAWN_FRAME_LIMIT = 512; // PLAYER_ART.maxFrames
+
+function stableSnapshot(d: Diagnostics, dom: DomListenerSummary, live = false) {
   return {
     canvases: d.canvases,
     activeScenes: d.activeScenes,
     displayListSize: d.displayListSize,
-    textureKeys: d.textureKeys,
+    // During live play the drawn-frame cache depends on how far players have run, so it is checked by its bound instead.
+    textureKeys: live ? d.textureKeys.filter((k) => !DRAWN_FRAME.test(k)) : d.textureKeys,
     listeners: d.listeners,
     dom,
   };
@@ -94,7 +99,8 @@ test('Start -> Jungle Ball -> Leave repeated keeps one canvas and stable listene
     for (const name of ['pen', 'back-button']) {
       expectInside(name, pitch.layout?.elements[name], viewport);
     }
-    const pitchSnap = stableSnapshot(pitch, await page.evaluate(() => window.__domListeners?.() ?? {}));
+    expect(pitch.textureKeys.filter((k) => DRAWN_FRAME.test(k)).length).toBeLessThanOrEqual(DRAWN_FRAME_LIMIT);
+    const pitchSnap = stableSnapshot(pitch, await page.evaluate(() => window.__domListeners?.() ?? {}), true);
     if (pitchBaseline) expect(pitchSnap, `jungle visit ${i + 1}`).toEqual(pitchBaseline);
     else pitchBaseline = pitchSnap;
     await linger(page);
