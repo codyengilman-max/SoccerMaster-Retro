@@ -199,3 +199,7 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Shoot-outs are seeded and labelled simulated because no playable shoot-out exists; the storyboard's "existing penalty-shootout gameplay" is a gap.
 - Strength rating is derived (Elo from saved results), never stored, so it cannot drift from the records and stays idempotent across reloads.
 - Next Horizon is not a league club; it enters tournaments and the State Cup by exemption (owner, 2026-10-21).
+
+## D41. Protagonist follows control in Team Training; New game archives (owner report, 2026-10-22)
+- Team Training drills choose which Batavia player you control, so the saved look goes on that player each situation. In matches the protagonist stays on the position slot (control can switch to teammates).
+- New game never deletes: old career, story, league and cup records are copied aside in the same databases before the fresh start.

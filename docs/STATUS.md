@@ -1,5 +1,10 @@
 # Status
 
+## Saved protagonist in Team Training + New game (owner report 2026-10-22, not merged, not deployed)
+- Team Training now gives the saved Boy/Girl look to the player each drill puts you in control of (`stageTeamSituation`), instead of the fixed formation slot (`CAREER_SLOT`). Before, a girl save controlled a Batavia boy while the girl stood elsewhere on the pitch.
+- Start has a "New game" button under "Play Story". It needs a second tap within 5 s. It archives the career save (`archive-<time>` in `smr-career`), the story, the league and the cup records (never deleted), then starts the story from the prologue at week 1 (`CareerStore.startOver`, `StoryStore.newGame`). Before, there was no way to start over, so an old save kept its training week (e.g. week 121).
+- Tests: `tests/new-game.test.ts`, `e2e/protagonist.spec.ts` (girl look on the controlled player in Team Training, New game two-tap and archive).
+
 ## Season One structure from the storyboard + story mode only (owner outline "A Place on the Field", 2026-10-21; stacked on PR #26, not merged, not deployed)
 - **Story mode only:** Start shows one "Play Story" button. Free 9v9 match, Home Training, Jungle Ball and Review & Lab (and the `T` shortcut, and Home Training's "Play a 9v9 match") need `?dev` in the link (`shouldExposeDevMenu`). Inside the story, matches, Crossbar, Jungle Ball and training still open as before. Browser specs that use the developer entries now load `/?debug=1&dev`; `navigation.spec` checks the player start screen has only Story and that `T` does nothing.
 - **Calendar** (`src/game/season/calendar.ts`): the 18 storyboard titles; league games 1–6 in weeks 3–8, 7–8 in weeks 10–11, 9–12 in weeks 13–16; AZ Showcase week 9, Holiday Classic week 12 (three weeks apart); week 14 keeps league game 10 and adds a non-league friendly against Next Horizon, Blake's new club (owner, 2026-10-21; `friendly` on the week, never league points); State Cup semifinals week 17, final week 18. Mom's deeper scenes in weeks 1, 4, 7, 9, 12, 16 plus the week 18 family decision (79 slots). Weeks 1–4 slots are unchanged.

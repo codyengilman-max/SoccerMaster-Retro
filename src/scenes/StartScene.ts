@@ -22,6 +22,8 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
   private sandboxButton: Button | null = null;
   private reviewButton: Button | null = null;
   private storyButton!: Button;
+  private newGameButton: Button | null = null;
+  private newGameArmed = 0;
   private jungleButton: Button | null = null;
   private dev = false;
   private navigating = false;
@@ -82,6 +84,11 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
       onClick: () => this.openStory(),
     });
 
+    this.newGameButton = null;
+    this.newGameArmed = 0;
+    if (!this.dev) {
+      this.newGameButton = new Button(this, 0, 0, { name: 'newgame-button', label: 'New game', width: 220, height: 44, fontSize: 16, onClick: () => this.pressNewGame() });
+    }
     // Story mode is the only way to play; developer and owner-review entries need `?dev`.
     this.careerButton = this.sandboxButton = this.reviewButton = this.jungleButton = null;
     if (this.dev) {
@@ -136,6 +143,7 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
         subtitle: boundsOf(this.subtitle),
         footer: boundsOf(this.footer),
         'story-button': this.storyButton.getButtonBounds(),
+        ...(this.newGameButton ? { 'newgame-button': this.newGameButton.getButtonBounds() } : {}),
         ...(this.careerButton ? { 'career-button': this.careerButton.getButtonBounds() } : {}),
         ...(this.sandboxButton ? { 'sandbox-button': this.sandboxButton.getButtonBounds() } : {}),
         ...(this.reviewButton ? { 'review-button': this.reviewButton.getButtonBounds() } : {}),
@@ -160,6 +168,22 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
     if (this.navigating) return;
     this.navigating = true;
     this.scene.start(SceneKeys.Story);
+  }
+
+  /** First tap arms (label asks to confirm); a second tap within 5 s starts over. The old save is archived, not deleted. */
+  private pressNewGame(): void {
+    if (this.navigating || !this.newGameButton) return;
+    const now = performance.now();
+    if (!this.newGameArmed || now - this.newGameArmed > 5000) {
+      this.newGameArmed = now;
+      this.newGameButton.setLabel('Tap again to start over');
+      this.time.delayedCall(5000, () => {
+        if (this.sys.isActive() && performance.now() - this.newGameArmed >= 4990) this.newGameButton?.setLabel('New game');
+      });
+      return;
+    }
+    this.navigating = true;
+    this.scene.start(SceneKeys.Story, { newGame: true });
   }
 
   private openReview(): void {
@@ -211,8 +235,9 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
       const bw = Math.round(portrait ? Math.min(width * 0.8, 420) : Math.min(width * 0.42, 360));
       const bh = Math.round(Math.max(60, Math.min(height * (portrait ? 0.1 : 0.2), 96)));
       const font = Math.round(Math.max(18, Math.min(bw * 0.09, bh * 0.38, 32)));
-      const y = portrait ? Math.min(height * 0.58, height - 48 - bh / 2) : Math.min(height * 0.66, height - 36 - bh / 2);
+      const y = portrait ? Math.min(height * 0.58, height - 48 - bh * 1.6 - 12) : Math.min(height * 0.58, height - 36 - bh * 1.6 - 12);
       this.storyButton.resize(bw, bh, font).setPosition(width / 2, y);
+      this.newGameButton?.resize(Math.round(bw * 0.7), Math.max(44, Math.round(bh * 0.6)), Math.max(14, Math.round(font * 0.6))).setPosition(width / 2, y + bh / 2 + 12 + Math.max(44, Math.round(bh * 0.6)) / 2);
       this.footer.setFontSize(Math.max(11, Math.round(Math.min(width, height) * 0.032))).setPosition(width / 2, height - 10);
       return;
     }

@@ -647,7 +647,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       coachIntent: s.coachIntent ? { ...s.coachIntent, target: { ...s.coachIntent.target } } : null,
       coach: this.coachReport(),
       teamTraining: this.team
-        ? { phase: this.team.phase, week: this.team.week, index: this.team.index, ids: this.team.situations.map((x) => x.id), scores: this.team.results.map((r) => r.score), message: this.team.message, hud: this.scoreText.text, half: this.team.half, zoom: TEAM_TRAINING_ZOOM, viewLen: this.viewLen, viewCross: this.viewCross }
+        ? { phase: this.team.phase, week: this.team.week, protagonist: this.team.look ? { id: this.sim.state.controlledId, set: this.looks[this.sim.state.controlledId]?.set ?? null } : null, index: this.team.index, ids: this.team.situations.map((x) => x.id), scores: this.team.results.map((r) => r.score), message: this.team.message, hud: this.scoreText.text, half: this.team.half, zoom: TEAM_TRAINING_ZOOM, viewLen: this.viewLen, viewCross: this.viewCross }
         : null,
       career: this.collector ? { slot: this.collector.careerId, pending: this.careerItems.length, batches: this.careerBatch, recorded: this.careerRecorded, missed: this.collector.missed } : null,
     };
@@ -1035,6 +1035,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
 
   private team: {
     week: number;
+    look: ProtagonistLook | null;
     situations: TeamTrainingSituation[];
     index: number;
     results: SituationResult[];
@@ -1053,7 +1054,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     if (!on) return;
     const debugSecs = Number(params.get('ttSeconds'));
     const shorten = shouldExposeDebug(window.location) && Number.isFinite(debugSecs) && debugSecs >= 1;
-    const team = { week: 0, situations: [] as TeamTrainingSituation[], index: 0, results: [] as SituationResult[], observer: null, store: null as CareerStore | null, attrs: {}, phase: 'loading' as 'loading' | 'playing' | 'review' | 'saving' | 'done', half: 'attack' as 'own' | 'attack', last: null as SituationResult | null, message: '' };
+    const team = { week: 0, look: null as ProtagonistLook | null, situations: [] as TeamTrainingSituation[], index: 0, results: [] as SituationResult[], observer: null, store: null as CareerStore | null, attrs: {}, phase: 'loading' as 'loading' | 'playing' | 'review' | 'saving' | 'done', half: 'attack' as 'own' | 'attack', last: null as SituationResult | null, message: '' };
     this.team = team;
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => team.store?.close());
     this.coachPose = COACH_POSE.walk;
@@ -1077,7 +1078,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       team.situations = selectSituations(save.player.position, save.week).map((x) => (shorten ? { ...x, seconds: Math.min(x.seconds, debugSecs) } : x));
       if (save.teamTraining.some((r) => r.week === save.week)) team.message = `Week ${save.week} is already counted; this is practice only.`;
       const gender = save.player.gender;
-      if (gender === 'boy' || gender === 'girl') this.setRosterLooks({ id: CAREER_SLOT[save.player.position], look: gender });
+      team.look = gender === 'boy' || gender === 'girl' ? gender : null;
       this.stageTeamSituation();
     });
   }
@@ -1098,6 +1099,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.cancelInput('team training');
     this.sim.command({ type: 'reset', seed: 11 + t.index });
     this.sim.arrange((s) => match.stageFixture(s, sit.fixture, MATCH_TUNING.pitch));
+    // The saved boy/girl is the player this drill puts you in control of, not a fixed formation slot.
+    if (t.look && this.sim.state.players[this.sim.state.controlledId].team === 'home') this.setRosterLooks({ id: this.sim.state.controlledId, look: t.look });
     this.sim.setPlayerAttrs(this.sim.state.controlledId, t.attrs);
     t.observer = new SituationObserver(sit, this.sim.state);
     this.snapCamera();

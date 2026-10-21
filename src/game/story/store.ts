@@ -218,6 +218,30 @@ export class StoryStore {
     }, false);
   }
 
+  /**
+   * New game: restarts the story (archiving it and the league record, as `restartStory`) and also copies
+   * this career's tournament records aside, so nothing from the old season carries over.
+   */
+  async newGame(careerId: string): Promise<boolean> {
+    if (!(await this.restartStory(careerId))) return false;
+    const at = Date.now();
+    for (const tid of ['az_showcase', 'holiday_classic']) {
+      const key = `tourney-s1:${careerId}:${tid}`;
+      const cur = await this.getRecord(key);
+      if (cur === undefined) continue;
+      const moved = await this.run<boolean>((st, finish) => {
+        st.put(cur, `rec:tourney-s1-archive:${careerId}:${tid}:${at}`);
+        st.delete(`rec:${key}`);
+        finish(true);
+      }, false).catch(() => false);
+      if (!this.db) {
+        this.memory.set(`rec:tourney-s1-archive:${careerId}:${tid}:${at}`, cur);
+        this.memory.delete(`rec:${key}`);
+      } else if (!moved) return false;
+    }
+    return true;
+  }
+
   /** The archived older story for this career, if Season One replaced one (read-only). */
   loadLegacy(careerId: string): Promise<StoryState | null> {
     if (!this.db) return Promise.resolve((this.memory.get(legacyKey(careerId)) as StoryState | undefined) ?? null);

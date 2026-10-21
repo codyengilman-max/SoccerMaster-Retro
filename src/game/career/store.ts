@@ -132,6 +132,29 @@ export class CareerStore {
     });
   }
 
+  /** New game: the current career is copied aside under `archive-<time>` (never deleted) and the save starts empty, in one transaction. */
+  async startOver(): Promise<boolean> {
+    if (!this.db) {
+      this.memory = emptySave();
+      this.notify(this.memory);
+      return true;
+    }
+    const at = Date.now();
+    try {
+      await this.tx((st) => {
+        const req = st.get(KEY);
+        req.onsuccess = () => {
+          if (req.result !== undefined) st.put(req.result, `archive-${at}`);
+          st.delete(KEY);
+        };
+      });
+    } catch {
+      return false;
+    }
+    this.notify(emptySave());
+    return true;
+  }
+
   async exportText(): Promise<string> {
     return exportSave(await this.load());
   }

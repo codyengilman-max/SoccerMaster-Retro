@@ -20,7 +20,7 @@ export interface MatchPlayerReport {
 /** Plain-data snapshot of the 9v9 sandbox exposed through `window.__SMR__` (debug builds only). */
 export interface MatchReport {
   /** Career Team Training progress, or null outside Team Training. */
-  readonly teamTraining?: { readonly phase: string; readonly week: number; readonly index: number; readonly ids: readonly string[]; readonly scores: readonly number[]; readonly message: string; readonly hud?: string; readonly half?: string; readonly zoom?: number; readonly viewLen?: number; readonly viewCross?: number } | null;
+  readonly teamTraining?: { readonly phase: string; readonly week: number; readonly index: number; readonly ids: readonly string[]; readonly scores: readonly number[]; readonly message: string; readonly hud?: string; readonly half?: string; readonly zoom?: number; readonly protagonist?: { readonly id: string; readonly set: string | null } | null; readonly viewLen?: number; readonly viewCross?: number } | null;
   /** M6: career evidence recording for the career player's slot, or null outside career play. */
   readonly career?: { readonly slot: string; readonly pending: number; readonly batches: number; readonly recorded: number; readonly missed: number } | null;
   /** Passing/shooting model (v1.1 or `?kick=classic`), live pre-release preview and the last released kick and first touch. */

@@ -109,6 +109,12 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     super(SceneKeys.Story);
   }
 
+  private newGame = false;
+
+  init(data?: { newGame?: boolean }): void {
+    this.newGame = data?.newGame === true;
+  }
+
   create(): void {
     this.mode = 'loading';
     this.busy = false;
@@ -159,8 +165,13 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
 
   private async boot(): Promise<void> {
     this.career = await CareerStore.open();
-    this.save = await this.career.load();
     this.store = await StoryStore.open();
+    if (this.newGame) {
+      // New game from Start: the old career, story, league and cups are archived, then everything starts at week 1.
+      this.newGame = false;
+      if (!(await this.career.startOver()) || !(await this.store.newGame(CAREER_ID))) return this.fail('A new game could not be started. Nothing was changed.');
+    }
+    this.save = await this.career.load();
     const begun = await this.store.begin(CAREER_ID);
     if (!begun.ok) return this.fail(begun.error);
     this.state = begun.state;
