@@ -1,7 +1,7 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { diagnostics, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
 
-test.describe.configure({ timeout: 180_000 });
+test.describe.configure({ timeout: 300_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 type Rect = { x: number; y: number; width: number; height: number };
 type Demo = { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: Rect; ball: { x: number; y: number }; rect: Rect };
@@ -70,8 +70,11 @@ const EXERCISES: readonly [string, string][] = [
   ['lib-awareness', 'act-aw-eyes-up'],
 ];
 
-for (const gender of ['boy', 'girl'] as const) {
-  test(`home demos: the saved ${gender} demonstrates in the training kit, after reload and rotation; watching awards nothing`, async ({ page }, info) => {
+// Split in two so each test fits CI's slower runners; together they cover every family above.
+const HALVES: readonly (readonly [string, string][])[] = [EXERCISES.slice(0, 4), EXERCISES.slice(4)];
+
+for (const gender of ['boy', 'girl'] as const) for (const [h, exercises] of HALVES.entries()) {
+  test(`home demos ${h + 1}/2: the saved ${gender} demonstrates in the training kit, after reload and rotation; watching awards nothing`, async ({ page }, info) => {
     const mode = modeFor(info);
     const errors = trackConsoleErrors(page);
     page.on('dialog', (d) => void d.accept('Alex'));
@@ -82,7 +85,7 @@ for (const gender of ['boy', 'girl'] as const) {
     c = await openCareer(page, mode); // loading a save
     expect(c.player).toBe('Alex');
     const before = { credit: c.credit, journal: c.journal };
-    for (const [lib, act] of EXERCISES) {
+    for (const [lib, act] of exercises) {
       if ((await career(page)).screen !== 'home') await openCareer(page, mode);
       await press(page, 'nav-library', mode);
       await until(page, (x) => x.screen === 'library', 'library');
