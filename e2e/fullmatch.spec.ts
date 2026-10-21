@@ -26,7 +26,7 @@ async function playUntil(page: Page, mode: PointerMode, predicate: (r: MatchRepo
 }
 
 async function openMatch(page: Page, mode: PointerMode, query: string): Promise<MatchReport> {
-  await page.goto(`/?debug=1${query}`);
+  await page.goto(`/?debug=1&dev${query}`);
   await waitForScene(page, 'start');
   await pressElement(page, 'sandbox-button', mode);
   await waitForScene(page, 'formation');

@@ -5,7 +5,7 @@ const modeFor = (info: { project: { name: string } }): PointerMode => (info.proj
 
 test('Gameplay Lab: ?lab opens the picker, a scenario stages the real match with no clock, Coach or career', async ({ page }, info) => {
   const errors = trackConsoleErrors(page);
-  await page.goto('/?debug=1&lab');
+  await page.goto('/?debug=1&dev&lab');
   await waitForScene(page, 'lab');
   // No scenario row may overlap another row, at any viewport.
   const els = Object.entries((await diagnostics(page)).layout?.elements ?? {}).filter(([k]) => k.startsWith('lab-'));
@@ -37,7 +37,7 @@ test('Gameplay Lab: ?lab opens the picker, a scenario stages the real match with
 
 test('Gameplay Lab: the controls setups stage their carrier and runner', async ({ page }, info) => {
   const errors = trackConsoleErrors(page);
-  await page.goto('/?debug=1&lab');
+  await page.goto('/?debug=1&dev&lab');
   await waitForScene(page, 'lab');
   await pressElement(page, 'lab-through-ball', modeFor(info));
   await waitForScene(page, 'match');

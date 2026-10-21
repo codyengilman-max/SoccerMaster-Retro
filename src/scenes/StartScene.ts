@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { artTextureKey, artUrl } from '../render/art/urls';
 import type { Rect } from '../game';
+import { shouldExposeDevMenu } from '../debug/diagnostics';
 import { orientationOf } from '../render/layout';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { InspectableScene, SceneLayoutReport } from './inspectable';
@@ -17,11 +18,12 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
   private title!: Phaser.GameObjects.Text;
   private subtitle!: Phaser.GameObjects.Text;
   private footer!: Phaser.GameObjects.Text;
-  private careerButton!: Button;
-  private sandboxButton!: Button;
-  private reviewButton!: Button;
+  private careerButton: Button | null = null;
+  private sandboxButton: Button | null = null;
+  private reviewButton: Button | null = null;
   private storyButton!: Button;
-  private jungleButton!: Button;
+  private jungleButton: Button | null = null;
+  private dev = false;
   private navigating = false;
 
   constructor() {
@@ -70,50 +72,55 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
       .setOrigin(0.5, 1)
       .setAlpha(0.7)
       .setResolution(resolution);
-    this.sandboxButton = new Button(this, 0, 0, {
-      name: 'sandbox-button',
-      label: 'Play 9v9 Match',
-      width: 280,
-      height: 72,
-      fontSize: 24,
-      onClick: () => this.openSandbox(),
-    });
-    this.careerButton = new Button(this, 0, 0, {
-      name: 'career-button',
-      label: 'Home Training',
-      width: 280,
-      height: 72,
-      fontSize: 24,
-      onClick: () => this.openCareer(),
-    });
-    this.reviewButton = new Button(this, 0, 0, {
-      name: 'review-button',
-      label: 'Review & Lab',
-      width: 220,
-      height: 48,
-      fontSize: 18,
-      onClick: () => this.openReview(),
-    });
+    this.dev = shouldExposeDevMenu(window.location);
     this.storyButton = new Button(this, 0, 0, {
       name: 'story-button',
-      label: 'Story',
+      label: this.dev ? 'Story' : 'Play Story',
       width: 220,
       height: 48,
       fontSize: 18,
       onClick: () => this.openStory(),
     });
 
-    this.jungleButton = new Button(this, 0, 0, {
-      name: 'jungle-button',
-      label: 'Jungle Ball',
-      width: 220,
-      height: 48,
-      fontSize: 18,
-      onClick: () => this.openJungle(),
-    });
+    // Story mode is the only way to play; developer and owner-review entries need `?dev`.
+    this.careerButton = this.sandboxButton = this.reviewButton = this.jungleButton = null;
+    if (this.dev) {
+      this.sandboxButton = new Button(this, 0, 0, {
+        name: 'sandbox-button',
+        label: 'Play 9v9 Match',
+        width: 280,
+        height: 72,
+        fontSize: 24,
+        onClick: () => this.openSandbox(),
+      });
+      this.careerButton = new Button(this, 0, 0, {
+        name: 'career-button',
+        label: 'Home Training',
+        width: 280,
+        height: 72,
+        fontSize: 24,
+        onClick: () => this.openCareer(),
+      });
+      this.reviewButton = new Button(this, 0, 0, {
+        name: 'review-button',
+        label: 'Review & Lab',
+        width: 220,
+        height: 48,
+        fontSize: 18,
+        onClick: () => this.openReview(),
+      });
+      this.jungleButton = new Button(this, 0, 0, {
+        name: 'jungle-button',
+        label: 'Jungle Ball',
+        width: 220,
+        height: 48,
+        fontSize: 18,
+        onClick: () => this.openJungle(),
+      });
+    }
 
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this);
-    this.input.keyboard?.on('keydown-T', this.openSandbox, this);
+    if (this.dev) this.input.keyboard?.on('keydown-T', this.openSandbox, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleShutdown, this);
 
     this.layout(this.scale.width, this.scale.height);
@@ -128,23 +135,23 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
         title: boundsOf(this.title),
         subtitle: boundsOf(this.subtitle),
         footer: boundsOf(this.footer),
-        'career-button': this.careerButton.getButtonBounds(),
-        'sandbox-button': this.sandboxButton.getButtonBounds(),
-        'review-button': this.reviewButton.getButtonBounds(),
         'story-button': this.storyButton.getButtonBounds(),
-        'jungle-button': this.jungleButton.getButtonBounds(),
+        ...(this.careerButton ? { 'career-button': this.careerButton.getButtonBounds() } : {}),
+        ...(this.sandboxButton ? { 'sandbox-button': this.sandboxButton.getButtonBounds() } : {}),
+        ...(this.reviewButton ? { 'review-button': this.reviewButton.getButtonBounds() } : {}),
+        ...(this.jungleButton ? { 'jungle-button': this.jungleButton.getButtonBounds() } : {}),
       },
     };
   }
 
   private openJungle(): void {
-    if (this.navigating) return;
+    if (this.navigating || !this.dev) return;
     this.navigating = true;
     this.scene.start(SceneKeys.Jungle);
   }
 
   private openCareer(): void {
-    if (this.navigating) return;
+    if (this.navigating || !this.dev) return;
     this.navigating = true;
     this.scene.start(SceneKeys.Career);
   }
@@ -156,13 +163,13 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
   }
 
   private openReview(): void {
-    if (this.navigating) return;
+    if (this.navigating || !this.dev) return;
     this.navigating = true;
     this.scene.start(SceneKeys.Career, { open: 'reviewHub' });
   }
 
   private openSandbox(): void {
-    if (this.navigating) return;
+    if (this.navigating || !this.dev) return;
     this.navigating = true;
     this.scene.start(SceneKeys.Formation);
   }
@@ -199,6 +206,16 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
       .setFontSize(subtitleSize)
       .setPosition(width / 2, this.title.y + this.title.displayHeight / 2 + subtitleSize * 1.1);
 
+    if (!this.sandboxButton || !this.careerButton || !this.jungleButton || !this.reviewButton) {
+      // Player build: one large Story button.
+      const bw = Math.round(portrait ? Math.min(width * 0.8, 420) : Math.min(width * 0.42, 360));
+      const bh = Math.round(Math.max(60, Math.min(height * (portrait ? 0.1 : 0.2), 96)));
+      const font = Math.round(Math.max(18, Math.min(bw * 0.09, bh * 0.38, 32)));
+      const y = portrait ? Math.min(height * 0.58, height - 48 - bh / 2) : Math.min(height * 0.66, height - 36 - bh / 2);
+      this.storyButton.resize(bw, bh, font).setPosition(width / 2, y);
+      this.footer.setFontSize(Math.max(11, Math.round(Math.min(width, height) * 0.032))).setPosition(width / 2, height - 10);
+      return;
+    }
     // Portrait stacks the buttons; landscape puts them side by side.
     const buttons = [this.sandboxButton, this.careerButton, this.jungleButton];
     const n = buttons.length;

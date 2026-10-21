@@ -28,7 +28,7 @@ test.beforeEach(async ({ page }) => {
   await trackDomListeners(page);
 });
 
-test('start screen fits the phone viewport', async ({ page }, info) => {
+test('player start screen offers only Story, and it fits the phone viewport', async ({ page }, info) => {
   const errors = trackConsoleErrors(page);
   await page.goto('/?debug=1');
   const d = await waitForScene(page, 'start');
@@ -38,7 +38,25 @@ test('start screen fits the phone viewport', async ({ page }, info) => {
   expect(d.canvases).toBe(1);
   expect(d.layout?.orientation).toBe(info.project.name.includes('portrait') ? 'portrait' : 'landscape');
   expect(d.layout?.viewport).toEqual(viewport);
-  for (const name of ['title', 'subtitle', 'footer', 'sandbox-button', 'career-button', 'jungle-button', 'review-button']) expectInside(name, d.layout?.elements[name], viewport);
+  for (const name of ['title', 'subtitle', 'footer', 'story-button']) expectInside(name, d.layout?.elements[name], viewport);
+  for (const name of ['sandbox-button', 'career-button', 'jungle-button', 'review-button']) expect(d.layout?.elements[name], name).toBeUndefined();
+  expect(d.layout?.elements['story-button']?.height ?? 0).toBeGreaterThanOrEqual(44);
+  // The old free-match shortcut does nothing in story mode.
+  await page.keyboard.press('t');
+  await linger(page);
+  expect((await diagnostics(page)).activeScenes).toEqual(['start']);
+  await pressElement(page, 'story-button', 'touch');
+  await waitForScene(page, 'story');
+  expect(errors).toEqual([]);
+});
+
+test('?dev start screen keeps the developer and review entries, and they fit', async ({ page }) => {
+  const errors = trackConsoleErrors(page);
+  await page.goto('/?debug=1&dev');
+  const d = await waitForScene(page, 'start');
+  const viewport = page.viewportSize();
+  if (!viewport) throw new Error('no viewport');
+  for (const name of ['title', 'subtitle', 'footer', 'story-button', 'sandbox-button', 'career-button', 'jungle-button', 'review-button']) expectInside(name, d.layout?.elements[name], viewport);
   expect(d.layout?.elements['sandbox-button']?.height ?? 0).toBeGreaterThanOrEqual(44);
   await linger(page);
   expect(errors).toEqual([]);
@@ -48,7 +66,7 @@ test('Start -> Jungle Ball -> Leave repeated keeps one canvas and stable listene
   // Five round trips through a playable gameplay scene (Jungle Ball).
   test.setTimeout(120_000);
   const errors = trackConsoleErrors(page);
-  await page.goto('/?debug=1');
+  await page.goto('/?debug=1&dev');
   const initial = await waitForScene(page, 'start');
   const viewport = page.viewportSize();
   if (!viewport) throw new Error('no viewport');
@@ -88,7 +106,7 @@ test('Start -> Jungle Ball -> Leave repeated keeps one canvas and stable listene
 
 test('Jungle Ball re-lays out on orientation change and Leave still works', async ({ page }) => {
   const errors = trackConsoleErrors(page);
-  await page.goto('/?debug=1');
+  await page.goto('/?debug=1&dev');
   await waitForScene(page, 'start');
   await pressElement(page, 'jungle-button', 'touch');
   const before = await waitForScene(page, 'jungle');
@@ -120,7 +138,7 @@ test('Jungle Ball re-lays out on orientation change and Leave still works', asyn
 
 test('canvas recovers when Phaser refreshes with a stale parent size (rotation race)', async ({ page }) => {
   const errors = trackConsoleErrors(page);
-  await page.goto('/?debug=1');
+  await page.goto('/?debug=1&dev');
   await waitForScene(page, 'start');
   await pressElement(page, 'jungle-button', 'touch');
   const before = await waitForScene(page, 'jungle');
@@ -155,7 +173,7 @@ test('canvas recovers when Phaser refreshes with a stale parent size (rotation r
 
 test('keyboard shortcuts navigate without stacking scenes', async ({ page }) => {
   const errors = trackConsoleErrors(page);
-  await page.goto('/?debug=1');
+  await page.goto('/?debug=1&dev');
   await waitForScene(page, 'start');
   await page.locator('canvas').focus();
   await page.keyboard.press('t');

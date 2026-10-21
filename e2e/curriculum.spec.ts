@@ -49,7 +49,7 @@ test('draft library is review-only: cards and demo prototypes, never in the plan
     if (!['localhost', '127.0.0.1'].includes(u.hostname) && u.protocol !== 'data:' && u.protocol !== 'blob:') external.push(r.url());
   });
   page.on('dialog', (d) => void d.accept('Sam'));
-  await page.goto('/?debug=1');
+  await page.goto('/?debug=1&dev');
   await waitForScene(page, 'start');
   await press(page, 'career-button', mode);
   await waitForScene(page, 'career');
@@ -117,7 +117,7 @@ test('reduced motion starts the demo paused', async ({ page }, info) => {
   const mode = modeFor(info);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   page.on('dialog', (d) => void d.accept('Sam'));
-  await page.goto('/?debug=1');
+  await page.goto('/?debug=1&dev');
   await waitForScene(page, 'start');
   await press(page, 'career-button', mode);
   await waitForScene(page, 'career');

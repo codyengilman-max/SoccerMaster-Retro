@@ -72,6 +72,11 @@ export function shouldExposeDebug(location: Location): boolean {
   return import.meta.env.DEV || new URLSearchParams(location.search).has('debug');
 }
 
+/** Story mode is the only way to play; `?dev` adds the developer and owner-review entries (free match, Home Training, Jungle Ball, Review & Lab). */
+export function shouldExposeDevMenu(location: Location): boolean {
+  return new URLSearchParams(location.search).has('dev');
+}
+
 export function installDebugHandle(game: Phaser.Game): void {
   if (!shouldExposeDebug(window.location)) return;
   window.__SMR__ = { game, diagnostics: () => collectDiagnostics(game) };

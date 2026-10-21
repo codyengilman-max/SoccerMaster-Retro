@@ -43,7 +43,7 @@ test('team training: three catalog situations, counted once, leaving early count
   const mode = modeFor(info);
   const errors = trackConsoleErrors(page);
   page.on('dialog', (d) => void d.accept('Robin'));
-  await page.goto('/?debug=1&ttSeconds=2');
+  await page.goto('/?debug=1&dev&ttSeconds=2');
   await waitForScene(page, 'start');
   await press(page, 'career-button', mode);
   await waitForScene(page, 'career');

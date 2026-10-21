@@ -25,7 +25,7 @@ async function waitFor(page: Page, predicate: (r: MatchReport) => boolean, timeo
 }
 
 async function open(page: Page, mode: PointerMode, query = ''): Promise<MatchReport> {
-  await page.goto(`/?debug=1${query}`);
+  await page.goto(`/?debug=1&dev${query}`);
   await waitForScene(page, 'start');
   await pressElement(page, 'sandbox-button', mode);
   await waitForScene(page, 'formation');

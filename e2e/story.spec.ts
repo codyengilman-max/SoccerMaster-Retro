@@ -63,7 +63,7 @@ async function layout(page: Page): Promise<Layout> {
   return (await diagnostics(page)).layout as unknown as Layout;
 }
 async function openStory(page: Page, mode: 'touch' | 'mouse'): Promise<Story> {
-  await page.goto('/?debug=1&halfSeconds=8&ttSeconds=2');
+  await page.goto('/?debug=1&dev&halfSeconds=8&ttSeconds=2');
   await waitForScene(page, 'start');
   await pressAny(page, 'story-button', mode);
   return story(page, () => true, 'story loaded');

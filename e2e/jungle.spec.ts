@@ -29,7 +29,7 @@ test('Jungle Ball opens from Start, fits the screen, runs, and Leave returns wit
   // Three round trips into a sprite-rendered scene plus PUSH/SLIDE; slow CI runners need more than the 30 s default.
   test.setTimeout(120_000);
   const errors = trackConsoleErrors(page);
-  await page.goto('/?debug=1');
+  await page.goto('/?debug=1&dev');
   const initial = await waitForScene(page, 'start');
   const viewport = page.viewportSize();
   if (!viewport) throw new Error('no viewport');
@@ -72,7 +72,7 @@ test('Jungle Ball opens from Start, fits the screen, runs, and Leave returns wit
 test('keyboard moves the Jungle Ball player and rotation keeps the pen on screen', async ({ page }) => {
   test.setTimeout(90_000);
   const errors = trackConsoleErrors(page);
-  await page.goto('/?debug=1');
+  await page.goto('/?debug=1&dev');
   await waitForScene(page, 'start');
   await pressElement(page, 'jungle-button', 'touch');
   await waitForScene(page, 'jungle');

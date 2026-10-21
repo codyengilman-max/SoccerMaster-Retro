@@ -44,7 +44,7 @@ const ARM_MS = 350;
 const SUMMARY_ARM_MS = 1000;
 
 async function openCoached(page: Page, mode: PointerMode, query = ''): Promise<MatchReport> {
-  await page.goto(`/?debug=1&coach&coachSeconds=40${query}`);
+  await page.goto(`/?debug=1&dev&coach&coachSeconds=40${query}`);
   await waitForScene(page, 'start');
   await pressElement(page, 'sandbox-button', mode);
   await waitForScene(page, 'formation');
@@ -223,7 +223,7 @@ test('imported names are shown as plain text and the sandbox without ?coach is u
   await openCoached(page, mode, `&names=${encodeURIComponent('H2:<b>Ana</b>\u202e,H3:Bo,H4:Cy,H5:Di,H6:Ed,H7:Flo,H8:Gus,H9:Hal')}`);
   const q = await waitFor(page, (r) => r.coach!.overlay === 'question', 45_000);
   expect(q.coach!.view!.question).not.toMatch(/\u202e/);
-  await page.goto('/?debug=1');
+  await page.goto('/?debug=1&dev');
   await waitForScene(page, 'start');
   await pressElement(page, 'sandbox-button', mode);
   await waitForScene(page, 'formation');

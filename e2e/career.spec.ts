@@ -38,7 +38,7 @@ async function fits(page: Page): Promise<void> {
   expect((d.gameplay as Career).overflow, 'button labels spill past their buttons').toEqual([]);
 }
 async function openCareer(page: Page, mode: 'touch' | 'mouse'): Promise<Career> {
-  await page.goto('/?debug=1');
+  await page.goto('/?debug=1&dev');
   await waitForScene(page, 'start');
   await pressElement(page, 'career-button', mode);
   await waitForScene(page, 'career');

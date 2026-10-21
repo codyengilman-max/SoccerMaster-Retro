@@ -29,7 +29,7 @@ async function until(page: Page, pred: (c: Career) => boolean, what: string): Pr
   }
 }
 async function openCareer(page: Page, mode: 'touch' | 'mouse'): Promise<Career> {
-  await page.goto('/?debug=1');
+  await page.goto('/?debug=1&dev');
   await waitForScene(page, 'start');
   await pressAny(page, 'career-button', mode);
   await waitForScene(page, 'career');

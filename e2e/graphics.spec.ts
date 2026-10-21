@@ -44,7 +44,7 @@ async function advanceTo(page: Page, mode: 'touch' | 'mouse', pred: (s: Story) =
 /** Start Season One, choose girl + a name, and stop on the first moving-day line. */
 async function toDeparture(page: Page, mode: 'touch' | 'mouse'): Promise<Story> {
   page.on('dialog', (d) => void d.accept('Zoë'));
-  await page.goto('/?debug=1');
+  await page.goto('/?debug=1&dev');
   await waitForScene(page, 'start');
   await press(page, 'story-button', mode);
   for (let i = 0; i < 12; i++) {
@@ -113,7 +113,7 @@ test('missing art falls back to labelled placeholders and the story still advanc
 test('Art Gallery is reachable from Review & Lab, lists every asset with its status, and does not create a player', async ({ page }, info) => {
   const mode = modeFor(info);
   const errors = trackConsoleErrors(page);
-  await page.goto('/?debug=1');
+  await page.goto('/?debug=1&dev');
   await waitForScene(page, 'start');
   await press(page, 'review-button', mode);
   await waitForScene(page, 'career');

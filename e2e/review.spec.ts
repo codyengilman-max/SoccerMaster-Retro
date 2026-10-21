@@ -35,7 +35,7 @@ const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.width && b.x < a.x + a.widt
 test('Review & Lab hub reaches Training Review and the catalog-only Soccer Logic Review without touching the save', async ({ page }, info) => {
   const mode = modeFor(info);
   const errors = trackConsoleErrors(page);
-  await page.goto('/?debug=1');
+  await page.goto('/?debug=1&dev');
   await waitForScene(page, 'start');
   const start = await diagnostics(page);
   const els = start.layout!.elements as Record<string, Rect>;

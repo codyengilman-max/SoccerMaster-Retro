@@ -32,7 +32,7 @@ async function waitFor(page: Page, predicate: (r: MatchReport) => boolean, timeo
 }
 
 async function openSandbox(page: Page, mode: PointerMode, formation = '1-3-2-3', query = ''): Promise<MatchReport> {
-  await page.goto(`/?debug=1${query}`);
+  await page.goto(`/?debug=1&dev${query}`);
   await waitForScene(page, 'start');
   await pressElement(page, 'sandbox-button', mode);
   await waitForScene(page, 'formation');
@@ -149,7 +149,7 @@ test('keyboard: P pauses, R resets, O toggles overlay, Space passes, M returns t
 test('Start -> sandbox -> Menu repeated keeps one canvas and stable listeners', async ({ page }, info) => {
   const errors = trackConsoleErrors(page);
   const mode = modeFor(info);
-  await page.goto('/?debug=1');
+  await page.goto('/?debug=1&dev');
   const initial = await waitForScene(page, 'start');
   let baseline: unknown;
   for (let i = 0; i < 3; i++) {

@@ -31,7 +31,7 @@ async function until<T>(page: Page, scene: string, pred: (g: T) => boolean, what
     await page.waitForTimeout(50);
   }
 }
-const URL = '/?debug=1&coach&coachSeconds=40';
+const URL = '/?debug=1&dev&coach&coachSeconds=40';
 async function openCareer(page: Page, mode: 'touch' | 'mouse'): Promise<Career> {
   await page.goto(URL);
   await waitForScene(page, 'start');

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { shouldExposeDevMenu } from '../debug/diagnostics';
 import { ATTRIBUTE_EVIDENCE } from '../game/career/config';
 import { ALL_ACTIVITIES, FOCUSES, SOURCES, activityById, focusById } from '../game/career/catalog';
 import { substitutes, workableFocuses } from '../game/career/planner';
@@ -294,7 +295,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           actions: [
             { name: 'nav-review', label: 'Weekly Review', onClick: () => this.go({ kind: 'review' }) },
             { name: 'nav-player', label: 'Character Development', onClick: () => this.go({ kind: 'player' }) },
-            { name: 'nav-play', label: 'Play a 9v9 match (records game moments)', onClick: () => this.playSandbox() },
+            ...(shouldExposeDevMenu(window.location) ? [{ name: 'nav-play', label: 'Play a 9v9 match (records game moments)', onClick: () => this.playSandbox() }] : []),
           ],
         };
       case 'create':
