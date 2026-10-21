@@ -55,6 +55,7 @@ describe('home training demos use the created player', () => {
       for (let i = 1; i < beats.length; i++) {
         const t = i * BEAT_SECONDS;
         expect(Math.abs(demoPose(a, t - 0.001).ball.h - demoPose(a, t + 0.001).ball.h), `${id} beat ${i}`).toBeLessThan(0.05);
+        expect(Math.abs(demoPose(a, t - 0.001).ball.x - demoPose(a, t + 0.001).ball.x), `${id} beat ${i} x`).toBeLessThan(0.05);
       }
     }
   });
@@ -67,6 +68,14 @@ describe('home training demos use the created player', () => {
       expect(hits.length, id).toBeGreaterThan(0);
       expect(hits.every((p) => p.frame === 'kick-4'), id).toBe(true);
     }
+  });
+  it('turn-and-deliver passes back the way it came; moving-ball passes forward', () => {
+    const end = (id: string) => { const a = activityById(id)!; const p = demoPose(a, demoLength(a) - 0.01); return { a, p }; };
+    const back = end('ps-turn-deliver'), fwd = end('ps-moving-ball');
+    const lastX = (a: typeof back.a) => (a.demo.kind === 'path' ? a.demo.ball[a.demo.ball.length - 1]!.x : 0);
+    expect(back.p.ball.x).toBeLessThan(lastX(back.a));
+    expect(back.p.flip).toBe(true);
+    expect(fwd.p.ball.x).toBeGreaterThan(lastX(fwd.a));
   });
   it('defending demos use jockey/block poses, and playback is pure (same time, same pose)', () => {
     const a = activityById('df-side-step')!;
