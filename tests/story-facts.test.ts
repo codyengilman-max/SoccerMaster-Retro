@@ -24,6 +24,9 @@ describe('story facts come only from saved records', () => {
     expect(trainingLogDetail(at({ completedSessions: done, journal: journal(per, true) }))).toBe('within');
     expect(trainingLogDetail(at({ completedSessions: done, journal: [...journal(per, true), ...journal(2, false)] }))).toBe('above');
     expect(trainingLogDetail(at({ completedSessions: done.slice(0, 1), journal: journal(1, true) }))).toBe('below');
+    // a skipped log is not extra practice
+    const skipped = [{ week: 3, credited: false, completion: 'skipped', id: 'sk' }] as unknown as CareerSave['journal'];
+    expect(trainingLogDetail(at({ completedSessions: done, journal: [...journal(per, true), ...skipped] }))).toBe('within');
     // last week's extra practice does not count this week
     expect(trainingLogDetail(at({ completedSessions: done, journal: journal(2, false, 2) }))).toBe('within');
   });

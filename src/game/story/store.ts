@@ -13,7 +13,7 @@ export function parseStoryState(input: unknown): { ok: true; value: StoryState }
   if (typeof raw.careerId !== 'string' || typeof raw.sceneId !== 'string' || typeof raw.nodeId !== 'string') return { ok: false, error: 'missing cursor' };
   if (raw.contentVersion === SEASON_V1) {
     if (touchesOldWeeks(raw)) return { ok: false, error: UNMAPPABLE };
-    raw = { ...raw, contentVersion: SEASON_ONE.version };
+    raw = { ...raw, contentVersion: SEASON_ONE.version, runs: rekeyRuns(raw.runs) };
   }
   if (typeof raw.contentVersion !== 'string' || !catalogFor(raw.contentVersion)) return { ok: false, error: `story content ${String(raw.contentVersion)} is not in this build` };
   for (const k of ['revision', 'lastSeq', 'openedBy']) if (!Number.isInteger(raw[k])) return { ok: false, error: `bad ${k}` };
@@ -24,6 +24,23 @@ export function parseStoryState(input: unknown): { ok: true; value: StoryState }
   const scene = sceneById(value.sceneId);
   if (!scene || !nodeById(scene, value.nodeId)) return { ok: false, error: `story position ${raw.sceneId}.${raw.nodeId} is missing` };
   return { ok: true, value };
+}
+
+/** Weeks 1–2 runs carry over: re-index them under the new content version, keeping run ids and records. */
+function rekeyRuns(runs: unknown): unknown {
+  if (!isObj(runs)) return runs;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(runs)) {
+    let key = k;
+    try {
+      const p: unknown = JSON.parse(k);
+      if (Array.isArray(p) && p.length === 4 && p[2] === SEASON_V1) key = JSON.stringify([p[0], p[1], SEASON_ONE.version, p[3]]);
+    } catch {
+      /* not a run key; kept as is */
+    }
+    out[key] = v;
+  }
+  return out;
 }
 
 /** The first Season One text (weeks 1–18). Its weeks 1–2 are the owner rewrite and carry over unchanged. */

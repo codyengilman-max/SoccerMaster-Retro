@@ -15,6 +15,7 @@
 - Choice labels may now be up to 72 characters so the owner's exact answers fit.
 - Fix (found in browser testing): the week 3 and week 4 close screens showed the retired 5-club league ("no league result recorded yet") instead of the Season One table; they now show the live season standings.
 - Fix (found in browser testing): in week 4 the unchosen school activity still offered "Play Jungle Ball / Not today" (Play was refused by the runtime). It now shows one Continue that records it as declined.
+- Review fixes: weeks 1–2 activity runs are re-keyed to `s1-v2.0` on migration (a launched Crossbar/Team Training resumes instead of restarting); Mom's "above the plan" ignores skipped logs; the week 4 close card says more weeks are coming instead of "week 5 opens".
 
 
 ## Merge of open PRs #17, #18, #22 and #23 into `main` (owner request 2026-10-20)

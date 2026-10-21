@@ -1068,7 +1068,9 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.finishFact(schoolRewardDetail()) });
         return;
       case 'week_close':
-        setBody(`Finish week ${this.save?.week ?? 1}: your week review is saved and week ${(this.save?.week ?? 1) + 1} opens.`);
+        setBody((this.save?.week ?? 1) >= SEASON_RELEASED_WEEKS
+          ? `Finish week ${this.save?.week ?? 1}: your week review is saved. More weeks are coming soon.`
+          : `Finish week ${this.save?.week ?? 1}: your week review is saved and week ${(this.save?.week ?? 1) + 1} opens.`);
         acts.push({ name: 'handoff-week', label: `Finish week ${this.save?.week ?? 1}`, onClick: () => void this.closeWeek() });
         return;
     }

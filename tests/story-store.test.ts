@@ -109,6 +109,16 @@ describe('story store: weeks 3–4 replacement migration (s1-v1.0 -> s1-v2.0)', 
     const r = await a.begin('c6');
     expect(r.ok && r.state).toMatchObject({ contentVersion: 's1-v2.0', sceneId: 'S1_W02_M' });
   });
+  it('a launched weeks 1–2 run keeps resolving after the version change (re-keyed, same run id)', async () => {
+    const f = new IDBFactory();
+    const a = await StoryStore.open(f, 'm3');
+    const sc = sceneById('S1_W02_M')!;
+    const oldKey = JSON.stringify(['c8', 'S1_W02_M', 's1-v1.0', 'x1']);
+    const run = { runId: 'r-1', adapter: 'crossbar', sceneId: 'S1_W02_M', nodeId: 'x1', state: 'launched', outcome: null, result: null };
+    await put(f, 'm3', 'c8', { ...newSeasonStory('c8'), contentVersion: 's1-v1.0', sceneId: sc.id, nodeId: sc.entry, runs: { [oldKey]: run } });
+    const r = await a.begin('c8');
+    expect(r.ok && r.state.runs).toEqual({ [JSON.stringify(['c8', 'S1_W02_M', 's1-v2.0', 'x1'])]: run });
+  });
   it('a save with old weeks 3–18 progress is not mapped onto the new script: kept, reported, and restartable on request only', async () => {
     const f = new IDBFactory();
     const a = await StoryStore.open(f, 'm2');

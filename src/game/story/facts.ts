@@ -22,7 +22,8 @@ export function homeLearningDetail(save: CareerSave): HomeLearningDetail {
 /** This week's training log against the plan: extra practice on top of the planned sessions is "above". */
 export function trainingLogDetail(save: CareerSave): TrainingLogDetail {
   const planned = save.completedSessions.length;
-  const extra = save.journal.filter((j) => j.week === save.week && !j.credited).length;
+  // Uncredited, not skipped: extra practice (including a repeat of a session that already counted).
+  const extra = save.journal.filter((j) => j.week === save.week && !j.credited && j.completion !== 'skipped').length;
   if (planned === 0 && extra === 0) return 'unknown';
   if (planned < CAREER_CONFIG.home.sessionsPerWeek) return 'below';
   return extra > 0 ? 'above' : 'within';
