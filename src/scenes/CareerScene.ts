@@ -13,7 +13,7 @@ import { describeChanges, selectSituations } from '../game/career/teamTraining';
 import { orientationOf } from '../render/layout';
 import { PlayerArt, atlasKey } from '../render/art/playerArt';
 import { SPRITE_CELL } from '../render/art/spriteSets';
-import { demoPose, demoSet, isKeeperExercise } from '../render/art/homeDemo';
+import { DEMO_BALL_PEAK, JUGGLE_PATTERNS, demoPose, demoSet, isKeeperExercise } from '../render/art/homeDemo';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspectable';
 import { SceneKeys } from './keys';
@@ -77,6 +77,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private demoArt!: PlayerArt;
   private demoImg!: Phaser.GameObjects.Image;
   private demoBall!: Phaser.GameObjects.Graphics;
+  private demoInfo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number } } | null = null;
   private title!: Phaser.GameObjects.Text;
   private body!: Phaser.GameObjects.Text;
   private note!: Phaser.GameObjects.Text;
@@ -164,7 +165,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   /** Debug snapshot for browser tests. */
-  describeGameplay(): { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; text: string; textPage: string; overflow: string[]; evidence: number; coachEvidence: number } {
+  describeGameplay(): { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; text: string; textPage: string; overflow: string[]; evidence: number; coachEvidence: number; demo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number } } | null } {
     return {
       screen: this.screen.kind,
       week: this.save.week,
@@ -178,6 +179,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       text: this.body?.text ?? '',
       textPage: `${this.textPage + 1}/${this.textPages}`,
       overflow: this.buttons.filter((b) => b.active && !b.labelFits()).map((b) => b.name),
+      demo: this.demoImg?.visible && this.demoRect ? this.demoInfo : null,
       evidence: this.save.evidence.length,
       coachEvidence: this.save.evidence.filter((e) => e.source === 'coach').length,
     };
@@ -691,7 +693,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     let colX = 20;
     let colY = top;
     if (demoOn) {
-      const dh = portrait ? Math.min(height * 0.2, (width - 40) * 0.6) : Math.min(height * 0.32, contentW * 0.6);
+      const dh = portrait ? Math.min(height * 0.27, (width - 40) * 0.62) : Math.min(height * 0.32, contentW * 0.6);
       this.demoRect = { x: 20, y: top, w: portrait ? width - 40 : contentW, h: dh };
       bodyY = top + dh + 8;
     } else this.demoRect = null;
@@ -837,9 +839,10 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     const pose = demoPose(a, this.demoT);
     if (!this.textures.exists(key) || !this.textures.get(key).has(pose.frame)) return false;
     const r = this.demoRect!;
-    const bodyH = Math.min(unit * 2.2, r.h * 0.62);
-    const s = bodyH / SPRITE_CELL.bodyHeight;
     const footY = Math.min(sy(pose.py), r.y + r.h - 22);
+    // Moving demos keep the practice-area scale; on-the-spot demos (juggling, footwork) fill the frame, leaving room for the ball's peak.
+    const bodyH = a.demo.kind === 'path' && !JUGGLE_PATTERNS[a.id] ? Math.min(unit * 2.6, r.h * 0.62) : Math.min((footY - r.y - 12) / (1 + DEMO_BALL_PEAK * 0.55 - 0.9), r.w * 0.32);
+    const s = bodyH / SPRITE_CELL.bodyHeight;
     this.demoImg.setTexture(key, pose.frame).setOrigin(SPRITE_CELL.anchorX / SPRITE_CELL.width, SPRITE_CELL.anchorY / SPRITE_CELL.height).setScale(s).setFlipX(pose.flip).setPosition(sx(pose.px), footY).setVisible(true);
     const g = this.demoBall;
     g.clear();
@@ -850,6 +853,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     const by = ground - br - pose.ball.h * bodyH * 0.55;
     g.fillStyle(0xffffff, 1).fillCircle(bx, by, br);
     g.lineStyle(2, pose.contact === 'none' ? PALETTE.ink : PALETTE.sun, 1).strokeCircle(bx, by, br);
+    const ib = this.demoImg.getBounds();
+    this.demoInfo = { set, frame: pose.frame, flip: pose.flip, contact: pose.contact, scale: { x: this.demoImg.scaleX, y: this.demoImg.scaleY }, player: { x: ib.x, y: ib.y, width: ib.width, height: ib.height }, ball: { x: bx, y: by }, rect: { x: r.x, y: r.y, width: r.w, height: r.h } };
     if (pose.caption) {
       if (!this.demoCaption?.active) this.demoCaption = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: CSS.ink, fontStyle: 'bold' }).setOrigin(0.5, 1).setResolution(textResolution());
       this.demoCaption.setFontSize(Math.round(Math.max(12, Math.min(unit * 0.45, 16)))).setPosition(r.x + r.w / 2, r.y + r.h - 4).setWordWrapWidth(r.w - 16).setText(pose.caption).setVisible(true);

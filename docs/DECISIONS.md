@@ -181,3 +181,8 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - The owner will send new text for weeks 3–18 later and asked to hide the current ones. `SEASON_RELEASED_WEEKS = 2` in the story runtime: an end node pointing into a later week (or the epilogue) completes the story instead, and `migrateStory` parks a save resting in a hidden week at the last released week's close.
 - The hidden scenes stay in the catalog so saves, art mapping and the season tests keep working; those tests open all weeks with `setReleasedWeeks`. Raising the constant reopens the weeks and a parked save continues from there.
 
+
+## D39. At-home demos: one protagonist mapping (owner request, 2026-10-21)
+- `src/render/art/homeDemo.ts` is the single place a home demo picks its sheet (`demoSet`: saved gender, training kit, keeper sheet for keeper exercises) and its pose (`demoPose`: pure function of the activity's existing `DemoSpec` and playback time). It lives in `src/render/`, not `src/game/`, because it names atlas frames; the catalog's `DemoSpec` data is unchanged.
+- Strikes are derived from the demo data (a long, fast ball segment starting at the player's feet), so a kick never loops on its own. Juggling patterns are authored per ladder level from each level's steps. Left-foot contacts mirror the right-foot art; the sheets have no left-foot frames.
+- A career with no saved gender (made from My Training before the story) shows the boy, as matches already do.

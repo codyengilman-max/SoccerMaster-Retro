@@ -1,5 +1,11 @@
 # Status
 
+## At-home training demos use the created player (owner request 2026-10-21, branch `devin/1792553015-home-demo-sprites`, not merged, not deployed)
+- Every at-home exercise demonstration (92 catalog exercises) is now drawn with the saved Boy/Girl protagonist in the blue training kit, from the owner's sheets, with the ball drawn separately. One shared mapping: `src/render/art/homeDemo.ts` (`demoSet`, `demoPose`). Coverage list and gaps: `docs/art/HOME_DEMOS.md`.
+- There was no embedded video: demos were code-drawn dots and circles. Juggling ladder levels each have their own contact pattern (laces / thigh, alternating feet, bounce, settle and dribble or pass); passes and shots strike on the frame the ball leaves the foot; defending uses jockey/block poses.
+- Not converted: the 6 review-only demo prototypes in the Review hub, and the 100 v1.1 draft entries (never had a demo). No goalkeeper home exercises exist. Missing poses (sole, hands catch, receive, chest/head, real left foot) are listed as gaps.
+- Watching or replaying a demo changes nothing in the save (`e2e/homedemo.spec.ts`). Portrait demo area grew from 20% to 27% of screen height.
+
 
 ## Merge of open PRs #17, #18, #22 and #23 into `main` (owner request 2026-10-20)
 - Owner: "merge all remaining prs", then "only merge new weeks 1 and 2 stories as we will give you remaining weeks later". #23 (new weeks 1–2) is merged; #15 (approval of the older weeks 2–4 draft) is left out.

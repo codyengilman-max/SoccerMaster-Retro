@@ -48,6 +48,8 @@ export const JUGGLE_PATTERNS: Readonly<Record<string, readonly Beat[]>> = {
   'jg-8': [R('laces'), Lf('laces'), R('laces'), R('settle'), R('pass')],
 };
 export const BEAT_SECONDS = 0.8;
+/** Highest ball height any demo uses (juggling apex), for framing. */
+export const DEMO_BALL_PEAK = 1.9;
 
 const lerp = (a: number, b: number, f: number) => a + (b - a) * f;
 const at = (k: readonly { t: number; x: number; y: number }[], t: number) => {
@@ -82,23 +84,28 @@ function jugglePose(beats: readonly Beat[], t: number): DemoPose {
   const bx = px + (flip ? -0.35 : 0.35);
   const touched = (s: Beat['s']) => s === 'laces' || s === 'thigh';
   const next = beats[idx + 1];
-  const nextH = next && touched(next.s) ? CONTACT_H[next.s as 'laces' | 'thigh'] : next?.s === 'catch' ? 1.2 : 0.45;
-  if (t >= beats.length * BEAT_SECONDS) return { frame: 'idle-s', flip: false, px, py, ball: { x: px, y: py, h: 1.2 }, contact: 'none', caption: 'Reset' };
+  const nextH = next && touched(next.s) ? CONTACT_H[next.s as 'laces' | 'thigh'] : next?.s === 'catch' ? 0.75 : 0.45;
+  if (t >= beats.length * BEAT_SECONDS) return { frame: 'idle-s', flip: false, px, py, ball: { x: px + 0.2, y: py, h: 0.75 }, contact: 'none', caption: 'Reset' };
   if (touched(b.s)) {
     const s = b.s as 'laces' | 'thigh';
     const h0 = CONTACT_H[s];
-    const peak = 1.9;
+    const peak = DEMO_BALL_PEAK;
     // Rise to the peak, then fall to the next contact height: contact is exactly at the start of the beat.
     const h = f < 0.5 ? lerp(h0, peak, 1 - (1 - f * 2) ** 2) : lerp(peak, nextH, ((f - 0.5) * 2) ** 2);
     const list = JUGGLE_FRAMES[s];
-    const frame = f < 0.3 ? list[idx % list.length]! : 'idle-e';
-    return { frame, flip, px, py, ball: { x: bx, y: py, h }, contact: f < 0.3 ? s : 'none', caption: `${b.foot === 'left' ? 'Left' : 'Right'} ${s === 'laces' ? 'laces' : 'thigh'} up` };
+    // Preparation: the last part of the beat already shows the next contact surface, rising to meet the ball.
+    if (f > 0.85 && next && touched(next.s)) {
+      const nl = JUGGLE_FRAMES[next.s as 'laces' | 'thigh'];
+      return { frame: nl[(idx + 1) % nl.length]!, flip: next.foot === 'left', px, py, ball: { x: px + (next.foot === 'left' ? -0.35 : 0.35), y: py, h }, contact: 'none', caption: `${next.foot === 'left' ? 'Left' : 'Right'} ${next.s === 'laces' ? 'laces' : 'thigh'} up` };
+    }
+    const frame = f < 0.15 ? list[idx % list.length]! : 'idle-e';
+    return { frame, flip, px, py, ball: { x: bx, y: py, h }, contact: f < 0.15 ? s : 'none', caption: `${b.foot === 'left' ? 'Left' : 'Right'} ${s === 'laces' ? 'laces' : 'thigh'} up` };
   }
   if (b.s === 'bounce') {
     const h = f < 0.5 ? lerp(1.9, 0, (f * 2) ** 2) : lerp(0, 0.9, 1 - (1 - (f - 0.5) * 2) ** 2);
     return { frame: 'idle-e', flip, px, py, ball: { x: bx, y: py, h }, contact: 'none', caption: 'Let it bounce once' };
   }
-  if (b.s === 'catch') return { frame: 'idle-s', flip: false, px, py, ball: { x: px, y: py, h: 1.2 }, contact: 'catch', caption: 'Catch it' };
+  if (b.s === 'catch') return { frame: 'idle-s', flip: false, px, py, ball: { x: px + 0.2, y: py, h: 0.75 }, contact: 'catch', caption: 'Catch it' };
   if (b.s === 'settle') return { frame: 'dribble-0', flip: false, px, py, ball: { x: px + 0.5, y: py, h: lerp(0.45, 0, f) }, contact: 'sole', caption: 'Settle it on the ground' };
   if (b.s === 'dribble') {
     const x = lerp(px, 8.5, f);
@@ -156,7 +163,7 @@ const STEP_POSE = {
   sole: { frame: 'dribble-0', dx: 0.4, h: 0, contact: 'sole' },
   front: { frame: 'idle-e', dx: 0.7, h: 0, contact: 'none' },
   air: { frame: 'juggle-0', dx: 0.35, h: 0.9, contact: 'laces' },
-  away: { frame: 'kick-5', dx: 2.5, h: 0, contact: 'none' },
+  away: { frame: 'dribble-1', dx: 1.3, h: 0, contact: 'none' },
 } as const;
 
 /** Still-frame demos (footwork an animation would misrepresent): the protagonist in the closest pose per frame. */
