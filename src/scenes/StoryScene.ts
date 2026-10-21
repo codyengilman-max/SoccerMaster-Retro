@@ -984,7 +984,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       case 'crossbar': {
         const declined = s.sceneId.startsWith('S1_') ? evaluatePredicate(s, n.predicate) === false : s.decisions.W1_SCHOOL_02?.invitation === 'decline';
         if (declined) {
-          setBody(this.state?.sceneId.startsWith('S1_') ? 'You walk away from the goal. No score is recorded.' : 'You head back with Jordan. No score is recorded.');
+          setBody(s.sceneId === 'S1_W04_S' ? 'You picked Jungle Ball instead. No Crossbar score is recorded.' : this.state?.sceneId.startsWith('S1_') ? 'You walk away from the goal. No score is recorded.' : 'You head back with Jordan. No score is recorded.');
           acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.decline() });
         } else {
           setBody(`Three counted shots each from the same spot.${this.crossbarWarmup() ? ' One warm-up shot each first (does not count).' : ''} Hit the crossbar to score.`);
@@ -1045,6 +1045,12 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.finishStandings() });
         return;
       case 'jungle':
+        // A Season One Jungle Ball the player did not pick (week 4 school choice) is recorded as declined; never offered.
+        if (s.sceneId.startsWith('S1_') && evaluatePredicate(s, n.predicate) === false) {
+          setBody('You picked the Crossbar Challenge instead. No Jungle Ball score is recorded.');
+          acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.decline() });
+          return;
+        }
         setBody('Jungle Ball at lunch: one goal, a neutral keeper, you against Alex, Blake and Sam. Just for fun: scores never count as match growth.');
         acts.push({ name: 'handoff-jungle', label: 'Play Jungle Ball', onClick: () => void this.openJungle() });
         acts.push({ name: 'handoff-skip', label: 'Not today', onClick: () => void this.skipRun('declined') });

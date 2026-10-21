@@ -14,6 +14,7 @@
   - Week 4 Code's in-match stoppage lines ("They're playing a match. Speak with the adults afterward." / "Set up. Next play."): the match engine has no sideline-pressure events.
 - Choice labels may now be up to 72 characters so the owner's exact answers fit.
 - Fix (found in browser testing): the week 3 and week 4 close screens showed the retired 5-club league ("no league result recorded yet") instead of the Season One table; they now show the live season standings.
+- Fix (found in browser testing): in week 4 the unchosen school activity still offered "Play Jungle Ball / Not today" (Play was refused by the runtime). It now shows one Continue that records it as declined.
 
 
 ## Merge of open PRs #17, #18, #22 and #23 into `main` (owner request 2026-10-20)
