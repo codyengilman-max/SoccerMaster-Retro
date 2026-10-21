@@ -5,7 +5,7 @@ import type { CompetitorId } from '../game/jungle/sim';
 import { crossbarRules, sceneById, trainingDetail } from '../game/story/content';
 import { seasonWeek, type TournamentId } from '../game/season/calendar';
 import { bataviaRecord, fixtureForSeasonWeek, newSeasonLeague, opponentOf, parseSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough } from '../game/season/league';
-import { TOURNAMENTS, allFixtures, bataviaFinish, groupTable, nextBataviaFixture, newTournament, parseTournament, finalFixture, recordTournamentPlayed, type TournamentState } from '../game/season/tournament';
+import { TOURNAMENTS, allFixtures, bataviaFinish, groupTable, nextBataviaFixture, newTournament, parseTournament, finalFixture, recordTournamentPlayed, bataviaResult, type TournamentState } from '../game/season/tournament';
 import { CLUB_WORLD } from '../game/story/clubs';
 import type { Rect } from '../game';
 import { POSITION_SLOT } from '../game/career/player';
@@ -450,7 +450,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     if (n.adapter === 'tournament_match' && full) {
       const t = await this.recordTournament(run.runId, full);
       if (!t) return void (this.message = 'This tournament result could not be recorded. Nothing was changed.');
-      return this.complete(run.runId, 'completed', resultOf(full), t.detail);
+      // A level final is decided by its shoot-out, so the story result matches the tournament finish.
+      return this.complete(run.runId, 'completed', t.result ?? resultOf(full), t.detail);
     }
     // Season One reads the week's real Team Training grade so Code's reply follows what happened.
     const rec = n.adapter === 'team_training' && this.state.sceneId.startsWith('S1_') ? s.teamTraining.find((r) => r.week === snap.week) : undefined;
@@ -550,7 +551,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   }
 
   /** Batavia's next due tournament game counts once; detail = playoff assignment or final place. */
-  private async recordTournament(runId: string, score: { home: number; away: number }): Promise<{ detail: string | null } | null> {
+  private async recordTournament(runId: string, score: { home: number; away: number }): Promise<{ detail: string | null; result: 'WIN' | 'DRAW' | 'LOSS' | null } | null> {
     const tid = this.tournamentId();
     if (!tid || !this.store || !this.state) return null;
     const bound = await this.store.getRecord(`tfix:${runId}`);
@@ -566,7 +567,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       if (!r.ok) return null;
       const finish = bataviaFinish(r.state);
       const fin = finalFixture(r.state);
-      return { value: r.state, out: { detail: finish ?? (fin && (fin.home === 'batavia' || fin.away === 'batavia') ? 'final' : null) } };
+      return { value: r.state, out: { detail: finish ?? (fin && (fin.home === 'batavia' || fin.away === 'batavia') ? 'final' : null), result: bataviaResult(r.state, fid) } };
     });
   }
 

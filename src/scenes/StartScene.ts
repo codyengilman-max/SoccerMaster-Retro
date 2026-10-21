@@ -32,8 +32,8 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
 
   create(): void {
     this.navigating = false;
-    // Lab builds: `?lab` opens the Gameplay Lab once per page load.
-    if (__LAB__ && !labOpened && new URLSearchParams(window.location.search).get('lab') === '') {
+    // Lab builds: `?lab&dev` opens the Gameplay Lab once per page load (story mode only without `?dev`).
+    if (__LAB__ && !labOpened && shouldExposeDevMenu(window.location) && new URLSearchParams(window.location.search).get('lab') === '') {
       labOpened = true;
       this.navigating = true;
       this.time.delayedCall(0, () => this.scene.start(SceneKeys.Lab));

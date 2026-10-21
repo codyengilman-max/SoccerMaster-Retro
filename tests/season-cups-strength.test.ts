@@ -64,6 +64,10 @@ describe('Arizona State Cup', () => {
     }
     expect(nextCupFixture(cup)).toBeNull();
     expect(parseStateCup(cup, league).ok).toBe(true);
+    // A level semifinal's shoot-out winner must be one of its two clubs; a decided game carries none.
+    const tied = cup.results[semi.id]!;
+    expect(parseStateCup({ ...cup, results: { ...cup.results, [semi.id]: { ...tied, shootoutWinner: 'unknown_club' } } }, league).ok).toBe(false);
+    expect(parseStateCup({ ...cup, results: { ...cup.results, [other.id]: { ...cup.results[other.id]!, homeGoals: 3, awayGoals: 0, shootoutWinner: other.home } } }, league).ok).toBe(false);
   });
   it('a Batavia outside the top three is not entered; the cup still finishes without an invented berth', () => {
     const league = fullLeague(0, 5);

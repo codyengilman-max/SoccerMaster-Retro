@@ -251,6 +251,16 @@ export function bataviaFinish(s: TournamentState): Finish | null {
   if (!r) return null;
   return finalWinner(f, r) === HOME ? 'champion' : 'runner_up';
 }
+/** Batavia's story result for a recorded game: a level final is decided by its shoot-out; a level group game stays a draw. */
+export function bataviaResult(s: TournamentState, fixtureId: string): 'WIN' | 'DRAW' | 'LOSS' | null {
+  const f = allFixtures(s).find((x) => x.id === fixtureId);
+  const r = f && s.results[fixtureId];
+  if (!f || !r || !isHome(f)) return null;
+  const us = f.home === HOME ? r.homeGoals : r.awayGoals;
+  const them = f.home === HOME ? r.awayGoals : r.homeGoals;
+  if (us !== them) return us > them ? 'WIN' : 'LOSS';
+  return f.stage === 'final' ? (r.shootoutWinner === HOME ? 'WIN' : 'LOSS') : 'DRAW';
+}
 export function finalWinner(f: TFixture, r: TResult): string {
   return r.homeGoals > r.awayGoals ? f.home : r.awayGoals > r.homeGoals ? f.away : r.shootoutWinner!;
 }
@@ -271,9 +281,12 @@ export function parseTournament(raw: unknown, id: TournamentId): { ok: true; val
   const value = raw as TournamentState;
   const fin = finalFixture(value);
   for (const [k, r] of Object.entries(value.results)) {
-    if (known.has(k)) continue;
+    if (known.has(k)) {
+      if (r.shootoutWinner !== undefined) return { ok: false, error: `group game with a shoot-out ${k}` };
+      continue;
+    }
     if (!fin || k !== fin.id) return { ok: false, error: `unreachable fixture ${k}` };
-    if (r.homeGoals === r.awayGoals && r.shootoutWinner !== fin.home && r.shootoutWinner !== fin.away) return { ok: false, error: 'tied final without a shoot-out winner' };
+    if (r.homeGoals === r.awayGoals ? r.shootoutWinner !== fin.home && r.shootoutWinner !== fin.away : r.shootoutWinner !== undefined) return { ok: false, error: 'bad shoot-out winner on the final' };
   }
   return { ok: true, value };
 }

@@ -144,10 +144,21 @@ export function parseStateCup(raw: unknown, league: SeasonLeagueState): { ok: tr
   if (!Array.isArray(draw) || draw.length !== 4 || !ents.every((t) => draw.includes(t))) return { ok: false, error: 'bad draw' };
   if (typeof o.results !== 'object' || o.results === null || Array.isArray(o.results)) return { ok: false, error: 'bad results' };
   const value = raw as StateCupState;
-  const reachable = (k: string): boolean => semis(value).some((f) => f.id === k) || cupFinal(value)?.id === k;
-  for (const [k, r] of Object.entries(value.results)) {
-    if (r?.fixtureId !== k || !goalsOk(r.homeGoals) || !goalsOk(r.awayGoals) || (r.source !== 'played' && r.source !== 'simulated') || !reachable(k)) return { ok: false, error: `bad result ${k}` };
-    if (r.homeGoals === r.awayGoals && typeof r.shootoutWinner !== 'string') return { ok: false, error: 'level game without a shoot-out winner' };
+  // Semis first, so the final is only resolved from validated semifinal winners.
+  const check = (f: CupFixture, r: CupResult | undefined): string | null => {
+    if (!r) return null;
+    if (r.fixtureId !== f.id || !goalsOk(r.homeGoals) || !goalsOk(r.awayGoals) || (r.source !== 'played' && r.source !== 'simulated')) return `bad result ${f.id}`;
+    if (r.homeGoals === r.awayGoals ? r.shootoutWinner !== f.home && r.shootoutWinner !== f.away : r.shootoutWinner !== undefined) return `bad shoot-out winner ${f.id}`;
+    return null;
+  };
+  for (const f of semis(value)) {
+    const e = check(f, value.results[f.id]);
+    if (e) return { ok: false, error: e };
   }
+  const fin = cupFinal(value);
+  const known = new Set([...semis(value).map((f) => f.id), ...(fin ? [fin.id] : [])]);
+  for (const k of Object.keys(value.results)) if (!known.has(k)) return { ok: false, error: `bad result ${k}` };
+  const e = fin ? check(fin, value.results[fin.id]) : null;
+  if (e) return { ok: false, error: e };
   return { ok: true, value };
 }

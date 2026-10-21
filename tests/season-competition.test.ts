@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { HOME_CLUB, LEAGUE_CLUBS } from '../src/game/league/league';
 import { SEASON_WEEKS, slotIds, weekOfLeagueGame } from '../src/game/season/calendar';
 import { BATAVIA_FIXTURES, SEASON_FIXTURES, SEASON_ROUNDS, bataviaRecord, fixtureForSeasonWeek, newSeasonLeague, parseSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough } from '../src/game/season/league';
-import { TOURNAMENTS, bataviaFinish, bataviaFixture, finalFixture, groupFixtures, groupTable, matchPoints, newTournament, nextBataviaFixture, parseTournament, recordTournamentPlayed, type TournamentState } from '../src/game/season/tournament';
+import { TOURNAMENTS, bataviaFinish, bataviaResult, bataviaFixture, finalFixture, groupFixtures, groupTable, matchPoints, newTournament, nextBataviaFixture, parseTournament, recordTournamentPlayed, type TournamentState } from '../src/game/season/tournament';
 
 describe('Season One calendar', () => {
   it('follows the storyboard: 12 league games in weeks 3–8, 10–11 and 13–16, AZ Showcase week 9, Holiday Classic week 12, State Cup weeks 17–18', () => {
@@ -130,6 +130,14 @@ describe('Season One tournaments', () => {
     expect(Object.keys(s.results)).toHaveLength(13);
     expect(parseTournament(s, 'az_showcase').ok).toBe(true);
     expect(parseTournament({ ...s, results: { ...s.results, [fin.id]: { ...s.results[fin.id]!, shootoutWinner: undefined } } }, 'az_showcase').ok).toBe(false);
+    // The story result of a level final follows the shoot-out, matching the finish; a level group game stays a draw.
+    expect(bataviaResult(s, fin.id)).toBe(bataviaFinish(s) === 'champion' ? 'WIN' : 'LOSS');
+    expect(parseTournament({ ...s, results: { ...s.results, [fin.id]: { ...s.results[fin.id]!, shootoutWinner: 'unknown_club' } } }, 'az_showcase').ok).toBe(false);
+    const g1 = groupFixtures('az_showcase').find((f) => f.stage === 'g1' && f.home === 'batavia')!;
+    expect(parseTournament({ ...s, results: { ...s.results, [g1.id]: { ...s.results[g1.id]!, shootoutWinner: 'batavia' } } }, 'az_showcase').ok).toBe(false);
+    let d = newTournament('az_showcase', 'c', 11);
+    d = play(d, 1, 1);
+    expect(bataviaResult(d, g1.id)).toBe('DRAW');
   });
   it('losing every group game ends after three games with the final simulated; results cannot be rewritten or played out of order', () => {
     let s = newTournament('holiday_classic', 'c', 5);

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SEASON_ONE } from '../src/game/story/content';
 import { SEASON_RELEASED_WEEKS, currentNode, newSeasonStory, outcomeOf, reduceStory, setReleasedWeeks, type StoryCommand, type StoryState } from '../src/game/story/runtime';
 import { SEASON_LENGTH, seasonWeek, slotIds } from '../src/game/season/calendar';
-import { TOURNAMENTS, bataviaFinish, newTournament, nextBataviaFixture, finalFixture, recordTournamentPlayed, type TournamentState } from '../src/game/season/tournament';
+import { TOURNAMENTS, bataviaFinish, newTournament, nextBataviaFixture, finalFixture, recordTournamentPlayed, bataviaResult, type TournamentState } from '../src/game/season/tournament';
 import { bataviaRecord, fixtureForSeasonWeek, newSeasonLeague, recordSeasonPlayed, simulateSeasonThrough, type SeasonLeagueState } from '../src/game/season/league';
 
 type Score = { home: number; away: number };
@@ -47,6 +47,7 @@ function season(p: Policy = {}) {
         const sc = p.score ? p.score(s.sceneId) : { home: 2, away: 1 };
         if (!sc) { s = step(s, { type: 'complete', runId: r.runId, outcome: 'declined' }); continue; }
         let detail: string | null = null;
+        let nextFid: string | null = null;
         if (n.adapter === 'league_match') {
           const f = fixtureForSeasonWeek(week)!;
           const rec = recordSeasonPlayed(league, f.id, sc.home, sc.away);
@@ -56,13 +57,15 @@ function season(p: Policy = {}) {
           const tid = seasonWeek(week)!.tournament!;
           const t = cups[tid] ?? newTournament(tid, 't1', 7);
           const f = nextBataviaFixture(t)!;
+          nextFid = f.id;
           const rec = recordTournamentPlayed(t, f.id, sc.home, sc.away);
           if (!rec.ok) throw new Error(rec.error);
           cups[tid] = rec.state;
           const fin = finalFixture(rec.state);
           detail = bataviaFinish(rec.state) ?? (fin && (fin.home === 'batavia' || fin.away === 'batavia') ? 'final' : null);
         }
-        s = step(s, { type: 'complete', runId: r.runId, outcome: 'completed', result: res(sc), detail });
+        const result = n.adapter === 'tournament_match' ? bataviaResult(cups[seasonWeek(week)!.tournament!]!, nextFid!) ?? res(sc) : res(sc);
+        s = step(s, { type: 'complete', runId: r.runId, outcome: 'completed', result, detail });
       } else if (n.adapter === 'standings') {
         // Same rule as StoryScene.seasonComplete: all 12 league results and both cup placings.
         const done = bataviaRecord(league).pending === 0 && Object.keys(TOURNAMENTS).every((tid) => cups[tid] && bataviaFinish(cups[tid]!) !== null);
