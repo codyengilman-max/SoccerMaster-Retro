@@ -72,7 +72,7 @@ export function demoPose(a: Activity, time: number): DemoPose {
   const j = JUGGLE_PATTERNS[a.id];
   if (j) return jugglePose(j, time % demoLength(a));
   const d = a.demo;
-  return d.kind === 'path' ? pathPose(d, a.skillFamilyId === 'defending', time % demoLength(a)) : stepsPose(d, a.skillFamilyId === 'defending', time);
+  return d.kind === 'path' ? pathPose(d, a.skillFamilyId === 'defending', kicksBall(a), time % demoLength(a)) : stepsPose(d, a.skillFamilyId === 'defending', time);
 }
 
 function jugglePose(beats: readonly Beat[], t: number): DemoPose {
@@ -102,10 +102,16 @@ function jugglePose(beats: readonly Beat[], t: number): DemoPose {
     return { frame, flip, px, py, ball: { x: bx, y: py, h }, contact: f < 0.15 ? s : 'none', caption: `${b.foot === 'left' ? 'Left' : 'Right'} ${s === 'laces' ? 'laces' : 'thigh'} up` };
   }
   if (b.s === 'bounce') {
-    const h = f < 0.5 ? lerp(1.9, 0, (f * 2) ** 2) : lerp(0, 0.9, 1 - (1 - (f - 0.5) * 2) ** 2);
+    // Continues the previous beat's fall (laces height) to the ground, rebounds, and drops back to the next contact.
+    const h = f < 0.25 ? lerp(0.45, 0, (f / 0.25) ** 2) : f < 0.65 ? lerp(0, 1.1, 1 - (1 - (f - 0.25) / 0.4) ** 2) : lerp(1.1, nextH, ((f - 0.65) / 0.35) ** 2);
     return { frame: 'idle-e', flip, px, py, ball: { x: bx, y: py, h }, contact: 'none', caption: 'Let it bounce once' };
   }
-  if (b.s === 'catch') return { frame: 'idle-s', flip: false, px, py, ball: { x: px + 0.2, y: py, h: 0.75 }, contact: 'catch', caption: 'Catch it' };
+  if (b.s === 'catch') {
+    // Hold, then drop from the hands onto the next contact.
+    const drop = next && f > 0.7;
+    const h = drop ? lerp(0.75, nextH, ((f - 0.7) / 0.3) ** 2) : 0.75;
+    return { frame: 'idle-s', flip: false, px, py, ball: { x: drop ? lerp(px + 0.2, bx, (f - 0.7) / 0.3) : px + 0.2, y: py, h }, contact: drop ? 'none' : 'catch', caption: drop ? 'Drop it' : 'Catch it' };
+  }
   if (b.s === 'settle') return { frame: 'dribble-0', flip: false, px, py, ball: { x: px + 0.5, y: py, h: lerp(0.45, 0, f) }, contact: 'sole', caption: 'Settle it on the ground' };
   if (b.s === 'dribble') {
     const x = lerp(px, 8.5, f);
@@ -116,7 +122,7 @@ function jugglePose(beats: readonly Beat[], t: number): DemoPose {
 }
 
 /** Moving demos: run/dribble with the ball, a kick exactly when the ball leaves the foot, jockey for defending. */
-function pathPose(d: Extract<DemoSpec, { kind: 'path' }>, defending: boolean, t: number): DemoPose {
+function pathPose(d: Extract<DemoSpec, { kind: 'path' }>, defending: boolean, kicks: boolean, t: number): DemoPose {
   const pl = at(d.player, t);
   const b = at(d.ball, t);
   const nb = at(d.ball, Math.min(d.seconds, t + 0.05));
@@ -129,6 +135,19 @@ function pathPose(d: Extract<DemoSpec, { kind: 'path' }>, defending: boolean, t:
   const strikeAt = strikeTimes(d);
   const s = strikeAt.find((k) => t >= k - 0.25 && t <= k + 0.3);
   const ball = { x: b.x, y: b.y, h: 0 };
+  // Directional first touches, carries and recoveries push the ball with a touch, never a kick.
+  if (s !== undefined && !kicks) {
+    const frame = t < s + 0.15 ? 'dribble-1' : `run-${Math.floor(t * 8) % 8}`;
+    return { frame, flip, px: pl.x, py: pl.y, ball, contact: Math.abs(t - s) < 0.1 ? 'inside' : 'none', caption: null };
+  }
+  // A pass/shot exercise whose route ends with the ball at the feet: deliver it at the end of the route.
+  if (kicks && strikeAt.length === 0 && t > d.seconds) {
+    const f = t - d.seconds;
+    const last = d.ball[d.ball.length - 1]!;
+    const frame = f < 0.15 ? 'kick-2' : f < 0.3 ? 'kick-4' : 'kick-5';
+    const k = Math.max(0, (f - 0.22) / 0.78);
+    return { frame, flip, px: pl.x, py: pl.y, ball: { x: lerp(last.x, 9.7, k), y: last.y, h: 0 }, contact: f >= 0.15 && f < 0.3 ? 'strike' : 'none', caption: null };
+  }
   if (s !== undefined) {
     const frame = t < s - 0.1 ? 'kick-2' : t < s + 0.1 ? 'kick-4' : 'kick-5';
     return { frame, flip, px: pl.x, py: pl.y, ball, contact: Math.abs(t - s) < 0.1 ? 'strike' : 'none', caption: null };
@@ -143,6 +162,9 @@ function pathPose(d: Extract<DemoSpec, { kind: 'path' }>, defending: boolean, t:
   }
   return { frame, flip, px: pl.x, py: pl.y, ball, contact: near && ballSpeed > 0.3 && speed > 0.3 ? 'inside' : 'none', caption: null };
 }
+
+/** Exercises whose demonstrated contact is a pass or shot (kick frames); every other route uses touch frames. */
+export const kicksBall = (a: Activity): boolean => a.skillFamilyId === 'passing' || a.skillFamilyId === 'finishing' || /pass|distribution/.test(a.id);
 
 /** Times at which the ball leaves the player's foot for a long, fast segment (pass, shot, wall pass). */
 export function strikeTimes(d: Extract<DemoSpec, { kind: 'path' }>): number[] {

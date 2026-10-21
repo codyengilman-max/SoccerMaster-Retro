@@ -60,6 +60,10 @@ interface Draft {
 }
 
 /** M6 home training and career screens. Reads and writes the career only through CareerStore. */
+/** A moving (route) demo, drawn at practice-area scale; juggling and still-frame demos stay on one spot. */
+const d0 = (a: Activity): boolean => a.demo.kind === 'path' && !JUGGLE_PATTERNS[a.id];
+const pathBodyHeight = (unit: number, h: number): number => Math.min(unit * 2.2, h * 0.5);
+
 export class CareerScene extends Phaser.Scene implements InspectableScene, GameplayScene {
   private store: CareerStore | null = null;
   private save: CareerSave = emptySave();
@@ -779,9 +783,13 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     g.fillStyle(PALETTE.grassLight, 1).fillRoundedRect(r.x, r.y, r.w, r.h, 12);
     g.lineStyle(3, PALETTE.ink, 1).strokeRoundedRect(r.x, r.y, r.w, r.h, 12);
     const d = a.demo;
-    const sx = (x: number) => r.x + 10 + (x / 10) * (r.w - 20);
-    const sy = (y: number) => r.y + 8 + (y / 6) * (r.h - 16);
     const unit = Math.min(r.w / 10, r.h / 6);
+    // Moving demos inset the practice area by the protagonist's half-width and height, so no route endpoint clips the sprite.
+    const bodyH = pathBodyHeight(unit, r.h);
+    const mx = d0(a) ? SPRITE_CELL.width * 0.4 * (bodyH / SPRITE_CELL.bodyHeight) : 10;
+    const top = d0(a) ? bodyH + 4 : 8;
+    const sx = (x: number) => r.x + mx + (x / 10) * (r.w - 2 * mx);
+    const sy = (y: number) => r.y + top + (y / 6) * (r.h - top - (d0(a) ? 24 : 8));
     if (d.kind === 'path') {
       for (const m of d.markers) {
         if (m.kind === 'cone') g.fillStyle(PALETTE.tomato, 1).fillTriangle(sx(m.x), sy(m.y) - unit * 0.3, sx(m.x) - unit * 0.22, sy(m.y) + unit * 0.2, sx(m.x) + unit * 0.22, sy(m.y) + unit * 0.2);
@@ -841,7 +849,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     const r = this.demoRect!;
     const footY = Math.min(sy(pose.py), r.y + r.h - 22);
     // Moving demos keep the practice-area scale; on-the-spot demos (juggling, footwork) fill the frame, leaving room for the ball's peak.
-    const bodyH = a.demo.kind === 'path' && !JUGGLE_PATTERNS[a.id] ? Math.min(unit * 2.6, r.h * 0.62) : Math.min((footY - r.y - 12) / (1 + DEMO_BALL_PEAK * 0.55 - 0.9), r.w * 0.32);
+    const bodyH = d0(a) ? pathBodyHeight(unit, r.h) : Math.min((footY - r.y - 12) / (1 + DEMO_BALL_PEAK * 0.55 - 0.9), r.w * 0.32);
     const s = bodyH / SPRITE_CELL.bodyHeight;
     this.demoImg.setTexture(key, pose.frame).setOrigin(SPRITE_CELL.anchorX / SPRITE_CELL.width, SPRITE_CELL.anchorY / SPRITE_CELL.height).setScale(s).setFlipX(pose.flip).setPosition(sx(pose.px), footY).setVisible(true);
     const g = this.demoBall;

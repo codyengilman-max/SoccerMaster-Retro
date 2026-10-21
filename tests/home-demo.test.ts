@@ -49,6 +49,25 @@ describe('home training demos use the created player', () => {
     expect(strikeTimes(course.demo as Extract<typeof a.demo, { kind: 'path' }>)).toEqual([]);
     expect(demoPose(course, 1).frame).toMatch(/^(dribble|run)-/);
   });
+  it('juggling ball height is continuous across every beat boundary', () => {
+    for (const [id, beats] of Object.entries(JUGGLE_PATTERNS)) {
+      const a = activityById(id)!;
+      for (let i = 1; i < beats.length; i++) {
+        const t = i * BEAT_SECONDS;
+        expect(Math.abs(demoPose(a, t - 0.001).ball.h - demoPose(a, t + 0.001).ball.h), `${id} beat ${i}`).toBeLessThan(0.05);
+      }
+    }
+  });
+  it('first touches touch, pass/shot routes always strike (end-of-route delivery when the ball stays at the feet)', () => {
+    const touch = activityById('ft-side-door')!;
+    for (let t = 0; t < demoLength(touch); t += 0.05) expect(demoPose(touch, t).frame).not.toMatch(/^kick-/);
+    for (const id of ['ps-moving-ball', 'fn-dribble-finish']) {
+      const a = activityById(id)!;
+      const hits = Array.from({ length: Math.ceil(demoLength(a) / 0.05) }, (_, i) => demoPose(a, i * 0.05)).filter((p) => p.contact === 'strike');
+      expect(hits.length, id).toBeGreaterThan(0);
+      expect(hits.every((p) => p.frame === 'kick-4'), id).toBe(true);
+    }
+  });
   it('defending demos use jockey/block poses, and playback is pure (same time, same pose)', () => {
     const a = activityById('df-side-step')!;
     expect(demoPose(a, 0).frame).toMatch(/^jockey-/);

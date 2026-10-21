@@ -12,7 +12,7 @@ Every at-home exercise demonstration is drawn by `CareerScene.drawSpriteDemo()` 
   save: watching or replaying a demo awards nothing (asserted in `e2e/homedemo.spec.ts`).
 - Frames come from the runtime atlases built from the owner's sheets (`docs/art/sprites-v2/`, extracted by alpha
   connectivity, feet anchored). The sprite keeps one uniform scale per demo (never stretched); on-the-spot demos fill
-  the frame and leave room for the ball's highest point, moving demos keep the practice-area scale.
+  the frame and leave room for the ball's highest point, moving demos keep the practice-area scale, with the area inset by the sprite's half-width and height so no route endpoint clips the player.
 
 There was no embedded video anywhere: before this change every demo was code-drawn (a blue dot and a white ball for
 moving demos, a row of numbered circles for still-frame demos).
@@ -23,10 +23,10 @@ moving demos, a row of numbered circles for still-frame demos).
 | --- | --- | --- | --- |
 | Juggling ladder `jg-1`…`jg-8` | 8 | Protagonist | Own contact pattern per level: one touch + catch (1), right then left with catches (2), touch-bounce-touch (3), two touches (4), alternating feet (5), foot-thigh-foot-thigh (6), juggle-settle-dribble (7), juggle-settle-pass (8). Each contact is prepared (the surface rises in the last part of the previous beat), the contact frame shows exactly when the ball is at laces (0.45) or thigh (1.05) height; the ball rises and falls between contacts. Left contacts are mirrored right-foot frames. |
 | Passing | 14 (all path) | Protagonist | Run/dribble to the ball, `kick-2` (prep) → `kick-4` (contact, on the frame the ball leaves the foot) → `kick-5` (follow-through), then recovery run. |
-| Finishing | 14 (all path) | Protagonist | Same strike timing as passing, toward the drawn targets; dribble-to-finish routes dribble first. |
+| Finishing | 14 (all path) | Protagonist | Same strike timing as passing, toward the drawn targets. Pass/shot routes where the ball stays at the feet (course routes: `ps-moving-ball`, `fn-dribble-finish`, …) dribble the route and deliver at its end. |
 | Awareness | 14 (all path) | Protagonist | Dribble frames while the ball is at the feet, run frames when apart. No strike unless the ball really leaves the foot. |
 | Dribbling | 4 path + 10 still-frame | Protagonist | Path: dribble cycle. Still-frame (inside / outside / sole touches): closest pose with the ball at the touched side (an "away" step shows the push into space, not a kick); left-foot steps mirrored. |
-| First touch | 9 path + 5 still-frame | Protagonist | Path: run to the ball, settle with the dribble pose. Still-frame: air → juggle pose with the ball raised, inside / outside / sole → dribble poses. |
+| First touch | 9 path + 5 still-frame | Protagonist | Path: run to the ball, settle with the dribble pose; a directional touch that sends the ball on is a touch (`dribble-1`), never a kick (kicks only in passing, finishing and `*pass*`/`*distribution*` exercises). Still-frame: air → juggle pose with the ball raised, inside / outside / sole → dribble poses. |
 | Defending | 12 path + 2 still-frame | Protagonist | Jockey frames when shadowing, run frames when recovering fast, block pose when set; still-frame "away" steps use the jockey pose. |
 | Training-library drafts `v11-*` | 100 | No demo (unchanged) | These screens never showed a demonstration: text steps only. |
 | Review-only demo prototypes (BM01-L1, DR01-L1, TR01-L1, PA02-L1, JU01-L1, FI01-L1) | 6 | Unchanged (foot close-ups) | Review hub only, not player-facing. **Gap**: not converted. |

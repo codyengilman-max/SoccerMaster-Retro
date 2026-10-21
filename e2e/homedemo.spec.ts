@@ -67,6 +67,7 @@ const EXERCISES: readonly [string, string][] = [
   ['lib-dribbling', 'act-dr-inside'],
   ['lib-firstTouch', 'act-ft-soft-landing'],
   ['lib-defending', 'act-df-side-step'],
+  ['lib-awareness', 'act-aw-eyes-up'],
 ];
 
 for (const gender of ['boy', 'girl'] as const) {
@@ -99,6 +100,8 @@ for (const gender of ['boy', 'girl'] as const) {
           expect(x.set).toBe(`${gender}-training`);
           expect(inside({ x: x.player.x + x.player.width / 2, y: x.player.y + x.player.height }, x.rect), `${act} feet in frame`).toBe(true);
           expect(inside(x.ball, x.rect), `${act} ball in frame`).toBe(true);
+          const art = { x: x.player.x + x.player.width * 0.1, y: x.player.y + x.player.height * 0.08 };
+          expect(inside(art, x.rect) && inside({ x: x.player.x + x.player.width * 0.9, y: art.y }, x.rect), `${act} whole player in frame`).toBe(true);
           expect(x.scale.x, 'not stretched').toBeCloseTo(x.scale.y, 5);
           scale ??= x.scale.x;
           expect(x.scale.x, 'stable character scale across poses').toBeCloseTo(scale, 5);
