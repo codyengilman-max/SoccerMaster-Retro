@@ -252,13 +252,15 @@ export class StoryArt {
       s.x = Math.round(f.width * ((i + 1) / (n + 1)));
       const speaking = this.speakerRole !== null && s.role === this.speakerRole;
       const anySpeaker = this.speakerRole !== null && this.slots.some((o) => o.role === this.speakerRole);
-      const dim = f.showCast && anySpeaker && !speaking;
-      const alpha = f.showCast ? 1 : 0;
+      // Over a painting that already shows the player and Cloudy, a portrait (Mom) appears only while she speaks.
+      const show = f.showCast && (!this.castInBackdrop || speaking);
+      const dim = show && anySpeaker && !speaking;
+      const alpha = show ? 1 : 0;
       const lift = speaking ? Math.round(h * 0.025) : 0;
       if (s.img) {
         s.box.setVisible(false);
         s.label.setVisible(false);
-        s.img.setDisplaySize(w, h).setVisible(f.showCast).setTint(dim ? 0x9c968c : 0xffffff);
+        s.img.setDisplaySize(w, h).setVisible(show).setTint(dim ? 0x9c968c : 0xffffff);
         const ty = bottom - lift;
         if (this.reducedMotion) s.img.setPosition(s.x, ty).setAlpha(alpha);
         else if (entering) {
@@ -280,8 +282,8 @@ export class StoryArt {
         const bw = Math.min(w * 0.7, 120);
         const bh = Math.min(room * 0.7, 150);
         const label = s.state === 'loading' ? '' : `${s.state === 'failed' ? 'Art unavailable' : 'Art gap'}\n${s.role === 'player' ? 'Player' : (artAsset(s.role)?.label ?? s.role)}`;
-        s.box.clear().fillStyle(PALETTE.ink, 0.35).fillRoundedRect(s.x - bw / 2, f.panelY - bh - 6, bw, bh, 12).setVisible(f.showCast && s.state !== 'loading').setAlpha(alpha);
-        s.label.setText(label).setPosition(s.x, f.panelY - bh / 2 - 6).setVisible(f.showCast && s.state !== 'loading').setAlpha(alpha);
+        s.box.clear().fillStyle(PALETTE.ink, 0.35).fillRoundedRect(s.x - bw / 2, f.panelY - bh - 6, bw, bh, 12).setVisible(show && s.state !== 'loading').setAlpha(alpha);
+        s.label.setText(label).setPosition(s.x, f.panelY - bh / 2 - 6).setVisible(show && s.state !== 'loading').setAlpha(alpha);
       }
     });
   }
