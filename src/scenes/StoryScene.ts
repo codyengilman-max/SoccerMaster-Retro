@@ -1198,7 +1198,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     pg.lineStyle(3, PALETTE.ink, 1).strokeRoundedRect(this.panel.x, this.panel.y, this.panel.width, this.panel.height, 14);
     const s = this.stage;
     s.clear();
-    if (this.mode === 'story' && n?.type === 'line' && n.speaker !== 'System' && !art.hasCast) {
+    if (this.mode === 'story' && n?.type === 'line' && n.speaker !== 'System' && !art.hasCast && !art.castInBackdrop) {
       // Code-drawn portrait: head, hair and a coloured shirt per speaker.
       const cx = width * 0.5;
       const r = Math.min(stageH * 0.22, width * 0.14);

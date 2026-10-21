@@ -307,6 +307,168 @@
       "continuityFlags": [],
       "use": "Prologue departure (girl), neutral caption",
       "runtime": true
+    },
+    {
+      "assetId": "mom-neutral",
+      "path": "assets/v2/mom_neutral.png",
+      "sourcePath": "SoccerMaster_Jungle_Ball_Devin/extras/mom_cutscene_source.png (cut by scripts/art/crop-mom-portraits.py)",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom (neutral)",
+      "outfitId": "home",
+      "width": 512,
+      "height": 768,
+      "hasAlpha": true,
+      "sha256": "2c60a9f66328562d3df0138b6e0152cbfa7ec5491973aada18cbb56856763d2b",
+      "sizeBytes": 315987,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_2026_10_22"
+      ],
+      "use": "Mom in story cutscenes",
+      "runtime": true
+    },
+    {
+      "assetId": "mom-proud",
+      "path": "assets/v2/mom_proud.png",
+      "sourcePath": "SoccerMaster_Jungle_Ball_Devin/extras/mom_cutscene_source.png (cut by scripts/art/crop-mom-portraits.py)",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom (proud)",
+      "outfitId": "home",
+      "width": 512,
+      "height": 768,
+      "hasAlpha": true,
+      "sha256": "3f77f04fe33c3c6c279642e304089ef6654e2ea0e06341391de3b0a9c4d248e4",
+      "sizeBytes": 326605,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_2026_10_22"
+      ],
+      "use": "Mom in story cutscenes",
+      "runtime": true
+    },
+    {
+      "assetId": "mom-worried",
+      "path": "assets/v2/mom_worried.png",
+      "sourcePath": "SoccerMaster_Jungle_Ball_Devin/extras/mom_cutscene_source.png (cut by scripts/art/crop-mom-portraits.py)",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom (worried)",
+      "outfitId": "home",
+      "width": 512,
+      "height": 768,
+      "hasAlpha": true,
+      "sha256": "1623cd9a0ab906b082350ff38c0ccac6bef9b7853e1170049e3b2746c983a9f5",
+      "sizeBytes": 292398,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_2026_10_22"
+      ],
+      "use": "Mom in story cutscenes",
+      "runtime": true
+    },
+    {
+      "assetId": "mom-laughing",
+      "path": "assets/v2/mom_laughing.png",
+      "sourcePath": "SoccerMaster_Jungle_Ball_Devin/extras/mom_cutscene_source.png (cut by scripts/art/crop-mom-portraits.py)",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom (laughing)",
+      "outfitId": "home",
+      "width": 512,
+      "height": 768,
+      "hasAlpha": true,
+      "sha256": "6b93bfa96a9d804c3490f4559d6b1d23620b011bf9388ce80f37940610827dee",
+      "sizeBytes": 290485,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_2026_10_22"
+      ],
+      "use": "Mom in story cutscenes",
+      "runtime": true
+    },
+    {
+      "assetId": "mom-firm",
+      "path": "assets/v2/mom_firm.png",
+      "sourcePath": "SoccerMaster_Jungle_Ball_Devin/extras/mom_cutscene_source.png (cut by scripts/art/crop-mom-portraits.py)",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom (firm)",
+      "outfitId": "home",
+      "width": 512,
+      "height": 768,
+      "hasAlpha": true,
+      "sha256": "787b47a3d20b15a0842a0dd94e8172ae621c5b9c208f38b8fe496e3c3d7708f9",
+      "sizeBytes": 327916,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_2026_10_22"
+      ],
+      "use": "Mom in story cutscenes",
+      "runtime": true
+    },
+    {
+      "assetId": "mom-sad",
+      "path": "assets/v2/mom_sad.png",
+      "sourcePath": "SoccerMaster_Jungle_Ball_Devin/extras/mom_cutscene_source.png (cut by scripts/art/crop-mom-portraits.py)",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom (sad)",
+      "outfitId": "home",
+      "width": 512,
+      "height": 768,
+      "hasAlpha": true,
+      "sha256": "361faf3cbe9a7533668e82c3584e2a25bd7447ef523faa03214834dd1a25d45f",
+      "sizeBytes": 322272,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_2026_10_22"
+      ],
+      "use": "Mom in story cutscenes",
+      "runtime": true
+    },
+    {
+      "assetId": "s1-tank-girl",
+      "path": "assets/v2/aquarium_girl.png",
+      "sourcePath": "owner chat attachment 2026-10-22 (aquarium, girl)",
+      "type": "background",
+      "characterId": null,
+      "label": "Bedroom with Cloudy's tank (girl)",
+      "outfitId": null,
+      "width": 1536,
+      "height": 1024,
+      "hasAlpha": false,
+      "sha256": "7fa50b928e21f3fa0f565bf492388b07911788d3b7dae9e66ddf247cf2c8b472",
+      "sizeBytes": 3175293,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_2026_10_22",
+        "cast_in_backdrop"
+      ],
+      "use": "Cloudy conversations: the saved boy/girl is painted in",
+      "runtime": true
+    },
+    {
+      "assetId": "s1-tank-boy",
+      "path": "assets/v2/aquarium_boy.png",
+      "sourcePath": "owner chat attachment 2026-10-22 (aquarium, boy)",
+      "type": "background",
+      "characterId": null,
+      "label": "Bedroom with Cloudy's tank (boy)",
+      "outfitId": null,
+      "width": 1536,
+      "height": 1024,
+      "hasAlpha": false,
+      "sha256": "7c18115d447f36b14869c24e8faca1e8c4eb3c697d366c449c0ba88f97c60ccb",
+      "sizeBytes": 3173082,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_2026_10_22",
+        "cast_in_backdrop"
+      ],
+      "use": "Cloudy conversations: the saved boy/girl is painted in",
+      "runtime": true
     }
   ]
 }

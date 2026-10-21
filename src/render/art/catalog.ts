@@ -143,6 +143,7 @@ export const SPEAKER_ROLE: Readonly<Record<string, CastRole>> = Object.freeze({
   Jordan: 'jordan',
   Blake: 'blake',
   Caregiver: 'caregiver',
+  Mom: 'caregiver',
   'Coach Code': 'coach',
   Alex: 'alex',
   Sam: 'sam',
@@ -175,23 +176,35 @@ export const unmappedScenes = (storySceneIds: readonly string[]): string[] => st
 /** Scene order used to prefetch the next scene's art. */
 export const PREFETCH_ORDER: readonly string[] = [...MAPPED_SCENE_IDS, ...SEASON_ONE.order];
 
+/** Mom's neutral expression; the Season One script has no per-line expression field yet. */
+export const MOM_PORTRAIT = 'mom-neutral';
+/** Backdrop already paints the cast (StoryScene draws no fallback portrait over it). */
+export const CAST_IN_BACKDROP = 'cast_in_backdrop';
+
 /**
  * Season One: backdrop from the scene's authored location; the player is always the saved boy/girl
- * (never a fixed illustrated character); Mom and Casey have no confirmed portrait, so they are not cast.
+ * (never a fixed illustrated character). Mom is cast with the owner's portrait in every scene where she speaks.
+ * Cloudy scenes use the owner's aquarium painting for the saved boy/girl, which already shows the player and Cloudy.
  */
 function seasonOneVisual(sceneId: string, appearance: 'boy' | 'girl' | null): SceneVisual | null {
   if (!SEASON_ONE.order.includes(sceneId)) return null;
   const sc = sceneById(sceneId)!;
   const allowed = (id: string | null): string | null => (id && isAllowedAsset(id) ? id : null);
   const visual = (bg: string | null, cast: CastMember[], flags: string[] = []): SceneVisual => ({ sceneId, presentation: 'cutscene', backgroundAssetId: allowed(bg), cast, continuityFlags: ['season_one', ...flags], revision: ART_REVISION });
+  const mom: CastMember[] = sc.nodes.some((n) => n.type === 'line' && SPEAKER_ROLE[n.speaker] === 'caregiver')
+    ? [{ role: 'caregiver', visualId: 'caregiver', outfit: 'home', assetId: allowed(MOM_PORTRAIT) }]
+    : [];
   if (sc.background === 'prologue') {
     const kind = sceneId === 'S1_PRO_DEPART' ? 'departure' : 'arrival';
-    return visual(appearance ? `${kind}-${appearance}` : null, [], kind === 'departure' ? ['neutral_departure_region'] : []);
+    return visual(appearance ? `${kind}-${appearance}` : null, mom, kind === 'departure' ? ['neutral_departure_region'] : []);
   }
   if (sc.background === 'aquarium') {
+    const painted = appearance ? allowed(`s1-tank-${appearance}`) : null;
+    if (painted) return visual(painted, mom, [CAST_IN_BACKDROP]);
     return visual('s1-bedroom-tank', [
       { role: 'player', visualId: appearance, outfit: 'tank', assetId: appearance ? allowed(`player-${appearance}-down`) : null },
       { role: 'fish', visualId: 'fish', outfit: 'tank', assetId: allowed('clownfish') },
+      ...mom,
     ]);
   }
   const loc: Exclude<Location, 'handoff'> =
@@ -206,11 +219,12 @@ function seasonOneVisual(sceneId: string, appearance: 'boy' | 'girl' | null): Sc
       if (r && r !== 'fish' && r !== 'caregiver' && !roles.includes(r) && roles.length < 3) roles.push(r);
     }
   }
+  if (mom.length && roles.length >= 3) roles.pop();
   const cast = roles.flatMap((role): CastMember[] => {
     const outfit = outfitFor(role, loc);
     if (!outfit) return [];
     const visualId: VisualId | null = role === 'player' ? appearance : role;
     return [{ role, visualId, outfit, assetId: visualId ? variantAsset(visualId, outfit) : null }];
   });
-  return visual(bg, cast);
+  return visual(bg, [...cast, ...mom]);
 }

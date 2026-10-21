@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { PREFETCH_ORDER, SPEAKER_ROLE, artAsset, isAllowedAsset, sceneVisual, type CastRole, type SceneVisual } from '../render/art/catalog';
+import { CAST_IN_BACKDROP, PREFETCH_ORDER, SPEAKER_ROLE, artAsset, isAllowedAsset, sceneVisual, type CastRole, type SceneVisual } from '../render/art/catalog';
 import { artTextureKey, artUrl } from '../render/art/urls';
 import { CSS, FONT_FAMILY, PALETTE } from '../render/theme';
 
@@ -61,6 +61,11 @@ export class StoryArt {
     return this.slots.length > 0;
   }
 
+  /** True when the backdrop itself paints the characters (no code-drawn portrait goes over it). */
+  get castInBackdrop(): boolean {
+    return this.bgImage.visible && (this.visual?.continuityFlags.includes(CAST_IN_BACKDROP) ?? false);
+  }
+
   update(f: StoryArtFrame): void {
     if (this.destroyed) return;
     this.last = f;
@@ -88,6 +93,7 @@ export class StoryArt {
       mapped: v !== null,
       revision: v?.revision ?? null,
       background: v?.backgroundAssetId ?? null,
+      castInBackdrop: v?.continuityFlags.includes(CAST_IN_BACKDROP) ?? false,
       backgroundShown: this.bgImage.visible,
       speakerRole: this.speakerRole,
       cast: this.slots.map((s) => ({ role: s.role, assetId: s.assetId, state: s.state, visible: (s.img?.visible ?? false) || s.box.visible, speaking: s.role === this.speakerRole, alpha: s.img?.alpha ?? s.box.alpha, x: s.x })),

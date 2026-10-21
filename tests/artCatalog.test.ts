@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import s1Manifest from '../docs/art/season-one/asset-manifest.json';
 import t12Manifest from '../docs/training/v1.2/asset-manifest.json';
-import { SEASON_ONE } from '../src/game/story/content';
+import { SEASON_ONE, sceneById } from '../src/game/story/content';
 import { ART_ASSETS, MAPPED_SCENE_IDS, RUNTIME_IMAGES, SPEAKER_ROLE, isAllowedAsset, sceneVisual, unmappedScenes, variantAsset } from '../src/render/art/catalog';
 
 const S1_IDS = new Set([...s1Manifest.assets, ...t12Manifest.assets].map((a) => a.assetId));
@@ -73,8 +73,8 @@ describe('Graphics v1 catalog', () => {
     expect(variantAsset('alex', 'home')).toBeNull();
   });
 
-  it('Season One screen art: 17 masters byte-identical, 14 runtime images, Tank Cup kept out of the game', () => {
-    expect(s1Manifest.assets).toHaveLength(17);
+  it('Season One screen art: 25 masters byte-identical, 22 runtime images, Tank Cup kept out of the game', () => {
+    expect(s1Manifest.assets).toHaveLength(25);
     for (const a of s1Manifest.assets) {
       const sha = createHash('sha256').update(readFileSync(`docs/art/season-one/${a.path}`)).digest('hex');
       expect(sha, a.assetId).toBe(a.sha256);
@@ -93,9 +93,19 @@ describe('Graphics v1 catalog', () => {
       const other = look === 'boy' ? 'girl' : 'boy';
       expect(sceneVisual('S1_PRO_DEPART', look)!.backgroundAssetId).toBe(`departure-${look}`);
       expect(sceneVisual('S1_PRO_ARRIVE', look)!.backgroundAssetId).toBe(`arrival-${look}`);
+      // Cloudy scenes: the owner's aquarium painting for the saved look already shows the player and Cloudy.
       const tank = sceneVisual('S1_W01_F', look)!;
-      expect(tank.backgroundAssetId).toBe('s1-bedroom-tank');
-      expect(tank.cast.map((c) => c.assetId)).toEqual([`player-${look}-down`, 'clownfish']);
+      expect(tank.backgroundAssetId).toBe(`s1-tank-${look}`);
+      expect(tank.cast).toEqual([]);
+      expect(tank.continuityFlags).toContain('cast_in_backdrop');
+      // Mom's portrait is cast in every scene where she speaks, and nowhere else.
+      for (const id of SEASON_ONE.order) {
+        const momSpeaks = sceneById(id)!.nodes.some((n) => n.type === 'line' && n.speaker === 'Mom');
+        const cast = sceneVisual(id, look)!.cast;
+        expect(cast.some((c) => c.role === 'caregiver' && c.assetId === 'mom-neutral'), id).toBe(momSpeaks);
+        expect(cast.length, id).toBeLessThanOrEqual(3);
+      }
+      expect(sceneVisual('S1_W02_F', look)!.cast.map((c) => c.assetId)).toEqual(['mom-neutral']);
       for (const id of SEASON_ONE.order) {
         const v = sceneVisual(id, look)!;
         expect(v, id).not.toBeNull();

@@ -344,6 +344,70 @@
       "bytes": 95278
     },
     {
+      "assetId": "mom-neutral",
+      "file": "mom-neutral.webp",
+      "width": 256,
+      "height": 384,
+      "masterSha256": "2c60a9f66328562d3df0138b6e0152cbfa7ec5491973aada18cbb56856763d2b",
+      "bytes": 16622
+    },
+    {
+      "assetId": "mom-proud",
+      "file": "mom-proud.webp",
+      "width": 256,
+      "height": 384,
+      "masterSha256": "3f77f04fe33c3c6c279642e304089ef6654e2ea0e06341391de3b0a9c4d248e4",
+      "bytes": 17278
+    },
+    {
+      "assetId": "mom-worried",
+      "file": "mom-worried.webp",
+      "width": 256,
+      "height": 384,
+      "masterSha256": "1623cd9a0ab906b082350ff38c0ccac6bef9b7853e1170049e3b2746c983a9f5",
+      "bytes": 15842
+    },
+    {
+      "assetId": "mom-laughing",
+      "file": "mom-laughing.webp",
+      "width": 256,
+      "height": 384,
+      "masterSha256": "6b93bfa96a9d804c3490f4559d6b1d23620b011bf9388ce80f37940610827dee",
+      "bytes": 16600
+    },
+    {
+      "assetId": "mom-firm",
+      "file": "mom-firm.webp",
+      "width": 256,
+      "height": 384,
+      "masterSha256": "787b47a3d20b15a0842a0dd94e8172ae621c5b9c208f38b8fe496e3c3d7708f9",
+      "bytes": 18830
+    },
+    {
+      "assetId": "mom-sad",
+      "file": "mom-sad.webp",
+      "width": 256,
+      "height": 384,
+      "masterSha256": "361faf3cbe9a7533668e82c3584e2a25bd7447ef523faa03214834dd1a25d45f",
+      "bytes": 18090
+    },
+    {
+      "assetId": "s1-tank-girl",
+      "file": "s1-tank-girl.webp",
+      "width": 768,
+      "height": 512,
+      "masterSha256": "7fa50b928e21f3fa0f565bf492388b07911788d3b7dae9e66ddf247cf2c8b472",
+      "bytes": 85158
+    },
+    {
+      "assetId": "s1-tank-boy",
+      "file": "s1-tank-boy.webp",
+      "width": 768,
+      "height": 512,
+      "masterSha256": "7c18115d447f36b14869c24e8faca1e8c4eb3c697d366c449c0ba88f97c60ccb",
+      "bytes": 84944
+    },
+    {
       "assetId": "crossbar-schoolyard",
       "file": "crossbar-schoolyard.webp",
       "width": 836,

@@ -2,7 +2,7 @@ import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { diagnostics, pressElement, trackConsoleErrors, waitForScene } from './helpers';
 
 type Cast = { role: string; assetId: string | null; state: string; visible: boolean; speaking: boolean };
-type Art = { scene: string | null; mapped: boolean; background: string | null; backgroundShown: boolean; speakerRole: string | null; cast: Cast[]; reducedMotion: boolean; textures: number };
+type Art = { scene: string | null; mapped: boolean; background: string | null; backgroundShown: boolean; castInBackdrop: boolean; speakerRole: string | null; cast: Cast[]; reducedMotion: boolean; textures: number };
 type Story = { mode: string; scene: string | null; type?: string; adapter?: string; revision: number; buttons: string[]; art: Art | null };
 test.describe.configure({ timeout: 120_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
@@ -71,11 +71,14 @@ test('Season One cutscenes: departure plate and aquarium for the chosen girl, sp
   await toDeparture(page, modeFor(info));
   const depart = await story(page, (x) => x.art?.backgroundShown === true, 'departure art loaded');
   expect(depart.art!.background).toBe('departure-girl');
-  expect(depart.art!.cast).toEqual([]);
+  // Mom speaks at the departure, so her portrait is cast.
+  expect(depart.art!.cast.map((c) => [c.role, c.assetId])).toEqual([['caregiver', 'mom-neutral']]);
   const s = await advanceTo(page, modeFor(info), (x) => x.scene === 'S1_PRO_ROOM' && x.type === 'line', 'aquarium line');
   const ready = await story(page, (x) => x.art?.backgroundShown === true && (x.art?.cast.every((c) => c.state === 'shown') ?? false), 'art loaded');
-  expect(ready.art!.background).toBe('s1-bedroom-tank');
-  expect(ready.art!.cast.map((c) => [c.role, c.assetId])).toEqual([['player', 'player-girl-down'], ['fish', 'clownfish']]);
+  // The owner's aquarium painting for the saved girl already shows her and Cloudy: no portraits on top.
+  expect(ready.art!.background).toBe('s1-tank-girl');
+  expect(ready.art!.castInBackdrop).toBe(true);
+  expect(ready.art!.cast).toEqual([]);
   const speaking = ready.art!.cast.filter((c) => c.speaking).map((c) => c.role);
   expect(speaking).toEqual(ready.art!.speakerRole ? [ready.art!.speakerRole] : []);
   // Image loading and idle time do not advance or rewrite the story.

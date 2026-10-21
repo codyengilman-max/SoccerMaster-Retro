@@ -22,7 +22,7 @@ export const ART_GAPS: readonly string[] = [
   'No squad numbers or club kits in the match engine: numbers are formation slot + 1, kits are home/away/keeper reference colours (match sides, not clubs).',
   'No corridor, moving-box arrival or night bedroom art: the bedroom map is used for all home scenes (time/props awaiting review).',
   'Static portraits only: no expression or lip-sync frames; motion is entrance and speaker highlight.',
-  'Season One: no Mom or Casey portrait (their lines are text only); no daytime aquarium; no classroom or lunch room.',
+  'Season One: no Casey portrait (text only); Mom has one owner portrait per expression but the script names none, so neutral is used; no daytime aquarium; no classroom or lunch room.',
   'Season One: the Tank Cup images (underwater, mini goal, pellet) are kept but not shown, because no Tank Cup activity exists.',
 ];
 
