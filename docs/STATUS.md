@@ -1,5 +1,20 @@
 # Status
 
+## Season One structure from the storyboard + story mode only (owner outline "A Place on the Field", 2026-10-21; stacked on PR #26, not merged, not deployed)
+- **Story mode only:** Start shows one "Play Story" button. Free 9v9 match, Home Training, Jungle Ball and Review & Lab (and the `T` shortcut, and Home Training's "Play a 9v9 match") need `?dev` in the link (`shouldExposeDevMenu`). Inside the story, matches, Crossbar, Jungle Ball and training still open as before. Browser specs that use the developer entries now load `/?debug=1&dev`; `navigation.spec` checks the player start screen has only Story and that `T` does nothing.
+- **Calendar** (`src/game/season/calendar.ts`): the 18 storyboard titles; league games 1–6 in weeks 3–8, 7–8 in weeks 10–11, 9–12 in weeks 13–16; AZ Showcase week 9, Holiday Classic week 12 (three weeks apart); State Cup semifinals week 17, final week 18. Mom's deeper scenes in weeks 1, 4, 7, 9, 12, 16 plus the week 18 family decision (79 slots). Weeks 1–4 slots are unchanged.
+- **Tournaments** (`tournament.ts`, save version `s1-t2`): 8 teams, 2 groups of 4, three group games each, group winners meet in the final. Ten-point system (win 6, draw 3, +1 a goal up to three, +1 clean sheet). Tiebreakers: points, wins, head-to-head only for a two-team points tie, goal difference capped at ±3 a match, fewest conceded, then the drawing of lots recorded at creation; no restart after a partial split. Batavia's group: Batavia, one league club, two out-of-state clubs. Next Horizon (not a league club, owner: special exemption) is in the other group with one league club and two out-of-state clubs. Eight random fictional out-of-state clubs with colours (owner: "random out of state team names and colors"). Tournament points never touch the league.
+- **State Cup** (`stateCup.ts`): the league's top three once all league games have results, plus the invited club (`STATE_CUP_INVITED = 'next_horizon'`, pending owner answer on "Next Level"). The semifinal draw is recorded once; Batavia outside the top three is not entered and the cup is simulated without an invented berth.
+- **Strength ranking** (`strength.ts`, review-only default): Elo (start 1500, K 24) over league and tournament results in season order, recomputed from saved results, never stored. Separate from league position and tournament points.
+- **Not done / gaps (not invented):**
+  - Weeks 5–18 have no scenes until the owner sends scripts; the story still ends after week 4, so tournaments, the State Cup and the strength table are not reachable in play yet.
+  - No playable penalty shoot-out exists: a level tournament final or State Cup game gets a seeded shoot-out winner, labelled simulated.
+  - Out-of-state clubs have colours but no sprite sheet and the match renderer only knows sheet clubs, so they are not drawn in their colours yet.
+  - Energy, endurance and health (minutes, workload, recovery by elapsed game time) are not started.
+  - School activity +1/−1/neutral rule: still unconfigured.
+  - Week 4: the script has no Mom line acting on the support preference at League Game Two.
+  - Week 14 "League Game 10 — Next Horizon" conflicts with Next Horizon not being in the league; awaiting the owner. League game 10 is currently a normal league fixture.
+
 ## Season One weeks 3–4 (owner directive "REPLACE LEGACY STORY CONTENT", branch `devin/1792547837-story-weeks-3-4`, not merged, not deployed)
 - Only approved weeks 1–4 are authoritative. Weeks 1–2 (owner rewrite) unchanged; weeks 3 "When It Counts" and 4 "Everybody Wants Something" replaced from the owner scripts. Blake's gendered line uses the directive's replacement "Come on. Prove you can play some real soccer."
 - One content source and one runtime: `src/game/story/content.ts` exports only `SEASON_ONE` (`s1-v2.0`, compiled from `docs/story/season-one/src`). The v0.7 week-one package and the weeks 2–4 draft are no longer imported anywhere; `DRAFT_SCENES`, `WEEK_ONE`, `WEEKS_2_4` and `STORY` are gone.

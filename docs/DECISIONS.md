@@ -192,3 +192,10 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - `src/render/art/homeDemo.ts` is the single place a home demo picks its sheet (`demoSet`: saved gender, training kit, keeper sheet for keeper exercises) and its pose (`demoPose`: pure function of the activity's existing `DemoSpec` and playback time). It lives in `src/render/`, not `src/game/`, because it names atlas frames; the catalog's `DemoSpec` data is unchanged.
 - Strikes are derived from the demo data (a long, fast ball segment starting at the player's feet), so a kick never loops on its own. Juggling patterns are authored per ladder level from each level's steps. Left-foot contacts mirror the right-foot art; the sheets have no left-foot frames.
 - A career with no saved gender (made from My Training before the story) shows the boy, as matches already do.
+
+## D40. Season One structure from the storyboard; story mode only (owner outline, 2026-10-21)
+- Players reach the game only through the story; developer and owner-review entries stay behind `?dev` so browser tests and owner review keep working without exposing free modes.
+- Tournament ties are broken by recursive splitting: each tied cluster is split by the next criterion only, so a partial separation never restarts at points; head-to-head applies only when exactly two teams were level on points. Lots are drawn once when the tournament is created and saved with it.
+- Shoot-outs are seeded and labelled simulated because no playable shoot-out exists; the storyboard's "existing penalty-shootout gameplay" is a gap.
+- Strength rating is derived (Elo from saved results), never stored, so it cannot drift from the records and stays idempotent across reloads.
+- Next Horizon is not a league club; it enters tournaments and the State Cup by exemption (owner, 2026-10-21).
