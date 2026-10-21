@@ -16,6 +16,9 @@ describe('Season One calendar', () => {
       'Whose Side?', 'Losing the Room', 'Bigger Names', 'New Badge, Same Blake', 'Who Am I Doing This For?', 'What We Can Afford',
       'Questions Worth Asking', 'Next Horizon', 'Monday Still Comes', 'Finish What You Started', 'Four Teams Left', 'What Comes Next',
     ]);
+    // Week 14: league game 10 plus a non-league friendly against Next Horizon; no other week has one.
+    expect(SEASON_WEEKS.filter((w) => w.friendly).map((w) => [w.week, w.friendly, w.leagueGame])).toEqual([[14, 'next_horizon', 10]]);
+    expect(LEAGUE_CLUBS as readonly string[]).not.toContain('next_horizon');
     // Three weeks apart, two league weekends between them.
     expect(TOURNAMENTS.holiday_classic.week - TOURNAMENTS.az_showcase.week).toBe(3);
     for (const w of [1, 2, 9, 12, 17, 18]) expect(fixtureForSeasonWeek(w)).toBeNull();

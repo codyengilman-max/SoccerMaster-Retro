@@ -1,7 +1,7 @@
 /**
- * Arizona State Cup (owner storyboard 2026-10-21): four teams, the top three of the league plus one
- * invited club (Next Horizon by special exemption, owner 2026-10-21; whether "Next Level" is a
- * different club is awaiting the owner). League position alone qualifies; the strength ranking never
+ * Arizona State Cup (owner storyboard 2026-10-21): four teams, the top three of the league plus Next
+ * Horizon as the fourth team by special exemption (owner 2026-10-21). League position alone qualifies
+ * Batavia; the strength ranking never
  * does. The semifinal draw is recorded once when the cup is created. Semifinals in week 17, final in
  * week 18. A level game goes to a seeded shoot-out (no playable shoot-out exists yet). Batavia's games
  * are played; others are simulated and labelled. Framework-free and deterministic.

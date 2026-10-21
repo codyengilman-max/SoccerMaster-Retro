@@ -3,7 +3,7 @@
  * Weeks 1–2 arrival/preseason, league games 1–6 in weeks 3–8, AZ Showcase in week 9, league games 7–8
  * in weeks 10–11, Holiday Classic in week 12, league games 9–12 in weeks 13–16, Arizona State Cup
  * semifinals in week 17 and final in week 18. Mom's deeper talks: weeks 1, 4, 7, 9, 12, 16, then the
- * week 18 family decision.
+ * week 18 family decision. Week 14 adds a non-league friendly against Next Horizon (Blake's new club).
  */
 export type WeekKind = 'arrival' | 'preseason' | 'league' | 'tournament' | 'state_cup';
 export type TournamentId = 'az_showcase' | 'holiday_classic';
@@ -15,6 +15,8 @@ export interface SeasonWeek {
   /** League game number 1–12, or null. */
   readonly leagueGame: number | null;
   readonly tournament: TournamentId | null;
+  /** Extra non-league match that week (week 14: Blake's new club, owner 2026-10-21). Never league points. */
+  readonly friendly: 'next_horizon' | null;
   readonly parent: boolean;
 }
 
@@ -23,6 +25,9 @@ export const PARENT_WEEKS: readonly number[] = Object.freeze([1, 4, 7, 9, 12, 16
 function parentWeek(week: number): boolean {
   return PARENT_WEEKS.includes(week);
 }
+
+/** Week 14: a "friendly" that's not really friendly against Next Horizon, alongside league game 10. */
+const FRIENDLIES: Readonly<Record<number, 'next_horizon'>> = { 14: 'next_horizon' };
 
 const RAW: readonly [string, WeekKind, number | null, TournamentId | null][] = [
   ["You Don't Know Anybody Yet", 'arrival', null, null],
@@ -46,7 +51,7 @@ const RAW: readonly [string, WeekKind, number | null, TournamentId | null][] = [
 ];
 
 export const SEASON_WEEKS: readonly SeasonWeek[] = Object.freeze(
-  RAW.map(([title, kind, leagueGame, tournament], i) => Object.freeze({ week: i + 1, title, kind, leagueGame, tournament, parent: parentWeek(i + 1) })),
+  RAW.map(([title, kind, leagueGame, tournament], i) => Object.freeze({ week: i + 1, title, kind, leagueGame, tournament, friendly: FRIENDLIES[i + 1] ?? null, parent: parentWeek(i + 1) })),
 );
 export const SEASON_LENGTH = SEASON_WEEKS.length;
 export const seasonWeek = (week: number): SeasonWeek | null => SEASON_WEEKS[week - 1] ?? null;
