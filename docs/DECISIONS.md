@@ -188,3 +188,7 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Migration never maps old weeks 3–18 onto the new weeks 3–4. Retired content versions are archived and restarted; `s1-v1.0` saves past week 2 need an explicit story-only restart.
 - The week 4 school attribute change, personal match feedback bands and in-match sideline lines stay off until the owner defines their rules.
 
+## D39. At-home demos: one protagonist mapping (owner request, 2026-10-21)
+- `src/render/art/homeDemo.ts` is the single place a home demo picks its sheet (`demoSet`: saved gender, training kit, keeper sheet for keeper exercises) and its pose (`demoPose`: pure function of the activity's existing `DemoSpec` and playback time). It lives in `src/render/`, not `src/game/`, because it names atlas frames; the catalog's `DemoSpec` data is unchanged.
+- Strikes are derived from the demo data (a long, fast ball segment starting at the player's feet), so a kick never loops on its own. Juggling patterns are authored per ladder level from each level's steps. Left-foot contacts mirror the right-foot art; the sheets have no left-foot frames.
+- A career with no saved gender (made from My Training before the story) shows the boy, as matches already do.

@@ -11,6 +11,9 @@ import { DRAFT_PREFIX, DRAFT_STATUS, draftActivityId } from '../game/career/curr
 import { LOGIC_CATALOG, LOGIC_GROUPS, SCENARIO_GOAL, activeLogicScenarios, currentText, type LogicGroup } from '../game/logic/catalog';
 import { describeChanges, selectSituations } from '../game/career/teamTraining';
 import { orientationOf } from '../render/layout';
+import { PlayerArt, atlasKey } from '../render/art/playerArt';
+import { SPRITE_CELL } from '../render/art/spriteSets';
+import { DEMO_BALL_PEAK, JUGGLE_PATTERNS, demoPose, demoSet, isKeeperExercise } from '../render/art/homeDemo';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspectable';
 import { SceneKeys } from './keys';
@@ -57,6 +60,10 @@ interface Draft {
 }
 
 /** M6 home training and career screens. Reads and writes the career only through CareerStore. */
+/** A moving (route) demo, drawn at practice-area scale; juggling and still-frame demos stay on one spot. */
+const d0 = (a: Activity): boolean => a.demo.kind === 'path' && !JUGGLE_PATTERNS[a.id];
+const pathBodyHeight = (unit: number, h: number): number => Math.min(unit * 2.2, h * 0.5);
+
 export class CareerScene extends Phaser.Scene implements InspectableScene, GameplayScene {
   private store: CareerStore | null = null;
   private save: CareerSave = emptySave();
@@ -71,6 +78,10 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private navigating = false;
   private bg!: Phaser.GameObjects.Graphics;
   private demoG!: Phaser.GameObjects.Graphics;
+  private demoArt!: PlayerArt;
+  private demoImg!: Phaser.GameObjects.Image;
+  private demoBall!: Phaser.GameObjects.Graphics;
+  private demoInfo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number } } | null = null;
   private title!: Phaser.GameObjects.Text;
   private body!: Phaser.GameObjects.Text;
   private note!: Phaser.GameObjects.Text;
@@ -102,6 +113,9 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     const res = textResolution();
     this.bg = this.add.graphics();
     this.demoG = this.add.graphics();
+    this.demoArt = new PlayerArt(this);
+    this.demoImg = this.add.image(0, 0, '__DEFAULT').setVisible(false);
+    this.demoBall = this.add.graphics();
     const style = { fontFamily: FONT_FAMILY, color: CSS.ink } as const;
     this.title = this.add.text(0, 0, '', { ...style, fontStyle: 'bold' }).setOrigin(0.5, 0).setResolution(res);
     this.body = this.add.text(0, 0, '', { ...style }).setOrigin(0, 0).setResolution(res);
@@ -155,7 +169,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   /** Debug snapshot for browser tests. */
-  describeGameplay(): { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; text: string; textPage: string; overflow: string[]; evidence: number; coachEvidence: number } {
+  describeGameplay(): { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; text: string; textPage: string; overflow: string[]; evidence: number; coachEvidence: number; demo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number } } | null } {
     return {
       screen: this.screen.kind,
       week: this.save.week,
@@ -169,6 +183,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       text: this.body?.text ?? '',
       textPage: `${this.textPage + 1}/${this.textPages}`,
       overflow: this.buttons.filter((b) => b.active && !b.labelFits()).map((b) => b.name),
+      demo: this.demoImg?.visible && this.demoRect ? this.demoInfo : null,
       evidence: this.save.evidence.length,
       coachEvidence: this.save.evidence.filter((e) => e.source === 'coach').length,
     };
@@ -181,6 +196,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.store?.close();
     this.store = null;
     this.buttons = [];
+    this.demoArt.destroy();
   }
 
   private go(s: Screen): void {
@@ -681,11 +697,13 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     let colX = 20;
     let colY = top;
     if (demoOn) {
-      const dh = portrait ? Math.min(height * 0.2, (width - 40) * 0.6) : Math.min(height * 0.32, contentW * 0.6);
+      const dh = portrait ? Math.min(height * 0.27, (width - 40) * 0.62) : Math.min(height * 0.32, contentW * 0.6);
       this.demoRect = { x: 20, y: top, w: portrait ? width - 40 : contentW, h: dh };
       bodyY = top + dh + 8;
     } else this.demoRect = null;
     this.demoG.clear();
+    this.demoBall.clear();
+    this.demoImg.setVisible(false);
     if (!demoOn) this.demoCaption?.setVisible(false);
     if (!portrait) {
       colX = 28 + contentW;
@@ -765,15 +783,23 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     g.fillStyle(PALETTE.grassLight, 1).fillRoundedRect(r.x, r.y, r.w, r.h, 12);
     g.lineStyle(3, PALETTE.ink, 1).strokeRoundedRect(r.x, r.y, r.w, r.h, 12);
     const d = a.demo;
-    const sx = (x: number) => r.x + 10 + (x / 10) * (r.w - 20);
-    const sy = (y: number) => r.y + 8 + (y / 6) * (r.h - 16);
     const unit = Math.min(r.w / 10, r.h / 6);
+    // Moving demos inset the practice area by the protagonist's half-width and height, so no route endpoint clips the sprite.
+    const bodyH = pathBodyHeight(unit, r.h);
+    const mx = d0(a) ? SPRITE_CELL.width * 0.4 * (bodyH / SPRITE_CELL.bodyHeight) : 10;
+    const top = d0(a) ? bodyH + 4 : 8;
+    const sx = (x: number) => r.x + mx + (x / 10) * (r.w - 2 * mx);
+    const sy = (y: number) => r.y + top + (y / 6) * (r.h - top - (d0(a) ? 24 : 8));
     if (d.kind === 'path') {
       for (const m of d.markers) {
         if (m.kind === 'cone') g.fillStyle(PALETTE.tomato, 1).fillTriangle(sx(m.x), sy(m.y) - unit * 0.3, sx(m.x) - unit * 0.22, sy(m.y) + unit * 0.2, sx(m.x) + unit * 0.22, sy(m.y) + unit * 0.2);
         else if (m.kind === 'wall') g.fillStyle(PALETTE.track, 1).fillRect(sx(m.x) - unit * 0.15, r.y + 6, unit * 0.3, r.h - 12);
         else if (m.kind === 'target') g.lineStyle(3, PALETTE.blue, 1).strokeRect(sx(m.x) - unit * 0.3, sy(m.y) - unit * 0.5, unit * 0.6, unit);
         else g.lineStyle(3, PALETTE.mustardDark, 1).strokeRect(sx(m.x) - unit * 0.6, sy(m.y) - unit * 0.6, unit * 1.2, unit * 1.2);
+      }
+      if (this.drawSpriteDemo(a, sx, sy, unit)) {
+        this.demoCaption?.setVisible(false);
+        return;
       }
       const t = this.demoT % (d.seconds + 1);
       const at = (k: readonly { t: number; x: number; y: number }[]) => {
@@ -791,6 +817,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       g.fillStyle(0xffffff, 1).fillCircle(sx(b.x), sy(b.y), unit * 0.16);
       g.lineStyle(2, PALETTE.ink, 1).strokeCircle(sx(b.x), sy(b.y), unit * 0.16);
     } else {
+      if (this.drawSpriteDemo(a, sx, sy, unit)) return;
       const n = d.frames.length;
       const k = Math.floor(this.demoT / 1.4) % n;
       d.frames.forEach((fr, i) => {
@@ -811,6 +838,37 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   private demoCaption: Phaser.GameObjects.Text | null = null;
+
+  /** The created player (saved boy/girl, training kit) demonstrates the exercise; the ball is drawn separately. */
+  private drawSpriteDemo(a: Activity, sx: (x: number) => number, sy: (y: number) => number, unit: number): boolean {
+    const set = demoSet(this.save.player?.gender, isKeeperExercise(a));
+    this.demoArt.ensure([set]);
+    const key = atlasKey(set);
+    const pose = demoPose(a, this.demoT);
+    if (!this.textures.exists(key) || !this.textures.get(key).has(pose.frame)) return false;
+    const r = this.demoRect!;
+    const footY = Math.min(sy(pose.py), r.y + r.h - 22);
+    // Moving demos keep the practice-area scale; on-the-spot demos (juggling, footwork) fill the frame, leaving room for the ball's peak.
+    const bodyH = d0(a) ? pathBodyHeight(unit, r.h) : Math.min((footY - r.y - 12) / (1 + DEMO_BALL_PEAK * 0.55 - 0.9), r.w * 0.32);
+    const s = bodyH / SPRITE_CELL.bodyHeight;
+    this.demoImg.setTexture(key, pose.frame).setOrigin(SPRITE_CELL.anchorX / SPRITE_CELL.width, SPRITE_CELL.anchorY / SPRITE_CELL.height).setScale(s).setFlipX(pose.flip).setPosition(sx(pose.px), footY).setVisible(true);
+    const g = this.demoBall;
+    g.clear();
+    const bx = sx(pose.ball.x);
+    const ground = footY + (sy(pose.ball.y) - sy(pose.py));
+    const br = Math.max(4, unit * 0.16);
+    g.fillStyle(PALETTE.ink, 0.25).fillEllipse(bx, ground, br * 2.2, br * 0.8);
+    const by = ground - br - pose.ball.h * bodyH * 0.55;
+    g.fillStyle(0xffffff, 1).fillCircle(bx, by, br);
+    g.lineStyle(2, pose.contact === 'none' ? PALETTE.ink : PALETTE.sun, 1).strokeCircle(bx, by, br);
+    const ib = this.demoImg.getBounds();
+    this.demoInfo = { set, frame: pose.frame, flip: pose.flip, contact: pose.contact, scale: { x: this.demoImg.scaleX, y: this.demoImg.scaleY }, player: { x: ib.x, y: ib.y, width: ib.width, height: ib.height }, ball: { x: bx, y: by }, rect: { x: r.x, y: r.y, width: r.w, height: r.h } };
+    if (pose.caption) {
+      if (!this.demoCaption?.active) this.demoCaption = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: CSS.ink, fontStyle: 'bold' }).setOrigin(0.5, 1).setResolution(textResolution());
+      this.demoCaption.setFontSize(Math.round(Math.max(12, Math.min(unit * 0.45, 16)))).setPosition(r.x + r.w / 2, r.y + r.h - 4).setWordWrapWidth(r.w - 16).setText(pose.caption).setVisible(true);
+    } else this.demoCaption?.setVisible(false);
+    return true;
+  }
 
   private stepDemo(proto: NonNullable<ReturnType<typeof prototypeFor>>): void {
     const { index } = stepAt(proto, this.demoT);
