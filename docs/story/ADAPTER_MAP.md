@@ -2,6 +2,8 @@
 
 Package: `docs/story/v0.7/` (unchanged, SHA256SUMS verified). Runtime reads only `week_one_scenes.json` and `club_world.json`, both strictly validated; no content-supplied code, expressions or effects other than `remember_choice` run.
 
+**2026-10-20 (owner directive, D38):** the v0.7 week-one scenes and the weeks 2–4 draft are retired and removed; only `club_world.json` is still read. The active story is `docs/story/season-one` (`SEASON_ONE`, weeks 1–4).
+
 | Requirement | Implementation | Writer | Test | Status |
 |---|---|---|---|---|
 | Scene graph (18 scenes, v0.7 order) | `src/game/story/content.ts` `parseCatalog` | none (read-only) | `tests/story-content.test.ts` | Implemented |

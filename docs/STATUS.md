@@ -1,5 +1,19 @@
 # Status
 
+## Season One weeks 3–4 (owner directive "REPLACE LEGACY STORY CONTENT", branch `devin/1792547837-story-weeks-3-4`, not merged, not deployed)
+- Only approved weeks 1–4 are authoritative. Weeks 1–2 (owner rewrite) unchanged; weeks 3 "When It Counts" and 4 "Everybody Wants Something" replaced from the owner scripts. Blake's gendered line uses the directive's replacement "Come on. Prove you can play some real soccer."
+- One content source and one runtime: `src/game/story/content.ts` exports only `SEASON_ONE` (`s1-v2.0`, compiled from `docs/story/season-one/src`). The v0.7 week-one package and the weeks 2–4 draft are no longer imported anywhere; `DRAFT_SCENES`, `WEEK_ONE`, `WEEKS_2_4` and `STORY` are gone.
+- Weeks 5–18 and the epilogue are ordered, comment-only placeholders; nothing is generated or loaded for them. `SEASON_RELEASED_WEEKS = 4`: the story ends after week 4 with "Weeks 1–4 complete. More weeks are coming soon."
+- Week 3: Jungle Ball (existing game unchanged; WIN/DRAW/LOSS from the saved player vs Blake score), home-learning follow-up from last week's saved review, Team Training, League Game One with WIN/DRAW/LOSS branches.
+- Week 4: Crossbar or Jungle Ball by the player's choice (the unchosen one is recorded as declined, never launched), Mom's talk chosen from the real training log (above / within / below / unknown), League Game Two with WIN/DRAW/LOSS branches.
+- Facts are read from records only (`src/game/story/facts.ts`); missing records are "unknown", never "did not train".
+- Saves: retired `0.7` and `w24-draft-1` story saves are archived unchanged and a fresh Season One story starts; a `s1-v1.0` save still in weeks 1–2 resumes in place; a `s1-v1.0` save with progress in old weeks 3–18 is not mapped and the story screen offers an explicit "restart story" (archives the story and league record; career, player, attributes and training are kept).
+- **Not implemented, owner decision needed (not invented):**
+  - Week 4 school activity ±1 "overall attribute point": the game has no overall rating and neither minigame has strong/poor bands. Recorded as `unconfigured`; no attribute changes.
+  - Weeks 3–4 personal match feedback (strong / mixed / difficult debut / limited time): the match hands back only the team result; no rule maps match evidence to these bands.
+  - Week 4 Code's in-match stoppage lines ("They're playing a match. Speak with the adults afterward." / "Set up. Next play."): the match engine has no sideline-pressure events.
+- Choice labels may now be up to 72 characters so the owner's exact answers fit.
+
 
 ## Merge of open PRs #17, #18, #22 and #23 into `main` (owner request 2026-10-20)
 - Owner: "merge all remaining prs", then "only merge new weeks 1 and 2 stories as we will give you remaining weeks later". #23 (new weeks 1–2) is merged; #15 (approval of the older weeks 2–4 draft) is left out.

@@ -181,3 +181,10 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - The owner will send new text for weeks 3–18 later and asked to hide the current ones. `SEASON_RELEASED_WEEKS = 2` in the story runtime: an end node pointing into a later week (or the epilogue) completes the story instead, and `migrateStory` parks a save resting in a hidden week at the last released week's close.
 - The hidden scenes stay in the catalog so saves, art mapping and the season tests keep working; those tests open all weeks with `setReleasedWeeks`. Raising the constant reopens the weeks and a parked save continues from there.
 
+## D38. Authoritative weeks 1–4, legacy story removed (owner directive, 2026-10-20)
+- `SEASON_ONE` (`s1-v2.0`) is the only story catalog; `catalogFor` and `sceneById` cannot reach v0.7 or the weeks 2–4 draft. `SEASON_RELEASED_WEEKS = 4`; weeks 5–18 are empty source placeholders.
+- Story facts come from saved records (`facts.ts`): Jungle Ball result = player vs Blake score; home learning = last week's review (completed / partial / none / unknown); training log = this week's planned sessions plus uncredited extra practice (above / within / below / unknown).
+- A conditional activity whose predicate is false is recorded `declined` without a run id; that is how week 4 launches only the chosen school activity.
+- Migration never maps old weeks 3–18 onto the new weeks 3–4. Retired content versions are archived and restarted; `s1-v1.0` saves past week 2 need an explicit story-only restart.
+- The week 4 school attribute change, personal match feedback bands and in-match sideline lines stay off until the owner defines their rules.
+

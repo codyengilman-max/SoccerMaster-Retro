@@ -36,12 +36,12 @@ function play(plan: Plan, stop: string | null = null) {
       if (!r.ok && /declined/.test(r.error)) { s = step(s, { type: 'decline', seq: ++seq }); continue; }
       if (!r.ok) throw new Error(`${s.sceneId}: ${r.error}`);
       s = r.state;
-      const result = n.adapter === 'crossbar' ? plan.crossbar?.[s.sceneId] ?? 'WIN' : null;
-      const detail = n.adapter === 'team_training' ? plan.training?.[s.sceneId] ?? null : null;
+      const result = ['crossbar', 'jungle', 'league_match'].includes(n.adapter) ? plan.crossbar?.[s.sceneId] ?? 'WIN' : null;
+      const detail = n.adapter === 'team_training' ? plan.training?.[s.sceneId] ?? null : n.adapter === 'home_learning' ? 'completed' : n.adapter === 'training_log' ? 'within' : n.adapter === 'school_reward' ? 'unconfigured' : null;
       s = step(s, { type: 'complete', runId, outcome: 'completed', result, detail });
     } else if (n.type === 'end') s = step(s, { type: 'advance', seq: ++seq });
   }
-  expect(stop === null ? [s.sceneId, s.complete] : s.sceneId).toEqual(stop === null ? ['S1_W02_E', true] : stop);
+  expect(stop === null ? [s.sceneId, s.complete] : s.sceneId).toEqual(stop === null ? ['S1_W04_E', true] : stop);
   return { s, text: text.join('\n') };
 }
 
@@ -176,22 +176,18 @@ describe('Season One weeks 1-2 rewrite', () => {
   });
 });
 
-describe('Season One weeks 3–18 hidden until released (owner, 2026-10-20)', () => {
-  it('the story ends at the week 2 close and resumes into week 3 once more weeks are released', () => {
+describe('Season One stops after the approved weeks 1–4 (owner directive, 2026-10-20)', () => {
+  it('the story ends at the week 4 close and never launches an empty week', () => {
     const { s } = play({});
-    expect(s.complete && s.sceneId).toBe('S1_W02_E');
+    expect(s.complete && s.sceneId).toBe('S1_W04_E');
     expect(awaitingRelease(s)).toBe(true);
     expect(migrateStory(s)).toBe(s);
     setReleasedWeeks(99);
-    try { expect(migrateStory(s).sceneId).toBe('S1_W03_M'); } finally { setReleasedWeeks(SEASON_RELEASED_WEEKS); }
+    try { expect(migrateStory(s)).toEqual(s); } finally { setReleasedWeeks(SEASON_RELEASED_WEEKS); }
   });
 
-  it('a save already in a hidden week rests at the week 2 close with its choices and runs kept', () => {
-    const { s } = play({});
-    const w3 = sceneById('S1_W03_M')!;
-    const m = migrateStory({ ...s, complete: false, sceneId: w3.id, nodeId: w3.entry });
-    expect([m.sceneId, m.complete]).toEqual(['S1_W02_E', true]);
-    expect(m.decisions).toEqual(s.decisions);
-    expect(m.runs).toEqual(s.runs);
+  it('weeks 5–18 and the epilogue hold no scenes', () => {
+    for (let w = 5; w <= 18; w++) expect(SEASON_ONE.order.some((id) => id.startsWith(`S1_W${String(w).padStart(2, '0')}_`))).toBe(false);
+    expect(SEASON_ONE.order.some((id) => id.startsWith('S1_END'))).toBe(false);
   });
 });

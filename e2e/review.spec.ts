@@ -46,7 +46,7 @@ test('Review & Lab hub reaches Training Review and the catalog-only Soccer Logic
   await waitForScene(page, 'career');
   let c = await until(page, (x) => x.status === 'ok' && x.screen === 'reviewHub', 'hub');
   expect(c.player).toBeNull();
-  expect(c.text).toContain('Story & RPG: Start → Story plays Season One weeks 1–2 (owner rewrite); weeks 3–18 are hidden until the new text arrives.');
+  expect(c.text).toContain('Story & RPG: Start → Story plays Season One weeks 1–4 (owner scripts); weeks 5–18 are empty until new text is approved.');
   expect(c.text).toContain('U12, coming later');
   await fits(page);
 

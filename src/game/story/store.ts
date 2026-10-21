@@ -1,14 +1,20 @@
-import { SEASON_ONE, catalogFor, nodeById, sceneById } from './content';
-import { STORY_SCHEMA, migrateStory, newSeasonStory, reduceStory, type StoryCommand, type StoryOutcome, type StoryState } from './runtime';
+import { RETIRED_VERSIONS, SEASON_ONE, catalogFor, nodeById, sceneById } from './content';
+import { STORY_SCHEMA, migrateStory, seasonWeek, newSeasonStory, reduceStory, type StoryCommand, type StoryOutcome, type StoryState } from './runtime';
 
 const STORE = 'story';
+const isRetired = (v: unknown): boolean => isObj(v) && typeof v.contentVersion === 'string' && RETIRED_VERSIONS.includes(v.contentVersion);
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** Structural check of a saved story state; anything unknown is kept aside, never silently rewritten. */
-export function parseStoryState(raw: unknown): { ok: true; value: StoryState } | { ok: false; error: string } {
-  if (!isObj(raw)) return { ok: false, error: 'not an object' };
+export function parseStoryState(input: unknown): { ok: true; value: StoryState } | { ok: false; error: string } {
+  if (!isObj(input)) return { ok: false, error: 'not an object' };
+  let raw: Record<string, unknown> = input;
   if (raw.schema !== STORY_SCHEMA) return { ok: false, error: `unknown story schema ${String(raw.schema)}` };
   if (typeof raw.careerId !== 'string' || typeof raw.sceneId !== 'string' || typeof raw.nodeId !== 'string') return { ok: false, error: 'missing cursor' };
+  if (raw.contentVersion === SEASON_V1) {
+    if (touchesOldWeeks(raw)) return { ok: false, error: UNMAPPABLE };
+    raw = { ...raw, contentVersion: SEASON_ONE.version };
+  }
   if (typeof raw.contentVersion !== 'string' || !catalogFor(raw.contentVersion)) return { ok: false, error: `story content ${String(raw.contentVersion)} is not in this build` };
   for (const k of ['revision', 'lastSeq', 'openedBy']) if (!Number.isInteger(raw[k])) return { ok: false, error: `bad ${k}` };
   if (!isObj(raw.decisions) || !isObj(raw.runs) || !Array.isArray(raw.transcript) || !Array.isArray(raw.completedScenes)) return { ok: false, error: 'bad story fields' };
@@ -18,6 +24,19 @@ export function parseStoryState(raw: unknown): { ok: true; value: StoryState } |
   const scene = sceneById(value.sceneId);
   if (!scene || !nodeById(scene, value.nodeId)) return { ok: false, error: `story position ${raw.sceneId}.${raw.nodeId} is missing` };
   return { ok: true, value };
+}
+
+/** The first Season One text (weeks 1–18). Its weeks 1–2 are the owner rewrite and carry over unchanged. */
+export const SEASON_V1 = 's1-v1.0';
+export const UNMAPPABLE = 'progress from the earlier weeks 3–18 cannot be mapped to the new weeks 3–4';
+
+/** True when a save has any trace (position, choice, run, completed scene, log line) of the replaced weeks 3+. */
+function touchesOldWeeks(raw: Record<string, unknown>): boolean {
+  const ids: unknown[] = [raw.sceneId, ...Object.keys(isObj(raw.decisions) ? raw.decisions : {})];
+  if (isObj(raw.runs)) for (const r of Object.values(raw.runs)) ids.push(isObj(r) ? r.sceneId : null);
+  if (Array.isArray(raw.completedScenes)) ids.push(...raw.completedScenes);
+  if (Array.isArray(raw.transcript)) for (const t of raw.transcript) ids.push(isObj(t) ? t.sceneId : null);
+  return ids.some((id) => typeof id === 'string' && seasonWeek(id) >= 3);
 }
 
 /** Key of the archived pre-season story for a career (kept read-only, never deleted). */
@@ -103,6 +122,12 @@ export class StoryStore {
     type R = { ok: true; state: StoryState } | { ok: false; error: string };
     if (!this.db) {
       const cur = this.memory.get(careerId);
+      if (isRetired(cur)) {
+        const fresh = newSeasonStory(careerId);
+        this.memory.set(legacyKey(careerId), cur);
+        this.memory.set(careerId, fresh);
+        return Promise.resolve({ ok: true, state: fresh });
+      }
       const p = cur === undefined ? { ok: true as const, value: newSeasonStory(careerId) } : parseStoryState(cur);
       if (!p.ok) return Promise.resolve({ ok: false, error: p.error });
       const m = toSeason(careerId, p.value, cur);
@@ -117,6 +142,14 @@ export class StoryStore {
           const s = newSeasonStory(careerId);
           st.put(s, careerId);
           finish({ ok: true, state: s });
+          return;
+        }
+        if (isRetired(req.result)) {
+          // An older story package (v0.7 week one, weeks 2–4 draft): archived unchanged, Season One starts.
+          const fresh = newSeasonStory(careerId);
+          st.put(req.result, legacyKey(careerId));
+          st.put(fresh, careerId);
+          finish({ ok: true, state: fresh });
           return;
         }
         const p = parseStoryState(req.result);
@@ -135,6 +168,37 @@ export class StoryStore {
         finish({ ok: true, state: m.state });
       };
     }, { ok: false, error: 'Story save failed to open.' });
+  }
+
+  /**
+   * Story-only restart, offered when old progress cannot be mapped. In one transaction: the stored story and
+   * this career's Season One league record are copied aside (never deleted) and the story starts again at the
+   * prologue. The career save (player, attributes, training) lives elsewhere and is not touched.
+   */
+  restartStory(careerId: string): Promise<boolean> {
+    const at = Date.now();
+    const league = `rec:league-s1:${careerId}`;
+    const fresh = newSeasonStory(careerId);
+    if (!this.db) {
+      const cur = this.memory.get(careerId);
+      if (cur !== undefined) this.memory.set(`restart-${careerId}-${at}`, cur);
+      const lg = this.memory.get(league);
+      if (lg !== undefined) { this.memory.set(`rec:league-s1-archive:${careerId}:${at}`, lg); this.memory.delete(league); }
+      this.memory.set(careerId, fresh);
+      return Promise.resolve(true);
+    }
+    return this.run<boolean>((st, finish) => {
+      const a = st.get(careerId);
+      a.onsuccess = () => {
+        if (a.result !== undefined) st.put(a.result, `restart-${careerId}-${at}`);
+        const b = st.get(league);
+        b.onsuccess = () => {
+          if (b.result !== undefined) { st.put(b.result, `rec:league-s1-archive:${careerId}:${at}`); st.delete(league); }
+          st.put(fresh, careerId);
+          finish(true);
+        };
+      };
+    }, false);
   }
 
   /** The archived older story for this career, if Season One replaced one (read-only). */

@@ -3,11 +3,11 @@
  * transaction, so cursor, decision, run and revision are written together or not at all.
  * The UI sends only a requested choice id, expected revision and input sequence number.
  */
-import { SEASON_ONE, STORY, catalogFor, nodeById, sceneById, type AdapterKind, type Outcome, type StoryNode } from './content';
+import { SEASON_ONE, catalogFor, nodeById, sceneById, type AdapterKind, type Outcome, type StoryNode } from './content';
 
 export const STORY_SCHEMA = 1;
 /** Season One weeks open to players (owner, 2026-10-20: weeks 3–18 hidden until the new text arrives). */
-export const SEASON_RELEASED_WEEKS = 2;
+export const SEASON_RELEASED_WEEKS = 4;
 let releasedWeeks = SEASON_RELEASED_WEEKS;
 /** Tests of later-week content open the whole season; the game always uses SEASON_RELEASED_WEEKS. */
 export const setReleasedWeeks = (n: number): void => { releasedWeeks = n; };
@@ -67,7 +67,7 @@ export type StoryOutcome =
 
 export const runKey = (s: Pick<StoryState, 'careerId' | 'contentVersion'>, sceneId: string, nodeId: string): string => JSON.stringify([s.careerId, sceneId, s.contentVersion, nodeId]);
 
-export function newStory(careerId: string, catalog = STORY): StoryState {
+export function newStory(careerId: string, catalog = SEASON_ONE): StoryState {
   const scene = sceneById(catalog.entry)!;
   return { schema: STORY_SCHEMA, careerId, contentVersion: catalog.version, sceneId: scene.id, nodeId: scene.entry, revealed: false, revision: 0, lastSeq: 0, openedBy: 0, decisions: {}, runs: {}, transcript: [{ sceneId: scene.id, nodeId: scene.entry }], completedScenes: [], complete: false };
 }
@@ -75,7 +75,7 @@ export function newStory(careerId: string, catalog = STORY): StoryState {
 /** A Season One story from the prologue, for a new career or alongside an archived older story. */
 export const newSeasonStory = (careerId: string): StoryState => newStory(careerId, SEASON_ONE);
 /** Adapters whose completion carries a WIN/DRAW/LOSS result from the real activity. */
-export const RESULT_ADAPTERS: readonly AdapterKind[] = ['crossbar', 'league_match', 'tournament_match'];
+export const RESULT_ADAPTERS: readonly AdapterKind[] = ['crossbar', 'jungle', 'league_match', 'tournament_match'];
 
 /**
  * Saves that finished the old week-one slice (complete at the final callback) continue into week 2.
@@ -96,7 +96,8 @@ function migrateRewritten(s: StoryState): StoryState {
   const scene = sceneById(s.sceneId);
   // Only a scene revised by the compiler (`v2n1`-style ids) whose saved node has the pre-revision shape
   // (`n10`, `a3`) is restarted; any other unknown position stays unknown and is kept aside by the store.
-  if (!scene || nodeById(scene, s.nodeId) || !/^v\d+/.test(scene.entry) || !/^[a-z]\d+$/.test(s.nodeId)) return s;
+  // Only the unchanged owner weeks 1–2 restart in place; older week 3–4 text is never mapped onto the new script.
+  if (!scene || seasonWeek(scene.id) > 2 || nodeById(scene, s.nodeId) || !/^v\d+/.test(scene.entry) || !/^[a-z]\d+$/.test(s.nodeId)) return s;
   const { [scene.id]: _dropped, ...decisions } = s.decisions;
   const runs = Object.fromEntries(Object.entries(s.runs).filter(([, r]) => r.sceneId !== scene.id || nodeById(scene, r.nodeId)));
   return enter({ ...s, decisions, runs, complete: false }, scene.id, scene.entry, s.lastSeq);

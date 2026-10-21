@@ -1,20 +1,16 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import story from '../docs/story/v0.7/week_one_scenes.json';
 import s1Manifest from '../docs/art/season-one/asset-manifest.json';
 import t12Manifest from '../docs/training/v1.2/asset-manifest.json';
 import { SEASON_ONE } from '../src/game/story/content';
 import { ART_ASSETS, MAPPED_SCENE_IDS, RUNTIME_IMAGES, SPEAKER_ROLE, isAllowedAsset, sceneVisual, unmappedScenes, variantAsset } from '../src/render/art/catalog';
 
 const S1_IDS = new Set([...s1Manifest.assets, ...t12Manifest.assets].map((a) => a.assetId));
-const storyIds = (story.scenes as { id: string }[]).map((s) => s.id);
 
 describe('Graphics v1 catalog', () => {
-  it('maps every reachable v0.7 story scene, in story order', () => {
-    expect(storyIds).toHaveLength(18);
-    expect(unmappedScenes(storyIds)).toEqual([]);
-    expect(MAPPED_SCENE_IDS).toEqual(storyIds);
+  it('legacy v0.7 art mappings are not reachable from the active story', () => {
+    expect(MAPPED_SCENE_IDS.some((id) => SEASON_ONE.order.includes(id))).toBe(false);
   });
 
   it('keeps original masters byte-identical to the manifest and derives every runtime image', () => {
@@ -48,7 +44,7 @@ describe('Graphics v1 catalog', () => {
     expect(sceneVisual('W1_SCHOOL_02', 'girl')!.cast.map((c) => c.assetId)).toEqual(['girl', 'jordan', 'blake']);
     expect(sceneVisual('W1_MATCH_POST', 'boy')!.cast.map((c) => c.assetId)).toEqual(['boy-match', 'coach-club']);
     expect(sceneVisual('W1_HOME_CLOSE', 'boy')!.cast.map((c) => c.assetId)).toEqual(['boy-home', 'fish-tank']);
-    for (const id of storyIds) {
+    for (const id of MAPPED_SCENE_IDS) {
       const v = sceneVisual(id, 'boy')!;
       if (v.presentation !== 'cutscene') expect(v.cast).toEqual([]);
       else for (const c of v.cast) expect(c.assetId, `${id}/${c.role}`).not.toBeNull();
@@ -66,19 +62,6 @@ describe('Graphics v1 catalog', () => {
   it('gives an unchosen player appearance an explicit neutral gap instead of another person', () => {
     const c = sceneVisual('W1_HOME_01', null)!.cast;
     expect(c[0]).toMatchObject({ role: 'player', visualId: null, assetId: null });
-  });
-
-  it('maps every draft weeks 2–4 scene to supplied art only, one location and outfit per scene', async () => {
-    const { WEEKS_2_4 } = await import('../src/game/story/content');
-    for (const id of WEEKS_2_4.order) {
-      const v = sceneVisual(id, 'girl');
-      expect(v, id).not.toBeNull();
-      if (v!.backgroundAssetId !== null) expect(isAllowedAsset(v!.backgroundAssetId), id).toBe(true);
-      for (const c of v!.cast) expect(c.assetId === null || isAllowedAsset(c.assetId), `${id} ${c.role}`).toBe(true);
-      expect(v!.cast.filter((c) => c.role === 'player').length, id).toBeLessThanOrEqual(1);
-    }
-    expect(sceneVisual('W4_TOUCHLINE', 'boy')!.cast.map((c) => c.role)).toEqual(['player', 'alex']);
-    expect(MAPPED_SCENE_IDS.some((id) => WEEKS_2_4.order.includes(id))).toBe(false);
   });
 
   it('rejects unknown, forged and traversal-like IDs', () => {

@@ -2,11 +2,9 @@
  * Story scene graph: week one from package v0.7 (immutable) plus the weeks 2–4 DRAFT extension
  * (owner decision A, 2026-10-16). Strict validation, no executable content.
  */
-import raw from '../../../docs/story/v0.7/week_one_scenes.json';
-import rawExt from '../../../docs/story/weeks-2-4/weeks_2_4_draft.json';
 import rawSeason from '../../../docs/story/season-one/season_one_scenes.json';
 
-export const ADAPTERS = ['identity', 'crossbar', 'training_arrangement', 'weekly_focus', 'practice', 'assignment', 'match', 'week_close', 'jungle', 'team_training', 'league_match', 'tournament_match', 'standings'] as const;
+export const ADAPTERS = ['identity', 'crossbar', 'training_arrangement', 'weekly_focus', 'practice', 'assignment', 'match', 'week_close', 'jungle', 'team_training', 'league_match', 'tournament_match', 'standings', 'home_learning', 'school_reward', 'training_log'] as const;
 export type AdapterKind = (typeof ADAPTERS)[number];
 export const PREDICATES = ['always', 'crossbar_accepted', 'jungle_accepted', 'promise_made', 'promise_kept', 'promise_cancelled', 'promise_missed', 'promise_repaired'] as const;
 export type LegacyPredicateId = (typeof PREDICATES)[number];
@@ -62,12 +60,10 @@ function oneOf<T extends string>(v: J, list: readonly T[], w: string): T {
   return v as T;
 }
 
-export const SUPPORTED_VERSION = '0.7';
-export const EXTENSION_VERSION = 'w24-draft-1';
-export const SEASON_VERSION = 's1-v1.0';
+export const SEASON_VERSION = 's1-v2.0';
 
 export function parseCatalog(input: J, opts: { version?: string; branches?: boolean; allowOpenLinks?: boolean; season?: boolean } = {}): StoryCatalog {
-  const version = opts.version ?? SUPPORTED_VERSION;
+  const version = opts.version ?? SEASON_VERSION;
   if (!isObj(input)) fail('catalog: expected object');
   const c = input as Record<string, J>;
   keys(c, ['version', 'entry', 'scenes'], 'catalog');
@@ -127,7 +123,7 @@ export function parseCatalog(input: J, opts: { version?: string; branches?: bool
             if (eo.op !== 'remember_choice' || eo.key !== nid || eo.value !== oid) fail(`${ew}: effect not allowed`);
             return { op: 'remember_choice' as const, key: nid, value: oid };
           });
-          return { id: oid, label: text(oo.label, `${ow}.label`, 48), predicate: 'always' as const, effects, next: id(oo.next, `${ow}.next`) };
+          return { id: oid, label: text(oo.label, `${ow}.label`, 72), predicate: 'always' as const, effects, next: id(oo.next, `${ow}.next`) };
         });
         nodes.push({ id: nid, type: 'choice', options });
         edges.set(nid, options.map((o) => o.next));
@@ -219,25 +215,15 @@ function checkReferences(scenes: readonly StoryScene[], order: readonly string[]
   }
 }
 
-/** Week one stays byte-identical to the package; only its final callback now leads into week 2. */
-export function mergeCatalogs(week1: StoryCatalog, ext: StoryCatalog): StoryCatalog {
-  const last = week1.order[week1.order.length - 1]!;
-  const patched = week1.scenes.map((sc) => (sc.id !== last ? sc : { ...sc, nodes: sc.nodes.map((n) => (n.type === 'end' && n.next_scene === null ? { ...n, next_scene: ext.entry } : n)) }));
-  for (const sc of ext.scenes) if (week1.scenes.some((w) => w.id === sc.id)) fail(`extension: duplicate scene ${sc.id}`);
-  return { version: week1.version, entry: week1.entry, scenes: [...patched, ...ext.scenes], order: [...week1.order, ...ext.order] };
-}
-export const WEEK_ONE: StoryCatalog = parseCatalog(raw);
-export const WEEKS_2_4: StoryCatalog = parseCatalog(rawExt, { version: EXTENSION_VERSION, branches: true });
-export const STORY: StoryCatalog = mergeCatalogs(WEEK_ONE, WEEKS_2_4);
-/** Season One (story package v1.0): prologue, 18 weeks (81 featured slots plus match/week-close steps) and the epilogue. */
+/** Season One: the single story catalog. Weeks 1–4 are owner-approved; weeks 5–18 and the epilogue are empty slots. */
 export const SEASON_ONE: StoryCatalog = parseCatalog(rawSeason, { version: SEASON_VERSION, branches: true, season: true });
-export const CATALOGS: readonly StoryCatalog[] = [STORY, SEASON_ONE];
+export const CATALOGS: readonly StoryCatalog[] = [SEASON_ONE];
 export const catalogFor = (version: string): StoryCatalog | undefined => CATALOGS.find((c) => c.version === version);
-/** Scene ids whose dialogue is Devin's draft from the outline, awaiting owner review. */
-export const DRAFT_SCENES: ReadonlySet<string> = new Set(WEEKS_2_4.order);
+/** Story versions replaced by Season One; such saves are archived unchanged, never played. */
+export const RETIRED_VERSIONS: readonly string[] = ['0.7', 'w24-draft-1'];
 
 export function sceneById(sid: string): StoryScene | undefined {
-  return STORY.scenes.find((s) => s.id === sid) ?? SEASON_ONE.scenes.find((s) => s.id === sid);
+  return SEASON_ONE.scenes.find((s) => s.id === sid);
 }
 export function nodeById(scene: StoryScene, nid: string): StoryNode | undefined {
   return scene.nodes.find((n) => n.id === nid);

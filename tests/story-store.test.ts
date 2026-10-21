@@ -1,8 +1,8 @@
 import { IDBFactory } from 'fake-indexeddb';
 import { describe, expect, it } from 'vitest';
 import { StoryStore, legacyKey } from '../src/game/story/store';
-import { currentNode, newStory } from '../src/game/story/runtime';
-import { STORY } from '../src/game/story/content';
+import { currentNode, newSeasonStory, newStory } from '../src/game/story/runtime';
+import { sceneById } from '../src/game/story/content';
 
 describe('story store (IndexedDB, one transaction per command)', () => {
   it('creates the story once and persists the cursor across reopen', async () => {
@@ -60,12 +60,12 @@ describe('story store (IndexedDB, one transaction per command)', () => {
   it('an older four-week story is archived unchanged and the career starts Season One once', async () => {
     const f = new IDBFactory();
     const a = await StoryStore.open(f, 'st');
-    const old = { ...newStory('c3'), decisions: { W1_MONDAY_01: { feeling: 'nervous' } }, revision: 7 };
+    const old = { ...newStory('c3'), contentVersion: '0.7', sceneId: 'W1_MONDAY_01', nodeId: 'n1', decisions: { W1_MONDAY_01: { feeling: 'nervous' } }, revision: 7 };
     const db = await new Promise<IDBDatabase>((res) => { const q = f.open('st', 1); q.onsuccess = () => res(q.result); });
     await new Promise<void>((res) => { const t = db.transaction('story', 'readwrite'); t.objectStore('story').put(old, 'c3'); t.oncomplete = () => res(); });
     const r = await a.begin('c3');
     expect(r.ok && r.state.sceneId).toBe('S1_PRO_IDENTITY');
-    expect(r.ok && r.state.contentVersion).toBe('s1-v1.0');
+    expect(r.ok && r.state.contentVersion).toBe('s1-v2.0');
     expect(await a.loadLegacy('c3')).toEqual(old);
     const again = await a.begin('c3');
     expect(again.ok && again.state).toEqual(r.ok && r.state);
@@ -78,9 +78,7 @@ describe('story store: Season One review fixes', () => {
   it('archives a finished legacy save exactly as stored, not its migrated cursor', async () => {
     const f = new IDBFactory();
     const a = await StoryStore.open(f, 'st2');
-    const sc = STORY.scenes.find((x) => x.nodes.some((n) => n.type === 'end' && n.next_scene))!;
-    const end = sc.nodes.find((n) => n.type === 'end' && n.next_scene)!;
-    const old = { ...newStory('c5'), sceneId: sc.id, nodeId: end.id, complete: true };
+    const old = { ...newStory('c5'), contentVersion: 'w24-draft-1', sceneId: 'W2_ROLE_BOARD', nodeId: 'end', complete: true };
     const db = await new Promise<IDBDatabase>((res) => { const q = f.open('st2', 1); q.onsuccess = () => res(q.result); });
     await new Promise<void>((res) => { const t = db.transaction('story', 'readwrite'); t.objectStore('story').put(old, 'c5'); t.oncomplete = () => res(); });
     const r = await a.begin('c5');
@@ -93,5 +91,41 @@ describe('story store: Season One review fixes', () => {
     expect(await a.updateRecord('k', (cur) => (cur === undefined ? { value: { goals: 2 }, out: 'first' } : null))).toBe('first');
     expect(await a.updateRecord('k', (cur) => (cur === undefined ? { value: { goals: 0 }, out: 'second' } : null))).toBeNull();
     expect(await a.getRecord('k')).toEqual({ goals: 2 });
+  });
+});
+
+describe('story store: weeks 3–4 replacement migration (s1-v1.0 -> s1-v2.0)', () => {
+  const put = async (f: IDBFactory, name: string, key: string, v: unknown) => {
+    const db = await new Promise<IDBDatabase>((res) => { const q = f.open(name, 1); q.onsuccess = () => res(q.result); });
+    await new Promise<void>((res) => { const t = db.transaction('story', 'readwrite'); t.objectStore('story').put(v, key); t.oncomplete = () => res(); });
+    return db;
+  };
+  const allKeys = (db: IDBDatabase) => new Promise<IDBValidKey[]>((res) => { const q = db.transaction('story').objectStore('story').getAllKeys(); q.onsuccess = () => res(q.result); });
+  it('a weeks 1–2 save from the previous release resumes in place on the new content version', async () => {
+    const f = new IDBFactory();
+    const a = await StoryStore.open(f, 'm1');
+    const sc = sceneById('S1_W02_M')!;
+    await put(f, 'm1', 'c6', { ...newSeasonStory('c6'), contentVersion: 's1-v1.0', sceneId: sc.id, nodeId: sc.entry, completedScenes: ['S1_PRO_IDENTITY'] });
+    const r = await a.begin('c6');
+    expect(r.ok && r.state).toMatchObject({ contentVersion: 's1-v2.0', sceneId: 'S1_W02_M' });
+  });
+  it('a save with old weeks 3–18 progress is not mapped onto the new script: kept, reported, and restartable on request only', async () => {
+    const f = new IDBFactory();
+    const a = await StoryStore.open(f, 'm2');
+    const old = { ...newSeasonStory('c7'), contentVersion: 's1-v1.0', sceneId: 'S1_W02_E', completedScenes: ['S1_PRO_IDENTITY', 'S1_W03_M'] };
+    const db = await put(f, 'm2', 'c7', old);
+    await a.putRecord('league-s1:c7', { fake: 'league' });
+    const r = await a.begin('c7');
+    expect(r.ok).toBe(false);
+    expect(!r.ok && r.error).toMatch(/cannot be mapped/);
+    // Nothing is wiped by the failed begin.
+    expect(await a.getRecord('league-s1:c7')).toEqual({ fake: 'league' });
+    expect(await a.restartStory('c7')).toBe(true);
+    const keys = (await allKeys(db)).map(String);
+    expect(keys.some((k) => k.startsWith('restart-c7-'))).toBe(true);
+    expect(keys.some((k) => k.startsWith('rec:league-s1-archive:c7:'))).toBe(true);
+    expect(await a.getRecord('league-s1:c7')).toBeUndefined();
+    const again = await a.begin('c7');
+    expect(again.ok && again.state).toMatchObject({ contentVersion: 's1-v2.0', sceneId: 'S1_PRO_IDENTITY', completedScenes: [] });
   });
 });

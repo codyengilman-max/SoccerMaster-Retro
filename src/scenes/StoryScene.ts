@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { fixtureForWeek, newLeague, parseLeague, recordPlayed, simulateThrough, table } from '../game/league/league';
-import { DRAFT_SCENES, crossbarRules, sceneById, trainingDetail } from '../game/story/content';
+import { homeLearningDetail, jungleResult, schoolRewardDetail, trainingLogDetail } from '../game/story/facts';
+import type { CompetitorId } from '../game/jungle/sim';
+import { crossbarRules, sceneById, trainingDetail } from '../game/story/content';
 import { seasonWeek, type TournamentId } from '../game/season/calendar';
 import { bataviaRecord, fixtureForSeasonWeek, newSeasonLeague, opponentOf, parseSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough } from '../game/season/league';
 import { TOURNAMENTS, allFixtures, bataviaFinish, groupTable, nextBataviaFixture, newTournament, parseTournament, playoffs, recordTournamentPlayed, type TournamentState } from '../game/season/tournament';
@@ -154,6 +156,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     void this.boot();
   }
 
+  private restartable = false;
+
   private async boot(): Promise<void> {
     this.career = await CareerStore.open();
     this.save = await this.career.load();
@@ -172,7 +176,18 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     this.render();
   }
 
+  private async restartStory(): Promise<void> {
+    if (!this.store) return;
+    this.restartable = false;
+    const r = await this.store.restartStory(CAREER_ID);
+    if (!r) return this.fail('The story could not be restarted. Nothing was changed.');
+    this.mode = 'loading';
+    this.render();
+    await this.boot();
+  }
+
   private fail(error: string): void {
+    this.restartable = /cannot be mapped/.test(error);
     this.mode = 'error';
     this.message = error;
     this.render();
@@ -405,8 +420,9 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     if (!run) return;
     if (n.adapter === 'crossbar') return this.enterCrossbar(run.runId);
     if (n.adapter === 'jungle') {
-      const rec = (await this.store.getRecord(`jungle:${run.runId}`)) as { status?: string } | undefined;
-      if (rec) await this.complete(run.runId, rec.status === 'completed' ? 'completed' : 'abandoned');
+      const rec = (await this.store.getRecord(`jungle:${run.runId}`)) as { status?: string; scores?: Record<CompetitorId, number> } | undefined;
+      const result = rec?.status === 'completed' ? jungleResult(rec.scores) : null;
+      if (rec) await (result ? this.complete(run.runId, 'completed', result) : this.complete(run.runId, 'abandoned'));
       else this.message = 'Not finished yet. Nothing was recorded.';
       return;
     }
@@ -810,17 +826,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private recap(): string {
     const s = this.state;
     if (!s) return '';
-    const draft = 'Draft dialogue (weeks 2–4), awaiting owner review.';
-    if (/^W[234]_(MATCH_POST|FINAL)$/.test(s.sceneId)) return `${this.leagueSummary}\n${draft}`;
-    if (DRAFT_SCENES.has(s.sceneId)) return draft;
-    if (s.sceneId === 'W1_CROSSBAR_REACTION' || s.sceneId === 'W1_TRAINING_CONNECTION') return this.crossbarSummary;
-    if (s.sceneId === 'W1_TRAINING_REFLECTION' || s.sceneId === 'W1_MATCH_POST' || s.sceneId === 'W1_HOME_CLOSE' || s.sceneId === 'W2_SCHOOL_CALLBACK') {
-      const practice = outcomeOf(s, 'W1_PRACTICE');
-      const match = outcomeOf(s, 'W1_MATCH');
-      const parts = [practice ? `Practice: ${practice.outcome === 'completed' ? 'one scheduled session logged' : 'not done'}` : '', match ? `Match: ${match.outcome === 'completed' ? 'played' : 'not played'}` : ''].filter(Boolean);
-      const recap = parts.join(' · ');
-      return s.sceneId === 'W1_MATCH_POST' ? `${recap}\n${this.leagueSummary}` : recap;
-    }
+    if (s.sceneId === 'S1_W02_S2') return this.crossbarSummary;
+    if (s.sceneId === 'S1_W03_E' || s.sceneId === 'S1_W04_E') return this.leagueSummary;
     return '';
   }
 
@@ -904,6 +911,10 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     if (this.mode === 'loading') body = 'Loading story…';
     else if (this.mode === 'error') {
       body = this.message;
+      if (this.restartable) {
+        body += '\nRestarting starts the story again at the prologue. Your player, attributes and training are kept; a copy of the old story is saved.';
+        acts.push({ name: 'story-restart', label: 'Restart story', onClick: () => void this.restartStory() });
+      }
       acts.push({ name: 'story-back', label: 'Back to menu', onClick: () => this.goStart() });
     } else if (this.mode === 'transcript') {
       log = (this.state?.transcript ?? []).map((t) => this.lineFor(t.sceneId, t.nodeId)).filter(Boolean).slice(-8);
@@ -1044,11 +1055,33 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         acts.push({ name: 'handoff-jungle', label: 'Play Jungle Ball', onClick: () => void this.openJungle() });
         acts.push({ name: 'handoff-skip', label: 'Not today', onClick: () => void this.skipRun('declined') });
         return;
+      case 'home_learning':
+        setBody("Coach Code checks last week's home learning against your saved training record.");
+        acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.finishFact(this.save ? homeLearningDetail(this.save) : 'unknown') });
+        return;
+      case 'training_log':
+        setBody("Mom looks at this week's training log.");
+        acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.finishFact(this.save ? trainingLogDetail(this.save) : 'unknown') });
+        return;
+      case 'school_reward':
+        setBody('School activity attribute change: not configured yet (owner decision pending). No attribute changes.');
+        acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.finishFact(schoolRewardDetail()) });
+        return;
       case 'week_close':
         setBody(`Finish week ${this.save?.week ?? 1}: your week review is saved and week ${(this.save?.week ?? 1) + 1} opens.`);
         acts.push({ name: 'handoff-week', label: `Finish week ${this.save?.week ?? 1}`, onClick: () => void this.closeWeek() });
         return;
     }
+  }
+
+  /** Records a fact read from saved records (never from choices) and moves on. */
+  private async finishFact(detail: string): Promise<void> {
+    if (!this.fresh()) return;
+    this.busy = true;
+    const run = await this.launch();
+    if (run) await this.complete(run, 'completed', null, detail);
+    this.busy = false;
+    this.render();
   }
 
   private async finishStandings(): Promise<void> {

@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { SEASON_ONE } from '../src/game/story/content';
 import { SEASON_RELEASED_WEEKS, currentNode, newSeasonStory, outcomeOf, reduceStory, setReleasedWeeks, type StoryCommand, type StoryState } from '../src/game/story/runtime';
 import { SEASON_LENGTH, seasonWeek, slotIds } from '../src/game/season/calendar';
@@ -9,7 +9,9 @@ type Score = { home: number; away: number };
 interface Policy {
   pick?: (scene: string, key: string, ids: string[]) => string;
   score?: (scene: string) => Score | null; // null = skip / withdraw (declined)
+  detail?: (adapter: string) => string | null;
 }
+const FACT_DEFAULTS: Record<string, string> = { home_learning: 'completed', training_log: 'within', school_reward: 'unconfigured' };
 
 let seq = 0;
 const uuid = (n: number | string) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
@@ -41,7 +43,7 @@ function season(p: Policy = {}) {
       if (!r.ok) throw new Error(`${s.sceneId}: ${r.error}`);
       s = r.state;
       const week = Number(/^S1_W(\d\d)_/.exec(s.sceneId)?.[1] ?? 0);
-      if (n.adapter === 'league_match' || n.adapter === 'tournament_match' || n.adapter === 'crossbar') {
+      if (n.adapter === 'league_match' || n.adapter === 'tournament_match' || n.adapter === 'crossbar' || n.adapter === 'jungle') {
         const sc = p.score ? p.score(s.sceneId) : { home: 2, away: 1 };
         if (!sc) { s = step(s, { type: 'complete', runId: r.runId, outcome: 'declined' }); continue; }
         let detail: string | null = null;
@@ -65,81 +67,87 @@ function season(p: Policy = {}) {
         // Same rule as StoryScene.seasonComplete: all 12 league results and both cup placings.
         const done = bataviaRecord(league).pending === 0 && Object.keys(TOURNAMENTS).every((tid) => cups[tid] && bataviaFinish(cups[tid]!) !== null);
         s = step(s, { type: 'complete', runId: r.runId, outcome: 'completed', detail: done ? 'season_complete' : 'season_incomplete' });
-      } else s = step(s, { type: 'complete', runId: r.runId, outcome: 'completed' });
+      } else s = step(s, { type: 'complete', runId: r.runId, outcome: 'completed', detail: p.detail?.(n.adapter) ?? FACT_DEFAULTS[n.adapter] ?? null });
     }
   }
   return { s, league, cups, said: text.join('\n') };
 }
 
-describe('Season One story', () => {
-  // These routes cover the authored later weeks, which the game hides until they are released.
-  beforeAll(() => setReleasedWeeks(99));
-  afterAll(() => setReleasedWeeks(SEASON_RELEASED_WEEKS));
-  it('a skipped league game keeps the season ending neutral instead of calling the season complete', () => {
-    const { s, league, said } = season({ score: (id) => (id.startsWith('S1_W05_') ? null : { home: 2, away: 1 }) });
-    expect(s.complete).toBe(true);
-    expect(bataviaRecord(league).pending).toBe(1);
-    expect(outcomeOf(s, 'S1_END_FIELD')!.detail).toBe('season_incomplete');
-    expect(said).toMatch(/season is incomplete/);
-    expect(said).not.toMatch(/Twelve league games, two tournaments/);
-  });
-
-  it('contains the prologue, all 81 featured weekly slots and the epilogue', () => {
-    const ids = new Set(SEASON_ONE.order);
-    let featured = 0;
-    for (let w = 1; w <= SEASON_LENGTH; w++) for (const id of slotIds(w)) { expect(ids.has(id), id).toBe(true); featured++; }
-    expect(featured).toBe(81);
+describe('Season One story: approved weeks 1–4 only (owner directive, 2026-10-20)', () => {
+  it('keeps 18 ordered weeks; only the prologue and weeks 1–4 have scenes, weeks 5–18 and the epilogue are empty', () => {
+    expect(SEASON_LENGTH).toBe(18);
+    expect(SEASON_RELEASED_WEEKS).toBe(4);
     expect(SEASON_ONE.entry).toBe('S1_PRO_IDENTITY');
-    expect(ids.has('S1_END_FIELD') && ids.has('S1_END_AQUARIUM')).toBe(true);
-    expect([...ids].every((id) => id.startsWith('S1_'))).toBe(true);
+    for (let w = 1; w <= 4; w++) expect(SEASON_ONE.order.some((id) => id.startsWith(`S1_W0${w}_`)), `week ${w}`).toBe(true);
+    for (const id of SEASON_ONE.order) expect(id.startsWith('S1_PRO') || /^S1_W0[1-4]_/.test(id), id).toBe(true);
+    for (let w = 1; w <= 18; w++) expect(seasonWeek(w), `week ${w}`).toBeTruthy();
+    for (let w = 5; w <= 18; w++) expect(slotIds(w).filter((id) => SEASON_ONE.order.includes(id)), `week ${w}`).toEqual([]);
   });
 
-  for (const [name, sc, rec] of [['all-win', { home: 3, away: 0 }, 'won'], ['all-draw', { home: 1, away: 1 }, 'drawn'], ['all-loss', { home: 0, away: 2 }, 'lost']] as const) {
-    it(`${name}: the season completes once with 12 real league results and both tournaments placed`, () => {
-      const { s, league, cups, said } = season({ score: () => sc });
+  it('releasing more weeks still stops after week 4: no empty week 5 and no legacy fallback is launched', () => {
+    setReleasedWeeks(99);
+    try {
+      const { s } = season();
       expect(s.complete).toBe(true);
-      expect(s.completedScenes.at(-1)).toBe('S1_END_AQUARIUM');
-      expect(new Set(s.completedScenes).size).toBe(s.completedScenes.length);
-      const r = bataviaRecord(league);
-      expect(r[rec]).toBe(12);
-      expect(r.pending).toBe(0);
-      for (const tid of ['starter_cup', 'desert_lights']) expect(bataviaFinish(cups[tid]!)).not.toBeNull();
-      const leagueRuns = Object.values(s.runs).filter((x) => x.adapter === 'league_match' && x.outcome === 'completed');
-      expect(leagueRuns).toHaveLength(12);
-      expect(leagueRuns.every((x) => x.result === res(sc))).toBe(true);
-      expect(Object.values(s.runs).filter((x) => x.adapter === 'tournament_match' && x.outcome === 'completed')).toHaveLength(8);
-      if (name === 'all-win') expect(outcomeOf(s, 'S1_W09_G4')!.detail).toBe('champion');
-      if (name === 'all-loss') expect(outcomeOf(s, 'S1_W09_G4')!.detail).toBe('fourth');
-      if (name === 'all-draw') expect(said).toMatch(/shared/);
-      expect(said).toMatch(/Twelve league games, two tournaments/);
-    });
-  }
-
-  it('skipping every match leaves games unplayed (never losses) and the season is labelled incomplete', () => {
-    const { s, league, said } = season({ score: () => null });
-    expect(s.complete).toBe(true);
-    expect(bataviaRecord(league)).toMatchObject({ played: 0, lost: 0, pending: 12 });
-    expect(said).toMatch(/stays pending, not lost/);
-    expect(said).toMatch(/season is incomplete/);
-    expect(said).not.toMatch(/We lost this one/);
-    // a withdrawn first tournament game ends the cup unfinished; later games are not offered
-    expect(outcomeOf(s, 'S1_W09_G2')!.outcome).toBe('declined');
-  });
-
-  it('friendship-only Riley never shows crush lines; an explicitly enabled crush does', () => {
-    const friend = (season({ pick: (_s, k, ids) => (k === 'riley_route' ? 'friendship' : ids[0]!) })).said;
-    const crush = (season({ pick: (_s, k, ids) => (k === 'riley_route' ? 'crush' : ids[0]!) })).said;
-    for (const l of ['Your face feels warm', 'I like spending time with you']) {
-      expect(friend).not.toContain(l);
-      expect(crush).toContain(l);
+      expect(s.completedScenes.at(-1)).toBe('S1_W04_E');
+    } finally {
+      setReleasedWeeks(SEASON_RELEASED_WEEKS);
     }
   });
 
-  it('remembers choices weeks later (Jordan project, Casey exclusion and repair)', () => {
-    const t = (season({ pick: (_scene, k, ids) => (k === 'project_check' ? 'cancel' : k === 'casey' ? 'nothing' : k === 'casey_repair' ? 'invite' : ids[0]!) })).said;
-    expect(t).toContain("The captions didn't get done");
-    expect(t).toContain("That's what happened to you");
-    expect(t).toContain('Thanks for asking me last week');
+  for (const [name, sc, rec] of [['all-win', { home: 3, away: 0 }, 'won'], ['all-draw', { home: 1, away: 1 }, 'drawn'], ['all-loss', { home: 0, away: 2 }, 'lost']] as const) {
+    it(`${name}: weeks 3–4 play League Games One and Two once each and record the real results`, () => {
+      const { s, league } = season({ score: () => sc });
+      expect(s.complete).toBe(true);
+      expect(s.completedScenes.at(-1)).toBe('S1_W04_E');
+      expect(new Set(s.completedScenes).size).toBe(s.completedScenes.length);
+      const leagueRuns = Object.values(s.runs).filter((x) => x.adapter === 'league_match' && x.outcome === 'completed');
+      expect(leagueRuns.map((x) => x.sceneId)).toEqual(['S1_W03_G', 'S1_W04_G']);
+      expect(leagueRuns.every((x) => x.result === res(sc))).toBe(true);
+      expect(bataviaRecord(league)).toMatchObject({ [rec]: 2, played: 2 });
+      expect(outcomeOf(s, 'S1_W03_S')).toMatchObject({ outcome: 'completed', result: res(sc) });
+      expect(Object.values(s.runs).some((x) => x.adapter === 'tournament_match')).toBe(false);
+    });
+  }
+
+  it('skipping both league games leaves them unplayed (never losses) and the story still ends at week 4', () => {
+    const { s, league } = season({ score: () => null });
+    expect(s.complete).toBe(true);
+    expect(s.completedScenes.at(-1)).toBe('S1_W04_E');
+    expect(bataviaRecord(league)).toMatchObject({ played: 0, lost: 0 });
+  });
+
+  for (const pick of ['crossbar', 'jungle'] as const) {
+    it(`week 4 school activity: choosing ${pick} launches only ${pick}, once`, () => {
+      const { s } = season({ pick: (scene, k, ids) => (scene === 'S1_W04_S' && k === 'activity' ? pick : ids[0]!) });
+      const runs = Object.values(s.runs).filter((x) => x.sceneId === 'S1_W04_S');
+      // The unchosen activity is recorded as declined by its predicate and never gets a run id.
+      expect(runs.filter((x) => x.runId !== '').map((x) => x.adapter)).toEqual([pick]);
+      expect(runs.filter((x) => x.runId === '').every((x) => x.outcome === 'declined' && x.adapter !== pick)).toBe(true);
+      const reward = Object.values(s.runs).filter((x) => x.adapter === 'school_reward');
+      expect(reward).toHaveLength(1);
+      expect(reward[0]!.detail).toBe('unconfigured');
+    });
+  }
+
+  it("Mom's week 4 talk follows the real training log, and each log state reads differently", () => {
+    const said: string[] = [];
+    for (const d of ['above', 'below', 'within', 'unknown']) {
+      const r = season({ detail: (a) => (a === 'training_log' ? d : null) });
+      expect(Object.values(r.s.runs).find((x) => x.adapter === 'training_log')!.detail).toBe(d);
+      said.push(r.said);
+    }
+    expect(new Set(said).size).toBe(4);
+  });
+
+  it("Coach Code's home-learning follow-up follows the real record in weeks 3 and 4", () => {
+    const said: string[] = [];
+    for (const d of ['completed', 'partial', 'none', 'unknown']) {
+      const r = season({ detail: (a) => (a === 'home_learning' ? d : null) });
+      expect(Object.values(r.s.runs).filter((x) => x.adapter === 'home_learning').map((x) => x.detail)).toEqual([d, d]);
+      said.push(r.said);
+    }
+    expect(new Set(said).size).toBe(4);
   });
 
   it('a completed run cannot be completed again or re-launched (no duplicate results or rewards)', () => {
@@ -152,7 +160,7 @@ describe('Season One story', () => {
       else if (n.type === 'activity_handoff') {
         const r = reduceStory(s, { type: 'launch', revision: s.revision, runId: uuid(100000 + i) });
         if (!r.ok) { s = step(s, { type: 'decline', seq: ++seq }); continue; }
-        s = step(r.state, { type: 'complete', runId: r.runId, outcome: 'completed', result: n.adapter === 'crossbar' ? 'WIN' : null });
+        s = step(r.state, { type: 'complete', runId: r.runId, outcome: 'completed', result: n.adapter === 'crossbar' || n.adapter === 'jungle' ? 'WIN' : null, detail: FACT_DEFAULTS[n.adapter] ?? null });
       }
     }
     const r = reduceStory(s, { type: 'launch', revision: s.revision, runId: uuid(900001) });
@@ -161,7 +169,6 @@ describe('Season One story', () => {
     const again = reduceStory(done, { type: 'complete', revision: done.revision, runId: uuid(900001), outcome: 'completed', result: 'LOSS' });
     expect(again.ok && again.changed).toBeFalsy();
     expect(outcomeOf(again.ok ? again.state : done, 'S1_W03_G')!.result).toBe('WIN');
-    // result-bearing season matches require a result
     const r2 = reduceStory(s, { type: 'launch', revision: s.revision, runId: uuid(900002) });
     const bad = reduceStory((r2 as { state: StoryState }).state, { type: 'complete', revision: (r2 as { state: StoryState }).state.revision, runId: uuid(900002), outcome: 'completed', result: null });
     expect(bad.ok).toBe(false);

@@ -366,7 +366,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             `Soccer Logic Review: ${n} research outlines, catalog only, none drives the game (goal ${SCENARIO_GOAL}+).`,
             `Coach Moments: play a 9v9 match from a link ending in ?coach.`,
             'Art Gallery: Graphics v1.1 cutscene and player art with review status; most new character/outfit art is awaiting your individual review.',
-            'Story & RPG: Start → Story plays Season One weeks 1–2 (owner rewrite); weeks 3–18 are hidden until the new text arrives. With Jungle Ball and a 5-club local league (Next Horizon not entered). Pacific Wave Cup and Lone Star International Cup: U12, coming later. Transfers are not implemented.',
+            'Story & RPG: Start → Story plays Season One weeks 1–4 (owner scripts); weeks 5–18 are empty until new text is approved. With Jungle Ball and a 5-club local league (Next Horizon not entered). Pacific Wave Cup and Lone Star International Cup: U12, coming later. Transfers are not implemented.',
           ].join('\n'),
           actions: [
             ...(__LAB__ ? [{ name: 'hub-lab', label: 'Gameplay Lab', onClick: () => this.openLab() }] : []),

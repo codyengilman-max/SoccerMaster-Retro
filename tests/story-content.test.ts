@@ -1,48 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import raw from '../docs/story/v0.7/week_one_scenes.json';
-import { DRAFT_SCENES, STORY, StoryContentError, WEEKS_2_4, WEEK_ONE, parseCatalog } from '../src/game/story/content';
+import rawSeason from '../docs/story/season-one/season_one_scenes.json';
+import { CATALOGS, RETIRED_VERSIONS, SEASON_ONE, SEASON_VERSION, StoryContentError, catalogFor, parseCatalog, sceneById } from '../src/game/story/content';
 import { PRONOUNS, renderText, validateName } from '../src/game/story/identity';
 
-const clone = () => JSON.parse(JSON.stringify(raw)) as { scenes: { id: string; nodes: Record<string, unknown>[] }[] } & Record<string, unknown>;
+const clone = () => JSON.parse(JSON.stringify(rawSeason)) as { scenes: { id: string; nodes: Record<string, unknown>[] }[] } & Record<string, unknown>;
+const parseSeason = (c: unknown) => parseCatalog(c as never, { version: SEASON_VERSION, branches: true, season: true });
 
-describe('week-one story catalog v0.7', () => {
-  it('loads the authoritative 18-scene order', () => {
-    expect(WEEK_ONE.order).toEqual([
-      'INIT_IDENTITY', 'W1_HOME_01', 'W1_HOME_DOORWAY', 'W1_SCHOOL_01', 'W1_SCHOOL_02', 'W1_CROSSBAR', 'W1_CROSSBAR_REACTION',
-      'W1_TRAINING_CONNECTION', 'INIT_FOCUS', 'W1_TRAINING_ARRIVAL', 'W1_PRACTICE', 'W1_TRAINING_REFLECTION', 'W1_MATCH_PRE',
-      'W1_MATCH', 'W1_MATCH_POST', 'W1_HOME_CLOSE', 'CLOSE_WEEK', 'W2_SCHOOL_CALLBACK',
-    ]);
-    const kinds: Record<string, number> = {};
-    for (const s of WEEK_ONE.scenes) for (const n of s.nodes) kinds[n.type] = (kinds[n.type] ?? 0) + 1;
-    expect(kinds).toEqual({ line: 46, end: 18, choice: 9, activity_handoff: 8 });
+describe('one story catalog (owner directive, 2026-10-20)', () => {
+  it('Season One is the only catalog; the v0.7 week one and the weeks 2–4 draft are not loadable', () => {
+    expect(CATALOGS).toEqual([SEASON_ONE]);
+    for (const v of RETIRED_VERSIONS) expect(catalogFor(v)).toBeUndefined();
+    for (const id of ['W1_MONDAY_01', 'W1_SCHOOL_02', 'W2_ROLE_BOARD', 'W2_JUNGLE', 'W4_BEDROOM']) expect(sceneById(id)).toBeUndefined();
+    expect(SEASON_ONE.version).toBe('s1-v2.0');
   });
-  it('appends the weeks 2–4 draft after the unchanged week-one order, ending the chapter at W4_BEDROOM', () => {
-    expect(STORY.order.slice(0, 18)).toEqual(WEEK_ONE.order);
-    expect(STORY.order.slice(18)).toEqual(WEEKS_2_4.order);
-    expect(STORY.order[18]).toBe('W2_ROLE_BOARD');
-    expect(STORY.order.at(-1)).toBe('W4_BEDROOM');
-    for (const id of WEEK_ONE.order) expect(DRAFT_SCENES.has(id)).toBe(false);
-    for (const id of WEEKS_2_4.order) expect(DRAFT_SCENES.has(id)).toBe(true);
-    // Week one is unchanged except that its last end now leads into week 2.
-    const cb = STORY.scenes.find((s) => s.id === 'W2_SCHOOL_CALLBACK')!;
-    expect(cb.nodes.find((n) => n.type === 'end')).toMatchObject({ next_scene: 'W2_ROLE_BOARD' });
-    const pkg = WEEK_ONE.scenes.find((s) => s.id === 'W2_SCHOOL_CALLBACK')!;
-    expect(pkg.nodes.find((n) => n.type === 'end')).toMatchObject({ next_scene: null });
-    for (const w of ['W2_MATCH', 'W3_MATCH', 'W4_MATCH']) expect(STORY.scenes.find((s) => s.id === w)!.nodes.some((n) => n.type === 'activity_handoff' && n.adapter === 'match')).toBe(true);
-    expect(STORY.scenes.find((s) => s.id === 'W2_JUNGLE')!.nodes.some((n) => n.type === 'activity_handoff' && n.adapter === 'jungle')).toBe(true);
-  });
-  it('the week-one package catalog still rejects branch nodes (only the draft extension may use them)', () => {
-    const c = clone();
-    (c.scenes[0] as { nodes: unknown[] }).nodes.unshift({ id: 'b', type: 'branch', cases: [{ predicate: 'always', next: 'x' }], default: 'x' });
-    expect(() => parseCatalog(c)).toThrow(StoryContentError);
+  it('the season catalog rejects branch nodes unless branches are enabled', () => {
+    expect(() => parseCatalog(clone() as never, { version: SEASON_VERSION, season: true })).toThrow(StoryContentError);
   });
   const reject = (mut: (c: ReturnType<typeof clone>) => void, msg: RegExp) => {
     const c = clone();
     mut(c);
-    expect(() => parseCatalog(c)).toThrow(StoryContentError);
-    expect(() => parseCatalog(c)).toThrow(msg);
+    expect(() => parseSeason(c)).toThrow(StoryContentError);
+    expect(() => parseSeason(c)).toThrow(msg);
   };
-  const choiceNode = (c: ReturnType<typeof clone>) => c.scenes.find((s) => s.id === 'W1_SCHOOL_02')!.nodes.find((n) => n.type === 'choice')! as { options: Record<string, unknown>[] };
+  const choiceNode = (c: ReturnType<typeof clone>) => c.scenes.flatMap((s) => s.nodes).find((n) => n.type === 'choice' && (n.options as unknown[]).length >= 2)! as { options: Record<string, unknown>[] };
   it('rejects effect injection, unknown predicates and duplicate options', () => {
     reject((c) => void (choiceNode(c).options[0]!.effects = [{ op: 'add_stat', key: 'shooting', value: '5' }]), /effect not allowed/);
     reject((c) => void (choiceNode(c).options[0]!.predicate = 'is_admin'), /predicate not allowed/);
@@ -51,15 +31,15 @@ describe('week-one story catalog v0.7', () => {
   it('rejects missing targets, cycles, unknown adapters, markup and unknown tokens', () => {
     reject((c) => void (c.scenes[1]!.nodes[0]!.next = 'nowhere'), /missing target/);
     reject((c) => void (c.scenes[1]!.nodes[0]!.next = c.scenes[1]!.nodes[0]!.id), /cycle/);
-    reject((c) => void (c.scenes[0]!.nodes.find((n) => n.type === 'activity_handoff')!.adapter = 'shell'), /not allowed/);
+    reject((c) => void (c.scenes.flatMap((s) => s.nodes).find((n) => n.type === 'activity_handoff')!.adapter = 'shell'), /not allowed/);
     reject((c) => void (c.scenes[1]!.nodes[0]!.text = '<img src=x>'), /markup/);
     reject((c) => void (c.scenes[1]!.nodes[0]!.text = 'Hi {coach.secret}'), /unknown token/);
     reject((c) => void (c.version = '0.6'), /unsupported version/);
     reject((c) => void (c.scenes[0]!.nodes[0]!.__proto__x = 1), /unexpected field/);
   });
-  it('requires all four outcomes for crossbar, practice and match', () => {
+  it('requires all four outcomes for full activities such as league matches', () => {
     reject((c) => {
-      const h = c.scenes.find((s) => s.id === 'W1_MATCH')!.nodes.find((n) => n.type === 'activity_handoff')! as { outcomes: Record<string, string> };
+      const h = c.scenes.flatMap((s) => s.nodes).find((n) => n.type === 'activity_handoff' && n.adapter === 'league_match')! as { outcomes: Record<string, string> };
       delete h.outcomes.interrupted;
     }, /outcomes must be/);
   });
