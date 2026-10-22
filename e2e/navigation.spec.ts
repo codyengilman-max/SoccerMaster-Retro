@@ -105,7 +105,9 @@ test('Start -> Jungle Ball -> Leave repeated keeps one canvas and stable listene
     else pitchBaseline = pitchSnap;
     await linger(page);
 
+    // Jungle Ball: Pause, then confirm Leave.
     await pressElement(page, 'back-button', via);
+    await pressElement(page, 'leave-confirm-button', via);
     const start = await waitForScene(page, 'start');
     expect(start.canvases).toBe(1);
     const startSnap = stableSnapshot(start, await page.evaluate(() => window.__domListeners?.() ?? {}));
@@ -144,7 +146,9 @@ test('Jungle Ball re-lays out on orientation change and Leave still works', asyn
   }
   await linger(page);
 
+  // Jungle Ball: Pause, then confirm Leave.
   await pressElement(page, 'back-button', 'touch');
+  await pressElement(page, 'leave-confirm-button', 'touch');
   const start = await waitForScene(page, 'start');
   expect(start.layout?.orientation).toBe(expected);
   for (const name of ['title', 'sandbox-button']) expectInside(name, start.layout?.elements[name], rotated);

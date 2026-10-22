@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import type { Rect } from '../game';
-import { COMPETITORS, JUNGLE, abandon, canMove, command, drainEvents, newJungle, standings, step, type CompetitorId, type JungleState } from '../game/jungle/sim';
+import { COMPETITORS, JUNGLE, abandon, actState, canMove, command, cooldownLeft, drainEvents, newJungle, shotCharge, standings, step, type CompetitorId, type JungleState } from '../game/jungle/sim';
+import { JungleSfx } from './ui/jungleSfx';
+import { jungleActionFrame, type JungleAct } from '../render/art/spriteSets';
 import type { PadEvent } from '../input/joystickControls';
 import { orientationOf } from '../render/layout';
 import { CSS, FONT_FAMILY, textResolution } from '../render/theme';
@@ -40,13 +42,12 @@ const KITS = {
   sam: { shirt: '#7768ae', shade: '#52487d', light: '#9d90cc' },
 } as const;
 const BG_ASSET = 'jungle-ball';
-const MAX_CHARGE_MS = 900;
 const HITSTOP_MS = 70;
 const BIG_HITSTOP_MS = 140;
 
 /**
  * Jungle Ball mini-game: one shared goal, a neutral keeper, the player and three AI competitors.
- * The scene only draws `JungleState` and turns the joystick + TURBO / SHOOT / SLIDE / PUSH into sim commands.
+ * The scene only draws `JungleState` and turns the joystick + TURBO / SHOOT / SLIDE / HIT into sim commands.
  */
 export class JungleScene extends Phaser.Scene implements InspectableScene, GameplayScene {
   private sim!: JungleState;
@@ -62,7 +63,15 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
   private pad!: PadHud;
   private pen: Rect = { x: 0, y: 0, width: 1, height: 1 };
   private scale1 = 1;
-  private chargeStart: number | null = null;
+  private paused = false;
+  private pauseG!: Phaser.GameObjects.Graphics;
+  private pauseText!: Phaser.GameObjects.Text;
+  private resumeButton!: Button;
+  private leaveConfirmButton!: Button;
+  private sfx!: JungleSfx;
+  private reducedMotion = false;
+  private fx: { x: number; y: number; z: number; t0: number; kind: 'ring' | 'dust' | 'net' }[] = [];
+  private zk = 1;
   private keys = new Set<string>();
   private saved = false;
   private leaving = false;
@@ -97,7 +106,10 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     this.sim = newJungle(Number.isInteger(data.seed) ? (data.seed as number) : Math.floor(Math.random() * 1e9));
     this.saved = false;
     this.leaving = false;
-    this.chargeStart = null;
+    this.paused = false;
+    this.fx = [];
+    this.sfx = new JungleSfx();
+    this.reducedMotion = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.keys.clear();
     this.labels = {};
     this.cameras.main.setBackgroundColor('#1f3d2b');
@@ -143,13 +155,19 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     this.hud = text(16).setDepth(5001);
     this.result = text(20).setVisible(false).setDepth(5002);
     for (const id of COMPETITORS) this.labels[id] = text(12).setText(NAMES[id]).setDepth(5001);
-    this.backButton = new Button(this, 0, 0, { name: 'back-button', label: '‹ Leave', width: 110, height: 44, fontSize: 16, onClick: () => this.leave() });
+    this.backButton = new Button(this, 0, 0, { name: 'back-button', label: 'II Pause', width: 110, height: 44, fontSize: 16, onClick: () => (this.sim.phase === 'ended' ? this.leave() : this.setPaused(true)) });
+    this.pauseG = this.add.graphics().setDepth(7000).setVisible(false);
+    this.pauseText = text(28).setText('PAUSED').setDepth(7001).setVisible(false);
+    this.resumeButton = new Button(this, 0, 0, { name: 'resume-button', label: 'Resume', width: 200, height: 52, fontSize: 18, onClick: () => this.setPaused(false) });
+    this.leaveConfirmButton = new Button(this, 0, 0, { name: 'leave-confirm-button', label: 'Leave round', width: 200, height: 52, fontSize: 18, onClick: () => this.leave() });
+    this.resumeButton.setDepth(7002).setVisible(false);
+    this.leaveConfirmButton.setDepth(7002).setVisible(false);
     this.continueButton = new Button(this, 0, 0, { name: 'continue-button', label: this.returnTo ? 'Back to story' : 'Menu', width: 200, height: 52, fontSize: 18, onClick: () => this.exit() });
     this.continueButton.setVisible(false);
     this.backButton.setDepth(5003);
     this.continueButton.setDepth(5003);
-    this.pad = new PadHud(this, this.scale.width, this.scale.height, { labels: { pass: 'TURBO', slide: 'SLIDE', block: 'PUSH' } });
-    // TURBO is held with another finger on SHOOT / SLIDE / PUSH, so it gets its own touch slot.
+    this.pad = new PadHud(this, this.scale.width, this.scale.height, { labels: { pass: 'TURBO', slide: 'SLIDE', block: 'HIT' } });
+    // TURBO is held with another finger on SHOOT / SLIDE / HIT, so it gets its own touch slot.
     this.pad.controls.setModifier('pass');
 
     this.input.addPointer(2);
@@ -159,6 +177,7 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     this.input.on(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.onUp, this);
     this.scale.on(Phaser.Scale.Events.RESIZE, this.onResize, this);
     this.game.events.on(Phaser.Core.Events.BLUR, this.onBlur, this);
+    this.game.events.on(Phaser.Core.Events.HIDDEN, this.onHidden, this);
     this.input.keyboard?.on('keydown', this.onKeyDown, this);
     this.input.keyboard?.on('keyup', this.onKeyUp, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.onShutdown, this);
@@ -167,27 +186,46 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
 
   override update(_time: number, delta: number): void {
     const now = performance.now();
-    if (this.sim.phase !== 'ended' && now >= this.freezeUntil) {
-      const me = this.sim.competitors.player;
-      this.handlePad(this.pad.controls.setAvailable({ pass: true, shoot: this.sim.ball.owner === 'player', slide: canMove(this.sim, me, 'slide'), block: canMove(this.sim, me, 'push') }));
-      step(this.sim, Math.min(delta, 100) / 1000);
-      for (const e of drainEvents(this.sim)) {
+    if (this.sim.phase !== 'ended' && !this.paused && now >= this.freezeUntil) {
+      const s = this.sim;
+      const me = s.competitors.player;
+      const charge = shotCharge(s, 'player');
+      this.handlePad(this.pad.controls.setAvailable({ pass: true, shoot: s.ball.owner === 'player' || charge !== null, slide: canMove(s, me, 'slide'), block: canMove(s, me, 'hit') }));
+      // Rings: HIT / SLIDE cooldown left, SHOOT charge, TURBO meter (gold while ON FIRE).
+      this.pad.setMeters({
+        block: { fill: cooldownLeft(s, 'player', 'hit') / JUNGLE.hitCooldown, color: 0xb39ddb },
+        slide: { fill: cooldownLeft(s, 'player', 'slide') / JUNGLE.slideCooldown, color: 0xffe082 },
+        shoot: { fill: charge ?? 0, color: charge === 1 ? 0xff5252 : 0xffd23f },
+        pass: { fill: me.turbo, color: s.fire === 'player' ? 0xff7a1a : 0x4fc3f7 },
+      });
+      step(s, Math.min(delta, 100) / 1000);
+      for (const e of drainEvents(s)) {
         if (e.type === 'hit') {
           // Arcade hit-stop + shake; the sim itself is untouched (it just is not stepped for a few frames).
           this.freezeUntil = now + (e.big ? BIG_HITSTOP_MS : HITSTOP_MS);
-          this.cameras.main.shake(e.big ? 220 : 110, e.big ? 0.014 : 0.006);
-          const word = e.carrier && e.kind === 'push' ? 'STIFF ARM!' : e.big ? (e.kind === 'slide' ? 'CRUSHED!' : 'BOOM!') : e.kind === 'slide' ? 'SMASH!' : 'WHAM!';
+          this.shake(e.big ? 220 : 110, e.big ? 0.014 : 0.006);
+          const on = s.competitors[e.on].pos;
+          this.fx.push({ x: on.x, y: on.y, z: 0.8, t0: s.t, kind: 'ring' });
+          this.sfx.play(e.big ? 'big' : 'hit');
+          const word = e.carrier && e.kind === 'hit' ? 'STIFF ARM!' : e.big ? (e.kind === 'slide' ? 'CRUSHED!' : 'BOOM!') : e.kind === 'slide' ? 'SMASH!' : 'WHAM!';
           this.showBanner(word, e.big ? 650 : 450, e.big ? 40 : 34);
-        } else if (e.type === 'fire') this.showBanner(e.on ? `${NAMES[e.by].toUpperCase()}\n${e.by === 'player' ? 'ARE' : 'IS'} ON FIRE!` : 'FIRE OUT!', e.on ? 1400 : 700, e.on ? 40 : 30);
-        else if (e.type === 'shot') this.kickedAt[e.by] = this.sim.t;
-        else if (e.type === 'goal') this.showBanner(`GOAL!\n${NAMES[e.by].toUpperCase()}`, 1100);
-        else if (e.type === 'save') (this.savedAt = this.sim.t), this.showBanner('SAVED!', 600, 34);
+        } else if (e.type === 'swing' && e.kind === 'slide') this.sfx.play('slide');
+        else if (e.type === 'woodwork') (this.sfx.play('post'), this.showBanner('CLANG!', 500, 34), this.shake(90, 0.004));
+        else if (e.type === 'fire') this.showBanner(e.on ? `${NAMES[e.by].toUpperCase()}\n${e.by === 'player' ? 'ARE' : 'IS'} ON FIRE!` : 'FIRE OUT!', e.on ? 1400 : 700, e.on ? 40 : 30);
+        else if (e.type === 'shot') (this.kickedAt[e.by] = s.t), this.sfx.play(e.charged ? 'charged' : 'shot');
+        else if (e.type === 'goal') {
+          this.showBanner(`GOAL!\n${NAMES[e.by].toUpperCase()}`, 1100);
+          this.sfx.play('goal');
+          this.shake(260, 0.01);
+          this.fx.push({ x: s.ball.pos.x, y: s.ball.pos.y, z: s.ball.z, t0: s.t, kind: 'net' });
+        } else if (e.type === 'save') (this.savedAt = s.t), this.sfx.play('save'), this.showBanner(e.kind === 'catch' ? 'DENIED!' : 'PARRIED!', 600, 34);
       }
       const restart = (this.sim.phase as JungleState['phase']) === 'restart';
       if (this.wasRestart && !restart && this.sim.phase === 'live') this.showBanner('PLAY!', 600);
       this.wasRestart = restart;
       if ((this.sim.phase as JungleState['phase']) === 'ended') {
         this.showBanner('TIME!', 900);
+        this.sfx.play('whistle');
         void this.finish('completed');
       }
     }
@@ -214,7 +252,10 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
         shoot: { x: L.buttons.shoot.x - L.buttons.shoot.r, y: L.buttons.shoot.y - L.buttons.shoot.r, width: L.buttons.shoot.r * 2, height: L.buttons.shoot.r * 2 },
         slide: { x: L.buttons.slide.x - L.buttons.slide.r, y: L.buttons.slide.y - L.buttons.slide.r, width: L.buttons.slide.r * 2, height: L.buttons.slide.r * 2 },
         turbo: { x: L.buttons.pass.x - L.buttons.pass.r, y: L.buttons.pass.y - L.buttons.pass.r, width: L.buttons.pass.r * 2, height: L.buttons.pass.r * 2 },
+        hit: { x: L.buttons.block.x - L.buttons.block.r, y: L.buttons.block.y - L.buttons.block.r, width: L.buttons.block.r * 2, height: L.buttons.block.r * 2 },
+        // v2 name of the HIT button, kept for existing browser tests.
         push: { x: L.buttons.block.x - L.buttons.block.r, y: L.buttons.block.y - L.buttons.block.r, width: L.buttons.block.r * 2, height: L.buttons.block.r * 2 },
+        ...(this.paused ? { 'resume-button': this.resumeButton.getButtonBounds(), 'leave-confirm-button': this.leaveConfirmButton.getButtonBounds() } : {}),
         title: bounds(this.title),
         ...(this.continueButton.visible ? { 'continue-button': this.continueButton.getButtonBounds() } : {}),
       },
@@ -230,7 +271,12 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
       ball: { ...s.ball.pos },
       player: { ...s.competitors.player.pos },
       scores: { ...s.scores },
-      charging: this.chargeStart !== null,
+      charging: shotCharge(s, 'player') !== null,
+      paused: this.paused,
+      acts: Object.fromEntries(COMPETITORS.map((id) => [id, actState(s, id)])),
+      keeper: { x: s.keeper.x, y: s.keeper.y, mode: s.keeper.mode },
+      ballZ: s.ball.z,
+      cooldowns: { hit: cooldownLeft(s, 'player', 'hit'), slide: cooldownLeft(s, 'player', 'slide') },
       hits: this.sim.competitors.player.lastMove,
       turbo: { held: s.turbo, meter: s.competitors.player.turbo },
       fire: s.fire,
@@ -269,6 +315,9 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     this.kx = w / JUNGLE.length;
     this.ky = (top + h - this.floorTop) / JUNGLE.width;
     this.scale1 = Math.min(this.kx, this.ky * 1.6);
+    // Screen pixels per yard of height (ball flight, crossbar, net).
+    this.zk = this.scale1 * 1.8;
+    this.layoutPause();
     // Short title between Leave (left) and the screen edge, so nothing overlaps it in portrait.
     this.title.setFontSize(18).setPosition(width / 2 + 40, 26);
     this.hud.setVisible(false);
@@ -338,18 +387,42 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     this.bg.setCrop((this.bg.width - p.width / k) / 2, (this.bg.height - p.height / k), p.width / k, p.height / k);
   }
 
-  /** Factory frame from what the sim says each competitor is doing (read-only). */
-  private frameFor(id: CompetitorId, dt: number): readonly [PoseKind, number, number] {
+  /** Camera shake, skipped when the device asks for reduced motion. */
+  private shake(ms: number, k: number): void {
+    if (!this.reducedMotion) this.cameras.main.shake(ms, k);
+  }
+
+  /**
+   * Frame from what the sim says each competitor is doing (read-only): an owner action-sheet frame when the
+   * look has one (`named`), otherwise the closest factory pose (Alex has no sheet).
+   */
+  private frameFor(id: CompetitorId, dt: number): { kind: PoseKind; dir: number; pose: number; named: string | null } {
     const s = this.sim;
     const c = s.competitors[id];
     const speed = Math.hypot(c.vel.x, c.vel.y);
+    const a = actState(s, id);
     let kind: PoseKind = speed > 0.6 ? 'run' : 'idle';
-    if (s.t < c.downUntil || s.t < c.slideUntil || (s.t < c.lagUntil && c.lastMove?.kind === 'slide')) kind = 'slide';
-    else if (c.lastMove?.kind === 'push' && s.t - c.lastMove.t < 0.2) kind = 'kick';
-    else if (this.kickedAt[id] !== undefined && s.t - this.kickedAt[id]! < 0.25) kind = 'kick';
+    if (a === 'impact' || a === 'falling' || a === 'down' || a === 'rising' || a === 'slide' || a === 'recover') kind = 'slide';
+    else if (a === 'hit' || a === 'strike' || a === 'charge') kind = 'kick';
     if (Math.hypot(c.facing.x, c.facing.y) > 1e-6) this.artDir[id] = dirFromScreen(c.facing.x * this.kx, c.facing.y * this.ky);
     this.artDist[id] = (this.artDist[id] + speed * dt) % 1000;
-    return [kind, this.artDir[id], Math.floor(this.artDist[id] / 0.55)] as const;
+    const pose = Math.floor(this.artDist[id] / 0.55);
+    const span = (from: number, len: number): number => Math.min(1, Math.max(0, (s.t - from) / len));
+    const knock = JUNGLE.impactSeconds + JUNGLE.fallSeconds;
+    let act: JungleAct | null = null;
+    let k = 0;
+    if (a === 'impact') act = 'impact';
+    else if (a === 'falling') (act = 'falling'), (k = span(c.downAt + JUNGLE.impactSeconds, JUNGLE.fallSeconds));
+    else if (a === 'down') (act = 'down'), (k = span(c.downAt + knock, c.downUntil - JUNGLE.riseSeconds - c.downAt - knock));
+    else if (a === 'rising') (act = 'rising'), (k = span(c.downUntil - JUNGLE.riseSeconds, JUNGLE.riseSeconds));
+    else if (a === 'slide') (act = 'slide'), (k = span(c.lastMove?.t ?? s.t, Math.max(0.01, c.slideUntil - (c.lastMove?.t ?? s.t))));
+    else if (a === 'recover') (act = 'recover'), (k = span(c.lagUntil - 0.3, 0.3));
+    else if (a === 'stagger') (act = 'stagger'), (k = s.t);
+    else if (a === 'hit') (act = 'hit'), (k = span(c.lastMove?.t ?? s.t, JUNGLE.hitWindow));
+    else if (a === 'charge') (act = 'charge'), (k = shotCharge(s, id) ?? 0);
+    else if (a === 'strike') (act = 'strike'), (k = span(c.strikeAt, JUNGLE.strikeSeconds));
+    else if (c.turboOn && speed > JUNGLE.runSpeed * 0.9) (act = 'sprint'), (k = pose);
+    return { kind, dir: this.artDir[id], pose, named: act ? jungleActionFrame(act, this.artDir[id], k) : null };
   }
 
   private draw(): void {
@@ -369,10 +442,25 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     const mid = JUNGLE.width / 2;
     const gb = this.toScreen(JUNGLE.goalX, mid - JUNGLE.goalHalfWidth);
     const gf = this.toScreen(JUNGLE.goalX, mid + JUNGLE.goalHalfWidth);
-    const gh = this.scale1 * 4;
-    g.fillStyle(0xffffff, 0.25).fillRect(gb.x - this.kx * 0.8, gb.y - gh, this.kx * 0.8, gf.y - gb.y + gh);
-    for (let i = 1; i < 6; i++) g.lineStyle(1, 0xffffff, 0.5).lineBetween(gb.x - this.kx * 0.8, gb.y - gh + (gh * i) / 6, gf.x - this.kx * 0.8, gf.y - gh + (gh * i) / 6);
+    // Low boards round the pen (the ball rebounds off them), then the goal: net behind the line, posts and bar in front.
+    g.fillStyle(0x6d4c2f, 1).fillRect(p.x, this.floorTop - 8, p.width, 8).fillRect(p.x, p.y + p.height - 6, p.width, 6);
+    g.fillStyle(0x8d6e4a, 1).fillRect(p.x, this.floorTop - 8, 6, fh + 8);
+    const gh = JUNGLE.crossbar * this.zk;
+    const nd = JUNGLE.netDepth * this.kx;
+    const shake = this.fx.some((f) => f.kind === 'net' && s.t - f.t0 < 0.5) ? Math.sin(s.t * 60) * 3 : 0;
+    g.fillStyle(0x10202a, 0.35).fillRect(gb.x, gb.y - gh, nd + shake, gf.y - gb.y + gh);
+    for (let i = 1; i < 6; i++) g.lineStyle(1, 0xffffff, 0.45).lineBetween(gb.x, gb.y - gh + (gh * i) / 6, gb.x + nd + shake, gb.y - gh + (gh * i) / 6 + (gf.y - gb.y) * 0);
+    for (let i = 1; i < 8; i++) g.lineStyle(1, 0xffffff, 0.35).lineBetween(gb.x + (nd * i) / 8, gb.y - gh, gb.x + (nd * i) / 8 + shake, gf.y);
+    g.lineStyle(2, 0xffffff, 0.6).strokeRect(gb.x, gb.y - gh, nd + shake, gf.y - gb.y + gh);
     g.lineStyle(5, 0xffffff, 1).lineBetween(gb.x, gb.y, gb.x, gb.y - gh).lineBetween(gf.x, gf.y, gf.x, gf.y - gh).lineBetween(gb.x, gb.y - gh, gf.x, gf.y - gh);
+    // Effects: impact rings and slide dust (short-lived, drawn from sim positions).
+    this.fx = this.fx.filter((f) => s.t - f.t0 < 0.6 && s.t >= f.t0);
+    for (const f of this.fx) {
+      const q = this.toScreen(f.x, f.y);
+      const age = (s.t - f.t0) / 0.6;
+      if (f.kind === 'ring') h.lineStyle(4, 0xffd23f, 1 - age).strokeCircle(q.x, q.y - f.z * this.zk, 10 + age * 40);
+      else if (f.kind === 'dust') g.fillStyle(0xc8b28a, 0.6 * (1 - age)).fillCircle(q.x, q.y, 4 + age * 10);
+    }
     // Oversized arcade fighters (art only; physics radii are unchanged).
     const bodyH = (y: number): number => this.scale1 * 3.6 * (0.85 + 0.3 * (y / JUNGLE.width));
     for (const id of COMPETITORS) {
@@ -380,13 +468,16 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
       const f = this.toScreen(c.pos.x, c.pos.y);
       const ph = bodyH(c.pos.y);
       g.fillStyle(0x000000, 0.3).fillEllipse(f.x, f.y, ph * 0.9, ph * 0.25);
+      if (actState(s, id) === 'slide' && dt > 0) this.fx.push({ x: c.pos.x, y: c.pos.y, z: 0, t0: s.t, kind: 'dust' });
       if (s.fire === id) for (let i = 0; i < 5; i++) {
         const a = s.t * 7 + i * 1.3;
         g.fillStyle(i % 2 ? 0xffd23f : 0xff5a1a, 0.75).fillTriangle(f.x - ph * 0.3 + i * ph * 0.15 - 5, f.y, f.x - ph * 0.3 + i * ph * 0.15 + 5, f.y, f.x - ph * 0.3 + i * ph * 0.15, f.y - ph * (0.25 + 0.12 * Math.sin(a)));
       }
       else if (c.turboOn && Math.hypot(c.vel.x, c.vel.y) > JUNGLE.runSpeed * 0.9) for (let i = 1; i <= 3; i++) g.lineStyle(2, 0xffffff, 0.5 - i * 0.12).lineBetween(f.x - c.vel.x * this.kx * 0.04 * i - 8, f.y - ph * 0.3 * i, f.x - c.vel.x * this.kx * 0.04 * i + 8, f.y - ph * 0.3 * i);
-      const [kind, dir, pose] = this.frameFor(id, dt);
-      this.art.apply(this.sprites[id]!, this.looks[id], kind, dir, pose, ph).setPosition(f.x, f.y).setDepth(100 + f.y).setAlpha(s.t < c.stunUntil ? 0.75 : 1);
+      const fr = this.frameFor(id, dt);
+      if (actState(s, id) === 'celebrate') fr.kind = 'idle';
+      const img = this.sprites[id]!;
+      (actState(s, id) === 'celebrate' && this.looks[id].set ? this.art.applyNamed(img, this.looks[id], 'celebrate', 'idle', fr.dir, fr.pose, ph) : this.art.applyNamed(img, this.looks[id], fr.named, fr.kind, fr.dir, fr.pose, ph)).setPosition(f.x, f.y).setDepth(100 + f.y).setAlpha(s.t < c.stunUntil ? 0.75 : 1);
       const top = f.y - ph * PLAYER_ART.bodyScale - 4;
       if (s.t < c.stunUntil) for (let i = 0; i < 3; i++) {
         const a = s.t * 9 + (i * Math.PI * 2) / 3;
@@ -395,18 +486,20 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
       if (id === 'player') h.fillStyle(0xffd23f, 1).lineStyle(2, 0x1b1b1b, 1).fillTriangle(f.x - 7, top - 12, f.x + 7, top - 12, f.x, top - 2).strokeTriangle(f.x - 7, top - 12, f.x + 7, top - 12, f.x, top - 2);
     }
     // Neutral keeper: reference keeper kit, diving briefly after a save.
-    const kp = this.toScreen(JUNGLE.goalX - 0.6, s.keeper.y);
+    const kp = this.toScreen(s.keeper.x, s.keeper.y);
     const kh = bodyH(s.keeper.y);
     const ksc = PlayerArt.scaleFor(kh);
-    this.sprites.keeper!.setTexture(this.art.frame(this.looks.keeper, this.savedAt !== null && s.t - this.savedAt < 0.4 ? 'dive' : 'idle', 4, 0)).setScale(ksc.x, ksc.y).setPosition(kp.x, kp.y).setDepth(100 + kp.y);
+    this.sprites.keeper!.setTexture(this.art.frame(this.looks.keeper, s.keeper.mode === 'dive' || s.keeper.mode === 'down' || (this.savedAt !== null && s.t - this.savedAt < 0.3) ? 'dive' : s.keeper.mode === 'hold' ? 'kick' : 'idle', 4, 0)).setScale(ksc.x, ksc.y).setPosition(kp.x, kp.y).setDepth(100 + kp.y);
     const b = this.toScreen(s.ball.pos.x, s.ball.pos.y);
     const br = Math.max(9, this.scale1 * 0.55);
     g.fillStyle(0x000000, 0.3).fillEllipse(b.x, b.y, br * 1.2, br * 0.4);
     // ON FIRE: the ball trails flame while the burning competitor has it or just shot it.
     if (s.fire && s.ball.lastTouch === s.fire) for (let i = 1; i <= 4; i++) g.fillStyle(i % 2 ? 0xff7a1a : 0xffd23f, 0.6 - i * 0.12).fillCircle(b.x - s.ball.vel.x * this.kx * 0.02 * i, b.y - br * 0.45 - s.ball.vel.y * this.ky * 0.02 * i, br * (1 - i * 0.15));
-    this.ballImg.setScale(br / BALL_TEXTURE_SIZE.width).setPosition(b.x, b.y - br * 0.45).setDepth(100 + b.y + 0.5);
-    if (this.chargeStart !== null) {
-      const k = Math.min(1, (performance.now() - this.chargeStart) / MAX_CHARGE_MS);
+    // The ball rises off its ground shadow by its height; depth sorts by ground position.
+    this.ballImg.setScale(br / BALL_TEXTURE_SIZE.width).setPosition(b.x, b.y - br * 0.45 - s.ball.z * this.zk).setDepth(100 + b.y + 0.5);
+    const charge = shotCharge(s, 'player');
+    if (charge !== null) {
+      const k = charge;
       const me = this.toScreen(s.competitors.player.pos.x, s.competitors.player.pos.y);
       h.fillStyle(0x000000, 0.5).fillRect(me.x - 20, me.y + 8, 40, 6);
       h.fillStyle(0xf2c14e, 1).fillRect(me.x - 20, me.y + 8, 40 * k, 6);
@@ -418,10 +511,11 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   private onDown(p: Phaser.Input.Pointer): void {
-    if (this.sim.phase !== 'ended') this.handlePad(this.pad.controls.pointerDown(p.id, p.x, p.y));
+    this.sfx.unlock();
+    if (this.sim.phase !== 'ended' && !this.paused) this.handlePad(this.pad.controls.pointerDown(p.id, p.x, p.y));
   }
   private onMove(p: Phaser.Input.Pointer): void {
-    if (p.isDown) this.handlePad(this.pad.controls.pointerMove(p.id, p.x, p.y));
+    if (p.isDown && !this.paused) this.handlePad(this.pad.controls.pointerMove(p.id, p.x, p.y));
   }
   private onUp(p: Phaser.Input.Pointer): void {
     this.handlePad(this.pad.controls.pointerUp(p.id));
@@ -431,42 +525,32 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     for (const e of events) {
       if (e.type === 'move') command(this.sim, { type: 'move', x: e.x, y: e.y });
       else if (e.type === 'press' && e.action === 'slide') command(this.sim, { type: 'slide' });
-      else if (e.type === 'press' && e.action === 'block') command(this.sim, { type: 'push' });
+      else if (e.type === 'press' && e.action === 'block') command(this.sim, { type: 'hit' });
       else if (e.action === 'pass') command(this.sim, { type: 'turbo', on: e.type === 'press' });
       else if (e.action !== 'shoot') continue;
-      else if (e.type === 'press') this.chargeStart = performance.now();
-      else if (e.type === 'release') this.releaseShot();
-      else this.chargeStart = null;
+      else command(this.sim, { type: 'shoot', phase: e.type === 'press' ? 'press' : e.type === 'release' ? 'release' : 'cancel' });
     }
-  }
-
-  /** Aim at the goal; the stick's vertical part steers toward a post. Power grows with the hold. */
-  private releaseShot(): void {
-    if (this.chargeStart === null) return;
-    const held = performance.now() - this.chargeStart;
-    this.chargeStart = null;
-    const me = this.sim.competitors.player.pos;
-    const aimY = JUNGLE.width / 2 + this.sim.stick.y * (JUNGLE.goalHalfWidth - 0.4);
-    command(this.sim, { type: 'kick', x: JUNGLE.goalX - me.x, y: aimY - me.y, power: 0.3 + 0.7 * Math.min(1, held / MAX_CHARGE_MS) });
   }
 
   private onKeyDown(e: KeyboardEvent): void {
     const dirs: Record<string, readonly [number, number]> = { ArrowUp: [0, -1], KeyW: [0, -1], ArrowDown: [0, 1], KeyS: [0, 1], ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0] };
-    if (e.code === 'Escape') return this.leave();
+    this.sfx.unlock();
+    if (e.code === 'Escape') return this.sim.phase === 'ended' ? this.leave() : this.setPaused(!this.paused);
+    if (this.paused) return;
     if (dirs[e.code]) {
       this.keys.add(e.code);
       this.sendKeys(dirs);
     } else if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyI') && !e.repeat) command(this.sim, { type: 'turbo', on: true });
-    else if (e.code === 'KeyJ' && !e.repeat) command(this.sim, { type: 'push' });
+    else if (e.code === 'KeyJ' && !e.repeat) command(this.sim, { type: 'hit' });
     else if (e.code === 'KeyL' && !e.repeat) command(this.sim, { type: 'slide' });
-    else if ((e.code === 'Space' || e.code === 'KeyK') && !e.repeat && this.sim.ball.owner === 'player') this.chargeStart = performance.now();
+    else if ((e.code === 'Space' || e.code === 'KeyK') && !e.repeat) command(this.sim, { type: 'shoot', phase: 'press' });
   }
   private onKeyUp(e: KeyboardEvent): void {
     const dirs: Record<string, readonly [number, number]> = { ArrowUp: [0, -1], KeyW: [0, -1], ArrowDown: [0, 1], KeyS: [0, 1], ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0] };
     if (dirs[e.code]) {
       this.keys.delete(e.code);
       this.sendKeys(dirs);
-    } else if (e.code === 'Space' || e.code === 'KeyK') this.releaseShot();
+    } else if (e.code === 'Space' || e.code === 'KeyK') command(this.sim, { type: 'shoot', phase: 'release' });
     else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyI') command(this.sim, { type: 'turbo', on: false });
   }
   private sendKeys(dirs: Record<string, readonly [number, number]>): void {
@@ -478,14 +562,39 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   private onBlur(): void {
-    this.chargeStart = null;
     this.keys.clear();
+    command(this.sim, { type: 'shoot', phase: 'cancel' });
     command(this.sim, { type: 'move', x: 0, y: 0 });
     command(this.sim, { type: 'turbo', on: false });
     this.handlePad(this.pad.controls.cancelAll('blur'));
   }
+  /** App switched away or screen locked: drop every held control and pause (the round clock stops). */
+  private onHidden(): void {
+    this.onBlur();
+    if (this.sim.phase !== 'ended') this.setPaused(true);
+  }
+
+  private setPaused(on: boolean): void {
+    if (this.leaving || (on && this.sim.phase === 'ended')) return;
+    this.paused = on;
+    if (on) this.onBlur();
+    this.pauseG.setVisible(on);
+    this.pauseText.setVisible(on);
+    this.resumeButton.setVisible(on);
+    this.leaveConfirmButton.setVisible(on);
+    this.layoutPause();
+  }
+
+  private layoutPause(): void {
+    const { width, height } = this.scale;
+    this.pauseG.clear().fillStyle(0x000000, 0.6).fillRect(0, 0, width, height);
+    this.pauseText.setPosition(width / 2, height / 2 - 90);
+    this.resumeButton.setPosition(width / 2, height / 2 - 20);
+    this.leaveConfirmButton.setPosition(width / 2, height / 2 + 48);
+  }
+
   private onResize(size: Phaser.Structs.Size): void {
-    this.chargeStart = null;
+    command(this.sim, { type: 'shoot', phase: 'cancel' });
     this.layout(size.width, size.height);
   }
 
@@ -540,6 +649,8 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     this.input.off(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.onUp, this);
     this.scale.off(Phaser.Scale.Events.RESIZE, this.onResize, this);
     this.game.events.off(Phaser.Core.Events.BLUR, this.onBlur, this);
+    this.game.events.off(Phaser.Core.Events.HIDDEN, this.onHidden, this);
+    this.sfx.destroy();
     this.input.keyboard?.off('keydown', this.onKeyDown, this);
     this.input.keyboard?.off('keyup', this.onKeyUp, this);
     this.pad.destroy();

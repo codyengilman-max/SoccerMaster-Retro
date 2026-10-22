@@ -5,7 +5,7 @@ type JungleSnap = { phase: string; t: number; player: { x: number; y: number }; 
 const snap = async (page: import('@playwright/test').Page): Promise<JungleSnap> => (await diagnostics(page)).gameplay as JungleSnap;
 
 /** Press a move button until the sim starts that move. A press while the player is stunned (e.g. by an AI turbo hit) is rejected by the sim, as in real play. */
-async function pressMove(page: import('@playwright/test').Page, kind: 'push' | 'slide'): Promise<void> {
+async function pressMove(page: import('@playwright/test').Page, kind: 'hit' | 'slide'): Promise<void> {
   type Hits = { gameplay: { hits?: { kind: string; t: number } | null } | null };
   const last = async (): Promise<{ kind: string; t: number } | null> => ((await diagnostics(page)) as unknown as Hits).gameplay?.hits ?? null;
   const before = (await last())?.t ?? -1;
@@ -38,13 +38,13 @@ test('Jungle Ball opens from Start, fits the screen, runs, and Leave returns wit
     await pressElement(page, 'jungle-button', i % 2 === 0 ? 'touch' : 'mouse');
     const d = await waitForScene(page, 'jungle');
     expect(d.canvases).toBe(1);
-    for (const name of ['pen', 'title', 'back-button', 'stick', 'turbo', 'shoot', 'slide', 'push']) expectInside(name, d.layout?.elements[name], viewport);
+    for (const name of ['pen', 'title', 'back-button', 'stick', 'turbo', 'shoot', 'slide', 'hit']) expectInside(name, d.layout?.elements[name], viewport);
     await page.waitForFunction(() => (window.__SMR__?.diagnostics().gameplay as { phase?: string } | null)?.phase === 'live');
     const t0 = (await snap(page)).t;
     await page.waitForFunction((t) => ((window.__SMR__?.diagnostics().gameplay as { t?: number } | null)?.t ?? 0) > t + 0.5, t0, { timeout: 8000 });
     if (i === 0) {
-      // PUSH and SLIDE are real buttons that start an arcade move.
-      await pressMove(page, 'push');
+      // HIT and SLIDE are real buttons that start an arcade move.
+      await pressMove(page, 'hit');
       await page.waitForTimeout(700);
       await pressMove(page, 'slide');
       // TURBO is held: the sim sees it while the finger is down and drops it on release.
@@ -57,7 +57,9 @@ test('Jungle Ball opens from Start, fits the screen, runs, and Leave returns wit
       await page.waitForFunction(() => (window.__SMR__?.diagnostics().gameplay as { turbo?: { held: boolean } } | null)?.turbo?.held === false);
       await page.screenshot({ path: `test-results/jungle-${viewport.width}x${viewport.height}.png` });
     }
+    // Pause, then confirm Leave.
     await pressElement(page, 'back-button', 'touch');
+    await pressElement(page, 'leave-confirm-button', 'touch');
     const start = await waitForScene(page, 'start');
     expect(start.canvases).toBe(1);
     expect(start.listeners).toEqual(initial.listeners);
@@ -88,7 +90,7 @@ test('keyboard moves the Jungle Ball player and rotation keeps the pen on screen
   await page.setViewportSize(rotated);
   await page.waitForFunction((v) => window.__SMR__?.diagnostics().layout?.viewport.width === v.width, rotated);
   const after = await diagnostics(page);
-  for (const name of ['pen', 'title', 'back-button', 'stick', 'turbo', 'shoot', 'slide', 'push']) expectInside(name, after.layout?.elements[name], rotated);
+  for (const name of ['pen', 'title', 'back-button', 'stick', 'turbo', 'shoot', 'slide', 'hit']) expectInside(name, after.layout?.elements[name], rotated);
   await page.keyboard.press('Escape');
   await waitForScene(page, 'start');
   expect(errors).toEqual([]);
