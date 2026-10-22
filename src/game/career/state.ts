@@ -248,6 +248,9 @@ export function reduce(save: CareerSave, action: Action): Outcome {
       if (!save.player) return fail('No career player.');
       if (action.week !== save.week) return fail('That Team Training belongs to another week.');
       if (save.teamTraining.some((r) => r.week === save.week)) return same(save, `Team Training for week ${save.week} is already counted.`);
+      // One week, one mode: once a v1.2 session counts, the week is graded by the v1.2 sessions.
+      const started = save.tt12.filter((r) => r.week === save.week && r.credited).length;
+      if (started > 0) return same(save, `This week counts through your Team Training v1.2 sessions (${started} of 3 done); this run was practice only.`);
       const counted = countTeamWeek(save, action.results);
       return 'error' in counted ? fail(counted.error) : ok(counted.save, counted.message);
     }

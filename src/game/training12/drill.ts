@@ -70,7 +70,14 @@ export interface DrillState {
   readonly L: number;
   readonly W: number;
   readonly actors: DrillActor[];
-  readonly ball: { pos: MutableVec2; vel: MutableVec2; owner: string | null; lastTeam: Team | 'N' | null; target: string | null };
+  readonly ball: {
+    pos: MutableVec2; vel: MutableVec2; owner: string | null; lastTeam: Team | 'N' | null; target: string | null;
+    /** Where the ball was last struck from (shot-origin rules), and by whom (it cannot re-trap its own pass at once). */
+    origin: Vec2 | null;
+    passer: string | null;
+    /** The team a neutral on the ball is playing for (the side that passed to it). */
+    neutralFor: Team | null;
+  };
   readonly targets: readonly (Target & { cx: number; cy: number; half: number })[];
   phase: DrillPhase;
   t: number;
@@ -117,7 +124,7 @@ export function createDrill(def: ScenarioDefinition, seed: number, variation = 0
   const pressSlot = nearOutlet && (owner.side.startsWith('GK') || rng() < 0.5) ? nearOutlet.slot : owner.slot;
   return {
     def, L, W, actors, targets, pressSlot, holdT: 0, releaseLeft: 1.4 + rng() * 0.8,
-    ball: { pos: v(owner.pos.x, owner.pos.y), vel: v(0, 0), owner: owner.slot, lastTeam: teamOf(owner.side), target: null },
+    ball: { pos: v(owner.pos.x, owner.pos.y), vel: v(0, 0), owner: owner.slot, lastTeam: teamOf(owner.side), target: null, origin: null, passer: null, neutralFor: null },
     phase: 'release', t: 0, execT: 0, chosen: null, outcome: null, startTeam: teamOf(owner.side), execLimit: DRILL.executeSeconds, turnover: false,
   };
 }
@@ -125,7 +132,11 @@ export function createDrill(def: ScenarioDefinition, seed: number, variation = 0
 export const human = (s: DrillState): DrillActor => s.actors.find((a) => a.human)!;
 export const actor = (s: DrillState, slot: string | null): DrillActor | undefined => s.actors.find((a) => a.slot === slot);
 const opponents = (s: DrillState, team: Team | 'N'): DrillActor[] => s.actors.filter((a) => { const t = teamOf(a.side); return t !== team && t !== 'N'; });
-const mates = (s: DrillState, a: DrillActor): DrillActor[] => s.actors.filter((b) => b !== a && (teamOf(b.side) === teamOf(a.side) || teamOf(b.side) === 'N'));
+/** The team an actor plays for right now: a neutral on the ball supports the side that gave it the ball. */
+const playsFor = (s: DrillState, a: DrillActor): Team | 'N' => (teamOf(a.side) === 'N' ? (s.ball.owner === a.slot && s.ball.neutralFor) || 'N' : teamOf(a.side));
+const mates = (s: DrillState, a: DrillActor): DrillActor[] => { const t = playsFor(s, a); return s.actors.filter((b) => b !== a && (teamOf(b.side) === t || teamOf(b.side) === 'N')); };
+/** A finish counts only if struck from inside the target's allowed end distance (S1: last 5 m). */
+const originOk = (t: Target & { cx: number }, from: Vec2 | null): boolean => t.shotOriginWithinEndMeters === undefined || (from !== null && Math.abs(from.x - t.cx) <= t.shotOriginWithinEndMeters);
 /** Distance from p to the closest opponent of `team`. */
 export const pressureOn = (s: DrillState, p: Vec2, team: Team | 'N'): number => Math.min(99, ...opponents(s, team).map((o) => distance(o.pos, p)));
 /** The targets a team scores in. */
@@ -167,7 +178,7 @@ export function options(s: DrillState): DrillOption[] {
       for (const t of ownTargets(s, team)) {
         const d = Math.abs(t.cx - me.pos.x);
         if (t.type === 'gate') out.push({ id: `gate-${Math.round(t.cy)}`, kind: 'carry', label: `Dribble out through the ${t.cy < s.W / 2 ? 'left' : 'right'} gate`, point: clampP(t.cx, t.cy) });
-        else if (d <= 22 && t.type !== 'end-zone') out.push({ id: `shoot-${Math.round(t.cy)}`, kind: 'shoot', label: t.type === 'goal' ? 'Shoot' : `Finish ${t.cy < s.W / 2 ? 'left' : 'right'} ${t.type}`, point: { x: t.cx, y: t.cy } });
+        else if (d <= (t.shotOriginWithinEndMeters ?? 22) && t.type !== 'end-zone') out.push({ id: `shoot-${Math.round(t.cy)}`, kind: 'shoot', label: t.type === 'goal' ? 'Shoot' : `Finish ${t.cy < s.W / 2 ? 'left' : 'right'} ${t.type}`, point: { x: t.cx, y: t.cy } });
       }
     }
     return out;
@@ -364,6 +375,8 @@ function kick(s: DrillState, from: DrillActor, to: Vec2, speed: number, target: 
   s.ball.owner = null;
   s.ball.target = target;
   s.ball.lastTeam = teamOf(from.side);
+  s.ball.origin = { x: from.pos.x, y: from.pos.y };
+  s.ball.passer = from.slot;
   s.ball.pos = { x: from.pos.x + (dx / d) * 0.6, y: from.pos.y + (dy / d) * 0.6 };
   s.ball.vel = { x: (dx / d) * sp, y: (dy / d) * sp };
 }
@@ -462,13 +475,13 @@ export function step(s: DrillState, dt = DRILL.dt): void {
     const sp = Math.hypot(b.vel.x, b.vel.y);
     const nsp = Math.max(0, sp - DRILL.friction * 9.8 * dt);
     b.vel = sp > 0 ? { x: (b.vel.x / sp) * nsp, y: (b.vel.y / sp) * nsp } : b.vel;
-    const crossed = s.targets.find((t) => ((t.type === 'goal' || t.type === 'mini-goal') && Math.abs(b.pos.x - t.cx) < 0.4 && Math.abs(b.pos.y - t.cy) <= t.half) && b.lastTeam === t.scoresFor);
+    const crossed = s.targets.find((t) => ((t.type === 'goal' || t.type === 'mini-goal') && Math.abs(b.pos.x - t.cx) < 0.4 && Math.abs(b.pos.y - t.cy) <= t.half) && b.lastTeam === t.scoresFor && originOk(t, b.origin));
     if (crossed) return finish(s, crossed.scoresFor === teamOf(me.side) ? 'scored' : 'conceded');
     if (b.pos.x < 0 || b.pos.x > s.L || b.pos.y < 0 || b.pos.y > s.W) return finish(s, 'out');
     // Control: the nearest player within reach takes a slow enough ball.
-    const near = s.actors.filter((a) => distance(a.pos, b.pos) < DRILL.reach && (nsp < 9 || a.side.startsWith('GK')))
+    const near = s.actors.filter((a) => distance(a.pos, b.pos) < DRILL.reach && (nsp < 9 || a.side.startsWith('GK')) && !(a.slot === b.passer && b.origin && distance(b.origin, b.pos) < 1.5))
       .sort((x, y) => distance(x.pos, b.pos) - distance(y.pos, b.pos))[0];
-    if (near && !(near.human && s.execT < 0.15)) { s.holdT = 0; b.owner = near.slot; b.vel = { x: 0, y: 0 }; b.lastTeam = teamOf(near.side); b.target = null; }
+    if (near && !(near.human && s.execT < 0.15)) { if (teamOf(near.side) === 'N' && (b.lastTeam === 'A' || b.lastTeam === 'B')) b.neutralFor = b.lastTeam; s.holdT = 0; b.owner = near.slot; b.vel = { x: 0, y: 0 }; b.lastTeam = teamOf(near.side); b.target = null; }
   }
   if (b.owner) {
     const t = teamOf(actor(s, b.owner)!.side);
@@ -523,10 +536,12 @@ export function settle(s: DrillState): void {
 function npcRelease(s: DrillState): void {
   const a = actor(s, s.ball.owner);
   if (!a || a.human || s.holdT < 0.5) return;
-  const team = teamOf(a.side);
-  const goal = ownTargets(s, team).find((t) => (t.type === 'goal' || t.type === 'mini-goal') && Math.hypot(t.cx - a.pos.x, t.cy - a.pos.y) < 7);
+  const team = playsFor(s, a);
+  const neutral = teamOf(a.side) === 'N';
+  const goal = neutral ? undefined : ownTargets(s, team).find((t) => (t.type === 'goal' || t.type === 'mini-goal') && Math.hypot(t.cx - a.pos.x, t.cy - a.pos.y) < 7 && originOk(t, a.pos));
   if (goal) return kick(s, a, { x: goal.cx, y: goal.cy }, DRILL.shotSpeed, null);
-  if (pressureOn(s, a.pos, team) > 3.5 && !a.side.startsWith('GK')) return;
+  // A neutral is a wall: it plays the ball on rather than dribbling; others hold until pressed.
+  if (pressureOn(s, a.pos, team) > 3.5 && !a.side.startsWith('GK') && !neutral) return;
   let best: DrillActor | null = null;
   let score = 0.3;
   for (const m of mates(s, a)) {
