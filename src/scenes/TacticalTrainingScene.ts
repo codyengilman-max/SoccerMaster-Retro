@@ -29,7 +29,7 @@ export const HALF = { length: 75 * 0.9144 / 2, width: 50 * 0.9144, goalWidth: 6.
 export const ROLE_CHOICES: Readonly<Record<Position, readonly RoleId[]>> = { DEF: ['CB', 'LB', 'RB'], MID: ['6', '8'], FWD: ['LW', 'RW', '9'] };
 const ROLE_LABEL: Readonly<Record<RoleId, string>> = { GK: 'Keeper', CB: 'Centre back', LB: 'Left back', RB: 'Right back', '6': 'Holding mid (6)', '8': 'Box-to-box (8)', LW: 'Left wing', RW: 'Right wing', '9': 'Striker (9)' };
 
-type Screen = 'loading' | 'unavailable' | 'role' | 'brief' | 'play' | 'reflection' | 'saving' | 'done';
+type Screen = 'loading' | 'unavailable' | 'role' | 'brief' | 'play' | 'reflection' | 'saving' | 'saveFailed' | 'done';
 
 /**
  * Team Training v1.2: a fixed straight-down camera over one whole half, the coached Observe -> Decide ->
@@ -38,6 +38,8 @@ type Screen = 'loading' | 'unavailable' | 'role' | 'brief' | 'play' | 'reflectio
 export class TacticalTrainingScene extends Phaser.Scene implements InspectableScene, GameplayScene {
   private store: CareerStore | null = null;
   private save: CareerSave | null = null;
+  private entry = 0;
+  private bodyMax = Number.POSITIVE_INFINITY;
   private session: TrainingSession | null = null;
   private screen: Screen = 'loading';
   private slot: Tt12Slot = 'A';
@@ -57,6 +59,8 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
   private look: RosterLook | null = null;
   private lookName: ProtagonistLook | null = null;
   private me!: Phaser.GameObjects.Image;
+  private sprites: Phaser.GameObjects.Image[] = [];
+  private kits: { A: RosterLook[]; B: RosterLook[]; N: RosterLook[] } | null = null;
   private field: Rect = { x: 0, y: 0, width: 1, height: 1 };
   private panel: Rect = { x: 0, y: 0, width: 1, height: 1 };
   private px = 1;
@@ -79,6 +83,8 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     this.leaveArmed = false;
     this.buttons = [];
     this.tokenText = [];
+    this.sprites = [];
+    this.kits = null;
     this.buttonKey = '';
     const params = new URLSearchParams(window.location.search);
     const sp = Number(params.get('ttSpeed'));
@@ -96,19 +102,25 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     this.game.events.on(Phaser.Core.Events.HIDDEN, this.onBlur, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.onShutdown, this);
     this.layout();
+    const entry = ++this.entry;
+    const stale = (): boolean => entry !== this.entry || !this.sys.isActive();
     void CareerStore.open().then(async (store) => {
-      if (!this.sys.isActive()) return store.close();
+      if (stale()) return store.close();
       this.store = store;
       const save = await store.load();
-      if (!this.sys.isActive()) return;
+      if (stale()) return store.close();
       this.save = save;
       if (!save.player) return this.setScreen('unavailable', 'Create your player first.');
       const g = save.player.gender;
       this.lookName = g === 'boy' || g === 'girl' ? g : null;
-      if (this.lookName) {
-        this.look = sideLooks('home', { slot: 1, look: this.lookName }, { club: 'batavia', kit: 'training' })[1]!;
-        this.art.ensure([this.look.set]);
-      }
+      const home = sideLooks('home', this.lookName ? { slot: 1, look: this.lookName } : null, { club: 'batavia', kit: 'training' });
+      this.kits = {
+        A: home,
+        B: sideLooks('away', null, { club: 'batavia', kit: 'match' }),
+        N: sideLooks('away', null, { club: 'sol_vista', kit: 'match' }),
+      };
+      if (this.lookName) this.look = home[1]!;
+      this.art.ensure([...new Set([...this.kits.A, ...this.kits.B, ...this.kits.N].map((l) => l.set))]);
       this.role = ROLE_CHOICES[save.player.position][0]!;
       const plan = planFor(sessionId(1, save.week, this.slot), this.role);
       if (plan.status !== 'selected') return this.setScreen('unavailable', `Session ${sessionId(1, save.week, this.slot)} is not available yet. Its scenes have not passed testing, so nothing here is counted. Your weekly Team Training is still on the Team Training page.`);
@@ -189,7 +201,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
   private leave(): void {
     if (this.screen === 'saving') return;
     const live = this.session && ['ready', 'playing', 'paused', 'reflection'].includes(this.session.status);
-    if (live && !this.leaveArmed) {
+    if ((live || this.screen === 'saveFailed') && !this.leaveArmed) {
       this.leaveArmed = true;
       this.buttonKey = '';
       return;
@@ -203,13 +215,22 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     const s = this.session;
     const c = s?.completion;
     if (!s || !c || !this.store || !this.save) return;
+    if (this.screen === 'saving') return;
+    this.leaveArmed = false;
     this.setScreen('saving', 'Saving…');
     const qs = s.attempts.map((a) => a.decision?.quality ?? 0);
     const score = qs.length ? qs.reduce((a, b) => a + b, 0) / qs.length : 0;
-    const out = await this.store.dispatch({ type: 'tt12Run', week: this.save.week, slot: this.slot, runId: c.runId, score, creditEligible: c.creditEligible });
+    // The same runId is idempotent in the reducer, so a failed save can be retried safely.
+    let out: { ok: true; message: string } | { ok: false; error: string };
+    try {
+      const r = await this.store.dispatch({ type: 'tt12Run', week: this.save.week, slot: this.slot, runId: c.runId, score, creditEligible: c.creditEligible });
+      out = r.ok ? { ok: true, message: r.message } : { ok: false, error: r.error };
+    } catch (e) {
+      out = { ok: false, error: e instanceof Error ? e.message : 'The save could not be written.' };
+    }
     if (!this.sys.isActive() || this.session !== s) return;
     this.saved = out.ok ? out.message : out.error;
-    this.setScreen('done', '');
+    this.setScreen(out.ok ? 'done' : 'saveFailed', '');
   }
 
   // ---- panel ---------------------------------------------------------------------------------------
@@ -284,6 +305,11 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       case 'saving':
         lines.push('Saving…');
         break;
+      case 'saveFailed':
+        title = 'Not saved yet';
+        lines.push('Your finished session could not be saved:', this.saved, '', 'Try again; leaving now loses this session.');
+        buttons.push({ name: 'tt-retry-save', label: 'Try saving again', onClick: () => void this.finish() });
+        break;
       case 'done': {
         title = `${this.id} complete`;
         const c = s?.completion;
@@ -299,9 +325,8 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       buttons.push({ name: 'tt-leave', label: this.leaveArmed ? 'Tap again to leave (nothing counts)' : 'Leave', onClick: () => this.leave(), fill: PALETTE.sand });
     }
     this.title.setText(title);
-    this.body.setText(lines.join('\n'));
     const key = `${this.screen}|${s?.status}|${s?.drill?.phase}|${s?.attempts.length}|${this.leaveArmed}|${buttons.map((b) => b.name + b.label).join(',')}|${this.panel.width}x${this.panel.height}`;
-    if (key === this.buttonKey) return;
+    if (key === this.buttonKey) return this.fitBody(lines);
     this.buttonKey = key;
     for (const b of this.buttons) b.destroy();
     this.buttons = [];
@@ -324,10 +349,15 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     this.body.setWordWrapWidth(P.width - 2 * pad);
     this.title.setWordWrapWidth(P.width - 2 * pad);
     this.body.setPosition(P.x + pad, P.y + pad + this.title.height + 4);
-    // Keep the text above the buttons: drop trailing lines that would run under them.
-    const maxH = top - this.body.y - 4;
+    this.bodyMax = top - this.body.y - 4;
+    this.fitBody(lines);
+  }
+
+  /** Keep the text above the buttons: drop trailing lines that would run under them (every refresh, not just on relayout). */
+  private fitBody(lines: string[]): void {
     const all = lines.join('\n').split('\n');
-    while (all.length > 1 && this.body.height > maxH) {
+    this.body.setText(all.join('\n'));
+    while (all.length > 1 && this.body.height > this.bodyMax) {
       all.pop();
       this.body.setText(all.join('\n'));
     }
@@ -401,7 +431,10 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     const s = this.session;
     const d = s?.drill;
     for (const t of this.tokenText) t.setVisible(false);
-    if (!d) return void this.me.setVisible(false);
+    if (!d) {
+      for (const im of this.sprites) im.setVisible(false);
+      return void this.me.setVisible(false);
+    }
     const a0 = this.toScreen(this.drillToHalf({ x: 0, y: 0 }).x, this.drillToHalf({ x: 0, y: 0 }).y);
     const a1 = this.toScreen(this.drillToHalf({ x: d.L, y: d.W }).x, this.drillToHalf({ x: d.L, y: d.W }).y);
     g.fillStyle(0xffffff, 0.08).fillRect(Math.min(a0.x, a1.x), Math.min(a0.y, a1.y), Math.abs(a1.x - a0.x), Math.abs(a1.y - a0.y));
@@ -425,21 +458,41 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       });
     }
     const r = Math.max(6, k * 0.55);
-    for (const a of d.actors) {
+    const h = Math.max(26, k * 2.6);
+    const pose = Math.floor(this.walk * 8) % 6;
+    const used = { A: 0, B: 0, N: 0 };
+    d.actors.forEach((a, i) => {
       const p = this.actorScreen(a);
-      const team = a.side.startsWith('GK') ? (a.side.endsWith('B') ? 'B' : 'A') : a.side;
-      const fill = team === 'A' ? PALETTE.blue : team === 'B' ? PALETTE.tomato : PALETTE.mustard;
-      g.fillStyle(PALETTE.shadow, 0.25).fillEllipse(p.x, p.y + r * 0.6, r * 2, r);
-      g.fillStyle(fill, 1).fillCircle(p.x, p.y, r);
-      if (a.side.startsWith('GK')) g.lineStyle(2, 0x2c2c2c, 1).strokeCircle(p.x, p.y, r);
-      if (a.human) g.lineStyle(3, PALETTE.sun, 1).strokeCircle(p.x, p.y, r + 4);
-    }
+      const keeper = a.side.startsWith('GK');
+      const team = keeper ? (a.side.endsWith('B') ? 'B' : 'A') : a.side === 'A' || a.side === 'B' ? a.side : 'N';
+      const moving = Math.hypot(a.vel.x, a.vel.y) > 0.4;
+      const dir = moving ? dirFromScreen(a.vel.y, -a.vel.x) : 2;
+      g.fillStyle(PALETTE.shadow, 0.25).fillEllipse(p.x, p.y + r * 0.2, r * 2.2, r);
+      if (a.human) g.lineStyle(3, PALETTE.sun, 1).strokeEllipse(p.x, p.y + r * 0.2, r * 3, r * 1.4);
+      const im = (this.sprites[i] ??= this.add.image(-100, -100, '__DEFAULT').setDepth(900));
+      if (a.human) {
+        im.setVisible(false);
+        return;
+      }
+      const kit = this.kits?.[team];
+      // Home slot 1 is the protagonist's sheet, so home teammates use slots 2-8.
+      const look = kit ? (keeper ? kit[0]! : team === 'A' ? kit[2 + (used.A++ % 7)]! : kit[1 + (used[team]++ % 8)]!) : null;
+      if (!look) {
+        im.setVisible(false);
+        g.fillStyle(team === 'A' ? PALETTE.blue : team === 'B' ? PALETTE.tomato : PALETTE.mustard, 1).fillCircle(p.x, p.y, r);
+        return;
+      }
+      im.setDepth(900 + p.y / 10000);
+      this.art.apply(im, look, moving ? 'run' : 'idle', dir, pose, h).setPosition(p.x, p.y).setVisible(true);
+    });
+    for (let i = d.actors.length; i < this.sprites.length; i++) this.sprites[i]!.setVisible(false);
     const me = d.actors.find((x) => x.human)!;
     const mp = this.actorScreen(me);
-    if (this.look) {
+    const mine = this.look ?? this.kits?.A[1] ?? null;
+    if (mine) {
       const moving = Math.hypot(me.vel.x, me.vel.y) > 0.4;
       const dir = moving ? dirFromScreen(me.vel.y, -me.vel.x) : 2;
-      this.art.apply(this.me, this.look, moving ? 'run' : 'idle', dir, Math.floor(this.walk * 8) % 6, Math.max(26, k * 2.6)).setPosition(mp.x, mp.y).setVisible(true);
+      this.art.apply(this.me, mine, moving ? 'run' : 'idle', dir, pose, h).setPosition(mp.x, mp.y).setDepth(901).setVisible(true);
     } else this.me.setVisible(false);
     const bp = this.drillToHalf(d.ball.pos);
     const bs = this.toScreen(bp.x, bp.y);
@@ -486,6 +539,9 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       role: this.role,
       look: this.lookName,
       sprite: this.me.visible ? (this.look?.set ?? null) : null,
+      squadSprites: this.sprites.filter((im) => im.visible).map((im) => im.texture.key),
+      bodyBottom: this.body.y + this.body.height,
+      buttonsTop: Math.min(...this.buttons.map((b) => b.y - b.height / 2)),
       status: s?.status ?? null,
       round: s?.run.round ?? null,
       phase: d?.phase ?? null,

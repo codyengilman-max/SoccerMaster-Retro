@@ -20,6 +20,10 @@ export const DRILL = {
   control: 0.9,
   carryMetres: 6,
   executeSeconds: 3.2,
+  /** After a change of possession, play continues this long so the regaining side can counter. */
+  counterSeconds: 3,
+  /** A gate counts when its team controls the ball within this distance of the gate line. */
+  gateReach: 1.5,
   /** Host goal width in metres (U11 9v9: 6.4 m / 7 yd). */
   goalWidth: 6.4,
   pressure: 3,
@@ -81,6 +85,10 @@ export interface DrillState {
   releaseLeft: number;
   /** Possession team when the decision was made, for outcome classification. */
   startTeam: Team | 'N' | null;
+  /** Seconds this attempt plays for; extended once when possession changes. */
+  execLimit: number;
+  /** Possession changed during this attempt: play continues as a transition. */
+  turnover: boolean;
 }
 
 const v = (x: number, y: number): MutableVec2 => ({ x, y });
@@ -110,7 +118,7 @@ export function createDrill(def: ScenarioDefinition, seed: number, variation = 0
   return {
     def, L, W, actors, targets, pressSlot, holdT: 0, releaseLeft: 1.4 + rng() * 0.8,
     ball: { pos: v(owner.pos.x, owner.pos.y), vel: v(0, 0), owner: owner.slot, lastTeam: teamOf(owner.side), target: null },
-    phase: 'release', t: 0, execT: 0, chosen: null, outcome: null, startTeam: teamOf(owner.side),
+    phase: 'release', t: 0, execT: 0, chosen: null, outcome: null, startTeam: teamOf(owner.side), execLimit: DRILL.executeSeconds, turnover: false,
   };
 }
 
@@ -158,7 +166,8 @@ export function options(s: DrillState): DrillOption[] {
       out.push({ id: 'carry', kind: 'carry', label: 'Carry into space', point: best });
       for (const t of ownTargets(s, team)) {
         const d = Math.abs(t.cx - me.pos.x);
-        if (d <= 22 && t.type !== 'end-zone') out.push({ id: `shoot-${Math.round(t.cy)}`, kind: 'shoot', label: t.type === 'goal' ? 'Shoot' : `Finish ${t.cy < s.W / 2 ? 'left' : 'right'} ${t.type}`, point: { x: t.cx, y: t.cy } });
+        if (t.type === 'gate') out.push({ id: `gate-${Math.round(t.cy)}`, kind: 'carry', label: `Dribble out through the ${t.cy < s.W / 2 ? 'left' : 'right'} gate`, point: clampP(t.cx, t.cy) });
+        else if (d <= 22 && t.type !== 'end-zone') out.push({ id: `shoot-${Math.round(t.cy)}`, kind: 'shoot', label: t.type === 'goal' ? 'Shoot' : `Finish ${t.cy < s.W / 2 ? 'left' : 'right'} ${t.type}`, point: { x: t.cx, y: t.cy } });
       }
     }
     return out;
@@ -332,6 +341,8 @@ export function choose(s: DrillState, optionId: string): boolean {
   s.chosen = o;
   s.phase = 'execute';
   s.execT = 0;
+  s.execLimit = DRILL.executeSeconds;
+  s.turnover = false;
   s.startTeam = s.ball.owner ? teamOf(actor(s, s.ball.owner)!.side) : null;
   const me = human(s);
   if (o.kind === 'pass' || o.kind === 'shoot') kick(s, me, o.point, o.kind === 'shoot' ? DRILL.shotSpeed : DRILL.passSpeed, o.toSlot ?? null);
@@ -451,7 +462,7 @@ export function step(s: DrillState, dt = DRILL.dt): void {
     const sp = Math.hypot(b.vel.x, b.vel.y);
     const nsp = Math.max(0, sp - DRILL.friction * 9.8 * dt);
     b.vel = sp > 0 ? { x: (b.vel.x / sp) * nsp, y: (b.vel.y / sp) * nsp } : b.vel;
-    const crossed = s.targets.find((t) => (t.type === 'end-zone' ? false : Math.abs(b.pos.x - t.cx) < 0.4 && Math.abs(b.pos.y - t.cy) <= t.half) && b.lastTeam === t.scoresFor);
+    const crossed = s.targets.find((t) => ((t.type === 'goal' || t.type === 'mini-goal') && Math.abs(b.pos.x - t.cx) < 0.4 && Math.abs(b.pos.y - t.cy) <= t.half) && b.lastTeam === t.scoresFor);
     if (crossed) return finish(s, crossed.scoresFor === teamOf(me.side) ? 'scored' : 'conceded');
     if (b.pos.x < 0 || b.pos.x > s.L || b.pos.y < 0 || b.pos.y > s.W) return finish(s, 'out');
     // Control: the nearest player within reach takes a slow enough ball.
@@ -462,10 +473,30 @@ export function step(s: DrillState, dt = DRILL.dt): void {
   if (b.owner) {
     const t = teamOf(actor(s, b.owner)!.side);
     const mine = teamOf(me.side);
-    if (s.startTeam !== null && t !== s.startTeam && t !== 'N') return finish(s, t === mine ? 'regained' : 'lost');
-    if (b.owner === me.slot && s.chosen?.kind === 'carry' && me.goal && distance(me.pos, me.goal) < 0.3) return finish(s, 'kept');
+    // Gates and end zones score only on controlled possession, never on a loose ball crossing them.
+    if (t !== 'N' && s.targets.some((z) => z.scoresFor === t && controlledIn(s, z, b.pos))) return finish(s, t === mine ? 'scored' : 'conceded');
+    if (s.startTeam !== null && t !== s.startTeam && t !== 'N' && !s.turnover) {
+      s.turnover = true;
+      s.execLimit = Math.max(s.execLimit, s.execT + DRILL.counterSeconds);
+    }
+    if (!s.turnover && b.owner === me.slot && s.chosen?.kind === 'carry' && me.goal && distance(me.pos, me.goal) < 0.3) return finish(s, 'kept');
   }
-  if (s.execT >= DRILL.executeSeconds) finish(s, b.owner && teamOf(actor(s, b.owner)!.side) === teamOf(me.side) ? 'kept' : 'held');
+  if (s.execT >= s.execLimit) {
+    const ot = b.owner ? teamOf(actor(s, b.owner)!.side) : null;
+    const mine = teamOf(me.side);
+    if (s.turnover && ot !== null && ot !== 'N' && ot !== s.startTeam) finish(s, ot === mine ? 'regained' : 'lost');
+    else finish(s, ot === mine ? 'kept' : 'held');
+  }
+}
+
+/** Is a controlled ball at `p` inside a gate's exit or an end zone for that target? */
+function controlledIn(s: DrillState, t: DrillState['targets'][number], p: Vec2): boolean {
+  if (t.type === 'gate') return Math.abs(p.x - t.cx) <= DRILL.gateReach && Math.abs(p.y - t.cy) <= t.half;
+  if (t.type === 'end-zone') {
+    const depth = t.depthMeters ?? 3;
+    return t.cx > s.L / 2 ? p.x >= s.L - depth : p.x <= depth;
+  }
+  return false;
 }
 
 const OUTCOME_TEXT: Record<DrillOutcome['kind'], string> = {
@@ -493,7 +524,7 @@ function npcRelease(s: DrillState): void {
   const a = actor(s, s.ball.owner);
   if (!a || a.human || s.holdT < 0.5) return;
   const team = teamOf(a.side);
-  const goal = ownTargets(s, team).find((t) => t.type !== 'end-zone' && Math.hypot(t.cx - a.pos.x, t.cy - a.pos.y) < 7);
+  const goal = ownTargets(s, team).find((t) => (t.type === 'goal' || t.type === 'mini-goal') && Math.hypot(t.cx - a.pos.x, t.cy - a.pos.y) < 7);
   if (goal) return kick(s, a, { x: goal.cx, y: goal.cy }, DRILL.shotSpeed, null);
   if (pressureOn(s, a.pos, team) > 3.5 && !a.side.startsWith('GK')) return;
   let best: DrillActor | null = null;

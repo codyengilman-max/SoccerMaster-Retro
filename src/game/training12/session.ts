@@ -182,7 +182,8 @@ export class TrainingSession {
     const last = this.attempts.at(-1);
     const d = this.drill;
     if (last && d?.outcome && last.outcome === '') (last as { outcome: string }).outcome = d.outcome.text;
-    const end = Math.min(this.run.totalPlayed, this.windowStart + 5);
+    // The reference accepts spans of at most 5 s; a transition can play longer, so only its first 5 s count (margin for float error).
+    const end = Math.min(this.run.totalPlayed, this.windowStart + 4.999);
     if (last?.optionId && end > this.windowStart) {
       const kind = last.kind && ['support', 'width', 'run', 'short'].includes(last.kind) ? 'off-ball-support' : 'active-play';
       this.send({ type: 'participation', actorId: HUMAN_ID, windowId: `w-${this.run.round}-${last.index}`, kind, observable: true, start: this.windowStart, end } as never);

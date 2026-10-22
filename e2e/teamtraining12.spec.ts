@@ -7,7 +7,7 @@ const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mous
 type TT = {
   screen: string; sessionId: string; role: string; look: string | null; status: string | null; round: number | null; phase: string | null;
   options: { id: string; good: boolean; quality: number }[]; attempts: number; activeSeconds: number; rejected: number;
-  completion: { creditEligible: boolean; masteryGranted: boolean } | null; saved: string; pxPerMetre: number; sprite: string | null;
+  completion: { creditEligible: boolean; masteryGranted: boolean } | null; saved: string; pxPerMetre: number; sprite: string | null; squadSprites: string[]; bodyBottom: number; buttonsTop: number;
 };
 type Career = { screen: string; status: string; text: string };
 
@@ -110,6 +110,12 @@ test('team training v1.2: whole session on the overhead half, counted once, idle
         if (!t.options.length) continue;
         if (!shot) {
           expect(t.sprite).toBe('girl-training');
+          console.log('squad sprites', [...new Set(t.squadSprites)].join(','));
+          expect(t.squadSprites.length).toBeGreaterThan(0);
+          expect(t.squadSprites.every((k) => k.startsWith('spr2:club-'))).toBe(true);
+          expect(t.squadSprites, 'teammates in the Batavia training kit').toContain('spr2:club-batavia-training');
+          expect(t.squadSprites.some((k) => k !== 'spr2:club-batavia-training'), 'opponents or keepers in another kit').toBe(true);
+          expect(t.bodyBottom, 'coaching text stays above the buttons').toBeLessThanOrEqual(t.buttonsTop);
           await page.screenshot({ path: info.outputPath(`tt12-decide-${info.project.name}.png`) });
           shot = true;
         }

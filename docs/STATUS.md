@@ -6,6 +6,8 @@
 - Playable: Career → Team Training → Session A/B/C (v1.2) for Season 1 weeks 1–4, every role offered to the career position. Fixed overhead half-field camera, coached Observe → Decide → Execute → Explain loop, 3 rounds (guided, unguided, timed), pause, two-tap leave, rotation-safe.
 - Weeks 5–18 and Season 2 are "not available yet". GK routes pass unit tests but have no career position.
 - Rewards: three credited sessions grade the week once through the existing economy (shared with the legacy situations).
+- Sprites: every player in the drill uses the sprite atlases (owner, 2026-10-23): teammates in Batavia training kit, opponents in Batavia match kit, neutrals in Sol Vista, keepers in their club's keeper art; the player you control is the saved girl/boy with the gold ring.
+- PR #32 review fixes: a failed save keeps the finished session and offers "Try saving again" (same run id); the store is closed if the scene shuts down while loading; exit gates (B1/K1) and the C1 end zone score only on a controlled reception, a loose ball crossing a gate does not; a turnover in D1/T1 keeps play live for a 3 s counter; v1.2 runs after the legacy weekly grade are saved as practice only. Participation spans are capped just under 5 s (longer counters were rejected by the reference). Coaching text is re-fitted above the buttons on every refresh.
 - Not tested on a physical iPhone.
 
 ## Jungle Ball v3 arcade upgrade (owner brief 2026-10-22, branch `devin/1792638887-jungle-arcade-v3`, stacked on PR #30, not merged, not deployed)

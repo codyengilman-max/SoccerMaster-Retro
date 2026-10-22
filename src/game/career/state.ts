@@ -260,12 +260,15 @@ export function reduce(save: CareerSave, action: Action): Outcome {
       // A replayed completion (same run) or a second run of an already credited session changes nothing.
       if (save.tt12.some((r) => r.runId === action.runId)) return same(save, 'This session is already saved.');
       if (save.tt12.some((r) => r.week === save.week && r.slot === action.slot && r.credited)) return same(save, `Session ${action.slot} for week ${save.week} is already counted; this was practice only.`);
-      const credited = action.creditEligible === true;
+      // Once the week is graded (legacy Team Training or three v1.2 sessions), further runs are practice only.
+      const graded = save.teamTraining.some((r) => r.week === save.week);
+      const credited = action.creditEligible === true && !graded;
       const runs = [...save.tt12, { week: save.week, slot: action.slot, runId: action.runId, score: action.score, credited }].slice(-L.historyMax * 4);
       let next: CareerSave = { ...save, tt12: runs };
+      if (graded) return ok(next, `Team Training for week ${save.week} is already counted; this session was practice only.`);
       if (!credited) return ok(next, 'Session saved, but not counted: it needs at least 30 seconds of your own play.');
       const week = TT12_SLOTS.map((slot) => runs.find((r) => r.week === save.week && r.slot === slot && r.credited));
-      if (week.some((r) => !r) || save.teamTraining.some((r) => r.week === save.week)) {
+      if (week.some((r) => !r)) {
         return ok(next, `Session ${action.slot} counted (${week.filter(Boolean).length} of 3 this week).`);
       }
       // All three sessions credited: the week is graded once through the existing Team Training economy.
