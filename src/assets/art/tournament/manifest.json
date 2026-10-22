@@ -1,0 +1,1505 @@
+{
+  "schemaVersion": 1,
+  "source": [
+    "docs/art/tournament-v1/ASSET_MAP.json",
+    "docs/art/rosters-v1/roster_manifest.json"
+  ],
+  "assets": [
+    {
+      "assetId": "az-showcase-background",
+      "file": "az-showcase-background.webp",
+      "width": 1024,
+      "height": 683,
+      "source": "art/az_showcase_background.png",
+      "bytes": 158548
+    },
+    {
+      "assetId": "holiday-classic-background",
+      "file": "holiday-classic-background.webp",
+      "width": 1024,
+      "height": 683,
+      "source": "art/holiday_classic_background.png",
+      "bytes": 209800
+    },
+    {
+      "assetId": "state-cup-background",
+      "file": "state-cup-background.webp",
+      "width": 1024,
+      "height": 683,
+      "source": "art/state_cup_background.png",
+      "bytes": 139526
+    },
+    {
+      "assetId": "az-showcase-assets-logo",
+      "file": "az-showcase-assets-logo.webp",
+      "width": 254,
+      "height": 225,
+      "source": "art/az_showcase_assets.png#logo",
+      "bytes": 24970
+    },
+    {
+      "assetId": "az-showcase-assets-field-board",
+      "file": "az-showcase-assets-field-board.webp",
+      "width": 283,
+      "height": 90,
+      "source": "art/az_showcase_assets.png#field_board",
+      "bytes": 8450
+    },
+    {
+      "assetId": "az-showcase-assets-pennant",
+      "file": "az-showcase-assets-pennant.webp",
+      "width": 132,
+      "height": 219,
+      "source": "art/az_showcase_assets.png#pennant",
+      "bytes": 9410
+    },
+    {
+      "assetId": "az-showcase-assets-trophy",
+      "file": "az-showcase-assets-trophy.webp",
+      "width": 181,
+      "height": 237,
+      "source": "art/az_showcase_assets.png#trophy",
+      "bytes": 20608
+    },
+    {
+      "assetId": "az-showcase-assets-medal",
+      "file": "az-showcase-assets-medal.webp",
+      "width": 164,
+      "height": 224,
+      "source": "art/az_showcase_assets.png#medal",
+      "bytes": 19456
+    },
+    {
+      "assetId": "az-showcase-assets-title-ribbon",
+      "file": "az-showcase-assets-title-ribbon.webp",
+      "width": 302,
+      "height": 134,
+      "source": "art/az_showcase_assets.png#title_ribbon",
+      "bytes": 13700
+    },
+    {
+      "assetId": "holiday-classic-assets-logo",
+      "file": "holiday-classic-assets-logo.webp",
+      "width": 256,
+      "height": 222,
+      "source": "art/holiday_classic_assets.png#logo",
+      "bytes": 25100
+    },
+    {
+      "assetId": "holiday-classic-assets-field-board",
+      "file": "holiday-classic-assets-field-board.webp",
+      "width": 288,
+      "height": 96,
+      "source": "art/holiday_classic_assets.png#field_board",
+      "bytes": 6144
+    },
+    {
+      "assetId": "holiday-classic-assets-pennant",
+      "file": "holiday-classic-assets-pennant.webp",
+      "width": 142,
+      "height": 246,
+      "source": "art/holiday_classic_assets.png#pennant",
+      "bytes": 9776
+    },
+    {
+      "assetId": "holiday-classic-assets-trophy",
+      "file": "holiday-classic-assets-trophy.webp",
+      "width": 219,
+      "height": 233,
+      "source": "art/holiday_classic_assets.png#trophy",
+      "bytes": 27044
+    },
+    {
+      "assetId": "holiday-classic-assets-medal",
+      "file": "holiday-classic-assets-medal.webp",
+      "width": 162,
+      "height": 230,
+      "source": "art/holiday_classic_assets.png#medal",
+      "bytes": 18020
+    },
+    {
+      "assetId": "holiday-classic-assets-title-ribbon",
+      "file": "holiday-classic-assets-title-ribbon.webp",
+      "width": 296,
+      "height": 107,
+      "source": "art/holiday_classic_assets.png#title_ribbon",
+      "bytes": 11246
+    },
+    {
+      "assetId": "state-cup-assets-logo",
+      "file": "state-cup-assets-logo.webp",
+      "width": 216,
+      "height": 236,
+      "source": "art/state_cup_assets.png#logo",
+      "bytes": 23408
+    },
+    {
+      "assetId": "state-cup-assets-field-board",
+      "file": "state-cup-assets-field-board.webp",
+      "width": 302,
+      "height": 80,
+      "source": "art/state_cup_assets.png#field_board",
+      "bytes": 6424
+    },
+    {
+      "assetId": "state-cup-assets-pennant",
+      "file": "state-cup-assets-pennant.webp",
+      "width": 158,
+      "height": 256,
+      "source": "art/state_cup_assets.png#pennant",
+      "bytes": 13380
+    },
+    {
+      "assetId": "state-cup-assets-trophy",
+      "file": "state-cup-assets-trophy.webp",
+      "width": 210,
+      "height": 246,
+      "source": "art/state_cup_assets.png#trophy",
+      "bytes": 29454
+    },
+    {
+      "assetId": "state-cup-assets-medal",
+      "file": "state-cup-assets-medal.webp",
+      "width": 158,
+      "height": 232,
+      "source": "art/state_cup_assets.png#medal",
+      "bytes": 21132
+    },
+    {
+      "assetId": "state-cup-assets-title-ribbon",
+      "file": "state-cup-assets-title-ribbon.webp",
+      "width": 311,
+      "height": 112,
+      "source": "art/state_cup_assets.png#title_ribbon",
+      "bytes": 13540
+    },
+    {
+      "assetId": "boy-reactions-fist-pump",
+      "file": "boy-reactions-fist-pump.webp",
+      "width": 138,
+      "height": 244,
+      "source": "art/boy_reactions.png#fist_pump",
+      "bytes": 16002
+    },
+    {
+      "assetId": "boy-reactions-arms-raised",
+      "file": "boy-reactions-arms-raised.webp",
+      "width": 150,
+      "height": 246,
+      "source": "art/boy_reactions.png#arms_raised",
+      "bytes": 16772
+    },
+    {
+      "assetId": "boy-reactions-applaud",
+      "file": "boy-reactions-applaud.webp",
+      "width": 108,
+      "height": 236,
+      "source": "art/boy_reactions.png#applaud",
+      "bytes": 13424
+    },
+    {
+      "assetId": "boy-reactions-proud",
+      "file": "boy-reactions-proud.webp",
+      "width": 129,
+      "height": 240,
+      "source": "art/boy_reactions.png#proud",
+      "bytes": 15364
+    },
+    {
+      "assetId": "boy-reactions-disappointed",
+      "file": "boy-reactions-disappointed.webp",
+      "width": 104,
+      "height": 230,
+      "source": "art/boy_reactions.png#disappointed",
+      "bytes": 13102
+    },
+    {
+      "assetId": "boy-reactions-frustrated",
+      "file": "boy-reactions-frustrated.webp",
+      "width": 125,
+      "height": 234,
+      "source": "art/boy_reactions.png#frustrated",
+      "bytes": 15050
+    },
+    {
+      "assetId": "boy-reactions-reflective",
+      "file": "boy-reactions-reflective.webp",
+      "width": 106,
+      "height": 231,
+      "source": "art/boy_reactions.png#reflective",
+      "bytes": 13044
+    },
+    {
+      "assetId": "boy-reactions-supportive",
+      "file": "boy-reactions-supportive.webp",
+      "width": 122,
+      "height": 236,
+      "source": "art/boy_reactions.png#supportive",
+      "bytes": 15366
+    },
+    {
+      "assetId": "girl-reactions-fist-pump",
+      "file": "girl-reactions-fist-pump.webp",
+      "width": 124,
+      "height": 250,
+      "source": "art/girl_reactions.png#fist_pump",
+      "bytes": 17610
+    },
+    {
+      "assetId": "girl-reactions-arms-raised",
+      "file": "girl-reactions-arms-raised.webp",
+      "width": 160,
+      "height": 252,
+      "source": "art/girl_reactions.png#arms_raised",
+      "bytes": 18038
+    },
+    {
+      "assetId": "girl-reactions-applaud",
+      "file": "girl-reactions-applaud.webp",
+      "width": 138,
+      "height": 248,
+      "source": "art/girl_reactions.png#applaud",
+      "bytes": 15330
+    },
+    {
+      "assetId": "girl-reactions-proud",
+      "file": "girl-reactions-proud.webp",
+      "width": 129,
+      "height": 252,
+      "source": "art/girl_reactions.png#proud",
+      "bytes": 18456
+    },
+    {
+      "assetId": "girl-reactions-disappointed",
+      "file": "girl-reactions-disappointed.webp",
+      "width": 90,
+      "height": 247,
+      "source": "art/girl_reactions.png#disappointed",
+      "bytes": 14422
+    },
+    {
+      "assetId": "girl-reactions-frustrated",
+      "file": "girl-reactions-frustrated.webp",
+      "width": 126,
+      "height": 246,
+      "source": "art/girl_reactions.png#frustrated",
+      "bytes": 17420
+    },
+    {
+      "assetId": "girl-reactions-reflective",
+      "file": "girl-reactions-reflective.webp",
+      "width": 90,
+      "height": 248,
+      "source": "art/girl_reactions.png#reflective",
+      "bytes": 12406
+    },
+    {
+      "assetId": "girl-reactions-supportive",
+      "file": "girl-reactions-supportive.webp",
+      "width": 126,
+      "height": 248,
+      "source": "art/girl_reactions.png#supportive",
+      "bytes": 17638
+    },
+    {
+      "assetId": "sam-reactions-fist-pump",
+      "file": "sam-reactions-fist-pump.webp",
+      "width": 134,
+      "height": 249,
+      "source": "art/sam_reactions.png#fist_pump",
+      "bytes": 15854
+    },
+    {
+      "assetId": "sam-reactions-arms-raised",
+      "file": "sam-reactions-arms-raised.webp",
+      "width": 160,
+      "height": 252,
+      "source": "art/sam_reactions.png#arms_raised",
+      "bytes": 17588
+    },
+    {
+      "assetId": "sam-reactions-applaud",
+      "file": "sam-reactions-applaud.webp",
+      "width": 118,
+      "height": 250,
+      "source": "art/sam_reactions.png#applaud",
+      "bytes": 14204
+    },
+    {
+      "assetId": "sam-reactions-proud",
+      "file": "sam-reactions-proud.webp",
+      "width": 132,
+      "height": 248,
+      "source": "art/sam_reactions.png#proud",
+      "bytes": 15580
+    },
+    {
+      "assetId": "sam-reactions-disappointed",
+      "file": "sam-reactions-disappointed.webp",
+      "width": 118,
+      "height": 240,
+      "source": "art/sam_reactions.png#disappointed",
+      "bytes": 13088
+    },
+    {
+      "assetId": "sam-reactions-frustrated",
+      "file": "sam-reactions-frustrated.webp",
+      "width": 132,
+      "height": 244,
+      "source": "art/sam_reactions.png#frustrated",
+      "bytes": 15156
+    },
+    {
+      "assetId": "sam-reactions-reflective",
+      "file": "sam-reactions-reflective.webp",
+      "width": 120,
+      "height": 241,
+      "source": "art/sam_reactions.png#reflective",
+      "bytes": 13126
+    },
+    {
+      "assetId": "sam-reactions-supportive",
+      "file": "sam-reactions-supportive.webp",
+      "width": 128,
+      "height": 244,
+      "source": "art/sam_reactions.png#supportive",
+      "bytes": 15262
+    },
+    {
+      "assetId": "coach-code-reactions-fist-pump",
+      "file": "coach-code-reactions-fist-pump.webp",
+      "width": 138,
+      "height": 242,
+      "source": "art/coach_code_reactions.png#fist_pump",
+      "bytes": 16020
+    },
+    {
+      "assetId": "coach-code-reactions-arms-raised",
+      "file": "coach-code-reactions-arms-raised.webp",
+      "width": 177,
+      "height": 252,
+      "source": "art/coach_code_reactions.png#arms_raised",
+      "bytes": 18452
+    },
+    {
+      "assetId": "coach-code-reactions-applaud",
+      "file": "coach-code-reactions-applaud.webp",
+      "width": 130,
+      "height": 243,
+      "source": "art/coach_code_reactions.png#applaud",
+      "bytes": 15092
+    },
+    {
+      "assetId": "coach-code-reactions-proud",
+      "file": "coach-code-reactions-proud.webp",
+      "width": 150,
+      "height": 243,
+      "source": "art/coach_code_reactions.png#proud",
+      "bytes": 16650
+    },
+    {
+      "assetId": "coach-code-reactions-disappointed",
+      "file": "coach-code-reactions-disappointed.webp",
+      "width": 118,
+      "height": 240,
+      "source": "art/coach_code_reactions.png#disappointed",
+      "bytes": 14360
+    },
+    {
+      "assetId": "coach-code-reactions-frustrated",
+      "file": "coach-code-reactions-frustrated.webp",
+      "width": 146,
+      "height": 242,
+      "source": "art/coach_code_reactions.png#frustrated",
+      "bytes": 16538
+    },
+    {
+      "assetId": "coach-code-reactions-reflective",
+      "file": "coach-code-reactions-reflective.webp",
+      "width": 124,
+      "height": 240,
+      "source": "art/coach_code_reactions.png#reflective",
+      "bytes": 14450
+    },
+    {
+      "assetId": "coach-code-reactions-supportive",
+      "file": "coach-code-reactions-supportive.webp",
+      "width": 149,
+      "height": 243,
+      "source": "art/coach_code_reactions.png#supportive",
+      "bytes": 16690
+    },
+    {
+      "assetId": "tournament-results-components-title",
+      "file": "tournament-results-components-title.webp",
+      "width": 262,
+      "height": 88,
+      "source": "art/tournament_results_components.png#title",
+      "bytes": 5922
+    },
+    {
+      "assetId": "tournament-results-components-group-a",
+      "file": "tournament-results-components-group-a.webp",
+      "width": 230,
+      "height": 201,
+      "source": "art/tournament_results_components.png#group_a",
+      "bytes": 6544
+    },
+    {
+      "assetId": "tournament-results-components-group-b",
+      "file": "tournament-results-components-group-b.webp",
+      "width": 229,
+      "height": 201,
+      "source": "art/tournament_results_components.png#group_b",
+      "bytes": 5692
+    },
+    {
+      "assetId": "tournament-results-components-match-result",
+      "file": "tournament-results-components-match-result.webp",
+      "width": 262,
+      "height": 140,
+      "source": "art/tournament_results_components.png#match_result",
+      "bytes": 7740
+    },
+    {
+      "assetId": "tournament-results-components-outcome",
+      "file": "tournament-results-components-outcome.webp",
+      "width": 252,
+      "height": 174,
+      "source": "art/tournament_results_components.png#outcome",
+      "bytes": 5238
+    },
+    {
+      "assetId": "tournament-results-components-continue",
+      "file": "tournament-results-components-continue.webp",
+      "width": 210,
+      "height": 65,
+      "source": "art/tournament_results_components.png#continue",
+      "bytes": 3132
+    },
+    {
+      "assetId": "blake-next-horizon-portraits-jacket-neutral",
+      "file": "blake-next-horizon-portraits-jacket-neutral.webp",
+      "width": 233,
+      "height": 262,
+      "source": "art/blake_next_horizon_portraits.png#jacket_neutral",
+      "bytes": 25184
+    },
+    {
+      "assetId": "blake-next-horizon-portraits-jacket-smug",
+      "file": "blake-next-horizon-portraits-jacket-smug.webp",
+      "width": 210,
+      "height": 262,
+      "source": "art/blake_next_horizon_portraits.png#jacket_smug",
+      "bytes": 24852
+    },
+    {
+      "assetId": "blake-next-horizon-portraits-jacket-thoughtful",
+      "file": "blake-next-horizon-portraits-jacket-thoughtful.webp",
+      "width": 214,
+      "height": 260,
+      "source": "art/blake_next_horizon_portraits.png#jacket_thoughtful",
+      "bytes": 24458
+    },
+    {
+      "assetId": "blake-next-horizon-portraits-match-determined",
+      "file": "blake-next-horizon-portraits-match-determined.webp",
+      "width": 234,
+      "height": 250,
+      "source": "art/blake_next_horizon_portraits.png#match_determined",
+      "bytes": 25570
+    },
+    {
+      "assetId": "blake-next-horizon-portraits-match-pleased",
+      "file": "blake-next-horizon-portraits-match-pleased.webp",
+      "width": 238,
+      "height": 250,
+      "source": "art/blake_next_horizon_portraits.png#match_pleased",
+      "bytes": 23572
+    },
+    {
+      "assetId": "blake-next-horizon-portraits-match-disappointed",
+      "file": "blake-next-horizon-portraits-match-disappointed.webp",
+      "width": 198,
+      "height": 250,
+      "source": "art/blake_next_horizon_portraits.png#match_disappointed",
+      "bytes": 22424
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-run-right-0",
+      "file": "blake-next-horizon-gameplay-run-right-0.webp",
+      "width": 210,
+      "height": 241,
+      "source": "art/blake_next_horizon_gameplay.png#run_right_0",
+      "bytes": 21690
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-run-right-1",
+      "file": "blake-next-horizon-gameplay-run-right-1.webp",
+      "width": 213,
+      "height": 248,
+      "source": "art/blake_next_horizon_gameplay.png#run_right_1",
+      "bytes": 22024
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-run-right-2",
+      "file": "blake-next-horizon-gameplay-run-right-2.webp",
+      "width": 212,
+      "height": 244,
+      "source": "art/blake_next_horizon_gameplay.png#run_right_2",
+      "bytes": 22100
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-run-right-3",
+      "file": "blake-next-horizon-gameplay-run-right-3.webp",
+      "width": 220,
+      "height": 240,
+      "source": "art/blake_next_horizon_gameplay.png#run_right_3",
+      "bytes": 21466
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-run-right-4",
+      "file": "blake-next-horizon-gameplay-run-right-4.webp",
+      "width": 221,
+      "height": 239,
+      "source": "art/blake_next_horizon_gameplay.png#run_right_4",
+      "bytes": 21908
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-run-right-5",
+      "file": "blake-next-horizon-gameplay-run-right-5.webp",
+      "width": 199,
+      "height": 242,
+      "source": "art/blake_next_horizon_gameplay.png#run_right_5",
+      "bytes": 21610
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-idle-front",
+      "file": "blake-next-horizon-gameplay-idle-front.webp",
+      "width": 133,
+      "height": 248,
+      "source": "art/blake_next_horizon_gameplay.png#idle_front",
+      "bytes": 18066
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-idle-back",
+      "file": "blake-next-horizon-gameplay-idle-back.webp",
+      "width": 122,
+      "height": 247,
+      "source": "art/blake_next_horizon_gameplay.png#idle_back",
+      "bytes": 16270
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-idle-right",
+      "file": "blake-next-horizon-gameplay-idle-right.webp",
+      "width": 117,
+      "height": 256,
+      "source": "art/blake_next_horizon_gameplay.png#idle_right",
+      "bytes": 15236
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-idle-left",
+      "file": "blake-next-horizon-gameplay-idle-left.webp",
+      "width": 119,
+      "height": 250,
+      "source": "art/blake_next_horizon_gameplay.png#idle_left",
+      "bytes": 15378
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-receive-right",
+      "file": "blake-next-horizon-gameplay-receive-right.webp",
+      "width": 197,
+      "height": 242,
+      "source": "art/blake_next_horizon_gameplay.png#receive_right",
+      "bytes": 21508
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-receive-left",
+      "file": "blake-next-horizon-gameplay-receive-left.webp",
+      "width": 198,
+      "height": 242,
+      "source": "art/blake_next_horizon_gameplay.png#receive_left",
+      "bytes": 21520
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-pass-windup",
+      "file": "blake-next-horizon-gameplay-pass-windup.webp",
+      "width": 215,
+      "height": 252,
+      "source": "art/blake_next_horizon_gameplay.png#pass_windup",
+      "bytes": 18486
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-pass-contact",
+      "file": "blake-next-horizon-gameplay-pass-contact.webp",
+      "width": 239,
+      "height": 252,
+      "source": "art/blake_next_horizon_gameplay.png#pass_contact",
+      "bytes": 20292
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-pass-followthrough",
+      "file": "blake-next-horizon-gameplay-pass-followthrough.webp",
+      "width": 236,
+      "height": 251,
+      "source": "art/blake_next_horizon_gameplay.png#pass_followthrough",
+      "bytes": 19680
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-shoot-windup",
+      "file": "blake-next-horizon-gameplay-shoot-windup.webp",
+      "width": 235,
+      "height": 252,
+      "source": "art/blake_next_horizon_gameplay.png#shoot_windup",
+      "bytes": 21014
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-shoot-contact",
+      "file": "blake-next-horizon-gameplay-shoot-contact.webp",
+      "width": 223,
+      "height": 244,
+      "source": "art/blake_next_horizon_gameplay.png#shoot_contact",
+      "bytes": 21374
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-shoot-followthrough",
+      "file": "blake-next-horizon-gameplay-shoot-followthrough.webp",
+      "width": 252,
+      "height": 246,
+      "source": "art/blake_next_horizon_gameplay.png#shoot_followthrough",
+      "bytes": 18678
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-shoulder-brace",
+      "file": "blake-next-horizon-gameplay-shoulder-brace.webp",
+      "width": 235,
+      "height": 232,
+      "source": "art/blake_next_horizon_gameplay.png#shoulder_brace",
+      "bytes": 21118
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-slide",
+      "file": "blake-next-horizon-gameplay-slide.webp",
+      "width": 256,
+      "height": 177,
+      "source": "art/blake_next_horizon_gameplay.png#slide",
+      "bytes": 18376
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-stumble",
+      "file": "blake-next-horizon-gameplay-stumble.webp",
+      "width": 246,
+      "height": 175,
+      "source": "art/blake_next_horizon_gameplay.png#stumble",
+      "bytes": 18656
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-recover",
+      "file": "blake-next-horizon-gameplay-recover.webp",
+      "width": 205,
+      "height": 216,
+      "source": "art/blake_next_horizon_gameplay.png#recover",
+      "bytes": 19922
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-celebrate",
+      "file": "blake-next-horizon-gameplay-celebrate.webp",
+      "width": 179,
+      "height": 236,
+      "source": "art/blake_next_horizon_gameplay.png#celebrate",
+      "bytes": 20048
+    },
+    {
+      "assetId": "blake-next-horizon-gameplay-disappointed",
+      "file": "blake-next-horizon-gameplay-disappointed.webp",
+      "width": 151,
+      "height": 240,
+      "source": "art/blake_next_horizon_gameplay.png#disappointed",
+      "bytes": 17184
+    },
+    {
+      "assetId": "visitor-kit-candidates-candidate-1-outfield",
+      "file": "visitor-kit-candidates-candidate-1-outfield.webp",
+      "width": 101,
+      "height": 254,
+      "source": "art/visitor_kit_candidates.png#candidate_1_outfield",
+      "bytes": 13390
+    },
+    {
+      "assetId": "visitor-kit-candidates-candidate-2-outfield",
+      "file": "visitor-kit-candidates-candidate-2-outfield.webp",
+      "width": 102,
+      "height": 249,
+      "source": "art/visitor_kit_candidates.png#candidate_2_outfield",
+      "bytes": 14364
+    },
+    {
+      "assetId": "visitor-kit-candidates-candidate-3-outfield",
+      "file": "visitor-kit-candidates-candidate-3-outfield.webp",
+      "width": 103,
+      "height": 246,
+      "source": "art/visitor_kit_candidates.png#candidate_3_outfield",
+      "bytes": 12830
+    },
+    {
+      "assetId": "visitor-kit-candidates-candidate-4-outfield",
+      "file": "visitor-kit-candidates-candidate-4-outfield.webp",
+      "width": 102,
+      "height": 254,
+      "source": "art/visitor_kit_candidates.png#candidate_4_outfield",
+      "bytes": 13094
+    },
+    {
+      "assetId": "visitor-kit-candidates-candidate-1-keeper",
+      "file": "visitor-kit-candidates-candidate-1-keeper.webp",
+      "width": 112,
+      "height": 248,
+      "source": "art/visitor_kit_candidates.png#candidate_1_keeper",
+      "bytes": 14306
+    },
+    {
+      "assetId": "visitor-kit-candidates-candidate-2-keeper",
+      "file": "visitor-kit-candidates-candidate-2-keeper.webp",
+      "width": 112,
+      "height": 248,
+      "source": "art/visitor_kit_candidates.png#candidate_2_keeper",
+      "bytes": 14394
+    },
+    {
+      "assetId": "visitor-kit-candidates-candidate-3-keeper",
+      "file": "visitor-kit-candidates-candidate-3-keeper.webp",
+      "width": 113,
+      "height": 245,
+      "source": "art/visitor_kit_candidates.png#candidate_3_keeper",
+      "bytes": 13680
+    },
+    {
+      "assetId": "visitor-kit-candidates-candidate-4-keeper",
+      "file": "visitor-kit-candidates-candidate-4-keeper.webp",
+      "width": 111,
+      "height": 248,
+      "source": "art/visitor_kit_candidates.png#candidate_4_keeper",
+      "bytes": 14230
+    },
+    {
+      "assetId": "roster-fc-batavia-01",
+      "file": "roster-fc-batavia-01.webp",
+      "width": 125,
+      "height": 205,
+      "source": "art/fc_batavia.png#r0c0",
+      "bytes": 13572
+    },
+    {
+      "assetId": "roster-fc-batavia-02",
+      "file": "roster-fc-batavia-02.webp",
+      "width": 121,
+      "height": 201,
+      "source": "art/fc_batavia.png#r0c1",
+      "bytes": 13866
+    },
+    {
+      "assetId": "roster-fc-batavia-03",
+      "file": "roster-fc-batavia-03.webp",
+      "width": 120,
+      "height": 198,
+      "source": "art/fc_batavia.png#r0c2",
+      "bytes": 14098
+    },
+    {
+      "assetId": "roster-fc-batavia-04",
+      "file": "roster-fc-batavia-04.webp",
+      "width": 120,
+      "height": 200,
+      "source": "art/fc_batavia.png#r1c0",
+      "bytes": 15208
+    },
+    {
+      "assetId": "roster-fc-batavia-05",
+      "file": "roster-fc-batavia-05.webp",
+      "width": 122,
+      "height": 202,
+      "source": "art/fc_batavia.png#r1c1",
+      "bytes": 14542
+    },
+    {
+      "assetId": "roster-fc-batavia-06",
+      "file": "roster-fc-batavia-06.webp",
+      "width": 120,
+      "height": 198,
+      "source": "art/fc_batavia.png#r1c2",
+      "bytes": 13356
+    },
+    {
+      "assetId": "roster-fc-batavia-07",
+      "file": "roster-fc-batavia-07.webp",
+      "width": 126,
+      "height": 200,
+      "source": "art/fc_batavia.png#r2c0",
+      "bytes": 15080
+    },
+    {
+      "assetId": "roster-fc-batavia-08",
+      "file": "roster-fc-batavia-08.webp",
+      "width": 126,
+      "height": 200,
+      "source": "art/fc_batavia.png#r2c1",
+      "bytes": 15706
+    },
+    {
+      "assetId": "roster-fc-batavia-09",
+      "file": "roster-fc-batavia-09.webp",
+      "width": 145,
+      "height": 196,
+      "source": "art/fc_batavia.png#r2c2",
+      "bytes": 15130
+    },
+    {
+      "assetId": "roster-royal-salt-01",
+      "file": "roster-royal-salt-01.webp",
+      "width": 130,
+      "height": 194,
+      "source": "art/royal_salt.png#r0c0",
+      "bytes": 12500
+    },
+    {
+      "assetId": "roster-royal-salt-02",
+      "file": "roster-royal-salt-02.webp",
+      "width": 128,
+      "height": 188,
+      "source": "art/royal_salt.png#r0c1",
+      "bytes": 12700
+    },
+    {
+      "assetId": "roster-royal-salt-03",
+      "file": "roster-royal-salt-03.webp",
+      "width": 124,
+      "height": 190,
+      "source": "art/royal_salt.png#r0c2",
+      "bytes": 13162
+    },
+    {
+      "assetId": "roster-royal-salt-04",
+      "file": "roster-royal-salt-04.webp",
+      "width": 130,
+      "height": 188,
+      "source": "art/royal_salt.png#r1c0",
+      "bytes": 13654
+    },
+    {
+      "assetId": "roster-royal-salt-05",
+      "file": "roster-royal-salt-05.webp",
+      "width": 130,
+      "height": 186,
+      "source": "art/royal_salt.png#r1c1",
+      "bytes": 12930
+    },
+    {
+      "assetId": "roster-royal-salt-06",
+      "file": "roster-royal-salt-06.webp",
+      "width": 127,
+      "height": 185,
+      "source": "art/royal_salt.png#r1c2",
+      "bytes": 12562
+    },
+    {
+      "assetId": "roster-royal-salt-07",
+      "file": "roster-royal-salt-07.webp",
+      "width": 132,
+      "height": 192,
+      "source": "art/royal_salt.png#r2c0",
+      "bytes": 13696
+    },
+    {
+      "assetId": "roster-royal-salt-08",
+      "file": "roster-royal-salt-08.webp",
+      "width": 132,
+      "height": 199,
+      "source": "art/royal_salt.png#r2c1",
+      "bytes": 14660
+    },
+    {
+      "assetId": "roster-royal-salt-09",
+      "file": "roster-royal-salt-09.webp",
+      "width": 144,
+      "height": 183,
+      "source": "art/royal_salt.png#r2c2",
+      "bytes": 13508
+    },
+    {
+      "assetId": "roster-valley-rising-01",
+      "file": "roster-valley-rising-01.webp",
+      "width": 116,
+      "height": 196,
+      "source": "art/valley_rising.png#r0c0",
+      "bytes": 10838
+    },
+    {
+      "assetId": "roster-valley-rising-02",
+      "file": "roster-valley-rising-02.webp",
+      "width": 116,
+      "height": 192,
+      "source": "art/valley_rising.png#r0c1",
+      "bytes": 11096
+    },
+    {
+      "assetId": "roster-valley-rising-03",
+      "file": "roster-valley-rising-03.webp",
+      "width": 112,
+      "height": 192,
+      "source": "art/valley_rising.png#r0c2",
+      "bytes": 11388
+    },
+    {
+      "assetId": "roster-valley-rising-04",
+      "file": "roster-valley-rising-04.webp",
+      "width": 116,
+      "height": 192,
+      "source": "art/valley_rising.png#r1c0",
+      "bytes": 11898
+    },
+    {
+      "assetId": "roster-valley-rising-05",
+      "file": "roster-valley-rising-05.webp",
+      "width": 119,
+      "height": 188,
+      "source": "art/valley_rising.png#r1c1",
+      "bytes": 11062
+    },
+    {
+      "assetId": "roster-valley-rising-06",
+      "file": "roster-valley-rising-06.webp",
+      "width": 120,
+      "height": 191,
+      "source": "art/valley_rising.png#r1c2",
+      "bytes": 10584
+    },
+    {
+      "assetId": "roster-valley-rising-07",
+      "file": "roster-valley-rising-07.webp",
+      "width": 119,
+      "height": 190,
+      "source": "art/valley_rising.png#r2c0",
+      "bytes": 11966
+    },
+    {
+      "assetId": "roster-valley-rising-08",
+      "file": "roster-valley-rising-08.webp",
+      "width": 117,
+      "height": 192,
+      "source": "art/valley_rising.png#r2c1",
+      "bytes": 12210
+    },
+    {
+      "assetId": "roster-valley-rising-09",
+      "file": "roster-valley-rising-09.webp",
+      "width": 128,
+      "height": 185,
+      "source": "art/valley_rising.png#r2c2",
+      "bytes": 12406
+    },
+    {
+      "assetId": "roster-desert-tuzon-01",
+      "file": "roster-desert-tuzon-01.webp",
+      "width": 117,
+      "height": 168,
+      "source": "art/desert_tuzon.png#r0c0",
+      "bytes": 10250
+    },
+    {
+      "assetId": "roster-desert-tuzon-02",
+      "file": "roster-desert-tuzon-02.webp",
+      "width": 116,
+      "height": 164,
+      "source": "art/desert_tuzon.png#r0c1",
+      "bytes": 10746
+    },
+    {
+      "assetId": "roster-desert-tuzon-03",
+      "file": "roster-desert-tuzon-03.webp",
+      "width": 116,
+      "height": 167,
+      "source": "art/desert_tuzon.png#r0c2",
+      "bytes": 11078
+    },
+    {
+      "assetId": "roster-desert-tuzon-04",
+      "file": "roster-desert-tuzon-04.webp",
+      "width": 119,
+      "height": 164,
+      "source": "art/desert_tuzon.png#r1c0",
+      "bytes": 10344
+    },
+    {
+      "assetId": "roster-desert-tuzon-05",
+      "file": "roster-desert-tuzon-05.webp",
+      "width": 116,
+      "height": 165,
+      "source": "art/desert_tuzon.png#r1c1",
+      "bytes": 12228
+    },
+    {
+      "assetId": "roster-desert-tuzon-06",
+      "file": "roster-desert-tuzon-06.webp",
+      "width": 118,
+      "height": 166,
+      "source": "art/desert_tuzon.png#r1c2",
+      "bytes": 10476
+    },
+    {
+      "assetId": "roster-desert-tuzon-07",
+      "file": "roster-desert-tuzon-07.webp",
+      "width": 121,
+      "height": 166,
+      "source": "art/desert_tuzon.png#r2c0",
+      "bytes": 11038
+    },
+    {
+      "assetId": "roster-desert-tuzon-08",
+      "file": "roster-desert-tuzon-08.webp",
+      "width": 120,
+      "height": 168,
+      "source": "art/desert_tuzon.png#r2c1",
+      "bytes": 10592
+    },
+    {
+      "assetId": "roster-desert-tuzon-09",
+      "file": "roster-desert-tuzon-09.webp",
+      "width": 128,
+      "height": 169,
+      "source": "art/desert_tuzon.png#r2c2",
+      "bytes": 11250
+    },
+    {
+      "assetId": "roster-sol-vista-01",
+      "file": "roster-sol-vista-01.webp",
+      "width": 114,
+      "height": 168,
+      "source": "art/sol_vista.png#r0c0",
+      "bytes": 10206
+    },
+    {
+      "assetId": "roster-sol-vista-02",
+      "file": "roster-sol-vista-02.webp",
+      "width": 116,
+      "height": 162,
+      "source": "art/sol_vista.png#r0c1",
+      "bytes": 10086
+    },
+    {
+      "assetId": "roster-sol-vista-03",
+      "file": "roster-sol-vista-03.webp",
+      "width": 120,
+      "height": 164,
+      "source": "art/sol_vista.png#r0c2",
+      "bytes": 10976
+    },
+    {
+      "assetId": "roster-sol-vista-04",
+      "file": "roster-sol-vista-04.webp",
+      "width": 122,
+      "height": 170,
+      "source": "art/sol_vista.png#r1c0",
+      "bytes": 11520
+    },
+    {
+      "assetId": "roster-sol-vista-05",
+      "file": "roster-sol-vista-05.webp",
+      "width": 122,
+      "height": 164,
+      "source": "art/sol_vista.png#r1c1",
+      "bytes": 10934
+    },
+    {
+      "assetId": "roster-sol-vista-06",
+      "file": "roster-sol-vista-06.webp",
+      "width": 122,
+      "height": 174,
+      "source": "art/sol_vista.png#r1c2",
+      "bytes": 10790
+    },
+    {
+      "assetId": "roster-sol-vista-07",
+      "file": "roster-sol-vista-07.webp",
+      "width": 126,
+      "height": 166,
+      "source": "art/sol_vista.png#r2c0",
+      "bytes": 11230
+    },
+    {
+      "assetId": "roster-sol-vista-08",
+      "file": "roster-sol-vista-08.webp",
+      "width": 126,
+      "height": 166,
+      "source": "art/sol_vista.png#r2c1",
+      "bytes": 10834
+    },
+    {
+      "assetId": "roster-sol-vista-09",
+      "file": "roster-sol-vista-09.webp",
+      "width": 145,
+      "height": 168,
+      "source": "art/sol_vista.png#r2c2",
+      "bytes": 11886
+    },
+    {
+      "assetId": "roster-next-horizon-01",
+      "file": "roster-next-horizon-01.webp",
+      "width": 114,
+      "height": 170,
+      "source": "art/next_horizon.png#r0c0",
+      "bytes": 10460
+    },
+    {
+      "assetId": "roster-next-horizon-02",
+      "file": "roster-next-horizon-02.webp",
+      "width": 113,
+      "height": 172,
+      "source": "art/next_horizon.png#r0c1",
+      "bytes": 11958
+    },
+    {
+      "assetId": "roster-next-horizon-03",
+      "file": "roster-next-horizon-03.webp",
+      "width": 112,
+      "height": 170,
+      "source": "art/next_horizon.png#r0c2",
+      "bytes": 10908
+    },
+    {
+      "assetId": "roster-next-horizon-04",
+      "file": "roster-next-horizon-04.webp",
+      "width": 116,
+      "height": 172,
+      "source": "art/next_horizon.png#r1c0",
+      "bytes": 12036
+    },
+    {
+      "assetId": "roster-next-horizon-05",
+      "file": "roster-next-horizon-05.webp",
+      "width": 112,
+      "height": 170,
+      "source": "art/next_horizon.png#r1c1",
+      "bytes": 11404
+    },
+    {
+      "assetId": "roster-next-horizon-06",
+      "file": "roster-next-horizon-06.webp",
+      "width": 116,
+      "height": 176,
+      "source": "art/next_horizon.png#r1c2",
+      "bytes": 13318
+    },
+    {
+      "assetId": "roster-next-horizon-07",
+      "file": "roster-next-horizon-07.webp",
+      "width": 118,
+      "height": 174,
+      "source": "art/next_horizon.png#r2c0",
+      "bytes": 11664
+    },
+    {
+      "assetId": "roster-next-horizon-08",
+      "file": "roster-next-horizon-08.webp",
+      "width": 116,
+      "height": 172,
+      "source": "art/next_horizon.png#r2c1",
+      "bytes": 11632
+    },
+    {
+      "assetId": "roster-next-horizon-09",
+      "file": "roster-next-horizon-09.webp",
+      "width": 136,
+      "height": 174,
+      "source": "art/next_horizon.png#r2c2",
+      "bytes": 12902
+    },
+    {
+      "assetId": "roster-visitor-1-01",
+      "file": "roster-visitor-1-01.webp",
+      "width": 100,
+      "height": 224,
+      "source": "art/visitor_1.png#r0c0",
+      "bytes": 11702
+    },
+    {
+      "assetId": "roster-visitor-1-02",
+      "file": "roster-visitor-1-02.webp",
+      "width": 99,
+      "height": 222,
+      "source": "art/visitor_1.png#r0c1",
+      "bytes": 11810
+    },
+    {
+      "assetId": "roster-visitor-1-03",
+      "file": "roster-visitor-1-03.webp",
+      "width": 100,
+      "height": 226,
+      "source": "art/visitor_1.png#r0c2",
+      "bytes": 12878
+    },
+    {
+      "assetId": "roster-visitor-1-04",
+      "file": "roster-visitor-1-04.webp",
+      "width": 100,
+      "height": 209,
+      "source": "art/visitor_1.png#r1c0",
+      "bytes": 12054
+    },
+    {
+      "assetId": "roster-visitor-1-05",
+      "file": "roster-visitor-1-05.webp",
+      "width": 100,
+      "height": 210,
+      "source": "art/visitor_1.png#r1c1",
+      "bytes": 11870
+    },
+    {
+      "assetId": "roster-visitor-1-06",
+      "file": "roster-visitor-1-06.webp",
+      "width": 100,
+      "height": 210,
+      "source": "art/visitor_1.png#r1c2",
+      "bytes": 11314
+    },
+    {
+      "assetId": "roster-visitor-1-07",
+      "file": "roster-visitor-1-07.webp",
+      "width": 100,
+      "height": 190,
+      "source": "art/visitor_1.png#r2c0",
+      "bytes": 10826
+    },
+    {
+      "assetId": "roster-visitor-1-08",
+      "file": "roster-visitor-1-08.webp",
+      "width": 98,
+      "height": 194,
+      "source": "art/visitor_1.png#r2c1",
+      "bytes": 11516
+    },
+    {
+      "assetId": "roster-visitor-1-09",
+      "file": "roster-visitor-1-09.webp",
+      "width": 108,
+      "height": 187,
+      "source": "art/visitor_1.png#r2c2",
+      "bytes": 10888
+    },
+    {
+      "assetId": "roster-visitor-2-01",
+      "file": "roster-visitor-2-01.webp",
+      "width": 92,
+      "height": 208,
+      "source": "art/visitor_2.png#r0c0",
+      "bytes": 11096
+    },
+    {
+      "assetId": "roster-visitor-2-02",
+      "file": "roster-visitor-2-02.webp",
+      "width": 94,
+      "height": 200,
+      "source": "art/visitor_2.png#r0c1",
+      "bytes": 11152
+    },
+    {
+      "assetId": "roster-visitor-2-03",
+      "file": "roster-visitor-2-03.webp",
+      "width": 92,
+      "height": 210,
+      "source": "art/visitor_2.png#r0c2",
+      "bytes": 11428
+    },
+    {
+      "assetId": "roster-visitor-2-04",
+      "file": "roster-visitor-2-04.webp",
+      "width": 96,
+      "height": 202,
+      "source": "art/visitor_2.png#r1c0",
+      "bytes": 11992
+    },
+    {
+      "assetId": "roster-visitor-2-05",
+      "file": "roster-visitor-2-05.webp",
+      "width": 94,
+      "height": 196,
+      "source": "art/visitor_2.png#r1c1",
+      "bytes": 11364
+    },
+    {
+      "assetId": "roster-visitor-2-06",
+      "file": "roster-visitor-2-06.webp",
+      "width": 95,
+      "height": 202,
+      "source": "art/visitor_2.png#r1c2",
+      "bytes": 10888
+    },
+    {
+      "assetId": "roster-visitor-2-07",
+      "file": "roster-visitor-2-07.webp",
+      "width": 96,
+      "height": 196,
+      "source": "art/visitor_2.png#r2c0",
+      "bytes": 11604
+    },
+    {
+      "assetId": "roster-visitor-2-08",
+      "file": "roster-visitor-2-08.webp",
+      "width": 95,
+      "height": 194,
+      "source": "art/visitor_2.png#r2c1",
+      "bytes": 11660
+    },
+    {
+      "assetId": "roster-visitor-2-09",
+      "file": "roster-visitor-2-09.webp",
+      "width": 102,
+      "height": 193,
+      "source": "art/visitor_2.png#r2c2",
+      "bytes": 10638
+    },
+    {
+      "assetId": "roster-visitor-3-01",
+      "file": "roster-visitor-3-01.webp",
+      "width": 119,
+      "height": 266,
+      "source": "art/visitor_3.png#r0c0",
+      "bytes": 15254
+    },
+    {
+      "assetId": "roster-visitor-3-02",
+      "file": "roster-visitor-3-02.webp",
+      "width": 118,
+      "height": 258,
+      "source": "art/visitor_3.png#r0c1",
+      "bytes": 15148
+    },
+    {
+      "assetId": "roster-visitor-3-03",
+      "file": "roster-visitor-3-03.webp",
+      "width": 118,
+      "height": 264,
+      "source": "art/visitor_3.png#r0c2",
+      "bytes": 15044
+    },
+    {
+      "assetId": "roster-visitor-3-04",
+      "file": "roster-visitor-3-04.webp",
+      "width": 120,
+      "height": 258,
+      "source": "art/visitor_3.png#r1c0",
+      "bytes": 16674
+    },
+    {
+      "assetId": "roster-visitor-3-05",
+      "file": "roster-visitor-3-05.webp",
+      "width": 118,
+      "height": 258,
+      "source": "art/visitor_3.png#r1c1",
+      "bytes": 15646
+    },
+    {
+      "assetId": "roster-visitor-3-06",
+      "file": "roster-visitor-3-06.webp",
+      "width": 119,
+      "height": 258,
+      "source": "art/visitor_3.png#r1c2",
+      "bytes": 14648
+    },
+    {
+      "assetId": "roster-visitor-3-07",
+      "file": "roster-visitor-3-07.webp",
+      "width": 120,
+      "height": 246,
+      "source": "art/visitor_3.png#r2c0",
+      "bytes": 15974
+    },
+    {
+      "assetId": "roster-visitor-3-08",
+      "file": "roster-visitor-3-08.webp",
+      "width": 119,
+      "height": 250,
+      "source": "art/visitor_3.png#r2c1",
+      "bytes": 16060
+    },
+    {
+      "assetId": "roster-visitor-3-09",
+      "file": "roster-visitor-3-09.webp",
+      "width": 123,
+      "height": 242,
+      "source": "art/visitor_3.png#r2c2",
+      "bytes": 14864
+    },
+    {
+      "assetId": "roster-visitor-4-01",
+      "file": "roster-visitor-4-01.webp",
+      "width": 102,
+      "height": 228,
+      "source": "art/visitor_4.png#r0c0",
+      "bytes": 12116
+    },
+    {
+      "assetId": "roster-visitor-4-02",
+      "file": "roster-visitor-4-02.webp",
+      "width": 102,
+      "height": 224,
+      "source": "art/visitor_4.png#r0c1",
+      "bytes": 12102
+    },
+    {
+      "assetId": "roster-visitor-4-03",
+      "file": "roster-visitor-4-03.webp",
+      "width": 103,
+      "height": 228,
+      "source": "art/visitor_4.png#r0c2",
+      "bytes": 12300
+    },
+    {
+      "assetId": "roster-visitor-4-04",
+      "file": "roster-visitor-4-04.webp",
+      "width": 99,
+      "height": 216,
+      "source": "art/visitor_4.png#r1c0",
+      "bytes": 12458
+    },
+    {
+      "assetId": "roster-visitor-4-05",
+      "file": "roster-visitor-4-05.webp",
+      "width": 102,
+      "height": 214,
+      "source": "art/visitor_4.png#r1c1",
+      "bytes": 11874
+    },
+    {
+      "assetId": "roster-visitor-4-06",
+      "file": "roster-visitor-4-06.webp",
+      "width": 100,
+      "height": 216,
+      "source": "art/visitor_4.png#r1c2",
+      "bytes": 11366
+    },
+    {
+      "assetId": "roster-visitor-4-07",
+      "file": "roster-visitor-4-07.webp",
+      "width": 96,
+      "height": 188,
+      "source": "art/visitor_4.png#r2c0",
+      "bytes": 10988
+    },
+    {
+      "assetId": "roster-visitor-4-08",
+      "file": "roster-visitor-4-08.webp",
+      "width": 96,
+      "height": 188,
+      "source": "art/visitor_4.png#r2c1",
+      "bytes": 11056
+    },
+    {
+      "assetId": "roster-visitor-4-09",
+      "file": "roster-visitor-4-09.webp",
+      "width": 103,
+      "height": 186,
+      "source": "art/visitor_4.png#r2c2",
+      "bytes": 10864
+    }
+  ]
+}
