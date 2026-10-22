@@ -75,6 +75,8 @@ export interface DrillState {
   outcome: DrillOutcome | null;
   /** Who the first defender presses during the release: the holder or an outlet (seeded per attempt). */
   pressSlot: string | null;
+  /** Seconds since the ball last changed owner (a fresh receiver is protected briefly). */
+  holdT: number;
   /** Seconds of NPC movement left before play freezes for the decision. */
   releaseLeft: number;
   /** Possession team when the decision was made, for outcome classification. */
@@ -106,7 +108,7 @@ export function createDrill(def: ScenarioDefinition, seed: number, variation = 0
   const nearOutlet = press ? outlets.sort((a, b) => distance(a.pos, press.pos) - distance(b.pos, press.pos))[0] : undefined;
   const pressSlot = nearOutlet && (owner.side.startsWith('GK') || rng() < 0.5) ? nearOutlet.slot : owner.slot;
   return {
-    def, L, W, actors, targets, pressSlot, releaseLeft: 1.4 + rng() * 0.8,
+    def, L, W, actors, targets, pressSlot, holdT: 0, releaseLeft: 1.4 + rng() * 0.8,
     ball: { pos: v(owner.pos.x, owner.pos.y), vel: v(0, 0), owner: owner.slot, lastTeam: teamOf(owner.side), target: null },
     phase: 'release', t: 0, execT: 0, chosen: null, outcome: null, startTeam: teamOf(owner.side),
   };
@@ -333,6 +335,8 @@ export function choose(s: DrillState, optionId: string): boolean {
   s.startTeam = s.ball.owner ? teamOf(actor(s, s.ball.owner)!.side) : null;
   const me = human(s);
   if (o.kind === 'pass' || o.kind === 'shoot') kick(s, me, o.point, o.kind === 'shoot' ? DRILL.shotSpeed : DRILL.passSpeed, o.toSlot ?? null);
+  // After passing, the player follows the pass a few metres to stay available (keepers hold their line).
+  if (o.kind === 'pass' && !me.side.startsWith('GK')) me.goal = { x: clamp(me.pos.x + forward(teamOf(me.side)) * 3, 1, s.L - 1), y: me.pos.y };
   else me.goal = { x: o.point.x, y: o.point.y };
   return true;
 }
@@ -368,7 +372,19 @@ function npcGoal(s: DrillState, a: DrillActor): Vec2 {
     const dd = Math.hypot(dx, dy) || 1;
     return { x: gx + (dx / dd) * Math.min(2, dd), y: gy + (dy / dd) * Math.min(2, dd) };
   }
-  if (holder === a) return { x: clamp(a.pos.x + f * 2, 1, s.L - 1), y: a.pos.y };
+  if (holder === a) {
+    // Carry toward the nearest target this team scores in.
+    const goals = ownTargets(s, team);
+    const g = goals.length ? goals.reduce((p, q) => (Math.hypot(q.cx - a.pos.x, q.cy - a.pos.y) < Math.hypot(p.cx - a.pos.x, p.cy - a.pos.y) ? q : p)) : null;
+    const presser = opponents(s, team).filter((o) => !o.side.startsWith('GK')).sort((p, q) => distance(p.pos, a.pos) - distance(q.pos, a.pos))[0];
+    const aim = g ? { x: g.cx, y: g.cy } : { x: a.pos.x + f * 2, y: a.pos.y };
+    // Dribble away from a close presser rather than into it.
+    if (presser && distance(presser.pos, a.pos) < 2.5) {
+      const away = { x: a.pos.x - presser.pos.x, y: a.pos.y - presser.pos.y };
+      return { x: clamp(a.pos.x + away.x * 1.5 + f, 1, s.L - 1), y: clamp(a.pos.y + away.y * 1.5, 1, s.W - 1) };
+    }
+    return { x: clamp(aim.x, 1, s.L - 1), y: clamp(aim.y, 1, s.W - 1) };
+  }
   const attacking = holderTeam === team || (team === 'N' && holderTeam !== null);
   if (attacking || (!holder && s.ball.lastTeam === team)) {
     if (s.ball.target === a.slot) return { x: ball.x, y: ball.y };
@@ -418,15 +434,18 @@ export function step(s: DrillState, dt = DRILL.dt): void {
       else if (a.goal) moveToward(a, a.goal, DRILL.runSpeed, dt);
       continue;
     }
-    moveToward(a, npcGoal(s, a), a.side.startsWith('GK') ? 4 : DRILL.npcSpeed, dt);
+    const carrying = s.ball.owner === a.slot;
+    moveToward(a, npcGoal(s, a), a.side.startsWith('GK') ? 4 : carrying ? DRILL.npcSpeed * 0.75 : DRILL.npcSpeed, dt);
   }
   const b = s.ball;
+  s.holdT += dt;
+  npcRelease(s);
   const holder = actor(s, b.owner);
   if (holder) {
     b.pos = { x: holder.pos.x + (holder.vel.x ? Math.sign(holder.vel.x) * 0.4 : 0), y: holder.pos.y };
     // A defender at the ball's feet wins it physically.
-    const tackler = s.actors.find((o) => teamOf(o.side) !== teamOf(holder.side) && teamOf(o.side) !== 'N' && distance(o.pos, b.pos) < 0.75);
-    if (tackler) { b.owner = tackler.slot; b.lastTeam = teamOf(tackler.side); }
+    const tackler = s.holdT > 0.35 ? s.actors.find((o) => teamOf(o.side) !== teamOf(holder.side) && teamOf(o.side) !== 'N' && distance(o.pos, b.pos) < 0.75) : undefined;
+    if (tackler) { b.owner = tackler.slot; b.lastTeam = teamOf(tackler.side); s.holdT = 0; }
   } else {
     b.pos = { x: b.pos.x + b.vel.x * dt, y: b.pos.y + b.vel.y * dt };
     const sp = Math.hypot(b.vel.x, b.vel.y);
@@ -438,14 +457,13 @@ export function step(s: DrillState, dt = DRILL.dt): void {
     // Control: the nearest player within reach takes a slow enough ball.
     const near = s.actors.filter((a) => distance(a.pos, b.pos) < DRILL.reach && (nsp < 9 || a.side.startsWith('GK')))
       .sort((x, y) => distance(x.pos, b.pos) - distance(y.pos, b.pos))[0];
-    if (near && !(near.human && s.execT < 0.15)) { b.owner = near.slot; b.vel = { x: 0, y: 0 }; b.lastTeam = teamOf(near.side); b.target = null; }
+    if (near && !(near.human && s.execT < 0.15)) { s.holdT = 0; b.owner = near.slot; b.vel = { x: 0, y: 0 }; b.lastTeam = teamOf(near.side); b.target = null; }
   }
   if (b.owner) {
     const t = teamOf(actor(s, b.owner)!.side);
     const mine = teamOf(me.side);
     if (s.startTeam !== null && t !== s.startTeam && t !== 'N') return finish(s, t === mine ? 'regained' : 'lost');
     if (b.owner === me.slot && s.chosen?.kind === 'carry' && me.goal && distance(me.pos, me.goal) < 0.3) return finish(s, 'kept');
-    if (s.chosen?.kind === 'pass' && b.owner === s.chosen.toSlot) return finish(s, 'kept');
   }
   if (s.execT >= DRILL.executeSeconds) finish(s, b.owner && teamOf(actor(s, b.owner)!.side) === teamOf(me.side) ? 'kept' : 'held');
 }
@@ -468,4 +486,23 @@ function finish(s: DrillState, kind: DrillOutcome['kind']): void {
 /** Run the release to the decision moment (used when the player skips the watch). */
 export function settle(s: DrillState): void {
   while (s.phase === 'release') step(s);
+}
+
+/** An NPC on the ball that is being closed down passes to the most open teammate it can reach, or shoots when close. */
+function npcRelease(s: DrillState): void {
+  const a = actor(s, s.ball.owner);
+  if (!a || a.human || s.holdT < 0.5) return;
+  const team = teamOf(a.side);
+  const goal = ownTargets(s, team).find((t) => t.type !== 'end-zone' && Math.hypot(t.cx - a.pos.x, t.cy - a.pos.y) < 7);
+  if (goal) return kick(s, a, { x: goal.cx, y: goal.cy }, DRILL.shotSpeed, null);
+  if (pressureOn(s, a.pos, team) > 3.5 && !a.side.startsWith('GK')) return;
+  let best: DrillActor | null = null;
+  let score = 0.3;
+  for (const m of mates(s, a)) {
+    const lane = laneClearance(s, a.pos, m.pos, team);
+    if (lane <= 0) continue;
+    const v = lane + pressureOn(s, m.pos, team) * 0.3;
+    if (v > score) { score = v; best = m; }
+  }
+  if (best) kick(s, a, best.pos, DRILL.passSpeed, best.slot);
 }
