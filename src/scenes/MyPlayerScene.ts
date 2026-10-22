@@ -277,6 +277,6 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
   }
 
   describeGameplay(): unknown {
-    return { status: this.status, view: this.view, page: this.page, pages: this.pages(), rows: this.rows.map((t) => t.text), values: this.values.map((t) => t.text), week: this.weekTexts.map((t) => t.text), header: this.header?.text, gender: this.save?.player?.gender ?? null, portrait: this.portrait !== null };
+    return { taps: this.card?.trace ?? [], status: this.status, view: this.view, page: this.page, pages: this.pages(), rows: this.rows.map((t) => t.text), values: this.values.map((t) => t.text), week: this.weekTexts.map((t) => t.text), header: this.header?.text, gender: this.save?.player?.gender ?? null, portrait: this.portrait !== null };
   }
 }

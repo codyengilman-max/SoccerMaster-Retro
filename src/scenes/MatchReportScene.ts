@@ -12,7 +12,7 @@ import { orientationOf } from '../render/layout';
 import { FONT_FAMILY, textResolution } from '../render/theme';
 import type { InspectableScene, SceneLayoutReport } from './inspectable';
 import { SceneKeys } from './keys';
-import { ArtCard } from './ui/artCard';
+import { ArtCard, wrapFloor } from './ui/artCard';
 
 const images = import.meta.glob('../assets/art/devreport/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 export const devreportUrl = (name: string): string | undefined => Object.entries(images).find(([p]) => p.endsWith(`/${name}.webp`))?.[1];
@@ -236,7 +236,8 @@ export class MatchReportScene extends Phaser.Scene implements InspectableScene {
     if (f) {
       const r = this.card.rect({ x0: 0.06, y0: 0.26, x1: 0.94, y1: 0.83 });
       f.bg.clear().fillStyle(0xfbf3df, 0.98).fillRoundedRect(r.x, r.y, r.width, r.height, 10).lineStyle(3, 0x14394f, 1).strokeRoundedRect(r.x, r.y, r.width, r.height, 10);
-      f.text.setFontSize(Math.max(11, Math.round(r.width / 26))).setWordWrapWidth(r.width - 24, true);
+      f.text.setFontSize(Math.max(11, Math.round(r.width / 26)));
+      f.text.setWordWrapWidth(Math.max(wrapFloor(f.text), r.width - 24), true);
       const min = Math.min(0, r.height - 24 - f.text.height);
       f.offset = Math.max(min, Math.min(0, f.offset));
       f.text.setPosition(r.x + 12, r.y + 12 + f.offset);
@@ -272,6 +273,6 @@ export class MatchReportScene extends Phaser.Scene implements InspectableScene {
   }
 
   describeGameplay(): unknown {
-    return { status: this.status, matchId: this.matchId, next: this.next, report: this.report, fullOpen: this.full !== null };
+    return { taps: this.card?.trace ?? [], status: this.status, matchId: this.matchId, next: this.next, report: this.report, fullOpen: this.full !== null };
   }
 }

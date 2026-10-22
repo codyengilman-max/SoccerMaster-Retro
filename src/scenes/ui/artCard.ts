@@ -6,6 +6,12 @@ interface Label { readonly text: Phaser.GameObjects.Text; box: NBox; readonly si
 interface Hit { readonly name: string; box: NBox; readonly onTap: () => void; enabled: boolean }
 
 /** A tap must start and end on the same hit area and move less than this (so scrolling never presses). */
+/** Phaser's advanced wrap throws below one character, so never wrap narrower than ~3 glyphs. */
+export function wrapFloor(t: Phaser.GameObjects.Text): number {
+  const px = Number.parseFloat(String(t.style.fontSize)) || 16;
+  return Math.ceil(px * 3);
+}
+
 const TAP_SLOP = 12;
 
 /**
@@ -20,6 +26,8 @@ export class ArtCard {
   readonly hits: Hit[] = [];
   private down: { x: number; y: number; hit: Hit | null } | null = null;
   private readonly onLayout: (() => void)[] = [];
+  /** Last pointer decisions, for diagnostics. */
+  readonly trace: string[] = [];
 
   constructor(private readonly scene: Phaser.Scene, key: string, url: string | undefined) {
     scene.add.rectangle(0, 0, 4000, 4000, 0x10141c).setOrigin(0, 0).setDepth(-2);
@@ -36,13 +44,20 @@ export class ArtCard {
     }
     scene.input.on(Phaser.Input.Events.POINTER_DOWN, (p: Phaser.Input.Pointer) => {
       this.down = { x: p.x, y: p.y, hit: this.hitAt(p.x, p.y) };
+      this.note(`down ${Math.round(p.x)},${Math.round(p.y)} ${this.down.hit?.name ?? '-'}`);
     });
     scene.input.on(Phaser.Input.Events.POINTER_UP, (p: Phaser.Input.Pointer) => {
       const d = this.down;
       this.down = null;
+      this.note(`up ${Math.round(p.x)},${Math.round(p.y)} ${this.hitAt(p.x, p.y)?.name ?? '-'} from ${d?.hit?.name ?? 'none'}`);
       if (!d?.hit || Math.hypot(p.x - d.x, p.y - d.y) > TAP_SLOP) return;
       if (this.hitAt(p.x, p.y) === d.hit && d.hit.enabled) d.hit.onTap();
     });
+  }
+
+  private note(s: string): void {
+    this.trace.push(s);
+    if (this.trace.length > 8) this.trace.shift();
   }
 
   /** Safe area inside the canvas (the canvas already sits inside the iPhone safe area via the page CSS). */
@@ -96,7 +111,7 @@ export class ArtCard {
   private place(l: Label): void {
     const r = this.rect(l.box);
     let px = Math.max(8, Math.floor(r.height * l.size));
-    l.text.setWordWrapWidth(Math.max(10, r.width - 8), true);
+    l.text.setWordWrapWidth(Math.max(wrapFloor(l.text), r.width - 8), true);
     l.text.setFontSize(px);
     while (px > 8 && (l.text.width > r.width - 4 || l.text.height > r.height)) l.text.setFontSize(--px);
     const ox = l.align === 'left' ? 0 : l.align === 'right' ? 1 : 0.5;

@@ -657,6 +657,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       teamTraining: this.team
         ? { phase: this.team.phase, week: this.team.week, protagonist: this.team.look ? { id: this.sim.state.controlledId, set: this.looks[this.sim.state.controlledId]?.set ?? null } : null, index: this.team.index, ids: this.team.situations.map((x) => x.id), scores: this.team.results.map((r) => r.score), message: this.team.message, hud: this.scoreText.text, half: this.team.half, zoom: TEAM_TRAINING_ZOOM, viewLen: this.viewLen, viewCross: this.viewCross }
         : null,
+      report: { id: this.reportMatchId, saving: this.reportSaving !== null, ledger: this.ledger !== null, meta: this.reportMeta !== null, store: this.careerStore !== null },
       career: this.collector ? { slot: this.collector.careerId, pending: this.careerItems.length, batches: this.careerBatch, recorded: this.careerRecorded, missed: this.collector.missed } : null,
     };
   }
@@ -1344,7 +1345,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.eventArt = null;
     this.art?.destroy();
     const store = this.careerStore;
-    void this.flushCareer(true).finally(() => store?.close());
+    const saving = this.reportSaving ?? Promise.resolve();
+    void Promise.all([this.flushCareer(true), saving]).finally(() => store?.close());
     this.careerStore = null;
     this.collector = null;
     this.cancelInput('navigation');
@@ -1436,8 +1438,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         case 'fulltime':
           this.cancelInput('full-time');
           if (this.collector) void this.flushCareer(false);
-          void this.recordResult();
+          // The report takes the fixture key before recordResult() consumes it.
           this.saveReport();
+          void this.recordResult();
           break;
         case 'secondHalf':
           this.toast('Second half — away kick off');
