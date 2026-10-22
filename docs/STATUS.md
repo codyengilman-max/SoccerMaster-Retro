@@ -11,6 +11,9 @@
 - PR #33 review fixes: legacy Team Training refuses to grade a week once a v1.2 session has counted (the v1.2 sessions grade it); S1 finishes count only from the last 5 m (`shotOriginWithinEndMeters`), and long shots are not offered; a neutral on the ball plays for the side that passed to it and releases the ball like a wall; a passer can't re-trap its own pass in the first 1.5 m; portrait choices switch to two columns (then shorter buttons) before they cover the title and prompt.
 - Not tested on a physical iPhone.
 
+## Jungle Ball: bigger, bouncier ball (owner, 2026-10-23, PR #33)
+- `JUNGLE.ballRadius` 0.2 → 0.3 yd (drawn to the same ratio, 1.5x), `bounce` 0.45 → 0.68 with `bounceMinSpeed` 0.6 yd/s, `wallRestitution` 0.7 → 0.85. Rules, controls, scoring and saves unchanged. Test: dropped from 2 yd it rebounds above 0.85 yd and bounces at least 5 times (fails on the old constants).
+
 ## Jungle Ball v3 arcade upgrade (owner brief 2026-10-22, branch `devin/1792638887-jungle-arcade-v3`, stacked on PR #30, not merged, not deployed)
 
 - HIT / SLIDE / staged knockdowns / charged shots / ball height with posts, bar and net / keeper dives, catches, parries and throws / goal celebration / pause with Leave confirmation; see D43.
