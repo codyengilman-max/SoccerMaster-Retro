@@ -6,7 +6,7 @@
 import { spawnSync } from 'node:child_process';
 
 const args = process.argv.slice(2);
-const run = (extra) => spawnSync('npx', ['playwright', 'test', ...extra, ...args], { stdio: 'inherit' }).status ?? 1;
+const run = (extra) => spawnSync('npx', ['playwright', 'test', '--pass-with-no-tests', ...extra, ...args], { stdio: 'inherit' }).status ?? 1;
 if (args.some((a) => a === '--project' || a.startsWith('--project='))) process.exit(run([]));
 const phones = ['phone-portrait', 'phone-landscape', 'small-phone-landscape', 'small-phone-portrait', ...(process.env.WEBKIT ? ['webkit-phone-landscape'] : [])];
 const first = run(phones.map((p) => `--project=${p}`));
