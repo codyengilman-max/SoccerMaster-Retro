@@ -240,3 +240,10 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - New handoff `home_hub` completes with a code-set detail (`talk` or `trained`); the scene branches on `detail:S1_W05_H=talk`, so Cloudy is optional and cannot block the week. The training gate (`homeAssignments`) needs a logged `done` juggling entry and a first-touch entry in the current career week (scheduled or extra, easier variants count), never a story choice or a session count in another focus.
 - Ambition and park plan are `remember_choice` decisions only; they carry no attribute, attendance or reward effect (the compiler allows no other effect).
 - League results still require WIN/DRAW/LOSS on completion; declined or abandoned matches resolve with no result and skip the result-specific aftermath.
+
+## D47. Match Reports and the 35/30/30/5 weekly development settlement (owner spec, 2026-10-24)
+- One pipeline: sim events -> `MatchLedger` -> stats/rating -> `SavedReport` (saved once per `matchId`) -> `endWeek` settlement. See `docs/REPORTS.md`.
+- The six existing attributes are kept; requested attributes the game lacks, Energy and Form are shown as not tracked, never invented.
+- The owner spec makes Home skills a development source (35%). This supersedes the earlier rule that home practice cannot raise attributes; home logs are self-reported, so they carry 0.6 confidence.
+- `computeGrowth` (match/coach evidence thresholds) is unchanged; the settlement adds bounded fractional credits on top, inside the same weekly caps. Past weeks are never recalculated; old saves start with zero carry.
+- Decision quality is judged from receiver openness at the pass; positioning stays unavailable without off-ball telemetry.

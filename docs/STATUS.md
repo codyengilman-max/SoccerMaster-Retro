@@ -1,6 +1,11 @@
 # Status
 
 
+## Match Report + My Player (owner spec 2026-10-24, branch `devin/1792698553-player-dev-report`, stacked on PR #35, not merged, not deployed)
+- Match Report on the sunset art after every career match and from Match History; My Player on the bedroom art from the Week 5 home hub (and `?dev` Start).
+- Event ledger, stats with numerator/denominator, rating, saved immutable reports, 35/30/30/5 weekly settlement with fractional carry (`docs/REPORTS.md`).
+- Gaps: no Energy/Form, no keeper or DNP reports, recess not yet passed to the settlement, not tested on a real iPhone.
+
 ## V3 Week 5 "Put the Work In" (owner package SoccerMaster_V3_Week5, 2026-10-23, branch `devin/1792700000-v3-week5`, stacked on PR #34, not merged, not deployed)
 - Package copied unchanged to `docs/story/v3/` (its own validator passes there). Week 5 compiled into the existing Season One story format (`05_week05.story` → `season_one_scenes.json`); the story is released to week 5 (`SEASON_RELEASED_WEEKS = 5`), weeks 6–18 stay unwritten and unreachable. Weeks 1–4 and the prologue are byte-identical (hash-pinned in `tests/story-week5.test.ts`, with the week 5 source and the package's `WEEK_05_APPROVED.md`).
 - Route: science-sub talk → recess Crossbar or Jungle Ball (reaction from the real result) → required Team Training (no "Not this week" from week 5; feedback from the recorded grade: strong / struggled; the pass-weight line only on recorded pass evidence (`pass_weight`), which week 5's legacy situations do not produce yet) → ambition (saved as a decision, no reward) → home menu on the owner's background (`home-v3`): Training (required: a logged juggling task and control/first-touch work this career week, `homeAssignments`), Cloudy: Feed & Play (optional, opens Feeding Frenzy and returns), Cloudy: Talk (optional; the ambition is mentioned only if the player chooses to tell Cloudy), Continue Week (locked until the home sessions are done) → League Game 3 (aftermath from the real result; a completion without a result is rejected, never a loss) → park plan (practice / hang out / rest, saved only).

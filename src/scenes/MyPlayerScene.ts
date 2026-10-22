@@ -23,13 +23,17 @@ const INK = '#1b2a3a';
 const CREAM = '#f4ead2';
 const ROWS = 6;
 
-interface Row { readonly label: string; readonly value: number | null; readonly detail: string }
+interface Row { readonly label: string; readonly value: number | null; readonly carry: number | null; readonly detail: string }
 
 /** All attribute rows: the six the game tracks, then the requested ones it does not (never invented). */
 export function attributeRows(save: CareerSave): Row[] {
   const p = save.player;
-  const tracked: Row[] = ATTRIBUTES.map((a) => ({ label: ATTRIBUTE_LABELS[a], value: p ? p.attributes[a] : null, detail: `${ATTRIBUTE_LABELS[a]}: ${ATTRIBUTE_EVIDENCE[a]}` }));
-  return [...tracked, ...NOT_TRACKED.map((n) => ({ label: n, value: null, detail: `${n}: not tracked by this game yet. Nothing is counted or invented for it.` }))];
+  const tracked: Row[] = ATTRIBUTES.map((a) => {
+    const c = save.devCarry[a];
+    const toward = c > 0 ? ` Toward the next point: ${Math.round(c * 100)}% (applied at a weekly review).` : '';
+    return { label: ATTRIBUTE_LABELS[a], value: p ? p.attributes[a] : null, carry: p ? c : null, detail: `${ATTRIBUTE_LABELS[a]}: ${ATTRIBUTE_EVIDENCE[a]}${toward}` };
+  });
+  return [...tracked, ...NOT_TRACKED.map((n) => ({ label: n, value: null, carry: null, detail: `${n}: not tracked by this game yet. Nothing is counted or invented for it.` }))];
 }
 
 export const overall = (save: CareerSave): number | null => (save.player ? Math.round(ATTRIBUTES.reduce((a, k) => a + save.player!.attributes[k], 0) / ATTRIBUTES.length) : null);
@@ -185,7 +189,7 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
         value = `${it.score.home}-${it.score.away} >`;
       } else if (it) {
         label = it.label;
-        value = it.value === null ? '-' : `${it.value}`;
+        value = it.value === null ? '-' : it.carry ? `${it.value} +.${String(Math.round(it.carry * 100)).padStart(2, '0')}` : `${it.value}`;
       }
       if (i === 0 && !it && this.view === 'history') label = 'No matches yet';
       this.card.setText(this.rows[i]!, label);

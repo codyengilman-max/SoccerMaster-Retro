@@ -1,4 +1,5 @@
 import { REPORTS_KEPT, type SavedReport } from '../report/report';
+import { CARRY_MAX, zeroFractions, type Fractions, type WeekSettlement } from '../report/settlement';
 import { CAREER_CONFIG } from './config';
 import { FOCUSES, HOME_ACTIVITIES, activityById } from './catalog';
 import type { PlannedItem, PlannedSession, PlannerInput, WeekPlan } from './planner';
@@ -149,7 +150,31 @@ function review(v: unknown, week: number): WeekReview {
     missedEvents: int(o.missedEvents ?? 0, 'missedEvents', 0, 1e9),
     outcomes: arr(o.outcomes, 'outcomes', ATTRIBUTES.length).map(outcome),
     suggestedFocus: nullable(o.suggestedFocus, (x) => oneOf(x, 'focus', FOCUS_IDS)),
+    ...(o.settlement === undefined ? {} : { settlement: settlement(o.settlement) }),
   };
+}
+
+function fractions(v: unknown): Fractions {
+  const out = zeroFractions();
+  if (v === undefined) return out;
+  const o = obj(v, 'devCarry');
+  for (const a of ATTRIBUTES) {
+    const x = o[a] ?? 0;
+    if (typeof x !== 'number' || !Number.isFinite(x) || x < 0 || x > CARRY_MAX) throw new Invalid('development carry: out of range');
+    out[a] = x;
+  }
+  return out;
+}
+
+function settlement(v: unknown): WeekSettlement {
+  const o = obj(v, 'settlement');
+  int(o.version, 'settlement version', 1, 1000);
+  int(o.week, 'settlement week', 1, 1000);
+  arr(o.sources, 'settlement sources', 4);
+  const applied = obj(o.applied, 'settlement applied');
+  for (const a of ATTRIBUTES) int(applied[a] ?? 0, 'settlement applied', 0, 99);
+  fractions(o.carry);
+  return o as unknown as WeekSettlement;
 }
 
 function teamTraining(v: unknown, week: number): TeamTrainingRecord {
@@ -254,6 +279,7 @@ export function parseSave(raw: unknown): R<CareerSave> {
       cloudy: arr(o.cloudy ?? [], 'cloudy', DIFFICULTIES.length).map(cloudyBest),
       cloudyRuns: arr(o.cloudyRuns ?? [], 'cloudyRuns', CLOUDY_RUNS_KEPT).map((r) => str(r, 'cloudy run', 64)),
       reports: arr(o.reports ?? [], 'reports', REPORTS_KEPT).map(savedReport),
+      devCarry: fractions(o.devCarry),
     };
     if (new Set(save.reports.map((r) => r.matchId)).size !== save.reports.length) throw new Invalid('match report saved twice');
     if (new Set(save.teamTraining.map((t) => t.week)).size !== save.teamTraining.length) throw new Invalid('team training counted twice for a week');

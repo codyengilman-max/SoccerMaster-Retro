@@ -1,4 +1,5 @@
 import { REPORTS_KEPT, type SavedReport } from '../report/report';
+import { settleWeek, zeroFractions, type Fractions, type WeekSettlement } from '../report/settlement';
 import { DIFFICULTIES, type Difficulty } from '../cloudy/sim';
 import { CAREER_CONFIG } from './config';
 import { FOCUSES, activityById, focusById } from './catalog';
@@ -47,6 +48,8 @@ export interface WeekReview {
   readonly missedEvents: number;
   readonly outcomes: readonly AttributeOutcome[];
   readonly suggestedFocus: string | null;
+  /** The 35/30/30/5 weekly development settlement (weeks settled before it existed: absent). */
+  readonly settlement?: WeekSettlement;
 }
 
 /** One week's Team Training, counted once. */
@@ -84,6 +87,8 @@ export interface CareerSave {
   readonly cloudyRuns: readonly string[];
   /** Player Match Reports, newest last (older saves: empty). Built once at full time; never recalculated. */
   readonly reports: readonly SavedReport[];
+  /** Fractional development credits carried to next week (older saves: zero). */
+  readonly devCarry: Fractions;
 }
 
 export interface CloudyBest {
@@ -118,7 +123,7 @@ export type Action =
   | { readonly type: 'tt12Run'; readonly week: number; readonly slot: Tt12Slot; readonly runId: string; readonly score: number; readonly creditEligible: boolean }
   | { readonly type: 'cloudyResult'; readonly runId: string; readonly difficulty: Difficulty; readonly score: number; readonly stars: 1 | 2 | 3 }
   | { readonly type: 'matchReport'; readonly report: SavedReport }
-  | { readonly type: 'endWeek' };
+  | { readonly type: 'endWeek'; readonly recess?: { readonly played: boolean } | null };
 
 export type Outcome = { readonly ok: true; readonly save: CareerSave; readonly message: string; readonly changed: boolean } | { readonly ok: false; readonly error: string };
 
@@ -146,6 +151,7 @@ export function emptySave(): CareerSave {
     cloudy: [],
     cloudyRuns: [],
     reports: [],
+    devCarry: zeroFractions(),
   };
 }
 
@@ -323,7 +329,12 @@ export function reduce(save: CareerSave, action: Action): Outcome {
     case 'endWeek': {
       if (!save.player) return fail('No career player.');
       if (save.week >= L.weekMax) return fail('Last week reached.');
-      const outcomes = computeGrowth(save.player, save.evidence);
+      const evidenceOutcomes = computeGrowth(save.player, save.evidence);
+      const settlement = settleSave(save, evidenceOutcomes, action.recess ?? null);
+      const outcomes = evidenceOutcomes.map((o) => {
+        const p = settlement.applied[o.attribute];
+        return p > 0 ? { ...o, to: o.to + p, reason: `${o.reason} +${p} from weekly development.` } : o;
+      });
       const thisWeek = save.journal.filter((j) => j.week === save.week);
       const ratings = { learning: 0, improving: 0, comfortable: 0 };
       for (const j of thisWeek) if (j.rating) ratings[j.rating] += 1;
@@ -338,6 +349,7 @@ export function reduce(save: CareerSave, action: Action): Outcome {
         missedEvents: save.missedEvents,
         outcomes,
         suggestedFocus: suggestFocus(save, outcomes),
+        settlement,
       };
       let next: CareerSave = {
         ...save,
@@ -349,6 +361,7 @@ export function reduce(save: CareerSave, action: Action): Outcome {
         batches: [],
         missedEvents: 0,
         history: [...save.history, review].slice(-L.historyMax),
+        devCarry: settlement.carry,
       };
       if (save.focusId) {
         const r = replan(next, save.focusId);
@@ -357,6 +370,27 @@ export function reduce(save: CareerSave, action: Action): Outcome {
       return ok(next, `Week ${save.week} reviewed. Week ${save.week + 1} starts now.`);
     }
   }
+}
+
+/** This week's sources for the weekly settlement, read from the save only. */
+function settleSave(save: CareerSave, evidence: readonly AttributeOutcome[], recess: { readonly played: boolean } | null): WeekSettlement {
+  const w = save.week;
+  const runs = save.tt12.filter((r) => r.week === w && r.credited);
+  const tt = save.teamTraining.find((t) => t.week === w);
+  const teamScore = runs.length ? runs.reduce((a, r) => a + r.score, 0) / runs.length : tt && tt.scores.length ? tt.scores.reduce((a, b) => a + b, 0) / tt.scores.length : null;
+  const granted = zeroFractions();
+  for (const o of evidence) granted[o.attribute] = o.to - o.from;
+  return settleWeek({
+    week: w,
+    player: save.player!,
+    homeSessions: save.journal.filter((j) => j.week === w && j.credited && j.completion !== 'skipped').map((j) => j.activityId),
+    teamScore,
+    teamAttributes: tt ? tt.changes.map((c) => c.attribute) : [],
+    matches: save.reports.filter((r) => r.week === w),
+    recess,
+    carry: save.devCarry,
+    granted,
+  });
 }
 
 /** Grade one week of Team Training through the shared weekly economy (one record per week). */
