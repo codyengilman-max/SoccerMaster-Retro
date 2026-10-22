@@ -237,6 +237,6 @@ Approved technical choices. Add a new entry rather than silently changing an old
 
 ## D46. V3 content update applied to the existing story engine (owner package, 2026-10-23)
 - One story controller: V3 is authored in the existing `.story` source format and compiled by `scripts/story/build-season-one.py`; the paused v0.2 engine was never added and nothing from it runs. The package is kept unchanged in `docs/story/v3/` as the reference.
-- New handoff `home_hub` completes with a code-set detail (`talk` or `trained`); the scene branches on `detail:S1_W05_H=talk`, so Cloudy is optional and cannot block the week. The training gate reads the career save's credited home sessions for the current week (`CAREER_CONFIG.home.sessionsPerWeek`), never a story choice.
+- New handoff `home_hub` completes with a code-set detail (`talk` or `trained`); the scene branches on `detail:S1_W05_H=talk`, so Cloudy is optional and cannot block the week. The training gate (`homeAssignments`) needs a logged `done` juggling entry and a first-touch entry in the current career week (scheduled or extra, easier variants count), never a story choice or a session count in another focus.
 - Ambition and park plan are `remember_choice` decisions only; they carry no attribute, attendance or reward effect (the compiler allows no other effect).
 - League results still require WIN/DRAW/LOSS on completion; declined or abandoned matches resolve with no result and skip the result-specific aftermath.
