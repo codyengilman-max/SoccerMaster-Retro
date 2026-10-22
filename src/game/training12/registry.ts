@@ -4,7 +4,7 @@
  */
 import { scenarioDefinition } from './ref/seasons.mjs';
 import type { RoleId } from './ref/catalog.mjs';
-import type { ScenarioRecord } from './ref/seasons.mjs';
+import type { ScenarioDefinition, ScenarioRecord } from './ref/seasons.mjs';
 
 export const RULES_PROFILE = 'youth';
 
@@ -124,6 +124,12 @@ export const VERIFIED_KEYS: readonly string[] = [
 
 /** Registry records for planSession. The definition must still match the reference exactly, or the plan is refused. */
 export function verifiedRecord(sessionId: string, role: RoleId, level: number): ScenarioRecord | null {
-  const definition = scenarioDefinition(sessionId, role, level, RULES_PROFILE);
+  let definition: ScenarioDefinition;
+  try {
+    definition = scenarioDefinition(sessionId, role, level, RULES_PROFILE);
+  } catch {
+    // Unknown session, role or a level above the session cap: no route, never a crash.
+    return null;
+  }
   return VERIFIED_KEYS.includes(definition.key) ? { key: definition.key, verified: true, definition } : null;
 }

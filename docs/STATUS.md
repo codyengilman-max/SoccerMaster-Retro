@@ -1,5 +1,13 @@
 # Status
 
+
+## Team Training v1.2 (owner package 2026-10-22, branch `devin/1792646912-team-training-v12`, not merged, not deployed)
+- Package kept unchanged in `docs/training/v1.2/`; reference modules vendored with their 36 tests in `npm test`.
+- Playable: Career → Team Training → Session A/B/C (v1.2) for Season 1 weeks 1–4, every role offered to the career position. Fixed overhead half-field camera, coached Observe → Decide → Execute → Explain loop, 3 rounds (guided, unguided, timed), pause, two-tap leave, rotation-safe.
+- Weeks 5–18 and Season 2 are "not available yet". GK routes pass unit tests but have no career position.
+- Rewards: three credited sessions grade the week once through the existing economy (shared with the legacy situations).
+- Not tested on a physical iPhone.
+
 ## Jungle Ball v3 arcade upgrade (owner brief 2026-10-22, branch `devin/1792638887-jungle-arcade-v3`, stacked on PR #30, not merged, not deployed)
 
 - HIT / SLIDE / staged knockdowns / charged shots / ball height with posts, bar and net / keeper dives, catches, parries and throws / goal celebration / pause with Leave confirmation; see D43.

@@ -324,9 +324,13 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     this.body.setWordWrapWidth(P.width - 2 * pad);
     this.title.setWordWrapWidth(P.width - 2 * pad);
     this.body.setPosition(P.x + pad, P.y + pad + this.title.height + 4);
-    this.body.setFixedSize(0, 0);
+    // Keep the text above the buttons: drop trailing lines that would run under them.
     const maxH = top - this.body.y - 4;
-    this.body.setCrop(0, 0, P.width, Math.max(0, maxH));
+    const all = lines.join('\n').split('\n');
+    while (all.length > 1 && this.body.height > maxH) {
+      all.pop();
+      this.body.setText(all.join('\n'));
+    }
   }
 
   // ---- layout + drawing -------------------------------------------------------------------------
@@ -481,6 +485,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       slot: this.slot,
       role: this.role,
       look: this.lookName,
+      sprite: this.me.visible ? (this.look?.set ?? null) : null,
       status: s?.status ?? null,
       round: s?.run.round ?? null,
       phase: d?.phase ?? null,

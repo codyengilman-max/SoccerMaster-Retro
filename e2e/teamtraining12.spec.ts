@@ -7,7 +7,7 @@ const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mous
 type TT = {
   screen: string; sessionId: string; role: string; look: string | null; status: string | null; round: number | null; phase: string | null;
   options: { id: string; good: boolean; quality: number }[]; attempts: number; activeSeconds: number; rejected: number;
-  completion: { creditEligible: boolean; masteryGranted: boolean } | null; saved: string; pxPerMetre: number;
+  completion: { creditEligible: boolean; masteryGranted: boolean } | null; saved: string; pxPerMetre: number; sprite: string | null;
 };
 type Career = { screen: string; status: string; text: string };
 
@@ -41,6 +41,29 @@ async function press(page: Page, name: string, mode: 'touch' | 'mouse'): Promise
   return pressElement(page, name, mode);
 }
 
+async function saveGender(page: Page, gender: 'boy' | 'girl'): Promise<void> {
+  await page.evaluate(
+    (g) =>
+      new Promise<void>((resolve, reject) => {
+        const r = indexedDB.open('smr-career', 1);
+        r.onerror = () => reject(r.error);
+        r.onsuccess = () => {
+          const st = r.result.transaction('career', 'readwrite').objectStore('career');
+          const q = st.get('main');
+          q.onsuccess = () => {
+            const raw = q.result as unknown;
+            const v = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            v.player.gender = g;
+            const w = st.put(typeof raw === 'string' ? JSON.stringify(v) : v, 'main');
+            w.onsuccess = () => resolve();
+            w.onerror = () => reject(w.error);
+          };
+        };
+      }),
+    gender,
+  );
+}
+
 /** New career (girl, MID) through Career setup, then open the Team Training page. */
 async function toTeamPage(page: Page, mode: 'touch' | 'mouse'): Promise<void> {
   page.on('dialog', (d) => void d.accept('Robin'));
@@ -55,6 +78,7 @@ async function toTeamPage(page: Page, mode: 'touch' | 'mouse'): Promise<void> {
   await career(page, (c) => c.screen === 'home', 'home');
   await press(page, 'nav-team', mode);
   await career(page, (c) => c.screen === 'team', 'team screen');
+  await saveGender(page, 'girl');
 }
 
 test('team training v1.2: whole session on the overhead half, counted once, idle earns nothing', async ({ page }, info) => {
@@ -65,6 +89,7 @@ test('team training v1.2: whole session on the overhead half, counted once, idle
   await waitForScene(page, 'tactical');
   let t = await tt(page, (x) => x.screen === 'role', 'role choice');
   expect(t.sessionId).toBe('S1-W01-A');
+  expect(t.look).toBe('girl');
   await pressElement(page, 'role-8', mode);
   t = await tt(page, (x) => x.screen === 'brief', 'brief');
 
@@ -84,6 +109,7 @@ test('team training v1.2: whole session on the overhead half, counted once, idle
       if (t.phase === 'observe') {
         if (!t.options.length) continue;
         if (!shot) {
+          expect(t.sprite).toBe('girl-training');
           await page.screenshot({ path: info.outputPath(`tt12-decide-${info.project.name}.png`) });
           shot = true;
         }
