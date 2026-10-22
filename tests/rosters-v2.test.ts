@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { sideLooks } from '../src/render/art/roster';
-import { APPEARANCE_CLUBS, APPEARANCE_UNUSED, appearanceFrame, appearanceSet, layoutOf, type AppearanceSetId } from '../src/render/art/spriteSets';
+import { APPEARANCE_CLUBS, clubSet, APPEARANCE_UNUSED, appearanceFrame, appearanceSet, layoutOf, type AppearanceSetId } from '../src/render/art/spriteSets';
 
 const DIR = 'src/assets/art/rosters-v2';
 const atlas = (id: string): Record<string, unknown> => (JSON.parse(readFileSync(`${DIR}/${id}.json`, 'utf8')) as { frames: Record<string, unknown> }).frames;
@@ -40,6 +40,15 @@ describe('Animated Rosters v2', () => {
   it('training keeps the training kit for outfield players', () => {
     const t = sideLooks('home', null, { club: 'batavia', kit: 'training' });
     expect(t.slice(1).every((l) => l.set === 'club-batavia-training')).toBe(true);
+    expect(t[0]).toMatchObject({ set: 'club-batavia-match', keeper: true });
+  });
+
+  it('training sessions keep every participant on the existing sheets, even in match kit', () => {
+    for (const club of ['batavia', 'royal_salt'] as const) {
+      const p = sideLooks('away', null, { club, kit: 'match', practice: true });
+      expect(p.every((l) => l.set === clubSet(club, 'match'))).toBe(true);
+      expect(sideLooks('away', null, { club, kit: 'match' }).every((l) => String(l.set).startsWith('appr-'))).toBe(true);
+    }
   });
 
   it('every pose in every direction resolves to a drawn, enabled frame; left mirrors right', () => {

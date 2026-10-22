@@ -26,6 +26,8 @@ export interface RosterLook extends SpriteLook {
 export interface SideDress {
   readonly club: SpriteClub;
   readonly kit?: Kit;
+  /** Side is in a training session: keep the existing sheets until animated training variants are drawn. */
+  readonly practice?: boolean;
 }
 
 function look(sheetId: string, side: Side, slot: number): RosterLook {
@@ -54,8 +56,8 @@ export function sideLooks(side: Side, protagonist: { slot: number; look: Protago
   const kit = dress.kit ?? 'match';
   return looks.map((l, s) => {
     const mine = protagonist && side === 'home' && s === protagonist.slot && protagonist.slot >= 1 && protagonist.slot <= 8;
-    // Batavia's training sheet has no keeper row, so its keeper keeps the match sheet's keeper poses.
-    const set = mine ? protagonistSet(protagonist.look, kit, false) : ((kit === 'match' || s === 0 ? appearanceSet(dress.club, s) : null) ?? clubSet(dress.club, s === 0 ? 'match' : kit));
+    // Training keeps the existing training sheets (no animated training variants yet); Batavia's has no keeper row, so its keeper keeps the match sheet's keeper poses.
+    const set = mine ? protagonistSet(protagonist.look, kit, false) : ((kit === 'match' && !dress.practice ? appearanceSet(dress.club, s) : null) ?? clubSet(dress.club, s === 0 ? 'match' : kit));
     return { ...l, set, keeper: s === 0 };
   });
 }
