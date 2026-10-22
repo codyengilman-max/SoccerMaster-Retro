@@ -1,0 +1,1130 @@
+{
+  "version": 1,
+  "status": "art-source-handoff-not-game-integrated",
+  "requestedItems": [
+    1,
+    2,
+    3,
+    4,
+    7,
+    8,
+    10
+  ],
+  "visitorKits": "unassigned-design-candidates-not-runtime-team-assignments",
+  "assets": [
+    {
+      "id": "az_showcase_background",
+      "file": "art/az_showcase_background.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGB",
+      "sha256": "30cb229ead43f6e985e94672200e5560a3a497384dda46b0d1e56b254dc8eee8",
+      "usage": "cutscene-only; preserve aspect ratio; not a playable field texture"
+    },
+    {
+      "id": "holiday_classic_background",
+      "file": "art/holiday_classic_background.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGB",
+      "sha256": "fd0c119bd1e8cf992945abcd091693a12da35fad1e48fa1096b4489d8dc2b414",
+      "usage": "cutscene-only; preserve aspect ratio; not a playable field texture"
+    },
+    {
+      "id": "state_cup_background",
+      "file": "art/state_cup_background.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGB",
+      "sha256": "3b53d33e5483bb8dff1edfb4a5740b3979d4467a7805efc55a9431cb6a3e6c8f",
+      "usage": "cutscene-only; preserve aspect ratio; not a playable field texture"
+    },
+    {
+      "id": "az_showcase_assets",
+      "file": "art/az_showcase_assets.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "503abf71e5aebfbeebe6c94648b674da4ea8e695f4d8f7b2ad45480f9a78153a",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "regions": [
+        {
+          "name": "logo",
+          "rect": [
+            0,
+            0,
+            550,
+            500
+          ]
+        },
+        {
+          "name": "field_board",
+          "rect": [
+            565,
+            250,
+            605,
+            245
+          ]
+        },
+        {
+          "name": "pennant",
+          "rect": [
+            1175,
+            0,
+            361,
+            500
+          ]
+        },
+        {
+          "name": "trophy",
+          "rect": [
+            0,
+            500,
+            500,
+            524
+          ]
+        },
+        {
+          "name": "medal",
+          "rect": [
+            510,
+            500,
+            385,
+            524
+          ]
+        },
+        {
+          "name": "title_ribbon",
+          "rect": [
+            900,
+            630,
+            636,
+            365
+          ]
+        }
+      ],
+      "regionNote": "Source-space extraction regions; normalize anchors/scale for runtime. These are not 160x128 runtime cells."
+    },
+    {
+      "id": "holiday_classic_assets",
+      "file": "art/holiday_classic_assets.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "94dc531914e1b3e84cdc35b1f79676a26cb52f70f636b1fdc34d4a11cd68727d",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "regions": [
+        {
+          "name": "logo",
+          "rect": [
+            0,
+            0,
+            535,
+            520
+          ]
+        },
+        {
+          "name": "field_board",
+          "rect": [
+            535,
+            220,
+            625,
+            285
+          ]
+        },
+        {
+          "name": "pennant",
+          "rect": [
+            1180,
+            0,
+            356,
+            520
+          ]
+        },
+        {
+          "name": "trophy",
+          "rect": [
+            0,
+            520,
+            500,
+            504
+          ]
+        },
+        {
+          "name": "medal",
+          "rect": [
+            510,
+            520,
+            390,
+            504
+          ]
+        },
+        {
+          "name": "title_ribbon",
+          "rect": [
+            900,
+            650,
+            636,
+            350
+          ]
+        }
+      ],
+      "regionNote": "Source-space extraction regions; normalize anchors/scale for runtime. These are not 160x128 runtime cells."
+    },
+    {
+      "id": "state_cup_assets",
+      "file": "art/state_cup_assets.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "1e26d13bda0d35241852c9e5b61a85a4476ccbcc4a2515d052a527800b0e5345",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "regions": [
+        {
+          "name": "logo",
+          "rect": [
+            0,
+            0,
+            485,
+            495
+          ]
+        },
+        {
+          "name": "field_board",
+          "rect": [
+            490,
+            160,
+            630,
+            225
+          ]
+        },
+        {
+          "name": "pennant",
+          "rect": [
+            1150,
+            0,
+            386,
+            520
+          ]
+        },
+        {
+          "name": "trophy",
+          "rect": [
+            0,
+            495,
+            500,
+            529
+          ]
+        },
+        {
+          "name": "medal",
+          "rect": [
+            510,
+            510,
+            390,
+            514
+          ]
+        },
+        {
+          "name": "title_ribbon",
+          "rect": [
+            900,
+            650,
+            636,
+            350
+          ]
+        }
+      ],
+      "regionNote": "Source-space extraction regions; normalize anchors/scale for runtime. These are not 160x128 runtime cells."
+    },
+    {
+      "id": "boy_reactions",
+      "file": "art/boy_reactions.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "501c8393473bd1a91c4218b428d4e690fbd28d35ee23e6bce1006752cafa7f06",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "grid": {
+        "columns": 4,
+        "rows": 2,
+        "cell": [
+          384,
+          512
+        ]
+      },
+      "regions": [
+        {
+          "name": "fist_pump",
+          "rect": [
+            0,
+            0,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "arms_raised",
+          "rect": [
+            384,
+            0,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "applaud",
+          "rect": [
+            768,
+            0,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "proud",
+          "rect": [
+            1152,
+            0,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "disappointed",
+          "rect": [
+            0,
+            512,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "frustrated",
+          "rect": [
+            384,
+            512,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "reflective",
+          "rect": [
+            768,
+            512,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "supportive",
+          "rect": [
+            1152,
+            512,
+            384,
+            512
+          ]
+        }
+      ],
+      "regionNote": "Source-space extraction regions; normalize anchors/scale for runtime. These are not 160x128 runtime cells."
+    },
+    {
+      "id": "girl_reactions",
+      "file": "art/girl_reactions.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "7f3214b4e891467b43b59035339b0ec5fcc0989230cb02166c83fc52b5d7c93c",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "grid": {
+        "columns": 4,
+        "rows": 2,
+        "cell": [
+          384,
+          512
+        ]
+      },
+      "regions": [
+        {
+          "name": "fist_pump",
+          "rect": [
+            0,
+            0,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "arms_raised",
+          "rect": [
+            384,
+            0,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "applaud",
+          "rect": [
+            768,
+            0,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "proud",
+          "rect": [
+            1152,
+            0,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "disappointed",
+          "rect": [
+            0,
+            512,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "frustrated",
+          "rect": [
+            384,
+            512,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "reflective",
+          "rect": [
+            768,
+            512,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "supportive",
+          "rect": [
+            1152,
+            512,
+            384,
+            512
+          ]
+        }
+      ],
+      "regionNote": "Source-space extraction regions; normalize anchors/scale for runtime. These are not 160x128 runtime cells."
+    },
+    {
+      "id": "sam_reactions",
+      "file": "art/sam_reactions.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "61dde337ba826335bb443c54b3eda2607684cf8c796405d505183226e109deb4",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "grid": {
+        "columns": 4,
+        "rows": 2,
+        "cell": [
+          384,
+          512
+        ]
+      },
+      "regions": [
+        {
+          "name": "fist_pump",
+          "rect": [
+            0,
+            0,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "arms_raised",
+          "rect": [
+            384,
+            0,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "applaud",
+          "rect": [
+            768,
+            0,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "proud",
+          "rect": [
+            1152,
+            0,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "disappointed",
+          "rect": [
+            0,
+            512,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "frustrated",
+          "rect": [
+            384,
+            512,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "reflective",
+          "rect": [
+            768,
+            512,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "supportive",
+          "rect": [
+            1152,
+            512,
+            384,
+            512
+          ]
+        }
+      ],
+      "regionNote": "Source-space extraction regions; normalize anchors/scale for runtime. These are not 160x128 runtime cells."
+    },
+    {
+      "id": "coach_code_reactions",
+      "file": "art/coach_code_reactions.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "3d59a3c15270c2f119a2648f8f26d143997f0a972fc1b139cea659efbe02e407",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "grid": {
+        "columns": 4,
+        "rows": 2,
+        "cell": [
+          384,
+          512
+        ]
+      },
+      "regions": [
+        {
+          "name": "fist_pump",
+          "rect": [
+            0,
+            0,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "arms_raised",
+          "rect": [
+            384,
+            0,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "applaud",
+          "rect": [
+            768,
+            0,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "proud",
+          "rect": [
+            1152,
+            0,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "disappointed",
+          "rect": [
+            0,
+            512,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "frustrated",
+          "rect": [
+            384,
+            512,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "reflective",
+          "rect": [
+            768,
+            512,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "supportive",
+          "rect": [
+            1152,
+            512,
+            384,
+            512
+          ]
+        }
+      ],
+      "regionNote": "Source-space extraction regions; normalize anchors/scale for runtime. These are not 160x128 runtime cells."
+    },
+    {
+      "id": "tournament_results_components",
+      "file": "art/tournament_results_components.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "84aa7a482f6b4f9d54e0ba17c34258193549942a52332ac6fae0928d0ebfd9bc",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "regions": [
+        {
+          "name": "title",
+          "rect": [
+            15,
+            175,
+            540,
+            200
+          ]
+        },
+        {
+          "name": "group_a",
+          "rect": [
+            560,
+            115,
+            470,
+            420
+          ]
+        },
+        {
+          "name": "group_b",
+          "rect": [
+            1040,
+            115,
+            485,
+            420
+          ]
+        },
+        {
+          "name": "match_result",
+          "rect": [
+            15,
+            575,
+            540,
+            300
+          ]
+        },
+        {
+          "name": "outcome",
+          "rect": [
+            570,
+            540,
+            510,
+            370
+          ]
+        },
+        {
+          "name": "continue",
+          "rect": [
+            1090,
+            650,
+            435,
+            170
+          ]
+        }
+      ],
+      "regionNote": "Source-space extraction regions; normalize anchors/scale for runtime. These are not 160x128 runtime cells."
+    },
+    {
+      "id": "blake_next_horizon_portraits",
+      "file": "art/blake_next_horizon_portraits.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "8aee27712d018910839e5ac85dbfaf3817cc734a4c117800884c29bdc8a26b06",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "regions": [
+        {
+          "name": "jacket_neutral",
+          "rect": [
+            0,
+            0,
+            512,
+            524
+          ]
+        },
+        {
+          "name": "jacket_smug",
+          "rect": [
+            512,
+            0,
+            512,
+            524
+          ]
+        },
+        {
+          "name": "jacket_thoughtful",
+          "rect": [
+            1024,
+            0,
+            512,
+            524
+          ]
+        },
+        {
+          "name": "match_determined",
+          "rect": [
+            0,
+            524,
+            512,
+            500
+          ]
+        },
+        {
+          "name": "match_pleased",
+          "rect": [
+            512,
+            524,
+            512,
+            500
+          ]
+        },
+        {
+          "name": "match_disappointed",
+          "rect": [
+            1024,
+            524,
+            512,
+            500
+          ]
+        }
+      ],
+      "regionNote": "Source-space extraction regions; normalize anchors/scale for runtime. These are not 160x128 runtime cells."
+    },
+    {
+      "id": "blake_next_horizon_gameplay",
+      "file": "art/blake_next_horizon_gameplay.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "fc7a4a73a67030978f908bbe49c909cd5d2b5be5cd6e8c45293c170a6d42d8d7",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "grid": {
+        "columns": 6,
+        "rows": 4,
+        "cell": [
+          256,
+          256
+        ]
+      },
+      "regions": [
+        {
+          "name": "run_right_0",
+          "rect": [
+            0,
+            0,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "run_right_1",
+          "rect": [
+            256,
+            0,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "run_right_2",
+          "rect": [
+            512,
+            0,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "run_right_3",
+          "rect": [
+            768,
+            0,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "run_right_4",
+          "rect": [
+            1024,
+            0,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "run_right_5",
+          "rect": [
+            1280,
+            0,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "idle_front",
+          "rect": [
+            0,
+            256,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "idle_back",
+          "rect": [
+            256,
+            256,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "idle_right",
+          "rect": [
+            512,
+            256,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "idle_left",
+          "rect": [
+            768,
+            256,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "receive_right",
+          "rect": [
+            1024,
+            256,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "receive_left",
+          "rect": [
+            1280,
+            256,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "pass_windup",
+          "rect": [
+            0,
+            512,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "pass_contact",
+          "rect": [
+            256,
+            512,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "pass_followthrough",
+          "rect": [
+            512,
+            512,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "shoot_windup",
+          "rect": [
+            768,
+            512,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "shoot_contact",
+          "rect": [
+            1024,
+            512,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "shoot_followthrough",
+          "rect": [
+            1280,
+            512,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "shoulder_brace",
+          "rect": [
+            0,
+            768,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "slide",
+          "rect": [
+            256,
+            768,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "stumble",
+          "rect": [
+            512,
+            768,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "recover",
+          "rect": [
+            768,
+            768,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "celebrate",
+          "rect": [
+            1024,
+            768,
+            256,
+            256
+          ]
+        },
+        {
+          "name": "disappointed",
+          "rect": [
+            1280,
+            768,
+            256,
+            256
+          ]
+        }
+      ],
+      "regionNote": "Source-space extraction regions; normalize anchors/scale for runtime. These are not 160x128 runtime cells."
+    },
+    {
+      "id": "visitor_kit_candidates",
+      "file": "art/visitor_kit_candidates.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "sha256": "59b31989b0cbace32914e8c1f5cca7643064f8d413b69868209f471207a67fba",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "grid": {
+        "columns": 4,
+        "rows": 2,
+        "cell": [
+          384,
+          512
+        ]
+      },
+      "regions": [
+        {
+          "name": "candidate_1_outfield",
+          "rect": [
+            0,
+            0,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "candidate_2_outfield",
+          "rect": [
+            384,
+            0,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "candidate_3_outfield",
+          "rect": [
+            768,
+            0,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "candidate_4_outfield",
+          "rect": [
+            1152,
+            0,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "candidate_1_keeper",
+          "rect": [
+            0,
+            512,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "candidate_2_keeper",
+          "rect": [
+            384,
+            512,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "candidate_3_keeper",
+          "rect": [
+            768,
+            512,
+            384,
+            512
+          ]
+        },
+        {
+          "name": "candidate_4_keeper",
+          "rect": [
+            1152,
+            512,
+            384,
+            512
+          ]
+        }
+      ],
+      "regionNote": "Source-space extraction regions; normalize anchors/scale for runtime. These are not 160x128 runtime cells."
+    }
+  ]
+}

@@ -1,0 +1,732 @@
+{
+  "status": "source identity art; animation production and game integration pending",
+  "prompt": "Use case: stylized-concept. Create a production character roster reference sheet for Soccer Master Retro in the exact crisp pixel sprite art style of the provided reference, dark pixel outlines, compact youth soccer body proportions. Reference is for KIT and STYLE only, not cloned faces. Transparent background, no glow no shadows no labels no lettering no balls. Exactly NINE individual full body players, arranged evenly in THREE columns THREE rows, comfortable gutters, every foot visible. All in front-facing relaxed athletic ready poses. First eight wear identical outfield kit, ninth bottom-right wears goalkeeper kit with gloves. They must be nine visibly different children: varied skin tones from fair to deep brown, varied facial shapes and hair silhouettes. Broad Black, East Asian, South Asian, Latino, white and mixed heritage representation without caricature. Mix boys and girls; tied-back long hair for play. Row-major designs: 1 deep brown skin short natural afro; 2 light warm skin straight black sidepart; 3 medium brown skin dark braided ponytail; 4 fair freckled skin red short curls; 5 olive skin dark wavy crop; 6 dark skin short twists; 7 fair skin ashbrown short swept fringe; 8 tan skin dark high ponytail; 9 medium warm skin black buzzcut goalkeeper. Keep team colors absolutely consistent among outfield players, no individual alternate jerseys. No named story character replacements. Source roster identity art, not animation frames. Team kit: ",
+  "teams": [
+    {
+      "id": "fc_batavia",
+      "reference": "FC Batavia youth soccer sprite sheet.png",
+      "kit": "orange jersey blue collar and shoulders, blue shorts white side accents, orange socks white bands; goalkeeper green with white trim",
+      "status": "league roster references",
+      "file": "art/fc_batavia.png",
+      "size": [
+        1292,
+        1217
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "60833924d5d1d1448ea4681509a6a1c2392be2590b666b8ee98284d6cb1c3dcf",
+      "designs": [
+        {
+          "appearance_id": "fc_batavia_01",
+          "row": 0,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "fc_batavia_02",
+          "row": 0,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "fc_batavia_03",
+          "row": 0,
+          "column": 2,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "fc_batavia_04",
+          "row": 1,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "fc_batavia_05",
+          "row": 1,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "fc_batavia_06",
+          "row": 1,
+          "column": 2,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "fc_batavia_07",
+          "row": 2,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "fc_batavia_08",
+          "row": 2,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "fc_batavia_09",
+          "row": 2,
+          "column": 2,
+          "role": "goalkeeper"
+        }
+      ]
+    },
+    {
+      "id": "royal_salt",
+      "reference": "Royal Salt Academy Pixel Soccer Sprites.png",
+      "kit": "deep red jersey gold trim, navy shorts gold accents, red socks gold bands cream cleats; goalkeeper cyan gold trim",
+      "status": "league roster references",
+      "file": "art/royal_salt.png",
+      "size": [
+        1262,
+        1246
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "e26b2bb16cbf12dd1762a42e68dee3b27e886515dfe2667d2d3cbf7023bec32a",
+      "designs": [
+        {
+          "appearance_id": "royal_salt_01",
+          "row": 0,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "royal_salt_02",
+          "row": 0,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "royal_salt_03",
+          "row": 0,
+          "column": 2,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "royal_salt_04",
+          "row": 1,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "royal_salt_05",
+          "row": 1,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "royal_salt_06",
+          "row": 1,
+          "column": 2,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "royal_salt_07",
+          "row": 2,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "royal_salt_08",
+          "row": 2,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "royal_salt_09",
+          "row": 2,
+          "column": 2,
+          "role": "goalkeeper"
+        }
+      ]
+    },
+    {
+      "id": "valley_rising",
+      "reference": "Valley Rising Pixel Soccer Sprite Sheet.png",
+      "kit": "charcoal black jersey red chest stripe, black shorts red accents, red socks; goalkeeper yellow",
+      "status": "league roster references",
+      "file": "art/valley_rising.png",
+      "size": [
+        1312,
+        1199
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "194cd137cf19ac103761cd4d40b2dade0c292e3766ff0eb38b9298c0a2704fd6",
+      "designs": [
+        {
+          "appearance_id": "valley_rising_01",
+          "row": 0,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "valley_rising_02",
+          "row": 0,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "valley_rising_03",
+          "row": 0,
+          "column": 2,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "valley_rising_04",
+          "row": 1,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "valley_rising_05",
+          "row": 1,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "valley_rising_06",
+          "row": 1,
+          "column": 2,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "valley_rising_07",
+          "row": 2,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "valley_rising_08",
+          "row": 2,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "valley_rising_09",
+          "row": 2,
+          "column": 2,
+          "role": "goalkeeper"
+        }
+      ]
+    },
+    {
+      "id": "desert_tuzon",
+      "reference": "Desert Tuzon Youth Soccer Sprite Sheet.png",
+      "kit": "blue and white vertical striped jersey, blue shorts, white socks blue bands; goalkeeper coral pink navy trim",
+      "status": "league roster references",
+      "file": "art/desert_tuzon.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "1446db8f0c57c7bd6970820f091d69e593df37205550c288824fc72ddfb3b2b8",
+      "designs": [
+        {
+          "appearance_id": "desert_tuzon_01",
+          "row": 0,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "desert_tuzon_02",
+          "row": 0,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "desert_tuzon_03",
+          "row": 0,
+          "column": 2,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "desert_tuzon_04",
+          "row": 1,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "desert_tuzon_05",
+          "row": 1,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "desert_tuzon_06",
+          "row": 1,
+          "column": 2,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "desert_tuzon_07",
+          "row": 2,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "desert_tuzon_08",
+          "row": 2,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "desert_tuzon_09",
+          "row": 2,
+          "column": 2,
+          "role": "goalkeeper"
+        }
+      ]
+    },
+    {
+      "id": "sol_vista",
+      "reference": "Sol Vista pixel soccer sprite sheet.png",
+      "kit": "sky blue jersey navy sleeves white V collar, white shorts, skyblue socks navy bands; goalkeeper purple white trim",
+      "status": "league roster references",
+      "file": "art/sol_vista.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "a72bc0e4980b19e7ce9384d871dd033ff29dd8373f5042bb32fcf78d07002e89",
+      "designs": [
+        {
+          "appearance_id": "sol_vista_01",
+          "row": 0,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "sol_vista_02",
+          "row": 0,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "sol_vista_03",
+          "row": 0,
+          "column": 2,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "sol_vista_04",
+          "row": 1,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "sol_vista_05",
+          "row": 1,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "sol_vista_06",
+          "row": 1,
+          "column": 2,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "sol_vista_07",
+          "row": 2,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "sol_vista_08",
+          "row": 2,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "sol_vista_09",
+          "row": 2,
+          "column": 2,
+          "role": "goalkeeper"
+        }
+      ]
+    },
+    {
+      "id": "next_horizon",
+      "reference": "Next Horizon Retro Soccer Sprite Sheet.png",
+      "kit": "purple jersey silver white diagonal sash, purple shorts silver sides, purple socks silver cuffs; goalkeeper teal white cuffs",
+      "status": "league roster references",
+      "file": "art/next_horizon.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "8bd1a16089ecf4b3ca2ae261c9ea8b044fe136786947c6104ea90d5d20a454cf",
+      "designs": [
+        {
+          "appearance_id": "next_horizon_01",
+          "row": 0,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "next_horizon_02",
+          "row": 0,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "next_horizon_03",
+          "row": 0,
+          "column": 2,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "next_horizon_04",
+          "row": 1,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "next_horizon_05",
+          "row": 1,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "next_horizon_06",
+          "row": 1,
+          "column": 2,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "next_horizon_07",
+          "row": 2,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "next_horizon_08",
+          "row": 2,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "next_horizon_09",
+          "row": 2,
+          "column": 2,
+          "role": "goalkeeper"
+        }
+      ]
+    },
+    {
+      "id": "visitor_1",
+      "kit": "emerald shirt cream chest band and cream trim, cream shorts, emerald socks cream bands. goalkeeper coral shirt black shorts coral socks",
+      "status": "unassigned visitor candidate",
+      "file": "art/visitor_1.png",
+      "size": [
+        1271,
+        1238
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "a76884e1d11ae3ad387292ad4c623b8ed3512165079243fd23215fe27973e874",
+      "designs": [
+        {
+          "appearance_id": "visitor_1_01",
+          "row": 0,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_1_02",
+          "row": 0,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_1_03",
+          "row": 0,
+          "column": 2,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_1_04",
+          "row": 1,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_1_05",
+          "row": 1,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_1_06",
+          "row": 1,
+          "column": 2,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_1_07",
+          "row": 2,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_1_08",
+          "row": 2,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_1_09",
+          "row": 2,
+          "column": 2,
+          "role": "goalkeeper"
+        }
+      ]
+    },
+    {
+      "id": "visitor_2",
+      "kit": "yellow shirt black shoulders sleeves and collar, black shorts yellow accents, yellow socks black bands. goalkeeper magenta shirt navy shorts magenta socks",
+      "status": "unassigned visitor candidate",
+      "file": "art/visitor_2.png",
+      "size": [
+        1312,
+        1199
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "ca795b2fd2f9a5c85df9cfe4331f84750be32bb767a78ee784a2277fbbfe92f6",
+      "designs": [
+        {
+          "appearance_id": "visitor_2_01",
+          "row": 0,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_2_02",
+          "row": 0,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_2_03",
+          "row": 0,
+          "column": 2,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_2_04",
+          "row": 1,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_2_05",
+          "row": 1,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_2_06",
+          "row": 1,
+          "column": 2,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_2_07",
+          "row": 2,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_2_08",
+          "row": 2,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_2_09",
+          "row": 2,
+          "column": 2,
+          "role": "goalkeeper"
+        }
+      ]
+    },
+    {
+      "id": "visitor_3",
+      "kit": "white shirt burgundy sleeves and narrow vertical center stripe, burgundy shorts, white socks burgundy bands. goalkeeper turquoise shirt black shorts turquoise socks",
+      "status": "unassigned visitor candidate",
+      "file": "art/visitor_3.png",
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        254
+      ],
+      "sha256": "da79cdaf9e9741397406aa46a0a08134384de76e43b83ef91003828e36ce5148",
+      "designs": [
+        {
+          "appearance_id": "visitor_3_01",
+          "row": 0,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_3_02",
+          "row": 0,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_3_03",
+          "row": 0,
+          "column": 2,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_3_04",
+          "row": 1,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_3_05",
+          "row": 1,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_3_06",
+          "row": 1,
+          "column": 2,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_3_07",
+          "row": 2,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_3_08",
+          "row": 2,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_3_09",
+          "row": 2,
+          "column": 2,
+          "role": "goalkeeper"
+        }
+      ]
+    },
+    {
+      "id": "visitor_4",
+      "kit": "charcoal shirt mint side panels and trim, mint shorts, charcoal socks mint bands. goalkeeper red shirt navy shorts red socks",
+      "status": "unassigned visitor candidate",
+      "file": "art/visitor_4.png",
+      "size": [
+        1263,
+        1245
+      ],
+      "mode": "RGBA",
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "6b38aa7a088cc711a67249f6706d92a97bc14ec34715786e4c29c4c89dfa8181",
+      "designs": [
+        {
+          "appearance_id": "visitor_4_01",
+          "row": 0,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_4_02",
+          "row": 0,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_4_03",
+          "row": 0,
+          "column": 2,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_4_04",
+          "row": 1,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_4_05",
+          "row": 1,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_4_06",
+          "row": 1,
+          "column": 2,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_4_07",
+          "row": 2,
+          "column": 0,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_4_08",
+          "row": 2,
+          "column": 1,
+          "role": "outfield"
+        },
+        {
+          "appearance_id": "visitor_4_09",
+          "row": 2,
+          "column": 2,
+          "role": "goalkeeper"
+        }
+      ]
+    }
+  ]
+}

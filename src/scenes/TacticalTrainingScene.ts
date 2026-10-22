@@ -116,8 +116,8 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       const home = sideLooks('home', this.lookName ? { slot: 1, look: this.lookName } : null, { club: 'batavia', kit: 'training' });
       this.kits = {
         A: home,
-        B: sideLooks('away', null, { club: 'batavia', kit: 'match' }),
-        N: sideLooks('away', null, { club: 'sol_vista', kit: 'match' }),
+        B: sideLooks('away', null, { club: 'batavia', kit: 'match', practice: true }),
+        N: sideLooks('away', null, { club: 'sol_vista', kit: 'match', practice: true }),
       };
       if (this.lookName) this.look = home[1]!;
       this.art.ensure([...new Set([...this.kits.A, ...this.kits.B, ...this.kits.N].map((l) => l.set))]);

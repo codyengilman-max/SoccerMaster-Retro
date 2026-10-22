@@ -1,0 +1,150 @@
+{
+  "cell": [
+    160,
+    128
+  ],
+  "anchorPx": [
+    80,
+    120
+  ],
+  "origin": [
+    0.5,
+    0.9375
+  ],
+  "neutralBodyHeight": 79,
+  "clips": {
+    "run_right": {
+      "frames": [
+        "fc_batavia_09_00",
+        "fc_batavia_09_01",
+        "fc_batavia_09_02",
+        "fc_batavia_09_03",
+        "fc_batavia_09_04",
+        "fc_batavia_09_05"
+      ],
+      "frameRate": 10,
+      "repeat": -1,
+      "flipX": false
+    },
+    "run_front": {
+      "frames": [
+        "fc_batavia_09_06",
+        "fc_batavia_09_07",
+        "fc_batavia_09_08",
+        "fc_batavia_09_09",
+        "fc_batavia_09_10",
+        "fc_batavia_09_11"
+      ],
+      "frameRate": 10,
+      "repeat": -1,
+      "flipX": false
+    },
+    "run_back": {
+      "frames": [
+        "fc_batavia_09_12",
+        "fc_batavia_09_13",
+        "fc_batavia_09_14",
+        "fc_batavia_09_15",
+        "fc_batavia_09_16",
+        "fc_batavia_09_17"
+      ],
+      "frameRate": 10,
+      "repeat": -1,
+      "flipX": false
+    },
+    "ready": {
+      "frames": [
+        "fc_batavia_09_18",
+        "fc_batavia_09_19"
+      ],
+      "frameRate": 4,
+      "repeat": -1,
+      "flipX": false
+    },
+    "catch": {
+      "frames": [
+        "fc_batavia_09_20",
+        "fc_batavia_09_21"
+      ],
+      "frameRate": 7,
+      "repeat": 0,
+      "flipX": false
+    },
+    "dive_right": {
+      "frames": [
+        "fc_batavia_09_22",
+        "fc_batavia_09_23"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "flipX": false
+    },
+    "dive_left": {
+      "frames": [
+        "fc_batavia_09_22",
+        "fc_batavia_09_23"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "flipX": true,
+      "derivedFrom": "dive_right"
+    },
+    "throw_right": {
+      "frames": [
+        "fc_batavia_09_26",
+        "fc_batavia_09_27"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "flipX": false
+    },
+    "punt_right": {
+      "frames": [
+        "fc_batavia_09_28",
+        "fc_batavia_09_29"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "flipX": false
+    },
+    "run_left": {
+      "frames": [
+        "fc_batavia_09_00",
+        "fc_batavia_09_01",
+        "fc_batavia_09_02",
+        "fc_batavia_09_03",
+        "fc_batavia_09_04",
+        "fc_batavia_09_05"
+      ],
+      "frameRate": 10,
+      "repeat": -1,
+      "flipX": true,
+      "derivedFrom": "run_right"
+    },
+    "throw_left": {
+      "frames": [
+        "fc_batavia_09_26",
+        "fc_batavia_09_27"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "flipX": true,
+      "derivedFrom": "throw_right"
+    },
+    "punt_left": {
+      "frames": [
+        "fc_batavia_09_28",
+        "fc_batavia_09_29"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "flipX": true,
+      "derivedFrom": "punt_right"
+    }
+  },
+  "unusedFrames": [
+    24,
+    25
+  ],
+  "notes": "Left-facing side actions and keeper dive-left use horizontal mirroring; asymmetric kit trim also mirrors. These are compact pixel keyframe cycles; engine ball and player movement remain authoritative. Front/back kicking directions are not separately drawn. Canonical standing design supplies the outfield idle frame. Shoulder/slide are held poses, not full cycles."
+}
