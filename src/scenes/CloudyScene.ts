@@ -65,6 +65,9 @@ export class CloudyScene extends Phaser.Scene implements InspectableScene, Gamep
   private best: readonly CloudyBest[] = [];
   private saved = false;
   private savedMessage = '';
+  private saving = false;
+  private pending: { readonly runId: string; readonly difficulty: Difficulty; readonly score: number; readonly stars: 1 | 2 | 3 } | null = null;
+  private retryButton!: Button;
   private runId = '';
   private leaving = false;
   private speed = 1;
@@ -113,6 +116,7 @@ export class CloudyScene extends Phaser.Scene implements InspectableScene, Gamep
     this.leaveButton = new Button(this, 0, 0, { name: 'leave-confirm-button', label: 'Leave round', width: 200, height: 52, fontSize: 18, onClick: () => this.leaveRound() }).setDepth(201);
     this.replayButton = new Button(this, 0, 0, { name: 'replay-button', label: 'Play again', width: 200, height: 52, fontSize: 18, onClick: () => this.startRound(this.sim.difficulty) }).setDepth(110);
     this.doneButton = new Button(this, 0, 0, { name: 'done-button', label: 'Choose level', width: 200, height: 52, fontSize: 18, onClick: () => this.showMenu() }).setDepth(110);
+    this.retryButton = new Button(this, 0, 0, { name: 'retry-save-button', label: 'Retry save', width: 200, height: 52, fontSize: 18, onClick: () => void this.persist() }).setDepth(110);
     this.loadArt();
     void this.loadBest();
 
@@ -183,6 +187,7 @@ export class CloudyScene extends Phaser.Scene implements InspectableScene, Gamep
     } else {
       el['replay-button'] = this.replayButton.getButtonBounds();
       el['done-button'] = this.doneButton.getButtonBounds();
+      if (this.retryButton.visible) el['retry-save-button'] = this.retryButton.getButtonBounds();
       el['back-button'] = this.backButton.getButtonBounds();
       el.info = t(this.info);
     }
@@ -214,6 +219,8 @@ export class CloudyScene extends Phaser.Scene implements InspectableScene, Gamep
       fit: this.fit,
       saved: this.saved,
       savedMessage: this.savedMessage,
+      saving: this.saving,
+      unsaved: this.pending !== null,
       best: this.best,
       art: { background: this.bg !== null, fish: this.textures.exists(ATLAS_KEY) },
       runId: this.runId,
@@ -264,30 +271,48 @@ export class CloudyScene extends Phaser.Scene implements InspectableScene, Gamep
     this.saved = true;
     this.swimId = this.dashId = null;
     const r = resultOf(this.sim);
-    const runId = this.runId;
+    // Captured now: a new round may replace `this.sim` before the save completes.
+    this.pending = { runId: this.runId, difficulty: this.sim.difficulty, score: r.score, stars: r.stars };
     this.screen = 'results';
     this.applyScreen();
     this.layout(this.scale.width, this.scale.height);
     this.showBanner(r.stars === 3 ? 'FEEDING FRENZY!' : "TIME'S UP!", 1200, 34);
-    void (async () => {
-      try {
-        const store = await CareerStore.open();
-        const out = await store.dispatch({ type: 'cloudyResult', runId, difficulty: this.sim.difficulty, score: r.score, stars: r.stars });
-        if (out.ok) this.best = out.save.cloudy;
-        this.savedMessage = out.ok ? out.message : `Not saved: ${out.error}`;
-      } catch {
-        this.savedMessage = 'Not saved: this browser could not save the score.';
+    void this.persist();
+  }
+
+  /** Saves the finished round once; a failed write keeps it for Retry (the reducer ignores a repeated run ID). */
+  private async persist(): Promise<void> {
+    const p = this.pending;
+    if (!p || this.saving) return;
+    this.saving = true;
+    this.savedMessage = '';
+    let store: CareerStore | null = null;
+    try {
+      store = await CareerStore.open();
+      const out = await store.dispatch({ type: 'cloudyResult', ...p });
+      if (out.ok) {
+        if (this.pending === p) this.pending = null;
+        this.best = out.save.cloudy;
       }
-      if (this.sys.isActive() && this.screen === 'results') this.applyScreen();
-    })();
+      this.savedMessage = out.ok ? out.message : `Not saved: ${out.error}`;
+    } catch {
+      this.savedMessage = 'Not saved: this browser could not save the score.';
+    } finally {
+      store?.close();
+      this.saving = false;
+    }
+    if (this.sys.isActive() && this.screen === 'results') this.applyScreen();
   }
 
   private async loadBest(): Promise<void> {
+    let store: CareerStore | null = null;
     try {
-      const save = await (await CareerStore.open()).load();
-      this.best = save.cloudy;
+      store = await CareerStore.open();
+      this.best = (await store.load()).cloudy;
     } catch {
       this.best = [];
+    } finally {
+      store?.close();
     }
     if (this.sys.isActive()) this.applyScreen();
   }
@@ -314,8 +339,10 @@ export class CloudyScene extends Phaser.Scene implements InspectableScene, Gamep
     this.pauseG.setVisible(paused);
     this.resumeButton.setVisible(paused);
     this.leaveButton.setVisible(paused);
-    this.replayButton.setVisible(res);
+    const retry = res && this.pending !== null && !this.saving && this.savedMessage !== '';
+    this.replayButton.setVisible(res && !retry);
     this.doneButton.setVisible(res);
+    this.retryButton.setVisible(retry);
     this.dashText.setVisible(game);
     this.hud.setVisible(game);
     this.title.setVisible(!game);
@@ -422,6 +449,8 @@ export class CloudyScene extends Phaser.Scene implements InspectableScene, Gamep
       const ib = this.info.getBounds();
       this.replayButton.resize(bw, 48, 17).setPosition(x0, ib.bottom + 34);
       this.doneButton.resize(bw, 48, 17).setPosition(x0, ib.bottom + 92);
+      // A failed save takes Play again's slot until it is retried, so the finished round is not replaced.
+      this.retryButton.resize(bw, 48, 17).setPosition(x0, ib.bottom + 34);
     }
     this.banner.setPosition(pr.x + pr.width / 2, pr.y + pr.height * 0.4);
     this.layoutPause();
