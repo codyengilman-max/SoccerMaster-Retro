@@ -103,8 +103,10 @@ describe('Jungle Ball v3: SLIDE', () => {
   it('a missed slide keeps its committed line and leaves the slider on the grass longer than a hit slide', () => {
     const s = staged();
     command(s, { type: 'slide' });
+    const ev = adv(s, 1 / 60);
+    // Turning the stick after the press does not steer the committed slide.
     command(s, { type: 'move', x: 0, y: 1 });
-    const ev = adv(s, JUNGLE.slideSeconds + 0.02);
+    adv(s, JUNGLE.slideSeconds + 0.02 - 1 / 60, ev);
     expect(Math.abs(s.competitors.player.pos.y - MID)).toBeLessThan(1e-6);
     expect(ev.filter((e) => e.type === 'whiff' && e.kind === 'slide')).toHaveLength(1);
     const x = s.competitors.player.pos.x;
@@ -112,6 +114,18 @@ describe('Jungle Ball v3: SLIDE', () => {
     adv(s, JUNGLE.slideMissLag - 0.05);
     expect(s.competitors.player.pos.x - x).toBeLessThan(1e-6);
     expect(actState(s, 'player')).toBe('recover');
+  });
+
+  it('a stick turn and a press in the same frame commit the move to the new aim', () => {
+    for (const kind of ['slide', 'hit'] as const) {
+      const s = staged();
+      command(s, { type: 'move', x: 0, y: 1 });
+      command(s, { type: kind });
+      adv(s, 0.1);
+      const me = s.competitors.player;
+      expect(me.pos.y - MID, kind).toBeGreaterThan(0.2);
+      expect(Math.abs(me.pos.x - 10), kind).toBeLessThan(0.05);
+    }
   });
 
   it('hits only one competitor per slide and topples them', () => {
@@ -151,6 +165,14 @@ describe('Jungle Ball v3: shooting', () => {
     const f = adv(full, 1 / 60).find((e): e is Extract<JungleEvent, { type: 'shot' }> => e.type === 'shot');
     expect(f).toMatchObject({ power: 1, charged: true });
     expect(full.ball.vz).toBeGreaterThan(quick.ball.vz);
+  });
+
+  it('a press and release inside one frame is still a quick shot', () => {
+    const s = carrier();
+    command(s, { type: 'shoot', phase: 'press' });
+    command(s, { type: 'shoot', phase: 'release' });
+    const shot = adv(s, 1 / 60).find((e): e is Extract<JungleEvent, { type: 'shot' }> => e.type === 'shot');
+    expect(shot).toMatchObject({ by: 'player', power: JUNGLE.quickPower, charged: false });
   });
 
   it('a hit interrupts a charge: no shot on release', () => {
@@ -216,6 +238,21 @@ describe('Jungle Ball v3: ball, goal and keeper', () => {
     const ev = adv(low, JUNGLE.celebrateSeconds + 0.5);
     expect(ev.filter((e) => e.type === 'goal')).toEqual([expect.objectContaining({ by: 'player' })]);
     expect(low.scores.player).toBe(1);
+  });
+
+  it('a rising shot cannot pass over the bar line while half across: it meets the bar first', () => {
+    for (const [vx, vz] of [[12, 2], [20, 3], [8, 4], [30, 1]] as const) {
+      const s = staged();
+      s.keeper.y = 1;
+      shot(s, { x: 31.79, y: MID }, { x: vx, y: 0 }, 1.73, vz);
+      let highHalfAcross = false;
+      for (let t = 0; t < 0.5; t += 1 / 60) {
+        step(s, 1 / 60, () => 0.99);
+        const b = s.ball;
+        if (b.pos.x > JUNGLE.goalX && b.pos.x < JUNGLE.goalX + JUNGLE.ballRadius && b.z + JUNGLE.ballRadius > JUNGLE.crossbar + 0.01) highHalfAcross = true;
+      }
+      expect(highHalfAcross, `${vx},${vz}`).toBe(false);
+    }
   });
 
   it('the whole ball must cross: resting on the line is not a goal', () => {

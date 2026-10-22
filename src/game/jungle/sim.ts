@@ -248,7 +248,8 @@ export interface JungleState {
   stick: V;
   kick: { dir: V; power: number } | null;
   move: MoveKind | null;
-  shoot: 'press' | 'release' | 'cancel' | null;
+  /** Pending SHOOT transition; `tap` is a press and release that both arrived before one tick. */
+  shoot: 'press' | 'release' | 'cancel' | 'tap' | null;
   turbo: boolean;
 }
 
@@ -347,7 +348,7 @@ export function command(s: JungleState, c: JungleCommand): boolean {
   if (c.type === 'shoot') {
     if (c.phase !== 'press' && c.phase !== 'release' && c.phase !== 'cancel') return false;
     if (c.phase === 'press' && (s.phase !== 'live' || !canAct(s, s.competitors.player))) return false;
-    s.shoot = c.phase;
+    s.shoot = c.phase === 'release' && s.shoot === 'press' ? 'tap' : c.phase;
     return true;
   }
   if (c.type !== 'kick') return false;
@@ -1096,13 +1097,13 @@ export function step(s: JungleState, seconds: number, rng?: () => number): void 
     intents.player = s.stick;
     const me = s.competitors.player;
     me.turboOn = s.turbo;
-    // A move commits to the facing at the press; the stick turns the player only when free to act.
-    if (s.move) startMove(s, me, s.move);
+    // The stick turns the player only when free to act; a move then commits to that facing at the press.
     const sm = len(s.stick);
     if (sm > 0.2 && canAct(s, me)) me.facing = { x: s.stick.x / sm, y: s.stick.y / sm };
+    if (s.move) startMove(s, me, s.move);
     if (s.kick && s.ball.owner === 'player' && canAct(s, me)) kickBall(s, 'player', s.kick.dir, s.kick.power, s.kick.power > JUNGLE.quickPower);
-    if (s.shoot === 'press' && canAct(s, me)) me.chargeAt = s.t;
-    else if (s.shoot === 'release') releaseShot(s, me, aimShot(s, me.pos, s.stick));
+    if ((s.shoot === 'press' || s.shoot === 'tap') && canAct(s, me)) me.chargeAt = s.t;
+    if (s.shoot === 'release' || s.shoot === 'tap') releaseShot(s, me, aimShot(s, me.pos, s.stick));
     else if (s.shoot === 'cancel') me.chargeAt = null;
     s.kick = null;
     s.move = null;
