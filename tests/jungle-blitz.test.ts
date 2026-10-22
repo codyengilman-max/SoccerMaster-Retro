@@ -58,7 +58,7 @@ describe('Jungle Ball v2 (arcade football feel)', () => {
     expect(command(s, { type: 'push' })).toBe(true);
     step(s, 1 / 60);
     const hit = drainEvents(s).find((e): e is Extract<JungleEvent, { type: 'hit' }> => e.type === 'hit');
-    expect(hit).toMatchObject({ by: 'player', on: 'alex', kind: 'push', big: true });
+    expect(hit).toMatchObject({ by: 'player', on: 'alex', kind: 'hit', big: true });
     expect(alex.pos.x).toBeGreaterThan(11.2 + JUNGLE.pushKnock);
     expect(alex.pos.x - 11.2).toBeLessThanOrEqual(JUNGLE.bigKnock + JUNGLE.runSpeed / 60 + 1e-6);
     expect(alex.downUntil - s.t).toBeGreaterThan(JUNGLE.stunSeconds);
@@ -149,11 +149,18 @@ describe('Jungle Ball v2 (arcade football feel)', () => {
       s.ball.lastTouch = by;
       s.ball.inGoal = false;
       s.keeper.y = 1;
+      // v3 staging: a free ball on the grass, keeper set (not holding a caught ball).
+      s.ball.held = false;
+      s.ball.z = s.ball.vz = 0;
+      s.keeper.mode = 'set';
+      s.phase = 'live';
       s.ball.pos = { x: JUNGLE.goalX - 0.4, y: JUNGLE.width / 2 };
       s.ball.vel = { x: 20, y: 0 };
-      step(s, 1 / 60);
+      // v3 counts a goal only once the whole ball is over the line, a few frames later.
+      for (let i = 0; i < 6; i++) step(s, 1 / 60);
       const e = drainEvents(s);
-      adv(s, JUNGLE.restartFreeze + 0.02);
+      // v3: the scorer celebrates (nothing scores) before the fair restart.
+      adv(s, JUNGLE.celebrateSeconds + JUNGLE.restartFreeze + 0.04);
       return e;
     };
     goal('player');

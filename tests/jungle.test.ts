@@ -170,7 +170,7 @@ describe('Jungle Ball sim', () => {
       const x0 = s.competitors.alex.pos.x;
       expect(command(s, { type: 'push' })).toBe(true);
       const ev = tick(s);
-      expect(ev.some((e) => e.type === 'hit' && e.by === 'player' && e.on === 'alex' && e.kind === 'push')).toBe(true);
+      expect(ev.some((e) => e.type === 'hit' && e.by === 'player' && e.on === 'alex' && e.kind === 'hit')).toBe(true);
       expect(s.ball.owner).not.toBe('alex');
       expect(s.competitors.alex.pos.x - x0).toBeLessThanOrEqual(JUNGLE.pushKnock + JUNGLE.maxPush + 0.2);
       expect(s.t < s.competitors.alex.stunUntil).toBe(true);
@@ -193,12 +193,13 @@ describe('Jungle Ball sim', () => {
       expect(s.competitors.alex.stunUntil).toBe(until);
     });
 
-    it('PUSH with nobody in front whiffs and still costs the cooldown', () => {
+    it('HIT (old PUSH command) with nobody in front whiffs and still costs the cooldown', () => {
       const s = staged();
       s.competitors.player.facing = { x: -1, y: 0 };
       command(s, { type: 'push' });
-      const ev = tick(s);
-      expect(ev.some((e) => e.type === 'whiff' && e.by === 'player')).toBe(true);
+      // HIT is a committed lunge: the miss is known when its window ends, then a short recovery.
+      const ev = tick(s, Math.ceil(JUNGLE.hitWindow * 60) + 1);
+      expect(ev.some((e) => e.type === 'whiff' && e.by === 'player' && e.kind === 'hit')).toBe(true);
       expect(canMove(s, s.competitors.player, 'push')).toBe(false);
     });
 
