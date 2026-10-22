@@ -60,6 +60,12 @@ def fit_cell(im, k):
     """Scale by k and bottom-centre on the (AX, AY) anchor of a 160x128 cell."""
     w, h = max(1, round(im.width * k)), max(1, round(im.height * k))
     sm = im.resize((w, h), Image.LANCZOS)
+    # Resampling fades edge rows; trim to the visible body so the feet land exactly on the anchor.
+    a = np.array(sm)
+    a[:, :, 3][a[:, :, 3] <= 24] = 0
+    ys, xs = np.nonzero(a[:, :, 3])
+    sm = Image.fromarray(a).crop((int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1))
+    w, h = sm.width, sm.height
     assert w <= CELL_W and h <= AY, (w, h)
     cell = Image.new('RGBA', (CELL_W, CELL_H), (0, 0, 0, 0))
     cell.alpha_composite(sm, (AX - w // 2, AY - h))

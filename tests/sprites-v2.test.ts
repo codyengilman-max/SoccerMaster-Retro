@@ -17,12 +17,15 @@ interface Atlas {
 const atlas = (id: string): Atlas => JSON.parse(readFileSync(join(ATLAS, `${id}.json`), 'utf8')) as Atlas;
 const sha = (path: string): string => createHash('sha256').update(readFileSync(path)).digest('hex');
 
+/** Owner action sheets packed into the jungle atlases (no atlas of their own). */
+const JUNGLE_ACTION_SHEETS = ['boy', 'girl', 'blake', 'sam'].map((id) => `jungle-${id}-actions.png`);
+
 describe('sprites v2 assets', () => {
-  it('keeps all 18 owner sheets (14 sprites v2 + 4 Jungle Ball) unchanged, matching SHA256SUMS', () => {
+  it('keeps all 22 owner sheets (14 sprites v2 + 4 Jungle Ball + 4 Jungle Ball action sheets) unchanged, matching SHA256SUMS', () => {
     const sums = readFileSync(join(SOURCE, 'SHA256SUMS'), 'utf8').trim().split('\n').map((l) => l.split(/\s+/));
-    expect(sums).toHaveLength(18);
+    expect(sums).toHaveLength(22);
     for (const [hash, file] of sums) expect(sha(join(SOURCE, file!)), file).toBe(hash);
-    expect(readdirSync(SOURCE).filter((f) => f.endsWith('.png')).sort()).toEqual(SPRITE_SETS.map((s) => `${s}.png`).sort());
+    expect(readdirSync(SOURCE).filter((f) => f.endsWith('.png')).sort()).toEqual([...SPRITE_SETS.map((s) => `${s}.png`), ...JUNGLE_ACTION_SHEETS].sort());
   });
 
   it('builds one atlas per sheet, from that sheet, with in-bounds frames on the shared anchor', () => {

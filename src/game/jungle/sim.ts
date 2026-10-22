@@ -103,7 +103,7 @@ export const JUNGLE = {
   aiHitChance: 0.35,
   aiSlideChance: 0.12,
   aiChargeChance: 0.45,
-  /** HIT: a committed shoulder charge. Lands only on real contact in front within the lunge window. */
+  /** HIT: a committed shoulder charge. Lands only on real contact in front during the lunge. */
   hitReach: 0.35,
   hitWindow: 0.18,
   hitLungeSpeed: 7.5,
@@ -164,7 +164,7 @@ export interface Competitor {
   cooldownUntil: number;
   slideCooldownUntil: number;
   lastMove: { kind: MoveKind; t: number; big: boolean } | null;
-  /** HIT lunge: committed window, direction, and whether it landed (one victim per hit). */
+  /** HIT lunge: committed end time, direction, and whether it landed (one victim per hit). */
   hitUntil: number;
   hitDir: V;
   hitLanded: boolean;
@@ -502,7 +502,7 @@ function startMove(s: JungleState, c: Competitor, kind: MoveKind): void {
   hitContacts(s, c);
 }
 
-/** During the HIT window: the first competitor in real contact in front is hit once; the lunge then stops. */
+/** While the HIT lunge lasts: the first competitor in real contact in front is hit once; the lunge then stops. */
 function hitContacts(s: JungleState, c: Competitor): void {
   if (s.t >= c.hitUntil || c.hitLanded) return;
   let best: Competitor | null = null;
