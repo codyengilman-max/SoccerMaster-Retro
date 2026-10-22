@@ -7,7 +7,7 @@ import { SEASON_ONE, catalogFor, nodeById, sceneById, type AdapterKind, type Out
 
 export const STORY_SCHEMA = 1;
 /** Season One weeks open to players (owner, 2026-10-20: weeks 3–18 hidden until the new text arrives). */
-export const SEASON_RELEASED_WEEKS = 4;
+export const SEASON_RELEASED_WEEKS = 5;
 let releasedWeeks = SEASON_RELEASED_WEEKS;
 /** Tests of later-week content open the whole season; the game always uses SEASON_RELEASED_WEEKS. */
 export const setReleasedWeeks = (n: number): void => { releasedWeeks = n; };
