@@ -88,6 +88,29 @@ export function frameName(layout: SetLayout, kind: PoseKind, dir: number, pose: 
   }
 }
 
+export type JungleAct = 'impact' | 'falling' | 'down' | 'rising' | 'sprint' | 'charge' | 'strike' | 'hit' | 'slide' | 'recover' | 'stagger';
+/**
+ * Jungle Ball action frames from the owner action sheets (v3). `k` is progress 0..1 through a timed action,
+ * or the running-cycle counter for `sprint`. Slides use the grounded frames: the sheets have no slide-tackle pose.
+ */
+export function jungleActionFrame(act: JungleAct, dir: number, k: number): string {
+  const d = Number.isInteger(dir) && dir >= 0 && dir <= 7 ? dir : 0;
+  const at = (n: number): number => Math.min(n - 1, Math.max(0, Math.floor(k * n)));
+  switch (act) {
+    case 'impact': return side('impact', d);
+    case 'falling': return side(`fall-${at(2)}`, d);
+    case 'down': return side(`down-${at(4)}`, d);
+    case 'rising': return side(`rise-${at(3)}`, d);
+    case 'stagger': return side(`dazed-${cycle(k * 6, 2)}`, d);
+    case 'sprint': return side(`sprint-${cycle(k, 6)}`, d);
+    case 'charge': return side(`shot-${at(3)}`, d);
+    case 'strike': return side(`shot-${3 + at(3)}`, d);
+    case 'hit': return side(`hit-${at(6)}`, d);
+    case 'slide': return side(k < 0.5 ? 'fall-1' : 'down-0', d);
+    case 'recover': return side(`rise-${at(3)}`, d);
+  }
+}
+
 /** Coach Code's poses for training beats (instruction, pointing, observing, clipboard, encouragement, correction). */
 export const COACH_POSE = Object.freeze({
   instruct: 'explain', point: 'point', observe: 'hips', clipboard: 'clipboard', encourage: 'clap', correct: 'shout', idle: 'idle', walk: 'walk',

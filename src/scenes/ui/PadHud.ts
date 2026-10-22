@@ -58,6 +58,8 @@ export class PadHud {
   private readonly labels: Record<ActionButton, Phaser.GameObjects.Text>;
 
   private readonly hidden: ReadonlySet<ActionButton>;
+  /** Optional ring per button: fill 0..1 (cooldown left, shot charge, turbo meter) drawn around the button. */
+  private meters: Partial<Record<ActionButton, { fill: number; color: number }>> = {};
 
   /** `labels` renames buttons and `hidden` leaves a button undrawn (e.g. Jungle Ball shows SHOOT / SLIDE / PUSH). */
   constructor(scene: Phaser.Scene, width: number, height: number, opts: { labels?: Partial<Record<ActionButton, string>>; hidden?: readonly ActionButton[] } = {}) {
@@ -92,6 +94,10 @@ export class PadHud {
     return this.layout(width, height);
   }
 
+  setMeters(m: Partial<Record<ActionButton, { fill: number; color: number }>>): void {
+    this.meters = m;
+  }
+
   setVisible(v: boolean): void {
     this.g.setVisible(v);
     for (const a of ACTION_BUTTONS) this.labels[a].setVisible(v && !this.hidden.has(a));
@@ -121,6 +127,11 @@ export class PadHud {
       g.fillStyle(COLORS[a], (on ? op : op * 0.35) * (down ? 1.4 : 1));
       g.fillCircle(c.x, c.y, down ? c.r * 0.94 : c.r);
       g.lineStyle(down ? 5 : 3, 0xfff8e7, on ? Math.min(1, op + 0.25) : op * 0.4).strokeCircle(c.x, c.y, c.r);
+      const m = this.meters[a];
+      if (m && m.fill > 0.001) {
+        g.lineStyle(6, 0x000000, 0.5).strokeCircle(c.x, c.y, c.r + 5);
+        g.lineStyle(6, m.color, 1).beginPath().arc(c.x, c.y, c.r + 5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, m.fill)).strokePath();
+      }
       this.labels[a]
         .setPosition(c.x, c.y)
         .setFontSize(Math.max(11, Math.round(c.r * (a === 'slide' ? 0.3 : 0.36))))

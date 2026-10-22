@@ -86,6 +86,17 @@ export class PlayerArt {
     return img.setTexture(this.frame(look, kind, dir, pose)).setOrigin(0.5, SPRITE_FRAME.anchorY / SPRITE_FRAME.height).setScale(sc.x * k, sc.y * k);
   }
 
+  /** A named atlas frame (e.g. a Jungle Ball action) when the look's sheet has it; otherwise the `kind` pose. */
+  applyNamed(img: Phaser.GameObjects.Image, look: RosterLook | SpriteLook, name: string | null, kind: PoseKind, dir: number, pose: number, placeholderH: number): Phaser.GameObjects.Image {
+    const set = (look as RosterLook).set;
+    const key = set ? atlasKey(set) : '';
+    if (name && set && this.scene.textures.exists(key) && this.scene.textures.get(key).has(name)) {
+      const s = (PLAYER_ART.bodyScale * placeholderH) / SPRITE_CELL.bodyHeight;
+      return img.setTexture(key, name).setOrigin(SPRITE_CELL.anchorX / SPRITE_CELL.width, SPRITE_CELL.anchorY / SPRITE_CELL.height).setScale(s, s);
+    }
+    return this.apply(img, look, kind, dir, pose, placeholderH);
+  }
+
   get size(): number {
     return this.keys.size;
   }
