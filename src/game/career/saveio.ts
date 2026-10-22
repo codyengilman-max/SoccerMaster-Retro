@@ -1,3 +1,4 @@
+import { REPORTS_KEPT, type SavedReport } from '../report/report';
 import { CAREER_CONFIG } from './config';
 import { FOCUSES, HOME_ACTIVITIES, activityById } from './catalog';
 import type { PlannedItem, PlannedSession, PlannerInput, WeekPlan } from './planner';
@@ -175,6 +176,22 @@ function teamTraining(v: unknown, week: number): TeamTrainingRecord {
   };
 }
 
+function savedReport(v: unknown): SavedReport {
+  const o = obj(v, 'report');
+  str(o.matchId, 'report match', 64);
+  int(o.week, 'report week', 1, 1000);
+  for (const k of ['competition', 'home', 'away', 'playerName', 'position'] as const) str(o[k], `report ${k}`, 80);
+  const sc = obj(o.score, 'report score');
+  int(sc.home, 'report score', 0, 99);
+  int(sc.away, 'report score', 0, 99);
+  int(o.minutes, 'report minutes', 0, 200);
+  obj(o.stats, 'report stats');
+  obj(o.rating, 'report rating');
+  obj(o.versions, 'report versions');
+  arr(o.highlights, 'report highlights', 3);
+  return o as unknown as SavedReport;
+}
+
 function cloudyBest(v: unknown): CloudyBest {
   const o = obj(v, 'cloudy');
   const stars = int(o.bestStars, 'cloudy stars', 1, 3) as 1 | 2 | 3;
@@ -236,7 +253,9 @@ export function parseSave(raw: unknown): R<CareerSave> {
       tt12: arr(o.tt12 ?? [], 'tt12', L.historyMax * 4).map((t) => tt12Run(t, week)),
       cloudy: arr(o.cloudy ?? [], 'cloudy', DIFFICULTIES.length).map(cloudyBest),
       cloudyRuns: arr(o.cloudyRuns ?? [], 'cloudyRuns', CLOUDY_RUNS_KEPT).map((r) => str(r, 'cloudy run', 64)),
+      reports: arr(o.reports ?? [], 'reports', REPORTS_KEPT).map(savedReport),
     };
+    if (new Set(save.reports.map((r) => r.matchId)).size !== save.reports.length) throw new Invalid('match report saved twice');
     if (new Set(save.teamTraining.map((t) => t.week)).size !== save.teamTraining.length) throw new Invalid('team training counted twice for a week');
     if (new Set(save.cloudy.map((c) => c.difficulty)).size !== save.cloudy.length) throw new Invalid('cloudy best saved twice');
     if (new Set(save.tt12.map((t) => t.runId)).size !== save.tt12.length) throw new Invalid('team training run saved twice');

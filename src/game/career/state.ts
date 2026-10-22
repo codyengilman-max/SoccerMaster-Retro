@@ -1,3 +1,4 @@
+import { REPORTS_KEPT, type SavedReport } from '../report/report';
 import { DIFFICULTIES, type Difficulty } from '../cloudy/sim';
 import { CAREER_CONFIG } from './config';
 import { FOCUSES, activityById, focusById } from './catalog';
@@ -81,6 +82,8 @@ export interface CareerSave {
   readonly cloudy: readonly CloudyBest[];
   /** Recently saved Cloudy round ids, so a replayed save never counts twice. */
   readonly cloudyRuns: readonly string[];
+  /** Player Match Reports, newest last (older saves: empty). Built once at full time; never recalculated. */
+  readonly reports: readonly SavedReport[];
 }
 
 export interface CloudyBest {
@@ -114,6 +117,7 @@ export type Action =
   | { readonly type: 'teamTraining'; readonly week: number; readonly results: readonly SituationResult[] }
   | { readonly type: 'tt12Run'; readonly week: number; readonly slot: Tt12Slot; readonly runId: string; readonly score: number; readonly creditEligible: boolean }
   | { readonly type: 'cloudyResult'; readonly runId: string; readonly difficulty: Difficulty; readonly score: number; readonly stars: 1 | 2 | 3 }
+  | { readonly type: 'matchReport'; readonly report: SavedReport }
   | { readonly type: 'endWeek' };
 
 export type Outcome = { readonly ok: true; readonly save: CareerSave; readonly message: string; readonly changed: boolean } | { readonly ok: false; readonly error: string };
@@ -141,6 +145,7 @@ export function emptySave(): CareerSave {
     tt12: [],
     cloudy: [],
     cloudyRuns: [],
+    reports: [],
   };
 }
 
@@ -269,6 +274,13 @@ export function reduce(save: CareerSave, action: Action): Outcome {
       if (started > 0) return same(save, `This week counts through your Team Training v1.2 sessions (${started} of 3 done); this run was practice only.`);
       const counted = countTeamWeek(save, action.results);
       return 'error' in counted ? fail(counted.error) : ok(counted.save, counted.message);
+    }
+    case 'matchReport': {
+      const r = action.report;
+      if (!r || typeof r.matchId !== 'string' || r.matchId.length < 1 || r.matchId.length > 64) return fail('Invalid match report.');
+      // Saving the same match again (reload, replayed callback) keeps the first report and awards nothing.
+      if (save.reports.some((x) => x.matchId === r.matchId)) return same(save, 'This match report is already saved.');
+      return ok({ ...save, reports: [...save.reports, r].slice(-REPORTS_KEPT) }, 'Match report saved.');
     }
     case 'cloudyResult': {
       if (!DIFFICULTIES.includes(action.difficulty) || !Number.isSafeInteger(action.score) || action.score < 0 || action.score > 100_000 || ![1, 2, 3].includes(action.stars)) return fail('Cloudy result out of range.');
