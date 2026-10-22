@@ -35,6 +35,9 @@ import { EvidenceCollector, coachEvidence } from '../game/career/evidence';
 import type { EvidenceItem } from '../game/career/progression';
 import { matchAttrsFromCareer } from '../game/career/player';
 import { CareerStore } from '../game/career/store';
+import { MatchLedger } from '../game/report/ledger';
+import { buildReport, clubDisplayName } from '../game/report/report';
+import { TOURNAMENTS } from '../game/season/tournament';
 import { SituationObserver, selectSituations, type SituationResult, type TeamTrainingSituation } from '../game/career/teamTraining';
 import type { Position } from '../game/career/types';
 import { MATCH_TUNING } from '../game/match/tuning';
@@ -187,6 +190,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   /** Away side's club sheet; matches outside the story show Royal Salt. Cosmetic only. */
   private opponent: SpriteClub = 'royal_salt';
   private collector: EvidenceCollector | null = null;
+  /** Career player's own actions for the Match Report; read-only, beside the evidence collector. */
+  private ledger: MatchLedger | null = null;
+  private reportMeta: { name: string; position: string; week: number } | null = null;
+  private reportMatchId: string | null = null;
+  private reportSaving: Promise<void> | null = null;
   private careerItems: EvidenceItem[] = [];
   private careerSession = '';
   private careerBatch = 0;
@@ -1020,7 +1028,41 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       this.scene.start(SceneKeys.Career, { open: 'team', ...(this.returnTo === 'story' ? { returnTo: 'story' as const } : {}) });
       return;
     }
+    const reportId = this.reportMatchId;
+    if (reportId && this.reportSaving) {
+      const next = this.returnTo === 'story' ? 'story' : 'start';
+      void this.reportSaving.then(() => this.scene.start(SceneKeys.Report, { matchId: reportId, next }));
+      return;
+    }
     this.scene.start(this.returnTo === 'story' ? SceneKeys.Story : SceneKeys.Start, this.returnTo === 'story' ? { resume: true } : undefined);
+  }
+
+  /** Builds the Match Report once at full time from the ledger and saves it (idempotent by match id). */
+  private saveReport(): void {
+    const ledger = this.ledger;
+    const meta = this.reportMeta;
+    const store = this.careerStore;
+    if (!ledger || !meta || !store || this.reportSaving) return;
+    const s = this.sim.state;
+    const names: Record<string, string> = {};
+    for (const t of Object.values(TOURNAMENTS)) for (const [id, info] of Object.entries(t.teams)) names[id] = info.name;
+    const matchId = this.resultKey ?? this.careerSession;
+    const report = buildReport(
+      {
+        matchId: matchId.slice(0, 64),
+        week: meta.week,
+        competition: this.returnTo === 'story' ? 'League' : 'Friendly',
+        home: clubDisplayName('batavia', names),
+        away: clubDisplayName(this.opponent, names),
+        score: { home: s.score.home, away: s.score.away },
+        playerName: meta.name,
+        position: meta.position,
+        minutes: MATCH_TUNING.match.displayHalfMinutes * 2,
+      },
+      ledger.finish(),
+    );
+    this.reportMatchId = report.matchId;
+    this.reportSaving = store.dispatch({ type: 'matchReport', report }).then(() => undefined, () => undefined);
   }
 
   private handleResize(size: Phaser.Structs.Size): void {
@@ -1195,6 +1237,10 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.careerMissedSent = 0;
     this.careerCoachSent = false;
     this.careerStore = null;
+    this.ledger = null;
+    this.reportMeta = null;
+    this.reportMatchId = null;
+    this.reportSaving = null;
     if (!on) return;
     this.careerSession = `m-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e9).toString(36)}`;
     void CareerStore.open().then(async (store) => {
@@ -1212,6 +1258,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       const gender = save.player.gender;
       if (gender === 'boy' || gender === 'girl') this.setRosterLooks({ id: CAREER_SLOT[save.player.position], look: gender });
       this.collector = new EvidenceCollector(CAREER_SLOT[save.player.position], MATCH_TUNING.pitch);
+      this.ledger = new MatchLedger(CAREER_SLOT[save.player.position]);
+      this.reportMeta = { name: save.player.name, position: save.player.position, week: save.week };
       this.careerFlushAt = this.sim.state.simTime + CAREER_FLUSH_SECONDS;
     });
   }
@@ -1220,6 +1268,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const c = this.collector;
     if (!c) return;
     const s = this.sim.state;
+    this.ledger?.observe(s, s.events);
     this.careerItems.push(...c.observe(s, s.events));
     if (s.simTime >= this.careerFlushAt) {
       this.careerFlushAt = s.simTime + CAREER_FLUSH_SECONDS;
@@ -1388,6 +1437,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
           this.cancelInput('full-time');
           if (this.collector) void this.flushCareer(false);
           void this.recordResult();
+          this.saveReport();
           break;
         case 'secondHalf':
           this.toast('Second half — away kick off');

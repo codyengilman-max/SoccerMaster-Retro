@@ -9,6 +9,8 @@ export const SceneKeys = {
   Jungle: 'jungle',
   Tactical: 'tactical',
   Cloudy: 'cloudy',
+  Report: 'report',
+  MyPlayer: 'myPlayer',
 } as const;
 
 export type SceneKey = (typeof SceneKeys)[keyof typeof SceneKeys];

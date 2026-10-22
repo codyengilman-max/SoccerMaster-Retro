@@ -75,3 +75,8 @@ export function coachFeedback(r: SavedReport): { strength: string; improve: stri
     : 'Next time, look to get on the ball more and play forward.';
   return { strength, improve };
 }
+
+/** Club id to display name ("royal_salt" → "Royal Salt Academy"); unknown ids are title-cased, never blank. */
+export function clubDisplayName(id: string, known: Readonly<Record<string, string>>): string {
+  return known[id] ?? id.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}

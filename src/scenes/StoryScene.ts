@@ -421,6 +421,12 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   }
 
   /** Optional and never a story fact: the result is saved by Cloudy's own reducer action. */
+  private openMyPlayer(): void {
+    if (!this.fresh()) return;
+    this.navigating = true;
+    this.scene.start(SceneKeys.MyPlayer, { returnTo: 'story' });
+  }
+
   private openCloudy(): void {
     if (!this.fresh()) return;
     this.navigating = true;
@@ -1102,6 +1108,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
             `${trained ? 'Weekly home training complete. Continue Week is unlocked.' : 'Continue Week unlocks after the required training.'}\nCloudy: Feed & Play and Cloudy: Talk are optional.`,
         );
         acts.push({ name: 'hub-training', label: trained ? 'Training (done)' : 'Training (required)', onClick: () => this.openHome() });
+        acts.push({ name: 'hub-my-player', label: 'My Player', onClick: () => this.openMyPlayer() });
         acts.push({ name: 'hub-cloudy-play', label: 'Cloudy: Feed & Play', onClick: () => this.openCloudy() });
         if (!talked) acts.push({ name: 'hub-cloudy-talk', label: 'Cloudy: Talk', onClick: () => void this.finishFact('talk') });
         if (trained) acts.push({ name: 'hub-continue', label: 'Continue Week', onClick: () => void this.finishFact('trained') });
