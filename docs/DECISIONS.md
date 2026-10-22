@@ -210,3 +210,14 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Jungle Ball sheets join the sprite-set registry as layout `jungle` (pre-mirrored `-w` frames, same 160×128 cell and (80,120) anchor), so `PlayerArt` and its fallback stay the one sprite path.
 
 - Over a `cast_in_backdrop` painting, a separate portrait (Mom in `S1_W02_F`) is shown only while that character speaks. The paintings are cover-fit with a focus box (`BACKDROP_FOCUS`, `coverWithFocus`) so the child's face and Cloudy stay in view in portrait and landscape, with no gaps and no stretching.
+
+## D43. Jungle Ball v3: arcade feel upgrade of the existing mini-game (owner brief + 4 action sheets, 2026-10-22)
+
+- Same format: You, Alex, Blake, Sam each score individually past one neutral keeper; round length, scoring, ties, story record (first write wins) and the "never match growth" rule are unchanged.
+- `src/game/jungle/sim.ts` v3 (framework-free, 60 Hz fixed step, seeded): HIT (the v2 `push` command and `canMove('push')` stay as aliases) is a committed lunge that lands only on real contact in a forward cone, one victim, separate HIT/SLIDE cooldowns; a miss ends in a `whiff` and short recovery. SLIDE commits the facing at the press; a missed slide adds `slideMissLag`. Knockdowns run impact → falling → down → rising (`actState`), then protection, which never blocks interception, possession loss or goals.
+- SHOOT is press/release: a tap is a quick shot (`quickPower`), a hold charges to a cap (`maxChargeSeconds`); a hit cancels the charge. Aim follows the stick with at most `aimAssistMax`° of help inside `aimAssistCone`; a neutral stick aims inside the post away from the keeper.
+- Ball has height (`z`, `vz`, gravity, bounce), round posts and crossbar, boards, side/back netting, and sub-steps ≤ `ballSubstep` so fast shots cannot tunnel. A goal needs the whole ball past the line inside the posts and under the bar, counts once, and credits the last kicker/controller (deflections and parries keep the credit).
+- Keeper: reaction delay, limited speed/reach, dives, catches soft shots, parries hard ones into play, holds, then throws to alternating sides; cannot be hit or knocked down.
+- After a goal a short `goal` phase (celebration) precedes the fair restart; round expiry still ends the round from any phase.
+- AI uses the same meter, cooldowns and rules; it dribbles, charges shots, chases rebounds, and spreads (`aiSpread`) so it does not pile up.
+- Scene: HIT/SHOOT/SLIDE/TURBO with rings for cooldowns, charge and turbo; owner action-sheet frames (Alex and the keeper keep their existing art; slides use the falling/grounded frames because the sheets have no slide-tackle pose); net, bar, boards, ball shadow and height; code-synthesised sounds (`?mute` or `smr-sound=off` silences); shake is skipped under reduced motion. The Leave button now pauses, with Resume / Leave round; app hidden pauses and drops held controls.

@@ -1,5 +1,11 @@
 # Status
 
+## Jungle Ball v3 arcade upgrade (owner brief 2026-10-22, branch `devin/1792638887-jungle-arcade-v3`, stacked on PR #30, not merged, not deployed)
+
+- HIT / SLIDE / staged knockdowns / charged shots / ball height with posts, bar and net / keeper dives, catches, parries and throws / goal celebration / pause with Leave confirmation; see D43.
+- Owner action sheets (boy, girl, Blake, Sam) packed into the jungle atlases. Gaps: no Alex sheet, no slide-tackle pose, keeper keeps its existing sheet.
+- Tests: `tests/jungle-v3.test.ts` plus updated v2 suites. Not tested on a physical iPhone.
+
 ## Mom portraits, Cloudy aquarium paintings, Jungle Ball sheets (owner art 2026-10-22, branch `devin/1792623784-jungle-mom-aquarium`, not merged, not deployed)
 - **Mom:** the owner's 6-expression sheet (`docs/art/season-one/assets/v2/mom_expressions_source.png`, unchanged) is cut by `scripts/art/crop-mom-portraits.py` into `mom-neutral`, `mom-proud`, `mom-worried`, `mom-laughing`, `mom-firm`, `mom-sad` (2:3, bottom-anchored). `SPEAKER_ROLE.Mom = 'caregiver'`; every Season One scene where Mom speaks casts her portrait (7 scenes: prologue departure/arrival, weeks 1 and 4 home talks, weeks 1 and 4 pitch lines, week 2 aquarium). The script has no per-line expression field, so every line uses `mom-neutral`; the other five are loaded into the catalog and Art Gallery, ready once the script names expressions.
 - **Cloudy:** the owner's two aquarium paintings (`s1-tank-girl`, `s1-tank-boy`) are the backdrop of all 5 Cloudy scenes (`S1_PRO_ROOM`, `S1_W01_F`–`S1_W04_F`), chosen from the saved Boy/Girl. They already show the player and Cloudy, so no portraits or code-drawn figure go on top (`cast_in_backdrop`). Before a look is chosen, or if a painting fails to load, the old tank backdrop / labelled fallback is used.

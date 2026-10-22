@@ -91,7 +91,10 @@ test('keyboard moves the Jungle Ball player and rotation keeps the pen on screen
   await page.waitForFunction((v) => window.__SMR__?.diagnostics().layout?.viewport.width === v.width, rotated);
   const after = await diagnostics(page);
   for (const name of ['pen', 'title', 'back-button', 'stick', 'turbo', 'shoot', 'slide', 'hit']) expectInside(name, after.layout?.elements[name], rotated);
+  // Escape pauses; Leave is confirmed from the pause overlay.
   await page.keyboard.press('Escape');
+  await expect.poll(async () => ((await diagnostics(page)).gameplay as { paused?: boolean } | null)?.paused).toBe(true);
+  await pressElement(page, 'leave-confirm-button', 'touch');
   await waitForScene(page, 'start');
   expect(errors).toEqual([]);
 });
