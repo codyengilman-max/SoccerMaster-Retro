@@ -150,7 +150,8 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
   override update(_t: number, deltaMs: number): void {
     const s = this.session;
     if (s && this.screen === 'play') {
-      if (s.status === 'playing') s.update(Math.min(deltaMs / 1000, 0.1) * this.speed);
+      // ?ttSpeed (debug) speeds up play only; the timed decision window always runs in real seconds.
+      if (s.status === 'playing') s.update(Math.min(deltaMs / 1000, 0.1) * (s.drill?.phase === 'observe' ? 1 : this.speed));
       if (s.status === 'reflection') this.setScreen('reflection', '');
     }
     this.walk += deltaMs / 1000;

@@ -1,7 +1,7 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { diagnostics, expectInside, pressElement, trackConsoleErrors, waitForScene } from './helpers';
 
-test.describe.configure({ timeout: 300_000 });
+test.describe.configure({ timeout: 600_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 
 type TT = {
@@ -9,6 +9,11 @@ type TT = {
   options: { id: string; good: boolean; quality: number }[]; attempts: number; activeSeconds: number; rejected: number;
   completion: { creditEligible: boolean; masteryGranted: boolean } | null; saved: string; pxPerMetre: number; sprite: string | null; squadSprites: string[]; bodyBottom: number; buttonsTop: number; titleBottom: number;
 };
+/** The panel rebuilds its buttons on the next frame after the phase changes; on a slow runner wait for the button to exist. */
+async function pressReady(page: Page, name: string, mode: 'mouse' | 'touch'): Promise<void> {
+  await expect.poll(async () => !!(await diagnostics(page)).layout?.elements[name], { timeout: 10_000 }).toBe(true);
+  await pressElement(page, name, mode);
+}
 type Career = { screen: string; status: string; text: string };
 
 async function tt(page: Page, pred: (t: TT) => boolean, what: string, ms = 60_000): Promise<TT> {
@@ -121,10 +126,10 @@ test('team training v1.2: whole session on the overhead half, counted once, idle
           shot = true;
         }
         const best = [...t.options].sort((a, b) => b.quality - a.quality)[0]!;
-        await pressElement(page, `opt-${best.id}`, mode);
+        await pressReady(page, `opt-${best.id}`, mode);
         await tt(page, (x) => x.phase !== 'observe' || x.attempts > t.attempts, 'decision taken');
       } else {
-        await pressElement(page, 'tt-next', mode);
+        await pressReady(page, 'tt-next', mode);
         await tt(page, (x) => x.phase !== 'explain' || x.screen === 'reflection', 'next attempt');
       }
     }
