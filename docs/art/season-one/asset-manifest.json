@@ -469,6 +469,24 @@
       ],
       "use": "Cloudy conversations: the saved boy/girl is painted in",
       "runtime": true
+    },
+    {
+      "assetId": "home-v3",
+      "path": "assets/home_v3_background.jpeg",
+      "sourcePath": "SoccerMaster_V3_Week5/home-screen-background.jpeg",
+      "type": "background",
+      "characterId": null,
+      "label": "Home menu (V3)",
+      "outfitId": null,
+      "width": 1536,
+      "height": 1024,
+      "hasAlpha": false,
+      "sha256": "4baf73f3ac2093df496ed01255ae7df8a3c867cbe26e57015e7b16525d80f059",
+      "sizeBytes": 616590,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [],
+      "use": "Week 5+ home menu backdrop (V3)",
+      "runtime": true
     }
   ]
 }

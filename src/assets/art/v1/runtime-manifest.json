@@ -408,6 +408,14 @@
       "bytes": 84944
     },
     {
+      "assetId": "home-v3",
+      "file": "home-v3.webp",
+      "width": 768,
+      "height": 512,
+      "masterSha256": "4baf73f3ac2093df496ed01255ae7df8a3c867cbe26e57015e7b16525d80f059",
+      "bytes": 89670
+    },
+    {
       "assetId": "crossbar-schoolyard",
       "file": "crossbar-schoolyard.webp",
       "width": 836,

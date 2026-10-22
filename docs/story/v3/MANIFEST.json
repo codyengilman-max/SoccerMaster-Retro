@@ -1,0 +1,46 @@
+{
+  "version": "3.0.0",
+  "kind": "content-and-integration-handoff",
+  "files": {
+    "ACCEPTANCE_CHECKLIST.md": {
+      "bytes": 2543,
+      "sha256": "19df5abbf1f01195c7d04578bf808630d55a5a533acd5566693815ece13e012e"
+    },
+    "DEVIN_START_HERE.md": {
+      "bytes": 6460,
+      "sha256": "2563d55a7dc7723c9da023e4b990f632073b83fc6685bba4d342b36d9c3040a0"
+    },
+    "HOME_BACKGROUND_INSTRUCTIONS.md": {
+      "bytes": 1999,
+      "sha256": "ba1457a74d9ff8c151dedc88a42ab0cf5c27f35b60b165b64ae35748f3d9eecb"
+    },
+    "README.md": {
+      "bytes": 2012,
+      "sha256": "0a76018596040f600a6fc7ddd8f6c110cd1f6bd00c67af8ef9792072c391bc19"
+    },
+    "SEASON_CONTINUITY.md": {
+      "bytes": 4280,
+      "sha256": "cbe3081c6b3a40aa707305918d3aa508586d5e3b8edf5a3eb9a8467cf342ca5c"
+    },
+    "SEASON_RULES_V3.json": {
+      "bytes": 2755,
+      "sha256": "08130e510cba913abe300bf73afaf439ab24aeed7841e6ee6a1ec4f82f14a655"
+    },
+    "WEEK_05_APPROVED.md": {
+      "bytes": 6792,
+      "sha256": "e0200f3acd9ade1102943f45a10fa868a2ad99df7f93c7d89386f098d3c091c1"
+    },
+    "WEEK_05_FLOW.json": {
+      "bytes": 4058,
+      "sha256": "9d681d0c4ae72e5d894c3e0d4b9d7ca60d60b399a6ee676c4b8a5fee7ba07e6d"
+    },
+    "home-screen-background.jpeg": {
+      "bytes": 616590,
+      "sha256": "4baf73f3ac2093df496ed01255ae7df8a3c867cbe26e57015e7b16525d80f059"
+    },
+    "validate-package.mjs": {
+      "bytes": 2742,
+      "sha256": "cbd99185762ff711764d89b5dc0cc455cdc790ad9c968e767e1936117299b7b8"
+    }
+  }
+}
