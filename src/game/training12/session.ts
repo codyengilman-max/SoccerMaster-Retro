@@ -134,7 +134,7 @@ export class TrainingSession {
     while (left > 1e-9 && (d.phase === 'release' || d.phase === 'execute') && this.run.status === 'playing') {
       const dt = Math.min(DRILL.dt, left);
       left -= dt;
-      // Close the participation window before the tick that ends the bout: windows are only accepted during play.
+      // Close the participation span before the tick that ends the bout: spans are only accepted during play.
       if (d.phase === 'execute' && this.run.elapsed + dt >= this.run.boutSeconds - 1e-9) this.closeWindow();
       if (!this.send({ type: 'tick', tick: ++this.tick, dt } as never)) return;
       step(d, dt);
