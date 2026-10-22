@@ -1,6 +1,12 @@
 # Status
 
 
+## Cloudy's Feeding Frenzy (owner brief 2026-10-23, branch `devin/1792691488-cloudy-feeding-frenzy`, PR #34 stacked on #33, not merged, not deployed)
+- Playable aquarium mini-game on the supplied painting and Cloudy sheet: Easy/Medium/Hard, 45 s round after a 3 s countdown, drag-to-swim (touch or mouse), DASH (0.35 s, 3 s cooldown), x1/x2/x3 combos, two ball chances (about 12 s and 28 s, 10 s each) scored once (+50) when the whole ball enters the painted goal from outside.
+- Pause (button, Escape/P, app hidden, focus lost) freezes timers, spawning, physics, currents and cooldowns. Results save the best score and stars per difficulty once per run through the career reducer (`cloudyResult`); a failed write keeps the round and offers Retry save. No soccer attributes or match statistics.
+- Reachable only through `?dev` Start for now; the V3 Week 5 home menu opens it in the next PR.
+- Tests: `tests/cloudy.test.ts` (sim, transform, save) and `e2e/cloudy.spec.ts` (portrait and landscape: art fit, goal alignment, drag, DASH, pause, results, reload, app switch, rotation, listener counts). Not tested on a real iPhone.
+
 ## Team Training v1.2 (owner package 2026-10-22, branch `devin/1792646912-team-training-v12`, not merged, not deployed)
 - Package kept unchanged in `docs/training/v1.2/`; reference modules vendored with their 36 tests in `npm test`.
 - Playable: Career → Team Training → Session A/B/C (v1.2) for Season 1 weeks 1–4, every role offered to the career position. Fixed overhead half-field camera, coached Observe → Decide → Execute → Explain loop, 3 rounds (guided, unguided, timed), pause, two-tap leave, rotation-safe.
