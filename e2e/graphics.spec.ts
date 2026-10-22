@@ -145,7 +145,7 @@ test('Art Gallery is reachable from Review & Lab, lists every asset with its sta
     if (g.page.kind === 'gaps') expect(g.gaps).toBeGreaterThan(0);
     await press(page, 'gallery-next', mode);
   }
-  expect(seen.size).toBe(52); // 42 + v1.2 crossbar-schoolyard and training-bell94 + 6 Mom portraits and 2 aquarium paintings
+  expect(seen.size).toBe(53); // 42 + v1.2 crossbar-schoolyard and training-bell94 + 6 Mom portraits, 2 aquarium paintings and the V3 home menu
   await press(page, 'gallery-back', mode);
   await waitForScene(page, 'career');
   const career = (await diagnostics(page)).gameplay as { player: string | null; screen: string };
