@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { U11_9V9_PITCH, pitchMarkings } from '../src/game';
 import { arcPoints, fitPitch, orientationOf, rectToScreen, rectWithin, toScreen } from '../src/render/layout';
+import { BACKDROP_FOCUS } from '../src/render/art/catalog';
 import { coverWithFocus, fitRegion, fromScreen, pitchVectorToScreen, screenVectorToPitch } from '../src/render/layout';
 
 const PHONES = [
@@ -93,15 +94,14 @@ describe('fitRegion (attack drill view)', () => {
 });
 
 describe('coverWithFocus (painted story backdrops)', () => {
-  const focus = { x0: 0.2, y0: 0.2, x1: 0.85, y1: 0.44 };
   const cases = [
     { name: 'iPhone 13 portrait', width: 390, height: 383, top: 50 },
     { name: 'iPhone 13 landscape', width: 844, height: 201, top: 50 },
     { name: 'iPhone SE landscape', width: 667, height: 190, top: 50 },
     { name: 'iPhone 15 Pro Max portrait', width: 430, height: 420, top: 50 },
   ];
-  for (const c of cases) {
-    it(`${c.name}: covers the band with no gaps and keeps the focus box in view`, () => {
+  for (const [assetId, focus] of Object.entries(BACKDROP_FOCUS)) for (const c of cases) {
+    it(`${assetId} ${c.name}: covers the band with no gaps and keeps the focus box in view`, () => {
       const r = coverWithFocus(1536, 1024, c.width, c.height, c.top, focus);
       const w = 1536 * r.scale;
       const h = 1024 * r.scale;
@@ -122,8 +122,9 @@ describe('coverWithFocus (painted story backdrops)', () => {
 
   it('the old centred cover crops the portrait fish and the landscape face (regression)', () => {
     const p = Math.max(390 / 1536, 383 / 1024);
-    expect(390 / 2 + (0.85 - 0.5) * 1536 * p).toBeGreaterThan(390);
+    const focus = BACKDROP_FOCUS['s1-tank-boy']!;
+    expect(390 / 2 + (focus.x1 - 0.5) * 1536 * p).toBeGreaterThan(390);
     const l = Math.max(844 / 1536, 201 / 1024);
-    expect(201 / 2 + (0.2 - 0.5) * 1024 * l).toBeLessThan(50);
+    expect(201 / 2 + (focus.y0 - 0.5) * 1024 * l).toBeLessThan(50);
   });
 });
