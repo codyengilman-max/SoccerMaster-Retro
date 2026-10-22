@@ -1,0 +1,299 @@
+[
+  {
+    "id": "valley_rising_b_actions",
+    "team": "valley_rising",
+    "group": "b",
+    "type": "actions",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20133: side view facing RIGHT low inside-foot PASS: backswing, foot at contact low near ground, low follow-through. Columns4\u20136: facing RIGHT strong instep SHOT: large backswing bent rear leg, striking leg extended, across-body follow-through. Columns7\u20139: facing RIGHT CHIP: foot toe angled under implied ball, upward scooping contact, short upward follow-through with torso leaning back. Distinguish chip from flat shot. Column10: FRONT idle athletic ready. Column11: side-facing RIGHT shoulder charge braced lean. Column12: side-facing RIGHT low slide tackle, extended front leg bent rear leg. No ball painted in any frame. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/valley_rising_b.png"
+    ]
+  },
+  {
+    "id": "desert_tuzon_b_motion",
+    "team": "desert_tuzon",
+    "group": "b",
+    "type": "motion",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20134: side view running toward screen RIGHT, four distinct phases: left leg forward/right back, passing feet, right leg forward/left back, opposite passing feet. Columns5\u20138: FRONT view running TOWARD camera, four alternating gait phases, face fully visible. Columns9\u201312: BACK view running AWAY from camera, four alternating gait phases; back of head visible, NO face or eyes, backs of jerseys visible. These must be real changing leg/arm poses, no repeated standing pose. Hair moves naturally with stride without identity change. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/desert_tuzon_b.png"
+    ]
+  },
+  {
+    "id": "sol_vista_a_actions",
+    "team": "sol_vista",
+    "group": "a",
+    "type": "actions",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20133: side view facing RIGHT low inside-foot PASS: backswing, foot at contact low near ground, low follow-through. Columns4\u20136: facing RIGHT strong instep SHOT: large backswing bent rear leg, striking leg extended, across-body follow-through. Columns7\u20139: facing RIGHT CHIP: foot toe angled under implied ball, upward scooping contact, short upward follow-through with torso leaning back. Distinguish chip from flat shot. Column10: FRONT idle athletic ready. Column11: side-facing RIGHT shoulder charge braced lean. Column12: side-facing RIGHT low slide tackle, extended front leg bent rear leg. No ball painted in any frame. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/sol_vista_a.png"
+    ]
+  },
+  {
+    "id": "sol_vista_b_motion",
+    "team": "sol_vista",
+    "group": "b",
+    "type": "motion",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20134: side view running toward screen RIGHT, four distinct phases: left leg forward/right back, passing feet, right leg forward/left back, opposite passing feet. Columns5\u20138: FRONT view running TOWARD camera, four alternating gait phases, face fully visible. Columns9\u201312: BACK view running AWAY from camera, four alternating gait phases; back of head visible, NO face or eyes, backs of jerseys visible. These must be real changing leg/arm poses, no repeated standing pose. Hair moves naturally with stride without identity change. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/sol_vista_b.png"
+    ]
+  },
+  {
+    "id": "next_horizon_b_motion",
+    "team": "next_horizon",
+    "group": "b",
+    "type": "motion",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20134: side view running toward screen RIGHT, four distinct phases: left leg forward/right back, passing feet, right leg forward/left back, opposite passing feet. Columns5\u20138: FRONT view running TOWARD camera, four alternating gait phases, face fully visible. Columns9\u201312: BACK view running AWAY from camera, four alternating gait phases; back of head visible, NO face or eyes, backs of jerseys visible. These must be real changing leg/arm poses, no repeated standing pose. Hair moves naturally with stride without identity change. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/next_horizon_b.png"
+    ]
+  },
+  {
+    "id": "next_horizon_b_actions",
+    "team": "next_horizon",
+    "group": "b",
+    "type": "actions",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20133: side view facing RIGHT low inside-foot PASS: backswing, foot at contact low near ground, low follow-through. Columns4\u20136: facing RIGHT strong instep SHOT: large backswing bent rear leg, striking leg extended, across-body follow-through. Columns7\u20139: facing RIGHT CHIP: foot toe angled under implied ball, upward scooping contact, short upward follow-through with torso leaning back. Distinguish chip from flat shot. Column10: FRONT idle athletic ready. Column11: side-facing RIGHT shoulder charge braced lean. Column12: side-facing RIGHT low slide tackle, extended front leg bent rear leg. No ball painted in any frame. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/next_horizon_b.png"
+    ]
+  },
+  {
+    "id": "visitor_1_a_motion",
+    "team": "visitor_1",
+    "group": "a",
+    "type": "motion",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20134: side view running toward screen RIGHT, four distinct phases: left leg forward/right back, passing feet, right leg forward/left back, opposite passing feet. Columns5\u20138: FRONT view running TOWARD camera, four alternating gait phases, face fully visible. Columns9\u201312: BACK view running AWAY from camera, four alternating gait phases; back of head visible, NO face or eyes, backs of jerseys visible. These must be real changing leg/arm poses, no repeated standing pose. Hair moves naturally with stride without identity change. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/visitor_1_a.png"
+    ]
+  },
+  {
+    "id": "visitor_1_a_actions",
+    "team": "visitor_1",
+    "group": "a",
+    "type": "actions",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20133: side view facing RIGHT low inside-foot PASS: backswing, foot at contact low near ground, low follow-through. Columns4\u20136: facing RIGHT strong instep SHOT: large backswing bent rear leg, striking leg extended, across-body follow-through. Columns7\u20139: facing RIGHT CHIP: foot toe angled under implied ball, upward scooping contact, short upward follow-through with torso leaning back. Distinguish chip from flat shot. Column10: FRONT idle athletic ready. Column11: side-facing RIGHT shoulder charge braced lean. Column12: side-facing RIGHT low slide tackle, extended front leg bent rear leg. No ball painted in any frame. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/visitor_1_a.png"
+    ]
+  },
+  {
+    "id": "visitor_1_b_motion",
+    "team": "visitor_1",
+    "group": "b",
+    "type": "motion",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20134: side view running toward screen RIGHT, four distinct phases: left leg forward/right back, passing feet, right leg forward/left back, opposite passing feet. Columns5\u20138: FRONT view running TOWARD camera, four alternating gait phases, face fully visible. Columns9\u201312: BACK view running AWAY from camera, four alternating gait phases; back of head visible, NO face or eyes, backs of jerseys visible. These must be real changing leg/arm poses, no repeated standing pose. Hair moves naturally with stride without identity change. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/visitor_1_b.png"
+    ]
+  },
+  {
+    "id": "visitor_1_b_actions",
+    "team": "visitor_1",
+    "group": "b",
+    "type": "actions",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20133: side view facing RIGHT low inside-foot PASS: backswing, foot at contact low near ground, low follow-through. Columns4\u20136: facing RIGHT strong instep SHOT: large backswing bent rear leg, striking leg extended, across-body follow-through. Columns7\u20139: facing RIGHT CHIP: foot toe angled under implied ball, upward scooping contact, short upward follow-through with torso leaning back. Distinguish chip from flat shot. Column10: FRONT idle athletic ready. Column11: side-facing RIGHT shoulder charge braced lean. Column12: side-facing RIGHT low slide tackle, extended front leg bent rear leg. No ball painted in any frame. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/visitor_1_b.png"
+    ]
+  },
+  {
+    "id": "visitor_1_keeper",
+    "team": "visitor_1",
+    "type": "keeper",
+    "cols": 6,
+    "rows": 5,
+    "prompt": "Use case: identity-preserve. Draw a production goalkeeper animation sprite sheet of ONLY the child in the reference. Preserve exact face, skin, hairstyle, kit and gloves. Crisp retro pixel art and dark outlines, same youth proportions. Transparent background, NO glow NO shadows NO text NO ball. EXACT6 COLUMNS5 ROWS,30 full-body sprites,1536x1280. Equal cells and generous gutters, no clipped feet or hands. Same body scale throughout, even when diving. ROW1 six SIDE RIGHT running phases alternating legs and arms. ROW2 six FRONT running toward camera phases. ROW3 six BACK running away phases: back of head NO eyes. ROW4 columns1\u20132 ready crouch movement, columns3\u20134 reaching catch then hands brought to chest(no ball), columns5\u20136 dive RIGHT takeoff then full horizontal extension. ROW5 columns1\u20132 dive LEFT takeoff then full extension, columns3\u20134 overarm throwRIGHT windup/release, columns5\u20136 puntRIGHT dropmotion/kick followthrough. Every row has exactly SIX cells. Produce30 distinct poses.",
+    "refs": [
+      "reference/selected/visitor_1_keeper.png"
+    ]
+  },
+  {
+    "id": "visitor_2_a_motion",
+    "team": "visitor_2",
+    "group": "a",
+    "type": "motion",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20134: side view running toward screen RIGHT, four distinct phases: left leg forward/right back, passing feet, right leg forward/left back, opposite passing feet. Columns5\u20138: FRONT view running TOWARD camera, four alternating gait phases, face fully visible. Columns9\u201312: BACK view running AWAY from camera, four alternating gait phases; back of head visible, NO face or eyes, backs of jerseys visible. These must be real changing leg/arm poses, no repeated standing pose. Hair moves naturally with stride without identity change. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/visitor_2_a.png"
+    ]
+  },
+  {
+    "id": "visitor_2_a_actions",
+    "team": "visitor_2",
+    "group": "a",
+    "type": "actions",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20133: side view facing RIGHT low inside-foot PASS: backswing, foot at contact low near ground, low follow-through. Columns4\u20136: facing RIGHT strong instep SHOT: large backswing bent rear leg, striking leg extended, across-body follow-through. Columns7\u20139: facing RIGHT CHIP: foot toe angled under implied ball, upward scooping contact, short upward follow-through with torso leaning back. Distinguish chip from flat shot. Column10: FRONT idle athletic ready. Column11: side-facing RIGHT shoulder charge braced lean. Column12: side-facing RIGHT low slide tackle, extended front leg bent rear leg. No ball painted in any frame. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/visitor_2_a.png"
+    ]
+  },
+  {
+    "id": "visitor_2_b_motion",
+    "team": "visitor_2",
+    "group": "b",
+    "type": "motion",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20134: side view running toward screen RIGHT, four distinct phases: left leg forward/right back, passing feet, right leg forward/left back, opposite passing feet. Columns5\u20138: FRONT view running TOWARD camera, four alternating gait phases, face fully visible. Columns9\u201312: BACK view running AWAY from camera, four alternating gait phases; back of head visible, NO face or eyes, backs of jerseys visible. These must be real changing leg/arm poses, no repeated standing pose. Hair moves naturally with stride without identity change. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/visitor_2_b.png"
+    ]
+  },
+  {
+    "id": "visitor_2_b_actions",
+    "team": "visitor_2",
+    "group": "b",
+    "type": "actions",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20133: side view facing RIGHT low inside-foot PASS: backswing, foot at contact low near ground, low follow-through. Columns4\u20136: facing RIGHT strong instep SHOT: large backswing bent rear leg, striking leg extended, across-body follow-through. Columns7\u20139: facing RIGHT CHIP: foot toe angled under implied ball, upward scooping contact, short upward follow-through with torso leaning back. Distinguish chip from flat shot. Column10: FRONT idle athletic ready. Column11: side-facing RIGHT shoulder charge braced lean. Column12: side-facing RIGHT low slide tackle, extended front leg bent rear leg. No ball painted in any frame. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/visitor_2_b.png"
+    ]
+  },
+  {
+    "id": "visitor_2_keeper",
+    "team": "visitor_2",
+    "type": "keeper",
+    "cols": 6,
+    "rows": 5,
+    "prompt": "Use case: identity-preserve. Draw a production goalkeeper animation sprite sheet of ONLY the child in the reference. Preserve exact face, skin, hairstyle, kit and gloves. Crisp retro pixel art and dark outlines, same youth proportions. Transparent background, NO glow NO shadows NO text NO ball. EXACT6 COLUMNS5 ROWS,30 full-body sprites,1536x1280. Equal cells and generous gutters, no clipped feet or hands. Same body scale throughout, even when diving. ROW1 six SIDE RIGHT running phases alternating legs and arms. ROW2 six FRONT running toward camera phases. ROW3 six BACK running away phases: back of head NO eyes. ROW4 columns1\u20132 ready crouch movement, columns3\u20134 reaching catch then hands brought to chest(no ball), columns5\u20136 dive RIGHT takeoff then full horizontal extension. ROW5 columns1\u20132 dive LEFT takeoff then full extension, columns3\u20134 overarm throwRIGHT windup/release, columns5\u20136 puntRIGHT dropmotion/kick followthrough. Every row has exactly SIX cells. Produce30 distinct poses.",
+    "refs": [
+      "reference/selected/visitor_2_keeper.png"
+    ]
+  },
+  {
+    "id": "visitor_3_a_motion",
+    "team": "visitor_3",
+    "group": "a",
+    "type": "motion",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20134: side view running toward screen RIGHT, four distinct phases: left leg forward/right back, passing feet, right leg forward/left back, opposite passing feet. Columns5\u20138: FRONT view running TOWARD camera, four alternating gait phases, face fully visible. Columns9\u201312: BACK view running AWAY from camera, four alternating gait phases; back of head visible, NO face or eyes, backs of jerseys visible. These must be real changing leg/arm poses, no repeated standing pose. Hair moves naturally with stride without identity change. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/visitor_3_a.png"
+    ]
+  },
+  {
+    "id": "visitor_3_a_actions",
+    "team": "visitor_3",
+    "group": "a",
+    "type": "actions",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20133: side view facing RIGHT low inside-foot PASS: backswing, foot at contact low near ground, low follow-through. Columns4\u20136: facing RIGHT strong instep SHOT: large backswing bent rear leg, striking leg extended, across-body follow-through. Columns7\u20139: facing RIGHT CHIP: foot toe angled under implied ball, upward scooping contact, short upward follow-through with torso leaning back. Distinguish chip from flat shot. Column10: FRONT idle athletic ready. Column11: side-facing RIGHT shoulder charge braced lean. Column12: side-facing RIGHT low slide tackle, extended front leg bent rear leg. No ball painted in any frame. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/visitor_3_a.png"
+    ]
+  },
+  {
+    "id": "visitor_3_b_motion",
+    "team": "visitor_3",
+    "group": "b",
+    "type": "motion",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20134: side view running toward screen RIGHT, four distinct phases: left leg forward/right back, passing feet, right leg forward/left back, opposite passing feet. Columns5\u20138: FRONT view running TOWARD camera, four alternating gait phases, face fully visible. Columns9\u201312: BACK view running AWAY from camera, four alternating gait phases; back of head visible, NO face or eyes, backs of jerseys visible. These must be real changing leg/arm poses, no repeated standing pose. Hair moves naturally with stride without identity change. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/visitor_3_b.png"
+    ]
+  },
+  {
+    "id": "visitor_3_b_actions",
+    "team": "visitor_3",
+    "group": "b",
+    "type": "actions",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20133: side view facing RIGHT low inside-foot PASS: backswing, foot at contact low near ground, low follow-through. Columns4\u20136: facing RIGHT strong instep SHOT: large backswing bent rear leg, striking leg extended, across-body follow-through. Columns7\u20139: facing RIGHT CHIP: foot toe angled under implied ball, upward scooping contact, short upward follow-through with torso leaning back. Distinguish chip from flat shot. Column10: FRONT idle athletic ready. Column11: side-facing RIGHT shoulder charge braced lean. Column12: side-facing RIGHT low slide tackle, extended front leg bent rear leg. No ball painted in any frame. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/visitor_3_b.png"
+    ]
+  },
+  {
+    "id": "visitor_4_a_motion",
+    "team": "visitor_4",
+    "group": "a",
+    "type": "motion",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20134: side view running toward screen RIGHT, four distinct phases: left leg forward/right back, passing feet, right leg forward/left back, opposite passing feet. Columns5\u20138: FRONT view running TOWARD camera, four alternating gait phases, face fully visible. Columns9\u201312: BACK view running AWAY from camera, four alternating gait phases; back of head visible, NO face or eyes, backs of jerseys visible. These must be real changing leg/arm poses, no repeated standing pose. Hair moves naturally with stride without identity change. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/visitor_4_a.png"
+    ]
+  },
+  {
+    "id": "visitor_4_a_actions",
+    "team": "visitor_4",
+    "group": "a",
+    "type": "actions",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20133: side view facing RIGHT low inside-foot PASS: backswing, foot at contact low near ground, low follow-through. Columns4\u20136: facing RIGHT strong instep SHOT: large backswing bent rear leg, striking leg extended, across-body follow-through. Columns7\u20139: facing RIGHT CHIP: foot toe angled under implied ball, upward scooping contact, short upward follow-through with torso leaning back. Distinguish chip from flat shot. Column10: FRONT idle athletic ready. Column11: side-facing RIGHT shoulder charge braced lean. Column12: side-facing RIGHT low slide tackle, extended front leg bent rear leg. No ball painted in any frame. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/visitor_4_a.png"
+    ]
+  },
+  {
+    "id": "visitor_4_b_motion",
+    "team": "visitor_4",
+    "group": "b",
+    "type": "motion",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20134: side view running toward screen RIGHT, four distinct phases: left leg forward/right back, passing feet, right leg forward/left back, opposite passing feet. Columns5\u20138: FRONT view running TOWARD camera, four alternating gait phases, face fully visible. Columns9\u201312: BACK view running AWAY from camera, four alternating gait phases; back of head visible, NO face or eyes, backs of jerseys visible. These must be real changing leg/arm poses, no repeated standing pose. Hair moves naturally with stride without identity change. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/visitor_4_b.png"
+    ]
+  },
+  {
+    "id": "visitor_4_b_actions",
+    "team": "visitor_4",
+    "group": "b",
+    "type": "actions",
+    "cols": 12,
+    "rows": 4,
+    "prompt": "Use case: identity-preserve. Production animation sprite sheet for SoccerMaster Retro, crisp 2D pixel sprites with dark outlines and simple cel shading, same youth proportions as reference. TRANSPARENT background alpha zero everywhere outside sprites, NO glows NO floor NO shadows NO text NO labels NO lines NO balls. Exact evenly spaced grid of 12 columns and 4 rows, wide landscape 2400x1200. Every cell contains ONE full-body pose entirely inside its cell with ample gutter. Same body scale, consistent center and foot baseline in each cell. This is an animation source sheet, not a lineup. Each ROW is ONE child repeated through 12 different poses. Preserve the assigned child's face, skin, hair silhouette and uniform in all twelve cells of their row. The input contains ONLY FOUR children in a 2x2 layout. Output ROW1 must be the reference TOP-LEFT child; ROW2 TOP-RIGHT; ROW3 BOTTOM-LEFT; ROW4 BOTTOM-RIGHT. Each row repeats its SAME child 12 times. Do not change the child's face or hair when turning. Do not borrow faces from other rows. Columns1\u20133: side view facing RIGHT low inside-foot PASS: backswing, foot at contact low near ground, low follow-through. Columns4\u20136: facing RIGHT strong instep SHOT: large backswing bent rear leg, striking leg extended, across-body follow-through. Columns7\u20139: facing RIGHT CHIP: foot toe angled under implied ball, upward scooping contact, short upward follow-through with torso leaning back. Distinguish chip from flat shot. Column10: FRONT idle athletic ready. Column11: side-facing RIGHT shoulder charge braced lean. Column12: side-facing RIGHT low slide tackle, extended front leg bent rear leg. No ball painted in any frame. Keep the reference kit colors and exact hairstyles and skin tones in every single frame. A back-facing head must keep the correct hairstyle with no face. Leave at least12 source pixels gap between ALL sprite bodies and between sprites and outer image edges.",
+    "refs": [
+      "reference/selected/visitor_4_b.png"
+    ]
+  },
+  {
+    "id": "visitor_4_keeper",
+    "team": "visitor_4",
+    "type": "keeper",
+    "cols": 6,
+    "rows": 5,
+    "prompt": "Use case: identity-preserve. Draw a production goalkeeper animation sprite sheet of ONLY the child in the reference. Preserve exact face, skin, hairstyle, kit and gloves. Crisp retro pixel art and dark outlines, same youth proportions. Transparent background, NO glow NO shadows NO text NO ball. EXACT6 COLUMNS5 ROWS,30 full-body sprites,1536x1280. Equal cells and generous gutters, no clipped feet or hands. Same body scale throughout, even when diving. ROW1 six SIDE RIGHT running phases alternating legs and arms. ROW2 six FRONT running toward camera phases. ROW3 six BACK running away phases: back of head NO eyes. ROW4 columns1\u20132 ready crouch movement, columns3\u20134 reaching catch then hands brought to chest(no ball), columns5\u20136 dive RIGHT takeoff then full horizontal extension. ROW5 columns1\u20132 dive LEFT takeoff then full extension, columns3\u20134 overarm throwRIGHT windup/release, columns5\u20136 puntRIGHT dropmotion/kick followthrough. Every row has exactly SIX cells. Produce30 distinct poses.",
+    "refs": [
+      "reference/selected/visitor_4_keeper.png"
+    ]
+  }
+]

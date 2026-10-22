@@ -1,0 +1,150 @@
+{
+  "cell": [
+    160,
+    128
+  ],
+  "anchorPx": [
+    80,
+    120
+  ],
+  "origin": [
+    0.5,
+    0.9375
+  ],
+  "neutralBodyHeight": 94,
+  "clips": {
+    "run_right": {
+      "frames": [
+        "valley_rising_09_00",
+        "valley_rising_09_01",
+        "valley_rising_09_02",
+        "valley_rising_09_03",
+        "valley_rising_09_04",
+        "valley_rising_09_05"
+      ],
+      "frameRate": 10,
+      "repeat": -1,
+      "flipX": false
+    },
+    "run_front": {
+      "frames": [
+        "valley_rising_09_06",
+        "valley_rising_09_07",
+        "valley_rising_09_08",
+        "valley_rising_09_09",
+        "valley_rising_09_10",
+        "valley_rising_09_11"
+      ],
+      "frameRate": 10,
+      "repeat": -1,
+      "flipX": false
+    },
+    "run_back": {
+      "frames": [
+        "valley_rising_09_12",
+        "valley_rising_09_13",
+        "valley_rising_09_14",
+        "valley_rising_09_15",
+        "valley_rising_09_16",
+        "valley_rising_09_17"
+      ],
+      "frameRate": 10,
+      "repeat": -1,
+      "flipX": false
+    },
+    "ready": {
+      "frames": [
+        "valley_rising_09_18",
+        "valley_rising_09_19"
+      ],
+      "frameRate": 4,
+      "repeat": -1,
+      "flipX": false
+    },
+    "catch": {
+      "frames": [
+        "valley_rising_09_20",
+        "valley_rising_09_21"
+      ],
+      "frameRate": 7,
+      "repeat": 0,
+      "flipX": false
+    },
+    "dive_right": {
+      "frames": [
+        "valley_rising_09_22",
+        "valley_rising_09_23"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "flipX": false
+    },
+    "dive_left": {
+      "frames": [
+        "valley_rising_09_22",
+        "valley_rising_09_23"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "flipX": true,
+      "derivedFrom": "dive_right"
+    },
+    "throw_right": {
+      "frames": [
+        "valley_rising_09_26",
+        "valley_rising_09_27"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "flipX": false
+    },
+    "punt_right": {
+      "frames": [
+        "valley_rising_09_28",
+        "valley_rising_09_29"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "flipX": false
+    },
+    "run_left": {
+      "frames": [
+        "valley_rising_09_00",
+        "valley_rising_09_01",
+        "valley_rising_09_02",
+        "valley_rising_09_03",
+        "valley_rising_09_04",
+        "valley_rising_09_05"
+      ],
+      "frameRate": 10,
+      "repeat": -1,
+      "flipX": true,
+      "derivedFrom": "run_right"
+    },
+    "throw_left": {
+      "frames": [
+        "valley_rising_09_26",
+        "valley_rising_09_27"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "flipX": true,
+      "derivedFrom": "throw_right"
+    },
+    "punt_left": {
+      "frames": [
+        "valley_rising_09_28",
+        "valley_rising_09_29"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "flipX": true,
+      "derivedFrom": "punt_right"
+    }
+  },
+  "unusedFrames": [
+    24,
+    25
+  ],
+  "notes": "Left-facing side actions and keeper dive-left use horizontal mirroring; asymmetric kit trim also mirrors. These are compact pixel keyframe cycles; engine ball and player movement remain authoritative. Front/back kicking directions are not separately drawn. Canonical standing design supplies the outfield idle frame. Shoulder/slide are held poses, not full cycles."
+}

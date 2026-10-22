@@ -1,0 +1,22 @@
+{
+  "completion": "partial",
+  "remainingSourceSheets": 25,
+  "characters": 36,
+  "frames": 900,
+  "sourceSheets": 26,
+  "expectedCharacters": 91,
+  "expectedSources": 51,
+  "checks": [
+    "PNG sizes match atlas",
+    "WebP visible pixels equal PNG",
+    "frame names resolve",
+    "nonempty frames",
+    "binary clean alpha",
+    "transparent cell borders",
+    "multi-pose clips have distinct image data",
+    "preview JavaScript syntax checked"
+  ],
+  "issues": [],
+  "gameIntegrationTested": false,
+  "realIPhoneTested": false
+}

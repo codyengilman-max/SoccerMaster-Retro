@@ -99,8 +99,9 @@ describe('sprites v2 roster', () => {
     for (const look of ['boy', 'girl'] as const) for (const kit of ['match', 'training'] as const) {
       const home = sideLooks('home', { slot: 7, look }, { club: 'batavia', kit });
       expect(home[7]!.set).toBe(`${look}-${kit}`);
-      expect(home[0]).toMatchObject({ set: 'club-batavia-match', keeper: true });
-      expect(home.filter((_, i) => i !== 0 && i !== 7).every((l) => l.set === clubSet('batavia', kit) && !l.keeper)).toBe(true);
+      // Batavia's nine appearances are drawn in Animated Rosters v2: match kit and keeper use them, training keeps the v2 training sheet.
+      expect(home[0]).toMatchObject({ set: 'appr-fc_batavia_09', keeper: true });
+      expect(home.every((l, i) => i === 0 || i === 7 || (l.set === (kit === 'match' ? `appr-fc_batavia_0${i}` : clubSet('batavia', kit)) && !l.keeper))).toBe(true);
     }
     const away = sideLooks('away', null, { club: 'next_horizon' });
     expect(away.every((l) => l.set === 'club-next_horizon')).toBe(true);

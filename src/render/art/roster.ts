@@ -5,7 +5,7 @@
  */
 import appearancesRaw from '../../../docs/art/graphics-v1/assets/gameplay/appearances.json';
 import { REFERENCE_KITS, type SpriteLook } from './spriteFactory';
-import { clubSet, protagonistSet, type Kit, type SpriteClub, type SpriteSetId } from './spriteSets';
+import { appearanceSet, clubSet, protagonistSet, type Kit, type SpriteClub, type SpriteSetId } from './spriteSets';
 
 interface RawAppearance { readonly id: string; readonly team: number; readonly girl: boolean; readonly hairIndex: number; readonly hairStyle: number }
 const APPEARANCES: ReadonlyMap<string, RawAppearance> = new Map((appearancesRaw as RawAppearance[]).map((a) => [a.id, a]));
@@ -55,7 +55,7 @@ export function sideLooks(side: Side, protagonist: { slot: number; look: Protago
   return looks.map((l, s) => {
     const mine = protagonist && side === 'home' && s === protagonist.slot && protagonist.slot >= 1 && protagonist.slot <= 8;
     // Batavia's training sheet has no keeper row, so its keeper keeps the match sheet's keeper poses.
-    const set = mine ? protagonistSet(protagonist.look, kit, false) : clubSet(dress.club, s === 0 ? 'match' : kit);
+    const set = mine ? protagonistSet(protagonist.look, kit, false) : ((kit === 'match' || s === 0 ? appearanceSet(dress.club, s) : null) ?? clubSet(dress.club, s === 0 ? 'match' : kit));
     return { ...l, set, keeper: s === 0 };
   });
 }
