@@ -41,6 +41,19 @@ describe('tournament results board', () => {
     expect(tournamentBoard(s).next).toBeNull();
   });
 
+  it('a level final shows who won the shoot-out, matching the outcome', () => {
+    let s = newTournament('az_showcase', 'c1', 11);
+    for (let i = 0; i < 3; i++) s = play(s, 9, 0);
+    s = play(s, 1, 1);
+    const b = tournamentBoard(s);
+    expect([b.lastResult?.homeGoals, b.lastResult?.awayGoals]).toEqual([1, 1]);
+    expect(b.lastResult?.shootoutWinner).toEqual(bataviaFinish(s) === 'champion' ? TOURNAMENTS.az_showcase.teams[HOME]!.name : expect.not.stringContaining('Batavia'));
+    expect(b.outcome === 'champion' || b.outcome === 'runner_up').toBe(true);
+    let g = newTournament('az_showcase', 'c2', 11);
+    g = play(g, 1, 1);
+    expect(tournamentBoard(g).lastResult?.shootoutWinner).toBeUndefined();
+  });
+
   it('losing the final is runner-up, and three heavy losses are out', () => {
     let s = newTournament('az_showcase', 'c1', 11);
     for (let i = 0; i < 3; i++) s = play(s, 9, 0);

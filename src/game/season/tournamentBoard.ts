@@ -7,7 +7,7 @@ import { HOME, TOURNAMENTS, allFixtures, bataviaFinish, finalFixture, groupTable
 export type BoardOutcome = 'pending' | 'in_final' | 'champion' | 'runner_up' | 'eliminated';
 export interface BoardRow { readonly position: number; readonly team: string; readonly name: string; readonly played: number; readonly won: number; readonly drawn: number; readonly lost: number; readonly points: number; readonly home: boolean }
 export interface BoardGroup { readonly label: string; readonly rows: readonly BoardRow[]; readonly complete: boolean }
-export interface BoardResult { readonly stage: string; readonly homeName: string; readonly awayName: string; readonly homeGoals: number; readonly awayGoals: number }
+export interface BoardResult { readonly stage: string; readonly homeName: string; readonly awayName: string; readonly homeGoals: number; readonly awayGoals: number; /** Name of the shoot-out winner when a final ended level. */ readonly shootoutWinner?: string }
 export interface TournamentBoard {
   readonly id: TournamentState['id'];
   readonly name: string;
@@ -45,7 +45,7 @@ export function tournamentBoard(s: TournamentState): TournamentBoard {
   let lastResult: BoardResult | null = null;
   for (const f of allFixtures(s)) {
     const r = s.results[f.id];
-    if (r && (f.home === HOME || f.away === HOME)) lastResult = { stage: STAGE[f.stage] ?? f.stage, homeName: name(f.home), awayName: name(f.away), homeGoals: r.homeGoals, awayGoals: r.awayGoals };
+    if (r && (f.home === HOME || f.away === HOME)) lastResult = { stage: STAGE[f.stage] ?? f.stage, homeName: name(f.home), awayName: name(f.away), homeGoals: r.homeGoals, awayGoals: r.awayGoals, ...(r.shootoutWinner ? { shootoutWinner: name(r.shootoutWinner) } : {}) };
   }
   const n = nextBataviaFixture(s);
   const outcome = outcomeOf(s);

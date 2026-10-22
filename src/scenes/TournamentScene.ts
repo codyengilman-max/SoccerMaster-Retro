@@ -152,7 +152,7 @@ export class TournamentScene extends Phaser.Scene implements InspectableScene {
     this.text('group-a', this.groupText(b.groups[0]), INK, 'left', false);
     this.text('group-b-head', `${b.groups[1].label}  (W-D-L, points)`, CREAM);
     this.text('group-b', this.groupText(b.groups[1]), INK, 'left', false);
-    this.text('match-result', r ? r.stage : 'No game played yet');
+    this.text('match-result', r ? `${r.stage}${r.shootoutWinner ? `: ${r.shootoutWinner} won the shoot-out` : ''}` : 'No game played yet');
     this.text('result-home', r?.homeName ?? '');
     this.text('result-hg', r ? String(r.homeGoals) : '');
     this.text('result-ag', r ? String(r.awayGoals) : '');
