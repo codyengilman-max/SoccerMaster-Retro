@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { crossbarRules } from '../src/game/story/content';
+import { homeAssignments } from '../src/game/story/facts';
+import { emptySave, type CareerSave, type JournalEntry } from '../src/game/career/state';
+import { CORE_ACTIVITIES, JUGGLING_LADDER } from '../src/game/career/catalog';
 import { currentNode, newStory, outcomeOf, reduceStory, type StoryCommand, type StoryState } from '../src/game/story/runtime';
 
 let seq = 0;
@@ -138,10 +142,59 @@ describe('V3 week 5: registered source hashes', () => {
     'docs/story/season-one/src/02_week02.story': '7ee40088e17e37cd12c899c9ec71ec2d6b505ca5d296dc94253971bd88a5380b',
     'docs/story/season-one/src/03_week03.story': '2b6fb5ad4375713451e463324fd4e19b74883e17ed687847750e8d42c50ebccd',
     'docs/story/season-one/src/04_week04.story': '0b9ebf92fc78931d47c35d512dea6fbd770b8c58d3e249a442409626272d165b',
-    'docs/story/season-one/src/05_week05.story': 'b400eedacecd94e7c93358b10eabe1b6d52b7b2da72f198439d1d3829d646cd3',
+    'docs/story/season-one/src/05_week05.story': 'fa68657f830c9a3b8ee59c3f7c7beed52a35cd054e5bcb359ceea1497dedb424',
     'docs/story/v3/WEEK_05_APPROVED.md': 'e0200f3acd9ade1102943f45a10fa868a2ad99df7f93c7d89386f098d3c091c1',
   };
   it.each(Object.entries(PINNED))('%s', (file, sha) => {
     expect(createHash('sha256').update(readFileSync(file)).digest('hex')).toBe(sha);
+  });
+});
+
+describe('V3 week 5: review fixes', () => {
+  it.each(['WIN', 'DRAW', 'LOSS'] as const)('Jungle Ball (after the declined Crossbar placeholder) drives the recess reaction: %s', (res) => {
+    const { s, lines } = play({
+      pick: (sc, node, ids) => (sc === 'S1_W05_S' && node !== 'warmup' ? (ids.includes('jungle') ? 'jungle' : ids[0]) : ids[0]),
+      done: (sc, a) => (sc === 'S1_W05_S' && a === 'jungle' ? { outcome: 'completed', result: res } : undefined),
+    });
+    const ran = Object.values(s.runs).filter((r) => r.sceneId === 'S1_W05_S');
+    expect(ran.map((r) => [r.adapter, r.outcome])).toEqual([['crossbar', 'declined'], ['jungle', 'completed']]);
+    const said = w5(lines, 'S1_W05_S').join('\n');
+    expect(said.includes('Been practicing?')).toBe(res === 'WIN');
+    expect(said.includes("We're not discussing that.")).toBe(res === 'LOSS');
+    expect(said.includes('Rematch next week.')).toBe(res === 'DRAW');
+  });
+
+  it("Week 5 Crossbar is Sam's challenge and a tie stands", () => {
+    expect(crossbarRules('S1_W05_S')).toEqual({ opponent: 'Sam', warmup: 'always', sudden: false });
+  });
+
+  it('the aggregate "steady" grade never claims a pass; only pass evidence gives the pass-weight line', () => {
+    const say = (detail: string) => w5(play({ done: (sc) => (sc === 'S1_W05_T' ? { outcome: 'completed', detail } : undefined) }).lines, 'S1_W05_T').join('\n');
+    expect(say('steady')).not.toContain('weight');
+    expect(say('pass_weight')).toContain('Now give the pass the weight it needs.');
+  });
+
+  describe('home menu gate: the required juggling and control/first-touch work, not a session count', () => {
+    const jug = JUGGLING_LADDER[0]!.id;
+    const touch = CORE_ACTIVITIES.find((a) => a.skillFamilyId === 'firstTouch')!.id;
+    const other = CORE_ACTIVITIES.find((a) => a.skillFamilyId === 'defending')!.id;
+    let n = 0;
+    const entry = (activityId: string, over: Partial<JournalEntry> = {}): JournalEntry =>
+      ({ id: `j${++n}`, week: 5, sessionId: null, activityId, variantId: null, contentVersion: 1, completion: 'done', rating: null, foot: null, personalBest: null, reflection: '', easier: false, credited: false, ...over }) as JournalEntry;
+    const save = (journal: JournalEntry[], extra: Partial<CareerSave> = {}): CareerSave => ({ ...emptySave(), week: 5, journal, ...extra }) as CareerSave;
+    it('three sessions in another focus do not unlock it', () => {
+      expect(homeAssignments(save([entry(other), entry(other), entry(other)], { completedSessions: ['a', 'b', 'c'] })).complete).toBe(false);
+    });
+    it('missing juggling keeps it locked', () => {
+      expect(homeAssignments(save([entry(touch)]))).toEqual({ juggling: false, firstTouch: true, complete: false });
+    });
+    it('missing first touch keeps it locked', () => {
+      expect(homeAssignments(save([entry(jug)]))).toEqual({ juggling: true, firstTouch: false, complete: false });
+    });
+    it('skipped, partly done or last week\'s work does not count; an easier variant does', () => {
+      expect(homeAssignments(save([entry(jug, { completion: 'skipped' }), entry(touch, { completion: 'partly' })])).complete).toBe(false);
+      expect(homeAssignments(save([entry(jug, { week: 4 }), entry(touch, { week: 4 })])).complete).toBe(false);
+      expect(homeAssignments(save([entry(jug, { easier: true }), entry(touch)])).complete).toBe(true);
+    });
   });
 });

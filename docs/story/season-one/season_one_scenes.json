@@ -10331,7 +10331,7 @@
        "next": "n1"
       },
       {
-       "predicate": "detail:S1_W05_T=steady",
+       "predicate": "detail:S1_W05_T=pass_weight",
        "next": "n2"
       },
       {

@@ -2,6 +2,7 @@
  * Story facts read from real records only (owner directive, 2026-10-20). Choices and intentions never
  * count as completed training, and missing records are never treated as proof of inactivity.
  */
+import { activityById } from '../career/catalog';
 import { CAREER_CONFIG } from '../career/config';
 import type { CareerSave } from '../career/state';
 import type { CompetitorId } from '../jungle/sim';
@@ -42,3 +43,22 @@ export function jungleResult(scores: Readonly<Record<CompetitorId, number>> | un
  */
 export const SCHOOL_REWARD_RULE: null = null;
 export const schoolRewardDetail = (): 'unconfigured' => 'unconfigured';
+
+export interface HomeAssignments {
+  readonly juggling: boolean;
+  readonly firstTouch: boolean;
+  readonly complete: boolean;
+}
+
+/**
+ * V3 home menu (week 5+): the required juggling task and control/first-touch work for this career week,
+ * from logged "done" journal entries only (scheduled or extra; an easier variant still counts). Story
+ * choices and session counts in another focus never satisfy it.
+ */
+export function homeAssignments(save: CareerSave): HomeAssignments {
+  const done = (family: string): boolean =>
+    save.journal.some((j) => j.week === save.week && j.completion === 'done' && activityById(j.activityId)?.skillFamilyId === family);
+  const juggling = done('juggling');
+  const firstTouch = done('firstTouch');
+  return { juggling, firstTouch, complete: juggling && firstTouch };
+}

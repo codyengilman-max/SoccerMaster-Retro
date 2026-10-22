@@ -1,10 +1,9 @@
 import Phaser from 'phaser';
 import { fixtureForWeek, newLeague, parseLeague, recordPlayed, simulateThrough } from '../game/league/league';
-import { homeLearningDetail, jungleResult, schoolRewardDetail, trainingLogDetail } from '../game/story/facts';
+import { homeAssignments, homeLearningDetail, jungleResult, schoolRewardDetail, trainingLogDetail } from '../game/story/facts';
 import type { CompetitorId } from '../game/jungle/sim';
 import { crossbarRules, sceneById, trainingDetail } from '../game/story/content';
 import { seasonWeek, type TournamentId } from '../game/season/calendar';
-import { CAREER_CONFIG } from '../game/career/config';
 import { bataviaRecord, fixtureForSeasonWeek, newSeasonLeague, opponentOf, parseSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough } from '../game/season/league';
 import { TOURNAMENTS, allFixtures, bataviaFinish, groupTable, nextBataviaFixture, newTournament, parseTournament, finalFixture, recordTournamentPlayed, bataviaResult, type TournamentState } from '../game/season/tournament';
 import { CLUB_WORLD } from '../game/story/clubs';
@@ -1095,13 +1094,12 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.finishFact(schoolRewardDetail()) });
         return;
       case 'home_hub': {
-        const need = CAREER_CONFIG.home.sessionsPerWeek;
-        const done = Math.min(need, this.save?.completedSessions.length ?? 0);
-        const trained = done >= need;
+        const a = this.save ? homeAssignments(this.save) : { juggling: false, firstTouch: false, complete: false };
+        const trained = a.complete;
         const talked = Object.values(s.runs).some((r) => r.sceneId === s.sceneId && r.adapter === 'home_hub' && r.detail === 'talk');
         setBody(
-          `HOME MENU\nTraining (required): ${done}/${need} scheduled home sessions this week${trained ? ' - Weekly home training complete.' : '.'}\n` +
-            `Cloudy: Feed & Play and Cloudy: Talk are optional.\n${trained ? 'Continue Week is unlocked.' : 'Continue Week unlocks after the required training.'}`,
+          `HOME MENU\nTraining (required) - log each in Home Training:\n- Juggling task: ${a.juggling ? 'done' : 'not done yet'}\n- Control and first-touch work: ${a.firstTouch ? 'done' : 'not done yet'}\n` +
+            `${trained ? 'Weekly home training complete. Continue Week is unlocked.' : 'Continue Week unlocks after the required training.'}\nCloudy: Feed & Play and Cloudy: Talk are optional.`,
         );
         acts.push({ name: 'hub-training', label: trained ? 'Training (done)' : 'Training (required)', onClick: () => this.openHome() });
         acts.push({ name: 'hub-cloudy-play', label: 'Cloudy: Feed & Play', onClick: () => this.openCloudy() });

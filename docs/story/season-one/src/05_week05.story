@@ -45,7 +45,7 @@ Coach Code: If the pass is already there, use it. Read the field. Don't memorize
 @activity team_training
 @if detail:S1_W05_T=strong
 Coach Code: YES! You saw it before it happened. That's the game!
-@elif detail:S1_W05_T=steady
+@elif detail:S1_W05_T=pass_weight
 Coach Code: Right idea. Now give the pass the weight it needs. Again.
 @elif detail:S1_W05_T=struggled
 Coach Code: Freeze. Where was the pressure? Show me what you missed.

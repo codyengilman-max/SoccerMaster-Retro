@@ -561,7 +561,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           ]
             .filter(Boolean)
             .join('\n'),
-          actions: [{ name: 'end-week', label: `Finish Week ${s.week}`, onClick: () => void this.act({ type: 'endWeek' }) }],
+          // Opened from the story, the story closes the week (StoryScene.closeWeek), so it cannot be finished here.
+          actions: this.returnTo === 'story' ? [] : [{ name: 'end-week', label: `Finish Week ${s.week}`, onClick: () => void this.act({ type: 'endWeek' }) }],
         };
       }
       case 'team': {
