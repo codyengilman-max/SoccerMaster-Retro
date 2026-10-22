@@ -3,7 +3,8 @@ import { FOCUSES, HOME_ACTIVITIES, activityById } from './catalog';
 import type { PlannedItem, PlannedSession, PlannerInput, WeekPlan } from './planner';
 import { cleanText, type CareerPlayer } from './player';
 import type { AttributeOutcome, EvidenceItem } from './progression';
-import { SAVE_SCHEMA, emptySave, type CareerSave, type FamilyLevel, type JournalEntry, type TeamTrainingRecord, type Tt12Run, type WeekReview, TT12_SLOTS } from './state';
+import { CLOUDY_RUNS_KEPT, SAVE_SCHEMA, emptySave, type CareerSave, type CloudyBest, type FamilyLevel, type JournalEntry, type TeamTrainingRecord, type Tt12Run, type WeekReview, TT12_SLOTS } from './state';
+import { DIFFICULTIES } from '../cloudy/sim';
 import { TEAM_TRAINING_IDS, weekDelta } from './teamTraining';
 import { ATTRIBUTES, LEVELS, POSITIONS, RATINGS, SKILL_FAMILIES, type AttributeId, type Level, type SkillFamilyId } from './types';
 
@@ -174,6 +175,12 @@ function teamTraining(v: unknown, week: number): TeamTrainingRecord {
   };
 }
 
+function cloudyBest(v: unknown): CloudyBest {
+  const o = obj(v, 'cloudy');
+  const stars = int(o.bestStars, 'cloudy stars', 1, 3) as 1 | 2 | 3;
+  return { difficulty: oneOf(o.difficulty, 'cloudy difficulty', DIFFICULTIES), bestScore: int(o.bestScore, 'cloudy score', 0, 100_000), bestStars: stars };
+}
+
 function tt12Run(v: unknown, week: number): Tt12Run {
   const o = obj(v, 'tt12');
   if (typeof o.score !== 'number' || !Number.isFinite(o.score) || o.score < 0 || o.score > 1) throw new Invalid('tt12 score: out of range');
@@ -227,8 +234,11 @@ export function parseSave(raw: unknown): R<CareerSave> {
       history: arr(o.history, 'history', L.historyMax).map((h) => review(h, week)),
       teamTraining: arr(o.teamTraining ?? [], 'teamTraining', L.historyMax).map((t) => teamTraining(t, week)),
       tt12: arr(o.tt12 ?? [], 'tt12', L.historyMax * 4).map((t) => tt12Run(t, week)),
+      cloudy: arr(o.cloudy ?? [], 'cloudy', DIFFICULTIES.length).map(cloudyBest),
+      cloudyRuns: arr(o.cloudyRuns ?? [], 'cloudyRuns', CLOUDY_RUNS_KEPT).map((r) => str(r, 'cloudy run', 64)),
     };
     if (new Set(save.teamTraining.map((t) => t.week)).size !== save.teamTraining.length) throw new Invalid('team training counted twice for a week');
+    if (new Set(save.cloudy.map((c) => c.difficulty)).size !== save.cloudy.length) throw new Invalid('cloudy best saved twice');
     if (new Set(save.tt12.map((t) => t.runId)).size !== save.tt12.length) throw new Invalid('team training run saved twice');
     const credited = save.tt12.filter((t) => t.credited).map((t) => `${t.week}${t.slot}`);
     if (new Set(credited).size !== credited.length) throw new Invalid('team training session counted twice');

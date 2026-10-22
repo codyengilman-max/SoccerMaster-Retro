@@ -1,3 +1,4 @@
+import { DIFFICULTIES, type Difficulty } from '../cloudy/sim';
 import { CAREER_CONFIG } from './config';
 import { FOCUSES, activityById, focusById } from './catalog';
 import { DEFAULT_INPUT, normalizeInput, planWeek, substitute, workableFocuses, type PlannerInput, type WeekPlan } from './planner';
@@ -76,6 +77,16 @@ export interface CareerSave {
   readonly teamTraining: readonly TeamTrainingRecord[];
   /** Team Training v1.2 runs that finished all three rounds (older saves: empty). */
   readonly tt12: readonly Tt12Run[];
+  /** Cloudy's Feeding Frenzy best score and best stars per difficulty (no growth, no match statistics). */
+  readonly cloudy: readonly CloudyBest[];
+  /** Recently saved Cloudy round ids, so a replayed save never counts twice. */
+  readonly cloudyRuns: readonly string[];
+}
+
+export interface CloudyBest {
+  readonly difficulty: Difficulty;
+  readonly bestScore: number;
+  readonly bestStars: 1 | 2 | 3;
 }
 
 export type Tt12Slot = 'A' | 'B' | 'C';
@@ -102,9 +113,12 @@ export type Action =
   | { readonly type: 'acceptLevel'; readonly family: SkillFamilyId }
   | { readonly type: 'teamTraining'; readonly week: number; readonly results: readonly SituationResult[] }
   | { readonly type: 'tt12Run'; readonly week: number; readonly slot: Tt12Slot; readonly runId: string; readonly score: number; readonly creditEligible: boolean }
+  | { readonly type: 'cloudyResult'; readonly runId: string; readonly difficulty: Difficulty; readonly score: number; readonly stars: 1 | 2 | 3 }
   | { readonly type: 'endWeek' };
 
 export type Outcome = { readonly ok: true; readonly save: CareerSave; readonly message: string; readonly changed: boolean } | { readonly ok: false; readonly error: string };
+
+export const CLOUDY_RUNS_KEPT = 20;
 
 export function emptySave(): CareerSave {
   return {
@@ -125,6 +139,8 @@ export function emptySave(): CareerSave {
     history: [],
     teamTraining: [],
     tt12: [],
+    cloudy: [],
+    cloudyRuns: [],
   };
 }
 
@@ -253,6 +269,17 @@ export function reduce(save: CareerSave, action: Action): Outcome {
       if (started > 0) return same(save, `This week counts through your Team Training v1.2 sessions (${started} of 3 done); this run was practice only.`);
       const counted = countTeamWeek(save, action.results);
       return 'error' in counted ? fail(counted.error) : ok(counted.save, counted.message);
+    }
+    case 'cloudyResult': {
+      if (!DIFFICULTIES.includes(action.difficulty) || !Number.isSafeInteger(action.score) || action.score < 0 || action.score > 100_000 || ![1, 2, 3].includes(action.stars)) return fail('Cloudy result out of range.');
+      if (save.cloudyRuns.includes(action.runId)) return same(save, 'This round is already saved.');
+      const prev = save.cloudy.find((b) => b.difficulty === action.difficulty);
+      const best: CloudyBest = { difficulty: action.difficulty, bestScore: Math.max(prev?.bestScore ?? 0, action.score), bestStars: Math.max(prev?.bestStars ?? 1, action.stars) as 1 | 2 | 3 };
+      const record = !prev || action.score > prev.bestScore;
+      return ok(
+        { ...save, cloudy: [...save.cloudy.filter((b) => b.difficulty !== action.difficulty), best], cloudyRuns: [...save.cloudyRuns, action.runId].slice(-CLOUDY_RUNS_KEPT) },
+        record ? `New best on ${action.difficulty}: ${action.score}.` : `Best on ${action.difficulty}: ${best.bestScore}.`,
+      );
     }
     case 'tt12Run': {
       if (!save.player) return fail('No career player.');

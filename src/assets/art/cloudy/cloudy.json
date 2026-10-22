@@ -1,0 +1,438 @@
+{
+ "frames": {
+  "celebrate": {
+   "bodyBox": [
+    20,
+    4,
+    179,
+    135
+   ],
+   "frame": {
+    "h": 140,
+    "w": 200,
+    "x": 1200,
+    "y": 140
+   },
+   "rotated": false,
+   "sourceSize": {
+    "h": 140,
+    "w": 200
+   },
+   "spriteSourceSize": {
+    "h": 140,
+    "w": 200,
+    "x": 0,
+    "y": 0
+   },
+   "trimmed": false
+  },
+  "dash-0": {
+   "bodyBox": [
+    2,
+    29,
+    198,
+    110
+   ],
+   "frame": {
+    "h": 140,
+    "w": 200,
+    "x": 800,
+    "y": 140
+   },
+   "rotated": false,
+   "sourceSize": {
+    "h": 140,
+    "w": 200
+   },
+   "spriteSourceSize": {
+    "h": 140,
+    "w": 200,
+    "x": 0,
+    "y": 0
+   },
+   "trimmed": false
+  },
+  "dash-1": {
+   "bodyBox": [
+    2,
+    25,
+    198,
+    115
+   ],
+   "frame": {
+    "h": 140,
+    "w": 200,
+    "x": 1000,
+    "y": 140
+   },
+   "rotated": false,
+   "sourceSize": {
+    "h": 140,
+    "w": 200
+   },
+   "spriteSourceSize": {
+    "h": 140,
+    "w": 200,
+    "x": 0,
+    "y": 0
+   },
+   "trimmed": false
+  },
+  "down": {
+   "bodyBox": [
+    17,
+    12,
+    182,
+    127
+   ],
+   "frame": {
+    "h": 140,
+    "w": 200,
+    "x": 1200,
+    "y": 0
+   },
+   "rotated": false,
+   "sourceSize": {
+    "h": 140,
+    "w": 200
+   },
+   "spriteSourceSize": {
+    "h": 140,
+    "w": 200,
+    "x": 0,
+    "y": 0
+   },
+   "trimmed": false
+  },
+  "eat-0": {
+   "bodyBox": [
+    12,
+    14,
+    187,
+    126
+   ],
+   "frame": {
+    "h": 140,
+    "w": 200,
+    "x": 0,
+    "y": 140
+   },
+   "rotated": false,
+   "sourceSize": {
+    "h": 140,
+    "w": 200
+   },
+   "spriteSourceSize": {
+    "h": 140,
+    "w": 200,
+    "x": 0,
+    "y": 0
+   },
+   "trimmed": false
+  },
+  "eat-1": {
+   "bodyBox": [
+    11,
+    14,
+    189,
+    125
+   ],
+   "frame": {
+    "h": 140,
+    "w": 200,
+    "x": 200,
+    "y": 140
+   },
+   "rotated": false,
+   "sourceSize": {
+    "h": 140,
+    "w": 200
+   },
+   "spriteSourceSize": {
+    "h": 140,
+    "w": 200,
+    "x": 0,
+    "y": 0
+   },
+   "trimmed": false
+  },
+  "eat-2": {
+   "bodyBox": [
+    8,
+    14,
+    191,
+    126
+   ],
+   "frame": {
+    "h": 140,
+    "w": 200,
+    "x": 400,
+    "y": 140
+   },
+   "rotated": false,
+   "sourceSize": {
+    "h": 140,
+    "w": 200
+   },
+   "spriteSourceSize": {
+    "h": 140,
+    "w": 200,
+    "x": 0,
+    "y": 0
+   },
+   "trimmed": false
+  },
+  "eat-3": {
+   "bodyBox": [
+    10,
+    13,
+    189,
+    126
+   ],
+   "frame": {
+    "h": 140,
+    "w": 200,
+    "x": 600,
+    "y": 140
+   },
+   "rotated": false,
+   "sourceSize": {
+    "h": 140,
+    "w": 200
+   },
+   "spriteSourceSize": {
+    "h": 140,
+    "w": 200,
+    "x": 0,
+    "y": 0
+   },
+   "trimmed": false
+  },
+  "front": {
+   "bodyBox": [
+    25,
+    9,
+    175,
+    131
+   ],
+   "frame": {
+    "h": 140,
+    "w": 200,
+    "x": 1400,
+    "y": 0
+   },
+   "rotated": false,
+   "sourceSize": {
+    "h": 140,
+    "w": 200
+   },
+   "spriteSourceSize": {
+    "h": 140,
+    "w": 200,
+    "x": 0,
+    "y": 0
+   },
+   "trimmed": false
+  },
+  "idle": {
+   "bodyBox": [
+    8,
+    14,
+    192,
+    125
+   ],
+   "frame": {
+    "h": 140,
+    "w": 200,
+    "x": 1400,
+    "y": 140
+   },
+   "rotated": false,
+   "sourceSize": {
+    "h": 140,
+    "w": 200
+   },
+   "spriteSourceSize": {
+    "h": 140,
+    "w": 200,
+    "x": 0,
+    "y": 0
+   },
+   "trimmed": false
+  },
+  "left": {
+   "bodyBox": [
+    6,
+    15,
+    193,
+    125
+   ],
+   "frame": {
+    "h": 140,
+    "w": 200,
+    "x": 800,
+    "y": 0
+   },
+   "rotated": false,
+   "sourceSize": {
+    "h": 140,
+    "w": 200
+   },
+   "spriteSourceSize": {
+    "h": 140,
+    "w": 200,
+    "x": 0,
+    "y": 0
+   },
+   "trimmed": false
+  },
+  "swim-0": {
+   "bodyBox": [
+    8,
+    14,
+    191,
+    125
+   ],
+   "frame": {
+    "h": 140,
+    "w": 200,
+    "x": 0,
+    "y": 0
+   },
+   "rotated": false,
+   "sourceSize": {
+    "h": 140,
+    "w": 200
+   },
+   "spriteSourceSize": {
+    "h": 140,
+    "w": 200,
+    "x": 0,
+    "y": 0
+   },
+   "trimmed": false
+  },
+  "swim-1": {
+   "bodyBox": [
+    7,
+    16,
+    192,
+    123
+   ],
+   "frame": {
+    "h": 140,
+    "w": 200,
+    "x": 200,
+    "y": 0
+   },
+   "rotated": false,
+   "sourceSize": {
+    "h": 140,
+    "w": 200
+   },
+   "spriteSourceSize": {
+    "h": 140,
+    "w": 200,
+    "x": 0,
+    "y": 0
+   },
+   "trimmed": false
+  },
+  "swim-2": {
+   "bodyBox": [
+    8,
+    15,
+    191,
+    125
+   ],
+   "frame": {
+    "h": 140,
+    "w": 200,
+    "x": 400,
+    "y": 0
+   },
+   "rotated": false,
+   "sourceSize": {
+    "h": 140,
+    "w": 200
+   },
+   "spriteSourceSize": {
+    "h": 140,
+    "w": 200,
+    "x": 0,
+    "y": 0
+   },
+   "trimmed": false
+  },
+  "swim-3": {
+   "bodyBox": [
+    6,
+    15,
+    194,
+    125
+   ],
+   "frame": {
+    "h": 140,
+    "w": 200,
+    "x": 600,
+    "y": 0
+   },
+   "rotated": false,
+   "sourceSize": {
+    "h": 140,
+    "w": 200
+   },
+   "spriteSourceSize": {
+    "h": 140,
+    "w": 200,
+    "x": 0,
+    "y": 0
+   },
+   "trimmed": false
+  },
+  "up": {
+   "bodyBox": [
+    17,
+    13,
+    183,
+    127
+   ],
+   "frame": {
+    "h": 140,
+    "w": 200,
+    "x": 1000,
+    "y": 0
+   },
+   "rotated": false,
+   "sourceSize": {
+    "h": 140,
+    "w": 200
+   },
+   "spriteSourceSize": {
+    "h": 140,
+    "w": 200,
+    "x": 0,
+    "y": 0
+   },
+   "trimmed": false
+  }
+ },
+ "meta": {
+  "anchor": "cell centre",
+  "background": "docs/art/cloudy/source/aquarium.png",
+  "backgroundSha256": "ebf2c2a995d1cb9a21e869192e7f3cfb6d7571344974acc7314fd5c227ea1f2c",
+  "cell": {
+   "h": 140,
+   "w": 200
+  },
+  "facing": "swim/eat/dash/celebrate/idle face right; mirror for left",
+  "image": "cloudy.webp",
+  "scale": "1",
+  "size": {
+   "h": 280,
+   "w": 1600
+  },
+  "source": "docs/art/cloudy/source/cloudy-sheet.png",
+  "sourceSha256": "7c8a79ae016d333a9ebd6dc4bacd3bd9c63d8a9922bbf7b948383fc7bcba1b0b"
+ }
+}
