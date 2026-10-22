@@ -97,6 +97,9 @@ export const JUNGLE = {
   aiSpeedFactor: 0.94,
   aiAimError: 2.4,
   aiChasers: 2,
+  /** AI keep this far from each other unless within aiSpreadBall of the ball. */
+  aiSpread: 2.2,
+  aiSpreadBall: 1.6,
   aiHitChance: 0.35,
   aiSlideChance: 0.12,
   aiChargeChance: 0.45,
@@ -693,6 +696,18 @@ function think(s: JungleState, c: Competitor, rnd: () => number): Intent {
   const d = len(to);
   let mv = d > 0.05 ? { x: to.x / d, y: to.y / d } : { x: 0, y: 0 };
   if (d < 0.6) mv = { x: mv.x * d / 0.6, y: mv.y * d / 0.6 };
+  // Spread out: steer away from other AI bodies unless right on the ball (no permanent pile-ups).
+  if (Math.hypot(ball.pos.x - c.pos.x, ball.pos.y - c.pos.y) > JUNGLE.aiSpreadBall) {
+    for (const id of AI_COMPETITORS) {
+      const o = s.competitors[id];
+      if (o === c) continue;
+      const a = { x: c.pos.x - o.pos.x, y: c.pos.y - o.pos.y };
+      const ad = len(a);
+      if (ad > 1e-6 && ad < JUNGLE.aiSpread) mv = { x: mv.x + (a.x / ad) * (1 - ad / JUNGLE.aiSpread) * 1.5, y: mv.y + (a.y / ad) * (1 - ad / JUNGLE.aiSpread) * 1.5 };
+    }
+    const m = len(mv);
+    if (m > 1) mv = { x: mv.x / m, y: mv.y / m };
+  }
   return { move: mv };
 }
 
@@ -1081,13 +1096,14 @@ export function step(s: JungleState, seconds: number, rng?: () => number): void 
     intents.player = s.stick;
     const me = s.competitors.player;
     me.turboOn = s.turbo;
+    // A move commits to the facing at the press; the stick turns the player only when free to act.
+    if (s.move) startMove(s, me, s.move);
     const sm = len(s.stick);
     if (sm > 0.2 && canAct(s, me)) me.facing = { x: s.stick.x / sm, y: s.stick.y / sm };
     if (s.kick && s.ball.owner === 'player' && canAct(s, me)) kickBall(s, 'player', s.kick.dir, s.kick.power, s.kick.power > JUNGLE.quickPower);
     if (s.shoot === 'press' && canAct(s, me)) me.chargeAt = s.t;
     else if (s.shoot === 'release') releaseShot(s, me, aimShot(s, me.pos, s.stick));
     else if (s.shoot === 'cancel') me.chargeAt = null;
-    if (s.move) startMove(s, me, s.move);
     s.kick = null;
     s.move = null;
     s.shoot = null;

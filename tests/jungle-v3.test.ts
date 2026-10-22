@@ -227,7 +227,8 @@ describe('Jungle Ball v3: ball, goal and keeper', () => {
 
   it('keeper catches a soft shot, holds, then distributes away from goal without re-catching it', () => {
     const s = staged();
-    shot(s, { x: 26, y: MID }, { x: 9, y: 0 });
+    // Soft: under the keeper's catch speed, and hard enough to roll all the way to him.
+    shot(s, { x: 27, y: MID }, { x: 11, y: 0 });
     const ev = adv(s, 2.5);
     expect(ev.some((e) => e.type === 'save' && e.kind === 'catch')).toBe(true);
     expect(ev.filter((e) => e.type === 'distribute')).toHaveLength(1);
@@ -313,7 +314,7 @@ describe('Jungle Ball v3: seeded rounds', () => {
       expect(st.slide, id).toBeGreaterThan(0);
       expect(st.turbo, id).toBe(true);
     }
-    expect(bunched / samples).toBeLessThan(0.1);
+    expect(bunched / samples, `bunched ${bunched}/${samples}`).toBeLessThan(0.1);
   });
 
   it('a scripted player using press/release SHOOT scores in seeded rounds', () => {
