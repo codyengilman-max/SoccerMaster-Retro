@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { U11_9V9_PITCH, pitchMarkings } from '../src/game';
 import { arcPoints, fitPitch, orientationOf, rectToScreen, rectWithin, toScreen } from '../src/render/layout';
-import { fitRegion, fromScreen, pitchVectorToScreen, screenVectorToPitch } from '../src/render/layout';
+import { coverWithFocus, fitRegion, fromScreen, pitchVectorToScreen, screenVectorToPitch } from '../src/render/layout';
 
 const PHONES = [
   { name: 'iPhone SE portrait', width: 375, height: 667 },
@@ -90,4 +90,41 @@ describe('fitRegion (attack drill view)', () => {
       }
     });
   }
+});
+
+describe('coverWithFocus (painted story backdrops)', () => {
+  const focus = { x0: 0.2, y0: 0.12, x1: 0.85, y1: 0.45 };
+  const cases = [
+    { name: 'iPhone 13 portrait', width: 390, height: 383, top: 50 },
+    { name: 'iPhone 13 landscape', width: 844, height: 201, top: 50 },
+    { name: 'iPhone SE landscape', width: 667, height: 190, top: 50 },
+    { name: 'iPhone 15 Pro Max portrait', width: 430, height: 420, top: 50 },
+  ];
+  for (const c of cases) {
+    it(`${c.name}: covers the band with no gaps and keeps the focus box in view`, () => {
+      const r = coverWithFocus(1536, 1024, c.width, c.height, c.top, focus);
+      const w = 1536 * r.scale;
+      const h = 1024 * r.scale;
+      const left = r.x - w / 2;
+      const top = r.y - h / 2;
+      expect(r.scale).toBeCloseTo(Math.max(c.width / 1536, c.height / 1024), 9);
+      expect(left).toBeLessThanOrEqual(0);
+      expect(top).toBeLessThanOrEqual(0);
+      expect(left + w).toBeGreaterThanOrEqual(c.width - 1e-9);
+      expect(top + h).toBeGreaterThanOrEqual(c.height - 1e-9);
+      // Horizontally the whole focus box is on screen; vertically its centre (the faces) is in the free band.
+      expect(left + focus.x0 * w).toBeGreaterThanOrEqual(-1e-9);
+      expect(left + focus.x1 * w).toBeLessThanOrEqual(c.width + 1e-9);
+      const fy = top + ((focus.y0 + focus.y1) / 2) * h;
+      expect(fy).toBeGreaterThanOrEqual(c.top);
+      expect(fy).toBeLessThanOrEqual(c.height);
+    });
+  }
+
+  it('the old centred cover crops the portrait fish and the landscape face (regression)', () => {
+    const p = Math.max(390 / 1536, 383 / 1024);
+    expect(390 / 2 + (0.85 - 0.5) * 1536 * p).toBeGreaterThan(390);
+    const l = Math.max(844 / 1536, 201 / 1024);
+    expect(201 / 2 + (0.285 - 0.5) * 1024 * l).toBeLessThan(50);
+  });
 });

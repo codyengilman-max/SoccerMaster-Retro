@@ -208,3 +208,5 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Mom is cast wherever she speaks, using the neutral expression until the script carries an expression per line; expressions are not guessed from the text.
 - A backdrop that paints the cast (`cast_in_backdrop`) suppresses both portraits and the code-drawn speaker figure, so Cloudy scenes never show the player twice. The flag only applies once the painting is on screen.
 - Jungle Ball sheets join the sprite-set registry as layout `jungle` (pre-mirrored `-w` frames, same 160×128 cell and (80,120) anchor), so `PlayerArt` and its fallback stay the one sprite path.
+
+- Over a `cast_in_backdrop` painting, a separate portrait (Mom in `S1_W02_F`) is shown only while that character speaks. The paintings are cover-fit with a focus box (`BACKDROP_FOCUS`, `coverWithFocus`) so the child's face and Cloudy stay in view in portrait and landscape, with no gaps and no stretching.

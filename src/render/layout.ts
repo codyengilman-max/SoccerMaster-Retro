@@ -195,3 +195,33 @@ export function rectWithin(inner: Rect, outer: Rect, tolerance = 0.5): boolean {
     inner.y + inner.height <= outer.y + outer.height + tolerance
   );
 }
+
+/** Fractional region of an image (0..1) that a cover fit should keep in view when it can. */
+export interface FocusBox {
+  readonly x0: number;
+  readonly y0: number;
+  readonly x1: number;
+  readonly y1: number;
+}
+
+/**
+ * Cover-fits an image over [0,width]x[0,height] (never leaving gaps), then shifts it so the focus
+ * box is centred in the free band [top,height] as far as the cover allows. Returns the image centre.
+ */
+export function coverWithFocus(
+  imageW: number,
+  imageH: number,
+  width: number,
+  height: number,
+  top: number,
+  focus: FocusBox,
+): { x: number; y: number; scale: number } {
+  const scale = Math.max(width / imageW, height / imageH);
+  const w = imageW * scale;
+  const h = imageH * scale;
+  const fx = ((focus.x0 + focus.x1) / 2) * w;
+  const fy = ((focus.y0 + focus.y1) / 2) * h;
+  const left = Math.min(0, Math.max(width - w, width / 2 - fx));
+  const topEdge = Math.min(0, Math.max(height - h, (Math.min(top, height) + height) / 2 - fy));
+  return { x: left + w / 2, y: topEdge + h / 2, scale };
+}

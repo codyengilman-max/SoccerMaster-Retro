@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
-import { CAST_IN_BACKDROP, PREFETCH_ORDER, SPEAKER_ROLE, artAsset, isAllowedAsset, sceneVisual, type CastRole, type SceneVisual } from '../render/art/catalog';
+import { BACKDROP_FOCUS, CAST_IN_BACKDROP, PREFETCH_ORDER, SPEAKER_ROLE, artAsset, isAllowedAsset, sceneVisual, type CastRole, type SceneVisual } from '../render/art/catalog';
 import { artTextureKey, artUrl } from '../render/art/urls';
+import { coverWithFocus } from '../render/layout';
 import { CSS, FONT_FAMILY, PALETTE } from '../render/theme';
 
 /** Upper bound on cutscene textures resident at once (current scene's backdrop + cast, plus slack). */
@@ -231,6 +232,12 @@ export class StoryArt {
     }
     // Cover the area above the panel; the panel itself is near-opaque.
     const h = Math.max(1, f.panelY);
+    const focus = BACKDROP_FOCUS[id];
+    if (focus) {
+      const c = coverWithFocus(this.bgImage.width, this.bgImage.height, f.width, h, f.top, focus);
+      this.bgImage.setScale(c.scale).setPosition(c.x, c.y).setVisible(true);
+      return;
+    }
     const k = Math.max(f.width / this.bgImage.width, h / this.bgImage.height);
     this.bgImage.setScale(k).setPosition(f.width / 2, h / 2).setVisible(true);
   }
