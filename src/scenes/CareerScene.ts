@@ -3,7 +3,7 @@ import { shouldExposeDevMenu } from '../debug/diagnostics';
 import { ATTRIBUTE_EVIDENCE } from '../game/career/config';
 import { ALL_ACTIVITIES, FOCUSES, SOURCES, activityById, focusById } from '../game/career/catalog';
 import { substitutes, workableFocuses } from '../game/career/planner';
-import { emptySave, levelSuggestion, type CareerSave, type Completion } from '../game/career/state';
+import { emptySave, levelSuggestion, TT12_SLOTS, type CareerSave, type Completion, type Tt12Slot } from '../game/career/state';
 import { CareerStore } from '../game/career/store';
 import { ATTRIBUTES, ATTRIBUTE_LABELS, LEVEL_NAMES, POSITIONS, SKILL_FAMILY_LABELS, type Activity, type Foot, type Position, type Rating } from '../game/career/types';
 import { CATEGORY_SKILL_AREA, COACHING_REVIEW, CURRICULUM, EMPTY_STATE, FAMILY_MAPPING, publishedLevels } from '../game/career/curriculum';
@@ -11,6 +11,8 @@ import { prototypeFor, resolveSteps, stepAt } from '../game/career/curriculum/de
 import { DRAFT_PREFIX, DRAFT_STATUS, draftActivityId } from '../game/career/curriculum/drafts';
 import { LOGIC_CATALOG, LOGIC_GROUPS, SCENARIO_GOAL, activeLogicScenarios, currentText, type LogicGroup } from '../game/logic/catalog';
 import { describeChanges, selectSituations } from '../game/career/teamTraining';
+import { planFor, sessionId } from '../game/training12/session';
+import { ROLE_CHOICES } from './TacticalTrainingScene';
 import { orientationOf } from '../render/layout';
 import { PlayerArt, atlasKey } from '../render/art/playerArt';
 import { SPRITE_CELL } from '../render/art/spriteSets';
@@ -579,7 +581,14 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
               : '\nPlay all three with the normal controls. A good week adds up to +2 attribute points, a poor week costs 1 (never below the starting value). Leaving early counts nothing.',
             'Situations come from the soccer-logic catalog draft (not coach-certified).',
           ].join('\n'),
-          actions: [{ name: 'team-play', label: rec ? 'Practise again' : 'Play Team Training', onClick: () => this.playTeamTraining() }],
+          actions: [
+            ...TT12_SLOTS.map((slot) => {
+              const done = s.tt12.some((r) => r.week === s.week && r.slot === slot && r.credited);
+              const open = planFor(sessionId(1, s.week, slot), ROLE_CHOICES[p.position][0]!).status === 'selected';
+              return { name: `tt12-${slot}`, label: `Session ${slot} (v1.2)${done ? ' · counted' : open ? '' : ' · not available yet'}`, onClick: () => { if (open) this.playTactical(slot); } };
+            }),
+            { name: 'team-play', label: rec ? 'Practise again' : 'Play Team Training', onClick: () => this.playTeamTraining() },
+          ],
         };
       }
       case 'player': {
@@ -588,6 +597,12 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         return { title: `${p.name} (${p.position})`, body: rows.join('\n'), actions: [] };
       }
     }
+  }
+
+  private playTactical(slot: Tt12Slot): void {
+    if (this.navigating) return;
+    this.navigating = true;
+    this.scene.start(SceneKeys.Tactical, { slot, ...(this.returnTo === 'story' ? { returnTo: 'story' as const } : {}) });
   }
 
   private playTeamTraining(): void {
