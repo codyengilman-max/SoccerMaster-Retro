@@ -332,8 +332,10 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     this.buttons = [];
     const P = this.panel;
     const pad = 10;
-    const bh = 34;
-    const cols = P.width > 420 ? 2 : 1;
+    // Buttons stack up from the bottom; switch to two columns (then shorter buttons) before they reach the title and prompt.
+    const fits = (c: number, h: number): boolean => P.height - pad - Math.ceil(buttons.length / c) * (h + 6) >= pad + this.title.height + 40;
+    const cols = P.width > 420 || !fits(1, 34) ? 2 : 1;
+    const bh = fits(cols, 34) ? 34 : 28;
     const bw = (P.width - pad * (cols + 1)) / cols;
     const rows = Math.ceil(buttons.length / cols);
     const top = P.y + P.height - pad - rows * (bh + 6);
@@ -541,6 +543,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       sprite: this.me.visible ? (this.look?.set ?? null) : null,
       squadSprites: this.sprites.filter((im) => im.visible).map((im) => im.texture.key),
       bodyBottom: this.body.y + this.body.height,
+      titleBottom: this.title.y + this.title.height,
       buttonsTop: Math.min(...this.buttons.map((b) => b.y - b.height / 2)),
       status: s?.status ?? null,
       round: s?.run.round ?? null,
