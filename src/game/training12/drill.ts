@@ -55,7 +55,7 @@ export interface Assessment {
   readonly reasons: readonly string[];
 }
 
-export type DrillPhase = 'observe' | 'execute' | 'explain';
+export type DrillPhase = 'release' | 'observe' | 'execute' | 'explain';
 export interface DrillOutcome {
   readonly kind: 'kept' | 'lost' | 'scored' | 'conceded' | 'regained' | 'out' | 'held';
   readonly text: string;
@@ -73,6 +73,10 @@ export interface DrillState {
   execT: number;
   chosen: DrillOption | null;
   outcome: DrillOutcome | null;
+  /** Who the first defender presses during the release: the holder or an outlet (seeded per attempt). */
+  pressSlot: string | null;
+  /** Seconds of NPC movement left before play freezes for the decision. */
+  releaseLeft: number;
   /** Possession team when the decision was made, for outcome classification. */
   startTeam: Team | 'N' | null;
 }
@@ -96,10 +100,15 @@ export function createDrill(def: ScenarioDefinition, seed: number, variation = 0
     const width = t.width === 'host-goal-width' ? DRILL.goalWidth : t.widthMeters ?? W;
     return { ...t, cx: t.x * L, cy: t.type === 'end-zone' ? W / 2 : (t.y ?? 0.5) * W, half: t.type === 'end-zone' ? W / 2 : width / 2 };
   });
+  const outlets = actors.filter((a) => a !== owner && teamOf(a.side) === teamOf(owner.side) && !a.side.startsWith('GK'));
+  const press = actors.filter((a) => teamOf(a.side) !== teamOf(owner.side) && teamOf(a.side) !== 'N' && !a.side.startsWith('GK'))
+    .sort((a, b) => distance(a.pos, owner.pos) - distance(b.pos, owner.pos))[0];
+  const nearOutlet = press ? outlets.sort((a, b) => distance(a.pos, press.pos) - distance(b.pos, press.pos))[0] : undefined;
+  const pressSlot = nearOutlet && (owner.side.startsWith('GK') || rng() < 0.5) ? nearOutlet.slot : owner.slot;
   return {
-    def, L, W, actors, targets,
+    def, L, W, actors, targets, pressSlot, releaseLeft: 1.4 + rng() * 0.8,
     ball: { pos: v(owner.pos.x, owner.pos.y), vel: v(0, 0), owner: owner.slot, lastTeam: teamOf(owner.side), target: null },
-    phase: 'observe', t: 0, execT: 0, chosen: null, outcome: null, startTeam: teamOf(owner.side),
+    phase: 'release', t: 0, execT: 0, chosen: null, outcome: null, startTeam: teamOf(owner.side),
   };
 }
 
@@ -115,11 +124,17 @@ const forward = (team: Team | 'N'): number => (team === 'B' ? -1 : 1);
 
 /** Clearance of a pass lane: how far the nearest opponent stands from the line, less how far it can close while the ball travels. */
 export function laneClearance(s: DrillState, from: Vec2, to: Vec2, team: Team | 'N'): number {
-  const flight = distance(from, to) / DRILL.passSpeed;
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const d = Math.hypot(dx, dy) || 1;
   let worst = 99;
   for (const o of opponents(s, team)) {
     if (o.side.startsWith('GK') && distance(o.pos, to) > 6) continue;
-    worst = Math.min(worst, distanceToSegment(o.pos, from, to) - (DRILL.reach + flight * DRILL.npcSpeed * 0.45));
+    // Where the opponent meets the line, and how long the ball takes to get there.
+    const along = clamp(((o.pos.x - from.x) * dx + (o.pos.y - from.y) * dy) / d, 0, d);
+    if (along < 1) continue; // already behind the ball as it is struck
+    const time = along / DRILL.passSpeed;
+    worst = Math.min(worst, distanceToSegment(o.pos, from, to) - (DRILL.reach + time * DRILL.npcSpeed * 0.6));
   }
   return worst;
 }
@@ -141,7 +156,7 @@ export function options(s: DrillState): DrillOption[] {
       out.push({ id: 'carry', kind: 'carry', label: 'Carry into space', point: best });
       for (const t of ownTargets(s, team)) {
         const d = Math.abs(t.cx - me.pos.x);
-        if (d <= 16 && t.type !== 'end-zone') out.push({ id: `shoot-${Math.round(t.cy)}`, kind: 'shoot', label: t.type === 'goal' ? 'Shoot' : `Finish ${t.cy < s.W / 2 ? 'left' : 'right'} ${t.type}`, point: { x: t.cx, y: t.cy } });
+        if (d <= 22 && t.type !== 'end-zone') out.push({ id: `shoot-${Math.round(t.cy)}`, kind: 'shoot', label: t.type === 'goal' ? 'Shoot' : `Finish ${t.cy < s.W / 2 ? 'left' : 'right'} ${t.type}`, point: { x: t.cx, y: t.cy } });
       }
     }
     return out;
@@ -222,7 +237,7 @@ function rate(s: DrillState, o: DrillOption): { quality: number; reasons: string
       const recv = pressureOn(s, o.point, team);
       const gain = (o.point.x - me.pos.x) * f;
       const central = Math.abs(o.point.y - s.W / 2) < s.W * 0.18 && gain < 0 && lane < 1.5;
-      let q = 0.45 + clamp(lane, -2, 2) * 0.16 + clamp(recv - DRILL.pressure, -2, 3) * 0.06 + clamp(gain / 10, -0.3, 0.25);
+      let q = 0.3 + clamp(lane, -2, 2) * 0.12 + clamp(recv - DRILL.pressure, -2, 3) * 0.05 + clamp(gain / 10, -0.3, 0.15);
       if (myPressure < DRILL.pressure) q += 0.08;
       reasons.push(lane > 0.8 ? 'the passing lane was open' : lane > 0 ? 'the lane was tight' : 'a defender was in the passing lane');
       reasons.push(recv > DRILL.pressure + 1 ? 'the receiver had time on the ball' : recv < DRILL.pressure ? 'the receiver was already under pressure' : 'the receiver had a defender close');
@@ -364,7 +379,11 @@ function npcGoal(s: DrillState, a: DrillActor): Vec2 {
   const defenders = s.actors.filter((d) => teamOf(d.side) === team && !d.side.startsWith('GK')).sort((x, y) => distance(x.pos, ball) - distance(y.pos, ball));
   const rank = defenders.indexOf(a);
   const goalX = team === 'A' ? 0 : s.L;
-  if (rank === 0 && !(defenders[0]?.human)) return { x: ball.x - f * 0.8, y: ball.y };
+  if (rank === 0 && !(defenders[0]?.human)) {
+    const mark = s.phase === 'release' ? actor(s, s.pressSlot) : undefined;
+    if (mark && mark !== holder) return { x: mark.pos.x - f * 1.2, y: mark.pos.y };
+    return { x: ball.x - f * 0.8, y: ball.y };
+  }
   if (rank <= 1) return { x: (ball.x + goalX) / 2 + (ball.x - goalX) * 0.2, y: (ball.y + s.W / 2) / 2 };
   const mark = s.actors.filter((o) => teamOf(o.side) !== team && teamOf(o.side) !== 'N' && o !== holder && !o.side.startsWith('GK'))
     .sort((x, y) => distance(x.pos, a.pos) - distance(y.pos, a.pos))[0];
@@ -382,6 +401,13 @@ function moveToward(a: DrillActor, g: Vec2, speed: number, dt: number): void {
 
 /** One fixed step. Only the execute phase moves; observe and explain are frozen decision screens. */
 export function step(s: DrillState, dt = DRILL.dt): void {
+  if (s.phase === 'release') {
+    s.t += dt;
+    for (const a of s.actors) if (!a.human && a.slot !== s.ball.owner) moveToward(a, npcGoal(s, a), a.side.startsWith('GK') ? 4 : DRILL.npcSpeed, dt);
+    s.releaseLeft -= dt;
+    if (s.releaseLeft <= 0) { s.phase = 'observe'; for (const a of s.actors) a.vel = { x: 0, y: 0 }; }
+    return;
+  }
   if (s.phase !== 'execute') return;
   s.t += dt;
   s.execT += dt;
@@ -437,4 +463,9 @@ const OUTCOME_TEXT: Record<DrillOutcome['kind'], string> = {
 function finish(s: DrillState, kind: DrillOutcome['kind']): void {
   s.outcome = { kind, text: OUTCOME_TEXT[kind] };
   s.phase = 'explain';
+}
+
+/** Run the release to the decision moment (used when the player skips the watch). */
+export function settle(s: DrillState): void {
+  while (s.phase === 'release') step(s);
 }
