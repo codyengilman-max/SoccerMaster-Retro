@@ -119,8 +119,8 @@ export function settleWeek(i: SettleInput): WeekSettlement {
   sources.push({ source: 'home', share: budget.home, factor: r4(homeF), confidence: HOME_CONFIDENCE, credits: r4(homeC), attributes: split(homeW, homeC), note: `${i.homeSessions.length}/${perWeek} home sessions` });
 
   const teamF = i.teamScore === null ? 0 : clamp01(i.teamScore);
-  const teamC = WEEK_CREDITS * budget.team * teamF * mod;
-  const teamW = Object.fromEntries((i.teamAttributes.length ? i.teamAttributes : (['awareness'] as const)).map((a) => [a, 1]));
+  const teamC = i.teamAttributes.length ? WEEK_CREDITS * budget.team * teamF * mod : 0;
+  const teamW = Object.fromEntries(i.teamAttributes.map((a) => [a, 1]));
   sources.push({ source: 'team', share: budget.team, factor: r4(teamF), confidence: 1, credits: r4(teamC), attributes: split(teamW, teamC), note: i.teamScore === null ? 'No Team Training this week' : `Team Training ${Math.round(teamF * 100)}%` });
 
   const played = i.matches.filter((m) => m.minutes > 0);

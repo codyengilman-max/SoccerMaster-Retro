@@ -36,7 +36,7 @@ import type { EvidenceItem } from '../game/career/progression';
 import { matchAttrsFromCareer } from '../game/career/player';
 import { CareerStore } from '../game/career/store';
 import { MatchLedger } from '../game/report/ledger';
-import { buildReport, clubDisplayName } from '../game/report/report';
+import { buildReport, clubDisplayName, type SavedReport } from '../game/report/report';
 import { TOURNAMENTS } from '../game/season/tournament';
 import { SituationObserver, selectSituations, type SituationResult, type TeamTrainingSituation } from '../game/career/teamTraining';
 import type { Position } from '../game/career/types';
@@ -81,6 +81,9 @@ export interface MatchSceneData {
   readonly resultKey?: string;
   /** Story fixture opponent (club id): which club sheet the away side wears. Cosmetic only. */
   readonly opponent?: string;
+  /** Story fixture venue for Batavia and its competition, for the Match Report only. */
+  readonly venue?: 'home' | 'away';
+  readonly competition?: 'League' | 'Tournament';
 }
 
 /** Team Training camera magnification over the match view (brief: 1.25–1.40×). */
@@ -194,7 +197,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private ledger: MatchLedger | null = null;
   private reportMeta: { name: string; position: string; week: number } | null = null;
   private reportMatchId: string | null = null;
-  private reportSaving: Promise<void> | null = null;
+  private reportSaving: Promise<boolean> | null = null;
+  private reportPending: SavedReport | null = null;
+  private careerMatch = false;
+  private venue: 'home' | 'away' = 'home';
+  private competition: 'League' | 'Tournament' = 'League';
   private careerItems: EvidenceItem[] = [];
   private careerSession = '';
   private careerBatch = 0;
@@ -213,6 +220,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   create(data: MatchSceneData = {}): void {
     this.returnTo = data.returnTo === 'story' ? 'story' : null;
     this.resultKey = this.returnTo && typeof data.resultKey === 'string' ? data.resultKey : null;
+    this.venue = data.venue === 'away' ? 'away' : 'home';
+    this.competition = data.competition === 'Tournament' ? 'Tournament' : 'League';
     this.opponent = isSpriteClub(data.opponent) && data.opponent !== 'batavia' ? data.opponent : 'royal_salt';
     this.navigating = false;
     this.overlayOn = false;
@@ -936,6 +945,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   }
 
   private reset(): void {
+    // A career fixture is played once: its report, result and evidence belong to that one game.
+    if (this.careerMatch) {
+      this.toast('Career matches count once and cannot be restarted');
+      return;
+    }
     this.cancelInput('reset');
     // A Lab reset replays the scenario exactly: same seed, same staging.
     this.sim.command(this.labId ? { type: 'reset', seed: this.labSeed } : { type: 'reset' });
@@ -971,7 +985,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.breakTitle.setVisible(on);
     this.breakNote.setVisible(on);
     this.secondHalfButton.setEnabled(mode === 'halftime');
-    this.playAgainButton.setEnabled(mode === 'fulltime');
+    this.playAgainButton.setEnabled(mode === 'fulltime' && !this.careerMatch);
     this.breakMenuButton.setEnabled(on);
     if (!on) return;
     const st = s.stats;
@@ -1032,7 +1046,16 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const reportId = this.reportMatchId;
     if (reportId && this.reportSaving) {
       const next = this.returnTo === 'story' ? 'story' : 'start';
-      void this.reportSaving.then(() => this.scene.start(SceneKeys.Report, { matchId: reportId, next }));
+      void this.reportSaving.then((saved) => {
+        if (saved) {
+          this.scene.start(SceneKeys.Report, { matchId: reportId, next });
+          return;
+        }
+        // Keep the finished report and let the player retry; never leave without it.
+        this.navigating = false;
+        this.commitReport();
+        this.toast('Could not save the match report. Tap Menu to try again.');
+      });
       return;
     }
     this.scene.start(this.returnTo === 'story' ? SceneKeys.Story : SceneKeys.Start, this.returnTo === 'story' ? { resume: true } : undefined);
@@ -1048,14 +1071,16 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const names: Record<string, string> = {};
     for (const t of Object.values(TOURNAMENTS)) for (const [id, info] of Object.entries(t.teams)) names[id] = info.name;
     const matchId = this.resultKey ?? this.careerSession;
+    // The sim always plays Batavia on its home side; the report shows the fixture's real venue.
+    const away = this.returnTo === 'story' && this.venue === 'away';
     const report = buildReport(
       {
         matchId: matchId.slice(0, 64),
         week: meta.week,
-        competition: this.returnTo === 'story' ? 'League' : 'Friendly',
-        home: clubDisplayName('batavia', names),
-        away: clubDisplayName(this.opponent, names),
-        score: { home: s.score.home, away: s.score.away },
+        competition: this.returnTo === 'story' ? this.competition : 'Friendly',
+        home: clubDisplayName(away ? this.opponent : 'batavia', names),
+        away: clubDisplayName(away ? 'batavia' : this.opponent, names),
+        score: away ? { home: s.score.away, away: s.score.home } : { home: s.score.home, away: s.score.away },
         playerName: meta.name,
         position: meta.position,
         minutes: MATCH_TUNING.match.displayHalfMinutes * 2,
@@ -1063,7 +1088,16 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       ledger.finish(),
     );
     this.reportMatchId = report.matchId;
-    this.reportSaving = store.dispatch({ type: 'matchReport', report }).then(() => undefined, () => undefined);
+    this.reportPending = report;
+    this.commitReport();
+  }
+
+  /** Saves the finished report; resolves false on a failed commit so Menu can retry instead of losing it. */
+  private commitReport(): void {
+    const store = this.careerStore;
+    const report = this.reportPending;
+    if (!store || !report) return;
+    this.reportSaving = store.dispatch({ type: 'matchReport', report }).then((out) => out.ok, () => false);
   }
 
   private handleResize(size: Phaser.Structs.Size): void {
@@ -1242,6 +1276,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.reportMeta = null;
     this.reportMatchId = null;
     this.reportSaving = null;
+    this.reportPending = null;
+    this.careerMatch = on;
     if (!on) return;
     this.careerSession = `m-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e9).toString(36)}`;
     void CareerStore.open().then(async (store) => {

@@ -23,6 +23,8 @@ export class FormationScene extends Phaser.Scene implements InspectableScene {
   private returnTo: 'story' | undefined;
   private resultKey: string | undefined;
   private opponent: string | undefined;
+  private venue: 'home' | 'away' | undefined;
+  private competition: 'League' | 'Tournament' | undefined;
   private background!: Phaser.GameObjects.Graphics;
   private diagram!: Phaser.GameObjects.Graphics;
   private title!: Phaser.GameObjects.Text;
@@ -36,10 +38,12 @@ export class FormationScene extends Phaser.Scene implements InspectableScene {
     super(SceneKeys.Formation);
   }
 
-  create(data: { career?: boolean; returnTo?: 'story'; resultKey?: string; opponent?: string } = {}): void {
+  create(data: { career?: boolean; returnTo?: 'story'; resultKey?: string; opponent?: string; venue?: 'home' | 'away'; competition?: 'League' | 'Tournament' } = {}): void {
     this.returnTo = data.returnTo === 'story' ? 'story' : undefined;
     this.resultKey = this.returnTo && typeof data.resultKey === 'string' ? data.resultKey : undefined;
     this.opponent = this.returnTo && typeof data.opponent === 'string' ? data.opponent : undefined;
+    this.venue = this.returnTo && (data.venue === 'home' || data.venue === 'away') ? data.venue : undefined;
+    this.competition = this.returnTo && (data.competition === 'League' || data.competition === 'Tournament') ? data.competition : undefined;
     this.navigating = false;
     this.career = data.career === true;
     this.selected = DEFAULT_FORMATION;
@@ -109,7 +113,7 @@ export class FormationScene extends Phaser.Scene implements InspectableScene {
   private kickOff(): void {
     if (this.navigating) return;
     this.navigating = true;
-    this.scene.start(SceneKeys.Match, { formation: this.selected, career: this.career, returnTo: this.returnTo, ...(this.resultKey ? { resultKey: this.resultKey } : {}), ...(this.opponent ? { opponent: this.opponent } : {}) });
+    this.scene.start(SceneKeys.Match, { formation: this.selected, career: this.career, returnTo: this.returnTo, ...(this.resultKey ? { resultKey: this.resultKey } : {}), ...(this.opponent ? { opponent: this.opponent } : {}), ...(this.venue ? { venue: this.venue } : {}), ...(this.competition ? { competition: this.competition } : {}) });
   }
 
   private goBack(): void {

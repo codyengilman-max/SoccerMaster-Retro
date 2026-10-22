@@ -68,6 +68,15 @@ describe('match ledger and stats', () => {
     expect(matchStats(l.events).possessionLosses).toBe(1);
   });
 
+  it('an own goal by the player is not their goal (the sim names the last kicker, the detail the scoring team)', () => {
+    seq = 0;
+    const l = run([[null, [ev('shot', 'h1', '22'), ev('goal', 'h1', 'away scored')]]]);
+    const s = matchStats(l.events);
+    expect(s.goals).toBe(0);
+    expect(s.goalConversion.num).toBe(0);
+    expect(s.shotsOnTarget.num).toBe(0);
+  });
+
   it('shot on target means goal or keeper save; goals are not double counted', () => {
     seq = 0;
     const l = run([
@@ -75,7 +84,7 @@ describe('match ledger and stats', () => {
       [null, [ev('shot', 'h1', '20')]],
       ['a2', [ev('saved', 'a2', 'keeper caught it')]],
       ['h1', [ev('received', 'h1')]],
-      [null, [ev('shot', 'h1', '22'), ev('goal', 'h1', 'h1 scored')]],
+      [null, [ev('shot', 'h1', '22'), ev('goal', 'h1', 'home scored')]],
       [null, [ev('shot', 'h1', '18'), ev('out', null, 'wide')]],
     ]);
     const s = matchStats(l.events);

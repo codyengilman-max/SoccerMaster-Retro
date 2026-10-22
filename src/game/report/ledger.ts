@@ -97,8 +97,10 @@ export class MatchLedger {
         if (this.openShot) this.openShot.outcome = 'off';
         this.openShot = this.add(e, 'shot', 'pending');
       } else if (e.type === 'goal') {
-        if (mine) this.add(e, 'goal');
-        this.close('failed', mine ? 'goal' : 'off');
+        // The sim names the last kicker; the detail names the scoring team, so an own goal is never the player's goal.
+        const ours = mine && e.detail.split(' ')[0] === team(me);
+        if (ours) this.add(e, 'goal');
+        this.close('failed', ours ? 'goal' : 'off');
       } else if ((e.type === 'saved' || e.type === 'parried') && away) {
         this.close('failed', 'onTarget');
       } else if (e.type === 'out') {

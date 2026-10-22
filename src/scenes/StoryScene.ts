@@ -514,17 +514,17 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   }
 
   /** Club the away side wears in this story match (art only; competitions are unchanged). */
-  private async matchOpponent(kind: string, run: string): Promise<{ opponent?: string }> {
+  private async matchOpponent(kind: string, run: string): Promise<{ opponent?: string; venue?: 'home' | 'away'; competition?: 'League' | 'Tournament' }> {
     if (kind === 'league_match') {
       const week = this.seasonWeekNo();
       const f = week === null ? null : fixtureForSeasonWeek(week);
-      return f ? { opponent: opponentOf(f) } : {};
+      return f ? { opponent: opponentOf(f), venue: f.home === 'batavia' ? 'home' : 'away', competition: 'League' } : {};
     }
     if (kind === 'tournament_match') {
       const id = await this.store?.getRecord(`tfix:${run}`);
       const t = await this.tournament();
       const f = t && typeof id === 'string' ? allFixtures(t).find((x) => x.id === id) : undefined;
-      if (f) return { opponent: f.home === 'batavia' ? f.away : f.home };
+      if (f) return { opponent: f.home === 'batavia' ? f.away : f.home, venue: f.home === 'batavia' ? 'home' : 'away', competition: 'Tournament' };
     }
     return {};
   }

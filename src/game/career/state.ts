@@ -6,7 +6,7 @@ import { FOCUSES, activityById, focusById } from './catalog';
 import { DEFAULT_INPUT, normalizeInput, planWeek, substitute, workableFocuses, type PlannerInput, type WeekPlan } from './planner';
 import { cleanName, cleanText, createPlayer, type CareerPlayer } from './player';
 import { applyGrowth, computeGrowth, type AttributeOutcome, type EvidenceItem } from './progression';
-import { selectSituations, teamTrainingChanges, describeChanges, weekDelta, type AttributeChange, type SituationResult } from './teamTraining';
+import { selectSituations, situationById, teamTrainingChanges, describeChanges, weekDelta, type AttributeChange, type SituationResult } from './teamTraining';
 import { SKILL_FAMILIES, type AttributeId, type Foot, type Level, type Position, type Rating, type SkillFamilyId } from './types';
 
 export const SAVE_SCHEMA = 2;
@@ -378,14 +378,19 @@ function settleSave(save: CareerSave, evidence: readonly AttributeOutcome[], rec
   const runs = save.tt12.filter((r) => r.week === w && r.credited);
   const tt = save.teamTraining.find((t) => t.week === w);
   const teamScore = runs.length ? runs.reduce((a, r) => a + r.score, 0) / runs.length : tt && tt.scores.length ? tt.scores.reduce((a, b) => a + b, 0) / tt.scores.length : null;
+  // Points already given this week (evidence growth and graded Team Training) count against the weekly caps.
   const granted = zeroFractions();
-  for (const o of evidence) granted[o.attribute] = o.to - o.from;
+  for (const o of evidence) granted[o.attribute] += o.to - o.from;
+  for (const c of tt?.changes ?? []) if (c.to > c.from) granted[c.attribute] += c.to - c.from;
+  // Team credits go to the attributes the week's situations practised, never to a stand-in.
+  const practised = tt ? tt.situations : runs.length ? selectSituations(save.player!.position, w).map((x) => x.id) : [];
+  const teamAttributes = [...new Set(practised.flatMap((id) => situationById(id)?.attributes ?? []))];
   return settleWeek({
     week: w,
     player: save.player!,
     homeSessions: save.journal.filter((j) => j.week === w && j.credited && j.completion !== 'skipped').map((j) => j.activityId),
     teamScore,
-    teamAttributes: tt ? tt.changes.map((c) => c.attribute) : [],
+    teamAttributes,
     matches: save.reports.filter((r) => r.week === w),
     recess,
     carry: save.devCarry,

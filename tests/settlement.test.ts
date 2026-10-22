@@ -31,11 +31,15 @@ describe('weekly development settlement (35/30/30/5)', () => {
   });
 
   it('a skipped activity is not redistributed and a no-match week leaves match unearned', () => {
-    const team = settleWeek(base({ teamScore: 1 }));
+    const team = settleWeek(base({ teamScore: 1, teamAttributes: ['defending'] }));
     expect(credits(team, 'team')).toBeCloseTo(WEEK_CREDITS * weekBudget(false).team, 4);
     expect(credits(team, 'home')).toBe(0);
     expect(credits(team, 'match')).toBe(0);
     expect(team.sources.find((x) => x.source === 'match')!.note).toMatch(/unearned/);
+    // Team credits only go to attributes the week's situations practised; none means nothing is invented.
+    const none = settleWeek(base({ teamScore: 1 }));
+    expect(credits(none, 'team')).toBe(0);
+    expect(none.earned.awareness).toBe(0);
   });
 
   it('several matches share one match share: more or repeated matches never add more', () => {
@@ -87,5 +91,19 @@ describe('weekly development settlement (35/30/30/5)', () => {
     delete old.devCarry;
     const parsed = parseSave(old);
     expect(parsed.ok && parsed.value.devCarry).toEqual(zeroFractions());
+  });
+  it('graded Team Training points count against the weekly caps before settlement adds more', async () => {
+    const { selectSituations } = await import('../src/game/career/teamTraining');
+    let s = emptySave();
+    s = (reduce(s, { type: 'createPlayer', id: 'p1', name: 'Pat', position: 'MID' }) as { save: typeof s }).save;
+    const ids = selectSituations('MID', 1).map((x) => x.id);
+    const attrs = [...new Set(selectSituations('MID', 1).flatMap((x) => x.attributes))];
+    const changes = attrs.map((a) => ({ attribute: a, from: s.player!.attributes[a], to: s.player!.attributes[a] + CAREER_CONFIG.growth.weeklyCapTotal }));
+    const full = { ...s, teamTraining: [{ week: 1, situations: ids, scores: ids.map(() => 1), delta: 2, changes }], devCarry: Object.fromEntries(ATTRIBUTES.map((a) => [a, 1])) as typeof s.devCarry };
+    const e = reduce(full, { type: 'endWeek' });
+    expect(e.ok).toBe(true);
+    const st = (e as { save: typeof s }).save.history.at(-1)!.settlement!;
+    expect(Object.values(st.applied).reduce((a, b) => a + b, 0)).toBe(0);
+    expect(Object.keys(st.sources.find((x) => x.source === 'team')!.attributes).sort()).toEqual([...attrs].sort());
   });
 });
