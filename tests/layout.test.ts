@@ -93,7 +93,7 @@ describe('fitRegion (attack drill view)', () => {
 });
 
 describe('coverWithFocus (painted story backdrops)', () => {
-  const focus = { x0: 0.2, y0: 0.12, x1: 0.85, y1: 0.45 };
+  const focus = { x0: 0.2, y0: 0.2, x1: 0.85, y1: 0.44 };
   const cases = [
     { name: 'iPhone 13 portrait', width: 390, height: 383, top: 50 },
     { name: 'iPhone 13 landscape', width: 844, height: 201, top: 50 },
@@ -112,12 +112,11 @@ describe('coverWithFocus (painted story backdrops)', () => {
       expect(top).toBeLessThanOrEqual(0);
       expect(left + w).toBeGreaterThanOrEqual(c.width - 1e-9);
       expect(top + h).toBeGreaterThanOrEqual(c.height - 1e-9);
-      // Horizontally the whole focus box is on screen; vertically its centre (the faces) is in the free band.
+      // The whole focus box (faces and Cloudy) is on screen, below the top bar and above the panel.
       expect(left + focus.x0 * w).toBeGreaterThanOrEqual(-1e-9);
       expect(left + focus.x1 * w).toBeLessThanOrEqual(c.width + 1e-9);
-      const fy = top + ((focus.y0 + focus.y1) / 2) * h;
-      expect(fy).toBeGreaterThanOrEqual(c.top);
-      expect(fy).toBeLessThanOrEqual(c.height);
+      expect(top + focus.y0 * h).toBeGreaterThanOrEqual(c.top - 1e-9);
+      expect(top + focus.y1 * h).toBeLessThanOrEqual(c.height + 1e-9);
     });
   }
 
@@ -125,6 +124,6 @@ describe('coverWithFocus (painted story backdrops)', () => {
     const p = Math.max(390 / 1536, 383 / 1024);
     expect(390 / 2 + (0.85 - 0.5) * 1536 * p).toBeGreaterThan(390);
     const l = Math.max(844 / 1536, 201 / 1024);
-    expect(201 / 2 + (0.285 - 0.5) * 1024 * l).toBeLessThan(50);
+    expect(201 / 2 + (0.2 - 0.5) * 1024 * l).toBeLessThan(50);
   });
 });

@@ -184,8 +184,8 @@ export const CAST_IN_BACKDROP = 'cast_in_backdrop';
 
 /** Painted backdrops whose subject (child's face and Cloudy) must stay in view when cropped to fit. */
 export const BACKDROP_FOCUS: Readonly<Record<string, FocusBox>> = {
-  's1-tank-boy': { x0: 0.2, y0: 0.12, x1: 0.85, y1: 0.45 },
-  's1-tank-girl': { x0: 0.2, y0: 0.12, x1: 0.85, y1: 0.45 },
+  's1-tank-boy': { x0: 0.2, y0: 0.2, x1: 0.85, y1: 0.44 },
+  's1-tank-girl': { x0: 0.2, y0: 0.2, x1: 0.85, y1: 0.44 },
 };
 
 /**
