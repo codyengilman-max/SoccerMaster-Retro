@@ -221,3 +221,29 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - After a goal a short `goal` phase (celebration) precedes the fair restart; round expiry still ends the round from any phase.
 - AI uses the same meter, cooldowns and rules; it dribbles, charges shots, chases rebounds, and spreads (`aiSpread`) so it does not pile up.
 - Scene: HIT/SHOOT/SLIDE/TURBO with rings for cooldowns, charge and turbo; owner action-sheet frames (Alex and the keeper keep their existing art; slides use the falling/grounded frames because the sheets have no slide-tackle pose); net, bar, boards, ball shadow and height; code-synthesised sounds (`?mute` or `smr-sound=off` silences); shake is skipped under reduced motion. The Leave button now pauses, with Resume / Leave round; app hidden pauses and drops held controls.
+
+## D44. Team Training v1.2: reference coordinator, verified routes only, one weekly grade (owner package, 2026-10-22)
+- The package's `engine.mjs`, `catalog.mjs` and `seasons.mjs` are vendored unchanged in `src/game/training12/ref/` with `.d.mts` declarations; their hashes and the package's own 36 tests run inside `npm test`. Our code adapts around them instead of editing them.
+- A route opens only from an explicit, hand-kept list of exact scenario keys (`registry.ts`) that a full simulated session has passed. Generated layouts are never treated as verified. Season 1 weeks 1–4 (108 routes) are enabled; everything else shows "not available yet".
+- The tactical drill (`drill.ts`) is framework-free, metre-based and seeded. The human picks every tactical decision; NPCs only carry it out. Decision quality, execution and outcome are kept separate.
+- Rewards stay in the existing weekly Team Training economy: `tt12Run` stores each finished run (idempotent by run ID, one credited run per week/slot) and the third credited slot grades the week through `countTeamWeek`, shared with the legacy situations, so a week can be rewarded once whichever path finishes first. `masteryGranted` stays false.
+- `TacticalTrainingScene` uses its own fixed straight-down camera over one whole half (goal at top in both orientations) and never touches the match camera. Half-field adaptations are versioned in `docs/training/v1.2/MAPPING.md` (tt12-halffield-1).
+- Rounds are 45 s of live ball (reference default 90) so a session fits a phone sitting; `?debug&ttSpeed=1-8` speeds play for browser tests only.
+
+## D45. Cloudy's Feeding Frenzy: painting-pixel simulation, painted goal, career-save bests (owner brief, 2026-10-23)
+- `src/game/cloudy/sim.ts` is framework-free and seeded; every position is in pixels of the 1536x1024 aquarium painting. The scene draws the painting with one uniform fit (`fitBackground`, aspect kept, letterboxed) and maps sim points with the same `toScreen`/`toPainting`, so rendering, physics and the goal trigger cannot drift apart at any screen size. Alternative rejected: screen-space physics, which would move the trigger relative to the painted goal on every resize.
+- No goal is drawn: the trigger is a rectangle inset inside the painted goal mouth, and a goal needs the whole ball inside it after being outside (no scoring from behind or by spawning inside).
+- Bests live in the career save (`cloudy`, per difficulty, with the last 20 run IDs so a repeated save is ignored) rather than a separate store, so they share the save's backup, migration and multi-tab rules. The mini-game never changes attributes, growth or match statistics.
+
+## D46. V3 content update applied to the existing story engine (owner package, 2026-10-23)
+- One story controller: V3 is authored in the existing `.story` source format and compiled by `scripts/story/build-season-one.py`; the paused v0.2 engine was never added and nothing from it runs. The package is kept unchanged in `docs/story/v3/` as the reference.
+- New handoff `home_hub` completes with a code-set detail (`talk` or `trained`); the scene branches on `detail:S1_W05_H=talk`, so Cloudy is optional and cannot block the week. The training gate (`homeAssignments`) needs a logged `done` juggling entry and a first-touch entry in the current career week (scheduled or extra, easier variants count), never a story choice or a session count in another focus.
+- Ambition and park plan are `remember_choice` decisions only; they carry no attribute, attendance or reward effect (the compiler allows no other effect).
+- League results still require WIN/DRAW/LOSS on completion; declined or abandoned matches resolve with no result and skip the result-specific aftermath.
+
+## D47. Match Reports and the 35/30/30/5 weekly development settlement (owner spec, 2026-10-24)
+- One pipeline: sim events -> `MatchLedger` -> stats/rating -> `SavedReport` (saved once per `matchId`) -> `endWeek` settlement. See `docs/REPORTS.md`.
+- The six existing attributes are kept; requested attributes the game lacks, Energy and Form are shown as not tracked, never invented.
+- The owner spec makes Home skills a development source (35%). This supersedes the earlier rule that home practice cannot raise attributes; home logs are self-reported, so they carry 0.6 confidence.
+- `computeGrowth` (match/coach evidence thresholds) is unchanged; the settlement adds bounded fractional credits on top, inside the same weekly caps. Past weeks are never recalculated; old saves start with zero carry.
+- Decision quality is judged from receiver openness at the pass; positioning stays unavailable without off-ball telemetry.

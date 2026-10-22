@@ -19,6 +19,8 @@ export interface MatchPlayerReport {
 
 /** Plain-data snapshot of the 9v9 sandbox exposed through `window.__SMR__` (debug builds only). */
 export interface MatchReport {
+  /** Match Report save state (career matches): built once at full time. */
+  readonly report?: { readonly id: string | null; readonly saving: boolean; readonly ledger: boolean; readonly meta: boolean; readonly store: boolean };
   /** Career Team Training progress, or null outside Team Training. */
   readonly teamTraining?: { readonly phase: string; readonly week: number; readonly index: number; readonly ids: readonly string[]; readonly scores: readonly number[]; readonly message: string; readonly hud?: string; readonly half?: string; readonly zoom?: number; readonly protagonist?: { readonly id: string; readonly set: string | null } | null; readonly viewLen?: number; readonly viewCross?: number } | null;
   /** M6: career evidence recording for the career player's slot, or null outside career play. */

@@ -4,7 +4,7 @@
  */
 import rawSeason from '../../../docs/story/season-one/season_one_scenes.json';
 
-export const ADAPTERS = ['identity', 'crossbar', 'training_arrangement', 'weekly_focus', 'practice', 'assignment', 'match', 'week_close', 'jungle', 'team_training', 'league_match', 'tournament_match', 'standings', 'home_learning', 'school_reward', 'training_log'] as const;
+export const ADAPTERS = ['identity', 'crossbar', 'training_arrangement', 'weekly_focus', 'practice', 'assignment', 'match', 'week_close', 'jungle', 'team_training', 'league_match', 'tournament_match', 'standings', 'home_learning', 'school_reward', 'training_log', 'home_hub'] as const;
 export type AdapterKind = (typeof ADAPTERS)[number];
 export const PREDICATES = ['always', 'crossbar_accepted', 'jungle_accepted', 'promise_made', 'promise_kept', 'promise_cancelled', 'promise_missed', 'promise_repaired'] as const;
 export type LegacyPredicateId = (typeof PREDICATES)[number];
@@ -19,7 +19,7 @@ const PARAM_PREDICATE = /^(chose:[A-Za-z0-9_]{1,64}\.[A-Za-z0-9_]{1,64}=[A-Za-z0
 export const OUTCOMES = ['completed', 'declined', 'abandoned', 'interrupted'] as const;
 export type Outcome = (typeof OUTCOMES)[number];
 const FULL_OUTCOMES: readonly AdapterKind[] = ['crossbar', 'practice', 'match', 'jungle', 'team_training', 'league_match', 'tournament_match'];
-export const BACKGROUNDS = ['neutral_school', 'neutral_home', 'neutral_pitch', 'aquarium', 'recess', 'prologue'] as const;
+export const BACKGROUNDS = ['neutral_school', 'neutral_home', 'neutral_pitch', 'aquarium', 'recess', 'prologue', 'home_v3'] as const;
 export type Background = (typeof BACKGROUNDS)[number];
 
 export interface Effect { readonly op: 'remember_choice'; readonly key: string; readonly value: string }
@@ -240,6 +240,8 @@ export interface CrossbarRules {
 const CROSSBAR_RULES: Readonly<Record<string, CrossbarRules>> = {
   S1_W01_S: { opponent: 'Sam', warmup: 'always', sudden: false },
   S1_W02_S: { opponent: 'Blake', warmup: 'choice', sudden: false },
+  // V3 week 5: Sam's challenge, no warm-up choice in the scene; a tie stands ("Rematch next week").
+  S1_W05_S: { opponent: 'Sam', warmup: 'always', sudden: false },
 };
 export const crossbarRules = (sceneId: string): CrossbarRules => CROSSBAR_RULES[sceneId] ?? { opponent: 'Blake', warmup: 'choice', sudden: true };
 

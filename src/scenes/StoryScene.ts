@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { fixtureForWeek, newLeague, parseLeague, recordPlayed, simulateThrough } from '../game/league/league';
-import { homeLearningDetail, jungleResult, schoolRewardDetail, trainingLogDetail } from '../game/story/facts';
+import { homeAssignments, homeLearningDetail, jungleResult, schoolRewardDetail, trainingLogDetail } from '../game/story/facts';
 import type { CompetitorId } from '../game/jungle/sim';
 import { crossbarRules, sceneById, trainingDetail } from '../game/story/content';
 import { seasonWeek, type TournamentId } from '../game/season/calendar';
@@ -413,6 +413,26 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     else this.scene.start(SceneKeys.Career, { returnTo: 'story', ...(kind === 'team_training' ? { open: 'team' } : {}) });
   }
 
+  /** Home hub: Training opens Home Training without launching a run; the hub completes only on Continue or Talk. */
+  private openHome(): void {
+    if (!this.fresh()) return;
+    this.navigating = true;
+    this.scene.start(SceneKeys.Career, { returnTo: 'story' });
+  }
+
+  /** Optional and never a story fact: the result is saved by Cloudy's own reducer action. */
+  private openMyPlayer(): void {
+    if (!this.fresh()) return;
+    this.navigating = true;
+    this.scene.start(SceneKeys.MyPlayer, { returnTo: 'story' });
+  }
+
+  private openCloudy(): void {
+    if (!this.fresh()) return;
+    this.navigating = true;
+    this.scene.start(SceneKeys.Cloudy, { returnTo: 'story' });
+  }
+
   private async openJungle(): Promise<void> {
     if (!this.fresh() || !this.store) return;
     this.busy = true;
@@ -494,17 +514,17 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   }
 
   /** Club the away side wears in this story match (art only; competitions are unchanged). */
-  private async matchOpponent(kind: string, run: string): Promise<{ opponent?: string }> {
+  private async matchOpponent(kind: string, run: string): Promise<{ opponent?: string; venue?: 'home' | 'away'; competition?: 'League' | 'Tournament' }> {
     if (kind === 'league_match') {
       const week = this.seasonWeekNo();
       const f = week === null ? null : fixtureForSeasonWeek(week);
-      return f ? { opponent: opponentOf(f) } : {};
+      return f ? { opponent: opponentOf(f), venue: f.home === 'batavia' ? 'home' : 'away', competition: 'League' } : {};
     }
     if (kind === 'tournament_match') {
       const id = await this.store?.getRecord(`tfix:${run}`);
       const t = await this.tournament();
       const f = t && typeof id === 'string' ? allFixtures(t).find((x) => x.id === id) : undefined;
-      if (f) return { opponent: f.home === 'batavia' ? f.away : f.home };
+      if (f) return { opponent: f.home === 'batavia' ? f.away : f.home, venue: f.home === 'batavia' ? 'home' : 'away', competition: 'Tournament' };
     }
     return {};
   }
@@ -1033,7 +1053,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       case 'team_training':
         setBody(`This week's Team Training (career week ${this.save?.week ?? 1}): three situations from the team's logic catalog. Same rules as always: up to +2 attribute points for a good week, one per week.`);
         acts.push({ name: 'handoff-career', label: 'Open Team Training', onClick: () => void this.openCareer('team_training') });
-        acts.push({ name: 'handoff-skip', label: 'Not this week', onClick: () => void this.skipRun('declined') });
+        // From week 5 (V3) Team Training is required: no skip.
+        if ((this.seasonWeekNo() ?? 0) < 5) acts.push({ name: 'handoff-skip', label: 'Not this week', onClick: () => void this.skipRun('declined') });
         return;
       case 'league_match': {
         const week = this.seasonWeekNo() ?? 0;
@@ -1078,6 +1099,21 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         setBody('School activity attribute change: not configured yet (owner decision pending). No attribute changes.');
         acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.finishFact(schoolRewardDetail()) });
         return;
+      case 'home_hub': {
+        const a = this.save ? homeAssignments(this.save) : { juggling: false, firstTouch: false, complete: false };
+        const trained = a.complete;
+        const talked = Object.values(s.runs).some((r) => r.sceneId === s.sceneId && r.adapter === 'home_hub' && r.detail === 'talk');
+        setBody(
+          `HOME MENU\nTraining (required) - log each in Home Training:\n- Juggling task: ${a.juggling ? 'done' : 'not done yet'}\n- Control and first-touch work: ${a.firstTouch ? 'done' : 'not done yet'}\n` +
+            `${trained ? 'Weekly home training complete. Continue Week is unlocked.' : 'Continue Week unlocks after the required training.'}\nCloudy: Feed & Play and Cloudy: Talk are optional.`,
+        );
+        acts.push({ name: 'hub-training', label: trained ? 'Training (done)' : 'Training (required)', onClick: () => this.openHome() });
+        acts.push({ name: 'hub-my-player', label: 'My Player', onClick: () => this.openMyPlayer() });
+        acts.push({ name: 'hub-cloudy-play', label: 'Cloudy: Feed & Play', onClick: () => this.openCloudy() });
+        if (!talked) acts.push({ name: 'hub-cloudy-talk', label: 'Cloudy: Talk', onClick: () => void this.finishFact('talk') });
+        if (trained) acts.push({ name: 'hub-continue', label: 'Continue Week', onClick: () => void this.finishFact('trained') });
+        return;
+      }
       case 'week_close':
         setBody((this.save?.week ?? 1) >= SEASON_RELEASED_WEEKS
           ? `Finish week ${this.save?.week ?? 1}: your week review is saved. More weeks are coming soon.`
@@ -1143,7 +1179,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     void n;
     const id = this.state?.sceneId ?? '';
     const authored = id.startsWith('S1_') ? sceneById(id)?.background : undefined;
-    if (authored) return authored === 'aquarium' ? 'neutral_home' : authored === 'neutral_pitch' || authored === 'neutral_home' ? authored : 'neutral_school';
+    if (authored) return authored === 'aquarium' || authored === 'home_v3' ? 'neutral_home' : authored === 'neutral_pitch' || authored === 'neutral_home' ? authored : 'neutral_school';
     if (/HOME|CLOSE_WEEK/.test(id)) return 'neutral_home';
     if (/TRAINING|PRACTICE|MATCH|FOCUS/.test(id)) return 'neutral_pitch';
     return 'neutral_school';

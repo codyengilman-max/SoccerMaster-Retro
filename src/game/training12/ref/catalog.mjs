@@ -1,0 +1,66 @@
+// Original SoccerMaster practice designs. Sizes/doses are provisional game tuning.
+export const families = {
+ build: {name:'Play out under pressure',roles:['GK','CB','LB','RB','6','8'],cue:'Can we play through, around, or safely reset?',sources:['R02','R11'],
+  behaviors:['GK offers a return angle','CB draws a presser before releasing','6 moves out of the cover shadow','Defenders press with cover'],
+  evidence:'Recognize a reachable outlet without exposing an immediate central turnover'},
+ switch: {name:'Draw pressure and switch',roles:['6','8','LW','RW','LB','RB'],cue:'Has the defender moved enough to open the other side?',sources:['R01','R05','R10'],
+  behaviors:['Carrier attacks available space','Near support connects','Far winger stays available until width is handed over','Cover player protects the middle'],
+  evidence:'Switch when far-side access improves; continue forward when the same-side route remains better'},
+ combine: {name:'Receive, support and combine',roles:['6','8','9','LW','RW'],cue:'Can you help the receiver before the ball arrives?',sources:['R03','R08'],
+  behaviors:['Receiver checks away then offers an angle','Third player moves as the passer commits','9 can set or turn','Defender follows ball and runner cues'],
+  evidence:'Offer a reachable passing angle or exploit a third-player opening without running offside'},
+ wide: {name:'Wide overload and box movement',roles:['LB','RB','LW','RW','8','9'],cue:'Who holds width if somebody runs inside?',sources:['R01','R07'],
+  behaviors:['Winger can carry inside or outside','Back overlaps only with cover','9 attacks one finishing lane','Far winger narrows only after width handover'],
+  evidence:'Separate runs, preserve a reset, and choose cutback or carry from observed space'},
+ defend: {name:'Pressure, cover and balance',roles:['CB','LB','RB','6','8','LW','RW','9'],cue:'Can you win it, or should you slow the attack?',sources:['R06','R07','R12'],
+  behaviors:['First defender controls approach','Second covers the dangerous inside route','Far player protects a second threat','Front player curves pressure without exposing middle'],
+  evidence:'Delay or regain while a teammate covers; a foul or reckless chase is not success'},
+ transition: {name:'React to a change of possession',roles:['GK','CB','LB','RB','6','8','LW','RW','9'],cue:'Is there a safe counterpress, or do we recover?',sources:['R02','R07'],
+  behaviors:['Nearest effective player pressures if supported','6 protects the central counter','Runner offers an outlet on regain','GK adjusts to ball pressure and depth'],
+  evidence:'Choose press or recovery using support and threat, not an unconditional countdown'},
+ finish: {name:'Create and finish',roles:['GK','LW','RW','8','9'],cue:'Is the shot better than the next pass?',sources:['R07','R08'],
+  behaviors:['Carrier compares shot and pass','9 separates from marker','Second attacker supports rebound without blocking shot','GK sets from ball angle'],
+  evidence:'Choose a feasible finish or better teammate; distinguish decision from shot execution'},
+ keeper: {name:'Goalkeeper and back-line unit',roles:['GK','CB','LB','RB','6'],cue:'Protect the goal, defend space, or distribute?',sources:['R11','R02'],
+  behaviors:['GK reads ball travel and runner arrival','CB protects goal if GK advances','Outside backs provide split outlets','Opponent presses a visible touch, not hidden inputs'],
+  evidence:'Choose set, sweep or distribution from observed arrival and pressure'}
+};
+
+// id, family, level, name, outfield A/B, neutral, GK A/B, metres L/W, objective, turnover
+const rows = [
+ ['B1','build',1,'Find the exit',3,2,0,1,0,30,24,'A scores by controlled reception beyond either exit gate; B scores in the main goal','B attacks goal immediately; A recovers'],
+ ['B2','build',2,'Break the first press',4,3,0,1,0,38,28,'A progresses through either end gate; B attacks the main goal','Play continues on regain; reset only after goal or ball out'],
+ ['B3','build',3,'Two-way build',4,4,0,1,1,44,32,'Score in opposing goal; begin alternate rounds at each GK','Immediate two-way transition'],
+ ['S1','switch',1,'Two goals to choose',3,3,0,0,0,25,25,'Attack two mini-goals; finish inside final 5 m zone','New team can attack either opposite target'],
+ ['S2','switch',2,'Connect the opposite side',4,4,1,0,0,32,36,'Two mini-goals per end; neutral supports possession','Neutral changes allegiance only after secure possession'],
+ ['S3','switch',3,'Switch then exploit',5,5,0,1,1,48,38,'Normal goals; display feedback for useful switches, never require one','Normal two-way transition'],
+ ['C1','combine',1,'Give and go or turn',2,2,1,0,0,24,18,'Controlled reception in opposite 3 m end zone','Reverse attack direction for new possessor'],
+ ['C2','combine',2,'Third player choice',3,3,1,0,0,30,24,'Score in opposing two mini-goals','Neutral supports new team after possession is secure'],
+ ['C3','combine',3,'Find the pocket',4,4,0,1,1,40,30,'Normal goals with free movement between thirds','Receiver and runner must recover on loss'],
+ ['W1','wide',1,'Wide two against one',2,1,0,0,1,26,20,'A attacks goal; B can counter through either start gate','Defender can counter; attacker must recover'],
+ ['W2','wide',2,'Overlap or stay',3,3,0,0,1,34,28,'A attacks goal; B attacks two mini-goals','Live counter after regain; swap asymmetric roles each round'],
+ ['W3','wide',3,'Far-side arrival',5,5,0,1,1,45,38,'Normal goals; central and wide routes remain legal','Track opposite winger and protecting midfielder on turnover'],
+ ['D1','defend',1,'Delay and cover',2,2,0,0,0,24,18,'Two mini-goals per end','Both pairs attack and defend continuously'],
+ ['D2','defend',2,'Protect two threats',3,3,0,0,0,30,26,'Two mini-goals per end; free touches','One pressures, one covers, one balances'],
+ ['D3','defend',3,'Press as a unit',4,4,0,1,1,42,30,'Normal goals; no compulsory high press','Regaining team chooses counter or secure pass'],
+ ['T1','transition',1,'Win it and find space',3,3,0,0,0,28,22,'Two mini-goals per end','No automatic whistle after turnover'],
+ ['T2','transition',2,'Pressure with a spare',3,3,1,0,0,32,26,'Opposite end-zone controlled reception','Neutral switches only on settled possession; loose ball is contested'],
+ ['T3','transition',3,'Protect the counter',5,5,0,1,1,46,34,'Normal goals; reward quality in feedback, not forced fast shots','Nearest effective pressure plus central recovery'],
+ ['F1','finish',1,'Pass or finish',2,1,0,0,1,24,20,'A attacks goal; B attacks two exit gates','Live defender counter and rebounds'],
+ ['F2','finish',2,'Three finishers, two defenders',3,2,0,0,1,32,26,'A attacks goal; B attacks two mini-goals','Attackers recover on loss; reset after out or goal'],
+ ['F3','finish',3,'Finish under equal pressure',4,4,0,1,1,38,30,'Normal goals and live rebounds','Both teams recover after shooting'],
+ ['K1','keeper',1,'Keeper plus outlets',2,2,0,1,0,28,24,'GK team exits through either gate; opponents attack goal','GK may distribute after physical control only'],
+ ['K2','keeper',2,'Protect goal or space',2,2,0,1,1,34,24,'Normal goals; varied legal ground starts','No scripted mandatory sweep; actual arrival decides'],
+ ['K3','keeper',3,'Keeper in the team',4,4,0,1,1,44,32,'Normal goals; varied short and advanced starts','GK resets position as pressure and possession change']
+];
+export const catalog=rows.map(([id,family,level,name,a,b,n,ga,gb,length,width,objective,turnover])=>({
+ id,family,level,name,version:1,status:'reference-prototype',
+ participants:{outfieldA:a,outfieldB:b,neutrals:n,gkA:ga,gkB:gb,total:a+b+n+ga+gb},
+ pitch:{length,width},objective,turnover,roles:families[family].roles.filter(role=>role!=='GK'||ga+gb>0),
+ gameBoutSeconds:90,rounds:3,reflectionSeconds:15,
+ constraints:{touchLimit:null,minimumPasses:0,offside:'host-profile',heading:'host-profile'},
+ regression:'Use the resolved actor task: attack may gain width; defense may narrow targets; GK may move attacker start farther away. Verify one geometry change before use',
+ progression:'Review the next format separately; never change numbers, targets and geometry mid-bout without a verified layout',
+ transfer:'Remove practice incentives; observe the same decision in a normal 9v9 match',
+ sources:families[family].sources
+}));

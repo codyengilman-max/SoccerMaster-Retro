@@ -1,9 +1,12 @@
+import { REPORTS_KEPT, type SavedReport } from '../report/report';
+import { settleWeek, zeroFractions, type Fractions, type WeekSettlement } from '../report/settlement';
+import { DIFFICULTIES, type Difficulty } from '../cloudy/sim';
 import { CAREER_CONFIG } from './config';
 import { FOCUSES, activityById, focusById } from './catalog';
 import { DEFAULT_INPUT, normalizeInput, planWeek, substitute, workableFocuses, type PlannerInput, type WeekPlan } from './planner';
 import { cleanName, cleanText, createPlayer, type CareerPlayer } from './player';
 import { applyGrowth, computeGrowth, type AttributeOutcome, type EvidenceItem } from './progression';
-import { selectSituations, teamTrainingChanges, describeChanges, weekDelta, type AttributeChange, type SituationResult } from './teamTraining';
+import { selectSituations, situationById, teamTrainingChanges, describeChanges, weekDelta, type AttributeChange, type SituationResult } from './teamTraining';
 import { SKILL_FAMILIES, type AttributeId, type Foot, type Level, type Position, type Rating, type SkillFamilyId } from './types';
 
 export const SAVE_SCHEMA = 2;
@@ -45,6 +48,8 @@ export interface WeekReview {
   readonly missedEvents: number;
   readonly outcomes: readonly AttributeOutcome[];
   readonly suggestedFocus: string | null;
+  /** The 35/30/30/5 weekly development settlement (weeks settled before it existed: absent). */
+  readonly settlement?: WeekSettlement;
 }
 
 /** One week's Team Training, counted once. */
@@ -74,6 +79,35 @@ export interface CareerSave {
   readonly history: readonly WeekReview[];
   /** Weekly Team Training results; at most one per week (older saves: empty). */
   readonly teamTraining: readonly TeamTrainingRecord[];
+  /** Team Training v1.2 runs that finished all three rounds (older saves: empty). */
+  readonly tt12: readonly Tt12Run[];
+  /** Cloudy's Feeding Frenzy best score and best stars per difficulty (no growth, no match statistics). */
+  readonly cloudy: readonly CloudyBest[];
+  /** Recently saved Cloudy round ids, so a replayed save never counts twice. */
+  readonly cloudyRuns: readonly string[];
+  /** Player Match Reports, newest last (older saves: empty). Built once at full time; never recalculated. */
+  readonly reports: readonly SavedReport[];
+  /** Fractional development credits carried to next week (older saves: zero). */
+  readonly devCarry: Fractions;
+}
+
+export interface CloudyBest {
+  readonly difficulty: Difficulty;
+  readonly bestScore: number;
+  readonly bestStars: 1 | 2 | 3;
+}
+
+export type Tt12Slot = 'A' | 'B' | 'C';
+export const TT12_SLOTS: readonly Tt12Slot[] = ['A', 'B', 'C'];
+
+/** One completed v1.2 scheduled session. Only credited runs count toward the week. */
+export interface Tt12Run {
+  readonly week: number;
+  readonly slot: Tt12Slot;
+  readonly runId: string;
+  /** Mean decision quality (0-1) over the run's assessed decisions. */
+  readonly score: number;
+  readonly credited: boolean;
 }
 
 export type Action =
@@ -86,9 +120,14 @@ export type Action =
   | { readonly type: 'evidence'; readonly batchId: string; readonly items: readonly EvidenceItem[]; readonly missed: number }
   | { readonly type: 'acceptLevel'; readonly family: SkillFamilyId }
   | { readonly type: 'teamTraining'; readonly week: number; readonly results: readonly SituationResult[] }
-  | { readonly type: 'endWeek' };
+  | { readonly type: 'tt12Run'; readonly week: number; readonly slot: Tt12Slot; readonly runId: string; readonly score: number; readonly creditEligible: boolean }
+  | { readonly type: 'cloudyResult'; readonly runId: string; readonly difficulty: Difficulty; readonly score: number; readonly stars: 1 | 2 | 3 }
+  | { readonly type: 'matchReport'; readonly report: SavedReport }
+  | { readonly type: 'endWeek'; readonly recess?: { readonly played: boolean } | null };
 
 export type Outcome = { readonly ok: true; readonly save: CareerSave; readonly message: string; readonly changed: boolean } | { readonly ok: false; readonly error: string };
+
+export const CLOUDY_RUNS_KEPT = 20;
 
 export function emptySave(): CareerSave {
   return {
@@ -108,6 +147,11 @@ export function emptySave(): CareerSave {
     missedEvents: 0,
     history: [],
     teamTraining: [],
+    tt12: [],
+    cloudy: [],
+    cloudyRuns: [],
+    reports: [],
+    devCarry: zeroFractions(),
   };
 }
 
@@ -231,23 +275,66 @@ export function reduce(save: CareerSave, action: Action): Outcome {
       if (!save.player) return fail('No career player.');
       if (action.week !== save.week) return fail('That Team Training belongs to another week.');
       if (save.teamTraining.some((r) => r.week === save.week)) return same(save, `Team Training for week ${save.week} is already counted.`);
-      const expected = selectSituations(save.player.position, save.week).map((x) => x.id);
-      const results = action.results;
-      if (results.length !== expected.length || results.some((r, i) => r.id !== expected[i])) return fail('Team Training results do not match this week.');
-      if (results.some((r) => typeof r.score !== 'number' || !Number.isFinite(r.score) || r.score < 0 || r.score > 1)) return fail('Team Training score out of range.');
-      const changes = teamTrainingChanges(save.player, results);
-      const attributes = { ...save.player.attributes };
-      for (const c of changes) attributes[c.attribute] = c.to;
-      const record: TeamTrainingRecord = { week: save.week, situations: expected, scores: results.map((r) => r.score), delta: weekDelta(results.map((r) => r.score)), changes };
+      // One week, one mode: once a v1.2 session counts, the week is graded by the v1.2 sessions.
+      const started = save.tt12.filter((r) => r.week === save.week && r.credited).length;
+      if (started > 0) return same(save, `This week counts through your Team Training v1.2 sessions (${started} of 3 done); this run was practice only.`);
+      const counted = countTeamWeek(save, action.results);
+      return 'error' in counted ? fail(counted.error) : ok(counted.save, counted.message);
+    }
+    case 'matchReport': {
+      const r = action.report;
+      if (!r || typeof r.matchId !== 'string' || r.matchId.length < 1 || r.matchId.length > 64) return fail('Invalid match report.');
+      // Saving the same match again (reload, replayed callback) keeps the first report and awards nothing.
+      if (save.reports.some((x) => x.matchId === r.matchId)) return same(save, 'This match report is already saved.');
+      return ok({ ...save, reports: [...save.reports, r].slice(-REPORTS_KEPT) }, 'Match report saved.');
+    }
+    case 'cloudyResult': {
+      if (!DIFFICULTIES.includes(action.difficulty) || !Number.isSafeInteger(action.score) || action.score < 0 || action.score > 100_000 || ![1, 2, 3].includes(action.stars)) return fail('Cloudy result out of range.');
+      if (save.cloudyRuns.includes(action.runId)) return same(save, 'This round is already saved.');
+      const prev = save.cloudy.find((b) => b.difficulty === action.difficulty);
+      const best: CloudyBest = { difficulty: action.difficulty, bestScore: Math.max(prev?.bestScore ?? 0, action.score), bestStars: Math.max(prev?.bestStars ?? 1, action.stars) as 1 | 2 | 3 };
+      const record = !prev || action.score > prev.bestScore;
       return ok(
-        { ...save, player: { ...save.player, attributes }, teamTraining: [...save.teamTraining, record].slice(-L.historyMax) },
-        `Team Training week ${save.week}: ${describeChanges(changes)}`,
+        { ...save, cloudy: [...save.cloudy.filter((b) => b.difficulty !== action.difficulty), best], cloudyRuns: [...save.cloudyRuns, action.runId].slice(-CLOUDY_RUNS_KEPT) },
+        record ? `New best on ${action.difficulty}: ${action.score}.` : `Best on ${action.difficulty}: ${best.bestScore}.`,
       );
+    }
+    case 'tt12Run': {
+      if (!save.player) return fail('No career player.');
+      if (action.week !== save.week) return fail('That Team Training belongs to another week.');
+      if (!TT12_SLOTS.includes(action.slot)) return fail('Unknown Team Training session.');
+      if (typeof action.runId !== 'string' || action.runId.length < 1 || action.runId.length > 64) return fail('Invalid Team Training run.');
+      if (typeof action.score !== 'number' || !Number.isFinite(action.score) || action.score < 0 || action.score > 1) return fail('Team Training score out of range.');
+      // A replayed completion (same run) or a second run of an already credited session changes nothing.
+      if (save.tt12.some((r) => r.runId === action.runId)) return same(save, 'This session is already saved.');
+      if (save.tt12.some((r) => r.week === save.week && r.slot === action.slot && r.credited)) return same(save, `Session ${action.slot} for week ${save.week} is already counted; this was practice only.`);
+      // Once the week is graded (legacy Team Training or three v1.2 sessions), further runs are practice only.
+      const graded = save.teamTraining.some((r) => r.week === save.week);
+      const credited = action.creditEligible === true && !graded;
+      const runs = [...save.tt12, { week: save.week, slot: action.slot, runId: action.runId, score: action.score, credited }].slice(-L.historyMax * 4);
+      let next: CareerSave = { ...save, tt12: runs };
+      if (graded) return ok(next, `Team Training for week ${save.week} is already counted; this session was practice only.`);
+      if (!credited) return ok(next, 'Session saved, but not counted: it needs at least 30 seconds of your own play.');
+      const week = TT12_SLOTS.map((slot) => runs.find((r) => r.week === save.week && r.slot === slot && r.credited));
+      if (week.some((r) => !r)) {
+        return ok(next, `Session ${action.slot} counted (${week.filter(Boolean).length} of 3 this week).`);
+      }
+      // All three sessions credited: the week is graded once through the existing Team Training economy.
+      const results = selectSituations(save.player.position, save.week).map((x, i) => ({ id: x.id, score: week[i]!.score, notes: [] }));
+      const counted = countTeamWeek(next, results);
+      if ('error' in counted) return fail(counted.error);
+      next = counted.save;
+      return ok(next, `All three sessions counted. ${counted.message}`);
     }
     case 'endWeek': {
       if (!save.player) return fail('No career player.');
       if (save.week >= L.weekMax) return fail('Last week reached.');
-      const outcomes = computeGrowth(save.player, save.evidence);
+      const evidenceOutcomes = computeGrowth(save.player, save.evidence);
+      const settlement = settleSave(save, evidenceOutcomes, action.recess ?? null);
+      const outcomes = evidenceOutcomes.map((o) => {
+        const p = settlement.applied[o.attribute];
+        return p > 0 ? { ...o, to: o.to + p, reason: `${o.reason} +${p} from weekly development.` } : o;
+      });
       const thisWeek = save.journal.filter((j) => j.week === save.week);
       const ratings = { learning: 0, improving: 0, comfortable: 0 };
       for (const j of thisWeek) if (j.rating) ratings[j.rating] += 1;
@@ -262,6 +349,7 @@ export function reduce(save: CareerSave, action: Action): Outcome {
         missedEvents: save.missedEvents,
         outcomes,
         suggestedFocus: suggestFocus(save, outcomes),
+        settlement,
       };
       let next: CareerSave = {
         ...save,
@@ -273,6 +361,7 @@ export function reduce(save: CareerSave, action: Action): Outcome {
         batches: [],
         missedEvents: 0,
         history: [...save.history, review].slice(-L.historyMax),
+        devCarry: settlement.carry,
       };
       if (save.focusId) {
         const r = replan(next, save.focusId);
@@ -281,4 +370,46 @@ export function reduce(save: CareerSave, action: Action): Outcome {
       return ok(next, `Week ${save.week} reviewed. Week ${save.week + 1} starts now.`);
     }
   }
+}
+
+/** This week's sources for the weekly settlement, read from the save only. */
+function settleSave(save: CareerSave, evidence: readonly AttributeOutcome[], recess: { readonly played: boolean } | null): WeekSettlement {
+  const w = save.week;
+  const runs = save.tt12.filter((r) => r.week === w && r.credited);
+  const tt = save.teamTraining.find((t) => t.week === w);
+  const teamScore = runs.length ? runs.reduce((a, r) => a + r.score, 0) / runs.length : tt && tt.scores.length ? tt.scores.reduce((a, b) => a + b, 0) / tt.scores.length : null;
+  // Points already given this week (evidence growth and graded Team Training) count against the weekly caps.
+  const granted = zeroFractions();
+  for (const o of evidence) granted[o.attribute] += o.to - o.from;
+  for (const c of tt?.changes ?? []) if (c.to > c.from) granted[c.attribute] += c.to - c.from;
+  // Team credits go to the attributes the week's situations practised, never to a stand-in.
+  const practised = tt ? tt.situations : runs.length ? selectSituations(save.player!.position, w).map((x) => x.id) : [];
+  const teamAttributes = [...new Set(practised.flatMap((id) => situationById(id)?.attributes ?? []))];
+  return settleWeek({
+    week: w,
+    player: save.player!,
+    homeSessions: save.journal.filter((j) => j.week === w && j.credited && j.completion !== 'skipped').map((j) => j.activityId),
+    teamScore,
+    teamAttributes,
+    matches: save.reports.filter((r) => r.week === w),
+    recess,
+    carry: save.devCarry,
+    granted,
+  });
+}
+
+/** Grade one week of Team Training through the shared weekly economy (one record per week). */
+function countTeamWeek(save: CareerSave, results: readonly SituationResult[]): { save: CareerSave; message: string } | { error: string } {
+  const player = save.player!;
+  const expected = selectSituations(player.position, save.week).map((x) => x.id);
+  if (results.length !== expected.length || results.some((r, i) => r.id !== expected[i])) return { error: 'Team Training results do not match this week.' };
+  if (results.some((r) => typeof r.score !== 'number' || !Number.isFinite(r.score) || r.score < 0 || r.score > 1)) return { error: 'Team Training score out of range.' };
+  const changes = teamTrainingChanges(player, results);
+  const attributes = { ...player.attributes };
+  for (const c of changes) attributes[c.attribute] = c.to;
+  const record: TeamTrainingRecord = { week: save.week, situations: expected, scores: results.map((r) => r.score), delta: weekDelta(results.map((r) => r.score)), changes };
+  return {
+    save: { ...save, player: { ...player, attributes }, teamTraining: [...save.teamTraining, record].slice(-CAREER_CONFIG.limits.historyMax) },
+    message: `Team Training week ${save.week}: ${describeChanges(changes)}`,
+  };
 }

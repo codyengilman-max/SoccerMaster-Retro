@@ -12,7 +12,7 @@ npm test                                # Vitest unit tests (tests/)
 npm run build                           # tsc --noEmit && vite build -> dist/
 npm run preview                         # serve dist/ locally
 npx playwright install chromium         # once per machine, for browser tests
-npm run test:e2e                        # Playwright: builds, serves dist/, runs e2e/ in phone portrait + landscape
+npm run test:e2e                        # Playwright (scripts/e2e.mjs): phone projects, then desktop on its own
 RECORD_VIDEO=1 npm run test:e2e         # same, slowed down, with videos in test-results/
 ```
 

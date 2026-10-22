@@ -1,0 +1,321 @@
+SOCCERMASTER — EVENT MAPPING, DEVELOPMENT WEIGHTS, AND POST-MATCH REPORT
+
+Implement this alongside the approved player attributes and progression system. Do not create a separate statistics engine that disagrees with progression or the Player Development screen.
+
+1. DEVELOPMENT WEIGHTS
+
+Set the configurable weekly development-source weights to:
+
+• Home skills: 35%.
+• Team tactical training: 30%.
+• Matches: 30%.
+• Scheduled recess games: 5%.
+
+These are shares of the development opportunity, not automatic attribute increases or match-rating weights.
+
+When recess is not scheduled, redistribute its 5% proportionally between home skills and team training. Keep matches at 30%.
+
+Do not redistribute a source merely because the player skipped an available activity. For an approved recovery/no-match week, leave match development unearned rather than invent match evidence or mark the player as performing poorly.
+
+Multiple tournament matches share the weekly match-development budget. They must not each receive a full 30% allocation. Each match still receives its own report.
+
+2. ONE SOURCE OF TRUTH
+
+Implement this processing chain using existing project systems:
+
+Gameplay/training event
+→ validated event ledger
+→ statistics and performance evaluation
+→ attribute-development contributions
+→ saved match/week settlement
+→ post-match report and Player Development screen.
+
+The UI must never calculate or award progression independently.
+
+Create a central mapping registry connecting:
+
+• Event or activity type.
+• Required evidence.
+• Statistic affected.
+• Performance category.
+• Attribute contribution.
+• Eligibility and confidence rules.
+• Reward limits.
+• Explanation shown to the player.
+
+Version the registry and progression configuration. Store the applicable versions with settled results so reopening old reports does not recalculate history under new rules.
+
+3. EVENT DATA
+
+Each event should contain, where applicable:
+
+• Unique event ID.
+• Career, season, week, match/session ID.
+• Actor and team IDs.
+• Action/possession sequence ID.
+• Simulation tick and match time.
+• Position and assigned role.
+• Event type.
+• Intended action or target.
+• Action outcome.
+• Relevant difficulty and pressure context.
+• Decision-time context or a compact evaluation snapshot.
+• Attributes and energy used for evaluation.
+• Related action/contact/result IDs.
+
+Emit events from the authoritative simulation, not animations or button presses.
+
+A button press canceled before ball contact is not a pass or shot attempt.
+
+Use contact/action IDs to prevent multiple physics callbacks from counting the same event repeatedly.
+
+4. DEFINE TOUCHES CORRECTLY
+
+Show both:
+
+A. Ball touches
+Distinct physical contacts with the ball: receiving touches, dribbling touches, passes, shots, and other actual contacts.
+
+B. Possessions
+Separate episodes in which the player establishes controlled possession.
+
+These are different statistics. One possession can contain several touches.
+
+Do not count every frame that the ball remains attached or close to the player.
+
+If the current dribbling implementation does not model individual touches, report “Controlled involvements” until discrete touch events exist. Do not invent a true touch count.
+
+Separate deliberate playing contacts from incidental deflections in the underlying data. Make the displayed definition available through an information tooltip.
+
+No development reward should be based on raw touch count alone.
+
+5. POST-MATCH REPORT
+
+Open a Player Match Report after every completed match, before continuing the career flow.
+
+Provide three sections or tabs:
+
+SUMMARY
+• Opponent, result, competition, and position.
+• Minutes played.
+• Match performance rating, 0–100.
+• Evidence confidence where relevant.
+• Ball touches or accurately labelled controlled involvements.
+• Possessions.
+• Energy before and after.
+• Two strengths and one improvement target based on actual evidence.
+
+STATISTICS
+• Passes completed / attempted.
+• Pass completion percentage.
+• Ground passes and chips separately, plus a clearly defined combined passing total.
+• Shots attempted.
+• Shots on target.
+• Goals and assists, if reliable assist tracking exists.
+• Successful dribbles / attempted take-ons.
+• Possession losses.
+• Recoveries and interceptions.
+• Slide challenges attempted and successful.
+• Shoulder challenges attempted and successful.
+• Fouls committed.
+• Role-relevant defensive/off-ball contributions where measurable.
+
+DEVELOPMENT
+• Which attributes received match-development contributions.
+• Which actions contributed and why.
+• Form change, if settled after matches.
+• Progression status: pending weekly settlement or already applied.
+• Next relevant home-training recommendation.
+
+Display zero-denominator percentages as “—” or “No attempts,” not 0% or 100%.
+
+For a player who did not appear, show a DNP report without a fabricated performance rating.
+
+The report must remain accessible from match history.
+
+6. DEFINE EFFICIENCY WITHOUT MISLEADING THE PLAYER
+
+Do not create one unexplained “efficiency” percentage.
+
+Display named measures:
+
+• Passing efficiency = completed passes / attempted passes.
+• Shooting accuracy = shots on target / shots attempted.
+• Goal conversion = goals / shots attempted.
+• Take-on success = successful take-ons / attempted take-ons.
+• Challenge success = successful challenges / attempted challenges, separated by type.
+
+Always show numerator and denominator alongside percentages.
+
+A shot on target is a goal or a shot that would enter the goal but is stopped by the goalkeeper or an appropriate last-line intervention. Ordinary blocked shots and shots hitting the frame without entering are not automatically on target. Implement and document one consistent classification.
+
+A completed pass requires intended-team controlled reception before opponent control or the ball leaving play. Deflections do not automatically establish opponent possession.
+
+Define possession losses once per loss episode. Do not separately count the same failed dribble, tackle, and turnover as three possession losses.
+
+Define take-ons as actual attempts to beat an engaged defender—not every dribble touch.
+
+A successful challenge requires a meaningful ball disruption or recovery attributable to the contact within a bounded window. Contact alone is not success, and a foul must not earn a clean-challenge reward.
+
+7. MAP EVENTS TO ATTRIBUTES
+
+Use this starting mapping, adapting names to the existing attribute schema:
+
+• Ground-pass execution → Passing.
+• Chip execution → Lofted Delivery.
+• Receiving and first-touch quality → Ball Control.
+• Dribbling execution → Ball Control; Agility only when relevant movement evidence exists.
+• Shot placement and contact quality → Finishing.
+• Correct support, cover, and recovery positioning → Positioning.
+• Interception or challenge technique → Defending.
+• Shoulder-contact technique → Defending and Strength/Balance through a shared capped contribution.
+• Execution under genuine pressure → Composure when sufficient evidence exists.
+• Goalkeeper collection/parry control → Handling.
+• Goalkeeper reaction execution → Reflexes.
+• Goalkeeper positioning → GK Positioning.
+• Throw distribution → Throwing.
+• Punt/foot distribution → Kicking.
+• Home task → only its declared practiced attributes.
+• Tactical training → the relevant tactical competencies and associated attributes.
+
+Do not award Pace for covering more distance or Strength for repeatedly pushing opponents. Physical development should primarily use appropriate training exposures, not spammed actions.
+
+When one event affects multiple attributes, split a bounded contribution. Do not award the full reward independently to every attribute.
+
+An assist is a summary statistic of a sequence, not an additional unlimited payout on top of the same passing event. Apply the same principle to goals and shots.
+
+8. DECISION QUALITY AND MATCH RATING
+
+Keep match-rating categories separate from development-source weights.
+
+Initial outfield match-rating weights:
+
+• Decision quality: 35%.
+• Technical execution: 25%.
+• Off-ball positioning/support: 25%.
+• Transitions/defensive responsibility: 15%.
+
+Use position-specific rubrics and separate goalkeeper evaluation.
+
+Decision quality must use the situation at the moment of choice, not whether the eventual outcome was successful.
+
+Technical execution assesses whether the player delivered the intended action.
+
+Missing opportunities are not failures. Use confidence thresholds and renormalize available categories where appropriate.
+
+If no trustworthy decision evaluator or off-ball telemetry exists, mark that category unavailable and report the missing integration. Do not fabricate a tactical score from pass completion or team results.
+
+Use bounded tactical phases for positioning evaluations, not rewards every simulation frame.
+
+9. DEVELOPMENT CALCULATION
+
+Use a centralized, documented calculation:
+
+Eligible source budget
+× source performance/mastery factor
+× evidence-confidence factor
+× applicable development-rate modifier
+→ bounded development credits.
+
+Map credits to relevant attributes, apply diminishing returns and potential limits, then recalculate position-weighted overall.
+
+Performance/mastery factors are not raw completion percentages. They should account for difficulty, improvement, role, and quality without guaranteeing gains from trivial repetitions.
+
+Keep fractional gains internally.
+
+Apply the protagonist growth modifier once only. Calibrate rates against the approved season-development targets; do not preserve an arbitrary multiplier if it contradicts the intended trajectory.
+
+For multiple matches, aggregate confidence-weighted evidence within the weekly match budget. Prevent unlimited growth through tournament volume or replaying easy matches.
+
+Evaluate actual opportunities. Do not reward purposeful ball avoidance, tackle spam, or safe-pass loops.
+
+10. SETTLEMENT TIMING
+
+After a match:
+
+• Finalize its immutable statistics and rating.
+• Save eligible development contributions.
+• Display the report immediately.
+• Update form once if using match-based form.
+• Update energy through actual match expenditure.
+
+At the weekly review:
+
+• Combine the saved contributions with training and scheduled recess.
+• Apply source budgets, caps, and progression rules.
+• Update permanent attributes once.
+• Recalculate overall.
+• Process NPC development once.
+• Mark the week settled.
+
+Before weekly settlement, report “Development earned — pending weekly review.” Do not show unapplied credits as permanent attribute gains.
+
+After settlement, link to the actual weekly attribute changes. Do not invent a precise match-only share if nonlinear caps prevent reliable attribution.
+
+11. ENERGY, FORM, AND DECLINE
+
+Retain the distinction:
+
+• Ability: persistent, gradual change.
+• Form: recent performance trend.
+• Energy: temporary readiness.
+
+Poor performance may lower form. Permanent regression requires sustained, sufficiently confident evidence across multiple eligible weeks.
+
+Do not penalize attributes merely because energy was low, opposition was stronger, the player received few opportunities, or one recess game was lost.
+
+Do not make a negative form modifier create a self-reinforcing decline.
+
+Recess activities contribute only when scheduled. This task must not add extra school scenes or alter the approved story cadence.
+
+12. PLAYER DEVELOPMENT SCREEN INTEGRATION
+
+Every displayed value must have a defined source:
+
+• Overall badge → current position-weighted base attributes.
+• Attribute rows → persistent attribute values.
+• Fractional progress → development ledger.
+• Form → recent confidence-weighted performance trend.
+• Energy → readiness system.
+• Weekly tasks → authoritative schedule/completion records.
+• Recent gains → committed attribute-change ledger.
+• Match history → saved match reports.
+• Coach recommendation → evidence-based improvement rules.
+
+Provide a mapping document with actual module/function names after repository inspection.
+
+Do not hardcode mockup values such as “50 overall,” “92 energy,” or “Passing +0.3” into the live screen.
+
+13. RELIABILITY AND EXPLOIT TESTS
+
+Verify:
+
+• A receiving contact is counted once.
+• Continuous possession does not add touches each frame.
+• A canceled kick is not an attempt.
+• Ground passes and chips reconcile with the combined total.
+• No attempts displays “—.”
+• The same possession loss is not counted multiple times.
+• Goals, shots, and assists do not duplicate progression rewards.
+• Defensive positioning can earn credit without a tackle.
+• DNP and limited minutes are handled fairly.
+• Goalkeeper reports use appropriate statistics.
+• Reopening reports never changes attributes.
+• Reloading during settlement cannot duplicate or lose rewards.
+• Multiple tournament matches share the weekly match budget.
+• Match contributions remain 30% of the configured weekly development opportunity.
+• Unscheduled recess does not generate a failure.
+• Missing telemetry produces unavailable data, not invented scores.
+• UI values reconcile with saved ledgers.
+• Existing careers and match history survive migration.
+• League standings are unaffected by training or personal development.
+
+Mark tests PASS, FAIL, or NOT RUN with evidence.
+
+14. DELIVERY
+
+Deliver working implementation, a playable preview, exact commit, focused PR, event-to-stat-to-attribute mapping documentation, test results, and known gaps.
+
+Include sample reports produced by actual test matches—not manually populated mockups.
+
+Preserve approved gameplay controls, story cadence, team identities, ranking rules, and save data. This prompt does not authorize unrelated redesign or production replacement.

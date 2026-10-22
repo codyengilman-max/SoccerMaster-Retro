@@ -1,0 +1,166 @@
+{
+  "handoffVersion": "3.0.0",
+  "runtimeSchema": false,
+  "week": 5,
+  "title": "PUT THE WORK IN",
+  "script": "WEEK_05_APPROVED.md",
+  "orderedBeats": [
+    {
+      "id": "w05.school",
+      "section": "MONDAY — Outside Science",
+      "type": "dialogue",
+      "characters": [
+        "SAM",
+        "BLAKE",
+        "PLAYER"
+      ],
+      "choices": [
+        "learned-more",
+        "blake-notes"
+      ],
+      "effects": "flavor-only",
+      "next": "w05.schoolActivity"
+    },
+    {
+      "id": "w05.schoolActivity",
+      "section": "RECESS — Crossbar or Jungle?",
+      "type": "activity-choice",
+      "activities": [
+        "crossbar",
+        "jungle-ball"
+      ],
+      "resultBranches": [
+        "strong",
+        "difficult",
+        "neutral"
+      ],
+      "resultSource": "verified-minigame-performance",
+      "next": "w05.teamTraining"
+    },
+    {
+      "id": "w05.teamTraining",
+      "section": "TEAM TRAINING — Make Them Decide",
+      "type": "required-activity",
+      "activity": "team-training",
+      "roleBranches": [
+        "outfield",
+        "goalkeeper"
+      ],
+      "feedbackBranches": [
+        "strong-decision",
+        "sound-decision-poor-pass-execution",
+        "poor-decision"
+      ],
+      "feedbackSource": "verified-tactical-event",
+      "next": "w05.ambition"
+    },
+    {
+      "id": "w05.ambition",
+      "section": "AFTER TRAINING — The Question",
+      "type": "dialogue-choice",
+      "choices": [
+        {
+          "id": "state-best",
+          "text": "One of the best in Arizona."
+        },
+        {
+          "id": "team-reliable",
+          "text": "Someone this team can count on."
+        },
+        {
+          "id": "explore",
+          "text": "I want to find out."
+        }
+      ],
+      "persist": "playerAmbition",
+      "next": "w05.home"
+    },
+    {
+      "id": "w05.home",
+      "section": "HOME — Your Time",
+      "type": "navigation-hub",
+      "actions": [
+        {
+          "id": "training",
+          "target": "existing-home-training",
+          "required": true,
+          "returnsTo": "w05.home"
+        },
+        {
+          "id": "cloudy-feed-play",
+          "target": "existing-cloudy-feeding-game",
+          "required": false,
+          "returnsTo": "w05.home"
+        },
+        {
+          "id": "cloudy-talk",
+          "target": "week5-cloudy-dialogue",
+          "required": false,
+          "returnsTo": "w05.home"
+        },
+        {
+          "id": "continue-week",
+          "requires": "all-current-required-assignments-verified-complete",
+          "next": "w05.match"
+        }
+      ],
+      "cloudyTalkChoices": [
+        "share-selected-ambition",
+        "checking-on-you"
+      ],
+      "shareKnowledgeAfterAcknowledgement": true
+    },
+    {
+      "id": "w05.match",
+      "section": "WEEKEND — League Game 3",
+      "type": "required-activity",
+      "activity": "league-03",
+      "requires": [
+        "team-training-completed",
+        "playerAmbition-selected",
+        "home-required-assignments-completed"
+      ],
+      "homePraiseRequires": "verified-home-completion",
+      "next": "w05.aftermath"
+    },
+    {
+      "id": "w05.aftermath",
+      "section": "AFTER THE WHISTLE",
+      "type": "result-dialogue-choice",
+      "resultBranches": [
+        "win",
+        "draw",
+        "loss"
+      ],
+      "unknownResult": "wait-for-host-reconciliation",
+      "choices": [
+        {
+          "id": "practice",
+          "text": "Bring a ball."
+        },
+        {
+          "id": "hang-out",
+          "text": "Let’s just hang out."
+        },
+        {
+          "id": "rest",
+          "text": "I need a day."
+        }
+      ],
+      "persist": "parkIntention",
+      "intentionAwardsAttributes": false,
+      "next": "week-complete"
+    }
+  ],
+  "unknownDataPolicy": "do-not-invent-records-or-prose",
+  "saveRequirements": [
+    "exact-line",
+    "selected-reply",
+    "ambition",
+    "park-intention",
+    "home-task-progress",
+    "cloudy-disclosure",
+    "pending-activity",
+    "reward-receipts"
+  ]
+}

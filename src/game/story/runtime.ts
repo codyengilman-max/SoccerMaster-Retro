@@ -7,7 +7,7 @@ import { SEASON_ONE, catalogFor, nodeById, sceneById, type AdapterKind, type Out
 
 export const STORY_SCHEMA = 1;
 /** Season One weeks open to players (owner, 2026-10-20: weeks 3–18 hidden until the new text arrives). */
-export const SEASON_RELEASED_WEEKS = 4;
+export const SEASON_RELEASED_WEEKS = 5;
 let releasedWeeks = SEASON_RELEASED_WEEKS;
 /** Tests of later-week content open the whole season; the game always uses SEASON_RELEASED_WEEKS. */
 export const setReleasedWeeks = (n: number): void => { releasedWeeks = n; };
@@ -141,7 +141,9 @@ export function evaluatePredicate(s: StoryState, predicate: string): boolean | n
       const v = key === undefined ? undefined : s.decisions[sceneId]?.[key];
       return v === undefined ? null : values.includes(v);
     }
-    const r = Object.values(s.runs).find((x) => x.sceneId === sceneId && x.state === 'resolved');
+    // A scene can hold a declined placeholder (the unchosen activity) before the played run: read the played one.
+    const resolved = Object.values(s.runs).filter((x) => x.sceneId === sceneId && x.state === 'resolved');
+    const r = resolved.find((x) => x.outcome === 'completed') ?? resolved[0];
     if (kind === 'done') return r?.outcome === 'completed';
     if (!r || r.outcome !== 'completed') return false;
     if (kind === 'result') return r.result !== null && values.includes(r.result);

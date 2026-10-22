@@ -205,6 +205,8 @@ function seasonOneVisual(sceneId: string, appearance: 'boy' | 'girl' | null): Sc
     const kind = sceneId === 'S1_PRO_DEPART' ? 'departure' : 'arrival';
     return visual(appearance ? `${kind}-${appearance}` : null, mom, kind === 'departure' ? ['neutral_departure_region'] : []);
   }
+  // V3 home menu (week 5+): the owner's home painting, player only.
+  if (sc.background === 'home_v3') return visual(allowed('home-v3') ?? LOCATION.home.bg, [{ role: 'player', visualId: appearance, outfit: 'home', assetId: appearance ? variantAsset(appearance, 'home') : null }, ...mom]);
   if (sc.background === 'aquarium') {
     const painted = appearance ? allowed(`s1-tank-${appearance}`) : null;
     if (painted) return visual(painted, mom, [CAST_IN_BACKDROP]);

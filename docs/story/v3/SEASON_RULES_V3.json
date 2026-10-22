@@ -1,0 +1,122 @@
+{
+  "handoffVersion": "3.0.0",
+  "format": "implementation-specification",
+  "effectiveFromWeek": 5,
+  "preserveApprovedWeeks": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "schoolStoryWeeks": [
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    17
+  ],
+  "weeklySchoolMinigame": {
+    "choices": [
+      "crossbar",
+      "jungle-ball"
+    ],
+    "independentOfSchoolStory": true,
+    "rewardPolicy": "existing-once-weekly-performance-adjustment"
+  },
+  "teamTraining": {
+    "required": true,
+    "view": "overhead-half-field",
+    "evaluation": "existing-soccer-logic-and-training-library",
+    "attributes": "actual-session-performance",
+    "principles": [
+      "scan",
+      "recognize-space",
+      "attack-space-when-useful",
+      "draw-pressure",
+      "exploit-openings",
+      "support",
+      "switch-when-available"
+    ]
+  },
+  "home": {
+    "required": true,
+    "menu": [
+      "training",
+      "cloudy-feed-play",
+      "cloudy-talk",
+      "continue-week"
+    ],
+    "requiredAssignments": [
+      "weekly-juggling",
+      "assigned-control-first-touch",
+      "assigned-home-learning-if-present"
+    ],
+    "continueGate": "all-current-required-assignments-verified-complete",
+    "partialProgressPersists": true,
+    "adjustedRecoveryPlanCounts": true,
+    "cloudy": {
+      "required": false,
+      "skipBothAllowed": true,
+      "returnTo": "home-menu",
+      "knowledge": "acknowledged-disclosures-only",
+      "missingAdapterBlocksWeek": false,
+      "goalGraphic": "reuse-existing-approved-aquarium-goal"
+    }
+  },
+  "attributes": {
+    "home": "verified-required-work-and-existing-performance-policy",
+    "team": "verified-training-performance",
+    "numericAmounts": "reuse-existing-host-configuration",
+    "rewardIdentity": [
+      "saveId",
+      "seasonId",
+      "week",
+      "scheduledAssignmentOrSessionId"
+    ],
+    "atomicWithCompletion": true,
+    "duplicateReceiptsAwardAgain": false,
+    "conversationChoicesAward": false,
+    "skippingCloudyPenalizes": false
+  },
+  "competitions": {
+    "leagueWeeks": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      10,
+      11,
+      13,
+      14,
+      15,
+      16
+    ],
+    "tournaments": [
+      {
+        "week": 9,
+        "name": "AZ Showcase"
+      },
+      {
+        "week": 12,
+        "name": "Holiday Classic"
+      }
+    ],
+    "stateCup": {
+      "semifinalWeek": 17,
+      "finalWeek": 18,
+      "leagueQualifiers": 3,
+      "invitedClub": "Next Level"
+    },
+    "tournamentsChangeLeaguePoints": false,
+    "tournamentsAffectTeamStrength": true
+  },
+  "approval": {
+    "week5": "approved-dialogue-in-conversation",
+    "laterWeeks": "outline-only-write-week-by-week",
+    "runtimeHashes": "Devin-compiles-and-registers-actual-reviewed-content"
+  }
+}

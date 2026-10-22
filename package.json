@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "node scripts/e2e.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview"
   },

@@ -1,5 +1,34 @@
 # Status
 
+
+## Match Report + My Player (owner spec 2026-10-24, branch `devin/1792698553-player-dev-report`, stacked on PR #35, not merged, not deployed)
+- Match Report on the sunset art after every career match and from Match History; My Player on the bedroom art from the Week 5 home hub (and `?dev` Start).
+- Event ledger, stats with numerator/denominator, rating, saved immutable reports, 35/30/30/5 weekly settlement with fractional carry (`docs/REPORTS.md`).
+- Gaps: no Energy/Form, no keeper or DNP reports, recess not yet passed to the settlement, not tested on a real iPhone.
+
+## V3 Week 5 "Put the Work In" (owner package SoccerMaster_V3_Week5, 2026-10-23, branch `devin/1792700000-v3-week5`, stacked on PR #34, not merged, not deployed)
+- Package copied unchanged to `docs/story/v3/` (its own validator passes there). Week 5 compiled into the existing Season One story format (`05_week05.story` → `season_one_scenes.json`); the story is released to week 5 (`SEASON_RELEASED_WEEKS = 5`), weeks 6–18 stay unwritten and unreachable. Weeks 1–4 and the prologue are byte-identical (hash-pinned in `tests/story-week5.test.ts`, with the week 5 source and the package's `WEEK_05_APPROVED.md`).
+- Route: science-sub talk → recess Crossbar or Jungle Ball (reaction from the real result) → required Team Training (no "Not this week" from week 5; feedback from the recorded grade: strong / struggled; the pass-weight line only on recorded pass evidence (`pass_weight`), which week 5's legacy situations do not produce yet) → ambition (saved as a decision, no reward) → home menu on the owner's background (`home-v3`): Training (required: a logged juggling task and control/first-touch work this career week, `homeAssignments`), Cloudy: Feed & Play (optional, opens Feeding Frenzy and returns), Cloudy: Talk (optional; the ambition is mentioned only if the player chooses to tell Cloudy), Continue Week (locked until the home sessions are done) → League Game 3 (aftermath from the real result; a completion without a result is rejected, never a loss) → park plan (practice / hang out / rest, saved only).
+- Saves: a completed week 4 save at `S1_W04_E` continues into week 5 through the existing release migration; choices, runs, matches and rewards are kept, nothing replays.
+- Opened from the story, Career hides Finish Week (the story closes the week). Recess `result:` reads the played run, not the declined placeholder.
+- Known gaps: the home menu's "required training" is enforced by the story host (StoryScene) from the career save, not inside the story reducer. Next Horizon stays outside the league (earlier owner rule) although V3's continuity notes put it in; this does not affect week 5. Not tested on a real iPhone.
+
+## Cloudy's Feeding Frenzy (owner brief 2026-10-23, branch `devin/1792691488-cloudy-feeding-frenzy`, PR #34 stacked on #33, not merged, not deployed)
+- Playable aquarium mini-game on the supplied painting and Cloudy sheet: Easy/Medium/Hard, 45 s round after a 3 s countdown, drag-to-swim (touch or mouse), DASH (0.35 s, 3 s cooldown), x1/x2/x3 combos, two ball chances (about 12 s and 28 s, 10 s each) scored once (+50) when the whole ball enters the painted goal from outside.
+- Pause (button, Escape/P, app hidden, focus lost) freezes timers, spawning, physics, currents and cooldowns. Results save the best score and stars per difficulty once per run through the career reducer (`cloudyResult`); a failed write keeps the round and offers Retry save. No soccer attributes or match statistics.
+- Reachable only through `?dev` Start for now; the V3 Week 5 home menu opens it in the next PR.
+- Tests: `tests/cloudy.test.ts` (sim, transform, save) and `e2e/cloudy.spec.ts` (portrait and landscape: art fit, goal alignment, drag, DASH, pause, results, reload, app switch, rotation, listener counts). Not tested on a real iPhone.
+
+## Team Training v1.2 (owner package 2026-10-22, branch `devin/1792646912-team-training-v12`, not merged, not deployed)
+- Package kept unchanged in `docs/training/v1.2/`; reference modules vendored with their 36 tests in `npm test`.
+- Playable: Career → Team Training → Session A/B/C (v1.2) for Season 1 weeks 1–4, every role offered to the career position. Fixed overhead half-field camera, coached Observe → Decide → Execute → Explain loop, 3 rounds (guided, unguided, timed), pause, two-tap leave, rotation-safe.
+- Weeks 5–18 and Season 2 are "not available yet". GK routes pass unit tests but have no career position.
+- Rewards: three credited sessions grade the week once through the existing economy (shared with the legacy situations).
+- Sprites: every player in the drill uses the sprite atlases (owner, 2026-10-23): teammates in Batavia training kit, opponents in Batavia match kit, neutrals in Sol Vista, keepers in their club's keeper art; the player you control is the saved girl/boy with the gold ring.
+- PR #32 review fixes: a failed save keeps the finished session and offers "Try saving again" (same run id); the store is closed if the scene shuts down while loading; exit gates (B1/K1) and the C1 end zone score only on a controlled reception, a loose ball crossing a gate does not; a turnover in D1/T1 keeps play live for a 3 s counter; v1.2 runs after the legacy weekly grade are saved as practice only. Participation spans are capped just under 5 s (longer counters were rejected by the reference). Coaching text is re-fitted above the buttons on every refresh.
+- PR #33 review fixes: legacy Team Training refuses to grade a week once a v1.2 session has counted (the v1.2 sessions grade it); S1 finishes count only from the last 5 m (`shotOriginWithinEndMeters`), and long shots are not offered; a neutral on the ball plays for the side that passed to it and releases the ball like a wall; a passer can't re-trap its own pass in the first 1.5 m; portrait choices switch to two columns (then shorter buttons) before they cover the title and prompt.
+- Not tested on a physical iPhone.
+
 ## Jungle Ball v3 arcade upgrade (owner brief 2026-10-22, branch `devin/1792638887-jungle-arcade-v3`, stacked on PR #30, not merged, not deployed)
 
 - HIT / SLIDE / staged knockdowns / charged shots / ball height with posts, bar and net / keeper dives, catches, parries and throws / goal celebration / pause with Leave confirmation; see D43.

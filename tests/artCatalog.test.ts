@@ -73,8 +73,8 @@ describe('Graphics v1 catalog', () => {
     expect(variantAsset('alex', 'home')).toBeNull();
   });
 
-  it('Season One screen art: 25 masters byte-identical, 22 runtime images, Tank Cup kept out of the game', () => {
-    expect(s1Manifest.assets).toHaveLength(25);
+  it('Season One screen art: 26 masters byte-identical (V3 home menu added), 23 runtime images, Tank Cup kept out of the game', () => {
+    expect(s1Manifest.assets).toHaveLength(26);
     for (const a of s1Manifest.assets) {
       const sha = createHash('sha256').update(readFileSync(`docs/art/season-one/${a.path}`)).digest('hex');
       expect(sha, a.assetId).toBe(a.sha256);

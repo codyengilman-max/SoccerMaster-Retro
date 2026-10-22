@@ -1,9 +1,12 @@
+import { REPORTS_KEPT, type SavedReport } from '../report/report';
+import { CARRY_MAX, zeroFractions, type Fractions, type WeekSettlement } from '../report/settlement';
 import { CAREER_CONFIG } from './config';
 import { FOCUSES, HOME_ACTIVITIES, activityById } from './catalog';
 import type { PlannedItem, PlannedSession, PlannerInput, WeekPlan } from './planner';
 import { cleanText, type CareerPlayer } from './player';
 import type { AttributeOutcome, EvidenceItem } from './progression';
-import { SAVE_SCHEMA, emptySave, type CareerSave, type FamilyLevel, type JournalEntry, type TeamTrainingRecord, type WeekReview } from './state';
+import { CLOUDY_RUNS_KEPT, SAVE_SCHEMA, emptySave, type CareerSave, type CloudyBest, type FamilyLevel, type JournalEntry, type TeamTrainingRecord, type Tt12Run, type WeekReview, TT12_SLOTS } from './state';
+import { DIFFICULTIES } from '../cloudy/sim';
 import { TEAM_TRAINING_IDS, weekDelta } from './teamTraining';
 import { ATTRIBUTES, LEVELS, POSITIONS, RATINGS, SKILL_FAMILIES, type AttributeId, type Level, type SkillFamilyId } from './types';
 
@@ -147,7 +150,31 @@ function review(v: unknown, week: number): WeekReview {
     missedEvents: int(o.missedEvents ?? 0, 'missedEvents', 0, 1e9),
     outcomes: arr(o.outcomes, 'outcomes', ATTRIBUTES.length).map(outcome),
     suggestedFocus: nullable(o.suggestedFocus, (x) => oneOf(x, 'focus', FOCUS_IDS)),
+    ...(o.settlement === undefined ? {} : { settlement: settlement(o.settlement) }),
   };
+}
+
+function fractions(v: unknown): Fractions {
+  const out = zeroFractions();
+  if (v === undefined) return out;
+  const o = obj(v, 'devCarry');
+  for (const a of ATTRIBUTES) {
+    const x = o[a] ?? 0;
+    if (typeof x !== 'number' || !Number.isFinite(x) || x < 0 || x > CARRY_MAX) throw new Invalid('development carry: out of range');
+    out[a] = x;
+  }
+  return out;
+}
+
+function settlement(v: unknown): WeekSettlement {
+  const o = obj(v, 'settlement');
+  int(o.version, 'settlement version', 1, 1000);
+  int(o.week, 'settlement week', 1, 1000);
+  arr(o.sources, 'settlement sources', 4);
+  const applied = obj(o.applied, 'settlement applied');
+  for (const a of ATTRIBUTES) int(applied[a] ?? 0, 'settlement applied', 0, 99);
+  fractions(o.carry);
+  return o as unknown as WeekSettlement;
 }
 
 function teamTraining(v: unknown, week: number): TeamTrainingRecord {
@@ -172,6 +199,35 @@ function teamTraining(v: unknown, week: number): TeamTrainingRecord {
       return { attribute: oneOf(x.attribute, 'attribute', ATTRIBUTES), from, to };
     }),
   };
+}
+
+function savedReport(v: unknown): SavedReport {
+  const o = obj(v, 'report');
+  str(o.matchId, 'report match', 64);
+  int(o.week, 'report week', 1, 1000);
+  for (const k of ['competition', 'home', 'away', 'playerName', 'position'] as const) str(o[k], `report ${k}`, 80);
+  const sc = obj(o.score, 'report score');
+  int(sc.home, 'report score', 0, 99);
+  int(sc.away, 'report score', 0, 99);
+  int(o.minutes, 'report minutes', 0, 200);
+  obj(o.stats, 'report stats');
+  obj(o.rating, 'report rating');
+  obj(o.versions, 'report versions');
+  arr(o.highlights, 'report highlights', 3);
+  return o as unknown as SavedReport;
+}
+
+function cloudyBest(v: unknown): CloudyBest {
+  const o = obj(v, 'cloudy');
+  const stars = int(o.bestStars, 'cloudy stars', 1, 3) as 1 | 2 | 3;
+  return { difficulty: oneOf(o.difficulty, 'cloudy difficulty', DIFFICULTIES), bestScore: int(o.bestScore, 'cloudy score', 0, 100_000), bestStars: stars };
+}
+
+function tt12Run(v: unknown, week: number): Tt12Run {
+  const o = obj(v, 'tt12');
+  if (typeof o.score !== 'number' || !Number.isFinite(o.score) || o.score < 0 || o.score > 1) throw new Invalid('tt12 score: out of range');
+  if (typeof o.credited !== 'boolean') throw new Invalid('tt12 credited: not a boolean');
+  return { week: int(o.week, 'tt12 week', 1, week), slot: oneOf(o.slot, 'tt12 slot', TT12_SLOTS), runId: str(o.runId, 'tt12 runId', 64), score: o.score, credited: o.credited };
 }
 
 /** Schema 1 (pre-release M6 draft) had no missed-event counter and stored levels as plain numbers. */
@@ -219,8 +275,18 @@ export function parseSave(raw: unknown): R<CareerSave> {
       missedEvents: int(o.missedEvents, 'missedEvents', 0, 1e9),
       history: arr(o.history, 'history', L.historyMax).map((h) => review(h, week)),
       teamTraining: arr(o.teamTraining ?? [], 'teamTraining', L.historyMax).map((t) => teamTraining(t, week)),
+      tt12: arr(o.tt12 ?? [], 'tt12', L.historyMax * 4).map((t) => tt12Run(t, week)),
+      cloudy: arr(o.cloudy ?? [], 'cloudy', DIFFICULTIES.length).map(cloudyBest),
+      cloudyRuns: arr(o.cloudyRuns ?? [], 'cloudyRuns', CLOUDY_RUNS_KEPT).map((r) => str(r, 'cloudy run', 64)),
+      reports: arr(o.reports ?? [], 'reports', REPORTS_KEPT).map(savedReport),
+      devCarry: fractions(o.devCarry),
     };
+    if (new Set(save.reports.map((r) => r.matchId)).size !== save.reports.length) throw new Invalid('match report saved twice');
     if (new Set(save.teamTraining.map((t) => t.week)).size !== save.teamTraining.length) throw new Invalid('team training counted twice for a week');
+    if (new Set(save.cloudy.map((c) => c.difficulty)).size !== save.cloudy.length) throw new Invalid('cloudy best saved twice');
+    if (new Set(save.tt12.map((t) => t.runId)).size !== save.tt12.length) throw new Invalid('team training run saved twice');
+    const credited = save.tt12.filter((t) => t.credited).map((t) => `${t.week}${t.slot}`);
+    if (new Set(credited).size !== credited.length) throw new Invalid('team training session counted twice');
     return { ok: true, value: save };
   } catch (e) {
     if (e instanceof Invalid) return { ok: false, error: e.message };

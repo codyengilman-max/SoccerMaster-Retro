@@ -1,0 +1,194 @@
+APPROVED GRAPHICS — PLAYER DEVELOPMENT AND POST-MATCH REPORT
+
+Use the two attached images as the approved visual foundations for the screens described in the preceding specification. Implement both screens and connect them to the event, statistics, and progression systems.
+
+These images intentionally contain blank spaces. Add characters, labels, numbers, progress indicators, and interactive controls at runtime. Do not treat the images as completed interfaces.
+
+1. IDENTIFY THE ASSETS
+
+IMAGE 1 — Bedroom with fish tank:
+Use for the Player Development / My Player screen, accessible from the Home menu.
+
+IMAGE 2 — Soccer field with sunset:
+Use for the Player Match Report shown after each completed match and accessible from match history.
+
+Identify them by their visual content, not attachment order alone. Import them under descriptive asset names and document the original-to-project filename mapping.
+
+Preserve their pixel-art style, cream panels, navy headers, orange buttons, and scenery. Do not generate replacement backgrounds or redesign their visual theme.
+
+2. PLAYER DEVELOPMENT SCREEN — BEDROOM GRAPHIC
+
+Map the existing spaces as follows:
+
+TOP BANNER
+• Center: “MY PLAYER”.
+• Left orange square: Back button.
+• Right orange square: Help/info button explaining ability, form, and energy.
+
+MAIN PLAYER PANEL
+• Blue portrait area: render the saved player’s approved sprite or portrait.
+• Use the actual selected boy/girl appearance, hair, skin tone, and appropriate clothing.
+• Preserve sprite proportions; do not stretch the character to fill the box.
+• Right side: player name, team, position, and overall ability out of 100.
+• Two small boxes: Form and Energy.
+
+ATTRIBUTE PANEL WITH SIX EXISTING TRACKS
+• Navy header: “ATTRIBUTES”.
+• Each row: attribute name, current value, live progress fill, and numeric value out of 100.
+• Page the list in groups of six using runtime Previous/Next controls and a page indicator.
+• Include every approved attribute and the appropriate goalkeeper attributes.
+• The visible bar represents current ability. Show fractional development separately as a small change label or detail view.
+• Attribute details explain its gameplay effect and recent development sources.
+
+LOWER CREAM PANEL
+• Navy header: “THIS WEEK”.
+• Show scheduled home skills, team training, match status, and recess when scheduled.
+• Provide a compact way to switch to “Recent development” within this panel.
+• Do not invent activities or mark unscheduled recess as incomplete.
+
+BOTTOM ORANGE BUTTONS
+• First: “HOME TRAINING”.
+• Second: “MATCH HISTORY”.
+
+The overall, form, energy, task status, and attribute values must come from saved game data. Do not hardcode example values from previous mockups.
+
+3. POST-MATCH REPORT — SUNSET FIELD GRAPHIC
+
+TOP BANNER
+• Title: “MATCH REPORT”.
+
+TEAM/SCORE BANNER
+• Left: home team.
+• Right: away team.
+• Center dark badge: final score.
+• Smaller space below: competition and week.
+• Preserve actual home/away order.
+
+MAIN PLAYER PANEL
+• Blue portrait area: the actual player’s approved sprite or portrait.
+• Right side: player name, position, minutes played, and match rating out of 100.
+• Small horizontal inset: form change or evidence-confidence label.
+• Four statistic boxes:
+
+1. Ball touches.
+2. Passing: completed/attempted and percentage.
+3. Shooting: on-target/attempted and percentage.
+4. Recoveries.
+
+If true touches are not tracked, label the first box “Controlled involvements”. Do not invent touch counts.
+
+For goalkeepers, substitute role-relevant summary statistics such as saves, shots faced, and Throw/Punt distribution completion. Use the same panels without forcing outfield metrics onto goalkeepers.
+
+FIRST LOWER PANEL
+• Header: “PERFORMANCE”.
+• Show decision quality, execution, and other supported rating categories.
+• Use the existing horizontal track for the overall match-performance score.
+• Include a “Full stats” control opening a scrollable detail panel with all required statistics.
+• Show “—” for unavailable or zero-attempt percentages and explain why.
+
+SECOND LOWER PANEL
+• Header: “HIGHLIGHTS & DEVELOPMENT”.
+• Show two or three meaningful events with match timestamps.
+• Show relevant development contributions and their settlement status.
+• Before weekly settlement, label them “Pending weekly review”.
+• Highlight entries must come from recorded match events.
+• Do not label an entry “Watch replay” unless actual replay functionality exists.
+
+COACH PANEL
+• Small blue square: approved Coach Code portrait.
+• Speech panel: short feedback generated from the recorded performance.
+• Give one specific strength and one practical improvement point.
+• Use evidence-based templates; do not require an external AI service.
+• Do not fabricate events, dialogue claims, or praise unrelated to the match.
+
+BOTTOM ORANGE BUTTON
+• “CONTINUE”.
+• Continue returns to the correct existing career/schedule step.
+• Opening the report from history returns to history rather than advancing the week again.
+
+4. LIVE OVERLAYS AND ARTWORK HANDLING
+
+The attached files are flattened JPEG artwork, not layered UI assets.
+
+For the first implementation:
+• Keep each image as the visual backing.
+• Place live text, sprites, bar fills, icons, and hit areas over the appropriate blank spaces.
+• Use the blue portrait areas as portrait backdrops.
+• Treat gray/tan tracks as decorative empty tracks; add live fills within their bounds.
+• Align touch targets with the actual visible buttons.
+• Do not bake dynamic information into replacement images.
+
+If panel extraction or a responsive rebuild becomes necessary, reproduce panels from these supplied assets and preserve the original visual style. Do not assume clean layers or transparency exist.
+
+5. PORTRAIT SCALING AND TOUCH BEHAVIOR
+
+These are tall portrait layouts. Do not stretch them into the landscape match viewport.
+
+• Use a portrait-oriented UI scene or screen.
+• Scale uniformly from each image’s actual dimensions.
+• Use a shared coordinate transform for the image, overlays, and hit areas.
+• Define panel anchors in normalized image coordinates.
+• Recalculate layout on resize and orientation changes.
+• Respect iPhone safe areas and browser toolbars.
+• Prioritize readable text over fitting the entire image on one screen.
+• Allow vertical scrolling when needed.
+• In landscape, retain a readable centered portrait layout with scrolling or surrounding margins.
+• Keep text within panel bounds and handle long player/team names.
+• Add accessible touch-sized hit areas without overlapping neighboring controls.
+
+Do not automatically force device rotation merely to view these menus.
+
+6. REQUIRED DATA BINDINGS
+
+Connect both screens to the same authoritative data:
+
+• Player appearance → saved character customization.
+• Overall and attributes → persistent player attributes and position-weighted overall.
+• Form → recent performance trend.
+• Energy → readiness system.
+• Weekly activities → schedule and completion records.
+• Match statistics → finalized match-event aggregates.
+• Match rating → role-specific evaluation.
+• Highlights → recorded significant events.
+• Development → contribution and settlement ledgers.
+• Coach feedback → evidence-based recommendation rules.
+
+Keep historical match reports tied to the saved match snapshot. A later attribute increase, team transfer, or name change must not silently rewrite historical performance data.
+
+Current My Player information should reflect current career state.
+
+7. DEVELOPMENT WEIGHTS
+
+Retain the preceding specification:
+
+• Home skills: 35%.
+• Team training: 30%.
+• Matches: 30%.
+• Scheduled recess: 5%.
+
+The artwork must not change the calculation model.
+
+Neither opening these screens nor pressing Continue may award progression. Rewards and settlements belong to the underlying progression system.
+
+8. ACCEPTANCE CHECKS
+
+Verify:
+
+• Both supplied graphics appear on the correct screens.
+• No fixed example character replaces the saved protagonist.
+• Boy and girl appearances both render correctly.
+• All approved attributes are accessible despite the six-row artwork.
+• Text, sprites, and controls align at supported phone sizes.
+• Scrolling does not accidentally activate buttons.
+• Long names do not overflow.
+• Portrait/landscape transitions retain correct hit areas.
+• Match results and percentages reconcile with recorded events.
+• Goalkeepers and DNP players receive appropriate reports.
+• Missing statistics show unavailable states, not invented values.
+• Pending development is distinguishable from applied attribute gains.
+• Reopening reports does not duplicate rewards or advance the schedule.
+• My Player updates after weekly settlement.
+• Historical reports preserve their original match data.
+• Continue respects whether the report was opened after a match or from history.
+
+Deliver both functioning screens in the playable preview, with the exact build commit, implementation notes, screenshots, and test results. Implement the live interfaces and data connections—not merely the background images.
