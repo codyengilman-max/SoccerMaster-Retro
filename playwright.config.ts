@@ -25,11 +25,11 @@ export default defineConfig({
   projects: [
     { name: 'phone-portrait', use: { ...phone, viewport: { width: 390, height: 844 } } },
     { name: 'phone-landscape', use: { ...phone, viewport: { width: 844, height: 390 } } },
-    { name: 'small-phone-landscape', testMatch: /(attack|match|coach|lab)\.spec/, use: { ...phone, viewport: { width: 568, height: 320 } } },
-    { name: 'small-phone-portrait', testMatch: /(attack|match|coach|lab)\.spec/, use: { ...phone, viewport: { width: 320, height: 568 } } },
+    { name: 'small-phone-landscape', testMatch: /(attack|match|coach|lab|tournament)\.spec/, use: { ...phone, viewport: { width: 568, height: 320 } } },
+    { name: 'small-phone-portrait', testMatch: /(attack|match|coach|lab|tournament)\.spec/, use: { ...phone, viewport: { width: 320, height: 568 } } },
     {
       name: 'desktop',
-      testMatch: /(attack|match|coach|lab)\.spec/,
+      testMatch: /(attack|match|coach|lab|tournament)\.spec/,
       // A 1280x720 software-rendered WebGL canvas saturates a CI core; two at once starve each other's frame loop.
       workers: 1,
       use: { browserName: 'chromium', viewport: { width: 1280, height: 720 }, hasTouch: false, isMobile: false },

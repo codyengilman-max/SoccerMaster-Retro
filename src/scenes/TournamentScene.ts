@@ -46,6 +46,13 @@ export interface TournamentSceneData {
 }
 
 const INK = '#1b2a3a';
+/** Nine-slice insets (source px: left, right, top, bottom). Group and outcome panels keep their navy header band whole in the top inset. */
+const INSET: Readonly<Record<Exclude<Panel, 'match-result'>, readonly [number, number, number, number]>> = {
+  title: [18, 18, 14, 14], 'group-a': [14, 14, 40, 14], 'group-b': [14, 14, 40, 14], outcome: [14, 14, 40, 14], continue: [22, 22, 14, 14],
+};
+const BAND = { top: 10, height: 28 };
+/** Match-result card slots as fractions of the art: stage strip, home box, two score boxes, away box. */
+const SLOT = { stage: [0.1, 0.07, 0.8, 0.17], home: [0.08, 0.27, 0.225, 0.5], hg: [0.336, 0.36, 0.13, 0.28], ag: [0.534, 0.36, 0.13, 0.28], away: [0.695, 0.27, 0.225, 0.5] } as const;
 const CREAM = '#f7eedb';
 
 export class TournamentScene extends Phaser.Scene implements InspectableScene {
@@ -105,9 +112,13 @@ export class TournamentScene extends Phaser.Scene implements InspectableScene {
     for (const p of PANELS) {
       const k = key(`tournament-results-components-${p}`);
       if (!this.textures.exists(k)) continue;
+      if (p === 'match-result') {
+        this.panels.set(p, this.add.image(0, 0, k).setDepth(1));
+        continue;
+      }
       const src = this.textures.get(k).getSourceImage() as { width: number; height: number };
-      const c = Math.round(Math.min(src.width, src.height) * 0.18);
-      this.panels.set(p, this.add.nineslice(0, 0, k, undefined, src.width, src.height, c, c, c, c).setOrigin(0, 0).setDepth(1));
+      const [l, r, t, b] = INSET[p];
+      this.panels.set(p, this.add.nineslice(0, 0, k, undefined, src.width, src.height, l, r, t, b).setOrigin(0, 0).setDepth(1));
     }
     this.fillText();
     this.panelHit('continue', () => this.leave());
@@ -123,24 +134,31 @@ export class TournamentScene extends Phaser.Scene implements InspectableScene {
     this.layout();
   }
 
-  private text(name: string, value: string, color = INK, align: 'left' | 'center' = 'center'): void {
-    this.texts.set(name, this.add.text(0, 0, value, { fontFamily: FONT_FAMILY, color, align, fontStyle: 'bold', resolution: textResolution() }).setDepth(2));
+  private text(name: string, value: string, color = INK, align: 'left' | 'center' = 'center', wrap = true): void {
+    const t = this.add.text(0, 0, value, { fontFamily: FONT_FAMILY, color, align, fontStyle: 'bold', resolution: textResolution() }).setDepth(2);
+    t.setData('wrap', wrap);
+    this.texts.set(name, t);
   }
 
   private groupText(g: BoardGroup): string {
-    return g.rows.map((r) => `${r.position}. ${r.home ? '> ' : ''}${r.name}  P${r.played} W${r.won} D${r.drawn} L${r.lost}  ${r.points} pts`).join('\n');
+    return g.rows.map((r) => `${r.position}. ${r.home ? '> ' : ''}${r.name}   ${r.won}-${r.drawn}-${r.lost}   ${r.points} pts`).join('\n');
   }
 
   private fillText(): void {
     const b = this.board;
     const r = b.lastResult;
-    this.text('title', b.name, CREAM);
-    this.text('group-a-head', b.groups[0].label, CREAM);
-    this.text('group-a', this.groupText(b.groups[0]), INK, 'left');
-    this.text('group-b-head', b.groups[1].label, CREAM);
-    this.text('group-b', this.groupText(b.groups[1]), INK, 'left');
-    this.text('match-result', r ? `${r.stage}\n${r.homeName} ${r.homeGoals} - ${r.awayGoals} ${r.awayName}` : 'No game played yet');
-    this.text('outcome', `${b.headline}${b.next ? `\nNext: ${b.next.stage} vs ${b.next.opponent}` : ''}\nTournament points never count in the league.`);
+    this.text('title', b.name, INK);
+    this.text('group-a-head', `${b.groups[0].label}  (W-D-L, points)`, CREAM);
+    this.text('group-a', this.groupText(b.groups[0]), INK, 'left', false);
+    this.text('group-b-head', `${b.groups[1].label}  (W-D-L, points)`, CREAM);
+    this.text('group-b', this.groupText(b.groups[1]), INK, 'left', false);
+    this.text('match-result', r ? r.stage : 'No game played yet');
+    this.text('result-home', r?.homeName ?? '');
+    this.text('result-hg', r ? String(r.homeGoals) : '');
+    this.text('result-ag', r ? String(r.awayGoals) : '');
+    this.text('result-away', r?.awayName ?? '');
+    this.text('outcome-head', b.headline, CREAM);
+    this.text('outcome', b.next ? `Next: ${b.next.stage} vs ${b.next.opponent}` : b.outcome === 'eliminated' ? 'Batavia did not reach the final.' : 'Tournament complete.');
     this.text('continue', 'CONTINUE', CREAM);
     if (this.review) this.text('review-note', 'Owner review: sample results played through the real tournament rules. Not your save.', CREAM);
   }
@@ -169,41 +187,55 @@ export class TournamentScene extends Phaser.Scene implements InspectableScene {
     const top = pad * 2 + titleH;
     const avail = R.continue.y - pad - top;
     if (land) {
-      const gh = avail * 0.62;
+      const gh = avail * 0.6;
       const cw = (w - pad * 3) / 2;
       R['group-a'] = { x: pad, y: top, width: cw, height: gh };
       R['group-b'] = { x: pad * 2 + cw, y: top, width: cw, height: gh };
       R['match-result'] = { x: pad, y: top + gh + pad, width: cw, height: avail - gh - pad };
       R.outcome = { x: pad * 2 + cw, y: top + gh + pad, width: cw, height: avail - gh - pad };
     } else {
-      const gh = (avail - pad * 2) * 0.33;
       const fw = w - pad * 2;
+      const gh = (avail - pad * 3) * 0.29;
+      const rh = Math.min((avail - pad * 3) * 0.24, (fw * 140) / 262);
       R['group-a'] = { x: pad, y: top, width: fw, height: gh };
       R['group-b'] = { x: pad, y: top + gh + pad, width: fw, height: gh };
-      const lh = avail - gh * 2 - pad * 2;
-      const hw = (fw - pad) / 2;
-      R['match-result'] = { x: pad, y: top + (gh + pad) * 2, width: hw, height: lh };
-      R.outcome = { x: pad * 2 + hw, y: top + (gh + pad) * 2, width: hw, height: lh };
+      R['match-result'] = { x: pad, y: top + (gh + pad) * 2, width: fw, height: rh };
+      R.outcome = { x: pad, y: top + (gh + pad) * 2 + rh + pad, width: fw, height: avail - gh * 2 - rh - pad * 3 };
     }
     for (const p of PANELS) {
       const o = this.panels.get(p);
-      const r = R[p]!;
-      if (o instanceof Phaser.GameObjects.NineSlice) o.setPosition(r.x, r.y).setSize(r.width, r.height);
+      if (o instanceof Phaser.GameObjects.NineSlice) o.setPosition(R[p]!.x, R[p]!.y).setSize(R[p]!.width, R[p]!.height);
     }
-    const inner = (r: Rect, top = 0.06, side = 0.06): Rect => ({ x: r.x + r.width * side, y: r.y + r.height * top, width: r.width * (1 - side * 2), height: r.height * (1 - top - 0.06) });
-    const head = (r: Rect): Rect => ({ x: r.x, y: r.y + r.height * 0.02, width: r.width, height: r.height * 0.16 });
-    this.place('title', inner(R.title, 0.12, 0.08), 0.42);
-    this.place('group-a-head', head(R['group-a']!), 0.7);
-    this.place('group-a', inner(R['group-a']!, 0.22), 0.2);
-    this.place('group-b-head', head(R['group-b']!), 0.7);
-    this.place('group-b', inner(R['group-b']!, 0.22), 0.2);
-    this.place('match-result', inner(R['match-result']!, 0.14, 0.08), 0.22);
+    const card = this.panels.get('match-result') as Phaser.GameObjects.Image | undefined;
+    const mr = R['match-result']!;
+    if (card) {
+      this.contain(card, mr);
+      R['match-result'] = mr.width / mr.height > card.width / card.height
+        ? { x: mr.x + (mr.width - card.displayWidth) / 2, y: mr.y, width: card.displayWidth, height: mr.height }
+        : { x: mr.x, y: mr.y + (mr.height - card.displayHeight) / 2, width: mr.width, height: card.displayHeight };
+    }
+    const c = R['match-result']!;
+    const slot = (f: readonly number[]): Rect => ({ x: c.x + c.width * f[0]!, y: c.y + c.height * f[1]!, width: c.width * f[2]!, height: c.height * f[3]! });
+    const band = (r: Rect): Rect => ({ x: r.x + 16, y: r.y + BAND.top, width: r.width - 32, height: BAND.height });
+    const body = (r: Rect): Rect => ({ x: r.x + 18, y: r.y + 44, width: r.width - 36, height: r.height - 58 });
+    this.place('title', { x: R.title.x + 22, y: R.title.y + 14, width: R.title.width - 44, height: R.title.height - 28 }, 0.8);
+    this.place('group-a-head', band(R['group-a']!), 0.62);
+    this.place('group-a', body(R['group-a']!), 0.26);
+    this.place('group-b-head', band(R['group-b']!), 0.62);
+    this.place('group-b', body(R['group-b']!), 0.26);
+    this.place('match-result', slot(SLOT.stage), 0.8);
+    this.place('result-home', slot(SLOT.home), 0.3);
+    this.place('result-hg', slot(SLOT.hg), 0.8);
+    this.place('result-ag', slot(SLOT.ag), 0.8);
+    this.place('result-away', slot(SLOT.away), 0.3);
     const out = R.outcome!;
-    const prizeW = this.prize ? out.height * 0.55 : 0;
-    this.place('outcome', inner({ ...out, width: out.width - prizeW }, 0.14, 0.08), 0.18);
+    const ob = body(out);
+    const prizeW = this.prize ? Math.min(out.height - 12, out.width * 0.28) : 0;
+    this.place('outcome-head', { ...band(out), width: band(out).width - prizeW }, 0.62);
+    this.place('outcome', { ...ob, width: ob.width - prizeW }, 0.3);
     this.place('continue', R.continue, 0.45);
     this.contain(this.logo, R.logo);
-    if (this.prize) this.contain(this.prize, (R.prize = { x: out.x + out.width - prizeW - pad, y: out.y + out.height * 0.15, width: prizeW, height: out.height * 0.7 }));
+    if (this.prize) this.contain(this.prize, (R.prize = { x: out.x + out.width - prizeW - 12, y: out.y + 6, width: prizeW, height: out.height - 12 }));
     if (this.review) {
       R['review-note'] = { x: pad, y: h - pad - reviewH, width: w * 0.3 - pad, height: reviewH };
       this.place('review-note', R['review-note'], 0.3);
@@ -226,7 +258,7 @@ export class TournamentScene extends Phaser.Scene implements InspectableScene {
     const t = this.texts.get(name);
     if (!t) return;
     let px = Math.max(8, Math.floor(Math.min(r.height * size, 28)));
-    t.setWordWrapWidth(Math.max(20, r.width - 4), true).setFontSize(px);
+    t.setWordWrapWidth(t.getData('wrap') === false ? null : Math.max(20, r.width - 4), false).setFontSize(px);
     while (px > 7 && (t.width > r.width || t.height > r.height)) t.setFontSize(--px);
     const left = t.style.align === 'left';
     t.setOrigin(left ? 0 : 0.5, 0.5).setPosition(left ? r.x : r.x + r.width / 2, r.y + r.height / 2);
