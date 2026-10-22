@@ -246,6 +246,7 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
       viewport: { width, height },
       elements: {
         pen: this.pen,
+        goal: this.goalBounds(),
         hud: bounds(this.hud),
         'back-button': this.backButton.getButtonBounds(),
         stick: { x: L.stick.x - L.stick.r, y: L.stick.y - L.stick.r, width: L.stick.r * 2, height: L.stick.r * 2 },
@@ -302,12 +303,25 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     this.bannerUntil = performance.now() + ms;
   }
 
+  /** Screen box of the right-hand goal: posts, crossbar and the net behind the line. */
+  private goalBounds(): Rect {
+    const mid = JUNGLE.width / 2;
+    const gb = this.toScreen(JUNGLE.goalX, mid - JUNGLE.goalHalfWidth);
+    const gf = this.toScreen(JUNGLE.goalX, mid + JUNGLE.goalHalfWidth);
+    const gh = JUNGLE.crossbar * this.zk;
+    return { x: gb.x - 3, y: gb.y - gh - 3, width: JUNGLE.netDepth * this.kx + 6, height: gf.y - gb.y + gh + 6 };
+  }
+
   private layout(width: number, height: number): void {
     const portrait = height > width;
     const top = 104;
     const bottom = portrait ? Math.max(210, height * 0.32) : 16;
+    this.handlePad(this.pad.layout(width, height));
     const side = portrait ? 8 : Math.max(150, width * 0.2);
-    const w = Math.max(160, width - side * 2);
+    // The net hangs behind the right goal line: keep it on screen and, in landscape, left of the action buttons.
+    const b = this.pad.controls.currentLayout.buttons;
+    const limit = portrait ? width - 8 : Math.min(b.block.x - b.block.r, b.slide.x - b.slide.r) - 8;
+    const w = Math.max(160, Math.min(width - side * 2, (limit - width / 2) / (0.5 + JUNGLE.netDepth / JUNGLE.length)));
     const h = Math.max(120, height - top - bottom);
     this.pen = { x: (width - w) / 2, y: top, width: w, height: h };
     // Jungle wall takes the top of the stage; the floor (the pitch seen side-on) the rest.
@@ -327,7 +341,6 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     this.continueButton.setPosition(width / 2, height - 44);
     this.result.setOrigin(0.5, 1).setPosition(width / 2, height - 82).setWordWrapWidth(Math.min(width - 40, 420)).setDepth(6001);
     this.fitBackground();
-    this.handlePad(this.pad.layout(width, height));
   }
 
   private drawBars(): void {

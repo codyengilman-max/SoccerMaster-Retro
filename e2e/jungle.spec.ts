@@ -21,6 +21,19 @@ async function pressMove(page: import('@playwright/test').Page, kind: 'hit' | 's
   throw new Error(`${kind} never started after 8 presses`);
 }
 
+type Box = { x: number; y: number; width: number; height: number };
+/** The goal and net are fully on screen and no action button covers them. */
+function expectGoalClear(elements: Record<string, Box> | undefined, viewport: { width: number; height: number }): void {
+  const goal = elements?.goal;
+  expectInside('goal', goal, viewport);
+  for (const name of ['turbo', 'shoot', 'slide', 'hit']) {
+    const b = elements?.[name];
+    if (!goal || !b) throw new Error(`missing ${name}`);
+    const overlap = goal.x < b.x + b.width && b.x < goal.x + goal.width && goal.y < b.y + b.height && b.y < goal.y + goal.height;
+    expect(overlap, `${name} covers the goal`).toBe(false);
+  }
+}
+
 test.beforeEach(async ({ page }) => {
   await trackDomListeners(page);
 });
@@ -39,6 +52,7 @@ test('Jungle Ball opens from Start, fits the screen, runs, and Leave returns wit
     const d = await waitForScene(page, 'jungle');
     expect(d.canvases).toBe(1);
     for (const name of ['pen', 'title', 'back-button', 'stick', 'turbo', 'shoot', 'slide', 'hit']) expectInside(name, d.layout?.elements[name], viewport);
+    expectGoalClear(d.layout?.elements, viewport);
     await page.waitForFunction(() => (window.__SMR__?.diagnostics().gameplay as { phase?: string } | null)?.phase === 'live');
     const t0 = (await snap(page)).t;
     await page.waitForFunction((t) => ((window.__SMR__?.diagnostics().gameplay as { t?: number } | null)?.t ?? 0) > t + 0.5, t0, { timeout: 8000 });
@@ -91,6 +105,7 @@ test('keyboard moves the Jungle Ball player and rotation keeps the pen on screen
   await page.waitForFunction((v) => window.__SMR__?.diagnostics().layout?.viewport.width === v.width, rotated);
   const after = await diagnostics(page);
   for (const name of ['pen', 'title', 'back-button', 'stick', 'turbo', 'shoot', 'slide', 'hit']) expectInside(name, after.layout?.elements[name], rotated);
+  expectGoalClear(after.layout?.elements, rotated);
   // Escape pauses; Leave is confirmed from the pause overlay.
   await page.keyboard.press('Escape');
   await expect.poll(async () => ((await diagnostics(page)).gameplay as { paused?: boolean } | null)?.paused).toBe(true);
