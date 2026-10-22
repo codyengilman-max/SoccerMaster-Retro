@@ -29,7 +29,7 @@ export const JUNGLE = {
   dribbleSpeed: 5.2,
   accel: 30,
   playerRadius: 0.55,
-  ballRadius: 0.2,
+  ballRadius: 0.3,
   controlReach: 0.95,
   /** A ball above this height cannot be controlled (it has to come down first). */
   controlHeight: 0.6,
@@ -38,8 +38,10 @@ export const JUNGLE = {
   ballFriction: 1.6,
   airDrag: 0.25,
   gravity: 10.7,
-  bounce: 0.45,
-  wallRestitution: 0.7,
+  /** Share of vertical speed kept on each bounce; landings slower than bounceMinSpeed (yd/s) settle. */
+  bounce: 0.68,
+  bounceMinSpeed: 0.6,
+  wallRestitution: 0.85,
   /** Free balls faster than this cannot be trapped; they deflect off bodies instead. */
   trapSpeed: 14,
   /** Ball sub-steps keep every move under this length (no tunnelling through posts, keeper or bodies). */
@@ -917,7 +919,7 @@ function stepFree(s: JungleState, dt: number, rnd: () => number): void {
     if (b.z > 0) b.vz -= JUNGLE.gravity * h;
     if (b.z <= 0) {
       b.z = 0;
-      b.vz = b.vz < -1.2 ? -b.vz * JUNGLE.bounce : 0;
+      b.vz = b.vz < -JUNGLE.bounceMinSpeed ? -b.vz * JUNGLE.bounce : 0;
     }
     const sp = len(b.vel);
     const decel = b.z > 0.02 ? JUNGLE.airDrag : JUNGLE.ballFriction * 6;

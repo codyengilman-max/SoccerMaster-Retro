@@ -504,7 +504,8 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     const ksc = PlayerArt.scaleFor(kh);
     this.sprites.keeper!.setTexture(this.art.frame(this.looks.keeper, s.keeper.mode === 'dive' || s.keeper.mode === 'down' || (this.savedAt !== null && s.t - this.savedAt < 0.3) ? 'dive' : s.keeper.mode === 'hold' ? 'kick' : 'idle', 4, 0)).setScale(ksc.x, ksc.y).setPosition(kp.x, kp.y).setDepth(100 + kp.y);
     const b = this.toScreen(s.ball.pos.x, s.ball.pos.y);
-    const br = Math.max(9, this.scale1 * 0.55);
+    // Drawn size follows the sim's ball radius (0.2 yd drew at 0.55 yd wide).
+    const br = Math.max(13, this.scale1 * JUNGLE.ballRadius * 2.75);
     g.fillStyle(0x000000, 0.3).fillEllipse(b.x, b.y, br * 1.2, br * 0.4);
     // ON FIRE: the ball trails flame while the burning competitor has it or just shot it.
     if (s.fire && s.ball.lastTouch === s.fire) for (let i = 1; i <= 4; i++) g.fillStyle(i % 2 ? 0xff7a1a : 0xffd23f, 0.6 - i * 0.12).fillCircle(b.x - s.ball.vel.x * this.kx * 0.02 * i, b.y - br * 0.45 - s.ball.vel.y * this.ky * 0.02 * i, br * (1 - i * 0.15));

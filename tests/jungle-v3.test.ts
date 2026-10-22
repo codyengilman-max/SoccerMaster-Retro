@@ -372,3 +372,26 @@ describe('Jungle Ball v3: seeded rounds', () => {
     expect(goals).toBeGreaterThan(0);
   });
 });
+
+describe('Jungle Ball v3: bigger, bouncier ball (owner, 2026-10-23)', () => {
+  it('a ball dropped from 2 yd rebounds to most of that height and keeps bouncing', () => {
+    const s = staged();
+    s.ball.owner = null;
+    s.ball.vel = { x: 0, y: 0 };
+    s.ball.z = 2;
+    s.ball.vz = 0;
+    let bounces = 0;
+    let peak = 0;
+    let falling = true;
+    for (let i = 0; i < 600; i++) {
+      const before = s.ball.vz;
+      adv(s, 1 / 60);
+      if (before < 0 && s.ball.vz > 0) bounces++, (falling = false);
+      if (!falling && bounces === 1) peak = Math.max(peak, s.ball.z);
+    }
+    expect(JUNGLE.ballRadius).toBeGreaterThanOrEqual(0.3);
+    expect(peak, 'first rebound height (yd)').toBeGreaterThan(0.85);
+    expect(bounces).toBeGreaterThanOrEqual(5);
+    expect(s.ball.z).toBe(0);
+  });
+});
