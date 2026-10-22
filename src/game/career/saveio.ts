@@ -3,7 +3,7 @@ import { FOCUSES, HOME_ACTIVITIES, activityById } from './catalog';
 import type { PlannedItem, PlannedSession, PlannerInput, WeekPlan } from './planner';
 import { cleanText, type CareerPlayer } from './player';
 import type { AttributeOutcome, EvidenceItem } from './progression';
-import { SAVE_SCHEMA, emptySave, type CareerSave, type FamilyLevel, type JournalEntry, type TeamTrainingRecord, type WeekReview } from './state';
+import { SAVE_SCHEMA, emptySave, type CareerSave, type FamilyLevel, type JournalEntry, type TeamTrainingRecord, type Tt12Run, type WeekReview, TT12_SLOTS } from './state';
 import { TEAM_TRAINING_IDS, weekDelta } from './teamTraining';
 import { ATTRIBUTES, LEVELS, POSITIONS, RATINGS, SKILL_FAMILIES, type AttributeId, type Level, type SkillFamilyId } from './types';
 
@@ -174,6 +174,13 @@ function teamTraining(v: unknown, week: number): TeamTrainingRecord {
   };
 }
 
+function tt12Run(v: unknown, week: number): Tt12Run {
+  const o = obj(v, 'tt12');
+  if (typeof o.score !== 'number' || !Number.isFinite(o.score) || o.score < 0 || o.score > 1) throw new Invalid('tt12 score: out of range');
+  if (typeof o.credited !== 'boolean') throw new Invalid('tt12 credited: not a boolean');
+  return { week: int(o.week, 'tt12 week', 1, week), slot: oneOf(o.slot, 'tt12 slot', TT12_SLOTS), runId: str(o.runId, 'tt12 runId', 64), score: o.score, credited: o.credited };
+}
+
 /** Schema 1 (pre-release M6 draft) had no missed-event counter and stored levels as plain numbers. */
 function migrate(o: Record<string, unknown>): Record<string, unknown> {
   if (o.schema === 1) {
@@ -219,8 +226,12 @@ export function parseSave(raw: unknown): R<CareerSave> {
       missedEvents: int(o.missedEvents, 'missedEvents', 0, 1e9),
       history: arr(o.history, 'history', L.historyMax).map((h) => review(h, week)),
       teamTraining: arr(o.teamTraining ?? [], 'teamTraining', L.historyMax).map((t) => teamTraining(t, week)),
+      tt12: arr(o.tt12 ?? [], 'tt12', L.historyMax * 4).map((t) => tt12Run(t, week)),
     };
     if (new Set(save.teamTraining.map((t) => t.week)).size !== save.teamTraining.length) throw new Invalid('team training counted twice for a week');
+    if (new Set(save.tt12.map((t) => t.runId)).size !== save.tt12.length) throw new Invalid('team training run saved twice');
+    const credited = save.tt12.filter((t) => t.credited).map((t) => `${t.week}${t.slot}`);
+    if (new Set(credited).size !== credited.length) throw new Invalid('team training session counted twice');
     return { ok: true, value: save };
   } catch (e) {
     if (e instanceof Invalid) return { ok: false, error: e.message };
