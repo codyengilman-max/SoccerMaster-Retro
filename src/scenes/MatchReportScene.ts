@@ -12,6 +12,10 @@ import { orientationOf } from '../render/layout';
 import { FONT_FAMILY, textResolution } from '../render/theme';
 import type { InspectableScene, SceneLayoutReport } from './inspectable';
 import { SceneKeys } from './keys';
+import { StoryStore } from '../game/story/store';
+import { parseRankings } from '../game/rankings/ratings';
+import { parseKickoff, teamImpact } from '../game/rankings/views';
+import { kickoffKey, rankingsKey, storyResults } from './rankingsData';
 import { ArtCard, wrapFloor } from './ui/artCard';
 
 const images = import.meta.glob('../assets/art/devreport/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
@@ -57,6 +61,8 @@ export class MatchReportScene extends Phaser.Scene implements InspectableScene {
   private card!: ArtCard;
   private next: ReportNext = 'start';
   private matchId = '';
+  private storyStore: StoryStore | null = null;
+  private impact: string[] | null = null;
   private report: SavedReport | null = null;
   private status = 'loading';
   private overall = 0;
@@ -72,6 +78,8 @@ export class MatchReportScene extends Phaser.Scene implements InspectableScene {
   }
 
   init(data: MatchReportData): void {
+    this.impact = null;
+    this.storyStore = null;
     this.next = data?.next === 'story' || data?.next === 'history' ? data.next : 'start';
     this.matchId = typeof data?.matchId === 'string' ? data.matchId : '';
     this.report = null;
@@ -100,6 +108,7 @@ export class MatchReportScene extends Phaser.Scene implements InspectableScene {
       this.report = r;
       this.status = r ? 'ready' : 'missing';
       if (r) this.fill(r, save);
+      if (r) void this.loadImpact(r);
       else this.card.label(M.info, 'Report not found for this match.', 0.25, INK);
     });
   }
@@ -258,7 +267,28 @@ export class MatchReportScene extends Phaser.Scene implements InspectableScene {
     this.card.layout();
   }
 
+  /** TEAM IMPACT, only for story league/cup matches that saved kickoff ranks. */
+  private async loadImpact(r: SavedReport): Promise<void> {
+    const story = await StoryStore.open().catch(() => null);
+    if (!story) return;
+    if (!this.sys.isActive()) return story.close();
+    this.storyStore = story;
+    const k = parseKickoff(await story.getRecord(kickoffKey(this.matchId)));
+    if (!k || !this.sys.isActive()) return;
+    const rk = parseRankings(await story.getRecord(rankingsKey(k.careerId)), k.careerId);
+    const results = await storyResults(story, k.careerId);
+    if (!rk.ok || !this.sys.isActive()) return;
+    const ft = (await story.getRecord(`matchresult:${this.matchId}`)) as { home?: unknown; away?: unknown } | undefined;
+    if (!this.sys.isActive()) return;
+    const fullTime = ft && Number.isInteger(ft.home) && Number.isInteger(ft.away) ? { us: ft.home as number, them: ft.away as number } : null;
+    this.impact = teamImpact(k, rk.value, results, fullTime);
+    this.card.label(M.competition, `${r.competition} - Week ${r.week} · TEAM IMPACT >`, 0.5, NAVY);
+    this.card.hit('report-team-impact', M.competition, () => this.openFull(`TEAM IMPACT\n${this.impact!.join('\n')}`));
+  }
+
   private onShutdown(): void {
+    this.storyStore?.close();
+    this.storyStore = null;
     this.scale.off(Phaser.Scale.Events.RESIZE, this.onResize, this);
     this.input.off(Phaser.Input.Events.POINTER_MOVE, this.onDrag, this);
     this.store?.close();

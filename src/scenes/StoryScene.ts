@@ -7,6 +7,10 @@ import { seasonWeek, type TournamentId } from '../game/season/calendar';
 import { bataviaRecord, fixtureForSeasonWeek, newSeasonLeague, opponentOf, parseSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough } from '../game/season/league';
 import { TOURNAMENTS, allFixtures, bataviaFinish, groupTable, nextBataviaFixture, newTournament, parseTournament, finalFixture, recordTournamentPlayed, bataviaResult, type TournamentState } from '../game/season/tournament';
 import { CLUB_WORLD } from '../game/story/clubs';
+import { latest, movement, nationalTable, rankIn } from '../game/rankings/ratings';
+import { kickoffFor, stateCount, stateLabel, scopeTable, nextOpponent, leagueStandings } from '../game/rankings/views';
+import { teamById, teamName as worldTeamName } from '../game/rankings/teams';
+import { kickoffKey, settleRankings } from './rankingsData';
 import type { Rect } from '../game';
 import { POSITION_SLOT } from '../game/career/player';
 import type { CareerSave } from '../game/career/state';
@@ -94,6 +98,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private crossbarSummary = '';
   private crossbarScore = '';
   private seasonSummary = '';
+  private seasonPanel = '';
   private tournamentSummary = '';
   private bg!: Phaser.GameObjects.Graphics;
   private stage!: Phaser.GameObjects.Graphics;
@@ -409,8 +414,14 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       const snap: Snapshot = { revision: s.revision, sessions: s.completedSessions.length, batches: s.batches.length, week: s.week };
       await this.store.putRecord(`run:${run}`, snap);
     }
+    const opp = MATCH_ADAPTERS.includes(kind) ? await this.matchOpponent(kind, run) : {};
+    const wk = this.seasonWeekNo();
+    if ((kind === 'league_match' || kind === 'tournament_match') && wk !== null && this.state && 'opponent' in opp && typeof opp.opponent === 'string' && (await this.store.getRecord(kickoffKey(run))) === undefined) {
+      const { state: rk } = await settleRankings(this.store, this.state.careerId, wk - 1, wk);
+      await this.store.putRecord(kickoffKey(run), kickoffFor(rk, wk, kind === 'league_match' ? 'league' : 'tournament', opp.opponent));
+    }
     this.navigating = true;
-    if (MATCH_ADAPTERS.includes(kind)) this.scene.start(SceneKeys.Formation, { career: true, returnTo: 'story', resultKey: run, ...(await this.matchOpponent(kind, run)) });
+    if (MATCH_ADAPTERS.includes(kind)) this.scene.start(SceneKeys.Formation, { career: true, returnTo: 'story', resultKey: run, ...opp });
     else this.scene.start(SceneKeys.Career, { returnTo: 'story', ...(kind === 'team_training' ? { open: 'team' } : {}) });
   }
 
@@ -422,6 +433,32 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   }
 
   /** Optional and never a story fact: the result is saved by Cloudy's own reducer action. */
+  private openRankings(): void {
+    if (!this.fresh() || !this.state) return;
+    this.navigating = true;
+    this.scene.start(SceneKeys.Rankings, { careerId: this.state.careerId, week: this.seasonWeekNo() ?? 1, returnTo: 'story' });
+  }
+
+  /** THIS SEASON: live league position, ranks and next opponent, from saved results only. */
+  private async loadSeasonPanel(): Promise<void> {
+    if (!this.store || !this.state) return void (this.seasonPanel = '');
+    const wk = this.seasonWeekNo() ?? 1;
+    const { state: rk, story } = await settleRankings(this.store, this.state.careerId, wk - 1, wk);
+    const lg = leagueStandings(story.league);
+    const me = lg.rows.find((r) => r.club === 'batavia');
+    const nat = rankIn(nationalTable(latest(rk)), 'batavia');
+    const st = teamById('batavia')!.state;
+    const sr = rankIn(scopeTable(rk, st), 'batavia');
+    const m = movement(rk, 'batavia');
+    const opp = nextOpponent(story.league, wk);
+    this.seasonPanel = [
+      'THIS SEASON',
+      lg.started && me ? `League: ${me.rank}${me.rank === 1 ? 'st' : me.rank === 2 ? 'nd' : me.rank === 3 ? 'rd' : 'th'} of ${lg.rows.length} · ${me.points} pts (W${me.won} D${me.drawn} L${me.lost})` : 'League: season not started',
+      `National #${nat} of 120${m === null ? '' : m > 0 ? ` (up ${m})` : m < 0 ? ` (down ${-m})` : ' (no change)'} · ${stateLabel(st)} #${sr} of ${stateCount(st)}${latest(rk).week === 0 ? ' · Preseason' : ''}`,
+      opp ? `Next league game: ${worldTeamName(opp)}` : 'No league games left',
+    ].join('\n');
+  }
+
   private openMyPlayer(): void {
     if (!this.fresh()) return;
     this.navigating = true;
@@ -631,8 +668,10 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     if (!this.fresh() || !this.career) return;
     this.busy = true;
     const before = (await this.career.load()).week;
+    const wk = this.seasonWeekNo();
     const r = await this.career.dispatch({ type: 'endWeek' });
     this.save = await this.career.load();
+    if (r.ok && this.save.week > before && wk !== null && this.store && this.state) await settleRankings(this.store, this.state.careerId, wk, wk + 1);
     if (!r.ok || this.save.week <= before) {
       this.message = r.ok ? 'The week did not close.' : r.error;
     } else {
@@ -817,6 +856,14 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private async loadSummaries(): Promise<void> {
     if (!this.state || !this.store) return;
     if (this.state.contentVersion !== 'w24-draft-1' && this.state.sceneId.startsWith('S1_')) await this.loadSeasonSummaries();
+    // Settling the background season is slow on small devices; never hold the next line's render (and its taps) for it.
+    if (this.state.contentVersion !== 'w24-draft-1' && this.state.sceneId.startsWith('S1_')) {
+      void this.loadSeasonPanel()
+        .catch(() => void (this.seasonPanel = ''))
+        .then(() => {
+          if (this.sys.isActive() && this.state) this.render();
+        });
+    }
     const run = outcomeOf(this.state, 'W1_CROSSBAR');
     if (!run) return void (this.crossbarSummary = '');
     if (run.outcome === 'completed' && run.runId) {
@@ -1108,12 +1155,13 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         const learnLine = a.learning === null ? '' : `- Home learning (this week's planned home sessions): ${a.learning ? 'done' : 'not done yet'}\n`;
         const talked = Object.values(s.runs).some((r) => r.sceneId === s.sceneId && r.adapter === 'home_hub' && r.detail === 'talk');
         setBody(
-          `HOME MENU\nTraining (required) - log each in Home Training:\n- Juggling task: ${a.juggling ? 'done' : 'not done yet'}\n- ${skillLine}: ${a.skillDone ? 'done' : 'not done yet'}\n${learnLine}` +
+          `${this.seasonPanel ? `${this.seasonPanel}\n\n` : ''}HOME MENU\nTraining (required) - log each in Home Training:\n- Juggling task: ${a.juggling ? 'done' : 'not done yet'}\n- ${skillLine}: ${a.skillDone ? 'done' : 'not done yet'}\n${learnLine}` +
             `${trained ? 'Weekly home training complete. Continue Week is unlocked.' : 'Continue Week unlocks after the required training.'}\nCloudy: Feed & Play and Cloudy: Talk are optional.` +
             rileyLine(wk, s.decisions['S1_W07_M']?.['riley']),
         );
         acts.push({ name: 'hub-training', label: trained ? 'Training (done)' : 'Training (required)', onClick: () => this.openHome() });
         acts.push({ name: 'hub-my-player', label: 'My Player', onClick: () => this.openMyPlayer() });
+        acts.push({ name: 'hub-rankings', label: 'League & Rankings', onClick: () => this.openRankings() });
         acts.push({ name: 'hub-cloudy-play', label: 'Cloudy: Feed & Play', onClick: () => this.openCloudy() });
         if (!talked) acts.push({ name: 'hub-cloudy-talk', label: 'Cloudy: Talk', onClick: () => void this.finishFact('talk') });
         if (trained) acts.push({ name: 'hub-continue', label: 'Continue Week', onClick: () => void this.finishFact('trained') });

@@ -195,12 +195,15 @@ export class StoryStore {
   restartStory(careerId: string): Promise<boolean> {
     const at = Date.now();
     const league = `rec:league-s1:${careerId}`;
+    const rankings = `rec:rankings-s1:${careerId}`;
     const fresh = newSeasonStory(careerId);
     if (!this.db) {
       const cur = this.memory.get(careerId);
       if (cur !== undefined) this.memory.set(`restart-${careerId}-${at}`, cur);
       const lg = this.memory.get(league);
       if (lg !== undefined) { this.memory.set(`rec:league-s1-archive:${careerId}:${at}`, lg); this.memory.delete(league); }
+      const rk = this.memory.get(rankings);
+      if (rk !== undefined) { this.memory.set(`rec:rankings-s1-archive:${careerId}:${at}`, rk); this.memory.delete(rankings); }
       this.memory.set(careerId, fresh);
       return Promise.resolve(true);
     }
@@ -211,8 +214,12 @@ export class StoryStore {
         const b = st.get(league);
         b.onsuccess = () => {
           if (b.result !== undefined) { st.put(b.result, `rec:league-s1-archive:${careerId}:${at}`); st.delete(league); }
-          st.put(fresh, careerId);
-          finish(true);
+          const c = st.get(rankings);
+          c.onsuccess = () => {
+            if (c.result !== undefined) { st.put(c.result, `rec:rankings-s1-archive:${careerId}:${at}`); st.delete(rankings); }
+            st.put(fresh, careerId);
+            finish(true);
+          };
         };
       };
     }, false);

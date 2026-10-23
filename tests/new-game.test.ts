@@ -27,8 +27,11 @@ describe('New game', () => {
     await st.begin('main');
     await st.putRecord('league-s1:main', { x: 1 });
     await st.putRecord('tourney-s1:main:az_showcase', { y: 2 });
+    await st.putRecord('rankings-s1:main', { z: 3 });
     expect(await st.newGame('main')).toBe(true);
     expect(await st.getRecord('league-s1:main')).toBeUndefined();
+    // Old rankings would carry published weeks into the new story; they are moved aside too.
+    expect(await st.getRecord('rankings-s1:main')).toBeUndefined();
     expect(await st.getRecord('tourney-s1:main:az_showcase')).toBeUndefined();
     const b = await st.begin('main');
     const fresh = await (await StoryStore.open(new IDBFactory(), 'fresh')).begin('main');

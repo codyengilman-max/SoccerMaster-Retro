@@ -1,0 +1,2407 @@
+{
+ "version": 1,
+ "category": "U11-9v9",
+ "nameStatus": "working_fictional_names",
+ "teams": [
+  {
+   "id": "batavia",
+   "name": "FC Batavia",
+   "city": "Scottsdale",
+   "state": "AZ",
+   "region": "Southwest",
+   "category": "U11-9v9",
+   "league": "az_local",
+   "colors": [
+    "#e06000",
+    "#1b2a4a"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "B"
+   },
+   "tier": 3,
+   "rating0": 1492,
+   "origin": "league"
+  },
+  {
+   "id": "royal_salt",
+   "name": "Royal Salt Academy",
+   "city": "Phoenix",
+   "state": "AZ",
+   "region": "Southwest",
+   "category": "U11-9v9",
+   "league": "az_local",
+   "colors": [
+    "#800020",
+    "#002040"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "RS"
+   },
+   "tier": 2,
+   "rating0": 1573,
+   "origin": "league"
+  },
+  {
+   "id": "valley_rising",
+   "name": "Valley Rising",
+   "city": "Mesa",
+   "state": "AZ",
+   "region": "Southwest",
+   "category": "U11-9v9",
+   "league": "az_local",
+   "colors": [
+    "#c00000",
+    "#e0e0e0"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "VR"
+   },
+   "tier": 3,
+   "rating0": 1497,
+   "origin": "league"
+  },
+  {
+   "id": "desert_tuzon",
+   "name": "Desert Tuzon",
+   "city": "Tucson",
+   "state": "AZ",
+   "region": "Southwest",
+   "category": "U11-9v9",
+   "league": "az_local",
+   "colors": [
+    "#e0e0e0",
+    "#002080"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "DT"
+   },
+   "tier": 3,
+   "rating0": 1482,
+   "origin": "league"
+  },
+  {
+   "id": "sol_vista",
+   "name": "Sol Vista",
+   "city": "Chandler",
+   "state": "AZ",
+   "region": "Southwest",
+   "category": "U11-9v9",
+   "league": "az_local",
+   "colors": [
+    "#002040",
+    "#e0e0e0"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "SV"
+   },
+   "tier": 3,
+   "rating0": 1501,
+   "origin": "league"
+  },
+  {
+   "id": "next_horizon",
+   "name": "Next Horizon",
+   "city": "Scottsdale",
+   "state": "AZ",
+   "region": "Southwest",
+   "category": "U11-9v9",
+   "league": null,
+   "colors": [
+    "#400080",
+    "#6000a0"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "NH"
+   },
+   "tier": 1,
+   "rating0": 1662,
+   "origin": "out_of_league"
+  },
+  {
+   "id": "cascade_city",
+   "name": "Cascade City SC (OR)",
+   "city": "Portland",
+   "state": "OR",
+   "region": "Pacific Northwest",
+   "category": "U11-9v9",
+   "league": "bg_pnw",
+   "colors": [
+    "#1b5e20",
+    "#fdd835"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "CC"
+   },
+   "tier": 2,
+   "rating0": 1580,
+   "origin": "out_of_state"
+  },
+  {
+   "id": "x_bellingham_lodestar",
+   "name": "Bellingham Lodestar FC",
+   "city": "Bellingham",
+   "state": "WA",
+   "region": "Pacific Northwest",
+   "category": "U11-9v9",
+   "league": "bg_pnw",
+   "colors": [
+    "#c9a227",
+    "#20262e"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "BL"
+   },
+   "tier": 1,
+   "rating0": 1632,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_vancouver_bluebonnet",
+   "name": "Vancouver Bluebonnet Academy",
+   "city": "Vancouver",
+   "state": "WA",
+   "region": "Pacific Northwest",
+   "category": "U11-9v9",
+   "league": "bg_pnw",
+   "colors": [
+    "#1b3a6b",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "VB"
+   },
+   "tier": 2,
+   "rating0": 1588,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_eugene_granite",
+   "name": "Eugene Granite Academy",
+   "city": "Eugene",
+   "state": "OR",
+   "region": "Pacific Northwest",
+   "category": "U11-9v9",
+   "league": "bg_pnw",
+   "colors": [
+    "#7a3e1d",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "EG"
+   },
+   "tier": 3,
+   "rating0": 1514,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_spokane_northwind",
+   "name": "Spokane Northwind SC",
+   "city": "Spokane",
+   "state": "WA",
+   "region": "Pacific Northwest",
+   "category": "U11-9v9",
+   "league": "bg_pnw",
+   "colors": [
+    "#284b63",
+    "#d9d9d9"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "SN"
+   },
+   "tier": 3,
+   "rating0": 1485,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_tacoma_lodestar",
+   "name": "Tacoma Lodestar SC",
+   "city": "Tacoma",
+   "state": "WA",
+   "region": "Pacific Northwest",
+   "category": "U11-9v9",
+   "league": "bg_pnw",
+   "colors": [
+    "#284b63",
+    "#d9d9d9"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "TL"
+   },
+   "tier": 3,
+   "rating0": 1484,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_olympia_bluebonnet",
+   "name": "Olympia Bluebonnet Athletic",
+   "city": "Olympia",
+   "state": "WA",
+   "region": "Pacific Northwest",
+   "category": "U11-9v9",
+   "league": "bg_pnw",
+   "colors": [
+    "#8b1e2d",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "OB"
+   },
+   "tier": 4,
+   "rating0": 1417,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_bend_redtail",
+   "name": "Bend Redtail Athletic",
+   "city": "Bend",
+   "state": "OR",
+   "region": "Pacific Northwest",
+   "category": "U11-9v9",
+   "league": "bg_pnw",
+   "colors": [
+    "#8b1e2d",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "BR"
+   },
+   "tier": 4,
+   "rating0": 1432,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_salem_willow_run",
+   "name": "Salem Willow Run United",
+   "city": "Salem",
+   "state": "OR",
+   "region": "Pacific Northwest",
+   "category": "U11-9v9",
+   "league": "bg_pnw",
+   "colors": [
+    "#1b3a6b",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "SW"
+   },
+   "tier": 5,
+   "rating0": 1341,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_chico_bramble",
+   "name": "Chico Bramble United",
+   "city": "Chico",
+   "state": "CA",
+   "region": "Northern California",
+   "category": "U11-9v9",
+   "league": "bg_norcal",
+   "colors": [
+    "#5b6b2e",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "CB"
+   },
+   "tier": 1,
+   "rating0": 1644,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_davis_northwind",
+   "name": "Davis Northwind SC",
+   "city": "Davis",
+   "state": "CA",
+   "region": "Northern California",
+   "category": "U11-9v9",
+   "league": "bg_norcal",
+   "colors": [
+    "#4a2a7a",
+    "#e8c34a"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "DN"
+   },
+   "tier": 2,
+   "rating0": 1567,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_modesto_osprey",
+   "name": "Modesto Osprey FC",
+   "city": "Modesto",
+   "state": "CA",
+   "region": "Northern California",
+   "category": "U11-9v9",
+   "league": "bg_norcal",
+   "colors": [
+    "#7a3e1d",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "MO"
+   },
+   "tier": 2,
+   "rating0": 1595,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_stockton_bluestem",
+   "name": "Stockton Bluestem United",
+   "city": "Stockton",
+   "state": "CA",
+   "region": "Northern California",
+   "category": "U11-9v9",
+   "league": "bg_norcal",
+   "colors": [
+    "#1b3a6b",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "SB"
+   },
+   "tier": 3,
+   "rating0": 1483,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_redding_copperleaf",
+   "name": "Redding Copperleaf Academy",
+   "city": "Redding",
+   "state": "CA",
+   "region": "Northern California",
+   "category": "U11-9v9",
+   "league": "bg_norcal",
+   "colors": [
+    "#20262e",
+    "#e04848"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "RC"
+   },
+   "tier": 3,
+   "rating0": 1503,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_monterey_basalt",
+   "name": "Monterey Basalt United",
+   "city": "Monterey",
+   "state": "CA",
+   "region": "Northern California",
+   "category": "U11-9v9",
+   "league": "bg_norcal",
+   "colors": [
+    "#d24d1f",
+    "#ffffff"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "MB"
+   },
+   "tier": 3,
+   "rating0": 1496,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_fresno_hollow_oak",
+   "name": "Fresno Hollow Oak Academy",
+   "city": "Fresno",
+   "state": "CA",
+   "region": "Northern California",
+   "category": "U11-9v9",
+   "league": "bg_norcal",
+   "colors": [
+    "#4a2a7a",
+    "#e8c34a"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "FH"
+   },
+   "tier": 4,
+   "rating0": 1438,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_sacramento_riverbend",
+   "name": "Sacramento Riverbend Academy",
+   "city": "Sacramento",
+   "state": "CA",
+   "region": "Northern California",
+   "category": "U11-9v9",
+   "league": "bg_norcal",
+   "colors": [
+    "#1f7a5a",
+    "#20262e"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "SR"
+   },
+   "tier": 4,
+   "rating0": 1420,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_santa_rosa_juniper",
+   "name": "Santa Rosa Juniper United",
+   "city": "Santa Rosa",
+   "state": "CA",
+   "region": "Northern California",
+   "category": "U11-9v9",
+   "league": "bg_norcal",
+   "colors": [
+    "#0f6f78",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "SR"
+   },
+   "tier": 5,
+   "rating0": 1346,
+   "origin": "fictional"
+  },
+  {
+   "id": "pacific_crest",
+   "name": "Pacific Crest FC (CA)",
+   "city": "San Diego",
+   "state": "CA",
+   "region": "Southern California",
+   "category": "U11-9v9",
+   "league": "bg_socal",
+   "colors": [
+    "#f9a825",
+    "#1a237e"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "PC"
+   },
+   "tier": 2,
+   "rating0": 1587,
+   "origin": "out_of_state"
+  },
+  {
+   "id": "x_palm_springs_granite",
+   "name": "Palm Springs Granite Academy",
+   "city": "Palm Springs",
+   "state": "CA",
+   "region": "Southern California",
+   "category": "U11-9v9",
+   "league": "bg_socal",
+   "colors": [
+    "#8b1e2d",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "PS"
+   },
+   "tier": 1,
+   "rating0": 1669,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_temecula_lantern",
+   "name": "Temecula Lantern Athletic",
+   "city": "Temecula",
+   "state": "CA",
+   "region": "Southern California",
+   "category": "U11-9v9",
+   "league": "bg_socal",
+   "colors": [
+    "#0f6f78",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "TL"
+   },
+   "tier": 2,
+   "rating0": 1588,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_bakersfield_thistle",
+   "name": "Bakersfield Thistle Athletic",
+   "city": "Bakersfield",
+   "state": "CA",
+   "region": "Southern California",
+   "category": "U11-9v9",
+   "league": "bg_socal",
+   "colors": [
+    "#1b3a6b",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "BT"
+   },
+   "tier": 3,
+   "rating0": 1520,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_santa_barbara_northwind",
+   "name": "Santa Barbara Northwind Academy",
+   "city": "Santa Barbara",
+   "state": "CA",
+   "region": "Southern California",
+   "category": "U11-9v9",
+   "league": "bg_socal",
+   "colors": [
+    "#b03060",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "SB"
+   },
+   "tier": 3,
+   "rating0": 1493,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_riverside_pinecrest",
+   "name": "Riverside Pinecrest FC",
+   "city": "Riverside",
+   "state": "CA",
+   "region": "Southern California",
+   "category": "U11-9v9",
+   "league": "bg_socal",
+   "colors": [
+    "#4a2a7a",
+    "#e8c34a"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "RP"
+   },
+   "tier": 3,
+   "rating0": 1509,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_oxnard_stonebridge",
+   "name": "Oxnard Stonebridge Athletic",
+   "city": "Oxnard",
+   "state": "CA",
+   "region": "Southern California",
+   "category": "U11-9v9",
+   "league": "bg_socal",
+   "colors": [
+    "#0f6f78",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "OS"
+   },
+   "tier": 4,
+   "rating0": 1439,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_escondido_kestrel",
+   "name": "Escondido Kestrel FC",
+   "city": "Escondido",
+   "state": "CA",
+   "region": "Southern California",
+   "category": "U11-9v9",
+   "league": "bg_socal",
+   "colors": [
+    "#3b6fb6",
+    "#ffffff"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "EK"
+   },
+   "tier": 4,
+   "rating0": 1432,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_lancaster_meadowlark",
+   "name": "Lancaster Meadowlark Athletic",
+   "city": "Lancaster",
+   "state": "CA",
+   "region": "Southern California",
+   "category": "U11-9v9",
+   "league": "bg_socal",
+   "colors": [
+    "#7a3e1d",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "LM"
+   },
+   "tier": 5,
+   "rating0": 1356,
+   "origin": "fictional"
+  },
+  {
+   "id": "silver_state",
+   "name": "Silver State SC (NV)",
+   "city": "Las Vegas",
+   "state": "NV",
+   "region": "Great Basin",
+   "category": "U11-9v9",
+   "league": "bg_basin",
+   "colors": [
+    "#2e7d32",
+    "#ffffff"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "SS"
+   },
+   "tier": 2,
+   "rating0": 1566,
+   "origin": "out_of_state"
+  },
+  {
+   "id": "wasatch_peak",
+   "name": "Wasatch Peak United (UT)",
+   "city": "Salt Lake City",
+   "state": "UT",
+   "region": "Great Basin",
+   "category": "U11-9v9",
+   "league": "bg_basin",
+   "colors": [
+    "#6d4c41",
+    "#ffcc80"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "WP"
+   },
+   "tier": 2,
+   "rating0": 1559,
+   "origin": "out_of_state"
+  },
+  {
+   "id": "x_idaho_falls_riverbend",
+   "name": "Idaho Falls Riverbend SC",
+   "city": "Idaho Falls",
+   "state": "ID",
+   "region": "Great Basin",
+   "category": "U11-9v9",
+   "league": "bg_basin",
+   "colors": [
+    "#d24d1f",
+    "#ffffff"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "IF"
+   },
+   "tier": 1,
+   "rating0": 1648,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_ogden_hollow_oak",
+   "name": "Ogden Hollow Oak Athletic",
+   "city": "Ogden",
+   "state": "UT",
+   "region": "Great Basin",
+   "category": "U11-9v9",
+   "league": "bg_basin",
+   "colors": [
+    "#2f6b3a",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "OH"
+   },
+   "tier": 3,
+   "rating0": 1508,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_st__george_ridgeback",
+   "name": "St. George Ridgeback Academy",
+   "city": "St. George",
+   "state": "UT",
+   "region": "Great Basin",
+   "category": "U11-9v9",
+   "league": "bg_basin",
+   "colors": [
+    "#20262e",
+    "#e04848"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "SG"
+   },
+   "tier": 3,
+   "rating0": 1480,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_reno_hollow_oak",
+   "name": "Reno Hollow Oak SC",
+   "city": "Reno",
+   "state": "NV",
+   "region": "Great Basin",
+   "category": "U11-9v9",
+   "league": "bg_basin",
+   "colors": [
+    "#1f7a5a",
+    "#20262e"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "RH"
+   },
+   "tier": 3,
+   "rating0": 1505,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_provo_lantern",
+   "name": "Provo Lantern SC",
+   "city": "Provo",
+   "state": "UT",
+   "region": "Great Basin",
+   "category": "U11-9v9",
+   "league": "bg_basin",
+   "colors": [
+    "#3b6fb6",
+    "#ffffff"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "PL"
+   },
+   "tier": 4,
+   "rating0": 1410,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_henderson_quarry",
+   "name": "Henderson Quarry FC",
+   "city": "Henderson",
+   "state": "NV",
+   "region": "Great Basin",
+   "category": "U11-9v9",
+   "league": "bg_basin",
+   "colors": [
+    "#8b1e2d",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "HQ"
+   },
+   "tier": 4,
+   "rating0": 1405,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_boise_flint",
+   "name": "Boise Flint Academy",
+   "city": "Boise",
+   "state": "ID",
+   "region": "Great Basin",
+   "category": "U11-9v9",
+   "league": "bg_basin",
+   "colors": [
+    "#e06000",
+    "#1b2a4a"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "BF"
+   },
+   "tier": 5,
+   "rating0": 1333,
+   "origin": "fictional"
+  },
+  {
+   "id": "front_range",
+   "name": "Front Range FC (CO)",
+   "city": "Denver",
+   "state": "CO",
+   "region": "Rocky Mountain",
+   "category": "U11-9v9",
+   "league": "bg_rockies",
+   "colors": [
+    "#c62828",
+    "#eeeeee"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "FR"
+   },
+   "tier": 2,
+   "rating0": 1588,
+   "origin": "out_of_state"
+  },
+  {
+   "id": "x_missoula_foxglove",
+   "name": "Missoula Foxglove Academy",
+   "city": "Missoula",
+   "state": "MT",
+   "region": "Rocky Mountain",
+   "category": "U11-9v9",
+   "league": "bg_rockies",
+   "colors": [
+    "#8b1e2d",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "MF"
+   },
+   "tier": 1,
+   "rating0": 1657,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_cheyenne_juniper",
+   "name": "Cheyenne Juniper SC",
+   "city": "Cheyenne",
+   "state": "WY",
+   "region": "Rocky Mountain",
+   "category": "U11-9v9",
+   "league": "bg_rockies",
+   "colors": [
+    "#e06000",
+    "#1b2a4a"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "CJ"
+   },
+   "tier": 2,
+   "rating0": 1555,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_billings_riverbend",
+   "name": "Billings Riverbend FC",
+   "city": "Billings",
+   "state": "MT",
+   "region": "Rocky Mountain",
+   "category": "U11-9v9",
+   "league": "bg_rockies",
+   "colors": [
+    "#20262e",
+    "#e04848"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "BR"
+   },
+   "tier": 3,
+   "rating0": 1512,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_pueblo_thistle",
+   "name": "Pueblo Thistle SC",
+   "city": "Pueblo",
+   "state": "CO",
+   "region": "Rocky Mountain",
+   "category": "U11-9v9",
+   "league": "bg_rockies",
+   "colors": [
+    "#b03060",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "PT"
+   },
+   "tier": 3,
+   "rating0": 1504,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_colorado_springs_ironwood",
+   "name": "Colorado Springs Ironwood United",
+   "city": "Colorado Springs",
+   "state": "CO",
+   "region": "Rocky Mountain",
+   "category": "U11-9v9",
+   "league": "bg_rockies",
+   "colors": [
+    "#4a2a7a",
+    "#e8c34a"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "CS"
+   },
+   "tier": 3,
+   "rating0": 1485,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_fort_collins_bluestem",
+   "name": "Fort Collins Bluestem Athletic",
+   "city": "Fort Collins",
+   "state": "CO",
+   "region": "Rocky Mountain",
+   "category": "U11-9v9",
+   "league": "bg_rockies",
+   "colors": [
+    "#1b3a6b",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "FC"
+   },
+   "tier": 4,
+   "rating0": 1444,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_casper_redtail",
+   "name": "Casper Redtail SC",
+   "city": "Casper",
+   "state": "WY",
+   "region": "Rocky Mountain",
+   "category": "U11-9v9",
+   "league": "bg_rockies",
+   "colors": [
+    "#0f6f78",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "CR"
+   },
+   "tier": 4,
+   "rating0": 1443,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_boulder_foxglove",
+   "name": "Boulder Foxglove SC",
+   "city": "Boulder",
+   "state": "CO",
+   "region": "Rocky Mountain",
+   "category": "U11-9v9",
+   "league": "bg_rockies",
+   "colors": [
+    "#3b6fb6",
+    "#ffffff"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "BF"
+   },
+   "tier": 5,
+   "rating0": 1335,
+   "origin": "fictional"
+  },
+  {
+   "id": "rio_grande",
+   "name": "Rio Grande Rapids (NM)",
+   "city": "Albuquerque",
+   "state": "NM",
+   "region": "Desert Southwest",
+   "category": "U11-9v9",
+   "league": "bg_desert",
+   "colors": [
+    "#00838f",
+    "#212121"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "RG"
+   },
+   "tier": 2,
+   "rating0": 1579,
+   "origin": "out_of_state"
+  },
+  {
+   "id": "high_plains",
+   "name": "High Plains United (TX)",
+   "city": "Amarillo",
+   "state": "TX",
+   "region": "Desert Southwest",
+   "category": "U11-9v9",
+   "league": "bg_desert",
+   "colors": [
+    "#ef6c00",
+    "#263238"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "HP"
+   },
+   "tier": 2,
+   "rating0": 1581,
+   "origin": "out_of_state"
+  },
+  {
+   "id": "x_roswell_driftwood",
+   "name": "Roswell Driftwood Athletic",
+   "city": "Roswell",
+   "state": "NM",
+   "region": "Desert Southwest",
+   "category": "U11-9v9",
+   "league": "bg_desert",
+   "colors": [
+    "#3b6fb6",
+    "#ffffff"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "RD"
+   },
+   "tier": 1,
+   "rating0": 1654,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_farmington_willow_run",
+   "name": "Farmington Willow Run FC",
+   "city": "Farmington",
+   "state": "NM",
+   "region": "Desert Southwest",
+   "category": "U11-9v9",
+   "league": "bg_desert",
+   "colors": [
+    "#0f6f78",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "FW"
+   },
+   "tier": 3,
+   "rating0": 1501,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_el_paso_ironwood",
+   "name": "El Paso Ironwood Athletic",
+   "city": "El Paso",
+   "state": "TX",
+   "region": "Desert Southwest",
+   "category": "U11-9v9",
+   "league": "bg_desert",
+   "colors": [
+    "#1b3a6b",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "EP"
+   },
+   "tier": 3,
+   "rating0": 1482,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_lubbock_hollow_oak",
+   "name": "Lubbock Hollow Oak FC",
+   "city": "Lubbock",
+   "state": "TX",
+   "region": "Desert Southwest",
+   "category": "U11-9v9",
+   "league": "bg_desert",
+   "colors": [
+    "#4a2a7a",
+    "#e8c34a"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "LH"
+   },
+   "tier": 3,
+   "rating0": 1513,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_santa_fe_tamarack",
+   "name": "Santa Fe Tamarack FC",
+   "city": "Santa Fe",
+   "state": "NM",
+   "region": "Desert Southwest",
+   "category": "U11-9v9",
+   "league": "bg_desert",
+   "colors": [
+    "#e06000",
+    "#1b2a4a"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "SF"
+   },
+   "tier": 4,
+   "rating0": 1415,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_las_cruces_tamarack",
+   "name": "Las Cruces Tamarack FC",
+   "city": "Las Cruces",
+   "state": "NM",
+   "region": "Desert Southwest",
+   "category": "U11-9v9",
+   "league": "bg_desert",
+   "colors": [
+    "#d24d1f",
+    "#ffffff"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "LC"
+   },
+   "tier": 4,
+   "rating0": 1421,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_midland_sandhill",
+   "name": "Midland Sandhill SC",
+   "city": "Midland",
+   "state": "TX",
+   "region": "Desert Southwest",
+   "category": "U11-9v9",
+   "league": "bg_desert",
+   "colors": [
+    "#b03060",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "MS"
+   },
+   "tier": 5,
+   "rating0": 1366,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_denton_saltmarsh",
+   "name": "Denton Saltmarsh Athletic",
+   "city": "Denton",
+   "state": "TX",
+   "region": "Texas",
+   "category": "U11-9v9",
+   "league": "bg_texas",
+   "colors": [
+    "#20262e",
+    "#e04848"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "DS"
+   },
+   "tier": 1,
+   "rating0": 1664,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_san_antonio_flint",
+   "name": "San Antonio Flint Academy",
+   "city": "San Antonio",
+   "state": "TX",
+   "region": "Texas",
+   "category": "U11-9v9",
+   "league": "bg_texas",
+   "colors": [
+    "#20262e",
+    "#e04848"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "SA"
+   },
+   "tier": 2,
+   "rating0": 1579,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_austin_arrowhead",
+   "name": "Austin Arrowhead United",
+   "city": "Austin",
+   "state": "TX",
+   "region": "Texas",
+   "category": "U11-9v9",
+   "league": "bg_texas",
+   "colors": [
+    "#1b3a6b",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "AA"
+   },
+   "tier": 2,
+   "rating0": 1592,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_corpus_christi_pinecrest",
+   "name": "Corpus Christi Pinecrest Athletic",
+   "city": "Corpus Christi",
+   "state": "TX",
+   "region": "Texas",
+   "category": "U11-9v9",
+   "league": "bg_texas",
+   "colors": [
+    "#1b3a6b",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "CC"
+   },
+   "tier": 3,
+   "rating0": 1519,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_fort_worth_kestrel",
+   "name": "Fort Worth Kestrel United",
+   "city": "Fort Worth",
+   "state": "TX",
+   "region": "Texas",
+   "category": "U11-9v9",
+   "league": "bg_texas",
+   "colors": [
+    "#8b1e2d",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "FW"
+   },
+   "tier": 3,
+   "rating0": 1513,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_tyler_tamarack",
+   "name": "Tyler Tamarack United",
+   "city": "Tyler",
+   "state": "TX",
+   "region": "Texas",
+   "category": "U11-9v9",
+   "league": "bg_texas",
+   "colors": [
+    "#d24d1f",
+    "#ffffff"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "TT"
+   },
+   "tier": 3,
+   "rating0": 1517,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_waco_willow_run",
+   "name": "Waco Willow Run Athletic",
+   "city": "Waco",
+   "state": "TX",
+   "region": "Texas",
+   "category": "U11-9v9",
+   "league": "bg_texas",
+   "colors": [
+    "#0f6f78",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "WW"
+   },
+   "tier": 4,
+   "rating0": 1413,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_norman_clearwater",
+   "name": "Norman Clearwater Athletic",
+   "city": "Norman",
+   "state": "OK",
+   "region": "Texas",
+   "category": "U11-9v9",
+   "league": "bg_texas",
+   "colors": [
+    "#e06000",
+    "#1b2a4a"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "NC"
+   },
+   "tier": 4,
+   "rating0": 1437,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_tulsa_sandhill",
+   "name": "Tulsa Sandhill Athletic",
+   "city": "Tulsa",
+   "state": "OK",
+   "region": "Texas",
+   "category": "U11-9v9",
+   "league": "bg_texas",
+   "colors": [
+    "#1b3a6b",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "TS"
+   },
+   "tier": 5,
+   "rating0": 1341,
+   "origin": "fictional"
+  },
+  {
+   "id": "bayou_star",
+   "name": "Bayou Star FC (LA)",
+   "city": "New Orleans",
+   "state": "LA",
+   "region": "Gulf South",
+   "category": "U11-9v9",
+   "league": "bg_gulf",
+   "colors": [
+    "#4a148c",
+    "#ffd54f"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "BS"
+   },
+   "tier": 2,
+   "rating0": 1576,
+   "origin": "out_of_state"
+  },
+  {
+   "id": "x_jackson_meadowlark",
+   "name": "Jackson Meadowlark Academy",
+   "city": "Jackson",
+   "state": "MS",
+   "region": "Gulf South",
+   "category": "U11-9v9",
+   "league": "bg_gulf",
+   "colors": [
+    "#b03060",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "JM"
+   },
+   "tier": 1,
+   "rating0": 1630,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_lafayette_stonebridge",
+   "name": "Lafayette Stonebridge Athletic",
+   "city": "Lafayette",
+   "state": "LA",
+   "region": "Gulf South",
+   "category": "U11-9v9",
+   "league": "bg_gulf",
+   "colors": [
+    "#7a3e1d",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "LS"
+   },
+   "tier": 2,
+   "rating0": 1595,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_baton_rouge_lantern",
+   "name": "Baton Rouge Lantern SC",
+   "city": "Baton Rouge",
+   "state": "LA",
+   "region": "Gulf South",
+   "category": "U11-9v9",
+   "league": "bg_gulf",
+   "colors": [
+    "#8b1e2d",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "BR"
+   },
+   "tier": 3,
+   "rating0": 1512,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_shreveport_saltmarsh",
+   "name": "Shreveport Saltmarsh Academy",
+   "city": "Shreveport",
+   "state": "LA",
+   "region": "Gulf South",
+   "category": "U11-9v9",
+   "league": "bg_gulf",
+   "colors": [
+    "#284b63",
+    "#d9d9d9"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "SS"
+   },
+   "tier": 3,
+   "rating0": 1480,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_montgomery_quarry",
+   "name": "Montgomery Quarry Academy",
+   "city": "Montgomery",
+   "state": "AL",
+   "region": "Gulf South",
+   "category": "U11-9v9",
+   "league": "bg_gulf",
+   "colors": [
+    "#5b6b2e",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "MQ"
+   },
+   "tier": 3,
+   "rating0": 1494,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_huntsville_redtail",
+   "name": "Huntsville Redtail FC",
+   "city": "Huntsville",
+   "state": "AL",
+   "region": "Gulf South",
+   "category": "U11-9v9",
+   "league": "bg_gulf",
+   "colors": [
+    "#1f7a5a",
+    "#20262e"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "HR"
+   },
+   "tier": 4,
+   "rating0": 1420,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_mobile_copperleaf",
+   "name": "Mobile Copperleaf Athletic",
+   "city": "Mobile",
+   "state": "AL",
+   "region": "Gulf South",
+   "category": "U11-9v9",
+   "league": "bg_gulf",
+   "colors": [
+    "#8b1e2d",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "MC"
+   },
+   "tier": 4,
+   "rating0": 1425,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_biloxi_wren",
+   "name": "Biloxi Wren FC",
+   "city": "Biloxi",
+   "state": "MS",
+   "region": "Gulf South",
+   "category": "U11-9v9",
+   "league": "bg_gulf",
+   "colors": [
+    "#7a3e1d",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "BW"
+   },
+   "tier": 5,
+   "rating0": 1350,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_green_bay_basalt",
+   "name": "Green Bay Basalt Athletic",
+   "city": "Green Bay",
+   "state": "WI",
+   "region": "Upper Midwest",
+   "category": "U11-9v9",
+   "league": "bg_midwest",
+   "colors": [
+    "#e06000",
+    "#1b2a4a"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "GB"
+   },
+   "tier": 1,
+   "rating0": 1639,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_rochester_lodestar",
+   "name": "Rochester Lodestar SC",
+   "city": "Rochester",
+   "state": "MN",
+   "region": "Upper Midwest",
+   "category": "U11-9v9",
+   "league": "bg_midwest",
+   "colors": [
+    "#5b6b2e",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "RL"
+   },
+   "tier": 2,
+   "rating0": 1555,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_duluth_ember",
+   "name": "Duluth Ember SC",
+   "city": "Duluth",
+   "state": "MN",
+   "region": "Upper Midwest",
+   "category": "U11-9v9",
+   "league": "bg_midwest",
+   "colors": [
+    "#3b6fb6",
+    "#ffffff"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "DE"
+   },
+   "tier": 2,
+   "rating0": 1581,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_peoria_cottonwood",
+   "name": "Peoria Cottonwood Academy",
+   "city": "Peoria",
+   "state": "IL",
+   "region": "Upper Midwest",
+   "category": "U11-9v9",
+   "league": "bg_midwest",
+   "colors": [
+    "#d24d1f",
+    "#ffffff"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "PC"
+   },
+   "tier": 3,
+   "rating0": 1482,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_naperville_basalt",
+   "name": "Naperville Basalt SC",
+   "city": "Naperville",
+   "state": "IL",
+   "region": "Upper Midwest",
+   "category": "U11-9v9",
+   "league": "bg_midwest",
+   "colors": [
+    "#1f7a5a",
+    "#20262e"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "NB"
+   },
+   "tier": 3,
+   "rating0": 1490,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_milwaukee_sagebrush",
+   "name": "Milwaukee Sagebrush Academy",
+   "city": "Milwaukee",
+   "state": "WI",
+   "region": "Upper Midwest",
+   "category": "U11-9v9",
+   "league": "bg_midwest",
+   "colors": [
+    "#1b3a6b",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "MS"
+   },
+   "tier": 3,
+   "rating0": 1506,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_madison_saltmarsh",
+   "name": "Madison Saltmarsh SC",
+   "city": "Madison",
+   "state": "WI",
+   "region": "Upper Midwest",
+   "category": "U11-9v9",
+   "league": "bg_midwest",
+   "colors": [
+    "#5b6b2e",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "MS"
+   },
+   "tier": 4,
+   "rating0": 1408,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_rockford_bramble",
+   "name": "Rockford Bramble Athletic",
+   "city": "Rockford",
+   "state": "IL",
+   "region": "Upper Midwest",
+   "category": "U11-9v9",
+   "league": "bg_midwest",
+   "colors": [
+    "#0f6f78",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "RB"
+   },
+   "tier": 4,
+   "rating0": 1406,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_st__cloud_thistle",
+   "name": "St. Cloud Thistle SC",
+   "city": "St. Cloud",
+   "state": "MN",
+   "region": "Upper Midwest",
+   "category": "U11-9v9",
+   "league": "bg_midwest",
+   "colors": [
+    "#4a2a7a",
+    "#e8c34a"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "SC"
+   },
+   "tier": 5,
+   "rating0": 1367,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_fort_wayne_harrier",
+   "name": "Fort Wayne Harrier Academy",
+   "city": "Fort Wayne",
+   "state": "IN",
+   "region": "Great Lakes",
+   "category": "U11-9v9",
+   "league": "bg_lakes",
+   "colors": [
+    "#5b6b2e",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "FW"
+   },
+   "tier": 1,
+   "rating0": 1656,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_lansing_bluebonnet",
+   "name": "Lansing Bluebonnet Academy",
+   "city": "Lansing",
+   "state": "MI",
+   "region": "Great Lakes",
+   "category": "U11-9v9",
+   "league": "bg_lakes",
+   "colors": [
+    "#20262e",
+    "#e04848"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "LB"
+   },
+   "tier": 2,
+   "rating0": 1576,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_akron_sagebrush",
+   "name": "Akron Sagebrush Academy",
+   "city": "Akron",
+   "state": "OH",
+   "region": "Great Lakes",
+   "category": "U11-9v9",
+   "league": "bg_lakes",
+   "colors": [
+    "#d24d1f",
+    "#ffffff"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "AS"
+   },
+   "tier": 2,
+   "rating0": 1558,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_dayton_thistle",
+   "name": "Dayton Thistle Academy",
+   "city": "Dayton",
+   "state": "OH",
+   "region": "Great Lakes",
+   "category": "U11-9v9",
+   "league": "bg_lakes",
+   "colors": [
+    "#1b3a6b",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "DT"
+   },
+   "tier": 3,
+   "rating0": 1485,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_ann_arbor_stonebridge",
+   "name": "Ann Arbor Stonebridge United",
+   "city": "Ann Arbor",
+   "state": "MI",
+   "region": "Great Lakes",
+   "category": "U11-9v9",
+   "league": "bg_lakes",
+   "colors": [
+    "#b03060",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "AA"
+   },
+   "tier": 3,
+   "rating0": 1491,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_evansville_sagebrush",
+   "name": "Evansville Sagebrush Athletic",
+   "city": "Evansville",
+   "state": "IN",
+   "region": "Great Lakes",
+   "category": "U11-9v9",
+   "league": "bg_lakes",
+   "colors": [
+    "#20262e",
+    "#e04848"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "ES"
+   },
+   "tier": 3,
+   "rating0": 1497,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_bloomington_kestrel",
+   "name": "Bloomington Kestrel United",
+   "city": "Bloomington",
+   "state": "IN",
+   "region": "Great Lakes",
+   "category": "U11-9v9",
+   "league": "bg_lakes",
+   "colors": [
+    "#7a3e1d",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "BK"
+   },
+   "tier": 4,
+   "rating0": 1429,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_grand_rapids_lodestar",
+   "name": "Grand Rapids Lodestar SC",
+   "city": "Grand Rapids",
+   "state": "MI",
+   "region": "Great Lakes",
+   "category": "U11-9v9",
+   "league": "bg_lakes",
+   "colors": [
+    "#d24d1f",
+    "#ffffff"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "GR"
+   },
+   "tier": 4,
+   "rating0": 1406,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_toledo_foxglove",
+   "name": "Toledo Foxglove Academy",
+   "city": "Toledo",
+   "state": "OH",
+   "region": "Great Lakes",
+   "category": "U11-9v9",
+   "league": "bg_lakes",
+   "colors": [
+    "#7a3e1d",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "TF"
+   },
+   "tier": 5,
+   "rating0": 1368,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_tallahassee_marigold",
+   "name": "Tallahassee Marigold FC",
+   "city": "Tallahassee",
+   "state": "FL",
+   "region": "Southeast",
+   "category": "U11-9v9",
+   "league": "bg_southeast",
+   "colors": [
+    "#4a2a7a",
+    "#e8c34a"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "TM"
+   },
+   "tier": 1,
+   "rating0": 1641,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_greensboro_bramble",
+   "name": "Greensboro Bramble Academy",
+   "city": "Greensboro",
+   "state": "NC",
+   "region": "Southeast",
+   "category": "U11-9v9",
+   "league": "bg_southeast",
+   "colors": [
+    "#c9a227",
+    "#20262e"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "GB"
+   },
+   "tier": 2,
+   "rating0": 1557,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_chattanooga_bramble",
+   "name": "Chattanooga Bramble Academy",
+   "city": "Chattanooga",
+   "state": "TN",
+   "region": "Southeast",
+   "category": "U11-9v9",
+   "league": "bg_southeast",
+   "colors": [
+    "#284b63",
+    "#d9d9d9"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "CB"
+   },
+   "tier": 2,
+   "rating0": 1555,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_sarasota_stonebridge",
+   "name": "Sarasota Stonebridge Academy",
+   "city": "Sarasota",
+   "state": "FL",
+   "region": "Southeast",
+   "category": "U11-9v9",
+   "league": "bg_southeast",
+   "colors": [
+    "#d24d1f",
+    "#ffffff"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "SS"
+   },
+   "tier": 3,
+   "rating0": 1520,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_athens_sagebrush",
+   "name": "Athens Sagebrush United",
+   "city": "Athens",
+   "state": "GA",
+   "region": "Southeast",
+   "category": "U11-9v9",
+   "league": "bg_southeast",
+   "colors": [
+    "#3b6fb6",
+    "#ffffff"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "AS"
+   },
+   "tier": 3,
+   "rating0": 1482,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_asheville_bluestem",
+   "name": "Asheville Bluestem FC",
+   "city": "Asheville",
+   "state": "NC",
+   "region": "Southeast",
+   "category": "U11-9v9",
+   "league": "bg_southeast",
+   "colors": [
+    "#e06000",
+    "#1b2a4a"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "AB"
+   },
+   "tier": 3,
+   "rating0": 1497,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_macon_ember",
+   "name": "Macon Ember Academy",
+   "city": "Macon",
+   "state": "GA",
+   "region": "Southeast",
+   "category": "U11-9v9",
+   "league": "bg_southeast",
+   "colors": [
+    "#7a3e1d",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "ME"
+   },
+   "tier": 4,
+   "rating0": 1420,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_gainesville_driftwood",
+   "name": "Gainesville Driftwood Athletic",
+   "city": "Gainesville",
+   "state": "FL",
+   "region": "Southeast",
+   "category": "U11-9v9",
+   "league": "bg_southeast",
+   "colors": [
+    "#4a2a7a",
+    "#e8c34a"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "GD"
+   },
+   "tier": 4,
+   "rating0": 1441,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_savannah_bluestem",
+   "name": "Savannah Bluestem Academy",
+   "city": "Savannah",
+   "state": "GA",
+   "region": "Southeast",
+   "category": "U11-9v9",
+   "league": "bg_southeast",
+   "colors": [
+    "#d24d1f",
+    "#ffffff"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "SB"
+   },
+   "tier": 5,
+   "rating0": 1362,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_buffalo_ironwood",
+   "name": "Buffalo Ironwood SC",
+   "city": "Buffalo",
+   "state": "NY",
+   "region": "Northeast",
+   "category": "U11-9v9",
+   "league": "bg_northeast",
+   "colors": [
+    "#4a2a7a",
+    "#e8c34a"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "BI"
+   },
+   "tier": 1,
+   "rating0": 1650,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_worcester_marigold",
+   "name": "Worcester Marigold United",
+   "city": "Worcester",
+   "state": "MA",
+   "region": "Northeast",
+   "category": "U11-9v9",
+   "league": "bg_northeast",
+   "colors": [
+    "#0f6f78",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "WM"
+   },
+   "tier": 2,
+   "rating0": 1569,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_trenton_willow_run",
+   "name": "Trenton Willow Run FC",
+   "city": "Trenton",
+   "state": "NJ",
+   "region": "Northeast",
+   "category": "U11-9v9",
+   "league": "bg_northeast",
+   "colors": [
+    "#1b3a6b",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "TW"
+   },
+   "tier": 2,
+   "rating0": 1581,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_springfield_redtail",
+   "name": "Springfield Redtail United",
+   "city": "Springfield",
+   "state": "MA",
+   "region": "Northeast",
+   "category": "U11-9v9",
+   "league": "bg_northeast",
+   "colors": [
+    "#b03060",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "SR"
+   },
+   "tier": 3,
+   "rating0": 1507,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_allentown_thistle",
+   "name": "Allentown Thistle FC",
+   "city": "Allentown",
+   "state": "PA",
+   "region": "Northeast",
+   "category": "U11-9v9",
+   "league": "bg_northeast",
+   "colors": [
+    "#284b63",
+    "#d9d9d9"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "AT"
+   },
+   "tier": 3,
+   "rating0": 1504,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_harrisburg_hollow_oak",
+   "name": "Harrisburg Hollow Oak Athletic",
+   "city": "Harrisburg",
+   "state": "PA",
+   "region": "Northeast",
+   "category": "U11-9v9",
+   "league": "bg_northeast",
+   "colors": [
+    "#e06000",
+    "#1b2a4a"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "HH"
+   },
+   "tier": 3,
+   "rating0": 1485,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_albany_saltmarsh",
+   "name": "Albany Saltmarsh Academy",
+   "city": "Albany",
+   "state": "NY",
+   "region": "Northeast",
+   "category": "U11-9v9",
+   "league": "bg_northeast",
+   "colors": [
+    "#8b1e2d",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "AS"
+   },
+   "tier": 4,
+   "rating0": 1444,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_syracuse_clearwater",
+   "name": "Syracuse Clearwater FC",
+   "city": "Syracuse",
+   "state": "NY",
+   "region": "Northeast",
+   "category": "U11-9v9",
+   "league": "bg_northeast",
+   "colors": [
+    "#2f6b3a",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "SC"
+   },
+   "tier": 4,
+   "rating0": 1434,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_princeton_bluestem",
+   "name": "Princeton Bluestem Athletic",
+   "city": "Princeton",
+   "state": "NJ",
+   "region": "Northeast",
+   "category": "U11-9v9",
+   "league": "bg_northeast",
+   "colors": [
+    "#284b63",
+    "#d9d9d9"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "PB"
+   },
+   "tier": 5,
+   "rating0": 1369,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_gilbert_cottonwood",
+   "name": "Gilbert Cottonwood Academy",
+   "city": "Gilbert",
+   "state": "AZ",
+   "region": "Southwest",
+   "category": "U11-9v9",
+   "league": "bg_az",
+   "colors": [
+    "#8b1e2d",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "GC"
+   },
+   "tier": 2,
+   "rating0": 1578,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_prescott_harrier",
+   "name": "Prescott Harrier United",
+   "city": "Prescott",
+   "state": "AZ",
+   "region": "Southwest",
+   "category": "U11-9v9",
+   "league": "bg_az",
+   "colors": [
+    "#284b63",
+    "#d9d9d9"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "PH"
+   },
+   "tier": 3,
+   "rating0": 1509,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_yuma_redtail",
+   "name": "Yuma Redtail FC",
+   "city": "Yuma",
+   "state": "AZ",
+   "region": "Southwest",
+   "category": "U11-9v9",
+   "league": "bg_az",
+   "colors": [
+    "#7a3e1d",
+    "#f2c14e"
+   ],
+   "badge": {
+    "shape": "circle",
+    "initials": "YR"
+   },
+   "tier": 3,
+   "rating0": 1507,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_flagstaff_copperleaf",
+   "name": "Flagstaff Copperleaf United",
+   "city": "Flagstaff",
+   "state": "AZ",
+   "region": "Southwest",
+   "category": "U11-9v9",
+   "league": "bg_az",
+   "colors": [
+    "#2f6b3a",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "diamond",
+    "initials": "FC"
+   },
+   "tier": 4,
+   "rating0": 1437,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_sierra_vista_osprey",
+   "name": "Sierra Vista Osprey United",
+   "city": "Sierra Vista",
+   "state": "AZ",
+   "region": "Southwest",
+   "category": "U11-9v9",
+   "league": "bg_az",
+   "colors": [
+    "#284b63",
+    "#d9d9d9"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "SV"
+   },
+   "tier": 4,
+   "rating0": 1410,
+   "origin": "fictional"
+  },
+  {
+   "id": "x_glendale_willow_run",
+   "name": "Glendale Willow Run Athletic",
+   "city": "Glendale",
+   "state": "AZ",
+   "region": "Southwest",
+   "category": "U11-9v9",
+   "league": "bg_az",
+   "colors": [
+    "#8b1e2d",
+    "#f4ead5"
+   ],
+   "badge": {
+    "shape": "shield",
+    "initials": "GW"
+   },
+   "tier": 5,
+   "rating0": 1357,
+   "origin": "fictional"
+  }
+ ]
+}

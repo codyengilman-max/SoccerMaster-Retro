@@ -225,6 +225,12 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.scene.start(SceneKeys.Gallery);
   }
 
+  private openRankingsSample(): void {
+    if (this.navigating) return;
+    this.navigating = true;
+    this.scene.start(SceneKeys.Rankings, { sample: true, week: 8, returnTo: 'start' });
+  }
+
   private openLab(): void {
     if (this.navigating) return;
     this.navigating = true;
@@ -392,6 +398,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             { name: 'hub-training', label: 'Training Review (drafts)', onClick: () => this.go({ kind: 'drafts' }) },
             { name: 'hub-logic', label: 'Soccer Logic Review', onClick: () => this.go({ kind: 'logic', group: null }) },
             { name: 'hub-art', label: 'Art Gallery (Graphics v1)', onClick: () => this.openGallery() },
+            { name: 'hub-rankings', label: 'Rankings (sample season)', onClick: () => this.openRankingsSample() },
             { name: 'hub-career', label: 'Home Training (your save)', onClick: () => this.go(this.save.player ? { kind: 'home' } : { kind: 'create' }) },
           ],
         };
