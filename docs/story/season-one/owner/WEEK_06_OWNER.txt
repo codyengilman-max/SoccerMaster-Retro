@@ -1,0 +1,92 @@
+WEEK SIX — “HEAD UP”
+League Game 4
+RECESS
+SAM: “Crossbar or Jungle?”
+PLAYER: “Which one won’t you complain about?”
+SAM: “Neither. Pick.”
+Choose: Crossbar Challenge or Jungle Ball.
+Launch the existing minigame.
+- Strong performance — SAM: “Recruiting you was a mistake.”
+- Difficult performance — PLAYER: “We’re blaming the sun.”
+- Neutral result — SAM: “Rematch next week.”
+Apply the established weekly adjustment once.
+
+TEAM TRAINING — Before It Gets There
+Code holds up a ball.
+CODE: “What’s behind you?”
+You turn.
+CODE: “Now you know. Do that before this arrives.”
+SAM: “What if it’s Blake?”
+CODE: “Then definitely know where Blake is.”
+Blake steals the ball from Sam.
+CODE: “Last week: use the space. This week: find it sooner.”
+Choose:
+- “What am I looking for?”
+- “What if everything changes?”
+- “Can I just play it straight back?”
+If “Looking for”:
+CODE: “Pressure. Teammates. Space. Enough information to give your first touch a job.”
+If “Everything changes”:
+CODE: “Then update the picture. One look isn’t a lifetime subscription.”
+If “Straight back”:
+CODE: “Sometimes. Know why you’re doing it. Don’t send someone else your problem.”
+Launch mandatory tactical training.
+Outfield focus: Scan before receiving; recognize pressure; choose the appropriate touch or pass.
+Goalkeeper focus: Read the press and outlets before receiving a back-pass; choose appropriate control and distribution.
+Use actual training situations and the existing evaluator.
+After a strong decision:
+CODE: “THERE! You already knew your next option. See how much time that gave you?”
+After a good decision with poor execution:
+CODE: “You saw the right option. Now tidy up the execution.”
+After a poor decision:
+CODE: “Stop. What changed while the ball was travelling?”
+Award attributes from actual performance.
+
+LEAVING TRAINING
+PLAYER: “You make it look easy.”
+CODE: “That’s why I explain it standing still.”
+CODE: “Now we make it work while you’re moving. Check your home assignment. Bring me one thing that gets easier—and one that doesn’t.”
+
+HOME
+SAM — TEXT: “Park tomorrow. Riley’s coming. Apparently we’re doing something that isn’t soccer.”
+Choose:
+- “Training first. What time?”
+- “I’ll come early. Train afterward.”
+- “Not this time. Have fun.”
+Save the plan without assuming training or attendance happened.
+HOME MENU
+- Training — Required
+- Cloudy: Feed & Play — Optional
+- Cloudy: Talk — Optional
+- Continue Week — Unlocks after required training
+Training: Complete weekly juggling, assigned control/first-touch work, and assigned home learning. Save progress and award attributes through the existing system.
+Feed & Play: Launch the aquarium minigame, then return home.
+Optional Cloudy conversation:
+PLAYER: “Code wants me looking over my shoulder.”
+CLOUDY: “Tried it. Tail’s still following me.”
+PLAYER: “Want me to watch it?”
+CLOUDY: “Finally. Security.”
+Return to the menu. Cloudy never blocks advancement.
+
+LEAGUE GAME 4
+BLAKE: “Big plans?”
+Choose:
+- “Play well. Yours?”
+- “Avoid Code using my full name.”
+Code calls the team in.
+CODE: “Get your picture early. Help the player on the ball. And when something goes wrong—next decision.”
+Play League Game 4. Show the actual match breakdown and earned progression.
+
+AFTER THE MATCH
+- Win — SAM: “Good afternoon. Better if there are snacks.”
+- Draw — SAM: “Feels unfinished.”
+- Loss — SAM: “Talk later?” PLAYER: “Yeah.”
+Code approaches.
+If the match recorded a strong example of this week’s learning:
+CODE: “That moment we flagged—good reading of the game. We’ll look at it next session.”
+Otherwise:
+CODE: “We’ll find a useful moment to review. There’s always something.”
+Sam adds you to a group chat.
+RILEY: “Finally. Someone who might answer.”
+SAM: “⚽”
+END OF WEEK SIX
