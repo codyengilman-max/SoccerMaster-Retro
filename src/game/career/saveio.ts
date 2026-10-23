@@ -186,7 +186,9 @@ function teamTraining(v: unknown, week: number): TeamTrainingRecord {
   });
   const delta = int(o.delta, 'delta', -1, 2);
   if (delta !== weekDelta(scores)) throw new Invalid('team training delta does not match scores');
+  const missed = o.choiceMissed === undefined ? undefined : int(o.choiceMissed, 'choiceMissed', 0, scores.length);
   return {
+    ...(missed === undefined ? {} : { choiceMissed: missed }),
     week: int(o.week, 'team training week', 1, week),
     situations: arr(o.situations, 'situations', 3).map((x) => oneOf(x, 'situation', TEAM_TRAINING_IDS)),
     scores,

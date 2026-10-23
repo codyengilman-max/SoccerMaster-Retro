@@ -59,6 +59,8 @@ export interface TeamTrainingRecord {
   readonly scores: readonly number[];
   readonly delta: number;
   readonly changes: readonly AttributeChange[];
+  /** Situations where the evaluator saw the right choice but it did not come off (absent in older saves). */
+  readonly choiceMissed?: number;
 }
 
 export interface CareerSave {
@@ -407,7 +409,7 @@ function countTeamWeek(save: CareerSave, results: readonly SituationResult[]): {
   const changes = teamTrainingChanges(player, results);
   const attributes = { ...player.attributes };
   for (const c of changes) attributes[c.attribute] = c.to;
-  const record: TeamTrainingRecord = { week: save.week, situations: expected, scores: results.map((r) => r.score), delta: weekDelta(results.map((r) => r.score)), changes };
+  const record: TeamTrainingRecord = { week: save.week, situations: expected, scores: results.map((r) => r.score), delta: weekDelta(results.map((r) => r.score)), changes, choiceMissed: results.filter((r) => r.choiceMissed === true).length };
   return {
     save: { ...save, player: { ...player, attributes }, teamTraining: [...save.teamTraining, record].slice(-CAREER_CONFIG.limits.historyMax) },
     message: `Team Training week ${save.week}: ${describeChanges(changes)}`,

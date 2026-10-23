@@ -77,6 +77,8 @@ export interface SituationResult {
   /** 0 (poor) to 1 (excellent), from what happened on the pitch. */
   readonly score: number;
   readonly notes: readonly string[];
+  /** The evaluator saw a good choice (open pass or sensible shot) that did not come off. */
+  readonly choiceMissed?: boolean;
 }
 
 const ATTACK_GOAL = { x: 75, y: 25 };
@@ -243,7 +245,8 @@ export class SituationObserver {
       notes.push(this.wonBack ? 'Won the ball back.' : this.teamWonBack ? 'A teammate won it back.' : win > 0 ? 'Kept them from shooting.' : 'They got a shot away.');
       score = 0.5 * side + noGoal + win;
     }
-    return { id: this.situation.id, score: Math.round(Math.min(1, Math.max(0, score)) * 1000) / 1000, notes };
+    const choiceMissed = this.situation.kind === 'attack' && !this.goalFor && ((this.turnover && this.passLostOpen > 0) || (this.shotOnTarget === 0 && this.passDone === 0 && (this.shotSensible > 0 || this.passOpen > 0)));
+    return { id: this.situation.id, score: Math.round(Math.min(1, Math.max(0, score)) * 1000) / 1000, notes, choiceMissed };
   }
 }
 

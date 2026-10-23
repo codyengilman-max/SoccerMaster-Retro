@@ -247,3 +247,11 @@ export const crossbarRules = (sceneId: string): CrossbarRules => CROSSBAR_RULES[
 
 /** Story detail for a completed Team Training week, from its real grade (weekDelta: +2 / +1 / 0 or -1). */
 export const trainingDetail = (delta: number): 'strong' | 'steady' | 'struggled' => (delta >= 2 ? 'strong' : delta >= 1 ? 'steady' : 'struggled');
+
+/**
+ * Weeks 6+ Code reaction from the real grade: strong week; otherwise the evaluator's own "right choice,
+ * did not come off" evidence ('execution'); otherwise a poor week is a 'poor_decision'. A steady week
+ * with no such evidence gets no extra line. Older records without the evidence never claim it.
+ */
+export const decisionDetail = (rec: { readonly delta: number; readonly choiceMissed?: number }): 'strong' | 'execution' | 'poor_decision' | 'steady' =>
+  rec.delta >= 2 ? 'strong' : (rec.choiceMissed ?? 0) > 0 ? 'execution' : rec.delta <= 0 ? 'poor_decision' : 'steady';

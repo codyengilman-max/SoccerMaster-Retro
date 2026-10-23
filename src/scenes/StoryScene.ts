@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 import { fixtureForWeek, newLeague, parseLeague, recordPlayed, simulateThrough } from '../game/league/league';
-import { homeAssignments, homeLearningDetail, jungleResult, schoolRewardDetail, trainingLogDetail } from '../game/story/facts';
+import { homeLearningDetail, rileyLine, weekAssignments, jungleResult, schoolRewardDetail, trainingLogDetail } from '../game/story/facts';
 import type { CompetitorId } from '../game/jungle/sim';
-import { crossbarRules, sceneById, trainingDetail } from '../game/story/content';
+import { crossbarRules, decisionDetail, sceneById, trainingDetail } from '../game/story/content';
 import { seasonWeek, type TournamentId } from '../game/season/calendar';
 import { bataviaRecord, fixtureForSeasonWeek, newSeasonLeague, opponentOf, parseSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough } from '../game/season/league';
 import { TOURNAMENTS, allFixtures, bataviaFinish, groupTable, nextBataviaFixture, newTournament, parseTournament, finalFixture, recordTournamentPlayed, bataviaResult, type TournamentState } from '../game/season/tournament';
@@ -487,7 +487,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     }
     // Season One reads the week's real Team Training grade so Code's reply follows what happened.
     const rec = n.adapter === 'team_training' && this.state.sceneId.startsWith('S1_') ? s.teamTraining.find((r) => r.week === snap.week) : undefined;
-    await this.complete(run.runId, 'completed', null, rec ? trainingDetail(rec.delta) : null);
+    await this.complete(run.runId, 'completed', null, rec ? ((this.seasonWeekNo() ?? 0) >= 6 ? decisionDetail(rec) : trainingDetail(rec.delta)) : null);
   }
 
   /** The story week of the current match scene (W2_MATCH → 2), never the separately advancing career week. */
@@ -1101,12 +1101,16 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.finishFact(schoolRewardDetail()) });
         return;
       case 'home_hub': {
-        const a = this.save ? homeAssignments(this.save) : { juggling: false, firstTouch: false, complete: false };
+        const wk = this.seasonWeekNo() ?? 5;
+        const a = this.save ? weekAssignments(this.save, wk) : { juggling: false, skill: wk >= 7 ? 'passing' : 'firstTouch', skillDone: false, learning: wk >= 6 ? false : null, complete: false };
         const trained = a.complete;
+        const skillLine = a.skill === 'passing' ? 'Control and passing work' : 'Control and first-touch work';
+        const learnLine = a.learning === null ? '' : `- Home learning (this week's planned home sessions): ${a.learning ? 'done' : 'not done yet'}\n`;
         const talked = Object.values(s.runs).some((r) => r.sceneId === s.sceneId && r.adapter === 'home_hub' && r.detail === 'talk');
         setBody(
-          `HOME MENU\nTraining (required) - log each in Home Training:\n- Juggling task: ${a.juggling ? 'done' : 'not done yet'}\n- Control and first-touch work: ${a.firstTouch ? 'done' : 'not done yet'}\n` +
-            `${trained ? 'Weekly home training complete. Continue Week is unlocked.' : 'Continue Week unlocks after the required training.'}\nCloudy: Feed & Play and Cloudy: Talk are optional.`,
+          `HOME MENU\nTraining (required) - log each in Home Training:\n- Juggling task: ${a.juggling ? 'done' : 'not done yet'}\n- ${skillLine}: ${a.skillDone ? 'done' : 'not done yet'}\n${learnLine}` +
+            `${trained ? 'Weekly home training complete. Continue Week is unlocked.' : 'Continue Week unlocks after the required training.'}\nCloudy: Feed & Play and Cloudy: Talk are optional.` +
+            rileyLine(wk, s.decisions['S1_W07_M']?.['riley']),
         );
         acts.push({ name: 'hub-training', label: trained ? 'Training (done)' : 'Training (required)', onClick: () => this.openHome() });
         acts.push({ name: 'hub-my-player', label: 'My Player', onClick: () => this.openMyPlayer() });
