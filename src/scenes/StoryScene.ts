@@ -22,7 +22,7 @@ import { PRONOUNS, renderText, validateName, type Gender } from '../game/story/i
 import { SEASON_RELEASED_WEEKS, awaitingRelease, createSession, currentNode, evaluatePredicate, outcomeOf, type StoryCommand, type StoryOutcome, type StorySession, type StoryState } from '../game/story/runtime';
 import { StoryStore } from '../game/story/store';
 import { pullFor, thresholdsFor, type Pull } from '../input';
-import { ballSprite, crossbarView, goalGeometry, type CrossbarView } from '../render/crossbarView';
+import { ballSprite, crossbarView, pointWord, goalGeometry, type CrossbarView } from '../render/crossbarView';
 import { orientationOf } from '../render/layout';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspectable';
@@ -87,8 +87,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private pendingName = '';
   private contest: Contest | null = null;
   private runId = '';
-  private anim: { path: readonly (readonly [number, number, number])[]; start: number; dur: number; who: Participant; scored: boolean; outcome: ShotOutcome } | null = null;
-  private lastShot: { who: Participant; outcome: ShotOutcome; scored: boolean } | null = null;
+  private anim: { path: readonly (readonly [number, number, number])[]; start: number; dur: number; who: Participant; scored: boolean; warmup: boolean; outcome: ShotOutcome } | null = null;
+  private lastShot: { who: Participant; outcome: ShotOutcome; scored: boolean; warmup: boolean } | null = null;
   private paused = false;
   private epoch = 0;
   private pauseBtn: Button | null = null;
@@ -796,7 +796,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     if (!r.ok) return void (this.busy = false);
     // Start the flight before the turn passes, so the next kicker never sees a turn that is not open yet.
     const shot = simulateShot(att.input);
-    this.anim = { path: shot.path, start: this.time.now, dur: Math.max(400, shot.time * 1000), who, scored: shot.scored, outcome: describeShot(shot) };
+    this.anim = { path: shot.path, start: this.time.now, dur: Math.max(400, shot.time * 1000), who, scored: shot.scored, warmup: att.round === 'warmup', outcome: describeShot(shot) };
     this.lastShot = null;
     this.contest = r.contest;
     this.message = '';
@@ -924,7 +924,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     if (this.anim) {
       this.drawStage();
       if (time - this.anim.start >= this.anim.dur + 500 && !this.busy) {
-        this.lastShot = { who: this.anim.who, outcome: this.anim.outcome, scored: this.anim.scored };
+        this.lastShot = { who: this.anim.who, outcome: this.anim.outcome, scored: this.anim.scored, warmup: this.anim.warmup };
         this.anim = null;
         this.afterShot();
       }
@@ -1007,7 +1007,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       const turn = slot?.round === 'warmup' ? 'Warm-up (does not count)' : slot?.round === 'sudden' ? 'Sudden death' : `Shot ${Math.min(3, main + 1)} of 3`;
       body = `${this.name()} ${points(c, 'player')} · ${this.opponent()} ${points(c, 'blake')} · ${turn}`;
       const last = this.lastShot;
-      const said = last ? `${last.who === 'blake' ? `${this.opponent()}: ` : ''}${OUTCOME_WORD[last.outcome]}${last.scored ? ' One point.' : ' No point.'}` : '';
+      const said = last ? `${last.who === 'blake' ? `${this.opponent()}: ` : ''}${OUTCOME_WORD[last.outcome]} ${pointWord(last.scored, last.warmup)}` : '';
       hint = this.anim ? '…' : slot?.participant === 'player' ? `${said ? `${said} ` : ''}Your kick: press, pull back, let go.` : slot ? `${said ? `${said} ` : ''}${this.opponent()} is shooting…` : said || 'Done.';
     } else if (n && this.state) {
       if (this.state.complete) {
@@ -1313,6 +1313,27 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     const half = C.goalWidth / 2;
     const gy = C.spotDistance;
     const lw = g.postWidth;
+    const spot = g.spot;
+    let at: readonly [number, number, number] = [0, 0, C.ballRadius];
+    if (this.anim) {
+      const a = this.anim;
+      // Presentation only: the result was decided by the fixed-step simulation before the flight started.
+      const u = Math.min(1, (this.time.now - a.start) / a.dur) * (a.path.length - 1);
+      const i = Math.min(a.path.length - 2, Math.floor(u));
+      const p0 = a.path[Math.max(0, i)]!;
+      const p1 = a.path[Math.max(0, i + 1)] ?? p0;
+      const f = Math.max(0, Math.min(1, u - i));
+      at = [p0[0] + (p1[0] - p0[0]) * f, p0[1] + (p1[1] - p0[1]) * f, p0[2] + (p1[2] - p0[2]) * f];
+    }
+    const ball = ballSprite(v, at);
+    const sh = proj(at[0], at[1], 0);
+    const br = ball.r;
+    s.fillStyle(PALETTE.line, 0.9).fillEllipse(spot.x, spot.y, Math.max(10, br * 2.6), Math.max(3.5, br * 0.9));
+    s.fillStyle(PALETTE.shadow, 0.35).fillEllipse(sh.x, sh.y + br * 0.3, br * 2.2, br * 0.8);
+    // The ink rim sits inside the true radius, so the drawn edge is the ball's real edge.
+    const drawBall = (): void => void s.fillStyle(PALETTE.ink, 1).fillCircle(ball.x, ball.y, br).fillStyle(PALETTE.cream, 1).fillCircle(ball.x, ball.y, Math.max(0.75, br - 1));
+    // A ball past the back net is drawn first, so the net covers it.
+    if (ball.behindNet) drawBall();
     // Net first (behind the frame): back frame, side panels and a mesh, all from the same goal model.
     s.fillStyle(PALETTE.net, 0.18).fillPoints([g.leftTop, g.rightTop, g.rearRightTop, g.rearLeftTop], true);
     s.fillStyle(PALETTE.net, 0.14).fillPoints([g.rearLeftTop, g.rearRightTop, g.rearRightBase, g.rearLeftBase], true);
@@ -1339,27 +1360,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       .lineBetween(g.rearRightTop.x, g.rearRightTop.y, g.rearRightBase.x, g.rearRightBase.y)
       .lineBetween(g.leftBase.x, g.leftBase.y, g.rearLeftBase.x, g.rearLeftBase.y)
       .lineBetween(g.rightBase.x, g.rightBase.y, g.rearRightBase.x, g.rearRightBase.y);
-    const spot = g.spot;
-    let at: readonly [number, number, number] = [0, 0, C.ballRadius];
-    if (this.anim) {
-      const a = this.anim;
-      // Presentation only: the result was decided by the fixed-step simulation before the flight started.
-      const u = Math.min(1, (this.time.now - a.start) / a.dur) * (a.path.length - 1);
-      const i = Math.min(a.path.length - 2, Math.floor(u));
-      const p0 = a.path[Math.max(0, i)]!;
-      const p1 = a.path[Math.max(0, i + 1)] ?? p0;
-      const f = Math.max(0, Math.min(1, u - i));
-      at = [p0[0] + (p1[0] - p0[0]) * f, p0[1] + (p1[1] - p0[1]) * f, p0[2] + (p1[2] - p0[2]) * f];
-    }
-    const ball = ballSprite(v, at);
-    const sh = proj(at[0], at[1], 0);
-    const br = ball.r;
-    s.fillStyle(PALETTE.line, 0.9).fillEllipse(spot.x, spot.y, Math.max(10, br * 2.6), Math.max(3.5, br * 0.9));
-    s.fillStyle(PALETTE.shadow, 0.35).fillEllipse(sh.x, sh.y + br * 0.3, br * 2.2, br * 0.8);
-    // The ink rim sits inside the true radius, so the drawn edge is the ball's real edge.
-    const drawBall = (): void => void s.fillStyle(PALETTE.ink, 1).fillCircle(ball.x, ball.y, br).fillStyle(PALETTE.cream, 1).fillCircle(ball.x, ball.y, Math.max(0.75, br - 1));
     // Behind the goal line the front frame is drawn over the ball; in front of it the ball is drawn over the frame.
-    if (ball.behindFrame) drawBall();
+    if (ball.behindFrame && !ball.behindNet) drawBall();
     // Grounded front frame: contact shadows where the posts meet the grass, then posts and the bar joined at the corners.
     s.fillStyle(PALETTE.shadow, 0.35).fillEllipse(g.leftBase.x, g.leftBase.y, lw * 3.2, lw * 1.1).fillEllipse(g.rightBase.x, g.rightBase.y, lw * 3.2, lw * 1.1);
     s.lineStyle(lw, PALETTE.ink, 0.85)

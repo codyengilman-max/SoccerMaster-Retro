@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CROSSBAR, describeShot, idealPower, simulateShot } from '../src/game/story/crossbar';
-import { ballSprite, CROSSBAR_BACKDROP, crossbarView, goalGeometry } from '../src/render/crossbarView';
+import { ballSprite, CROSSBAR_BACKDROP, crossbarView, goalGeometry, NET_DEPTH, pointWord } from '../src/render/crossbarView';
 
 const STAGES = [
   { x: 0, y: 56, width: 390, height: 650 }, // phone portrait
@@ -136,4 +136,27 @@ describe('what the player sees matches the score (owner report: "crossbar challe
       expect(behind).toBeGreaterThan(100);
     });
   }
+});
+
+describe('depth against the net and warm-up wording (PR #41 browser review)', () => {
+  const v = crossbarView(STAGES[0]!);
+  const gy = CROSSBAR.spotDistance;
+  it('a ball past the back net is behind the net; one in the goal mouth or over the roof is not', () => {
+    expect(ballSprite(v, [0, gy + NET_DEPTH.ground + 0.3, 0.2]).behindNet).toBe(true);
+    expect(ballSprite(v, [0, gy + NET_DEPTH.top + 0.1, CROSSBAR.barHeight + 0.5]).behindNet).toBe(true);
+    expect(ballSprite(v, [0, gy + 0.3, 0.5]).behindNet).toBe(false);
+    expect(ballSprite(v, [0, gy + 0.3, CROSSBAR.barHeight + 0.3]).behindNet).toBe(false);
+    expect(ballSprite(v, [0, gy - 1, 1]).behindNet).toBe(false);
+  });
+  it('an over-the-bar shot from the sweep ends behind the net', () => {
+    const shot = simulateShot({ dirX: 0, dirY: 1, power: 0.5 });
+    expect(describeShot(shot)).toBe('over');
+    expect(ballSprite(v, shot.path[shot.path.length - 1]!).behindNet).toBe(true);
+  });
+  it('a warm-up bar hit never says "One point."', () => {
+    expect(pointWord(true, true)).toBe('Warm-up, no score.');
+    expect(pointWord(false, true)).toBe('Warm-up, no score.');
+    expect(pointWord(true, false)).toBe('One point.');
+    expect(pointWord(false, false)).toBe('No point.');
+  });
 });

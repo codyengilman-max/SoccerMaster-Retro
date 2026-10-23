@@ -75,7 +75,18 @@ const MIN_PX = 1.5;
  * Where and how big to draw the ball at world point `at`, at true scale. Behind the goal line the ball is
  * drawn before the front frame, so a shot that clears the bar and drops into the net passes behind it.
  */
-export function ballSprite(v: CrossbarView, at: readonly [number, number, number]): { readonly x: number; readonly y: number; readonly r: number; readonly behindFrame: boolean } {
+export function ballSprite(
+  v: CrossbarView,
+  at: readonly [number, number, number],
+): { readonly x: number; readonly y: number; readonly r: number; readonly behindFrame: boolean; readonly behindNet: boolean } {
   const p = v.proj(at[0], at[1], at[2]);
-  return { x: p.x, y: p.y, r: Math.max(MIN_PX, CROSSBAR.ballRadius * p.k), behindFrame: at[1] > CROSSBAR.spotDistance };
+  const gy = CROSSBAR.spotDistance;
+  // The back net slopes from NET_DEPTH.top (at 0.85 x bar height) down to NET_DEPTH.ground; past it the net is drawn over the ball.
+  const netY = gy + NET_DEPTH.ground - (NET_DEPTH.ground - NET_DEPTH.top) * Math.min(1, Math.max(0, at[2]) / (CROSSBAR.barHeight * 0.85));
+  return { x: p.x, y: p.y, r: Math.max(MIN_PX, CROSSBAR.ballRadius * p.k), behindFrame: at[1] > gy, behindNet: at[1] > netY };
+}
+
+/** The HUD's verdict on a shot: warm-up shots never score, even off the bar. */
+export function pointWord(scored: boolean, warmup: boolean): string {
+  return warmup ? 'Warm-up, no score.' : scored ? 'One point.' : 'No point.';
 }
