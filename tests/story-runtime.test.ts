@@ -32,10 +32,10 @@ function play(s: StoryState, opts: { pick?: (scene: string, node: string, ids: s
 }
 
 describe('story runtime', () => {
-  it('plays the approved weeks 1–5 once in order and stops at the week 5 close', () => {
+  it('plays the approved weeks 1–7 once in order and stops at the week 7 close', () => {
     const s = play(newStory('c1'));
     expect(s.complete).toBe(true);
-    expect(s.completedScenes.at(-1)).toBe('S1_W05_E');
+    expect(s.completedScenes.at(-1)).toBe('S1_W07_E');
     expect(new Set(s.completedScenes).size).toBe(s.completedScenes.length);
     expect(outcomeOf(s, 'S1_W01_S')).toMatchObject({ outcome: 'completed', result: 'DRAW' });
     expect(reduceStory(s, { type: 'advance', revision: s.revision, seq: ++seq }).ok).toBe(false);

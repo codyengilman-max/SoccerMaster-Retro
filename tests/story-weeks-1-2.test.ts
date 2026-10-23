@@ -41,7 +41,7 @@ function play(plan: Plan, stop: string | null = null) {
       s = step(s, { type: 'complete', runId, outcome: 'completed', result, detail });
     } else if (n.type === 'end') s = step(s, { type: 'advance', seq: ++seq });
   }
-  expect(stop === null ? [s.sceneId, s.complete] : s.sceneId).toEqual(stop === null ? ['S1_W05_E', true] : stop);
+  expect(stop === null ? [s.sceneId, s.complete] : s.sceneId).toEqual(stop === null ? ['S1_W07_E', true] : stop);
   return { s, text: text.join('\n') };
 }
 
@@ -177,17 +177,17 @@ describe('Season One weeks 1-2 rewrite', () => {
 });
 
 describe('Season One stops after the approved weeks 1–4 (owner directive, 2026-10-20)', () => {
-  it('the story ends at the week 5 close and never launches an empty week', () => {
+  it('the story ends at the week 7 close and never launches an empty week', () => {
     const { s } = play({});
-    expect(s.complete && s.sceneId).toBe('S1_W05_E');
+    expect(s.complete && s.sceneId).toBe('S1_W07_E');
     expect(awaitingRelease(s)).toBe(true);
     expect(migrateStory(s)).toBe(s);
     setReleasedWeeks(99);
     try { expect(migrateStory(s)).toEqual(s); } finally { setReleasedWeeks(SEASON_RELEASED_WEEKS); }
   });
 
-  it('weeks 6–18 and the epilogue hold no scenes', () => {
-    for (let w = 6; w <= 18; w++) expect(SEASON_ONE.order.some((id) => id.startsWith(`S1_W${String(w).padStart(2, '0')}_`))).toBe(false);
+  it('weeks 8–18 and the epilogue hold no scenes', () => {
+    for (let w = 8; w <= 18; w++) expect(SEASON_ONE.order.some((id) => id.startsWith(`S1_W${String(w).padStart(2, '0')}_`))).toBe(false);
     expect(SEASON_ONE.order.some((id) => id.startsWith('S1_END'))).toBe(false);
   });
 });

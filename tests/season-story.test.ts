@@ -77,46 +77,46 @@ function season(p: Policy = {}) {
 }
 
 describe('Season One story: approved weeks 1–4 only (owner directive, 2026-10-20)', () => {
-  it('keeps 18 ordered weeks; only the prologue and weeks 1–5 have scenes, weeks 6–18 and the epilogue are empty', () => {
+  it('keeps 18 ordered weeks; only the prologue and weeks 1–7 have scenes, weeks 8–18 and the epilogue are empty', () => {
     expect(SEASON_LENGTH).toBe(18);
-    expect(SEASON_RELEASED_WEEKS).toBe(5);
+    expect(SEASON_RELEASED_WEEKS).toBe(7);
     expect(SEASON_ONE.entry).toBe('S1_PRO_IDENTITY');
-    for (let w = 1; w <= 5; w++) expect(SEASON_ONE.order.some((id) => id.startsWith(`S1_W0${w}_`)), `week ${w}`).toBe(true);
-    for (const id of SEASON_ONE.order) expect(id.startsWith('S1_PRO') || /^S1_W0[1-5]_/.test(id), id).toBe(true);
+    for (let w = 1; w <= 7; w++) expect(SEASON_ONE.order.some((id) => id.startsWith(`S1_W0${w}_`)), `week ${w}`).toBe(true);
+    for (const id of SEASON_ONE.order) expect(id.startsWith('S1_PRO') || /^S1_W0[1-7]_/.test(id), id).toBe(true);
     for (let w = 1; w <= 18; w++) expect(seasonWeek(w), `week ${w}`).toBeTruthy();
-    for (let w = 6; w <= 18; w++) expect(slotIds(w).filter((id) => SEASON_ONE.order.includes(id)), `week ${w}`).toEqual([]);
+    for (let w = 8; w <= 18; w++) expect(slotIds(w).filter((id) => SEASON_ONE.order.includes(id)), `week ${w}`).toEqual([]);
   });
 
-  it('releasing more weeks still stops after week 5: no empty week 6 and no legacy fallback is launched', () => {
+  it('releasing more weeks still stops after week 7: no empty week 8 and no legacy fallback is launched', () => {
     setReleasedWeeks(99);
     try {
       const { s } = season();
       expect(s.complete).toBe(true);
-      expect(s.completedScenes.at(-1)).toBe('S1_W05_E');
+      expect(s.completedScenes.at(-1)).toBe('S1_W07_E');
     } finally {
       setReleasedWeeks(SEASON_RELEASED_WEEKS);
     }
   });
 
   for (const [name, sc, rec] of [['all-win', { home: 3, away: 0 }, 'won'], ['all-draw', { home: 1, away: 1 }, 'drawn'], ['all-loss', { home: 0, away: 2 }, 'lost']] as const) {
-    it(`${name}: weeks 3–5 play League Games One to Three once each and record the real results`, () => {
+    it(`${name}: weeks 3–7 play League Games One to Five once each and record the real results`, () => {
       const { s, league } = season({ score: () => sc });
       expect(s.complete).toBe(true);
-      expect(s.completedScenes.at(-1)).toBe('S1_W05_E');
+      expect(s.completedScenes.at(-1)).toBe('S1_W07_E');
       expect(new Set(s.completedScenes).size).toBe(s.completedScenes.length);
       const leagueRuns = Object.values(s.runs).filter((x) => x.adapter === 'league_match' && x.outcome === 'completed');
-      expect(leagueRuns.map((x) => x.sceneId)).toEqual(['S1_W03_G', 'S1_W04_G', 'S1_W05_G']);
+      expect(leagueRuns.map((x) => x.sceneId)).toEqual(['S1_W03_G', 'S1_W04_G', 'S1_W05_G', 'S1_W06_G', 'S1_W07_G']);
       expect(leagueRuns.every((x) => x.result === res(sc))).toBe(true);
-      expect(bataviaRecord(league)).toMatchObject({ [rec]: 3, played: 3 });
+      expect(bataviaRecord(league)).toMatchObject({ [rec]: 5, played: 5 });
       expect(outcomeOf(s, 'S1_W03_S')).toMatchObject({ outcome: 'completed', result: res(sc) });
       expect(Object.values(s.runs).some((x) => x.adapter === 'tournament_match')).toBe(false);
     });
   }
 
-  it('skipping both league games leaves them unplayed (never losses) and the story still ends at week 5', () => {
+  it('skipping both league games leaves them unplayed (never losses) and the story still ends at week 7', () => {
     const { s, league } = season({ score: () => null });
     expect(s.complete).toBe(true);
-    expect(s.completedScenes.at(-1)).toBe('S1_W05_E');
+    expect(s.completedScenes.at(-1)).toBe('S1_W07_E');
     expect(bataviaRecord(league)).toMatchObject({ played: 0, lost: 0 });
   });
 
