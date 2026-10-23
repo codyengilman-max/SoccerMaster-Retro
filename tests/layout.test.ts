@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { U11_9V9_PITCH, pitchMarkings } from '../src/game';
 import { arcPoints, fitPitch, orientationOf, rectToScreen, rectWithin, toScreen } from '../src/render/layout';
-import { BACKDROP_FOCUS } from '../src/render/art/catalog';
+import { BACKDROP_FOCUS, artAsset } from '../src/render/art/catalog';
 import { coverWithFocus, fitRegion, fromScreen, pitchVectorToScreen, screenVectorToPitch } from '../src/render/layout';
 
 const PHONES = [
@@ -102,12 +102,14 @@ describe('coverWithFocus (painted story backdrops)', () => {
   ];
   for (const [assetId, focus] of Object.entries(BACKDROP_FOCUS)) for (const c of cases) {
     it(`${assetId} ${c.name}: covers the band with no gaps and keeps the focus box in view`, () => {
-      const r = coverWithFocus(1536, 1024, c.width, c.height, c.top, focus);
-      const w = 1536 * r.scale;
-      const h = 1024 * r.scale;
+      const iw = artAsset(assetId)!.width;
+      const ih = artAsset(assetId)!.height;
+      const r = coverWithFocus(iw, ih, c.width, c.height, c.top, focus);
+      const w = iw * r.scale;
+      const h = ih * r.scale;
       const left = r.x - w / 2;
       const top = r.y - h / 2;
-      expect(r.scale).toBeCloseTo(Math.max(c.width / 1536, c.height / 1024), 9);
+      expect(r.scale).toBeCloseTo(Math.max(c.width / iw, c.height / ih), 9);
       expect(left).toBeLessThanOrEqual(0);
       expect(top).toBeLessThanOrEqual(0);
       expect(left + w).toBeGreaterThanOrEqual(c.width - 1e-9);
