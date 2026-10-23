@@ -856,7 +856,14 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private async loadSummaries(): Promise<void> {
     if (!this.state || !this.store) return;
     if (this.state.contentVersion !== 'w24-draft-1' && this.state.sceneId.startsWith('S1_')) await this.loadSeasonSummaries();
-    if (this.state.contentVersion !== 'w24-draft-1' && this.state.sceneId.startsWith('S1_')) await this.loadSeasonPanel().catch(() => void (this.seasonPanel = ''));
+    // Settling the background season is slow on small devices; never hold the next line's render (and its taps) for it.
+    if (this.state.contentVersion !== 'w24-draft-1' && this.state.sceneId.startsWith('S1_')) {
+      void this.loadSeasonPanel()
+        .catch(() => void (this.seasonPanel = ''))
+        .then(() => {
+          if (this.sys.isActive() && this.state) this.render();
+        });
+    }
     const run = outcomeOf(this.state, 'W1_CROSSBAR');
     if (!run) return void (this.crossbarSummary = '');
     if (run.outcome === 'completed' && run.runId) {
