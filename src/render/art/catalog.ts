@@ -12,6 +12,7 @@ import trainingRaw from '../../../docs/training/v1.2/asset-manifest.json';
 import { SEASON_ONE, sceneById } from '../../game/story/content';
 import type { FocusBox } from '../layout';
 import { MOM_REPLACED, momOutfit, momPortrait } from './momPortraits';
+import { phoneAsset, phoneRoles } from './phonePoses';
 
 export const ART_REVISION = 'graphics-v1.1';
 
@@ -230,8 +231,13 @@ function seasonOneVisual(sceneId: string, appearance: 'boy' | 'girl' | null): Sc
   if (!SEASON_ONE.order.includes(sceneId)) return null;
   const sc = sceneById(sceneId)!;
   const allowed = (id: string | null): string | null => (id && isAllowedAsset(id) ? id : null);
+  // Characters seen only on their phones (phonePoses.ts) join the cast with that pose and show only on those lines.
+  const withPhones = (cast: CastMember[]): CastMember[] => [
+    ...cast,
+    ...phoneRoles(sceneId).filter((r) => !cast.some((c) => c.role === r)).map((role): CastMember => ({ role, visualId: role === 'player' ? appearance : (role as VisualId), outfit: 'phone', assetId: allowed(phoneAsset(role, appearance)) })),
+  ];
   const visual = (bg: string | null, cast: CastMember[], flags: string[] = []): SceneVisual =>
-    withEmbedded({ sceneId, presentation: 'cutscene', backgroundAssetId: allowed(bg), cast, continuityFlags: ['season_one', ...flags], embeddedCharacters: [], revision: ART_REVISION });
+    withEmbedded({ sceneId, presentation: 'cutscene', backgroundAssetId: allowed(bg), cast: withPhones(cast), continuityFlags: ['season_one', ...flags], embeddedCharacters: [], revision: ART_REVISION });
   // Mom keeps one outfit for the whole scene; StoryArt switches her expression per line.
   const mom: CastMember[] = sc.nodes.some((n) => n.type === 'line' && SPEAKER_ROLE[n.speaker] === 'caregiver')
     ? [{ role: 'caregiver', visualId: 'caregiver', outfit: momOutfit(sceneId), assetId: allowed(momPortrait(sceneId, null)) }]

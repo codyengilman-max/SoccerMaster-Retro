@@ -73,8 +73,8 @@ describe('Graphics v1 catalog', () => {
     expect(variantAsset('alex', 'home')).toBeNull();
   });
 
-  it('Season One screen art: 38 masters byte-identical (V3 home menu, Mom v2 added), 32 runtime images, Tank Cup and the old Mom portraits kept out of the game', () => {
-    expect(s1Manifest.assets).toHaveLength(38);
+  it('Season One screen art: 43 masters byte-identical (V3 home menu, Mom v2, five phone poses added), 37 runtime images, Tank Cup and the old Mom portraits kept out of the game', () => {
+    expect(s1Manifest.assets).toHaveLength(43);
     for (const a of s1Manifest.assets) {
       const sha = createHash('sha256').update(readFileSync(`docs/art/season-one/${a.path}`)).digest('hex');
       expect(sha, a.assetId).toBe(a.sha256);
@@ -104,7 +104,8 @@ describe('Graphics v1 catalog', () => {
         const momSpeaks = sceneById(id)!.nodes.some((n) => n.type === 'line' && n.speaker === 'Mom') && !v.embeddedCharacters.includes('caregiver');
         const cast = v.cast;
         expect(cast.some((c) => c.role === 'caregiver' && c.assetId === 'mom2-casual-neutral'), id).toBe(momSpeaks);
-        expect(cast.length, id).toBeLessThanOrEqual(3);
+        // Phone-only characters (phonePoses.ts) show only on their phone lines, where at most three are staged.
+        expect(cast.filter((c) => c.outfit !== 'phone').length, id).toBeLessThanOrEqual(3);
       }
       expect(sceneVisual('S1_W02_F', look)!.cast.map((c) => c.assetId)).toEqual(['mom2-casual-neutral']);
       for (const id of SEASON_ONE.order) {
