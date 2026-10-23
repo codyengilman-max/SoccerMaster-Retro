@@ -1,9 +1,10 @@
 import Phaser from 'phaser';
 import type { Rect } from '../game';
-import { latest, movement, nationalTable, performance, publishedWeek, rankIn, type RankRow, type RankingsState, type StoryResults } from '../game/rankings/ratings';
+import { latest, movement, nationalTable, newRankings, performance, publishedWeek, rankIn, settleThrough, type RankRow, type RankingsState, type StoryResults } from '../game/rankings/ratings';
 import { CATEGORY_LABEL, HOME_TEAM, TEAMS, teamById, teamName } from '../game/rankings/teams';
 import { aroundStart, leagueStandings, nextOpponent, rankHistory, scopeTable, searchRows, stateCount, stateLabel, teamResults, upcoming } from '../game/rankings/views';
 import { StoryStore } from '../game/story/store';
+import { fixtureForGame, newSeasonLeague, recordSeasonPlayed, simulateSeasonThrough } from '../game/season/league';
 import { orientationOf } from '../render/layout';
 import { CSS, FONT_FAMILY, PALETTE } from '../render/theme';
 import type { InspectableScene, SceneLayoutReport } from './inspectable';
@@ -17,6 +18,8 @@ export interface RankingsData {
   readonly week?: number;
   readonly view?: View;
   readonly returnTo?: 'story' | 'start';
+  /** Review only: a made-up season held in memory; nothing is read from or written to the save. */
+  readonly sample?: boolean;
 }
 type View = 'rankings' | 'profile' | 'standings' | 'compare';
 
@@ -45,6 +48,8 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
   private searchEl: HTMLInputElement | null = null;
   private store: StoryStore | null = null;
   private leaving = false;
+  private sample = false;
+  private centre = false;
 
   constructor() {
     super(SceneKeys.Rankings);
@@ -64,6 +69,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     this.story = null;
     this.status = 'loading';
     this.leaving = false;
+    this.sample = !!data?.sample;
     this.stateFilter = teamById(HOME_TEAM)!.state;
   }
 
@@ -83,6 +89,21 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
   }
 
   private async loadData(): Promise<void> {
+    if (this.sample) {
+      const id = 'sample-career';
+      let lg = newSeasonLeague(id, 7);
+      const scores: [number, number][] = [[2, 1], [1, 1], [0, 2], [3, 0], [2, 2]];
+      for (let g = 1; g <= scores.length; g++) {
+        const r = recordSeasonPlayed(lg, fixtureForGame(g)!.id, scores[g - 1]![0], scores[g - 1]![1]);
+        if (r.ok) lg = r.state;
+      }
+      lg = simulateSeasonThrough(lg, fixtureForGame(scores.length)!.round);
+      this.story = { league: lg, cups: {}, stateCup: null };
+      this.rankings = settleThrough(newRankings(id, 7), this.story, this.week - 1).state;
+      this.status = 'ready';
+      this.jumpToTeam();
+      return this.render();
+    }
     try {
       const store = await StoryStore.open();
       if (!this.sys.isActive()) return store.close();
@@ -106,17 +127,12 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     if (!this.rankings) return [];
     return searchRows(scopeTable(this.rankings, this.scope), this.query);
   }
-  private perPage(): number {
-    const h = this.scale.height;
-    const portrait = orientationOf({ width: this.scale.width, height: h }) === 'portrait';
-    const rowH = this.rowH();
-    return Math.max(4, Math.floor((h - (portrait ? 250 : 190)) / rowH));
-  }
   private rowH(): number {
     return Math.max(40, Math.round(Math.min(this.scale.width, this.scale.height) * 0.07));
   }
+  /** Centre the list on your team at the next draw, once the rows that fit are known. */
   private jumpToTeam(): void {
-    this.start = aroundStart(this.rows(), HOME_TEAM, this.perPage());
+    this.centre = true;
   }
 
   private back(): void {
@@ -127,6 +143,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
       return this.render();
     }
     this.leaving = true;
+    if (this.sample) return void this.scene.start(SceneKeys.Career, { open: 'reviewHub' });
     this.scene.start(this.returnTo === 'story' ? SceneKeys.Story : SceneKeys.Start);
   }
 
@@ -167,6 +184,13 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     const h = this.scale.height;
     return Math.max(13, Math.min(orientationOf({ width: w, height: h }) === 'portrait' ? w * 0.038 : h * 0.04, 18));
   }
+  /** Shorten a one-line label with an ellipsis until it fits, keeping its suffix (YOU / NEXT). */
+  private fit(t: Phaser.GameObjects.Text, max: number, suffix: string, name: string): void {
+    const full = t.text.slice(0, t.text.length - suffix.length);
+    for (let n = full.length; t.displayWidth > max && n > 1; n--) t.setText(`${full.slice(0, n - 1).trimEnd()}…${suffix}`);
+    this.elements[name] = { x: t.x, y: t.y, width: t.displayWidth, height: t.displayHeight };
+  }
+
   private text(name: string, x: number, y: number, s: string, size: number, opts: Partial<Phaser.Types.GameObjects.Text.TextStyle> = {}): Phaser.GameObjects.Text {
     const t = this.add.text(x, y, s, { fontFamily: FONT_FAMILY, fontSize: `${Math.round(size)}px`, color: CSS.ink, ...opts });
     this.layer.add(t);
@@ -205,7 +229,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     }
     const s = this.rankings;
     const snap = latest(s);
-    const label = `Simulated career-world rankings · ${CATEGORY_LABEL} · ${snap.week === 0 ? 'Preseason (no results counted yet)' : `after week ${snap.week}`}${snap.provisional ? ' · Provisional: not every team is linked by results yet' : ''}`;
+    const label = `${this.sample ? 'SAMPLE SEASON (review only) · ' : ''}Simulated career-world rankings · ${CATEGORY_LABEL} · ${snap.week === 0 ? 'Preseason (no results counted yet)' : `after week ${snap.week}`}${snap.provisional ? ' · Provisional: not every team is linked by results yet' : ''}`;
     this.text('rank-label', 16, top + navH + 6, label, b * 0.8, { wordWrap: { width: w - 32 } });
     const y0 = top + navH + 6 + Math.ceil(this.elements['rank-label']!.height) + 8;
     if (this.view === 'rankings') this.drawRankings(y0);
@@ -214,8 +238,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     else this.drawCompare(y0);
   }
 
-  private drawTabs(y: number): number {
-    const w = this.scale.width;
+  private drawTabs(y: number, w = this.scale.width): number {
     const h = Math.max(44, Math.round(this.base() * 2.5));
     const tabs: [string, string, () => void, boolean][] = [
       ['tab-national', 'National', () => ((this.scope = 'national'), this.jumpToTeam(), this.render()), this.view === 'rankings' && this.scope === 'national'],
@@ -223,6 +246,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
       ['tab-league', 'League', () => ((this.view = 'standings'), this.render()), this.view === 'standings'],
     ];
     const tw = (w - 28 - 8 * (tabs.length - 1)) / tabs.length;
+    // w is the right edge of the tab strip (sideways the shortcuts share the row).
     tabs.forEach(([n, l, f, on], i) => this.button(n, 14 + i * (tw + 8), y, tw, h, l, f, on));
     return y + h + 8;
   }
@@ -231,22 +255,27 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     const s = this.rankings!;
     const w = this.scale.width;
     const b = this.base();
-    let y = this.drawTabs(y0);
+    const wide = orientationOf({ width: w, height: this.scale.height }) === 'landscape';
     const h = Math.max(44, Math.round(b * 2.5));
+    let y = this.drawTabs(y0, wide ? w / 2 + 10 : w);
+    const sx = wide ? w / 2 + 2 : 0;
+    if (wide) y = y0;
     const sc: [string, string, () => void][] = [
       ['rank-my-team', 'My Team', () => ((this.query = ''), this.closeSearch(), this.openProfile(HOME_TEAM))],
       ['rank-around', 'Around Me', () => ((this.query = ''), this.jumpToTeam(), this.render())],
       ['rank-top25', 'Top 25', () => ((this.query = ''), (this.start = 0), this.render())],
       ['rank-search-btn', this.searchEl ? 'Done' : 'Search', () => (this.searchEl ? this.closeSearch() : this.openSearch())],
     ];
-    const sw = (w - 28 - 8 * 3) / 4;
-    sc.forEach(([n, l, f], i) => this.button(n, 14 + i * (sw + 8), y, sw, h, l, f));
+    const sw = (w - sx - 28 - 8 * 3) / 4;
+    sc.forEach(([n, l, f], i) => this.button(n, sx + 14 + i * (sw + 8), y, sw, h, l, f));
     y += h + 6;
     const rows = this.rows();
-    const per = this.perPage();
+    const rowH = this.rowH();
+    const per = Math.max(1, Math.floor((this.scale.height - y - h - 18) / rowH));
+    if (this.centre) this.start = aroundStart(rows, HOME_TEAM, per);
+    this.centre = false;
     const total = this.scope === 'national' ? TEAMS.length : stateCount(this.scope);
     const next = nextOpponent(this.story!.league);
-    const rowH = this.rowH();
     if (this.query && !rows.length) this.text('rank-empty', 20, y + 8, `No team matches "${this.query}".`, b);
     this.start = Math.max(0, Math.min(this.start, Math.max(0, rows.length - per)));
     rows.slice(this.start, this.start + per).forEach((r, i) => {
@@ -262,7 +291,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
       const m = movement(s, r.team, (sn) => (this.scope === 'national' ? nationalTable(sn) : scopeTable({ ...s, snapshots: [sn] }, this.scope, 0)));
       const tag = mine ? ' (YOU)' : r.team === next ? ' (NEXT)' : '';
       this.text(`rank-row-${i}`, 22, yy + rowH / 2 - b * 0.6, `#${r.rank}`, b, { fontStyle: 'bold' });
-      this.text(`rank-name-${i}`, 30 + 56 + rowH * 0.4, yy + 4, `${t.name}${tag}`, b * 0.92, { fontStyle: mine ? 'bold' : 'normal', fixedWidth: w - 220, wordWrap: { width: w - 220 } });
+      this.fit(this.text(`rank-name-${i}`, 30 + 56 + rowH * 0.4, yy + 4, `${t.name}${tag}`, b * 0.92, { fontStyle: mine ? 'bold' : 'normal' }), w - 28 - (30 + 56 + rowH * 0.4), tag, `rank-name-${i}`);
       this.text(`rank-sub-${i}`, 30 + 56 + rowH * 0.4, yy + rowH / 2 + 1, `${t.city}, ${t.state} · ${Math.round(latest(s).ratings[r.team]!)} · ${move(m)}`, b * 0.78);
       const hit = this.add.zone(14, yy + 2, w - 28, rowH - 4).setOrigin(0).setInteractive({ useHandCursor: true });
       hit.on('pointerup', () => this.openProfile(r.team));
@@ -291,16 +320,32 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     if (!t.started) this.text('league-empty', 20, y, 'Season not started: no league results yet.', b);
     else this.text('league-note', 20, y, 'Points 3 / 1 / 0. Order: points, goal difference, goals scored. Level teams share a position. Tournament games never give league points.', b * 0.78, { wordWrap: { width: w - 40 } });
     y += Math.ceil(this.elements[t.started ? 'league-note' : 'league-empty']!.height) + 8;
-    this.text('league-head', 20, y, 'Pos  Team                 P  W  D  L  GF GA GD  Pts', b * 0.82, { fontFamily: 'monospace', fontStyle: 'bold' });
-    y += b * 1.5;
+    const fs = b * 0.82;
+    const col = Math.max(24, Math.round(fs * 1.9));
+    const heads = ['P', 'W', 'D', 'L', 'GF', 'GA', 'GD', 'Pts'];
+    const nameX = 20 + col * 1.1;
+    const nameW = w - 20 - nameX - col * heads.length - 4;
+    const colX = (j: number) => w - 20 - col * (heads.length - j);
+    this.text('league-head-pos', 20, y, 'Pos', fs, { fontStyle: 'bold' });
+    this.text('league-head-team', nameX, y, 'Team', fs, { fontStyle: 'bold' });
+    heads.forEach((hd, j) => this.text(`league-head-${hd}`, colX(j), y, hd, fs, { fontStyle: 'bold', fixedWidth: col, align: 'right' }));
+    y += fs * 1.6;
+    const step = Math.max(fs * 1.5, Math.min(Math.max(b * 1.9, 30), (this.scale.height - y - 10) / Math.max(1, t.rows.length)));
     t.rows.forEach((r, i) => {
-      const name = teamName(r.club).slice(0, 20).padEnd(20);
-      const line = `${String(r.rank).padStart(2)}.  ${name} ${[r.played, r.won, r.drawn, r.lost, r.goalsFor, r.goalsAgainst].map((n) => String(n).padStart(2)).join(' ')} ${(r.goalDiff > 0 ? '+' : '') + r.goalDiff}`.padEnd(48) + ` ${r.points}`;
-      this.text(`league-row-${i}`, 20, y, `${line}${r.club === HOME_TEAM ? '  <- YOU' : ''}`, b * 0.82, { fontFamily: 'monospace', fontStyle: r.club === HOME_TEAM ? 'bold' : 'normal' });
-      const hit = this.add.zone(14, y - 4, w - 28, b * 1.9).setOrigin(0).setInteractive({ useHandCursor: true });
+      const mine = r.club === HOME_TEAM;
+      if (mine) {
+        const g = this.add.graphics().fillStyle(PALETTE.mustard, 1).fillRoundedRect(14, y - 3, w - 28, step - 2, 6);
+        this.layer.add(g);
+      }
+      const st = { fontStyle: mine ? 'bold' : 'normal' };
+      this.text(`league-row-${i}`, 20, y, `${r.rank}.`, fs, st);
+      this.fit(this.text(`league-name-${i}`, nameX, y, `${teamName(r.club)}${mine ? ' (YOU)' : ''}`, fs, st), nameW, mine ? ' (YOU)' : '', `league-name-${i}`);
+      const vals = [r.played, r.won, r.drawn, r.lost, r.goalsFor, r.goalsAgainst, (r.goalDiff > 0 ? '+' : '') + r.goalDiff, r.points];
+      vals.forEach((v, j) => this.text(`league-${heads[j]}-${i}`, colX(j), y, String(v), fs, { ...st, fixedWidth: col, align: 'right' }));
+      const hit = this.add.zone(14, y - 3, w - 28, step - 2).setOrigin(0).setInteractive({ useHandCursor: true });
       hit.on('pointerup', () => this.openProfile(r.club));
       this.layer.add(hit);
-      y += Math.max(b * 1.9, 30);
+      y += step;
     });
   }
 
@@ -395,6 +440,6 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     return { orientation: orientationOf({ width: this.scale.width, height: this.scale.height }), viewport: { width: this.scale.width, height: this.scale.height }, elements: this.elements };
   }
   describeGameplay(): unknown {
-    return { status: this.status, view: this.view, scope: this.scope, query: this.query, team: this.team, visible: this.visible, published: this.rankings ? publishedWeek(this.rankings) : null, provisional: this.rankings ? latest(this.rankings).provisional : null };
+    return { status: this.status, sample: this.sample, view: this.view, scope: this.scope, query: this.query, team: this.team, visible: this.visible, published: this.rankings ? publishedWeek(this.rankings) : null, provisional: this.rankings ? latest(this.rankings).provisional : null };
   }
 }

@@ -18,6 +18,8 @@ Simulated career-world rankings for the U11 9v9 category. Offline only: no onlin
 - States: Scheduled (no result), In Progress (a story match run that is launched but not finished; the existing story run record), Finalized (a saved result). Postponed and Cancelled are not used in Season One: no fixture is ever moved. A result saved late (for example after an interrupted match) is counted in the next weekly settlement, labelled "not yet in rankings" until then.
 - Byes: the five-team league gives each team a bye per cycle; a bye is no game and changes nothing. Multi-week tournaments are counted week by week as their games are saved.
 
+- Background showcases (weeks 9 and 12): every background team not in that week's story tournament plays 3 games against teams from other regions. 26 of the 330 showcase games pair two teams from the same background league, as a real showcase can; they count for ratings like any other game.
+
 ## Ratings (defaults)
 - Expected = 1 / (1 + 10^((opponent − team) / 400)); Change = K × (result − expected); K = 24; win 1, draw 0.5, loss 0.
 - Both teams use their rating from before the match; changes are equal and opposite. No goal-margin multiplier. Full precision is stored; only the display rounds.
