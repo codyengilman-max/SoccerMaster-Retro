@@ -252,3 +252,9 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Old Mom portraits are retired (`runtime: false`), not deleted from history; v2 portraits are padded (not scaled) onto the 2:3 slot. `mom-sad` maps to worried, the closest supplied expression.
 - Who is painted into a background is explicit data (`BACKDROP_EMBEDDED`), never inferred from speakers or file names; an embedded character never gets a portrait, even while speaking.
 - Cast portraits show only on spoken lines (not narration, choices or hand-offs).
+
+## D49. Weeks 6–7 and phone poses (owner scripts, 2026-10-26)
+- Decision vs execution for Code's training reaction comes only from the Team Training evaluator: a situation where an open pass or sensible shot was chosen but did not come off sets `choiceMissed`. The weekly grade decides "strong" and "poor"; no reaction is inferred from score alone beyond that, and records saved before this field never show the execution line.
+- Week-specific home requirements live in `weekAssignments` (framework-free); Week 5 keeps `homeAssignments` unchanged.
+- Phone poses are per line (`src/render/art/phonePoses.ts`): each moment names exactly who is on screen and who holds a phone, resolved against the compiled script at load (a moment that matches no line or two lines is an error). Phone-only characters join the scene cast but never show on other lines, and only characters that can show take a place on screen, so at most three portraits share it.
+- The supplied 1024×1536 images are downscaled exactly 2:1 with nearest-neighbour and saved lossless with their own transparency (`scripts/art/build-phone-poses.py`); no matte, recolour or crop.

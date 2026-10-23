@@ -1,5 +1,13 @@
 # Status
 
+## Season One Weeks 6–7 (owner scripts 2026-10-26, branch `devin/1792728226-weeks6-7`, stacked on PR #38, not merged, not deployed)
+- Week 6 "Head Up" (no school scene, League Game 4) and Week 7 "Louder Doesn't Mean Open" (Blake's Next Horizon clips, Riley's showcase, Code's correction of Blake, League Game 5) compiled into the existing story format; `SEASON_RELEASED_WEEKS = 7`. Owner text kept in `docs/story/season-one/owner/`; every spoken line matches it word for word (straight quotes, as in Weeks 1–5). Blake stays on Batavia; no transfer before Week 8.
+- Recess and after-match lines follow the real Crossbar/Jungle Ball and league results; a skipped match shows no result line. Choices are saved (park plan, Riley's request as availability only, Mom's "Making Room" plan).
+- Team Training reaction (weeks 6+): strong week → "THERE!"; the evaluator's own "right choice, did not come off" evidence (`choiceMissed`, new optional field on the saved record) → "tidy up the execution"; poor week → "What changed while the ball was travelling?". Older records never claim the execution line. Situations are the existing pool for the career position (no keeper position exists).
+- Home menu: Week 6 requires juggling + first touch + this week's planned home sessions; Week 7 swaps in passing. Cloudy Talk / Feed & Play stay optional. The script gives no showcase time, so Riley's line says the time hasn't been sent and nothing can conflict.
+- Code's after-match "strong example" / "support movement" praise never shows: match records do not track scanning or off-ball support, so the "Otherwise" line plays.
+- Phone poses (owner image, five characters): Sam's texts, the group chat, Blake scrolling at school and after Week 7's match, the player replying by text. Only the listed characters show on those lines; Riley (no phone art) and Mom's phone pose (no Mom phone scene yet) are not shown.
+
 ## Mom Replacement v2 (owner package 2026-10-25, branch `devin/1792724543-mom-portraits-v2`, from `main` 4808b23, not merged, not deployed)
 - All standalone Mom portraits now use the v2 art: casual teal by default, burgundy only for listed dressier scenes (none in Weeks 1–5), one outfit per scene, expression per line. Mapping and coverage: `docs/art/season-one/MOM_V2.md`.
 - Characters painted into a backdrop (car: Mom + player; aquarium: player + Cloudy) never get a second portrait. Portraits show only on spoken lines; narration and choices clear them.
