@@ -344,54 +344,6 @@
       "bytes": 95278
     },
     {
-      "assetId": "mom-neutral",
-      "file": "mom-neutral.webp",
-      "width": 256,
-      "height": 384,
-      "masterSha256": "2c60a9f66328562d3df0138b6e0152cbfa7ec5491973aada18cbb56856763d2b",
-      "bytes": 16622
-    },
-    {
-      "assetId": "mom-proud",
-      "file": "mom-proud.webp",
-      "width": 256,
-      "height": 384,
-      "masterSha256": "3f77f04fe33c3c6c279642e304089ef6654e2ea0e06341391de3b0a9c4d248e4",
-      "bytes": 17278
-    },
-    {
-      "assetId": "mom-worried",
-      "file": "mom-worried.webp",
-      "width": 256,
-      "height": 384,
-      "masterSha256": "1623cd9a0ab906b082350ff38c0ccac6bef9b7853e1170049e3b2746c983a9f5",
-      "bytes": 15842
-    },
-    {
-      "assetId": "mom-laughing",
-      "file": "mom-laughing.webp",
-      "width": 256,
-      "height": 384,
-      "masterSha256": "6b93bfa96a9d804c3490f4559d6b1d23620b011bf9388ce80f37940610827dee",
-      "bytes": 16600
-    },
-    {
-      "assetId": "mom-firm",
-      "file": "mom-firm.webp",
-      "width": 256,
-      "height": 384,
-      "masterSha256": "787b47a3d20b15a0842a0dd94e8172ae621c5b9c208f38b8fe496e3c3d7708f9",
-      "bytes": 18830
-    },
-    {
-      "assetId": "mom-sad",
-      "file": "mom-sad.webp",
-      "width": 256,
-      "height": 384,
-      "masterSha256": "361faf3cbe9a7533668e82c3584e2a25bd7447ef523faa03214834dd1a25d45f",
-      "bytes": 18090
-    },
-    {
       "assetId": "s1-tank-girl",
       "file": "s1-tank-girl.webp",
       "width": 768,
@@ -430,6 +382,102 @@
       "height": 470,
       "masterSha256": "aa55a79f3be2f29dd5b638a5593ba2dd6971ca4b04c2f753dab33d9242e3c141",
       "bytes": 86476
+    },
+    {
+      "assetId": "mom2-casual-neutral",
+      "file": "mom2-casual-neutral.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "54826a39dba0c84438a75a2480a77458dd4485fddb682e0eca160589cb759f6f",
+      "bytes": 67180
+    },
+    {
+      "assetId": "mom2-casual-laughing",
+      "file": "mom2-casual-laughing.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "9898f455f19af98ed7c664bca1416f9047f6ccc529e1129c5b079910fd556faa",
+      "bytes": 68582
+    },
+    {
+      "assetId": "mom2-casual-worried",
+      "file": "mom2-casual-worried.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "2d5db9b674dbfe1708c37dbb8940751717c12160a95a5d7b03776aebad37a99d",
+      "bytes": 65296
+    },
+    {
+      "assetId": "mom2-casual-firm",
+      "file": "mom2-casual-firm.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "606518df6404fda0746720ecfe79c9db31bca5665074414028edec5b46100340",
+      "bytes": 65106
+    },
+    {
+      "assetId": "mom2-casual-reassuring",
+      "file": "mom2-casual-reassuring.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "d136d3d4ed51fc258fdc0ab126451778c1ec9ed1ce39b7ef08aa2abd6091aacd",
+      "bytes": 68382
+    },
+    {
+      "assetId": "mom2-casual-proud",
+      "file": "mom2-casual-proud.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "1164dd6959aba3c6d7055758aef952129ec3c3724ce7e4b186a202c8de7694ff",
+      "bytes": 66260
+    },
+    {
+      "assetId": "mom2-dressy-neutral",
+      "file": "mom2-dressy-neutral.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "b1304b5b6e990a26d894d53024963b880d95531d3d3060e9cc903377a045eaf9",
+      "bytes": 58568
+    },
+    {
+      "assetId": "mom2-dressy-laughing",
+      "file": "mom2-dressy-laughing.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "7b578b334cf5ed5c8c95112dcc01dd5f335b8f626b4f5e045b1ba7d6fe6cc14e",
+      "bytes": 59656
+    },
+    {
+      "assetId": "mom2-dressy-worried",
+      "file": "mom2-dressy-worried.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "06fb9159fbce3514cc2d3a8bdcabf488e19b943c0d557ddaaa82591388c33a03",
+      "bytes": 57946
+    },
+    {
+      "assetId": "mom2-dressy-firm",
+      "file": "mom2-dressy-firm.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "ea28f8f93ace835d7dd485952dd1049a40ee46f43da294c4f9c379b5e5932e9b",
+      "bytes": 57462
+    },
+    {
+      "assetId": "mom2-dressy-reassuring",
+      "file": "mom2-dressy-reassuring.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "deff231d32a6ac5ca1ef2ebd449fc46a68ae342823844a4671df3b5e72a54c8f",
+      "bytes": 61446
+    },
+    {
+      "assetId": "mom2-dressy-proud",
+      "file": "mom2-dressy-proud.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "ca33a5032f6267666fc8bc481469bcddb8159a808087e3b532bc754b970c538c",
+      "bytes": 57926
     }
   ]
 }

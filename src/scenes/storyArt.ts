@@ -1,11 +1,12 @@
 import Phaser from 'phaser';
 import { BACKDROP_FOCUS, CAST_IN_BACKDROP, PREFETCH_ORDER, SPEAKER_ROLE, artAsset, isAllowedAsset, sceneVisual, type CastRole, type SceneVisual } from '../render/art/catalog';
+import { momPortrait, momSceneAssets } from '../render/art/momPortraits';
 import { artTextureKey, artUrl } from '../render/art/urls';
 import { coverWithFocus } from '../render/layout';
 import { CSS, FONT_FAMILY, PALETTE } from '../render/theme';
 
 /** Upper bound on cutscene textures resident at once (current scene's backdrop + cast, plus slack). */
-export const STORY_ART_MAX_TEXTURES = 12;
+export const STORY_ART_MAX_TEXTURES = 16;
 const ENTER_MS = 260;
 const LIFT_MS = 140;
 
@@ -13,6 +14,9 @@ export interface StoryArtFrame {
   readonly sceneId: string | null;
   readonly appearance: 'boy' | 'girl' | null;
   readonly speaker: string | null;
+  /** Current story node: picks Mom's expression for this line. */
+  readonly nodeId?: string | null;
+  /** Portraits are shown only on spoken lines; narration, choices and hand-offs clear them. */
   readonly showCast: boolean;
   readonly width: number;
   readonly height: number;
@@ -67,6 +71,11 @@ export class StoryArt {
     return this.bgImage.visible && (this.visual?.continuityFlags.includes(CAST_IN_BACKDROP) ?? false);
   }
 
+  /** True when the selected backdrop already paints this character. */
+  embeds(role: CastRole | null): boolean {
+    return role !== null && (this.visual?.embeddedCharacters.includes(role) ?? false);
+  }
+
   update(f: StoryArtFrame): void {
     if (this.destroyed) return;
     this.last = f;
@@ -83,6 +92,7 @@ export class StoryArt {
     const role = f.speaker ? (SPEAKER_ROLE[f.speaker] ?? null) : null;
     const speakerChanged = role !== this.speakerRole;
     this.speakerRole = role;
+    this.applyBeat(f);
     this.placeBackdrop(f);
     this.placeCast(f, entering, speakerChanged);
   }
@@ -95,6 +105,8 @@ export class StoryArt {
       revision: v?.revision ?? null,
       background: v?.backgroundAssetId ?? null,
       castInBackdrop: v?.continuityFlags.includes(CAST_IN_BACKDROP) ?? false,
+      embedded: v?.embeddedCharacters ?? [],
+      nodeId: this.last?.nodeId ?? null,
       backgroundShown: this.bgImage.visible,
       speakerRole: this.speakerRole,
       cast: this.slots.map((s) => ({ role: s.role, assetId: s.assetId, state: s.state, visible: (s.img?.visible ?? false) || s.box.visible, speaking: s.role === this.speakerRole, alpha: s.img?.alpha ?? s.box.alpha, x: s.x })),
@@ -114,7 +126,9 @@ export class StoryArt {
 
   private wanted(v: SceneVisual | null = this.visual): string[] {
     if (!v) return [];
-    return [v.backgroundAssetId, ...(v.presentation === 'cutscene' ? v.cast.map((c) => c.assetId) : [])].filter((x): x is string => x !== null);
+    const cast = v.presentation === 'cutscene' ? v.cast : [];
+    const mom = cast.some((c) => c.role === 'caregiver') ? momSceneAssets(v.sceneId).filter(isAllowedAsset) : [];
+    return [...new Set([v.backgroundAssetId, ...cast.map((c) => c.assetId), ...mom])].filter((x): x is string => x !== null);
   }
 
   private request(): void {
@@ -207,6 +221,27 @@ export class StoryArt {
     }
   }
 
+  /** Mom's expression for the current line (her outfit is fixed for the scene). Stale or late textures never show. */
+  private applyBeat(f: StoryArtFrame): void {
+    for (const s of this.slots) {
+      if (s.role !== 'caregiver' || !s.assetId) continue;
+      const want = momPortrait(this.visual?.sceneId ?? null, f.nodeId ?? null);
+      if (want === s.assetId || !isAllowedAsset(want)) continue;
+      s.assetId = want;
+      const key = artTextureKey(want);
+      if (s.img && this.scene.textures.exists(key)) {
+        s.img.setTexture(key);
+        s.state = 'shown';
+        continue;
+      }
+      if (s.img) this.scene.tweens.killTweensOf(s.img);
+      s.img?.destroy();
+      s.img = null;
+      s.state = 'loading';
+      this.bindImage(s, false);
+    }
+  }
+
   private clearSlots(): void {
     for (const s of this.slots) {
       if (s.img) this.scene.tweens.killTweensOf(s.img);
@@ -259,8 +294,9 @@ export class StoryArt {
       s.x = Math.round(f.width * ((i + 1) / (n + 1)));
       const speaking = this.speakerRole !== null && s.role === this.speakerRole;
       const anySpeaker = this.speakerRole !== null && this.slots.some((o) => o.role === this.speakerRole);
-      // Over a painting that already shows the player and Cloudy, a portrait (Mom) appears only while she speaks.
-      const show = f.showCast && (!this.castInBackdrop || speaking);
+      // A character painted into the backdrop never gets a second portrait. Over a painting that already shows
+      // some of the cast, the others (e.g. Mom over the aquarium) appear only while they speak.
+      const show = f.showCast && !this.embeds(s.role) && (!this.castInBackdrop || speaking);
       const dim = show && anySpeaker && !speaking;
       const alpha = show ? 1 : 0;
       const lift = speaking ? Math.round(h * 0.025) : 0;

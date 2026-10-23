@@ -247,3 +247,8 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - The owner spec makes Home skills a development source (35%). This supersedes the earlier rule that home practice cannot raise attributes; home logs are self-reported, so they carry 0.6 confidence.
 - `computeGrowth` (match/coach evidence thresholds) is unchanged; the settlement adds bounded fractional credits on top, inside the same weekly caps. Past weeks are never recalculated; old saves start with zero carry.
 - Decision quality is judged from receiver openness at the pass; positioning stays unavailable without off-ball telemetry.
+
+## D48. Mom v2 portraits and backdrop-embedded cast (owner package, 2026-10-25)
+- Old Mom portraits are retired (`runtime: false`), not deleted from history; v2 portraits are padded (not scaled) onto the 2:3 slot. `mom-sad` maps to worried, the closest supplied expression.
+- Who is painted into a background is explicit data (`BACKDROP_EMBEDDED`), never inferred from speakers or file names; an embedded character never gets a portrait, even while speaking.
+- Cast portraits show only on spoken lines (not narration, choices or hand-offs).

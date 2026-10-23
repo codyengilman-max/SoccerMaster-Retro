@@ -73,15 +73,15 @@ describe('Graphics v1 catalog', () => {
     expect(variantAsset('alex', 'home')).toBeNull();
   });
 
-  it('Season One screen art: 26 masters byte-identical (V3 home menu added), 23 runtime images, Tank Cup kept out of the game', () => {
-    expect(s1Manifest.assets).toHaveLength(26);
+  it('Season One screen art: 38 masters byte-identical (V3 home menu, Mom v2 added), 32 runtime images, Tank Cup and the old Mom portraits kept out of the game', () => {
+    expect(s1Manifest.assets).toHaveLength(38);
     for (const a of s1Manifest.assets) {
       const sha = createHash('sha256').update(readFileSync(`docs/art/season-one/${a.path}`)).digest('hex');
       expect(sha, a.assetId).toBe(a.sha256);
       expect(isAllowedAsset(a.assetId), a.assetId).toBe(a.runtime);
       if (a.runtime) expect(RUNTIME_IMAGES.get(a.assetId)?.masterSha256).toBe(a.sha256);
     }
-    expect(s1Manifest.assets.filter((a) => !a.runtime).map((a) => a.assetId).sort()).toEqual(['tank-mini-goal', 'tank-pellet', 'tank-underwater']);
+    expect(s1Manifest.assets.filter((a) => !a.runtime).map((a) => a.assetId).sort()).toEqual(['mom-firm', 'mom-laughing', 'mom-neutral', 'mom-proud', 'mom-sad', 'mom-worried', 'tank-mini-goal', 'tank-pellet', 'tank-underwater']);
     // no duplicate of an existing core image
     const v1Sha = new Set(ART_ASSETS.filter((a) => !S1_IDS.has(a.assetId)).map((a) => a.sha256));
     expect(s1Manifest.assets.some((a) => v1Sha.has(a.sha256))).toBe(false);
@@ -98,14 +98,15 @@ describe('Graphics v1 catalog', () => {
       expect(tank.backgroundAssetId).toBe(`s1-tank-${look}`);
       expect(tank.cast).toEqual([]);
       expect(tank.continuityFlags).toContain('cast_in_backdrop');
-      // Mom's portrait is cast in every scene where she speaks, and nowhere else.
+      // Mom's v2 portrait is cast in every scene where she speaks, unless the backdrop already paints her.
       for (const id of SEASON_ONE.order) {
-        const momSpeaks = sceneById(id)!.nodes.some((n) => n.type === 'line' && n.speaker === 'Mom');
-        const cast = sceneVisual(id, look)!.cast;
-        expect(cast.some((c) => c.role === 'caregiver' && c.assetId === 'mom-neutral'), id).toBe(momSpeaks);
+        const v = sceneVisual(id, look)!;
+        const momSpeaks = sceneById(id)!.nodes.some((n) => n.type === 'line' && n.speaker === 'Mom') && !v.embeddedCharacters.includes('caregiver');
+        const cast = v.cast;
+        expect(cast.some((c) => c.role === 'caregiver' && c.assetId === 'mom2-casual-neutral'), id).toBe(momSpeaks);
         expect(cast.length, id).toBeLessThanOrEqual(3);
       }
-      expect(sceneVisual('S1_W02_F', look)!.cast.map((c) => c.assetId)).toEqual(['mom-neutral']);
+      expect(sceneVisual('S1_W02_F', look)!.cast.map((c) => c.assetId)).toEqual(['mom2-casual-neutral']);
       for (const id of SEASON_ONE.order) {
         const v = sceneVisual(id, look)!;
         expect(v, id).not.toBeNull();

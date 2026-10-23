@@ -2,7 +2,7 @@ import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { diagnostics, pressElement, trackConsoleErrors, waitForScene } from './helpers';
 
 type Cast = { role: string; assetId: string | null; state: string; visible: boolean; speaking: boolean };
-type Art = { scene: string | null; mapped: boolean; background: string | null; backgroundShown: boolean; castInBackdrop: boolean; speakerRole: string | null; cast: Cast[]; reducedMotion: boolean; textures: number };
+type Art = { scene: string | null; mapped: boolean; background: string | null; backgroundShown: boolean; castInBackdrop: boolean; embedded: string[]; nodeId: string | null; speakerRole: string | null; cast: Cast[]; reducedMotion: boolean; textures: number };
 type Story = { mode: string; scene: string | null; type?: string; adapter?: string; revision: number; buttons: string[]; art: Art | null };
 test.describe.configure({ timeout: 120_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
@@ -71,8 +71,10 @@ test('Season One cutscenes: departure plate and aquarium for the chosen girl, sp
   await toDeparture(page, modeFor(info));
   const depart = await story(page, (x) => x.art?.backgroundShown === true, 'departure art loaded');
   expect(depart.art!.background).toBe('departure-girl');
-  // Mom speaks at the departure, so her portrait is cast.
-  expect(depart.art!.cast.map((c) => [c.role, c.assetId])).toEqual([['caregiver', 'mom-neutral']]);
+  // Mom speaks at the departure, but the car painting already shows her and the player: no second portrait of either.
+  expect(depart.art!.embedded).toEqual(['caregiver', 'player']);
+  expect(depart.art!.castInBackdrop).toBe(true);
+  expect(depart.art!.cast).toEqual([]);
   const s = await advanceTo(page, modeFor(info), (x) => x.scene === 'S1_PRO_ROOM' && x.type === 'line', 'aquarium line');
   const ready = await story(page, (x) => x.art?.backgroundShown === true && (x.art?.cast.every((c) => c.state === 'shown') ?? false), 'art loaded');
   // The owner's aquarium painting for the saved girl already shows her and Cloudy: no portraits on top.
@@ -105,11 +107,10 @@ test.describe('reduced motion', () => {
 
 test('missing art falls back to labelled placeholders and the story still advances', async ({ page }, info) => {
   await page.route('**/*.webp', (r) => r.abort());
-  // Departure: Mom's portrait fails to load and shows the labelled placeholder.
+  // Departure: the car painting fails; Mom is painted into it, so no standalone Mom is cast even then.
   const s = await toDeparture(page, modeFor(info));
-  const failed = await story(page, (x) => (x.art?.cast.length ?? 0) > 0 && x.art!.cast.every((c) => c.state === 'failed'), 'fallback');
-  expect(failed.art!.backgroundShown).toBe(false);
-  expect(failed.art!.cast.every((c) => c.assetId !== null)).toBe(true);
+  expect(s.art!.backgroundShown).toBe(false);
+  expect(s.art!.cast).toEqual([]);
   await tapStage(page, modeFor(info));
   await story(page, (x) => x.revision !== s.revision, 'advanced past a line with missing art');
   // Aquarium: the painted backdrop fails, so nothing claims the cast is in the backdrop, and the story still advances.
@@ -129,7 +130,7 @@ test('Art Gallery is reachable from Review & Lab, lists every asset with its sta
   await press(page, 'hub-art', mode);
   await waitForScene(page, 'gallery');
   const seen = new Set<string>();
-  for (let i = 0; i < 9; i++) {
+  for (let i = 0; i < 11; i++) {
     const g = await (async () => {
       let v: { page: { kind: string }; shown: string[]; loaded: string[]; title: string; gaps: number } | null = null;
       await expect.poll(async () => {
@@ -145,11 +146,47 @@ test('Art Gallery is reachable from Review & Lab, lists every asset with its sta
     if (g.page.kind === 'gaps') expect(g.gaps).toBeGreaterThan(0);
     await press(page, 'gallery-next', mode);
   }
-  expect(seen.size).toBe(53); // 42 + v1.2 crossbar-schoolyard and training-bell94 + 6 Mom portraits, 2 aquarium paintings and the V3 home menu
+  expect(seen.size).toBe(59); // 42 + v1.2 crossbar-schoolyard and training-bell94 + 12 Mom v2 portraits, 2 aquarium paintings and the V3 home menu
   await press(page, 'gallery-back', mode);
   await waitForScene(page, 'career');
   const career = (await diagnostics(page)).gameplay as { player: string | null; screen: string };
   expect(career.screen).toBe('reviewHub');
   expect(career.player).toBeNull();
+  expect(errors).toEqual([]);
+});
+
+/** Presentation-only staging: show one authored node of another scene without advancing or saving the story. */
+async function stage(page: Page, sceneId: string, nodeId: string): Promise<Story> {
+  await page.evaluate(([sid, nid]) => {
+    const sc = (window as unknown as { __SMR__: { game: { scene: { getScene(k: string): unknown } } } }).__SMR__.game.scene.getScene('story') as { state: object; render(): void };
+    sc.state = { ...sc.state, sceneId: sid, nodeId: nid };
+    sc.render();
+  }, [sceneId, nodeId]);
+  return story(page, (x) => x.scene === sceneId && x.art?.nodeId === nodeId, `${sceneId}.${nodeId} staged`);
+}
+const shown = (s: Story) => s.art!.cast.filter((c) => c.visible).map((c) => `${c.role}:${c.assetId}`);
+
+test('Mom v2: casual expression per line over an empty backdrop, cleared on narration and choices, never stale across scenes', async ({ page }, info) => {
+  const errors = trackConsoleErrors(page);
+  await toDeparture(page, modeFor(info));
+  await stage(page, 'S1_W01_P', 'v2n43');
+  const laugh = await story(page, (x) => x.art!.cast.every((c) => c.state === 'shown'), 'home cast loaded');
+  expect(laugh.art!.embedded).toEqual([]);
+  expect(shown(laugh)).toContain('caregiver:mom2-casual-laughing');
+  // Same scene, next beat: her expression changes, her outfit does not.
+  const firm = await stage(page, 'S1_W01_P', 'v2n21');
+  expect(shown(firm)).toContain('caregiver:mom2-casual-firm');
+  // Narration and choices clear every portrait.
+  expect(shown(await stage(page, 'S1_W01_P', 'v2n47'))).toEqual([]);
+  expect(shown(await stage(page, 'S1_W01_P', 'worry'))).toEqual([]);
+  // Back into the car: the painted Mom and player get no overlay, and nothing from the home scene lingers.
+  const car = await stage(page, 'S1_PRO_DEPART', 'v2n20');
+  expect(car.art!.cast).toEqual([]);
+  expect(((await diagnostics(page)).textureKeys as readonly string[]).includes('art-v1:mom-neutral')).toBe(false);
+  // Over the aquarium painting (player and Cloudy painted in), only Mom appears, and only while she speaks.
+  const tank = await stage(page, 'S1_W02_F', 'v2n3');
+  await story(page, (x) => x.art!.backgroundShown && x.art!.cast.every((c) => c.state === 'shown'), 'aquarium loaded');
+  expect(tank.art!.embedded).toEqual(['player', 'fish']);
+  expect(shown(await story(page, (x) => x.art!.cast.some((c) => c.visible), 'mom shown'))).toEqual(['caregiver:mom2-casual-neutral']);
   expect(errors).toEqual([]);
 });

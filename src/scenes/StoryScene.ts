@@ -24,6 +24,7 @@ import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspectable';
 import { SceneKeys } from './keys';
 import { Button } from './ui/Button';
+import { SPEAKER_ROLE } from '../render/art/catalog';
 import { StoryArt } from './storyArt';
 
 /** The career save has one slot ('main'); the story is keyed to it. */
@@ -1199,7 +1200,9 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       sceneId: this.mode === 'story' || this.mode === 'crossbar' ? (this.state?.sceneId ?? null) : null,
       appearance: this.gender,
       speaker: this.mode === 'story' && n?.type === 'line' ? n.speaker : null,
-      showCast: this.mode === 'story' && (n?.type === 'line' || n?.type === 'choice'),
+      nodeId: this.mode === 'story' ? (n?.id ?? null) : null,
+      // Narration and choices clear every portrait; only spoken lines show the cast.
+      showCast: this.mode === 'story' && n?.type === 'line' && n.speaker !== 'System',
       width,
       height: this.scale.height,
       top: 58,
@@ -1234,7 +1237,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     pg.lineStyle(3, PALETTE.ink, 1).strokeRoundedRect(this.panel.x, this.panel.y, this.panel.width, this.panel.height, 14);
     const s = this.stage;
     s.clear();
-    if (this.mode === 'story' && n?.type === 'line' && n.speaker !== 'System' && !art.hasCast && !art.castInBackdrop) {
+    if (this.mode === 'story' && n?.type === 'line' && n.speaker !== 'System' && !art.hasCast && !art.castInBackdrop && !art.embeds(SPEAKER_ROLE[n.speaker] ?? null)) {
       // Code-drawn portrait: head, hair and a coloured shirt per speaker.
       const cx = width * 0.5;
       const r = Math.min(stageH * 0.22, width * 0.14);

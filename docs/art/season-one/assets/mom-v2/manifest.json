@@ -1,0 +1,129 @@
+{
+  "version": 2,
+  "character": "mom",
+  "scope": "standalone_cutscene_portraits",
+  "defaultOutfit": "casual",
+  "defaultExpression": "neutral",
+  "animated": false,
+  "integrationTested": false,
+  "outfits": {
+    "casual": {
+      "sheet": "sheets/mom_casual.png",
+      "expressions": {
+        "neutral": {
+          "file": "portraits/mom_casual_neutral.png",
+          "sourceRect": {
+            "x": 0,
+            "y": 0,
+            "w": 512,
+            "h": 512
+          }
+        },
+        "laughing": {
+          "file": "portraits/mom_casual_laughing.png",
+          "sourceRect": {
+            "x": 512,
+            "y": 0,
+            "w": 512,
+            "h": 512
+          }
+        },
+        "worried": {
+          "file": "portraits/mom_casual_worried.png",
+          "sourceRect": {
+            "x": 1024,
+            "y": 0,
+            "w": 512,
+            "h": 512
+          }
+        },
+        "firm": {
+          "file": "portraits/mom_casual_firm.png",
+          "sourceRect": {
+            "x": 0,
+            "y": 512,
+            "w": 512,
+            "h": 512
+          }
+        },
+        "reassuring": {
+          "file": "portraits/mom_casual_reassuring.png",
+          "sourceRect": {
+            "x": 512,
+            "y": 512,
+            "w": 512,
+            "h": 512
+          }
+        },
+        "proud": {
+          "file": "portraits/mom_casual_proud.png",
+          "sourceRect": {
+            "x": 1024,
+            "y": 512,
+            "w": 512,
+            "h": 512
+          }
+        }
+      }
+    },
+    "dressy": {
+      "sheet": "sheets/mom_dressy.png",
+      "expressions": {
+        "neutral": {
+          "file": "portraits/mom_dressy_neutral.png",
+          "sourceRect": {
+            "x": 0,
+            "y": 0,
+            "w": 512,
+            "h": 512
+          }
+        },
+        "laughing": {
+          "file": "portraits/mom_dressy_laughing.png",
+          "sourceRect": {
+            "x": 512,
+            "y": 0,
+            "w": 512,
+            "h": 512
+          }
+        },
+        "worried": {
+          "file": "portraits/mom_dressy_worried.png",
+          "sourceRect": {
+            "x": 1024,
+            "y": 0,
+            "w": 512,
+            "h": 512
+          }
+        },
+        "firm": {
+          "file": "portraits/mom_dressy_firm.png",
+          "sourceRect": {
+            "x": 0,
+            "y": 512,
+            "w": 512,
+            "h": 512
+          }
+        },
+        "reassuring": {
+          "file": "portraits/mom_dressy_reassuring.png",
+          "sourceRect": {
+            "x": 512,
+            "y": 512,
+            "w": 512,
+            "h": 512
+          }
+        },
+        "proud": {
+          "file": "portraits/mom_dressy_proud.png",
+          "sourceRect": {
+            "x": 1024,
+            "y": 512,
+            "w": 512,
+            "h": 512
+          }
+        }
+      }
+    }
+  }
+}

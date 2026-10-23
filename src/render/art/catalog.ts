@@ -11,6 +11,7 @@ import seasonOneRaw from '../../../docs/art/season-one/asset-manifest.json';
 import trainingRaw from '../../../docs/training/v1.2/asset-manifest.json';
 import { SEASON_ONE, sceneById } from '../../game/story/content';
 import type { FocusBox } from '../layout';
+import { MOM_REPLACED, momOutfit, momPortrait } from './momPortraits';
 
 export const ART_REVISION = 'graphics-v1.1';
 
@@ -47,6 +48,8 @@ export interface SceneVisual {
   readonly backgroundAssetId: string | null;
   readonly cast: readonly CastMember[];
   readonly continuityFlags: readonly string[];
+  /** Characters painted into the selected backdrop: never given a second, standalone portrait. */
+  readonly embeddedCharacters: readonly CastRole[];
   readonly revision: typeof ART_REVISION;
 }
 
@@ -165,10 +168,11 @@ export function sceneVisual(sceneId: unknown, appearance: 'boy' | 'girl' | null)
   const cast = s.castRoles.map((role): CastMember => {
     const outfit = s.wardrobeByRole[role]!;
     const visualId: VisualId | null = role === 'player' ? appearance : role;
+    if (role === 'caregiver') return { role, visualId, outfit: momOutfit(sceneId), assetId: allowedOrNull(momPortrait(sceneId, null)) };
     return { role, visualId, outfit, assetId: visualId ? variantAsset(visualId, outfit) : null };
   });
   const bg = s.backgroundAssetId && isAllowedAsset(s.backgroundAssetId) ? s.backgroundAssetId : null;
-  return { sceneId, presentation: s.presentation, backgroundAssetId: bg, cast, continuityFlags: s.continuityFlags, revision: ART_REVISION };
+  return withEmbedded({ sceneId, presentation: s.presentation, backgroundAssetId: bg, cast, continuityFlags: s.continuityFlags, embeddedCharacters: [], revision: ART_REVISION });
 }
 
 /** Story scene IDs with no visual binding (reported, never invented). */
@@ -177,10 +181,33 @@ export const unmappedScenes = (storySceneIds: readonly string[]): string[] => st
 /** Scene order used to prefetch the next scene's art. */
 export const PREFETCH_ORDER: readonly string[] = [...MAPPED_SCENE_IDS, ...SEASON_ONE.order];
 
-/** Mom's neutral expression; the Season One script has no per-line expression field yet. */
-export const MOM_PORTRAIT = 'mom-neutral';
-/** Backdrop already paints the cast (StoryScene draws no fallback portrait over it). */
+/** Retired standalone Mom portraits (Mom Replacement v2); never selected, loaded or used as a fallback. */
+export const RETIRED_MOM_PORTRAITS: readonly string[] = Object.keys(MOM_REPLACED);
+/** Backdrop already paints some of the cast (StoryScene draws no fallback portrait over it). */
 export const CAST_IN_BACKDROP = 'cast_in_backdrop';
+
+/**
+ * Who each painted backdrop already shows, per boy/girl variant (checked by eye against the art).
+ * Unlisted backdrops paint nobody. Never inferred from speaker text or file names.
+ */
+export const BACKDROP_EMBEDDED: Readonly<Record<string, readonly CastRole[]>> = {
+  'departure-boy': ['caregiver', 'player'],
+  'departure-girl': ['caregiver', 'player'],
+  'arrival-boy': ['caregiver', 'player'],
+  'arrival-girl': ['caregiver', 'player'],
+  's1-tank-boy': ['player', 'fish'],
+  's1-tank-girl': ['player', 'fish'],
+};
+
+const allowedOrNull = (id: string): string | null => (isAllowedAsset(id) ? id : null);
+
+/** Drops every cast member the backdrop already paints and records who is painted in. */
+function withEmbedded(v: SceneVisual): SceneVisual {
+  const embedded = (v.backgroundAssetId && BACKDROP_EMBEDDED[v.backgroundAssetId]) || [];
+  if (!embedded.length) return v;
+  const flags = v.continuityFlags.includes(CAST_IN_BACKDROP) ? v.continuityFlags : [...v.continuityFlags, CAST_IN_BACKDROP];
+  return { ...v, cast: v.cast.filter((c) => !embedded.includes(c.role)), continuityFlags: flags, embeddedCharacters: embedded };
+}
 
 /** Painted backdrops whose subject (child's face and Cloudy) must stay in view when cropped to fit. */
 export const BACKDROP_FOCUS: Readonly<Record<string, FocusBox>> = {
@@ -190,16 +217,19 @@ export const BACKDROP_FOCUS: Readonly<Record<string, FocusBox>> = {
 
 /**
  * Season One: backdrop from the scene's authored location; the player is always the saved boy/girl
- * (never a fixed illustrated character). Mom is cast with the owner's portrait in every scene where she speaks.
- * Cloudy scenes use the owner's aquarium painting for the saved boy/girl, which already shows the player and Cloudy.
+ * (never a fixed illustrated character). Mom is cast with her v2 portrait in every scene where she speaks, unless the
+ * backdrop already paints her (prologue car). Cloudy scenes use the owner's aquarium painting for the saved boy/girl,
+ * which already shows the player and Cloudy (see BACKDROP_EMBEDDED).
  */
 function seasonOneVisual(sceneId: string, appearance: 'boy' | 'girl' | null): SceneVisual | null {
   if (!SEASON_ONE.order.includes(sceneId)) return null;
   const sc = sceneById(sceneId)!;
   const allowed = (id: string | null): string | null => (id && isAllowedAsset(id) ? id : null);
-  const visual = (bg: string | null, cast: CastMember[], flags: string[] = []): SceneVisual => ({ sceneId, presentation: 'cutscene', backgroundAssetId: allowed(bg), cast, continuityFlags: ['season_one', ...flags], revision: ART_REVISION });
+  const visual = (bg: string | null, cast: CastMember[], flags: string[] = []): SceneVisual =>
+    withEmbedded({ sceneId, presentation: 'cutscene', backgroundAssetId: allowed(bg), cast, continuityFlags: ['season_one', ...flags], embeddedCharacters: [], revision: ART_REVISION });
+  // Mom keeps one outfit for the whole scene; StoryArt switches her expression per line.
   const mom: CastMember[] = sc.nodes.some((n) => n.type === 'line' && SPEAKER_ROLE[n.speaker] === 'caregiver')
-    ? [{ role: 'caregiver', visualId: 'caregiver', outfit: 'home', assetId: allowed(MOM_PORTRAIT) }]
+    ? [{ role: 'caregiver', visualId: 'caregiver', outfit: momOutfit(sceneId), assetId: allowed(momPortrait(sceneId, null)) }]
     : [];
   if (sc.background === 'prologue') {
     const kind = sceneId === 'S1_PRO_DEPART' ? 'departure' : 'arrival';
@@ -209,7 +239,7 @@ function seasonOneVisual(sceneId: string, appearance: 'boy' | 'girl' | null): Sc
   if (sc.background === 'home_v3') return visual(allowed('home-v3') ?? LOCATION.home.bg, [{ role: 'player', visualId: appearance, outfit: 'home', assetId: appearance ? variantAsset(appearance, 'home') : null }, ...mom]);
   if (sc.background === 'aquarium') {
     const painted = appearance ? allowed(`s1-tank-${appearance}`) : null;
-    if (painted) return visual(painted, mom, [CAST_IN_BACKDROP]);
+    if (painted) return visual(painted, mom);
     return visual('s1-bedroom-tank', [
       { role: 'player', visualId: appearance, outfit: 'tank', assetId: appearance ? allowed(`player-${appearance}-down`) : null },
       { role: 'fish', visualId: 'fish', outfit: 'tank', assetId: allowed('clownfish') },

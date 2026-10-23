@@ -1,5 +1,10 @@
 # Status
 
+## Mom Replacement v2 (owner package 2026-10-25, branch `devin/1792724543-mom-portraits-v2`, from `main` 4808b23, not merged, not deployed)
+- All standalone Mom portraits now use the v2 art: casual teal by default, burgundy only for listed dressier scenes (none in Weeks 1–5), one outfit per scene, expression per line. Mapping and coverage: `docs/art/season-one/MOM_V2.md`.
+- Characters painted into a backdrop (car: Mom + player; aquarium: player + Cloudy) never get a second portrait. Portraits show only on spoken lines; narration and choices clear them.
+- Story text, speakers, choices, rewards and gameplay unchanged. Phone emulation only, not tested on a real iPhone.
+
 
 ## Match Report + My Player (owner spec 2026-10-24, branch `devin/1792698553-player-dev-report`, stacked on PR #35, not merged, not deployed)
 - Match Report on the sunset art after every career match and from Match History; My Player on the bedroom art from the Week 5 home hub (and `?dev` Start).

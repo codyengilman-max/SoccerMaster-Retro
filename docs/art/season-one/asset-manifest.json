@@ -321,12 +321,12 @@
       "hasAlpha": true,
       "sha256": "2c60a9f66328562d3df0138b6e0152cbfa7ec5491973aada18cbb56856763d2b",
       "sizeBytes": 315987,
-      "status": "REFERENCE_APPROVED",
+      "status": "RETIRED_REPLACED_BY_MOM_V2",
       "continuityFlags": [
         "owner_supplied_2026_10_22"
       ],
       "use": "Mom in story cutscenes",
-      "runtime": true
+      "runtime": false
     },
     {
       "assetId": "mom-proud",
@@ -341,12 +341,12 @@
       "hasAlpha": true,
       "sha256": "3f77f04fe33c3c6c279642e304089ef6654e2ea0e06341391de3b0a9c4d248e4",
       "sizeBytes": 326605,
-      "status": "REFERENCE_APPROVED",
+      "status": "RETIRED_REPLACED_BY_MOM_V2",
       "continuityFlags": [
         "owner_supplied_2026_10_22"
       ],
       "use": "Mom in story cutscenes",
-      "runtime": true
+      "runtime": false
     },
     {
       "assetId": "mom-worried",
@@ -361,12 +361,12 @@
       "hasAlpha": true,
       "sha256": "1623cd9a0ab906b082350ff38c0ccac6bef9b7853e1170049e3b2746c983a9f5",
       "sizeBytes": 292398,
-      "status": "REFERENCE_APPROVED",
+      "status": "RETIRED_REPLACED_BY_MOM_V2",
       "continuityFlags": [
         "owner_supplied_2026_10_22"
       ],
       "use": "Mom in story cutscenes",
-      "runtime": true
+      "runtime": false
     },
     {
       "assetId": "mom-laughing",
@@ -381,12 +381,12 @@
       "hasAlpha": true,
       "sha256": "6b93bfa96a9d804c3490f4559d6b1d23620b011bf9388ce80f37940610827dee",
       "sizeBytes": 290485,
-      "status": "REFERENCE_APPROVED",
+      "status": "RETIRED_REPLACED_BY_MOM_V2",
       "continuityFlags": [
         "owner_supplied_2026_10_22"
       ],
       "use": "Mom in story cutscenes",
-      "runtime": true
+      "runtime": false
     },
     {
       "assetId": "mom-firm",
@@ -401,12 +401,12 @@
       "hasAlpha": true,
       "sha256": "787b47a3d20b15a0842a0dd94e8172ae621c5b9c208f38b8fe496e3c3d7708f9",
       "sizeBytes": 327916,
-      "status": "REFERENCE_APPROVED",
+      "status": "RETIRED_REPLACED_BY_MOM_V2",
       "continuityFlags": [
         "owner_supplied_2026_10_22"
       ],
       "use": "Mom in story cutscenes",
-      "runtime": true
+      "runtime": false
     },
     {
       "assetId": "mom-sad",
@@ -421,12 +421,12 @@
       "hasAlpha": true,
       "sha256": "361faf3cbe9a7533668e82c3584e2a25bd7447ef523faa03214834dd1a25d45f",
       "sizeBytes": 322272,
-      "status": "REFERENCE_APPROVED",
+      "status": "RETIRED_REPLACED_BY_MOM_V2",
       "continuityFlags": [
         "owner_supplied_2026_10_22"
       ],
       "use": "Mom in story cutscenes",
-      "runtime": true
+      "runtime": false
     },
     {
       "assetId": "s1-tank-girl",
@@ -486,6 +486,246 @@
       "status": "REFERENCE_APPROVED",
       "continuityFlags": [],
       "use": "Week 5+ home menu backdrop (V3)",
+      "runtime": true
+    },
+    {
+      "assetId": "mom2-casual-neutral",
+      "path": "assets/mom-v2/portraits/mom_casual_neutral.png",
+      "sourcePath": "SoccerMaster_Mom_Replacement_v2_Devin.zip/Mom_Replacement_v2/portraits/mom_casual_neutral.png",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom (casual teal, neutral)",
+      "outfitId": "casual",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": true,
+      "sha256": "54826a39dba0c84438a75a2480a77458dd4485fddb682e0eca160589cb759f6f",
+      "sizeBytes": 370757,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_mom_v2"
+      ],
+      "use": "Mom standalone cutscene portrait (bottom-anchored on a transparent 2:3 canvas at runtime)",
+      "runtime": true
+    },
+    {
+      "assetId": "mom2-casual-laughing",
+      "path": "assets/mom-v2/portraits/mom_casual_laughing.png",
+      "sourcePath": "SoccerMaster_Mom_Replacement_v2_Devin.zip/Mom_Replacement_v2/portraits/mom_casual_laughing.png",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom (casual teal, laughing)",
+      "outfitId": "casual",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": true,
+      "sha256": "9898f455f19af98ed7c664bca1416f9047f6ccc529e1129c5b079910fd556faa",
+      "sizeBytes": 374813,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_mom_v2"
+      ],
+      "use": "Mom standalone cutscene portrait (bottom-anchored on a transparent 2:3 canvas at runtime)",
+      "runtime": true
+    },
+    {
+      "assetId": "mom2-casual-worried",
+      "path": "assets/mom-v2/portraits/mom_casual_worried.png",
+      "sourcePath": "SoccerMaster_Mom_Replacement_v2_Devin.zip/Mom_Replacement_v2/portraits/mom_casual_worried.png",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom (casual teal, worried)",
+      "outfitId": "casual",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": true,
+      "sha256": "2d5db9b674dbfe1708c37dbb8940751717c12160a95a5d7b03776aebad37a99d",
+      "sizeBytes": 368811,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_mom_v2"
+      ],
+      "use": "Mom standalone cutscene portrait (bottom-anchored on a transparent 2:3 canvas at runtime)",
+      "runtime": true
+    },
+    {
+      "assetId": "mom2-casual-firm",
+      "path": "assets/mom-v2/portraits/mom_casual_firm.png",
+      "sourcePath": "SoccerMaster_Mom_Replacement_v2_Devin.zip/Mom_Replacement_v2/portraits/mom_casual_firm.png",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom (casual teal, firm)",
+      "outfitId": "casual",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": true,
+      "sha256": "606518df6404fda0746720ecfe79c9db31bca5665074414028edec5b46100340",
+      "sizeBytes": 369693,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_mom_v2"
+      ],
+      "use": "Mom standalone cutscene portrait (bottom-anchored on a transparent 2:3 canvas at runtime)",
+      "runtime": true
+    },
+    {
+      "assetId": "mom2-casual-reassuring",
+      "path": "assets/mom-v2/portraits/mom_casual_reassuring.png",
+      "sourcePath": "SoccerMaster_Mom_Replacement_v2_Devin.zip/Mom_Replacement_v2/portraits/mom_casual_reassuring.png",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom (casual teal, reassuring)",
+      "outfitId": "casual",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": true,
+      "sha256": "d136d3d4ed51fc258fdc0ab126451778c1ec9ed1ce39b7ef08aa2abd6091aacd",
+      "sizeBytes": 381002,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_mom_v2"
+      ],
+      "use": "Mom standalone cutscene portrait (bottom-anchored on a transparent 2:3 canvas at runtime)",
+      "runtime": true
+    },
+    {
+      "assetId": "mom2-casual-proud",
+      "path": "assets/mom-v2/portraits/mom_casual_proud.png",
+      "sourcePath": "SoccerMaster_Mom_Replacement_v2_Devin.zip/Mom_Replacement_v2/portraits/mom_casual_proud.png",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom (casual teal, proud)",
+      "outfitId": "casual",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": true,
+      "sha256": "1164dd6959aba3c6d7055758aef952129ec3c3724ce7e4b186a202c8de7694ff",
+      "sizeBytes": 374565,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_mom_v2"
+      ],
+      "use": "Mom standalone cutscene portrait (bottom-anchored on a transparent 2:3 canvas at runtime)",
+      "runtime": true
+    },
+    {
+      "assetId": "mom2-dressy-neutral",
+      "path": "assets/mom-v2/portraits/mom_dressy_neutral.png",
+      "sourcePath": "SoccerMaster_Mom_Replacement_v2_Devin.zip/Mom_Replacement_v2/portraits/mom_dressy_neutral.png",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom (dressy burgundy, neutral)",
+      "outfitId": "dressy",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": true,
+      "sha256": "b1304b5b6e990a26d894d53024963b880d95531d3d3060e9cc903377a045eaf9",
+      "sizeBytes": 361826,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_mom_v2"
+      ],
+      "use": "Mom standalone cutscene portrait (bottom-anchored on a transparent 2:3 canvas at runtime)",
+      "runtime": true
+    },
+    {
+      "assetId": "mom2-dressy-laughing",
+      "path": "assets/mom-v2/portraits/mom_dressy_laughing.png",
+      "sourcePath": "SoccerMaster_Mom_Replacement_v2_Devin.zip/Mom_Replacement_v2/portraits/mom_dressy_laughing.png",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom (dressy burgundy, laughing)",
+      "outfitId": "dressy",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": true,
+      "sha256": "7b578b334cf5ed5c8c95112dcc01dd5f335b8f626b4f5e045b1ba7d6fe6cc14e",
+      "sizeBytes": 366546,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_mom_v2"
+      ],
+      "use": "Mom standalone cutscene portrait (bottom-anchored on a transparent 2:3 canvas at runtime)",
+      "runtime": true
+    },
+    {
+      "assetId": "mom2-dressy-worried",
+      "path": "assets/mom-v2/portraits/mom_dressy_worried.png",
+      "sourcePath": "SoccerMaster_Mom_Replacement_v2_Devin.zip/Mom_Replacement_v2/portraits/mom_dressy_worried.png",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom (dressy burgundy, worried)",
+      "outfitId": "dressy",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": true,
+      "sha256": "06fb9159fbce3514cc2d3a8bdcabf488e19b943c0d557ddaaa82591388c33a03",
+      "sizeBytes": 361357,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_mom_v2"
+      ],
+      "use": "Mom standalone cutscene portrait (bottom-anchored on a transparent 2:3 canvas at runtime)",
+      "runtime": true
+    },
+    {
+      "assetId": "mom2-dressy-firm",
+      "path": "assets/mom-v2/portraits/mom_dressy_firm.png",
+      "sourcePath": "SoccerMaster_Mom_Replacement_v2_Devin.zip/Mom_Replacement_v2/portraits/mom_dressy_firm.png",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom (dressy burgundy, firm)",
+      "outfitId": "dressy",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": true,
+      "sha256": "ea28f8f93ace835d7dd485952dd1049a40ee46f43da294c4f9c379b5e5932e9b",
+      "sizeBytes": 362770,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_mom_v2"
+      ],
+      "use": "Mom standalone cutscene portrait (bottom-anchored on a transparent 2:3 canvas at runtime)",
+      "runtime": true
+    },
+    {
+      "assetId": "mom2-dressy-reassuring",
+      "path": "assets/mom-v2/portraits/mom_dressy_reassuring.png",
+      "sourcePath": "SoccerMaster_Mom_Replacement_v2_Devin.zip/Mom_Replacement_v2/portraits/mom_dressy_reassuring.png",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom (dressy burgundy, reassuring)",
+      "outfitId": "dressy",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": true,
+      "sha256": "deff231d32a6ac5ca1ef2ebd449fc46a68ae342823844a4671df3b5e72a54c8f",
+      "sizeBytes": 377812,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_mom_v2"
+      ],
+      "use": "Mom standalone cutscene portrait (bottom-anchored on a transparent 2:3 canvas at runtime)",
+      "runtime": true
+    },
+    {
+      "assetId": "mom2-dressy-proud",
+      "path": "assets/mom-v2/portraits/mom_dressy_proud.png",
+      "sourcePath": "SoccerMaster_Mom_Replacement_v2_Devin.zip/Mom_Replacement_v2/portraits/mom_dressy_proud.png",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom (dressy burgundy, proud)",
+      "outfitId": "dressy",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": true,
+      "sha256": "ca33a5032f6267666fc8bc481469bcddb8159a808087e3b532bc754b970c538c",
+      "sizeBytes": 368852,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_mom_v2"
+      ],
+      "use": "Mom standalone cutscene portrait (bottom-anchored on a transparent 2:3 canvas at runtime)",
       "runtime": true
     }
   ]
