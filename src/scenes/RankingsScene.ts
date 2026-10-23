@@ -275,7 +275,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     if (this.centre) this.start = aroundStart(rows, HOME_TEAM, per);
     this.centre = false;
     const total = this.scope === 'national' ? TEAMS.length : stateCount(this.scope);
-    const next = nextOpponent(this.story!.league);
+    const next = nextOpponent(this.story!.league, this.week);
     if (this.query && !rows.length) this.text('rank-empty', 20, y + 8, `No team matches "${this.query}".`, b);
     this.start = Math.max(0, Math.min(this.start, Math.max(0, rows.length - per)));
     rows.slice(this.start, this.start + per).forEach((r, i) => {
@@ -405,7 +405,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     this.drawGraph(gx, gy, gw, gh, team);
     if (portrait) y += gh + 8;
     const res = teamResults(s, this.story!, team).slice(0, 4);
-    const up = upcoming(s, this.story!, team, 2);
+    const up = upcoming(s, this.story!, team, 2, this.week);
     const lines = [
       'RECENT RESULTS',
       ...(res.length ? res.map((r) => `Wk ${r.week} ${r.outcome} ${r.us}-${r.them} ${r.home ? 'v' : '@'} ${teamName(r.opponent)} · ${r.comp}${r.note ? ` (${r.note})` : ''}${r.counted ? '' : ' · not yet in rankings'}`) : ['No results yet.']),

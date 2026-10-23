@@ -278,7 +278,10 @@ export class MatchReportScene extends Phaser.Scene implements InspectableScene {
     const rk = parseRankings(await story.getRecord(rankingsKey(k.careerId)), k.careerId);
     const results = await storyResults(story, k.careerId);
     if (!rk.ok || !this.sys.isActive()) return;
-    this.impact = teamImpact(k, rk.value, results);
+    const ft = (await story.getRecord(`matchresult:${this.matchId}`)) as { home?: unknown; away?: unknown } | undefined;
+    if (!this.sys.isActive()) return;
+    const fullTime = ft && Number.isInteger(ft.home) && Number.isInteger(ft.away) ? { us: ft.home as number, them: ft.away as number } : null;
+    this.impact = teamImpact(k, rk.value, results, fullTime);
     this.card.label(M.competition, `${r.competition} - Week ${r.week} · TEAM IMPACT >`, 0.5, NAVY);
     this.card.hit('report-team-impact', M.competition, () => this.openFull(`TEAM IMPACT\n${this.impact!.join('\n')}`));
   }

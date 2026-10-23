@@ -136,7 +136,8 @@ describe('elo', () => {
   });
 });
 
-import { kickoffFor, leagueStandings, parseKickoff, searchRows, teamImpact } from '../src/game/rankings/views';
+import { kickoffFor, leagueStandings, nextOpponent, parseKickoff, searchRows, teamImpact, upcoming } from '../src/game/rankings/views';
+import { weekOfLeagueGame } from '../src/game/season/calendar';
 
 describe('views', () => {
   it('search keeps real ranks', () => {
@@ -172,5 +173,26 @@ describe('views', () => {
     const lines = teamImpact(k, after, story({ league: lg })).join('\n');
     expect(lines).toContain(`#${k.rank},`);
     expect(lines).toMatch(/National after week 3: #\d+ \(up \d+\)/);
+  });
+});
+
+describe('review fixes', () => {
+  it('a skipped league game is not the next opponent in later weeks', () => {
+    const f1 = fixtureForGame(1)!;
+    const f2 = fixtureForGame(2)!;
+    const opp = (f: typeof f1) => (f.home === 'batavia' ? f.away : f.home);
+    expect(nextOpponent(null, weekOfLeagueGame(1)!)).toBe(opp(f1));
+    expect(nextOpponent(null, weekOfLeagueGame(2)!)).toBe(opp(f2));
+    const s = newRankings(ID, SEED);
+    const up = upcoming(s, story(), 'batavia', 3, weekOfLeagueGame(2)!);
+    expect(up.every((u) => u.week >= weekOfLeagueGame(2)!)).toBe(true);
+  });
+  it('team impact uses the saved full-time score before the story writes the league result', () => {
+    const pre = settleThrough(newRankings(ID, SEED), story(), 2).state;
+    const f1 = fixtureForGame(1)!;
+    const k = kickoffFor(pre, 3, 'league', f1.home === 'batavia' ? f1.away : f1.home);
+    expect(teamImpact(k, pre, story()).join('|')).toContain('League: result not saved yet.');
+    expect(teamImpact(k, pre, story(), { us: 2, them: 1 }).join('|')).toContain('League: +3 points (table updates when you return to the story)');
+    expect(teamImpact(k, pre, story(), { us: 1, them: 1 }).join('|')).toContain('League: +1 point (');
   });
 });

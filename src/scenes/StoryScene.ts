@@ -450,7 +450,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     const st = teamById('batavia')!.state;
     const sr = rankIn(scopeTable(rk, st), 'batavia');
     const m = movement(rk, 'batavia');
-    const opp = nextOpponent(story.league);
+    const opp = nextOpponent(story.league, wk);
     this.seasonPanel = [
       'THIS SEASON',
       lg.started && me ? `League: ${me.rank}${me.rank === 1 ? 'st' : me.rank === 2 ? 'nd' : me.rank === 3 ? 'rd' : 'th'} of ${lg.rows.length} · ${me.points} pts (W${me.won} D${me.drawn} L${me.lost})` : 'League: season not started',

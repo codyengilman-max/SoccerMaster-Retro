@@ -51,12 +51,12 @@ export function rankHistory(s: RankingsState, team: string, scope: 'national' | 
   return s.snapshots.map((sn, i) => ({ week: sn.week, rank: scopeTable(s, scope, i).find((r) => r.team === team)?.rank ?? 0 })).filter((x) => x.rank > 0);
 }
 
-/** Batavia's next league opponent: its earliest fixture without a saved result. */
-export function nextLeagueFixture(lg: SeasonLeagueState | null): SeasonFixture | null {
-  return SEASON_FIXTURES.filter((f) => f.home === HOME_CLUB || f.away === HOME_CLUB).find((f) => !lg?.results[f.id]) ?? null;
+/** Batavia's next league opponent: its earliest fixture from `fromWeek` on without a saved result (a skipped game in an earlier week is not "next"). */
+export function nextLeagueFixture(lg: SeasonLeagueState | null, fromWeek = 0): SeasonFixture | null {
+  return SEASON_FIXTURES.filter((f) => (f.home === HOME_CLUB || f.away === HOME_CLUB) && ROUND_WEEK.get(f.round)! >= fromWeek).find((f) => !lg?.results[f.id]) ?? null;
 }
-export const nextOpponent = (lg: SeasonLeagueState | null): string | null => {
-  const f = nextLeagueFixture(lg);
+export const nextOpponent = (lg: SeasonLeagueState | null, fromWeek = 0): string | null => {
+  const f = nextLeagueFixture(lg, fromWeek);
   return f ? opponentOf(f) : null;
 };
 
@@ -73,11 +73,11 @@ export function teamResults(s: RankingsState, story: StoryResults, team: string)
   }).reverse();
 }
 export interface UpcomingLine { readonly week: number; readonly comp: string; readonly opponent: string; readonly home: boolean }
-/** Scheduled fixtures with no saved result yet. */
-export function upcoming(s: RankingsState, story: StoryResults, team: string, limit = 3): readonly UpcomingLine[] {
+/** Scheduled fixtures from `fromWeek` on with no saved result yet. */
+export function upcoming(s: RankingsState, story: StoryResults, team: string, limit = 3, fromWeek = 0): readonly UpcomingLine[] {
   const out: UpcomingLine[] = [];
-  for (const f of SEASON_FIXTURES) if ((f.home === team || f.away === team) && !story.league?.results[f.id]) out.push({ week: ROUND_WEEK.get(f.round)!, comp: 'League', opponent: f.home === team ? f.away : f.home, home: f.home === team });
-  for (const f of BG_FIXTURES) if ((f.home === team || f.away === team) && !s.background[f.id] && f.week >= s.startWeek) out.push({ week: f.week, comp: COMP_LABEL[f.competition], opponent: f.home === team ? f.away : f.home, home: f.home === team });
+  for (const f of SEASON_FIXTURES) if ((f.home === team || f.away === team) && !story.league?.results[f.id] && ROUND_WEEK.get(f.round)! >= fromWeek) out.push({ week: ROUND_WEEK.get(f.round)!, comp: 'League', opponent: f.home === team ? f.away : f.home, home: f.home === team });
+  for (const f of BG_FIXTURES) if ((f.home === team || f.away === team) && !s.background[f.id] && f.week >= Math.max(s.startWeek, fromWeek)) out.push({ week: f.week, comp: COMP_LABEL[f.competition], opponent: f.home === team ? f.away : f.home, home: f.home === team });
   return out.sort((a, b) => a.week - b.week).slice(0, limit);
 }
 
@@ -105,8 +105,11 @@ export function parseKickoff(raw: unknown): Kickoff | null {
 }
 const ord = (n: number): string => `${n}${n % 10 === 1 && n % 100 !== 11 ? 'st' : n % 10 === 2 && n % 100 !== 12 ? 'nd' : n % 10 === 3 && n % 100 !== 13 ? 'rd' : 'th'}`;
 
-/** TEAM IMPACT lines for one match, from saved results and the saved kickoff ranks only. */
-export function teamImpact(k: Kickoff, s: RankingsState, story: StoryResults): string[] {
+/**
+ * TEAM IMPACT lines for one match, from saved results and the saved kickoff ranks only. `fullTime` is
+ * this match's saved full-time score (Batavia first), used before the story has written it to the league.
+ */
+export function teamImpact(k: Kickoff, s: RankingsState, story: StoryResults, fullTime: { readonly us: number; readonly them: number } | null = null): string[] {
   const out: string[] = [`At kickoff (${k.snapshot === 's1-pre' ? 'Preseason' : `after week ${k.snapshot.replace('s1-w', '')}`}): ${teamName(k.team)} #${k.rank}, ${teamName(k.opponent)} #${k.opponentRank} of ${TEAMS.length}`];
   if (k.competition === 'league') {
     const f = SEASON_FIXTURES.find((x) => ROUND_WEEK.get(x.round) === k.week && (x.home === HOME_CLUB || x.away === HOME_CLUB));
@@ -118,6 +121,9 @@ export function teamImpact(k: Kickoff, s: RankingsState, story: StoryResults): s
       const done = SEASON_FIXTURES.filter((x) => x.round === f.round).every((x) => !!story.league?.results[x.id]);
       out.push(`League: +${us > them ? 3 : us === them ? 1 : 0} point${us === them ? '' : 's'} (${me.points} total)`);
       out.push(`League position: ${ord(me.rank)}${done ? '' : ' (provisional: other games this round are not finished)'}`);
+    } else if (fullTime) {
+      const { us, them } = fullTime;
+      out.push(`League: +${us > them ? 3 : us === them ? 1 : 0} point${us === them ? '' : 's'} (table updates when you return to the story)`);
     } else out.push('League: result not saved yet.');
   } else out.push('Tournament game: counts for national ratings, gives no league points.');
   const snap = s.snapshots.find((x) => x.week === k.week);
