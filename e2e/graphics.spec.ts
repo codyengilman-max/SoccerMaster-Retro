@@ -60,7 +60,8 @@ async function toDeparture(page: Page, mode: 'touch' | 'mouse'): Promise<Story> 
   await page.waitForTimeout(200);
   await press(page, 'id-confirm', mode);
   await story(page, (s) => s.scene !== 'S1_PRO_IDENTITY', 'identity confirmed');
-  return advanceTo(page, mode, (s) => s.scene === 'S1_PRO_DEPART' && s.type === 'line', 'departure line');
+  // Wait for the art layer too: it switches to the new scene on the next frame, after the story cursor.
+  return advanceTo(page, mode, (s) => s.scene === 'S1_PRO_DEPART' && s.type === 'line' && s.art?.scene === 'S1_PRO_DEPART', 'departure line');
 }
 async function toAquarium(page: Page, mode: 'touch' | 'mouse'): Promise<Story> {
   await toDeparture(page, mode);
