@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { fixtureForWeek, newLeague, parseLeague, recordPlayed, simulateThrough } from '../game/league/league';
-import { homeLearningDetail, rileyLine, weekAssignments, jungleResult, schoolRewardDetail, trainingLogDetail } from '../game/story/facts';
+import { homeLearningDetail, homeTasks, rileyLine, weekAssignments, jungleResult, schoolRewardDetail, trainingLogDetail } from '../game/story/facts';
 import type { CompetitorId } from '../game/jungle/sim';
 import { crossbarRules, decisionDetail, sceneById, trainingDetail } from '../game/story/content';
 import { seasonWeek, type TournamentId } from '../game/season/calendar';
@@ -429,7 +429,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private openHome(): void {
     if (!this.fresh()) return;
     this.navigating = true;
-    this.scene.start(SceneKeys.Career, { returnTo: 'story' });
+    this.scene.start(SceneKeys.Career, { returnTo: 'story', week: this.seasonWeekNo() ?? undefined });
   }
 
   /** Optional and never a story fact: the result is saved by Cloudy's own reducer action. */
@@ -1149,13 +1149,12 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         return;
       case 'home_hub': {
         const wk = this.seasonWeekNo() ?? 5;
-        const a = this.save ? weekAssignments(this.save, wk) : { juggling: false, skill: wk >= 7 ? 'passing' : 'firstTouch', skillDone: false, learning: wk >= 6 ? false : null, complete: false };
+        const a = this.save ? weekAssignments(this.save, wk) : { juggling: false, skill: wk >= 7 ? ('passing' as const) : ('firstTouch' as const), skillDone: false, learning: wk >= 6 ? false : null, complete: false };
         const trained = a.complete;
-        const skillLine = a.skill === 'passing' ? 'Control and passing work' : 'Control and first-touch work';
-        const learnLine = a.learning === null ? '' : `- Home learning (this week's planned home sessions): ${a.learning ? 'done' : 'not done yet'}\n`;
+        const tasks = homeTasks(a).map((t) => `- ${t.label}: ${t.done ? 'done' : 'not done yet'}\n`).join('');
         const talked = Object.values(s.runs).some((r) => r.sceneId === s.sceneId && r.adapter === 'home_hub' && r.detail === 'talk');
         setBody(
-          `${this.seasonPanel ? `${this.seasonPanel}\n\n` : ''}HOME MENU\nTraining (required) - log each in Home Training:\n- Juggling task: ${a.juggling ? 'done' : 'not done yet'}\n- ${skillLine}: ${a.skillDone ? 'done' : 'not done yet'}\n${learnLine}` +
+          `${this.seasonPanel ? `${this.seasonPanel}\n\n` : ''}HOME MENU\nTraining (required) - tap Training, then each task, and log it:\n${tasks}` +
             `${trained ? 'Weekly home training complete. Continue Week is unlocked.' : 'Continue Week unlocks after the required training.'}\nCloudy: Feed & Play and Cloudy: Talk are optional.` +
             rileyLine(wk, s.decisions['S1_W07_M']?.['riley']),
         );

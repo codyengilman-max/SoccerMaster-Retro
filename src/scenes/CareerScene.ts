@@ -5,6 +5,7 @@ import { ALL_ACTIVITIES, FOCUSES, SOURCES, activityById, focusById } from '../ga
 import { substitutes, workableFocuses } from '../game/career/planner';
 import { emptySave, levelSuggestion, TT12_SLOTS, type CareerSave, type Completion, type Tt12Slot } from '../game/career/state';
 import { CareerStore } from '../game/career/store';
+import { homeTasks, weekAssignments, type HomeTask } from '../game/story/facts';
 import { ATTRIBUTES, ATTRIBUTE_LABELS, LEVEL_NAMES, POSITIONS, SKILL_FAMILY_LABELS, type Activity, type Foot, type Position, type Rating } from '../game/career/types';
 import { CATEGORY_SKILL_AREA, COACHING_REVIEW, CURRICULUM, EMPTY_STATE, FAMILY_MAPPING, publishedLevels } from '../game/career/curriculum';
 import { prototypeFor, resolveSteps, stepAt } from '../game/career/curriculum/demos';
@@ -102,9 +103,12 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   private returnTo: 'story' | null = null;
+  /** Story week when opened from the story home menu (week 5+ lists that week's required tasks). */
+  private storyWeek: number | null = null;
 
-  create(data?: { open?: string; returnTo?: 'story' }): void {
+  create(data?: { open?: string; returnTo?: 'story'; week?: number }): void {
     this.returnTo = data?.returnTo === 'story' ? 'story' : null;
+    this.storyWeek = this.returnTo === 'story' && typeof data?.week === 'number' && data.week >= 5 ? data.week : null;
     this.navigating = false;
     this.reducedMotion = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.demoPaused = this.reducedMotion;
@@ -271,13 +275,20 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     switch (sc.kind) {
       case 'home': {
         const f = s.focusId ? focusById(s.focusId) : null;
+        const req = p ? this.requiredTasks() : [];
+        const reqBody = req.length
+          ? `REQUIRED THIS WEEK (story)\n${req.map((t) => `- ${t.label}: ${t.done ? 'done' : 'not done yet'}`).join('\n')}\n${
+              req.every((t) => t.done) ? 'All done. Tap Back to story, then Continue Week.' : 'Tap a task, pick any activity, then Log extra practice > Complete.'
+            }\n\n`
+          : '';
         return {
           title: p ? `${p.name} · Week ${s.week}` : 'Home Training',
           body: p
-            ? 'Team Training is your weekly session with the club. Home Practice is optional. Game attributes only change from what you do in 9v9 play.'
+            ? `${reqBody}Team Training is your weekly session with the club.${req.length ? '' : ' Home Practice is optional.'} Game attributes only change from what you do in 9v9 play.`
             : 'Create your player to start.',
           actions: p
             ? [
+                ...req.map((t) => ({ name: `req-${t.key}`, label: `${t.short}: ${t.done ? 'done' : 'to do'}`, on: t.done, onClick: () => this.go(this.taskScreen(t)) })),
                 { name: 'nav-focus', label: `This week: ${f ? f.label : 'choose a focus'}`, onClick: () => this.go({ kind: 'focus' }) },
                 { name: 'nav-team', label: `Team Training · ${s.teamTraining.some((r) => r.week === s.week) ? 'Complete' : 'Not started'}`, onClick: () => this.go({ kind: 'team' }) },
                 { name: 'nav-practice', label: `Home Practice (optional) · ${s.completedSessions.length} of 3`, onClick: () => this.go({ kind: 'practice' }) },
@@ -531,7 +542,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           title: `Log: ${a.title}`,
           body: `What you report is your own record. It earns participation credit for a scheduled session, never game attributes.\nPersonal best (${a.personalBestLabel ?? 'none'}): ${d.personalBest ?? '-'}\nReflection: ${d.reflection || '-'}`,
           actions: [
-            { name: 'log-complete', label: 'Complete', onClick: () => this.complete(a, sc.sessionId) },
+            { name: 'log-complete', label: 'Complete', onClick: () => void this.complete(a, sc.sessionId) },
             ...(['done', 'partly', 'skipped'] as const).map((c) => ({ name: `c-${c}`, label: { done: 'Did it', partly: 'Did some', skipped: 'Skipped' }[c], on: d.completion === c, onClick: () => set({ completion: c }) })),
             ...(['learning', 'improving', 'comfortable'] as const).map((r) => ({ name: `r-${r}`, label: r[0]!.toUpperCase() + r.slice(1), on: d.rating === r, onClick: () => set({ rating: r }) })),
             ...(['left', 'right', 'both'] as const).map((f) => ({ name: `f-${f}`, label: `Foot: ${f}`, on: d.foot === f, onClick: () => set({ foot: f }) })),
@@ -652,17 +663,32 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.render();
   }
 
-  private complete(a: Activity, sessionId: string | null): void {
+  private requiredTasks(): readonly HomeTask[] {
+    return this.storyWeek === null ? [] : homeTasks(weekAssignments(this.save, this.storyWeek));
+  }
+
+  private taskScreen(t: HomeTask): Screen {
+    if (t.key === 'learning') return this.save.plan ? { kind: 'sessions' } : { kind: 'focus' };
+    return { kind: 'library', family: t.key };
+  }
+
+  private async complete(a: Activity, sessionId: string | null): Promise<void> {
     const d = this.draft;
     if (!d) return;
+    const before = this.requiredTasks().filter((t) => !t.done).map((t) => t.key);
     const it = sessionId ? this.save.plan?.sessions.find((x) => x.id === sessionId)?.items.find((x) => x.activityId === a.id) : undefined;
-    void this.act(
+    const ok = await this.act(
       {
         type: 'log',
         entry: { id: d.completionId, sessionId, activityId: a.id, variantId: it?.variantId ?? null, contentVersion: a.version, completion: d.completion, rating: d.rating, foot: d.foot, personalBest: d.personalBest, reflection: d.reflection, easier: d.easier },
       },
-      sessionId ? { kind: 'sessions' } : { kind: 'journal' },
+      sessionId ? { kind: 'sessions' } : this.storyWeek !== null ? { kind: 'home' } : { kind: 'journal' },
     );
+    const ticked = this.requiredTasks().filter((t) => t.done && before.includes(t.key));
+    if (ok && ticked.length) {
+      this.toast = `Saved. ${ticked.map((t) => t.label).join(' and ')}: done for this week.`;
+      this.render();
+    }
   }
 
   private async exportSave(): Promise<void> {

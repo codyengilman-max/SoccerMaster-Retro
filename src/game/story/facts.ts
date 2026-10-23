@@ -86,6 +86,25 @@ export function weekAssignments(save: CareerSave, storyWeek: number): WeekAssign
   return { juggling, skill, skillDone, learning, complete: juggling && skillDone && learning !== false };
 }
 
+export interface HomeTask {
+  readonly key: 'juggling' | HomeSkill | 'learning';
+  readonly label: string;
+  /** Short button label in Home Training. */
+  readonly short: string;
+  readonly done: boolean;
+}
+
+/** The week's required home tasks, in the order the home menu and Home Training list them. */
+export function homeTasks(a: WeekAssignments): readonly HomeTask[] {
+  return [
+    { key: 'juggling', label: 'Juggling task', short: 'Juggling', done: a.juggling },
+    a.skill === 'passing'
+      ? { key: 'passing', label: 'Control and passing work', short: 'Passing', done: a.skillDone }
+      : { key: 'firstTouch', label: 'Control and first-touch work', short: 'First touch', done: a.skillDone },
+    ...(a.learning === null ? [] : [{ key: 'learning' as const, label: "Home learning (this week's planned home sessions)", short: 'Home sessions', done: a.learning }]),
+  ];
+}
+
 /**
  * Week 7 home menu: Riley's showcase request as saved availability, never a commitment. The script gives
  * no showcase time, so none is shown or invented, and nothing can conflict with training.

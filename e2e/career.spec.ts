@@ -159,3 +159,32 @@ test('career sandbox play records evidence for the career slot and returns clean
   expect(slot).toBe('H8');
   expect(errors).toEqual([]);
 });
+
+test('story Home Training lists the required tasks and logging them ticks them off', async ({ page }, info) => {
+  const mode = modeFor(info);
+  const errors = trackConsoleErrors(page);
+  page.on('dialog', (d) => void d.accept('Zoë'));
+  await openCareer(page, mode);
+  await pressElement(page, 'pos-MID', mode);
+  await until(page, (x) => x.screen === 'setup' && x.player === 'Zoë', 'player');
+  await page.evaluate(() => (window as unknown as { __SMR__: { game: { scene: { start(k: string, d: object): void } } } }).__SMR__.game.scene.start('career', { returnTo: 'story', week: 5 }));
+  let c = await until(page, (x) => x.status === 'ok' && x.screen === 'home' && x.text.includes('REQUIRED THIS WEEK'), 'required list');
+  expect(c.text).toContain('Juggling task: not done yet');
+  expect(c.text).toContain('Control and first-touch work: not done yet');
+  await fits(page);
+  for (const [task, label] of [['juggling', 'Juggling task'], ['firstTouch', 'Control and first-touch work']] as const) {
+    await pressElement(page, `req-${task}`, mode);
+    await until(page, (x) => x.screen === 'library', `${task} library`);
+    const first = Object.keys((await diagnostics(page)).layout!.elements).find((k) => k.startsWith('act-'))!;
+    await pressElement(page, first, mode);
+    await until(page, (x) => x.screen === 'activity', 'activity');
+    await pressElement(page, 'log-open', mode);
+    await until(page, (x) => x.screen === 'log', 'log form');
+    await pressElement(page, 'log-complete', mode);
+    c = await until(page, (x) => x.screen === 'home' && x.text.includes(`${label}: done`), `${task} ticked`);
+    expect(c.toast).toContain(`${label}: done for this week`);
+    await fits(page);
+  }
+  expect(c.text).toContain('All done. Tap Back to story, then Continue Week.');
+  expect(errors).toEqual([]);
+});
