@@ -214,10 +214,10 @@ export const BACKDROP_FOCUS: Readonly<Record<string, FocusBox>> = {
   's1-tank-boy': { x0: 0.2, y0: 0.23, x1: 0.85, y1: 0.48 },
   's1-tank-girl': { x0: 0.2, y0: 0.2, x1: 0.85, y1: 0.44 },
   // Car: Mom's face (left) and the player (rear seat) stay in view in landscape, since neither gets a portrait.
-  'departure-boy': { x0: 0.2, y0: 0.14, x1: 0.75, y1: 0.4 },
-  'departure-girl': { x0: 0.2, y0: 0.14, x1: 0.75, y1: 0.4 },
-  'arrival-boy': { x0: 0.2, y0: 0.14, x1: 0.75, y1: 0.4 },
-  'arrival-girl': { x0: 0.2, y0: 0.14, x1: 0.75, y1: 0.4 },
+  'departure-boy': { x0: 0.22, y0: 0.16, x1: 0.78, y1: 0.43 },
+  'departure-girl': { x0: 0.22, y0: 0.16, x1: 0.78, y1: 0.43 },
+  'arrival-boy': { x0: 0.22, y0: 0.16, x1: 0.78, y1: 0.43 },
+  'arrival-girl': { x0: 0.22, y0: 0.16, x1: 0.78, y1: 0.43 },
 };
 
 /**

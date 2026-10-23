@@ -42,4 +42,4 @@ choices and hand-offs clear them, and a scene change rebuilds the cast so nothin
 
 ## Car backdrop framing
 
-With no Mom portrait over the prologue car, `BACKDROP_FOCUS` now gives `departure-*` and `arrival-*` a focus box (`x 0.2–0.75`, `y 0.14–0.40`). It keeps Mom's painted face and the rear-seat player below the top bar and above the dialogue panel on every tested phone size, in both orientations. Before this change, the landscape crop cut off Mom's face; that problem was already in the old build. `tests/layout.test.ts` checks the box against each backdrop's real image size.
+With no Mom portrait over the prologue car, `BACKDROP_FOCUS` now gives `departure-*` and `arrival-*` a focus box (`x 0.22–0.78`, `y 0.16–0.43`). It keeps Mom's painted face and the rear-seat player below the top bar and above the dialogue panel on every tested phone size, in both orientations. Before this change, the landscape crop cut off Mom's face; that problem was already in the old build. `tests/layout.test.ts` checks the box against each backdrop's real image size.
