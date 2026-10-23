@@ -6,7 +6,8 @@ import { newRankings, parseRankings, settleThrough, type RankingsState, type Sto
 import type { StoryStore } from '../game/story/store';
 
 export const rankingsKey = (careerId: string): string => `rankings-s1:${careerId}`;
-export const kickoffKey = (run: string): string => `kickoff:${run}`;
+/** Keyed like the saved match report (MatchScene caps report IDs at 64 characters). */
+export const kickoffKey = (run: string): string => `kickoff:${run.slice(0, 64)}`;
 
 /** Same seed the story uses for its season records. */
 export function seasonSeed(careerId: string): number {
