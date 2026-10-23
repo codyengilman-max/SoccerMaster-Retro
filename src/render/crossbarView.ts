@@ -61,7 +61,21 @@ export function goalGeometry(v: CrossbarView) {
     rearRightBase: v.proj(h, gy + NET_DEPTH.ground, 0),
     /** Scoring band: the bar centre line widened by bar + ball radius, exactly as simulateShot sweeps it. */
     barBand: { top: v.proj(0, gy, C.barHeight + C.barRadius + C.ballRadius).y, bottom: v.proj(0, gy, C.barHeight - C.barRadius - C.ballRadius).y },
-    postWidth: Math.max(3, 2 * C.postRadius * v.proj(0, gy, 0).k),
+    /** Drawn frame thickness at true scale, so a ball drawn touching the bar is a ball the simulation says hit it. */
+    postWidth: Math.max(MIN_PX, 2 * C.postRadius * v.proj(0, gy, 0).k),
+    barWidth: Math.max(MIN_PX, 2 * C.barRadius * v.proj(0, gy, C.barHeight).k),
     spot: v.proj(0, 0, 0),
   };
+}
+
+/** Smallest drawn ball radius / frame width; below the true size only at extreme distances. */
+const MIN_PX = 1.5;
+
+/**
+ * Where and how big to draw the ball at world point `at`, at true scale. Behind the goal line the ball is
+ * drawn before the front frame, so a shot that clears the bar and drops into the net passes behind it.
+ */
+export function ballSprite(v: CrossbarView, at: readonly [number, number, number]): { readonly x: number; readonly y: number; readonly r: number; readonly behindFrame: boolean } {
+  const p = v.proj(at[0], at[1], at[2]);
+  return { x: p.x, y: p.y, r: Math.max(MIN_PX, CROSSBAR.ballRadius * p.k), behindFrame: at[1] > CROSSBAR.spotDistance };
 }

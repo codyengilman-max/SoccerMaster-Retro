@@ -22,7 +22,7 @@ import { PRONOUNS, renderText, validateName, type Gender } from '../game/story/i
 import { SEASON_RELEASED_WEEKS, awaitingRelease, createSession, currentNode, evaluatePredicate, outcomeOf, type StoryCommand, type StoryOutcome, type StorySession, type StoryState } from '../game/story/runtime';
 import { StoryStore } from '../game/story/store';
 import { pullFor, thresholdsFor, type Pull } from '../input';
-import { crossbarView, goalGeometry, type CrossbarView } from '../render/crossbarView';
+import { ballSprite, crossbarView, goalGeometry, type CrossbarView } from '../render/crossbarView';
 import { orientationOf } from '../render/layout';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspectable';
@@ -1007,7 +1007,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       const turn = slot?.round === 'warmup' ? 'Warm-up (does not count)' : slot?.round === 'sudden' ? 'Sudden death' : `Shot ${Math.min(3, main + 1)} of 3`;
       body = `${this.name()} ${points(c, 'player')} · ${this.opponent()} ${points(c, 'blake')} · ${turn}`;
       const last = this.lastShot;
-      const said = last ? `${last.who === 'blake' ? `${this.opponent()}: ` : ''}${OUTCOME_WORD[last.outcome]}${last.scored ? ' One point.' : ''}` : '';
+      const said = last ? `${last.who === 'blake' ? `${this.opponent()}: ` : ''}${OUTCOME_WORD[last.outcome]}${last.scored ? ' One point.' : ' No point.'}` : '';
       hint = this.anim ? '…' : slot?.participant === 'player' ? `${said ? `${said} ` : ''}Your kick: press, pull back, let go.` : slot ? `${said ? `${said} ` : ''}${this.opponent()} is shooting…` : said || 'Done.';
     } else if (n && this.state) {
       if (this.state.complete) {
@@ -1339,22 +1339,6 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       .lineBetween(g.rearRightTop.x, g.rearRightTop.y, g.rearRightBase.x, g.rearRightBase.y)
       .lineBetween(g.leftBase.x, g.leftBase.y, g.rearLeftBase.x, g.rearLeftBase.y)
       .lineBetween(g.rightBase.x, g.rightBase.y, g.rearRightBase.x, g.rearRightBase.y);
-    // Grounded front frame: contact shadows where the posts meet the grass, then posts and the bar joined at the corners.
-    s.fillStyle(PALETTE.shadow, 0.35).fillEllipse(g.leftBase.x, g.leftBase.y, lw * 3.2, lw * 1.1).fillEllipse(g.rightBase.x, g.rightBase.y, lw * 3.2, lw * 1.1);
-    s.lineStyle(lw + 3, PALETTE.ink, 0.85)
-      .lineBetween(g.leftBase.x, g.leftBase.y, g.leftTop.x, g.leftTop.y)
-      .lineBetween(g.leftTop.x, g.leftTop.y, g.rightTop.x, g.rightTop.y)
-      .lineBetween(g.rightTop.x, g.rightTop.y, g.rightBase.x, g.rightBase.y);
-    s.lineStyle(lw, PALETTE.cream, 1)
-      .lineBetween(g.leftBase.x, g.leftBase.y, g.leftTop.x, g.leftTop.y)
-      .lineBetween(g.leftTop.x, g.leftTop.y, g.rightTop.x, g.rightTop.y)
-      .lineBetween(g.rightTop.x, g.rightTop.y, g.rightBase.x, g.rightBase.y);
-    s.fillStyle(PALETTE.cream, 1).fillCircle(g.leftTop.x, g.leftTop.y, lw / 2).fillCircle(g.rightTop.x, g.rightTop.y, lw / 2);
-    if (HIT_DEBUG) {
-      // Diagnostic only (?debug&hitbox): the simulation's crossbar scoring band and goal-line span.
-      s.fillStyle(PALETTE.tomato, 0.35).fillRect(g.leftTop.x, g.barBand.top, g.rightTop.x - g.leftTop.x, g.barBand.bottom - g.barBand.top);
-      s.lineStyle(1, PALETTE.tomato, 1).lineBetween(g.leftBase.x, g.leftBase.y, g.rightBase.x, g.rightBase.y);
-    }
     const spot = g.spot;
     let at: readonly [number, number, number] = [0, 0, C.ballRadius];
     if (this.anim) {
@@ -1367,14 +1351,33 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       const f = Math.max(0, Math.min(1, u - i));
       at = [p0[0] + (p1[0] - p0[0]) * f, p0[1] + (p1[1] - p0[1]) * f, p0[2] + (p1[2] - p0[2]) * f];
     }
-    const ball = proj(at[0], at[1], at[2]);
+    const ball = ballSprite(v, at);
     const sh = proj(at[0], at[1], 0);
-    const br = Math.max(4, C.ballRadius * ball.k);
-    s.fillStyle(PALETTE.line, 0.9).fillEllipse(spot.x, spot.y, br * 2.6, br * 0.9);
+    const br = ball.r;
+    s.fillStyle(PALETTE.line, 0.9).fillEllipse(spot.x, spot.y, Math.max(10, br * 2.6), Math.max(3.5, br * 0.9));
     s.fillStyle(PALETTE.shadow, 0.35).fillEllipse(sh.x, sh.y + br * 0.3, br * 2.2, br * 0.8);
-    // A ball in front of the goal line is drawn over the frame; behind it, the bar already sits in front.
-    s.fillStyle(PALETTE.cream, 1).fillCircle(ball.x, ball.y, br);
-    s.lineStyle(2, PALETTE.ink, 1).strokeCircle(ball.x, ball.y, br);
+    // The ink rim sits inside the true radius, so the drawn edge is the ball's real edge.
+    const drawBall = (): void => void s.fillStyle(PALETTE.ink, 1).fillCircle(ball.x, ball.y, br).fillStyle(PALETTE.cream, 1).fillCircle(ball.x, ball.y, Math.max(0.75, br - 1));
+    // Behind the goal line the front frame is drawn over the ball; in front of it the ball is drawn over the frame.
+    if (ball.behindFrame) drawBall();
+    // Grounded front frame: contact shadows where the posts meet the grass, then posts and the bar joined at the corners.
+    s.fillStyle(PALETTE.shadow, 0.35).fillEllipse(g.leftBase.x, g.leftBase.y, lw * 3.2, lw * 1.1).fillEllipse(g.rightBase.x, g.rightBase.y, lw * 3.2, lw * 1.1);
+    s.lineStyle(lw, PALETTE.ink, 0.85)
+      .lineBetween(g.leftBase.x, g.leftBase.y, g.leftTop.x, g.leftTop.y)
+      .lineBetween(g.rightTop.x, g.rightTop.y, g.rightBase.x, g.rightBase.y);
+    s.lineStyle(Math.max(1, lw - 1), PALETTE.cream, 1)
+      .lineBetween(g.leftBase.x, g.leftBase.y, g.leftTop.x, g.leftTop.y)
+      .lineBetween(g.rightTop.x, g.rightTop.y, g.rightBase.x, g.rightBase.y);
+    // The bar is drawn at its own true thickness (the posts are a hair thicker by design: 0.05 m each).
+    s.lineStyle(g.barWidth, PALETTE.ink, 0.85).lineBetween(g.leftTop.x, g.leftTop.y, g.rightTop.x, g.rightTop.y);
+    s.lineStyle(Math.max(1, g.barWidth - 1), PALETTE.cream, 1).lineBetween(g.leftTop.x, g.leftTop.y, g.rightTop.x, g.rightTop.y);
+    s.fillStyle(PALETTE.cream, 1).fillCircle(g.leftTop.x, g.leftTop.y, Math.max(0.5, lw / 2 - 0.5)).fillCircle(g.rightTop.x, g.rightTop.y, Math.max(0.5, lw / 2 - 0.5));
+    if (HIT_DEBUG) {
+      // Diagnostic only (?debug&hitbox): the simulation's crossbar scoring band and goal-line span.
+      s.fillStyle(PALETTE.tomato, 0.35).fillRect(g.leftTop.x, g.barBand.top, g.rightTop.x - g.leftTop.x, g.barBand.bottom - g.barBand.top);
+      s.lineStyle(1, PALETTE.tomato, 1).lineBetween(g.leftBase.x, g.leftBase.y, g.rightBase.x, g.rightBase.y);
+    }
+    if (!ball.behindFrame) drawBall();
     const p = this.pull;
     if (p && !p.inCancel && this.aimFrom) {
       const room = Math.max(60, stageH - 64);
