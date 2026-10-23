@@ -213,6 +213,11 @@ function withEmbedded(v: SceneVisual): SceneVisual {
 export const BACKDROP_FOCUS: Readonly<Record<string, FocusBox>> = {
   's1-tank-boy': { x0: 0.2, y0: 0.23, x1: 0.85, y1: 0.48 },
   's1-tank-girl': { x0: 0.2, y0: 0.2, x1: 0.85, y1: 0.44 },
+  // Car: Mom's face (left) and the player (rear seat) stay in view in landscape, since neither gets a portrait.
+  'departure-boy': { x0: 0.2, y0: 0.08, x1: 0.75, y1: 0.45 },
+  'departure-girl': { x0: 0.2, y0: 0.08, x1: 0.75, y1: 0.45 },
+  'arrival-boy': { x0: 0.2, y0: 0.08, x1: 0.75, y1: 0.45 },
+  'arrival-girl': { x0: 0.2, y0: 0.08, x1: 0.75, y1: 0.45 },
 };
 
 /**
