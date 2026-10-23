@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { rileyLine, weekAssignments } from '../src/game/story/facts';
-import { decisionDetail, trainingDetail } from '../src/game/story/content';
+import { crossbarRules, decisionDetail, trainingDetail } from '../src/game/story/content';
 import { parseSave } from '../src/game/career/saveio';
 import { emptySave, reduce, type CareerSave, type JournalEntry } from '../src/game/career/state';
 import { selectSituations } from '../src/game/career/teamTraining';
@@ -111,6 +111,10 @@ describe('Weeks 6–7 (owner scripts): order, branches and saved choices', () =>
     const g = [...w5(lines, 'S1_W06_G'), ...w5(lines, 'S1_W07_G')].join('\n');
     for (const t of ['Talk later?', 'Walk with me?', 'Feels unfinished.', 'We should do that more.', 'useful moment', 'Next session']) expect(g).not.toContain(t);
     expect(s.complete).toBe(true);
+  });
+
+  it("recess Crossbar in weeks 6-7 is Sam's challenge and a tie stands as a draw", () => {
+    for (const sc of ['S1_W06_S', 'S1_W07_S']) expect(crossbarRules(sc), sc).toEqual({ opponent: 'Sam', warmup: 'always', sudden: false });
   });
 
   it('every choice is saved and shows its own reply', () => {

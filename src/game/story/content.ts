@@ -242,6 +242,9 @@ const CROSSBAR_RULES: Readonly<Record<string, CrossbarRules>> = {
   S1_W02_S: { opponent: 'Blake', warmup: 'choice', sudden: false },
   // V3 week 5: Sam's challenge, no warm-up choice in the scene; a tie stands ("Rematch next week").
   S1_W05_S: { opponent: 'Sam', warmup: 'always', sudden: false },
+  // Weeks 6-7: Sam's recess again (his reactions; "Rematch next week" / lunch line on a tie).
+  S1_W06_S: { opponent: 'Sam', warmup: 'always', sudden: false },
+  S1_W07_S: { opponent: 'Sam', warmup: 'always', sudden: false },
 };
 export const crossbarRules = (sceneId: string): CrossbarRules => CROSSBAR_RULES[sceneId] ?? { opponent: 'Blake', warmup: 'choice', sudden: true };
 
