@@ -135,3 +135,42 @@ describe('elo', () => {
     expect(performance(s, story(), 'next_horizon')).toMatchObject({ matches: 0, attack: null, defense: null, schedule: null });
   });
 });
+
+import { kickoffFor, leagueStandings, parseKickoff, searchRows, teamImpact } from '../src/game/rankings/views';
+
+describe('views', () => {
+  it('search keeps real ranks', () => {
+    const s = settleThrough(newRankings(ID, SEED), story(), 5).state;
+    const all = nationalTable(latest(s));
+    const hit = searchRows(all, 'arizona');
+    expect(hit.length).toBeGreaterThan(1);
+    for (const r of hit) expect(r.rank).toBe(all.find((x) => x.team === r.team)!.rank);
+  });
+  it('league table: season not started, then 3/1/0', () => {
+    expect(leagueStandings(newSeasonLeague(ID, SEED)).started).toBe(false);
+    const f1 = fixtureForGame(1)!;
+    const lg = (recordSeasonPlayed(newSeasonLeague(ID, SEED), f1.id, 1, 1) as { ok: true; state: ReturnType<typeof newSeasonLeague> }).state;
+    const t = leagueStandings(lg);
+    expect(t.started).toBe(true);
+    expect(t.rows.find((r) => r.club === 'batavia')!.points).toBe(1);
+    // Untouched teams are all level and share a rank.
+    const zero = t.rows.filter((r) => r.played === 0);
+    expect(new Set(zero.map((r) => r.rank)).size).toBe(1);
+  });
+  it('team impact keeps the kickoff rank and says when rankings are not settled yet', () => {
+    const pre = settleThrough(newRankings(ID, SEED), story(), 2).state;
+    const f1 = fixtureForGame(1)!;
+    const opp = f1.home === 'batavia' ? f1.away : f1.home;
+    const k = kickoffFor(pre, 3, 'league', opp);
+    expect(parseKickoff(JSON.parse(JSON.stringify(k)))).toEqual(k);
+    const lg = (recordSeasonPlayed(newSeasonLeague(ID, SEED), f1.id, 3, 0) as { ok: true; state: ReturnType<typeof newSeasonLeague> }).state;
+    const before = teamImpact(k, pre, story({ league: lg }));
+    expect(before.join('\n')).toContain('National rankings update after this matchweek.');
+    expect(before.join('\n'), before.join(' | ')).toContain('League: +3 points');
+    expect(before.join('\n')).toContain('provisional');
+    const after = settleThrough(pre, story({ league: lg }), 3).state;
+    const lines = teamImpact(k, after, story({ league: lg })).join('\n');
+    expect(lines).toContain(`#${k.rank},`);
+    expect(lines).toMatch(/National after week 3: #\d+ \(up \d+\)/);
+  });
+});

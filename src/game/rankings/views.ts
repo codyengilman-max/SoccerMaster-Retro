@@ -3,7 +3,7 @@ import { HOME_CLUB } from '../league/league';
 import { SEASON_FIXTURES, opponentOf, seasonTable, type SeasonFixture, type SeasonLeagueState } from '../season/league';
 import { BG_FIXTURES } from './background';
 import { ROUND_WEEK, nationalTable, stateTable, worldResults, type RankRow, type RankingsState, type StoryResults, type WorldResult } from './ratings';
-import { STATE_NAMES, TEAMS, teamById } from './teams';
+import { STATE_NAMES, TEAMS, teamById, teamName } from './teams';
 
 export interface StandingRow {
   readonly rank: number;
@@ -79,4 +79,53 @@ export function upcoming(s: RankingsState, story: StoryResults, team: string, li
   for (const f of SEASON_FIXTURES) if ((f.home === team || f.away === team) && !story.league?.results[f.id]) out.push({ week: ROUND_WEEK.get(f.round)!, comp: 'League', opponent: f.home === team ? f.away : f.home, home: f.home === team });
   for (const f of BG_FIXTURES) if ((f.home === team || f.away === team) && !s.background[f.id] && f.week >= s.startWeek) out.push({ week: f.week, comp: COMP_LABEL[f.competition], opponent: f.home === team ? f.away : f.home, home: f.home === team });
   return out.sort((a, b) => a.week - b.week).slice(0, limit);
+}
+
+/** Ranks at kickoff, saved once per match run so a later report never shows today's rank as the kickoff rank. */
+export interface Kickoff {
+  readonly v: 1;
+  readonly careerId: string;
+  readonly snapshot: string;
+  readonly week: number;
+  readonly competition: 'league' | 'tournament';
+  readonly team: string;
+  readonly rank: number;
+  readonly opponent: string;
+  readonly opponentRank: number;
+}
+export function kickoffFor(s: RankingsState, week: number, competition: Kickoff['competition'], opponent: string): Kickoff {
+  const snap = s.snapshots[s.snapshots.length - 1]!;
+  const t = nationalTable(snap);
+  const rk = (id: string) => t.find((r) => r.team === id)?.rank ?? 0;
+  return { v: 1, careerId: s.careerId, snapshot: snap.id, week, competition, team: HOME_CLUB, rank: rk(HOME_CLUB), opponent, opponentRank: rk(opponent) };
+}
+export function parseKickoff(raw: unknown): Kickoff | null {
+  const k = raw as Partial<Kickoff> | null;
+  return k && k.v === 1 && typeof k.careerId === 'string' && typeof k.snapshot === 'string' && typeof k.week === 'number' && typeof k.rank === 'number' && typeof k.opponent === 'string' && typeof k.opponentRank === 'number' && (k.competition === 'league' || k.competition === 'tournament') ? (k as Kickoff) : null;
+}
+const ord = (n: number): string => `${n}${n % 10 === 1 && n % 100 !== 11 ? 'st' : n % 10 === 2 && n % 100 !== 12 ? 'nd' : n % 10 === 3 && n % 100 !== 13 ? 'rd' : 'th'}`;
+
+/** TEAM IMPACT lines for one match, from saved results and the saved kickoff ranks only. */
+export function teamImpact(k: Kickoff, s: RankingsState, story: StoryResults): string[] {
+  const out: string[] = [`At kickoff (${k.snapshot === 's1-pre' ? 'Preseason' : `after week ${k.snapshot.replace('s1-w', '')}`}): ${teamName(k.team)} #${k.rank}, ${teamName(k.opponent)} #${k.opponentRank} of ${TEAMS.length}`];
+  if (k.competition === 'league') {
+    const f = SEASON_FIXTURES.find((x) => ROUND_WEEK.get(x.round) === k.week && (x.home === HOME_CLUB || x.away === HOME_CLUB));
+    const r = f ? story.league?.results[f.id] : undefined;
+    if (f && r) {
+      const us = f.home === HOME_CLUB ? r.homeGoals : r.awayGoals;
+      const them = f.home === HOME_CLUB ? r.awayGoals : r.homeGoals;
+      const me = leagueStandings(story.league).rows.find((x) => x.club === HOME_CLUB)!;
+      const done = SEASON_FIXTURES.filter((x) => x.round === f.round).every((x) => !!story.league?.results[x.id]);
+      out.push(`League: +${us > them ? 3 : us === them ? 1 : 0} point${us === them ? '' : 's'} (${me.points} total)`);
+      out.push(`League position: ${ord(me.rank)}${done ? '' : ' (provisional: other games this round are not finished)'}`);
+    } else out.push('League: result not saved yet.');
+  } else out.push('Tournament game: counts for national ratings, gives no league points.');
+  const snap = s.snapshots.find((x) => x.week === k.week);
+  if (!snap) out.push('National rankings update after this matchweek.');
+  else {
+    const now = nationalTable(snap).find((r) => r.team === k.team)?.rank ?? 0;
+    const d = k.rank - now;
+    out.push(`National after week ${k.week}: #${now} (${d > 0 ? `up ${d}` : d < 0 ? `down ${-d}` : 'no change'})`);
+  }
+  return out;
 }

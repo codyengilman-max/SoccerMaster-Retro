@@ -8,9 +8,9 @@ import { bataviaRecord, fixtureForSeasonWeek, newSeasonLeague, opponentOf, parse
 import { TOURNAMENTS, allFixtures, bataviaFinish, groupTable, nextBataviaFixture, newTournament, parseTournament, finalFixture, recordTournamentPlayed, bataviaResult, type TournamentState } from '../game/season/tournament';
 import { CLUB_WORLD } from '../game/story/clubs';
 import { latest, movement, nationalTable, rankIn } from '../game/rankings/ratings';
-import { stateCount, stateLabel, scopeTable, nextOpponent, leagueStandings } from '../game/rankings/views';
+import { kickoffFor, stateCount, stateLabel, scopeTable, nextOpponent, leagueStandings } from '../game/rankings/views';
 import { teamById, teamName as worldTeamName } from '../game/rankings/teams';
-import { settleRankings } from './rankingsData';
+import { kickoffKey, settleRankings } from './rankingsData';
 import type { Rect } from '../game';
 import { POSITION_SLOT } from '../game/career/player';
 import type { CareerSave } from '../game/career/state';
@@ -414,8 +414,14 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       const snap: Snapshot = { revision: s.revision, sessions: s.completedSessions.length, batches: s.batches.length, week: s.week };
       await this.store.putRecord(`run:${run}`, snap);
     }
+    const opp = MATCH_ADAPTERS.includes(kind) ? await this.matchOpponent(kind, run) : {};
+    const wk = this.seasonWeekNo();
+    if ((kind === 'league_match' || kind === 'tournament_match') && wk !== null && this.state && 'opponent' in opp && typeof opp.opponent === 'string' && (await this.store.getRecord(kickoffKey(run))) === undefined) {
+      const { state: rk } = await settleRankings(this.store, this.state.careerId, wk - 1, wk);
+      await this.store.putRecord(kickoffKey(run), kickoffFor(rk, wk, kind === 'league_match' ? 'league' : 'tournament', opp.opponent));
+    }
     this.navigating = true;
-    if (MATCH_ADAPTERS.includes(kind)) this.scene.start(SceneKeys.Formation, { career: true, returnTo: 'story', resultKey: run, ...(await this.matchOpponent(kind, run)) });
+    if (MATCH_ADAPTERS.includes(kind)) this.scene.start(SceneKeys.Formation, { career: true, returnTo: 'story', resultKey: run, ...opp });
     else this.scene.start(SceneKeys.Career, { returnTo: 'story', ...(kind === 'team_training' ? { open: 'team' } : {}) });
   }
 

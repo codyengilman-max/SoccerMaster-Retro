@@ -357,3 +357,6 @@ See the PR for exact counts. Unit tests cover swipe-vs-aim recognition, single p
 
 ## Next task
 Real-iPhone playtest of the coached sandbox, then M4 match flow so Coach Moments can run in real matches (halves, restarts, clock).
+
+## Rankings (League, National, Team Profile)
+- 120-team registry, background season, Elo rankings with weekly snapshots, Rankings / Team Profile / League / Compare screens, THIS SEASON panel on the Home menu, TEAM IMPACT on the Match Report. See `docs/RANKINGS.md` and `docs/RANKINGS_REGISTRY.md`.
