@@ -478,6 +478,46 @@
       "height": 768,
       "masterSha256": "ca33a5032f6267666fc8bc481469bcddb8159a808087e3b532bc754b970c538c",
       "bytes": 57926
+    },
+    {
+      "assetId": "phone-blake",
+      "file": "phone-blake.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "d10a13a32b7e923983b1f7bbe0924dcb1ebb84a62790ea0bcb87d13d337e68a7",
+      "bytes": 357736
+    },
+    {
+      "assetId": "phone-sam",
+      "file": "phone-sam.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "033294d15f2232ced3fc80c4099248e975456e0c100cb5ce08aabdbd83fe77a4",
+      "bytes": 300608
+    },
+    {
+      "assetId": "phone-boy",
+      "file": "phone-boy.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "21b88c87ae117e38eb9d8dc9bc4ab9c9adbb87e68192fd1d0547ad9d9fced32a",
+      "bytes": 325052
+    },
+    {
+      "assetId": "phone-girl",
+      "file": "phone-girl.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "e0c0e2774f645c294956d4a441aefa3376cc810a5800c0606b6badd4ae10e9af",
+      "bytes": 369848
+    },
+    {
+      "assetId": "phone-mom-dressy",
+      "file": "phone-mom-dressy.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "907c80af721dff374500c49e74e9855e0925fc8d76729be52536da3f04fe91cc",
+      "bytes": 241390
     }
   ]
 }
