@@ -11,6 +11,7 @@ export const SceneKeys = {
   Cloudy: 'cloudy',
   Report: 'report',
   MyPlayer: 'myPlayer',
+  Rankings: 'rankings',
 } as const;
 
 export type SceneKey = (typeof SceneKeys)[keyof typeof SceneKeys];
