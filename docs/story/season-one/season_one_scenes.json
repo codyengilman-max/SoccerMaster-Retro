@@ -11027,6 +11027,1830 @@
     {
      "id": "end",
      "type": "end",
+     "next_scene": "S1_W06_S"
+    }
+   ]
+  },
+  {
+   "id": "S1_W06_S",
+   "version": "s1-v2.0",
+   "entry": "n10",
+   "background": "recess",
+   "nodes": [
+    {
+     "id": "n10",
+     "type": "line",
+     "speaker": "System",
+     "text": "Week 6. Recess.",
+     "next": "n9"
+    },
+    {
+     "id": "n9",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "Crossbar or Jungle?",
+     "next": "n8"
+    },
+    {
+     "id": "n8",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Which one won't you complain about?",
+     "next": "n7"
+    },
+    {
+     "id": "n7",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "Neither. Pick.",
+     "next": "activity"
+    },
+    {
+     "id": "activity",
+     "type": "choice",
+     "options": [
+      {
+       "id": "crossbar",
+       "label": "Crossbar Challenge",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "activity",
+         "value": "crossbar"
+        }
+       ],
+       "next": "a6"
+      },
+      {
+       "id": "jungle",
+       "label": "Jungle Ball",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "activity",
+         "value": "jungle"
+        }
+       ],
+       "next": "a6"
+      }
+     ]
+    },
+    {
+     "id": "a6",
+     "type": "activity_handoff",
+     "adapter": "crossbar",
+     "predicate": "chose:S1_W06_S.activity=crossbar",
+     "on_false": "a5",
+     "outcomes": {
+      "completed": "a5",
+      "declined": "a5",
+      "abandoned": "a5",
+      "interrupted": "a5"
+     }
+    },
+    {
+     "id": "a5",
+     "type": "activity_handoff",
+     "adapter": "jungle",
+     "predicate": "chose:S1_W06_S.activity=jungle",
+     "on_false": "b4",
+     "outcomes": {
+      "completed": "b4",
+      "declined": "b4",
+      "abandoned": "b4",
+      "interrupted": "b4"
+     }
+    },
+    {
+     "id": "b4",
+     "type": "branch",
+     "cases": [
+      {
+       "predicate": "result:S1_W06_S=WIN",
+       "next": "n1"
+      },
+      {
+       "predicate": "result:S1_W06_S=LOSS",
+       "next": "n2"
+      },
+      {
+       "predicate": "result:S1_W06_S=DRAW",
+       "next": "n3"
+      }
+     ],
+     "default": "end"
+    },
+    {
+     "id": "n3",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "Rematch next week.",
+     "next": "end"
+    },
+    {
+     "id": "n2",
+     "type": "line",
+     "speaker": "Player",
+     "text": "We're blaming the sun.",
+     "next": "end"
+    },
+    {
+     "id": "n1",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "Recruiting you was a mistake.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "S1_W06_T"
+    }
+   ]
+  },
+  {
+   "id": "S1_W06_T",
+   "version": "s1-v2.0",
+   "entry": "n19",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "n19",
+     "type": "line",
+     "speaker": "System",
+     "text": "Team Training. Code holds up a ball.",
+     "next": "n18"
+    },
+    {
+     "id": "n18",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "What's behind you?",
+     "next": "n17"
+    },
+    {
+     "id": "n17",
+     "type": "line",
+     "speaker": "System",
+     "text": "You turn.",
+     "next": "n16"
+    },
+    {
+     "id": "n16",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Now you know. Do that before this arrives.",
+     "next": "n15"
+    },
+    {
+     "id": "n15",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "What if it's Blake?",
+     "next": "n14"
+    },
+    {
+     "id": "n14",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Then definitely know where Blake is.",
+     "next": "n13"
+    },
+    {
+     "id": "n13",
+     "type": "line",
+     "speaker": "System",
+     "text": "Blake steals the ball from Sam.",
+     "next": "n12"
+    },
+    {
+     "id": "n12",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Last week: use the space. This week: find it sooner.",
+     "next": "question"
+    },
+    {
+     "id": "question",
+     "type": "choice",
+     "options": [
+      {
+       "id": "looking",
+       "label": "\"What am I looking for?\"",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "question",
+         "value": "looking"
+        }
+       ],
+       "next": "n7"
+      },
+      {
+       "id": "changes",
+       "label": "\"What if everything changes?\"",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "question",
+         "value": "changes"
+        }
+       ],
+       "next": "n9"
+      },
+      {
+       "id": "straight_back",
+       "label": "\"Can I just play it straight back?\"",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "question",
+         "value": "straight_back"
+        }
+       ],
+       "next": "n11"
+      }
+     ]
+    },
+    {
+     "id": "n11",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Can I just play it straight back?",
+     "next": "n10"
+    },
+    {
+     "id": "n10",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Sometimes. Know why you're doing it. Don't send someone else your problem.",
+     "next": "a5"
+    },
+    {
+     "id": "n9",
+     "type": "line",
+     "speaker": "Player",
+     "text": "What if everything changes?",
+     "next": "n8"
+    },
+    {
+     "id": "n8",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Then update the picture. One look isn't a lifetime subscription.",
+     "next": "a5"
+    },
+    {
+     "id": "n7",
+     "type": "line",
+     "speaker": "Player",
+     "text": "What am I looking for?",
+     "next": "n6"
+    },
+    {
+     "id": "n6",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Pressure. Teammates. Space. Enough information to give your first touch a job.",
+     "next": "a5"
+    },
+    {
+     "id": "a5",
+     "type": "activity_handoff",
+     "adapter": "team_training",
+     "predicate": "always",
+     "on_false": "b4",
+     "outcomes": {
+      "completed": "b4",
+      "declined": "b4",
+      "abandoned": "b4",
+      "interrupted": "b4"
+     }
+    },
+    {
+     "id": "b4",
+     "type": "branch",
+     "cases": [
+      {
+       "predicate": "detail:S1_W06_T=strong",
+       "next": "n1"
+      },
+      {
+       "predicate": "detail:S1_W06_T=execution",
+       "next": "n2"
+      },
+      {
+       "predicate": "detail:S1_W06_T=poor_decision",
+       "next": "n3"
+      }
+     ],
+     "default": "end"
+    },
+    {
+     "id": "n3",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Stop. What changed while the ball was travelling?",
+     "next": "end"
+    },
+    {
+     "id": "n2",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "You saw the right option. Now tidy up the execution.",
+     "next": "end"
+    },
+    {
+     "id": "n1",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "THERE! You already knew your next option. See how much time that gave you?",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "S1_W06_L"
+    }
+   ]
+  },
+  {
+   "id": "S1_W06_L",
+   "version": "s1-v2.0",
+   "entry": "n4",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "n4",
+     "type": "line",
+     "speaker": "System",
+     "text": "Leaving training.",
+     "next": "n3"
+    },
+    {
+     "id": "n3",
+     "type": "line",
+     "speaker": "Player",
+     "text": "You make it look easy.",
+     "next": "n2"
+    },
+    {
+     "id": "n2",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "That's why I explain it standing still.",
+     "next": "n1"
+    },
+    {
+     "id": "n1",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Now we make it work while you're moving. Check your home assignment. Bring me one thing that gets easier—and one that doesn't.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "S1_W06_H"
+    }
+   ]
+  },
+  {
+   "id": "S1_W06_H",
+   "version": "s1-v2.0",
+   "entry": "n12",
+   "background": "home_v3",
+   "nodes": [
+    {
+     "id": "n12",
+     "type": "line",
+     "speaker": "System",
+     "text": "Home. Your phone buzzes. A text from Sam.",
+     "next": "n11"
+    },
+    {
+     "id": "n11",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "Park tomorrow. Riley's coming. Apparently we're doing something that isn't soccer.",
+     "next": "park"
+    },
+    {
+     "id": "park",
+     "type": "choice",
+     "options": [
+      {
+       "id": "training_first",
+       "label": "\"Training first. What time?\"",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "park",
+         "value": "training_first"
+        }
+       ],
+       "next": "n8"
+      },
+      {
+       "id": "early",
+       "label": "\"I'll come early. Train afterward.\"",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "park",
+         "value": "early"
+        }
+       ],
+       "next": "n9"
+      },
+      {
+       "id": "not_this_time",
+       "label": "\"Not this time. Have fun.\"",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "park",
+         "value": "not_this_time"
+        }
+       ],
+       "next": "n10"
+      }
+     ]
+    },
+    {
+     "id": "n10",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Not this time. Have fun.",
+     "next": "a7"
+    },
+    {
+     "id": "n9",
+     "type": "line",
+     "speaker": "Player",
+     "text": "I'll come early. Train afterward.",
+     "next": "a7"
+    },
+    {
+     "id": "n8",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Training first. What time?",
+     "next": "a7"
+    },
+    {
+     "id": "a7",
+     "type": "activity_handoff",
+     "adapter": "home_hub",
+     "predicate": "always",
+     "on_false": "b6",
+     "outcomes": {
+      "completed": "b6"
+     }
+    },
+    {
+     "id": "b6",
+     "type": "branch",
+     "cases": [
+      {
+       "predicate": "detail:S1_W06_H=talk",
+       "next": "n5"
+      }
+     ],
+     "default": "end"
+    },
+    {
+     "id": "n5",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Code wants me looking over my shoulder.",
+     "next": "n4"
+    },
+    {
+     "id": "n4",
+     "type": "line",
+     "speaker": "Cloudy",
+     "text": "Tried it. Tail's still following me.",
+     "next": "n3"
+    },
+    {
+     "id": "n3",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Want me to watch it?",
+     "next": "n2"
+    },
+    {
+     "id": "n2",
+     "type": "line",
+     "speaker": "Cloudy",
+     "text": "Finally. Security.",
+     "next": "a1"
+    },
+    {
+     "id": "a1",
+     "type": "activity_handoff",
+     "adapter": "home_hub",
+     "predicate": "always",
+     "on_false": "end",
+     "outcomes": {
+      "completed": "end"
+     }
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "S1_W06_G"
+    }
+   ]
+  },
+  {
+   "id": "S1_W06_G",
+   "version": "s1-v2.0",
+   "entry": "n21",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "n21",
+     "type": "line",
+     "speaker": "System",
+     "text": "Weekend. League Game 4.",
+     "next": "n20"
+    },
+    {
+     "id": "n20",
+     "type": "line",
+     "speaker": "Blake",
+     "text": "Big plans?",
+     "next": "plans"
+    },
+    {
+     "id": "plans",
+     "type": "choice",
+     "options": [
+      {
+       "id": "play_well",
+       "label": "\"Play well. Yours?\"",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "plans",
+         "value": "play_well"
+        }
+       ],
+       "next": "n18"
+      },
+      {
+       "id": "full_name",
+       "label": "\"Avoid Code using my full name.\"",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "plans",
+         "value": "full_name"
+        }
+       ],
+       "next": "n19"
+      }
+     ]
+    },
+    {
+     "id": "n19",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Avoid Code using my full name.",
+     "next": "n17"
+    },
+    {
+     "id": "n18",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Play well. Yours?",
+     "next": "n17"
+    },
+    {
+     "id": "n17",
+     "type": "line",
+     "speaker": "System",
+     "text": "Code calls the team in.",
+     "next": "n16"
+    },
+    {
+     "id": "n16",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Get your picture early. Help the player on the ball. And when something goes wrong—next decision.",
+     "next": "a15"
+    },
+    {
+     "id": "a15",
+     "type": "activity_handoff",
+     "adapter": "league_match",
+     "predicate": "always",
+     "on_false": "b14",
+     "outcomes": {
+      "completed": "b14",
+      "declined": "b14",
+      "abandoned": "b14",
+      "interrupted": "b14"
+     }
+    },
+    {
+     "id": "b14",
+     "type": "branch",
+     "cases": [
+      {
+       "predicate": "result:S1_W06_G=WIN",
+       "next": "n10"
+      },
+      {
+       "predicate": "result:S1_W06_G=DRAW",
+       "next": "n11"
+      },
+      {
+       "predicate": "result:S1_W06_G=LOSS",
+       "next": "n13"
+      }
+     ],
+     "default": "b9"
+    },
+    {
+     "id": "n13",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "Talk later?",
+     "next": "n12"
+    },
+    {
+     "id": "n12",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Yeah.",
+     "next": "b9"
+    },
+    {
+     "id": "n11",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "Feels unfinished.",
+     "next": "b9"
+    },
+    {
+     "id": "n10",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "Good afternoon. Better if there are snacks.",
+     "next": "b9"
+    },
+    {
+     "id": "b9",
+     "type": "branch",
+     "cases": [
+      {
+       "predicate": "done:S1_W06_G",
+       "next": "n8"
+      }
+     ],
+     "default": "a4"
+    },
+    {
+     "id": "n8",
+     "type": "line",
+     "speaker": "System",
+     "text": "Code approaches.",
+     "next": "b7"
+    },
+    {
+     "id": "b7",
+     "type": "branch",
+     "cases": [
+      {
+       "predicate": "detail:S1_W06_G=learning_moment",
+       "next": "n6"
+      }
+     ],
+     "default": "n5"
+    },
+    {
+     "id": "n6",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "That moment we flagged—good reading of the game. We'll look at it next session.",
+     "next": "a4"
+    },
+    {
+     "id": "n5",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "We'll find a useful moment to review. There's always something.",
+     "next": "a4"
+    },
+    {
+     "id": "a4",
+     "type": "activity_handoff",
+     "adapter": "standings",
+     "predicate": "always",
+     "on_false": "n3",
+     "outcomes": {
+      "completed": "n3"
+     }
+    },
+    {
+     "id": "n3",
+     "type": "line",
+     "speaker": "System",
+     "text": "Sam adds you to a group chat.",
+     "next": "n2"
+    },
+    {
+     "id": "n2",
+     "type": "line",
+     "speaker": "Riley",
+     "text": "Finally. Someone who might answer.",
+     "next": "n1"
+    },
+    {
+     "id": "n1",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "⚽",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "S1_W06_E"
+    }
+   ]
+  },
+  {
+   "id": "S1_W06_E",
+   "version": "s1-v2.0",
+   "entry": "n2",
+   "background": "neutral_home",
+   "nodes": [
+    {
+     "id": "n2",
+     "type": "line",
+     "speaker": "System",
+     "text": "End of week 6.",
+     "next": "a1"
+    },
+    {
+     "id": "a1",
+     "type": "activity_handoff",
+     "adapter": "week_close",
+     "predicate": "always",
+     "on_false": "end",
+     "outcomes": {
+      "completed": "end"
+     }
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "S1_W07_M"
+    }
+   ]
+  },
+  {
+   "id": "S1_W07_M",
+   "version": "s1-v2.0",
+   "entry": "n16",
+   "background": "neutral_school",
+   "nodes": [
+    {
+     "id": "n16",
+     "type": "line",
+     "speaker": "System",
+     "text": "Week 7. School.",
+     "next": "n15"
+    },
+    {
+     "id": "n15",
+     "type": "line",
+     "speaker": "System",
+     "text": "Blake scrolls through Next Horizon's weekend clips, tapping the heart on another one.",
+     "next": "n14"
+    },
+    {
+     "id": "n14",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "You scouting them or joining the fan club?",
+     "next": "n13"
+    },
+    {
+     "id": "n13",
+     "type": "line",
+     "speaker": "System",
+     "text": "Blake locks the phone.",
+     "next": "n12"
+    },
+    {
+     "id": "n12",
+     "type": "line",
+     "speaker": "Blake",
+     "text": "They actually move the ball.",
+     "next": "clips"
+    },
+    {
+     "id": "clips",
+     "type": "choice",
+     "options": [
+      {
+       "id": "good_bits",
+       "label": "\"Easy when they only post the good bits.\"",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "clips",
+         "value": "good_bits"
+        }
+       ],
+       "next": "n9"
+      },
+      {
+       "id": "follow",
+       "label": "\"Since when do you follow them?\"",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "clips",
+         "value": "follow"
+        }
+       ],
+       "next": "n11"
+      }
+     ]
+    },
+    {
+     "id": "n11",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Since when do you follow them?",
+     "next": "n10"
+    },
+    {
+     "id": "n10",
+     "type": "line",
+     "speaker": "Blake",
+     "text": "Since they started playing decent soccer.",
+     "next": "n7"
+    },
+    {
+     "id": "n9",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Easy when they only post the good bits.",
+     "next": "n8"
+    },
+    {
+     "id": "n8",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "My highlights would be incredible if we deleted most of me.",
+     "next": "n7"
+    },
+    {
+     "id": "n7",
+     "type": "line",
+     "speaker": "System",
+     "text": "Riley catches you before class.",
+     "next": "n6"
+    },
+    {
+     "id": "n6",
+     "type": "line",
+     "speaker": "Riley",
+     "text": "Showcase Friday. Can you help set up?",
+     "next": "riley"
+    },
+    {
+     "id": "riley",
+     "type": "choice",
+     "options": [
+      {
+       "id": "check_training",
+       "label": "\"Send me the time. I'll check training.\"",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "riley",
+         "value": "check_training"
+        }
+       ],
+       "next": "n3"
+      },
+      {
+       "id": "show_time",
+       "label": "\"Can't help set up. Send me the show time?\"",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "riley",
+         "value": "show_time"
+        }
+       ],
+       "next": "n4"
+      },
+      {
+       "id": "cant",
+       "label": "\"I can't this week.\"",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "riley",
+         "value": "cant"
+        }
+       ],
+       "next": "n5"
+      }
+     ]
+    },
+    {
+     "id": "n5",
+     "type": "line",
+     "speaker": "Player",
+     "text": "I can't this week.",
+     "next": "n2"
+    },
+    {
+     "id": "n4",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Can't help set up. Send me the show time?",
+     "next": "n2"
+    },
+    {
+     "id": "n3",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Send me the time. I'll check training.",
+     "next": "n2"
+    },
+    {
+     "id": "n2",
+     "type": "line",
+     "speaker": "Riley",
+     "text": "Okay. Just tell me before Friday.",
+     "next": "n1"
+    },
+    {
+     "id": "n1",
+     "type": "line",
+     "speaker": "System",
+     "text": "The bell rings. Blake checks the phone once more before putting it away.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "S1_W07_S"
+    }
+   ]
+  },
+  {
+   "id": "S1_W07_S",
+   "version": "s1-v2.0",
+   "entry": "n10",
+   "background": "recess",
+   "nodes": [
+    {
+     "id": "n10",
+     "type": "line",
+     "speaker": "System",
+     "text": "Recess.",
+     "next": "n9"
+    },
+    {
+     "id": "n9",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "Crossbar or Jungle?",
+     "next": "n8"
+    },
+    {
+     "id": "n8",
+     "type": "line",
+     "speaker": "Player",
+     "text": "You picking?",
+     "next": "n7"
+    },
+    {
+     "id": "n7",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "No. I need someone to blame.",
+     "next": "activity"
+    },
+    {
+     "id": "activity",
+     "type": "choice",
+     "options": [
+      {
+       "id": "crossbar",
+       "label": "Crossbar Challenge",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "activity",
+         "value": "crossbar"
+        }
+       ],
+       "next": "a6"
+      },
+      {
+       "id": "jungle",
+       "label": "Jungle Ball",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "activity",
+         "value": "jungle"
+        }
+       ],
+       "next": "a6"
+      }
+     ]
+    },
+    {
+     "id": "a6",
+     "type": "activity_handoff",
+     "adapter": "crossbar",
+     "predicate": "chose:S1_W07_S.activity=crossbar",
+     "on_false": "a5",
+     "outcomes": {
+      "completed": "a5",
+      "declined": "a5",
+      "abandoned": "a5",
+      "interrupted": "a5"
+     }
+    },
+    {
+     "id": "a5",
+     "type": "activity_handoff",
+     "adapter": "jungle",
+     "predicate": "chose:S1_W07_S.activity=jungle",
+     "on_false": "b4",
+     "outcomes": {
+      "completed": "b4",
+      "declined": "b4",
+      "abandoned": "b4",
+      "interrupted": "b4"
+     }
+    },
+    {
+     "id": "b4",
+     "type": "branch",
+     "cases": [
+      {
+       "predicate": "result:S1_W07_S=WIN",
+       "next": "n1"
+      },
+      {
+       "predicate": "result:S1_W07_S=LOSS",
+       "next": "n2"
+      },
+      {
+       "predicate": "result:S1_W07_S=DRAW",
+       "next": "n3"
+      }
+     ],
+     "default": "end"
+    },
+    {
+     "id": "n3",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "Lunch? Something I'm good at.",
+     "next": "end"
+    },
+    {
+     "id": "n2",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "We're keeping that between us.",
+     "next": "end"
+    },
+    {
+     "id": "n1",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "Please don't start giving speeches.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "S1_W07_T"
+    }
+   ]
+  },
+  {
+   "id": "S1_W07_T",
+   "version": "s1-v2.0",
+   "entry": "n25",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "n25",
+     "type": "line",
+     "speaker": "System",
+     "text": "Team Training. Code positions a defender between two teammates.",
+     "next": "n24"
+    },
+    {
+     "id": "n24",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Call for it.",
+     "next": "n23"
+    },
+    {
+     "id": "n23",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "HERE!",
+     "next": "n22"
+    },
+    {
+     "id": "n22",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Louder.",
+     "next": "n21"
+    },
+    {
+     "id": "n21",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "HERE!",
+     "next": "n20"
+    },
+    {
+     "id": "n20",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Did the defender disappear?",
+     "next": "n19"
+    },
+    {
+     "id": "n19",
+     "type": "line",
+     "speaker": "System",
+     "text": "Sam steps sideways.",
+     "next": "n18"
+    },
+    {
+     "id": "n18",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "THERE. Now your teammate can actually use you.",
+     "next": "question"
+    },
+    {
+     "id": "question",
+     "type": "choice",
+     "options": [
+      {
+       "id": "how_far",
+       "label": "\"How far should I move?\"",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "question",
+         "value": "how_far"
+        }
+       ],
+       "next": "n13"
+      },
+      {
+       "id": "follows",
+       "label": "\"What if the defender follows?\"",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "question",
+         "value": "follows"
+        }
+       ],
+       "next": "n15"
+      },
+      {
+       "id": "after_pass",
+       "label": "\"What do I do after I pass?\"",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "question",
+         "value": "after_pass"
+        }
+       ],
+       "next": "n17"
+      }
+     ]
+    },
+    {
+     "id": "n17",
+     "type": "line",
+     "speaker": "Player",
+     "text": "What do I do after I pass?",
+     "next": "n16"
+    },
+    {
+     "id": "n16",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Find your next job. Support underneath, move beyond, or hold useful space. Don't admire the pass.",
+     "next": "n11"
+    },
+    {
+     "id": "n15",
+     "type": "line",
+     "speaker": "Player",
+     "text": "What if the defender follows?",
+     "next": "n14"
+    },
+    {
+     "id": "n14",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Then you've moved a defender. Look at what opened for somebody else.",
+     "next": "n11"
+    },
+    {
+     "id": "n13",
+     "type": "line",
+     "speaker": "Player",
+     "text": "How far should I move?",
+     "next": "n12"
+    },
+    {
+     "id": "n12",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Far enough to open the lane. Close enough to help. Keep checking—you don't get a permanent parking space.",
+     "next": "n11"
+    },
+    {
+     "id": "n11",
+     "type": "line",
+     "speaker": "System",
+     "text": "Blake passes, stays put, then throws both hands up when the return ball doesn't come.",
+     "next": "n10"
+    },
+    {
+     "id": "n10",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Blake. You passed, then watched. Give them an angle.",
+     "next": "n9"
+    },
+    {
+     "id": "n9",
+     "type": "line",
+     "speaker": "Blake",
+     "text": "I was open.",
+     "next": "n8"
+    },
+    {
+     "id": "n8",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "You were calling. That's different. Move so they can find you.",
+     "next": "n7"
+    },
+    {
+     "id": "n7",
+     "type": "line",
+     "speaker": "System",
+     "text": "Blake drops both hands and moves. Code immediately turns back to the drill.",
+     "next": "n6"
+    },
+    {
+     "id": "n6",
+     "type": "line",
+     "speaker": "System",
+     "text": "The correction is over. Blake's expression says otherwise.",
+     "next": "a5"
+    },
+    {
+     "id": "a5",
+     "type": "activity_handoff",
+     "adapter": "team_training",
+     "predicate": "always",
+     "on_false": "b4",
+     "outcomes": {
+      "completed": "b4",
+      "declined": "b4",
+      "abandoned": "b4",
+      "interrupted": "b4"
+     }
+    },
+    {
+     "id": "b4",
+     "type": "branch",
+     "cases": [
+      {
+       "predicate": "detail:S1_W07_T=strong",
+       "next": "n1"
+      },
+      {
+       "predicate": "detail:S1_W07_T=execution",
+       "next": "n2"
+      },
+      {
+       "predicate": "detail:S1_W07_T=poor_decision",
+       "next": "n3"
+      }
+     ],
+     "default": "end"
+    },
+    {
+     "id": "n3",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Freeze. Can the player on the ball actually reach you?",
+     "next": "end"
+    },
+    {
+     "id": "n2",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "The option was right. Now clean up the execution.",
+     "next": "end"
+    },
+    {
+     "id": "n1",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "YES! You made your teammate's next decision easier. That's good soccer.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "S1_W07_A"
+    }
+   ]
+  },
+  {
+   "id": "S1_W07_A",
+   "version": "s1-v2.0",
+   "entry": "n4",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "n4",
+     "type": "line",
+     "speaker": "System",
+     "text": "After training. Code gathers the team.",
+     "next": "n3"
+    },
+    {
+     "id": "n3",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "At home, work on the touches that let you use those options. Both feet. Under control. A useful repetition beats ten rushed ones.",
+     "next": "n2"
+    },
+    {
+     "id": "n2",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Even with the bad foot?",
+     "next": "n1"
+    },
+    {
+     "id": "n1",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Especially the foot you keep insulting.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "S1_W07_H"
+    }
+   ]
+  },
+  {
+   "id": "S1_W07_H",
+   "version": "s1-v2.0",
+   "entry": "n17",
+   "background": "home_v3",
+   "nodes": [
+    {
+     "id": "n17",
+     "type": "line",
+     "speaker": "System",
+     "text": "Home. Mom finds you checking the week's schedule.",
+     "next": "n16"
+    },
+    {
+     "id": "n16",
+     "type": "line",
+     "speaker": "Mom",
+     "text": "Anything on there besides soccer?",
+     "next": "n15"
+    },
+    {
+     "id": "n15",
+     "type": "line",
+     "speaker": "Player",
+     "text": "School. Unfortunately.",
+     "next": "n14"
+    },
+    {
+     "id": "n14",
+     "type": "line",
+     "speaker": "Mom",
+     "text": "And people you like?",
+     "next": "plan"
+    },
+    {
+     "id": "plan",
+     "type": "choice",
+     "options": [
+      {
+       "id": "everything",
+       "label": "\"I'm trying to fit everything in.\"",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "plan",
+         "value": "everything"
+        }
+       ],
+       "next": "n9"
+      },
+      {
+       "id": "get_better",
+       "label": "\"I really want to get better.\"",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "plan",
+         "value": "get_better"
+        }
+       ],
+       "next": "n11"
+      },
+      {
+       "id": "help",
+       "label": "\"Could you help me plan it?\"",
+       "predicate": "always",
+       "effects": [
+        {
+         "op": "remember_choice",
+         "key": "plan",
+         "value": "help"
+        }
+       ],
+       "next": "n13"
+      }
+     ]
+    },
+    {
+     "id": "n13",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Could you help me plan it?",
+     "next": "n12"
+    },
+    {
+     "id": "n12",
+     "type": "line",
+     "speaker": "Mom",
+     "text": "Yep. Show me what's required first.",
+     "next": "a7"
+    },
+    {
+     "id": "n11",
+     "type": "line",
+     "speaker": "Player",
+     "text": "I really want to get better.",
+     "next": "n10"
+    },
+    {
+     "id": "n10",
+     "type": "line",
+     "speaker": "Mom",
+     "text": "I know. I want you to enjoy getting there, too.",
+     "next": "a7"
+    },
+    {
+     "id": "n9",
+     "type": "line",
+     "speaker": "Player",
+     "text": "I'm trying to fit everything in.",
+     "next": "n8"
+    },
+    {
+     "id": "n8",
+     "type": "line",
+     "speaker": "Mom",
+     "text": "Then leave some breathing room. Every minute doesn't need a job.",
+     "next": "a7"
+    },
+    {
+     "id": "a7",
+     "type": "activity_handoff",
+     "adapter": "home_hub",
+     "predicate": "always",
+     "on_false": "b6",
+     "outcomes": {
+      "completed": "b6"
+     }
+    },
+    {
+     "id": "b6",
+     "type": "branch",
+     "cases": [
+      {
+       "predicate": "detail:S1_W07_H=talk",
+       "next": "n5"
+      }
+     ],
+     "default": "end"
+    },
+    {
+     "id": "n5",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Working on being a better teammate.",
+     "next": "n4"
+    },
+    {
+     "id": "n4",
+     "type": "line",
+     "speaker": "Cloudy",
+     "text": "Good. I've been carrying this aquarium.",
+     "next": "n3"
+    },
+    {
+     "id": "n3",
+     "type": "line",
+     "speaker": "Player",
+     "text": "You're the only player.",
+     "next": "n2"
+    },
+    {
+     "id": "n2",
+     "type": "line",
+     "speaker": "Cloudy",
+     "text": "And somehow still underappreciated.",
+     "next": "a1"
+    },
+    {
+     "id": "a1",
+     "type": "activity_handoff",
+     "adapter": "home_hub",
+     "predicate": "always",
+     "on_false": "end",
+     "outcomes": {
+      "completed": "end"
+     }
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "S1_W07_G"
+    }
+   ]
+  },
+  {
+   "id": "S1_W07_G",
+   "version": "s1-v2.0",
+   "entry": "n20",
+   "background": "neutral_pitch",
+   "nodes": [
+    {
+     "id": "n20",
+     "type": "line",
+     "speaker": "System",
+     "text": "Weekend. League Game 5. Sam stretches beside you.",
+     "next": "n19"
+    },
+    {
+     "id": "n19",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "If I'm shouting and covered, ignore me.",
+     "next": "n18"
+    },
+    {
+     "id": "n18",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Can I get that in writing?",
+     "next": "n17"
+    },
+    {
+     "id": "n17",
+     "type": "line",
+     "speaker": "System",
+     "text": "Code calls everyone together.",
+     "next": "n16"
+    },
+    {
+     "id": "n16",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Help before you're needed. Give the player on the ball a picture worth looking at.",
+     "next": "a15"
+    },
+    {
+     "id": "a15",
+     "type": "activity_handoff",
+     "adapter": "league_match",
+     "predicate": "always",
+     "on_false": "b14",
+     "outcomes": {
+      "completed": "b14",
+      "declined": "b14",
+      "abandoned": "b14",
+      "interrupted": "b14"
+     }
+    },
+    {
+     "id": "b14",
+     "type": "branch",
+     "cases": [
+      {
+       "predicate": "result:S1_W07_G=WIN",
+       "next": "n10"
+      },
+      {
+       "predicate": "result:S1_W07_G=DRAW",
+       "next": "n11"
+      },
+      {
+       "predicate": "result:S1_W07_G=LOSS",
+       "next": "n13"
+      }
+     ],
+     "default": "b9"
+    },
+    {
+     "id": "n13",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "Walk with me?",
+     "next": "n12"
+    },
+    {
+     "id": "n12",
+     "type": "line",
+     "speaker": "Player",
+     "text": "Yeah.",
+     "next": "b9"
+    },
+    {
+     "id": "n11",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "Another one for the 'almost' collection.",
+     "next": "b9"
+    },
+    {
+     "id": "n10",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "We should do that more.",
+     "next": "b9"
+    },
+    {
+     "id": "b9",
+     "type": "branch",
+     "cases": [
+      {
+       "predicate": "done:S1_W07_G",
+       "next": "b8"
+      }
+     ],
+     "default": "a5"
+    },
+    {
+     "id": "b8",
+     "type": "branch",
+     "cases": [
+      {
+       "predicate": "detail:S1_W07_G=support_moment",
+       "next": "n7"
+      }
+     ],
+     "default": "n6"
+    },
+    {
+     "id": "n7",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "That support movement mattered. We'll look at how it helped the team.",
+     "next": "a5"
+    },
+    {
+     "id": "n6",
+     "type": "line",
+     "speaker": "Coach Code",
+     "text": "Next session, we'll look at where we gave each other options—and where we didn't.",
+     "next": "a5"
+    },
+    {
+     "id": "a5",
+     "type": "activity_handoff",
+     "adapter": "standings",
+     "predicate": "always",
+     "on_false": "n4",
+     "outcomes": {
+      "completed": "n4"
+     }
+    },
+    {
+     "id": "n4",
+     "type": "line",
+     "speaker": "System",
+     "text": "While everyone collects their bags, Blake opens another Next Horizon clip.",
+     "next": "n3"
+    },
+    {
+     "id": "n3",
+     "type": "line",
+     "speaker": "Sam",
+     "text": "You coming?",
+     "next": "n2"
+    },
+    {
+     "id": "n2",
+     "type": "line",
+     "speaker": "Blake",
+     "text": "In a minute.",
+     "next": "n1"
+    },
+    {
+     "id": "n1",
+     "type": "line",
+     "speaker": "System",
+     "text": "Blake taps the heart. You and Sam head toward the parking lot.",
+     "next": "end"
+    },
+    {
+     "id": "end",
+     "type": "end",
+     "next_scene": "S1_W07_E"
+    }
+   ]
+  },
+  {
+   "id": "S1_W07_E",
+   "version": "s1-v2.0",
+   "entry": "n2",
+   "background": "neutral_home",
+   "nodes": [
+    {
+     "id": "n2",
+     "type": "line",
+     "speaker": "System",
+     "text": "End of week 7.",
+     "next": "a1"
+    },
+    {
+     "id": "a1",
+     "type": "activity_handoff",
+     "adapter": "week_close",
+     "predicate": "always",
+     "on_false": "end",
+     "outcomes": {
+      "completed": "end"
+     }
+    },
+    {
+     "id": "end",
+     "type": "end",
      "next_scene": null
     }
    ]

@@ -62,3 +62,36 @@ export function homeAssignments(save: CareerSave): HomeAssignments {
   const firstTouch = done('firstTouch');
   return { juggling, firstTouch, complete: juggling && firstTouch };
 }
+
+export type HomeSkill = 'firstTouch' | 'passing';
+
+export interface WeekAssignments {
+  readonly juggling: boolean;
+  /** The week's assigned skill work: control/first touch (weeks 5-6) or control/passing (week 7). */
+  readonly skill: HomeSkill;
+  readonly skillDone: boolean;
+  /** Assigned home learning (weeks 6+): this week's planned home sessions all completed; null when not assigned. */
+  readonly learning: boolean | null;
+  readonly complete: boolean;
+}
+
+/** The week's required home training (owner scripts): week 5 juggling + first touch; 6 adds home learning; 7 swaps in passing. */
+export function weekAssignments(save: CareerSave, storyWeek: number): WeekAssignments {
+  const done = (family: string): boolean =>
+    save.journal.some((j) => j.week === save.week && j.completion === 'done' && activityById(j.activityId)?.skillFamilyId === family);
+  const skill: HomeSkill = storyWeek >= 7 ? 'passing' : 'firstTouch';
+  const juggling = done('juggling');
+  const skillDone = done(skill);
+  const learning = storyWeek >= 6 ? save.completedSessions.length >= CAREER_CONFIG.home.sessionsPerWeek : null;
+  return { juggling, skill, skillDone, learning, complete: juggling && skillDone && learning !== false };
+}
+
+/**
+ * Week 7 home menu: Riley's showcase request as saved availability, never a commitment. The script gives
+ * no showcase time, so none is shown or invented, and nothing can conflict with training.
+ */
+export function rileyLine(storyWeek: number, choice: string | undefined): string {
+  if (storyWeek !== 7 || (choice !== 'check_training' && choice !== 'show_time')) return '';
+  const asked = choice === 'check_training' ? 'help set up' : 'come to the show';
+  return `\nRiley's showcase (Friday): you said you'd check whether you can ${asked}. Riley hasn't sent the time yet, so nothing is confirmed.`;
+}

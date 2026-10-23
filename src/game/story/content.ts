@@ -242,8 +242,19 @@ const CROSSBAR_RULES: Readonly<Record<string, CrossbarRules>> = {
   S1_W02_S: { opponent: 'Blake', warmup: 'choice', sudden: false },
   // V3 week 5: Sam's challenge, no warm-up choice in the scene; a tie stands ("Rematch next week").
   S1_W05_S: { opponent: 'Sam', warmup: 'always', sudden: false },
+  // Weeks 6-7: Sam's recess again (his reactions; "Rematch next week" / lunch line on a tie).
+  S1_W06_S: { opponent: 'Sam', warmup: 'always', sudden: false },
+  S1_W07_S: { opponent: 'Sam', warmup: 'always', sudden: false },
 };
 export const crossbarRules = (sceneId: string): CrossbarRules => CROSSBAR_RULES[sceneId] ?? { opponent: 'Blake', warmup: 'choice', sudden: true };
 
 /** Story detail for a completed Team Training week, from its real grade (weekDelta: +2 / +1 / 0 or -1). */
 export const trainingDetail = (delta: number): 'strong' | 'steady' | 'struggled' => (delta >= 2 ? 'strong' : delta >= 1 ? 'steady' : 'struggled');
+
+/**
+ * Weeks 6+ Code reaction from the real grade: strong week; otherwise the evaluator's own "right choice,
+ * did not come off" evidence ('execution'); otherwise a poor week is a 'poor_decision'. A steady week
+ * with no such evidence gets no extra line. Older records without the evidence never claim it.
+ */
+export const decisionDetail = (rec: { readonly delta: number; readonly choiceMissed?: number }): 'strong' | 'execution' | 'poor_decision' | 'steady' =>
+  rec.delta >= 2 ? 'strong' : (rec.choiceMissed ?? 0) > 0 ? 'execution' : rec.delta <= 0 ? 'poor_decision' : 'steady';

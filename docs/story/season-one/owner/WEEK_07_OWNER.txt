@@ -1,0 +1,244 @@
+WEEK SEVEN — “LOUDER DOESN’T MEAN OPEN”
+League Game 5
+
+SCHOOL — Scrolling
+
+Blake scrolls through Next Horizon’s weekend clips, tapping the heart on another one.
+
+SAM: “You scouting them or joining the fan club?”
+
+Blake locks the phone.
+
+BLAKE: “They actually move the ball.”
+
+Choose:
+
+* “Easy when they only post the good bits.”
+* “Since when do you follow them?”
+
+If “Good bits”:
+
+SAM: “My highlights would be incredible if we deleted most of me.”
+
+If “Follow them”:
+
+BLAKE: “Since they started playing decent soccer.”
+
+Riley catches you before class.
+
+RILEY: “Showcase Friday. Can you help set up?”
+
+Choose:
+
+* “Send me the time. I’ll check training.”
+* “Can’t help set up. Send me the show time?”
+* “I can’t this week.”
+
+RILEY: “Okay. Just tell me before Friday.”
+
+The bell rings. Blake checks the phone once more before putting it away.
+
+Record the player’s response to Riley. Checking availability is not a confirmed commitment.
+
+⸻
+
+RECESS
+
+SAM: “Crossbar or Jungle?”
+
+PLAYER: “You picking?”
+
+SAM: “No. I need someone to blame.”
+
+Choose: Crossbar Challenge or Jungle Ball.
+
+Launch the existing minigame.
+
+* Strong performance — SAM: “Please don’t start giving speeches.”
+* Difficult performance — SAM: “We’re keeping that between us.”
+* Neutral result — SAM: “Lunch? Something I’m good at.”
+
+Apply the established weekly adjustment once.
+
+⸻
+
+TEAM TRAINING — Give Them an Option
+
+Code positions a defender between two teammates.
+
+CODE: “Call for it.”
+
+SAM: “HERE!”
+
+CODE: “Louder.”
+
+SAM: “HERE!”
+
+CODE: “Did the defender disappear?”
+
+Sam steps sideways.
+
+CODE: “THERE. Now your teammate can actually use you.”
+
+Choose your question:
+
+* “How far should I move?”
+* “What if the defender follows?”
+* “What do I do after I pass?”
+
+If “How far”:
+
+CODE: “Far enough to open the lane. Close enough to help. Keep checking—you don’t get a permanent parking space.”
+
+If “Defender follows”:
+
+CODE: “Then you’ve moved a defender. Look at what opened for somebody else.”
+
+If “After I pass”:
+
+CODE: “Find your next job. Support underneath, move beyond, or hold useful space. Don’t admire the pass.”
+
+In a brief scripted demonstration, Blake passes, stays put, then throws both hands up when the return ball doesn’t come.
+
+CODE: “Blake. You passed, then watched. Give them an angle.”
+
+BLAKE: “I was open.”
+
+CODE: “You were calling. That’s different. Move so they can find you.”
+
+Blake drops both hands and moves. Code immediately turns back to the drill.
+
+The correction is over. Blake’s expression says otherwise.
+
+Launch mandatory tactical training.
+
+Outfield focus: Move out of a defender’s cover shadow, create supporting angles, and recognize when movement opens space for another teammate.
+
+Goalkeeper focus: Adjust the supporting position behind possession and offer a usable return pass without abandoning appropriate defensive positioning.
+
+Evaluate decisions using the actual field situation.
+
+After a strong decision:
+
+CODE: “YES! You made your teammate’s next decision easier. That’s good soccer.”
+
+After a sound decision with poor execution:
+
+CODE: “The option was right. Now clean up the execution.”
+
+After a poor decision:
+
+CODE: “Freeze. Can the player on the ball actually reach you?”
+
+Award attributes from actual team-training performance.
+
+⸻
+
+AFTER TRAINING
+
+Code gathers the team.
+
+CODE: “At home, work on the touches that let you use those options. Both feet. Under control. A useful repetition beats ten rushed ones.”
+
+PLAYER: “Even with the bad foot?”
+
+CODE: “Especially the foot you keep insulting.”
+
+⸻
+
+HOME — Making Room
+
+Mom finds you checking the week’s schedule.
+
+MOM: “Anything on there besides soccer?”
+
+PLAYER: “School. Unfortunately.”
+
+MOM: “And people you like?”
+
+Choose:
+
+* “I’m trying to fit everything in.”
+* “I really want to get better.”
+* “Could you help me plan it?”
+
+If “Everything”:
+
+MOM: “Then leave some breathing room. Every minute doesn’t need a job.”
+
+If “Get better”:
+
+MOM: “I know. I want you to enjoy getting there, too.”
+
+If “Help”:
+
+MOM: “Yep. Show me what’s required first.”
+
+Any additional workload feedback must reflect actual training records. Missing records do not mean missed training.
+
+HOME MENU
+
+* Training — Required
+* Cloudy: Feed & Play — Optional
+* Cloudy: Talk — Optional
+* Continue Week — Unlocks after required training
+
+Training: Complete mandatory juggling, assigned control/passing work, and the week’s home learning. Use the existing program’s appropriate difficulty and recovery adjustments. Save progress and award attributes through verified completion.
+
+If Riley’s invitation is active, show its actual time alongside the schedule. The player can confirm a workable plan or decline. Only a real scheduling overlap creates a conflict.
+
+Feed & Play: Launch the aquarium minigame and return home.
+
+Optional Cloudy conversation:
+
+PLAYER: “Working on being a better teammate.”
+
+CLOUDY: “Good. I’ve been carrying this aquarium.”
+
+PLAYER: “You’re the only player.”
+
+CLOUDY: “And somehow still underappreciated.”
+
+Cloudy is optional and never blocks advancement.
+
+⸻
+
+LEAGUE GAME 5
+
+Sam stretches beside you.
+
+SAM: “If I’m shouting and covered, ignore me.”
+
+PLAYER: “Can I get that in writing?”
+
+Code calls everyone together.
+
+CODE: “Help before you’re needed. Give the player on the ball a picture worth looking at.”
+
+Play League Game 5. Show the actual match breakdown and earned progression.
+
+⸻
+
+AFTER THE MATCH
+
+* Win — SAM: “We should do that more.”
+* Draw — SAM: “Another one for the ‘almost’ collection.”
+* Loss — SAM: “Walk with me?” PLAYER: “Yeah.”
+
+If a recorded moment demonstrates useful support:
+
+CODE: “That support movement mattered. We’ll look at how it helped the team.”
+
+Otherwise:
+
+CODE: “Next session, we’ll look at where we gave each other options—and where we didn’t.”
+
+While everyone collects their bags, Blake opens another Next Horizon clip.
+
+SAM: “You coming?”
+
+BLAKE: “In a minute.”
+
+Blake taps the heart. You and Sam head toward the parking lot.
+
+END OF WEEK SEVEN

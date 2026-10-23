@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { BACKDROP_FOCUS, CAST_IN_BACKDROP, PREFETCH_ORDER, SPEAKER_ROLE, artAsset, isAllowedAsset, sceneVisual, type CastRole, type SceneVisual } from '../render/art/catalog';
+import { phoneAsset, phoneRoles, phoneStage } from '../render/art/phonePoses';
 import { momPortrait, momSceneAssets } from '../render/art/momPortraits';
 import { artTextureKey, artUrl } from '../render/art/urls';
 import { coverWithFocus } from '../render/layout';
@@ -30,7 +31,7 @@ export interface StoryArtFrame {
 }
 
 type CastState = 'shown' | 'loading' | 'gap' | 'failed';
-interface Slot { role: CastRole; assetId: string | null; img: Phaser.GameObjects.Image | null; box: Phaser.GameObjects.Graphics; label: Phaser.GameObjects.Text; state: CastState; x: number; placed: boolean }
+interface Slot { role: CastRole; base: string | null; phoneOnly: boolean; assetId: string | null; img: Phaser.GameObjects.Image | null; box: Phaser.GameObjects.Graphics; label: Phaser.GameObjects.Text; state: CastState; x: number; placed: boolean }
 
 /**
  * Cutscene backdrop + static portraits for StoryScene. Presentation only: reads the scene id, the saved
@@ -128,7 +129,9 @@ export class StoryArt {
     if (!v) return [];
     const cast = v.presentation === 'cutscene' ? v.cast : [];
     const mom = cast.some((c) => c.role === 'caregiver') ? momSceneAssets(v.sceneId).filter(isAllowedAsset) : [];
-    return [...new Set([v.backgroundAssetId, ...cast.map((c) => c.assetId), ...mom])].filter((x): x is string => x !== null);
+    const look = cast.find((c) => c.role === 'player')?.visualId;
+    const phones = phoneRoles(v.sceneId).map((r) => phoneAsset(r, look === 'boy' || look === 'girl' ? look : null)).filter((x): x is string => x !== null && isAllowedAsset(x));
+    return [...new Set([v.backgroundAssetId, ...cast.map((c) => c.assetId), ...mom, ...phones])].filter((x): x is string => x !== null);
   }
 
   private request(): void {
@@ -196,7 +199,7 @@ export class StoryArt {
         .setOrigin(0.5)
         .setDepth(-1)
         .setVisible(false);
-      const s: Slot = { role: c.role, assetId: c.assetId, img: null, box, label, state: c.assetId ? 'loading' : 'gap', x: 0, placed: false };
+      const s: Slot = { role: c.role, base: c.assetId, phoneOnly: c.outfit === 'phone', assetId: c.assetId, img: null, box, label, state: c.assetId ? 'loading' : 'gap', x: 0, placed: false };
       this.bindImage(s, false);
       return s;
     });
@@ -223,10 +226,12 @@ export class StoryArt {
 
   /** Mom's expression for the current line (her outfit is fixed for the scene). Stale or late textures never show. */
   private applyBeat(f: StoryArtFrame): void {
+    const stage = phoneStage(this.visual?.sceneId ?? null, f.nodeId ?? null);
     for (const s of this.slots) {
-      if (s.role !== 'caregiver' || !s.assetId) continue;
-      const want = momPortrait(this.visual?.sceneId ?? null, f.nodeId ?? null);
-      if (want === s.assetId || !isAllowedAsset(want)) continue;
+      if (!s.base) continue;
+      const onPhone = stage?.some((r) => r.role === s.role && r.phone) ?? false;
+      const want = onPhone ? phoneAsset(s.role, f.appearance ?? null) : s.role === 'caregiver' ? momPortrait(this.visual?.sceneId ?? null, f.nodeId ?? null) : s.base;
+      if (!want || want === s.assetId || !isAllowedAsset(want)) continue;
       s.assetId = want;
       const key = artTextureKey(want);
       if (s.img && this.scene.textures.exists(key)) {
@@ -278,8 +283,13 @@ export class StoryArt {
   }
 
   private placeCast(f: StoryArtFrame, entering: boolean, speakerChanged: boolean): void {
-    const n = this.slots.length;
-    if (!n) return;
+    if (!this.slots.length) return;
+    // On a phone moment only the characters it lists show; phone-only characters never show otherwise.
+    // Only those who can show take a place, so no more than three portraits ever share the screen.
+    const stage = phoneStage(this.visual?.sceneId ?? null, f.nodeId ?? null);
+    const staged = (s: Slot) => (stage ? stage.some((r) => r.role === s.role) : !s.phoneOnly);
+    const lanes = this.slots.filter(staged);
+    const n = Math.max(1, lanes.length);
     const room = Math.max(40, f.panelY - f.top);
     // Portraits are 2:3; show the top ~78% above the panel so heads never clip the top bar.
     let h = room / 0.78;
@@ -291,12 +301,12 @@ export class StoryArt {
     }
     const bottom = f.panelY + h * 0.22;
     this.slots.forEach((s, i) => {
-      s.x = Math.round(f.width * ((i + 1) / (n + 1)));
+      s.x = Math.round(f.width * ((Math.max(0, lanes.indexOf(s)) + 1) / (n + 1)));
       const speaking = this.speakerRole !== null && s.role === this.speakerRole;
       const anySpeaker = this.speakerRole !== null && this.slots.some((o) => o.role === this.speakerRole);
       // A character painted into the backdrop never gets a second portrait. Over a painting that already shows
       // some of the cast, the others (e.g. Mom over the aquarium) appear only while they speak.
-      const show = f.showCast && !this.embeds(s.role) && (!this.castInBackdrop || speaking);
+      const show = f.showCast && staged(s) && !this.embeds(s.role) && (!this.castInBackdrop || speaking);
       const dim = show && anySpeaker && !speaking;
       const alpha = show ? 1 : 0;
       const lift = speaking ? Math.round(h * 0.025) : 0;

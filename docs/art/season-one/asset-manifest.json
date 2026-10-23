@@ -727,6 +727,106 @@
       ],
       "use": "Mom standalone cutscene portrait (bottom-anchored on a transparent 2:3 canvas at runtime)",
       "runtime": true
+    },
+    {
+      "assetId": "phone-blake",
+      "path": "assets/phones/phone-blake.png",
+      "sourcePath": "owner chat attachment (Blake on phone)",
+      "type": "portrait",
+      "characterId": "blake",
+      "label": "Blake using a phone",
+      "outfitId": "phone",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "sha256": "d10a13a32b7e923983b1f7bbe0924dcb1ebb84a62790ea0bcb87d13d337e68a7",
+      "sizeBytes": 2429073,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_phone_pose"
+      ],
+      "use": "Shown only on story lines where this character is explicitly using a phone",
+      "runtime": true
+    },
+    {
+      "assetId": "phone-sam",
+      "path": "assets/phones/phone-sam.png",
+      "sourcePath": "owner chat attachment (Sam on phone)",
+      "type": "portrait",
+      "characterId": "sam",
+      "label": "Sam using a phone",
+      "outfitId": "phone",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "sha256": "033294d15f2232ced3fc80c4099248e975456e0c100cb5ce08aabdbd83fe77a4",
+      "sizeBytes": 1985708,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_phone_pose"
+      ],
+      "use": "Shown only on story lines where this character is explicitly using a phone",
+      "runtime": true
+    },
+    {
+      "assetId": "phone-boy",
+      "path": "assets/phones/phone-boy.png",
+      "sourcePath": "owner chat attachment (player (boy) on phone)",
+      "type": "portrait",
+      "characterId": "boy",
+      "label": "player (boy) using a phone",
+      "outfitId": "phone",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "sha256": "21b88c87ae117e38eb9d8dc9bc4ab9c9adbb87e68192fd1d0547ad9d9fced32a",
+      "sizeBytes": 2175036,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_phone_pose"
+      ],
+      "use": "Shown only on story lines where this character is explicitly using a phone",
+      "runtime": true
+    },
+    {
+      "assetId": "phone-girl",
+      "path": "assets/phones/phone-girl.png",
+      "sourcePath": "owner chat attachment (player (girl) on phone)",
+      "type": "portrait",
+      "characterId": "girl",
+      "label": "player (girl) using a phone",
+      "outfitId": "phone",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "sha256": "e0c0e2774f645c294956d4a441aefa3376cc810a5800c0606b6badd4ae10e9af",
+      "sizeBytes": 2448656,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_phone_pose"
+      ],
+      "use": "Shown only on story lines where this character is explicitly using a phone",
+      "runtime": true
+    },
+    {
+      "assetId": "phone-mom-dressy",
+      "path": "assets/phones/phone-mom-dressy.png",
+      "sourcePath": "owner chat attachment (Mom (dressy burgundy) on phone)",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom (dressy burgundy) using a phone",
+      "outfitId": "phone",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "sha256": "907c80af721dff374500c49e74e9855e0925fc8d76729be52536da3f04fe91cc",
+      "sizeBytes": 1704123,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_phone_pose"
+      ],
+      "use": "Shown only on story lines where this character is explicitly using a phone",
+      "runtime": true
     }
   ]
 }

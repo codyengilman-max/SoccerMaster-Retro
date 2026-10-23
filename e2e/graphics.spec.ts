@@ -1,4 +1,5 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 import { diagnostics, pressElement, trackConsoleErrors, waitForScene } from './helpers';
 
 type Cast = { role: string; assetId: string | null; state: string; visible: boolean; speaking: boolean };
@@ -146,7 +147,7 @@ test('Art Gallery is reachable from Review & Lab, lists every asset with its sta
     if (g.page.kind === 'gaps') expect(g.gaps).toBeGreaterThan(0);
     await press(page, 'gallery-next', mode);
   }
-  expect(seen.size).toBe(59); // 42 + v1.2 crossbar-schoolyard and training-bell94 + 12 Mom v2 portraits, 2 aquarium paintings and the V3 home menu
+  expect(seen.size).toBe(64); // 42 + v1.2 crossbar-schoolyard and training-bell94 + 12 Mom v2 portraits, 2 aquarium paintings, the V3 home menu and 5 phone poses
   await press(page, 'gallery-back', mode);
   await waitForScene(page, 'career');
   const career = (await diagnostics(page)).gameplay as { player: string | null; screen: string };
@@ -188,5 +189,28 @@ test('Mom v2: casual expression per line over an empty backdrop, cleared on narr
   await story(page, (x) => x.art!.backgroundShown && x.art!.cast.every((c) => c.state === 'shown'), 'aquarium loaded');
   expect(tank.art!.embedded).toEqual(['player', 'fish']);
   expect(shown(await story(page, (x) => x.art!.cast.some((c) => c.visible), 'mom shown'))).toEqual(['caregiver:mom2-casual-neutral']);
+  expect(errors).toEqual([]);
+});
+
+test('Phone poses: only the scripted phone lines show the matching character on a phone, nobody duplicated', async ({ page }, info) => {
+  const errors = trackConsoleErrors(page);
+  await toDeparture(page, modeFor(info));
+  const scenes = (JSON.parse(readFileSync('docs/story/season-one/season_one_scenes.json', 'utf8')) as { scenes: { id: string; nodes: { id: string; type: string; speaker?: string; text?: string }[] }[] }).scenes;
+  const node = (sid: string, speaker: string, text: string) => scenes.find((s) => s.id === sid)!.nodes.find((n) => n.type === 'line' && n.speaker === speaker && n.text!.startsWith(text))!.id;
+  const at = async (sid: string, speaker: string, text: string, shot: string) => {
+    await stage(page, sid, node(sid, speaker, text));
+    const s = await story(page, (x) => x.art!.backgroundShown && x.art!.cast.filter((c) => c.visible).every((c) => c.state === 'shown'), `${sid} ${shot} loaded`);
+    await page.screenshot({ path: info.outputPath(`${shot}.png`) });
+    return shown(s);
+  };
+  expect(await at('S1_W06_H', 'Sam', 'Park tomorrow.', 'w6-sam-text')).toEqual(['sam:phone-sam']);
+  expect(await at('S1_W06_H', 'Player', 'Training first.', 'w6-player-reply')).toEqual(['player:phone-girl']);
+  expect(await at('S1_W06_H', 'Cloudy', 'Tried it.', 'w6-cloudy')).not.toContain('sam:phone-sam');
+  expect(await at('S1_W06_G', 'Riley', 'Finally.', 'w6-group-riley')).toEqual(['player:phone-girl']);
+  expect(await at('S1_W06_G', 'Sam', '⚽', 'w6-group-sam')).toEqual(['sam:phone-sam']);
+  expect(await at('S1_W06_G', 'Blake', 'Big plans?', 'w6-blake-normal')).not.toContain('sam:phone-sam');
+  expect(await at('S1_W07_M', 'Sam', 'You scouting them', 'w7-blake-scrolling')).toEqual(['sam:sam-school', 'blake:phone-blake']);
+  expect(await at('S1_W07_M', 'Blake', 'They actually move the ball.', 'w7-blake-locked')).toContain('blake:blake');
+  expect(await at('S1_W07_G', 'Sam', 'You coming?', 'w7-after-match')).toEqual(['player:girl-match', 'sam:sam-match', 'blake:phone-blake']);
   expect(errors).toEqual([]);
 });

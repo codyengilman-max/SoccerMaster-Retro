@@ -55,13 +55,13 @@ function play(opts: Opts = {}): { s: StoryState; lines: string[] } {
 const w5 = (lines: string[], scene: string) => lines.filter((l) => l.startsWith(`${scene}|`)).map((l) => l.slice(scene.length + 1));
 
 describe('V3 week 5 (approved): order, branches and persisted choices', () => {
-  it('follows week 4 in the approved scene order and stops at the week 5 close', () => {
+  it('follows week 4 in the approved scene order and hands over to week 6', () => {
     const { s } = play();
     expect(s.complete).toBe(true);
     const order = s.completedScenes.filter((id) => id.startsWith('S1_W05_'));
     expect(order).toEqual(['S1_W05_M', 'S1_W05_S', 'S1_W05_T', 'S1_W05_A', 'S1_W05_H', 'S1_W05_G', 'S1_W05_E']);
     expect(s.completedScenes.indexOf('S1_W05_M')).toBe(s.completedScenes.indexOf('S1_W04_E') + 1);
-    expect(s.completedScenes.some((id) => /^S1_W(0[6-9]|1\d)_/.test(id))).toBe(false);
+    expect(s.completedScenes[s.completedScenes.indexOf('S1_W05_E') + 1]).toBe('S1_W06_S');
   });
 
   it('records the ambition and the park intention as story decisions only', () => {
