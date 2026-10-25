@@ -77,6 +77,9 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
   private footer: Rect = { x: 0, y: 0, width: 1, height: 1 };
   private portraitBox: Rect = { x: 0, y: 0, width: 1, height: 1 };
   private portraitLayout = true;
+  private bodyDropped = 0;
+  /** Tight panel with long text (e.g. a landscape hint): the portrait steps aside so the text gets the full width. */
+  private coachCompact = false;
   private stageIdx = -1;
   private title!: Phaser.GameObjects.Text;
   private body!: Phaser.GameObjects.Text;
@@ -176,7 +179,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     const key = artTextureKey(COACH_ART);
     const place = (): void => {
       if (!this.sys.isActive() || !this.textures.exists(key) || this.coach) return;
-      this.coach = this.add.image(0, 0, key).setDepth(2001).setCrop(150, 0, 230, 230).setOrigin(0, 0);
+      this.coach = this.add.image(0, 0, key).setDepth(2001).setCrop(150, 0, 230, 230).setOrigin(0, 0).setVisible(!this.coachCompact);
       this.layout();
     };
     if (this.textures.exists(key)) place();
@@ -224,7 +227,8 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       if (s.status === 'playing') s.update(Math.min(deltaMs / 1000, 0.1) * (s.drill?.phase === 'observe' ? 1 : this.speed));
       if (s.status === 'reflection') this.setScreen('reflection', '');
     }
-    this.walk += deltaMs / 1000;
+    // Poses only step while play runs, so Pause and the DECIDE freeze hold every player still.
+    if (!s || s.status === 'playing') this.walk += deltaMs / 1000;
     this.draw();
     this.panelUpdate();
   }
@@ -430,14 +434,24 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     const main = buttons.filter((b) => !b.small);
     const small = buttons.filter((b) => b.small);
     const sh = 40;
-    const textW0 = P.x + P.width - pad - (this.portraitBox.x + this.portraitBox.width + pad);
-    this.title.setWordWrapWidth(textW0);
-    this.body.setWordWrapWidth(textW0).setText(lines[0] ?? '');
-    const coachH = Math.max(this.portraitBox.height + pad * 2, pad + this.title.height + 4 + this.body.height + 6);
-    const room = P.height - coachH - (small.length ? sh + 6 : 0) - pad;
-    // One answer per row (like the mockup) when they fit at a comfortable height, otherwise two columns.
-    const cols = main.length >= 2 && room < main.length * 46 && P.width >= 260 ? 2 : 1;
-    const rows = Math.ceil(main.length / cols);
+    // The coaching text is sized first (hint cues and the LEARN result included); buttons take what is left, going to two
+    // columns, then a smaller body font, then the text's full width without the portrait, before any text line is dropped.
+    let room = 0;
+    let cols = 1;
+    let rows = 0;
+    let compact = false;
+    for (const [fs, full] of [[14, false], [13, false], [12, false], [12, true]] as const) {
+      compact = full;
+      const textW0 = full ? P.width - pad * 2 : P.x + P.width - pad - (this.portraitBox.x + this.portraitBox.width + pad);
+      this.title.setText(title).setWordWrapWidth(textW0);
+      this.body.setFontSize(fs).setWordWrapWidth(textW0).setText(lines.join('\n'));
+      const coachH = Math.max(full ? 0 : this.portraitBox.height + pad * 2, pad + this.title.height + 4 + this.body.height + 6);
+      room = P.height - coachH - (small.length ? sh + 6 : 0) - pad;
+      // One answer per row (like the mockup) when they fit at a comfortable height, otherwise two columns.
+      cols = main.length >= 2 && room < main.length * 46 && P.width >= 260 ? 2 : 1;
+      rows = Math.ceil(main.length / cols);
+      if (room >= rows * 42) break;
+    }
     const bh = rows ? Math.max(36, Math.min(50, Math.floor(room / rows) - 6)) : 0;
     const smallTop = P.y + P.height - pad - (small.length ? sh : 0);
     const top = smallTop - (small.length ? 6 : 0) - rows * (bh + 6);
@@ -452,7 +466,12 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     main.forEach((b, i) => place(b, P.x + pad + (i % cols) * (bw + pad), top + Math.floor(i / cols) * (bh + 6), bw, bh, 15));
     const sw = (P.width - pad * (small.length + 1)) / Math.max(1, small.length);
     small.forEach((b, i) => place(b, P.x + pad + i * (sw + pad), smallTop, sw, sh, 14));
-    const textX = this.portraitBox.x + this.portraitBox.width + pad;
+    if (compact !== this.coachCompact) {
+      this.coachCompact = compact;
+      this.coach?.setVisible(!compact);
+      this.drawChrome();
+    }
+    const textX = compact ? P.x + pad : this.portraitBox.x + this.portraitBox.width + pad;
     const textW = P.x + P.width - pad - textX;
     this.body.setWordWrapWidth(textW);
     this.title.setWordWrapWidth(textW);
@@ -476,7 +495,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
 
   /** The session objective in the header, trimmed with an ellipsis to the lines that fit. */
   private setObjective(text: string): void {
-    if (this.hObj.text === text || this.hObj.getData('full') === text) return;
+    if (this.hObj.getData('full') === text) return;
     this.hObj.setData('full', text).setText(text);
     const max = this.header.y + this.header.height - 4 - this.hObj.y;
     const words = text.split(' ');
@@ -490,10 +509,12 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
   private fitBody(lines: string[]): void {
     const all = lines.join('\n').split('\n');
     this.body.setText(all.join('\n'));
+    const wanted = all.length;
     while (all.length > 1 && this.body.height > this.bodyMax) {
       all.pop();
       this.body.setText(all.join('\n'));
     }
+    this.bodyDropped = wanted - all.length;
   }
 
   // ---- layout + drawing -------------------------------------------------------------------------
@@ -555,8 +576,10 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       pg.lineStyle(2, UI.gold, 1).strokeRect(r.x + 1, r.y + 1, r.width - 2, r.height - 2);
     }
     const pbx = this.portraitBox;
-    pg.fillStyle(UI.navyDeep, 1).fillRect(pbx.x, pbx.y, pbx.width, pbx.height);
-    pg.lineStyle(2, UI.gold, 1).strokeRect(pbx.x, pbx.y, pbx.width, pbx.height);
+    if (!this.coachCompact) {
+      pg.fillStyle(UI.navyDeep, 1).fillRect(pbx.x, pbx.y, pbx.width, pbx.height);
+      pg.lineStyle(2, UI.gold, 1).strokeRect(pbx.x, pbx.y, pbx.width, pbx.height);
+    }
     const F = this.footer;
     const cell = F.width / STAGES.length;
     this.stageText.forEach((t, i) => {
@@ -863,6 +886,9 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       sprite: this.me.visible ? (this.look?.set ?? null) : null,
       squadSprites: this.sprites.filter((im) => im.visible).map((im) => im.texture.key),
       bodyBottom: this.body.y + this.body.height,
+      bodyText: this.body.text,
+      bodyDropped: this.bodyDropped,
+      pose: this.walk,
       titleBottom: this.title.y + this.title.height,
       buttonsTop: Math.min(...this.buttons.map((b) => b.y - b.height / 2)),
       status: s?.status ?? null,
@@ -902,16 +928,18 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
   }
 }
 
-/** LEARN text: the decision verdict, then the result, kept apart; reasons read from the frozen moment. */
+/** LEARN text: the decision verdict, then the result, kept apart, then reasons read from the frozen moment (trimmed first). */
 export function learnLines(a: Attempt | undefined, fallback: string, timed: boolean): string[] {
   if (!a) return [fallback];
   const out: string[] = [];
   if (a.replay) out.push('Replay: practice only, not counted.');
   if (a.decision) {
     out.push(`Decision: ${a.decision.good ? 'a good read' : 'another option was stronger here'}${a.hinted ? ' (with the hint)' : ''}.`);
+    out.push(`Result: ${a.outcome || fallback}`);
     out.push(...a.decision.reasons.slice(0, timed ? 1 : 2).map((r) => `• ${r}`));
     const others = a.frozen.good.filter((g) => g.id !== a.optionId).map((g) => g.label);
     if (others.length) out.push(`${a.decision.good ? 'Also a good read' : 'Stronger here'}: ${others.join(' or ')} (cyan).`);
+    return out;
   }
   out.push(`Result: ${a.outcome || fallback}`);
   return out;

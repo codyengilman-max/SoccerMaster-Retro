@@ -164,6 +164,10 @@ test('team training v1.2: rounds 1-2 wait for the player; pause blocks decisions
   expect(idle.attempts).toBe(t.attempts);
   await pressElement(page, 'tt-pause', mode);
   t = await tt(page, (x) => x.status === 'paused', 'paused');
+  // Paused means still: player poses do not keep stepping.
+  const pose = ((await diagnostics(page)).gameplay as unknown as Loop).pose;
+  await page.waitForTimeout(700);
+  expect(((await diagnostics(page)).gameplay as unknown as Loop).pose, 'poses hold while paused').toBe(pose);
   expect((await diagnostics(page)).layout!.elements[`opt-${idle.options[0]!.id}`]).toBeUndefined();
   // Rotate while paused: the run survives and the half stays fully visible.
   const vp = page.viewportSize()!;
@@ -189,7 +193,21 @@ type Loop = Omit<TT, 'options'> & {
   header: { title: string; sub: string; objective: string | null }; decisions: { independent: number; assisted: number } | null;
   lastAttempt: { optionId: string | null; hinted: boolean; replay: boolean; good: boolean | null; goodIds: string[] } | null;
   textBottoms: { header: number; headerBottom: number; headerRight: number; headerEdge: number };
+  bodyText: string; bodyDropped: number; pose: number;
 };
+
+/** Runs `check` at the smaller supported phone sizes for this orientation, then restores the project viewport. */
+async function atSmallerSizes(page: Page, portrait: boolean, check: (l: Loop, size: string) => void): Promise<void> {
+  const home = page.viewportSize()!;
+  for (const vp of portrait ? [{ width: 375, height: 667 }, { width: 320, height: 568 }] : [{ width: 844, height: 390 }, { width: 667, height: 375 }, { width: 568, height: 320 }]) {
+    await page.setViewportSize(vp);
+    await expect.poll(async () => (await diagnostics(page)).layout?.viewport.width).toBe(vp.width);
+    await page.waitForTimeout(300);
+    check((await diagnostics(page)).gameplay as unknown as Loop, `${vp.width}x${vp.height}`);
+  }
+  await page.setViewportSize(home);
+  await expect.poll(async () => (await diagnostics(page)).layout?.viewport.width).toBe(home.width);
+}
 
 test('team training: OBSERVE > DECIDE > PLAY > LEARN, hint is recorded as help, replay counts nothing', async ({ page }, info) => {
   const mode = modeFor(info);
@@ -259,6 +277,11 @@ test('team training: OBSERVE > DECIDE > PLAY > LEARN, hint is recorded as help, 
   await pressReady(page, 'tt-hint', mode);
   t = await L((x) => x.hinted, 'hint shown');
   await page.screenshot({ path: info.outputPath(`loop-2b-hint-${info.project.name}.png`) });
+  // The hint's explanation is never dropped for space, at any supported size.
+  await atSmallerSizes(page, portrait, (l, size) => {
+    expect(l.bodyDropped, `${size} hint text all shown`).toBe(0);
+    expect(l.bodyBottom, `${size} hint text above the buttons`).toBeLessThanOrEqual(l.buttonsTop);
+  });
   const pick = [...t.options].sort((a, b) => b.quality - a.quality)[0]!;
   await pressReady(page, `opt-${pick.id}`, mode);
   t = await L((x) => x.stage === 'PLAY' || x.stage === 'LEARN', 'play');
@@ -268,6 +291,12 @@ test('team training: OBSERVE > DECIDE > PLAY > LEARN, hint is recorded as help, 
   expect(t.lastAttempt?.hinted).toBe(true);
   expect(t.decisions).toEqual({ independent: 0, assisted: 1 });
   await page.screenshot({ path: info.outputPath(`loop-4-learn-${info.project.name}.png`) });
+  // LEARN always keeps the decision verdict and the separate result.
+  await atSmallerSizes(page, portrait, (l, size) => {
+    expect(l.bodyText, `${size} LEARN verdict`).toContain('Decision:');
+    expect(l.bodyText, `${size} LEARN result`).toContain('Result:');
+    expect(l.bodyBottom, `${size} LEARN text above the buttons`).toBeLessThanOrEqual(l.buttonsTop);
+  });
 
   const before = t.attempts;
   await pressReady(page, 'tt-replay', mode);
