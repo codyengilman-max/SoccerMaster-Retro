@@ -6,7 +6,7 @@ import type { Position } from '../game/career/types';
 import type { RoleId } from '../game/training12/ref/catalog.mjs';
 import { planFor, sessionId, TrainingSession, TIMED_DECISION_SECONDS, type Attempt } from '../game/training12/session';
 import type { DrillActor } from '../game/training12/drill';
-import { situationCues } from '../game/training12/cues';
+import { coachQuestion, situationCues } from '../game/training12/cues';
 import { sessions } from '../game/training12/ref/seasons.mjs';
 import { artTextureKey, artUrl } from '../render/art/urls';
 import { PlayerArt } from '../render/art/playerArt';
@@ -36,6 +36,10 @@ const ROLE_LABEL: Readonly<Record<RoleId, string>> = { GK: 'Keeper', CB: 'Centre
 const UI = { navy: 0x14213d, navyDeep: 0x0d1630, gold: 0xf2c14e, cyan: 0x4cc9f0, cream: 0xfff4dc, desert: 0xd9bb8c, path: 0xc9a46a, shrub: 0x6f8a4a } as const;
 const UI_CSS = { cream: '#fff4dc', gold: '#f2c14e', navy: '#14213d' } as const;
 export const STAGES = ['OBSERVE', 'DECIDE', 'PLAY', 'LEARN'] as const;
+/** Metres framed around the half: a thin strip past each touchline and the halfway line, the goal's depth behind the goal line. */
+const FRAME = { w: HALF.width + 1.2, h: HALF.length + 0.6 + 2.2 } as const;
+/** Pixels of Bell94 scenery (fence, palms) allowed beyond the framed half. */
+const SCENERY_BAND = 30;
 const LETTERS = ['A', 'B', 'C', 'D'] as const;
 const COACH_ART = 'coach-club';
 
@@ -72,6 +76,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
   private header: Rect = { x: 0, y: 0, width: 1, height: 1 };
   private footer: Rect = { x: 0, y: 0, width: 1, height: 1 };
   private portraitBox: Rect = { x: 0, y: 0, width: 1, height: 1 };
+  private portraitLayout = true;
   private stageIdx = -1;
   private title!: Phaser.GameObjects.Text;
   private body!: Phaser.GameObjects.Text;
@@ -123,11 +128,11 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     this.panelG = this.add.graphics().setDepth(2000);
     const style = { fontFamily: FONT_FAMILY, color: UI_CSS.cream, wordWrap: { width: 300, useAdvancedWrap: true } };
     this.title = this.add.text(0, 0, '', { ...style, color: UI_CSS.gold, fontStyle: 'bold', fontSize: '13px' }).setDepth(2001).setResolution(textResolution());
-    this.body = this.add.text(0, 0, '', { ...style, fontSize: '13px', lineSpacing: 2 }).setDepth(2001).setResolution(textResolution());
-    this.hTitle = this.add.text(0, 0, 'TEAM TRAINING', { fontFamily: FONT_FAMILY, color: UI_CSS.gold, fontStyle: 'bold', fontSize: '16px' }).setDepth(2001).setResolution(textResolution());
+    this.body = this.add.text(0, 0, '', { ...style, fontSize: '14px', lineSpacing: 2 }).setDepth(2001).setResolution(textResolution());
+    this.hTitle = this.add.text(0, 0, 'TEAM TRAINING', { fontFamily: FONT_FAMILY, color: UI_CSS.gold, fontStyle: 'bold', fontSize: '15px' }).setDepth(2001).setResolution(textResolution());
     this.hSub = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: UI_CSS.cream, fontSize: '12px' }).setDepth(2001).setResolution(textResolution());
-    this.hObj = this.add.text(0, 0, '', { ...style, fontSize: '12px' }).setDepth(2001).setResolution(textResolution());
-    for (const st of STAGES) this.stageText.push(this.add.text(0, 0, st, { fontFamily: FONT_FAMILY, color: UI_CSS.cream, fontStyle: 'bold', fontSize: '12px' }).setOrigin(0.5).setDepth(2002).setResolution(textResolution()));
+    this.hObj = this.add.text(0, 0, '', { ...style, fontSize: '12px', wordWrap: { width: 300 } }).setDepth(2001).setResolution(textResolution());
+    for (const st of STAGES) this.stageText.push(this.add.text(0, 0, st, { fontFamily: FONT_FAMILY, color: UI_CSS.cream, fontStyle: 'bold', fontSize: '11px' }).setOrigin(0.5).setDepth(2002).setResolution(textResolution()));
     this.loadCoach();
     this.art = new PlayerArt(this);
     this.me = this.add.image(-100, -100, '__DEFAULT').setVisible(false).setDepth(900);
@@ -323,7 +328,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     const util = (b: Omit<B, 'small'>): void => void buttons.push({ ...b, small: true });
     const roundTxt = s ? `Round ${s.roundNumber} of 3 · ${s.guided ? 'Guided' : s.timed ? 'Game speed' : 'Your read'}` : '';
     const sess = sessions.find((x) => x.id === this.id);
-    this.setSub([this.save ? `Season 1 · Week ${this.save.week} · Session ${this.slot}` : '', roundTxt, this.screen === 'play' || this.screen === 'brief' ? ROLE_LABEL[this.role] : ''].filter(Boolean));
+    this.setSub([this.save ? `S1 · Week ${this.save.week} · Session ${this.slot}` : '', s ? `Round ${s.roundNumber}/3` : '', this.screen === 'play' || this.screen === 'brief' ? ROLE_LABEL[this.role] : ''].filter(Boolean));
     this.setObjective(s ? s.plan.definition.objective : (sess?.objective ?? ''));
     switch (this.screen) {
       case 'loading':
@@ -359,10 +364,9 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
           break;
         }
         if (d?.phase === 'observe') {
-          title = 'PLAY PAUSED · YOUR DECISION';
-          lines.push(s!.timed ? `Choose now: ${Math.ceil(s!.decideSecondsLeft)} s` : 'What do you do?');
+          title = s!.timed ? `COACH CODE · ${Math.ceil(s!.decideSecondsLeft)} s to choose` : 'COACH CODE · YOUR DECISION';
+          lines.push(coachQuestion(d));
           if (s!.hinted) lines.push(...situationCues(d).lines);
-          else if (s!.guided) lines.push('Stuck? Hint shows what to look at (it counts as help).');
           s!.choices().forEach((c, i) => buttons.push({ name: `opt-${c.option.id}`, label: `${LETTERS[i]}  ${c.option.label}`, onClick: () => this.decide(c.option.id), fill: PALETTE.cream }));
           if (s!.hintAvailable) util({ name: 'tt-hint', label: s!.hinted ? 'Hint used' : 'Hint', onClick: () => this.hint(), fill: PALETTE.sand });
         } else if (d?.phase === 'explain') {
@@ -373,10 +377,9 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
           buttons.push({ name: 'tt-next', label: 'Next situation', onClick: () => this.next() });
         } else {
           title = d?.phase === 'execute' ? 'COACH CODE · PLAY' : 'COACH CODE · OBSERVE';
-          lines.push(d?.phase === 'execute' ? 'Playing it out from where you paused…' : 'Watch: the pressure, the movement, the lanes and the space.');
+          lines.push(d?.phase === 'execute' ? 'Playing it out from where you paused…' : 'Watch the pressure, the movement and the space.');
           if (s!.replaying) lines.push('Replay: practice only, not counted.');
         }
-        lines.push('', `Your active play: ${Math.floor(s!.activeSeconds)} s (30 s needed to count)`);
         util({ name: 'tt-pause', label: 'II Pause', onClick: () => this.togglePause(), fill: PALETTE.sand });
         break;
       }
@@ -426,12 +429,16 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     const pad = 8;
     const main = buttons.filter((b) => !b.small);
     const small = buttons.filter((b) => b.small);
-    const sh = 34;
-    const cols = main.length >= 2 && P.width >= 300 ? 2 : 1;
-    const rows = Math.ceil(main.length / cols);
-    const coachH = this.portraitBox.height + pad * 2;
+    const sh = 40;
+    const textW0 = P.x + P.width - pad - (this.portraitBox.x + this.portraitBox.width + pad);
+    this.title.setWordWrapWidth(textW0);
+    this.body.setWordWrapWidth(textW0).setText(lines[0] ?? '');
+    const coachH = Math.max(this.portraitBox.height + pad * 2, pad + this.title.height + 4 + this.body.height + 6);
     const room = P.height - coachH - (small.length ? sh + 6 : 0) - pad;
-    const bh = rows ? Math.max(30, Math.min(44, Math.floor(room / rows) - 6)) : 0;
+    // One answer per row (like the mockup) when they fit at a comfortable height, otherwise two columns.
+    const cols = main.length >= 2 && room < main.length * 46 && P.width >= 260 ? 2 : 1;
+    const rows = Math.ceil(main.length / cols);
+    const bh = rows ? Math.max(36, Math.min(50, Math.floor(room / rows) - 6)) : 0;
     const smallTop = P.y + P.height - pad - (small.length ? sh : 0);
     const top = smallTop - (small.length ? 6 : 0) - rows * (bh + 6);
     this.elements = { field: this.field, panel: this.panel, header: this.header, footer: this.footer };
@@ -442,9 +449,9 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       this.elements[b.name] = { x, y, width: w, height: h };
     };
     const bw = (P.width - pad * (cols + 1)) / cols;
-    main.forEach((b, i) => place(b, P.x + pad + (i % cols) * (bw + pad), top + Math.floor(i / cols) * (bh + 6), bw, bh, 14));
+    main.forEach((b, i) => place(b, P.x + pad + (i % cols) * (bw + pad), top + Math.floor(i / cols) * (bh + 6), bw, bh, 15));
     const sw = (P.width - pad * (small.length + 1)) / Math.max(1, small.length);
-    small.forEach((b, i) => place(b, P.x + pad + i * (sw + pad), smallTop, sw, sh, 13));
+    small.forEach((b, i) => place(b, P.x + pad + i * (sw + pad), smallTop, sw, sh, 14));
     const textX = this.portraitBox.x + this.portraitBox.width + pad;
     const textW = P.x + P.width - pad - textX;
     this.body.setWordWrapWidth(textW);
@@ -501,31 +508,38 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     const h = this.scale.height;
     const ins: Insets = safeInsets();
     const portrait = orientationOf({ width: w, height: h }) === 'portrait';
-    const ext = { w: HALF.width + HALF.margin * 2, h: HALF.length + HALF.margin * 2 + 2 };
+    this.portraitLayout = portrait;
+    const ext = FRAME;
     const usable = { x: ins.left, y: ins.top, width: w - ins.left - ins.right, height: h - ins.top - ins.bottom };
-    const hdrH = portrait ? 64 : 44;
-    const ftrH = portrait ? 28 : 24;
+    const hdrH = portrait ? 70 : 40;
+    const ftrH = portrait ? 24 : 22;
     this.header = { x: usable.x, y: usable.y, width: usable.width, height: hdrH };
     this.footer = { x: usable.x, y: usable.y + usable.height - ftrH, width: usable.width, height: ftrH };
     const midY = usable.y + hdrH;
     const midH = usable.height - hdrH - ftrH;
+    // The pitch gets the space first: as large as the whole half allows at true proportions, plus at most a slim
+    // band of scenery behind the goal. The panel takes the rest (never less than its minimum).
     if (portrait) {
-      const panelH = Math.max(230, Math.round(midH * 0.42));
-      this.panel = { x: usable.x, y: midY + midH - panelH, width: usable.width, height: panelH };
-      this.field = { x: usable.x, y: midY, width: usable.width, height: midH - panelH };
+      const minPanel = 250;
+      const k = Math.min(usable.width / ext.w, (midH - minPanel) / ext.h);
+      const fieldH = Math.min(midH - minPanel, Math.ceil(ext.h * k) + SCENERY_BAND);
+      this.field = { x: usable.x, y: midY, width: usable.width, height: fieldH };
+      this.panel = { x: usable.x, y: midY + fieldH, width: usable.width, height: midH - fieldH };
     } else {
-      const panelW = Math.max(260, Math.round(usable.width * 0.4));
-      this.panel = { x: usable.x + usable.width - panelW, y: midY, width: panelW, height: midH };
-      this.field = { x: usable.x, y: midY, width: usable.width - panelW, height: midH };
+      const minPanel = 280;
+      const k = Math.min((usable.width - minPanel) / ext.w, midH / ext.h);
+      const fieldW = Math.min(usable.width - minPanel, Math.ceil(ext.w * k) + SCENERY_BAND);
+      this.field = { x: usable.x, y: midY, width: fieldW, height: midH };
+      this.panel = { x: usable.x + fieldW, y: midY, width: usable.width - fieldW, height: midH };
     }
     this.px = Math.min(this.field.width / ext.w, this.field.height / ext.h);
-    const pb = portrait ? 64 : 56;
+    const pb = portrait ? 46 : 40;
     this.portraitBox = { x: this.panel.x + 8, y: this.panel.y + 8, width: pb, height: pb };
     if (this.coach) this.coach.setScale(pb / 230).setPosition(this.portraitBox.x - 150 * (pb / 230), this.portraitBox.y);
     this.hTitle.setPosition(this.header.x + 10, this.header.y + 6);
-    if (portrait) this.hSub.setPosition(this.header.x + 10, this.header.y + 26);
-    else this.hSub.setPosition(this.hTitle.x + this.hTitle.width + 12, this.header.y + 8);
-    this.hObj.setPosition(this.header.x + 10, this.header.y + (portrait ? 42 : 26)).setWordWrapWidth(this.header.width - 20);
+    if (portrait) this.hSub.setPosition(this.header.x + 10, this.header.y + 23);
+    else this.hSub.setPosition(this.hTitle.x + this.hTitle.width + 12, this.header.y + 6);
+    this.hObj.setPosition(this.header.x + 10, this.header.y + (portrait ? 38 : 22)).setWordWrapWidth(this.header.width - 20);
     this.hObj.setData('full', null);
     this.hSub.setData('full', null);
     this.drawChrome();
@@ -554,34 +568,44 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     });
   }
 
-  /** Restrained Bell94 / Scottsdale surroundings, outside the playing area only. */
+  /** Restrained Bell94 / Scottsdale surroundings, outside the playing area only: a slim path, then fence and palms. */
   private drawScenery(): void {
     const g = this.bgG.clear();
     const f = this.field;
     const k = this.px;
     g.fillStyle(UI.desert, 1).fillRect(f.x, f.y, f.width, f.height);
-    const tl = this.toScreen(-HALF.margin, HALF.length + HALF.margin + 1);
-    const br = this.toScreen(HALF.width + HALF.margin, -HALF.margin);
-    g.fillStyle(UI.path, 1).fillRect(tl.x - k * 0.8, tl.y - k * 0.8, br.x - tl.x + k * 1.6, br.y - tl.y + k * 1.6);
+    const tl = this.toScreen(-0.6, HALF.length + 2.2);
+    const br = this.toScreen(HALF.width + 0.6, -0.6);
+    g.fillStyle(UI.path, 1).fillRect(tl.x - 3, tl.y - 3, br.x - tl.x + 6, br.y - tl.y + 6);
     g.fillStyle(PALETTE.surround, 1).fillRect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
-    // Desert planting and floodlights in the corners of the frame, outside the path.
-    const spots = [[f.x + 10, f.y + 12], [f.x + f.width - 12, f.y + 14], [f.x + 14, f.y + f.height - 12], [f.x + f.width - 10, f.y + f.height - 14]];
-    for (const [x, y] of spots) {
-      if (x! > tl.x - k && x! < br.x + k && y! > tl.y - k && y! < br.y + k) continue;
-      g.fillStyle(UI.shrub, 1).fillCircle(x!, y!, 5).fillCircle(x! + 6, y! + 2, 4);
+    // Fence and planting only where there is room beyond the path; never over the pitch.
+    const band = tl.y - 3 - f.y;
+    if (band >= 12) {
+      const fy = f.y + band * 0.62;
+      g.lineStyle(1, 0x8a8f99, 0.9).lineBetween(f.x, fy, f.x + f.width, fy).lineBetween(f.x, fy - 7, f.x + f.width, fy - 7);
+      for (let x = f.x + 4; x < f.x + f.width; x += 7) g.lineBetween(x, fy - 7, x + 3.5, fy);
+      for (let x = f.x + 6; x < f.x + f.width; x += 22) g.fillStyle(0x6b6f78, 1).fillRect(x, fy - 9, 2, 11);
+      const palm = (x: number): void => {
+        g.fillStyle(0x8a5a2b, 1).fillRect(x - 1.5, fy - 18, 3, 18);
+        g.fillStyle(UI.shrub, 1).fillTriangle(x, fy - 19, x - 9, fy - 14, x - 2, fy - 21).fillTriangle(x, fy - 19, x + 9, fy - 14, x + 2, fy - 21).fillTriangle(x, fy - 20, x - 5, fy - 25, x + 5, fy - 25);
+      };
+      for (const x of [f.x + 14, f.x + 40, f.x + f.width - 40, f.x + f.width - 14]) palm(x);
+      for (const x of [f.x + f.width * 0.25, f.x + f.width * 0.75]) g.fillStyle(0x7a4a2a, 1).fillRect(x - 8, fy + 2, 16, 3);
+      for (const x of [f.x + 4, f.x + f.width - 6]) {
+        g.fillStyle(0x5b5b66, 1).fillRect(x, f.y + 2, 2, band - 4);
+        g.fillStyle(0xfff6c8, 0.95).fillRect(x - 2, f.y + 2, 6, 3);
+      }
     }
-    for (const [x, y] of [[tl.x - k * 0.4, tl.y - k * 0.4], [br.x + k * 0.4, tl.y - k * 0.4], [tl.x - k * 0.4, br.y + k * 0.4], [br.x + k * 0.4, br.y + k * 0.4]]) {
-      g.fillStyle(0x5b5b66, 1).fillRect(x! - 1.5, y! - 1.5, 3, 3);
-      g.fillStyle(0xfff6c8, 0.9).fillCircle(x!, y!, 2);
-    }
+    for (const [x, y] of [[f.x + 6, br.y + 6], [f.x + f.width - 8, br.y + 6]]) if (y! < f.y + f.height - 4) g.fillStyle(UI.shrub, 1).fillCircle(x!, y!, 3.5);
+    void k;
   }
 
   /** Half-field metres (x across from the left touchline, y from the halfway line toward goal) to screen. */
   private toScreen(x: number, y: number): { x: number; y: number } {
     const k = this.px;
     const cx = this.field.x + this.field.width / 2;
-    const cy = this.field.y + this.field.height / 2;
-    return { x: cx + (x - HALF.width / 2) * k, y: cy + (HALF.length / 2 - y) * k + k };
+    const base = this.field.y + this.field.height - (this.field.height - FRAME.h * k) / 2 * (this.portraitLayout ? 0 : 1);
+    return { x: cx + (x - HALF.width / 2) * k, y: base - (FRAME.h - HALF.length - 2.2 + y) * k };
   }
 
   /** Drill-area metres to half-field metres: the area is centred across and sits mid-half. */
@@ -611,8 +635,9 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     box(26, 11);
     box(12, 4);
     const ga = this.toScreen(HALF.width / 2 - HALF.goalWidth / 2, HALF.length);
-    g.fillStyle(PALETTE.net, 0.35).fillRect(ga.x, ga.y - 1.6 * k, HALF.goalWidth * k, 1.6 * k);
-    g.lineStyle(Math.max(2, k * 0.2), 0xffffff, 1).strokeRect(ga.x, ga.y - 1.6 * k, HALF.goalWidth * k, 1.6 * k);
+    // The full-size goal is background in these drills (they score on their own targets), so it is drawn muted.
+    g.fillStyle(PALETTE.net, 0.15).fillRect(ga.x, ga.y - 1.6 * k, HALF.goalWidth * k, 1.6 * k);
+    g.lineStyle(Math.max(1.5, k * 0.15), 0xffffff, 0.45).strokeRect(ga.x, ga.y - 1.6 * k, HALF.goalWidth * k, 1.6 * k);
     const s = this.session;
     const d = s?.drill;
     for (const t of this.tokenText) t.setVisible(false);
@@ -620,20 +645,10 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       for (const im of this.sprites) im.setVisible(false);
       return void this.me.setVisible(false);
     }
-    const a0 = this.toScreen(this.drillToHalf({ x: 0, y: 0 }).x, this.drillToHalf({ x: 0, y: 0 }).y);
-    const a1 = this.toScreen(this.drillToHalf({ x: d.L, y: d.W }).x, this.drillToHalf({ x: d.L, y: d.W }).y);
-    g.fillStyle(0xffffff, 0.08).fillRect(Math.min(a0.x, a1.x), Math.min(a0.y, a1.y), Math.abs(a1.x - a0.x), Math.abs(a1.y - a0.y));
-    g.lineStyle(2, PALETTE.mustard, 0.9).strokeRect(Math.min(a0.x, a1.x), Math.min(a0.y, a1.y), Math.abs(a1.x - a0.x), Math.abs(a1.y - a0.y));
-    for (const t of d.targets) {
-      const p = this.drillToHalf({ x: t.cx, y: t.cy - t.half });
-      const q = this.drillToHalf({ x: t.cx, y: t.cy + t.half });
-      const sp = this.toScreen(p.x, p.y);
-      const sq = this.toScreen(q.x, q.y);
-      g.lineStyle(Math.max(3, k * 0.35), t.scoresFor === 'A' ? PALETTE.blue : t.scoresFor === 'B' ? PALETTE.tomato : PALETTE.cream, 1).lineBetween(sp.x, sp.y, sq.x, sq.y);
-    }
+    this.drawArea(g, d, k);
     this.drawTactical(s!, k);
     const r = Math.max(6, k * 0.55);
-    const h = Math.max(26, k * 2.6);
+    const h = spriteHeight(k);
     const pose = Math.floor(this.walk * 8) % 6;
     const used = { A: 0, B: 0, N: 0 };
     d.actors.forEach((a, i) => {
@@ -643,7 +658,9 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       const moving = Math.hypot(a.vel.x, a.vel.y) > 0.4;
       const dir = moving ? dirFromScreen(a.vel.y, -a.vel.x) : 2;
       g.fillStyle(PALETTE.shadow, 0.25).fillEllipse(p.x, p.y + r * 0.2, r * 2.2, r);
-      if (a.human) g.lineStyle(3, PALETTE.sun, 1).strokeEllipse(p.x, p.y + r * 0.2, r * 3, r * 1.4);
+      g.fillStyle(team === 'A' ? PALETTE.blue : team === 'B' ? PALETTE.tomato : PALETTE.cream, 0.55).fillEllipse(p.x, p.y + r * 0.2, r * 1.9, r * 0.85);
+      if (a.slot === d.ball.owner && !a.human) g.lineStyle(1.5, 0xffffff, 0.95).strokeEllipse(p.x, p.y + r * 0.2, r * 2.6, r * 1.2);
+      if (a.human) g.lineStyle(2.5, PALETTE.sun, 1).strokeEllipse(p.x, p.y + r * 0.2, r * 2.8, r * 1.3);
       const im = (this.sprites[i] ??= this.add.image(-100, -100, '__DEFAULT').setDepth(900));
       if (a.human) {
         im.setVisible(false);
@@ -675,6 +692,69 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     this.ballG.lineStyle(1.5, PALETTE.ink, 1).strokeCircle(bs.x, bs.y, Math.max(4, k * 0.3));
   }
 
+  /**
+   * The practice area: the pitch outside it is dimmed, the area itself is marked by corner cones and a thin dashed
+   * line, and each target is a small pixel goal (posts, net) in the colour of the team that attacks it.
+   */
+  private drawArea(g: Phaser.GameObjects.Graphics, d: NonNullable<TrainingSession['drill']>, k: number): void {
+    const a0 = this.drillScreen({ x: 0, y: 0 });
+    const a1 = this.drillScreen({ x: d.L, y: d.W });
+    const x0 = Math.min(a0.x, a1.x), x1 = Math.max(a0.x, a1.x), y0 = Math.min(a0.y, a1.y), y1 = Math.max(a0.y, a1.y);
+    const tl = this.toScreen(0, HALF.length);
+    const br = this.toScreen(HALF.width, 0);
+    g.fillStyle(UI.navyDeep, 0.16);
+    g.fillRect(tl.x, tl.y, br.x - tl.x, y0 - tl.y).fillRect(tl.x, y1, br.x - tl.x, br.y - y1);
+    g.fillRect(tl.x, y0, x0 - tl.x, y1 - y0).fillRect(x1, y0, br.x - x1, y1 - y0);
+    g.lineStyle(1.5, 0xffffff, 0.55);
+    const dash = (ax: number, ay: number, bx: number, by: number): void => {
+      const len = Math.hypot(bx - ax, by - ay);
+      for (let t = 0; t < len; t += 10) {
+        const e = Math.min(len, t + 5);
+        g.lineBetween(ax + ((bx - ax) * t) / len, ay + ((by - ay) * t) / len, ax + ((bx - ax) * e) / len, ay + ((by - ay) * e) / len);
+      }
+    };
+    dash(x0, y0, x1, y0);
+    dash(x1, y0, x1, y1);
+    dash(x1, y1, x0, y1);
+    dash(x0, y1, x0, y0);
+    const cone = Math.max(4, k * 0.5);
+    for (const [cx, cy] of [[x0, y0], [x1, y0], [x0, y1], [x1, y1]] as const) {
+      g.fillStyle(0xff7a1a, 1).fillTriangle(cx, cy - cone, cx - cone * 0.75, cy + cone * 0.6, cx + cone * 0.75, cy + cone * 0.6);
+      g.fillStyle(0xffffff, 1).fillRect(cx - cone * 0.35, cy - cone * 0.1, cone * 0.7, cone * 0.25);
+    }
+    for (const t of d.targets) {
+      const col = t.scoresFor === 'A' ? PALETTE.blue : t.scoresFor === 'B' ? PALETTE.tomato : PALETTE.cream;
+      if (t.type === 'end-zone') {
+        const z0 = this.drillScreen({ x: t.cx, y: 0 });
+        const z1 = this.drillScreen({ x: t.cx + (t.cx < d.L / 2 ? 2 : -2), y: d.W });
+        g.fillStyle(col, 0.18).fillRect(Math.min(z0.x, z1.x), Math.min(z0.y, z1.y), Math.abs(z1.x - z0.x), Math.abs(z1.y - z0.y));
+        continue;
+      }
+      // The net sits behind the scoring line, away from the area, so the mouth faces the play.
+      const out = t.cx < d.L / 2 ? -1 : 1;
+      const p = this.drillScreen({ x: t.cx, y: t.cy - t.half });
+      const q = this.drillScreen({ x: t.cx, y: t.cy + t.half });
+      const back = this.drillScreen({ x: t.cx + out, y: t.cy + t.half });
+      const gx = Math.min(p.x, q.x);
+      const gw = Math.max(3, Math.abs(q.x - p.x));
+      const gy = Math.min(p.y, back.y);
+      const gh = Math.max(3, Math.abs(back.y - p.y));
+      g.fillStyle(0xffffff, 0.35).fillRect(gx, gy, gw, gh);
+      g.lineStyle(1, 0xffffff, 0.6);
+      for (let x = gx + 3; x < gx + gw; x += 3) g.lineBetween(x, gy, x, gy + gh);
+      g.lineBetween(gx, gy + gh / 2, gx + gw, gy + gh / 2);
+      g.lineStyle(Math.max(2, k * 0.22), col, 1).strokeRect(gx, gy, gw, gh);
+      const post = Math.max(3, k * 0.3);
+      g.fillStyle(0xffffff, 1).fillRect(p.x - post / 2, p.y - post / 2, post, post).fillRect(q.x - post / 2, q.y - post / 2, post, post);
+      g.lineStyle(1, PALETTE.ink, 1).strokeRect(p.x - post / 2, p.y - post / 2, post, post).strokeRect(q.x - post / 2, q.y - post / 2, post, post);
+      // A chevron in front of the mouth, in the attacking team's colour, pointing into the goal.
+      const m = this.drillScreen({ x: t.cx - out * 1.2, y: t.cy });
+      const dir = Math.sign(back.y - p.y) || 1;
+      const c = Math.max(4, k * 0.45);
+      g.fillStyle(col, 0.95).fillTriangle(m.x - c, m.y - dir * c * 0.4, m.x + c, m.y - dir * c * 0.4, m.x, m.y + dir * c * 0.6);
+    }
+  }
+
   private drillScreen(p: { x: number; y: number }): { x: number; y: number } {
     const h = this.drillToHalf(p);
     return this.toScreen(h.x, h.y);
@@ -704,11 +784,19 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
           if (o) { const p = this.actorScreen(o); t.lineStyle(2, UI.cyan, 0.9).strokeCircle(p.x, p.y, Math.max(10, k * 1.2)); }
         }
       }
+      const bodies = [...d.actors.flatMap((a) => { const p = this.actorScreen(a); return [p, { x: p.x, y: p.y - spriteHeight(k) * 0.6 }]; }), this.drillScreen(d.ball.pos)];
+      const placed: { x: number; y: number }[] = [];
       s.choices().forEach((ch, i) => {
-        const to = this.drillScreen(ch.option.point);
-        t.fillStyle(UI.cream, 1).fillCircle(to.x, to.y, tagR);
-        t.lineStyle(2, UI.navy, 1).strokeCircle(to.x, to.y, tagR);
-        this.label(`opt${i}`, LETTERS[i]!, to.x, to.y);
+        const at = this.drillScreen(ch.option.point);
+        const tag = clearSpot(at, bodies, placed, tagR + spriteHeight(k) * 0.3, tagR * 2.1);
+        placed.push(tag);
+        if (tag.x !== at.x || tag.y !== at.y) {
+          t.lineStyle(1.5, UI.cream, 0.9).lineBetween(at.x, at.y, tag.x, tag.y);
+          t.fillStyle(UI.cream, 1).fillCircle(at.x, at.y, 2.5);
+        }
+        t.fillStyle(UI.cream, 1).fillCircle(tag.x, tag.y, tagR);
+        t.lineStyle(2, UI.navy, 1).strokeCircle(tag.x, tag.y, tagR);
+        this.label(`opt${i}`, LETTERS[i]!, tag.x, tag.y);
       });
       return;
     }
@@ -754,12 +842,12 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
   describeLayout(): SceneLayoutReport {
     const w = this.scale.width;
     const h = this.scale.height;
-    const tl = this.toScreen(-HALF.margin, HALF.length + 2);
-    const br = this.toScreen(HALF.width + HALF.margin, -HALF.margin);
+    const tl = this.toScreen(-0.6, HALF.length + 2.2);
+    const br = this.toScreen(HALF.width + 0.6, -0.6);
     return {
       orientation: orientationOf({ width: w, height: h }),
       viewport: { width: w, height: h },
-      elements: { ...this.elements, half: { x: tl.x, y: tl.y, width: br.x - tl.x, height: br.y - tl.y } },
+      elements: { ...this.elements, half: { x: tl.x, y: tl.y, width: br.x - tl.x, height: br.y - tl.y }, panel: { ...this.panel }, header: { ...this.header } },
     };
   }
 
@@ -791,7 +879,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       choiceTagsVisible: this.tokenText.filter((t) => t.visible).length,
       coachPortrait: this.coach?.visible ?? false,
       lastAttempt: s?.attempts.at(-1) ? { optionId: s.attempts.at(-1)!.optionId, hinted: s.attempts.at(-1)!.hinted, replay: s.attempts.at(-1)!.replay, good: s.attempts.at(-1)!.decision?.good ?? null, goodIds: s.attempts.at(-1)!.frozen.good.map((g) => g.id) } : null,
-      textBottoms: { header: this.hObj.y + this.hObj.height, headerBottom: this.header.y + this.header.height },
+      textBottoms: { header: this.hObj.y + this.hObj.height, headerBottom: this.header.y + this.header.height, headerRight: Math.max(this.hSub.x + this.hSub.width, this.hObj.x + this.hObj.width), headerEdge: this.header.x + this.header.width },
       attempts: s?.attempts.length ?? 0,
       activeSeconds: s?.activeSeconds ?? 0,
       rejected: s?.rejected ?? 0,
@@ -832,4 +920,27 @@ export function learnLines(a: Attempt | undefined, fallback: string, timed: bool
 function summary(attempts: readonly { decision: { good: boolean } | null; kind: string | null }[]): string[] {
   const missed = attempts.filter((a) => !a.decision).length;
   return missed ? [`${missed} moment${missed === 1 ? '' : 's'} passed without a decision.`] : [];
+}
+
+/** Sprite height on screen: about 2.6 m (readable at phone scale) without hiding lanes on a large pitch. */
+function spriteHeight(k: number): number {
+  return Math.max(22, Math.min(34, k * 2.6));
+}
+
+/**
+ * Where to draw a choice tag: its true point if that is clear of players, the ball and other tags, else the nearest
+ * clear spot on rings around it (a leader line joins it to the true point), so it never sits on a face or the ball.
+ */
+export function clearSpot(p: { x: number; y: number }, bodies: readonly { x: number; y: number }[], tags: readonly { x: number; y: number }[], gap: number, tagGap: number): { x: number; y: number } {
+  const clear = (q: { x: number; y: number }): boolean =>
+    bodies.every((b) => Math.hypot(b.x - q.x, b.y - q.y) >= gap) && tags.every((t) => Math.hypot(t.x - q.x, t.y - q.y) >= tagGap);
+  if (clear(p)) return p;
+  for (let ring = 1; ring <= 4; ring++) {
+    for (let i = 0; i < 12; i++) {
+      const ang = -Math.PI / 2 + (i * Math.PI) / 6;
+      const q = { x: p.x + Math.cos(ang) * gap * ring * 0.8, y: p.y + Math.sin(ang) * gap * ring * 0.8 };
+      if (clear(q)) return q;
+    }
+  }
+  return p;
 }

@@ -213,7 +213,9 @@ export function options(s: DrillState): DrillOption[] {
   out.push({ id: 'press', kind: 'press', label: 'Press the ball', point: clampP(ball.x + (toGoal.x / dg) * 0.9, ball.y + (toGoal.y / dg) * 0.9) });
   out.push({ id: 'delay', kind: 'delay', label: 'Stay goal-side', point: clampP(ball.x + (toGoal.x / dg) * 3.5, ball.y + (toGoal.y / dg) * 3.5) });
   const threat = opponents(s, team).filter((o) => o.slot !== s.ball.owner && !o.side.startsWith('GK')).sort((a, b) => distance(a.pos, { x: goalP.cx, y: goalP.cy }) - distance(b.pos, { x: goalP.cx, y: goalP.cy }))[0];
-  if (threat) out.push({ id: 'cover', kind: 'cover', label: 'Mark the inside runner', point: clampP((threat.pos.x + goalP.cx) / 2 * 0.4 + threat.pos.x * 0.6, (threat.pos.y + goalP.cy) / 2) });
+  // Name the runner for what it is: only "inside" when it is nearer the goal than the ball.
+  const inside = threat && distance(threat.pos, { x: goalP.cx, y: goalP.cy }) < distance(ball, { x: goalP.cx, y: goalP.cy });
+  if (threat) out.push({ id: 'cover', kind: 'cover', label: inside ? 'Mark the inside runner' : 'Mark the other attacker', point: clampP((threat.pos.x + goalP.cx) / 2 * 0.4 + threat.pos.x * 0.6, (threat.pos.y + goalP.cy) / 2) });
   out.push({ id: 'recover', kind: 'recover', label: 'Drop toward goal', point: clampP(goalP.cx + Math.sign(ball.x - goalP.cx || f) * 5, goalP.cy) });
   return out;
 }

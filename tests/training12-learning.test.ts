@@ -174,4 +174,32 @@ describe('Team Training decision evidence in the save', () => {
     const again = reduce(s, run({ independent: 9, assisted: 9 }));
     expect(again.ok && !again.changed).toBe(true);
   });
+
+  it('shows every good read when up to four qualify (review: good reads were capped at two)', () => {
+    const a = (quality: number, good: boolean) => ({ quality, good }) as never;
+    const m = new Map([['pass-a', a(0.9, true)], ['pass-b', a(0.85, true)], ['carry', a(0.8, true)], ['shoot', a(0.3, false)], ['set', a(0.2, false)]]);
+    for (let seed = 1; seed < 20; seed++) {
+      const p = presented(m, seed);
+      expect(p.length).toBe(MAX_CHOICES);
+      for (const id of ['pass-a', 'pass-b', 'carry']) expect(p).toContain(id);
+    }
+  });
+
+  it('a replay never uses up round time (review: replays ticked the bout clock)', () => {
+    const s = mk('S1-W01-A', '8', 3);
+    toDecision(s);
+    s.decide(s.choices()[0]!.option.id);
+    for (let i = 0; i < 800 && s.drill!.phase !== 'explain'; i++) s.update(0.05);
+    expect(s.drill!.phase).toBe('explain');
+    const t = s.run.elapsed;
+    const active = s.activeSeconds;
+    expect(s.replay()).toBe(true);
+    for (let i = 0; i < 800 && s.drill!.phase !== 'observe'; i++) s.update(0.05);
+    s.decide(s.choices()[0]!.option.id);
+    for (let i = 0; i < 800 && s.drill!.phase !== 'explain'; i++) s.update(0.05);
+    expect(s.drill!.phase).toBe('explain');
+    expect(s.run.elapsed).toBe(t);
+    expect(s.activeSeconds).toBe(active);
+    expect(s.run.status).toBe('playing');
+  });
 });

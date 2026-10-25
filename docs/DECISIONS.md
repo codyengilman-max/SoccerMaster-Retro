@@ -266,3 +266,11 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Replay rewinds the same seeded situation and is practice only: no evidence, no participation seconds, no score. Stale generations reject hint/replay/decide calls.
 - Level-1 routes for all 108 sessions are enabled because every one uses one of the eight implemented level-1 cards and each route is played to a credited finish in unit tests; level 2–3 cards stay unavailable until their drills exist.
 
+
+## D51 — Team Training presentation: pitch first, drill marked by cones, targets as mini-goals
+
+- The half is framed at true proportions with a 0.6 m strip past the lines and the goal's depth; the pitch takes the screen width (portrait) or height (landscape) first, the panel takes the rest. A slim Bell94 fence band sits behind the goal only when there is room.
+- The practice area keeps its authored size and position (`drillToHalf`, unchanged). It is marked by corner cones and a thin dashed line; the rest of the half is dimmed. Targets are drawn as small goals (posts, net, frame in the attacking team's colour, chevron into the mouth) on the engine's own target geometry; the full-size goal is drawn muted because it is not a target.
+- Crowding was diagnosed, not moved: in S1-W01-C the spawns are 6 m apart and the defender closes to 1.2–2.1 m on the ball while pressing (intended D1 behaviour); world-to-screen scale is uniform and sprites are foot-anchored. Readability comes from team-coloured foot discs, a white ring on the ball carrier, the gold ring on the player you control, and choice tags that move off faces, the ball and each other with a leader line to their true point. No scenario changed.
+- The panel shows one coaching question worded from the frozen state (`coachQuestion`), four answers, small Hint / Pause / Leave and the stage bar. Active-play seconds are in diagnostics only; the anti-idle rule is unchanged. The cover answer is labelled "Mark the inside runner" only when that runner is nearer the goal than the ball.
+- Review fixes: every good read is shown (up to four), and replays play the drill without ticking the round clock or adding active play.

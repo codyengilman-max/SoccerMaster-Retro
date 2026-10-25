@@ -370,3 +370,7 @@ Real-iPhone playtest of the coached sandbox, then M4 match flow so Coach Moments
 
 ## Rankings (League, National, Team Profile)
 - 120-team registry, background season, Elo rankings with weekly snapshots, Rankings / Team Profile / League / Compare screens, THIS SEASON panel on the Home menu, TEAM IMPACT on the Match Report. See `docs/RANKINGS.md` and `docs/RANKINGS_REGISTRY.md`.
+
+### Team Training presentation pass (PR #43)
+
+Pitch-first layout at true proportions (390×844 down to 320×568 and 568×320 checked in the loop browser test), cones and a dashed line instead of the orange box, pixel mini-goals coloured by attacking team, muted background goal, team foot discs and carrier ring, tags kept off players and the ball, compact coaching panel with a state-worded question, technical readouts moved to diagnostics. Replays no longer use round time; all good reads are offered. Browser phone emulation only, not a physical iPhone.

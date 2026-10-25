@@ -187,9 +187,12 @@ export class TrainingSession {
     while (left > 1e-9 && (d.phase === 'release' || d.phase === 'execute') && this.run.status === 'playing') {
       const dt = Math.min(DRILL.dt, left);
       left -= dt;
-      // Close the participation span before the tick that ends the bout: spans are only accepted during play.
-      if (d.phase === 'execute' && this.run.elapsed + dt >= this.run.boutSeconds - 1e-9) this.closeWindow();
-      if (!this.send({ type: 'tick', tick: ++this.tick, dt } as never)) return;
+      // A replay is practice only: it plays the drill without ticking the round clock, so it never uses up the bout.
+      if (!this.replayRun) {
+        // Close the participation span before the tick that ends the bout: spans are only accepted during play.
+        if (d.phase === 'execute' && this.run.elapsed + dt >= this.run.boutSeconds - 1e-9) this.closeWindow();
+        if (!this.send({ type: 'tick', tick: ++this.tick, dt } as never)) return;
+      }
       step(d, dt);
       if (phaseOf(d) === 'explain') this.closeWindow();
     }
@@ -297,12 +300,12 @@ export class TrainingSession {
 }
 
 /**
- * The choices shown for one decision: every good read (at most two), then the strongest alternatives of other
- * kinds, up to MAX_CHOICES, in a seeded shuffled order. The order never says which one is best.
+ * The choices shown for one decision: every good read (the best MAX_CHOICES if more qualify), then the strongest
+ * alternatives of other kinds, up to MAX_CHOICES, in a seeded shuffled order. The order never says which one is best.
  */
 export function presented(assessed: ReadonlyMap<string, Assessment>, seed: number, max = MAX_CHOICES): string[] {
   const all = [...assessed.entries()].sort((a, b) => b[1].quality - a[1].quality);
-  const pick: string[] = all.filter(([, a]) => a.good).slice(0, 2).map(([id]) => id);
+  const pick: string[] = all.filter(([, a]) => a.good).slice(0, max).map(([id]) => id);
   const kindOf = (id: string): string => id.split('-')[0]!;
   for (const [id] of all) {
     if (pick.length >= max) break;

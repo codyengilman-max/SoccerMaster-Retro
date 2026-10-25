@@ -188,7 +188,7 @@ type Loop = Omit<TT, 'options'> & {
   options: { id: string; letter: string; label: string; good: boolean; quality: number }[];
   header: { title: string; sub: string; objective: string | null }; decisions: { independent: number; assisted: number } | null;
   lastAttempt: { optionId: string | null; hinted: boolean; replay: boolean; good: boolean | null; goodIds: string[] } | null;
-  textBottoms: { header: number; headerBottom: number };
+  textBottoms: { header: number; headerBottom: number; headerRight: number; headerEdge: number };
 };
 
 test('team training: OBSERVE > DECIDE > PLAY > LEARN, hint is recorded as help, replay counts nothing', async ({ page }, info) => {
@@ -231,6 +231,30 @@ test('team training: OBSERVE > DECIDE > PLAY > LEARN, hint is recorded as help, 
   const overlap = half.x < panel.x + panel.width && panel.x < half.x + half.width && half.y < panel.y + panel.height && panel.y < half.y + half.height;
   expect(overlap, 'panel never covers the half').toBe(false);
   await page.screenshot({ path: info.outputPath(`loop-2-decide-${info.project.name}.png`) });
+
+  // The same frozen decision at smaller supported phone sizes: whole half visible, the panel beside or below it,
+  // header text inside the header, every button on screen and at least 36 px tall.
+  const portrait = info.project.name.includes('portrait');
+  const home = page.viewportSize()!;
+  for (const vp of portrait ? [{ width: 375, height: 667 }, { width: 320, height: 568 }] : [{ width: 667, height: 375 }, { width: 568, height: 320 }]) {
+    await page.setViewportSize(vp);
+    await expect.poll(async () => (await diagnostics(page)).layout?.viewport.width).toBe(vp.width);
+    await page.waitForTimeout(300);
+    const dd = await diagnostics(page);
+    const e = dd.layout!.elements;
+    for (const [name, rect] of Object.entries(e)) expectInside(name, rect, dd.layout!.viewport);
+    const half = e.half!, panel = e.panel!;
+    if (portrait) expect(half.y + half.height, `${vp.width}x${vp.height} half above panel`).toBeLessThanOrEqual(panel.y + 0.5);
+    else expect(half.x + half.width, `${vp.width}x${vp.height} half left of panel`).toBeLessThanOrEqual(panel.x + 0.5);
+    expect(half.width / half.height, 'true half-field proportions').toBeCloseTo((50 * 0.9144 + 1.2) / (75 * 0.9144 / 2 + 2.8), 2);
+    const tb = (dd.gameplay as unknown as Loop).textBottoms;
+    expect(tb.header).toBeLessThanOrEqual(tb.headerBottom);
+    expect(tb.headerRight).toBeLessThanOrEqual(tb.headerEdge);
+    for (const [name, rect] of Object.entries(e)) if (name.startsWith('opt-') || name.startsWith('tt-')) expect(rect.height, `${name} touch height`).toBeGreaterThanOrEqual(36);
+    await page.screenshot({ path: info.outputPath(`loop-2-decide-${vp.width}x${vp.height}.png`) });
+  }
+  await page.setViewportSize(home);
+  await expect.poll(async () => (await diagnostics(page)).layout?.viewport.width).toBe(home.width);
 
   await pressReady(page, 'tt-hint', mode);
   t = await L((x) => x.hinted, 'hint shown');
