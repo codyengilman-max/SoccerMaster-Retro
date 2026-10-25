@@ -259,3 +259,10 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Phone poses are per line (`src/render/art/phonePoses.ts`): each moment names exactly who is on screen and who holds a phone, resolved against the compiled script at load (a moment that matches no line or two lines is an error). Phone-only characters join the scene cast but never show on other lines, and only characters that can show take a place on screen, so at most three portraits share it.
 - The supplied 1024×1536 images are downscaled exactly 2:1 with nearest-neighbour and saved lossless with their own transparency (`scripts/art/build-phone-poses.py`); no matte, recolour or crop.
 - Rankings: one 120-team registry with permanent IDs (`src/game/rankings/teams.json`), K = 24 Elo with tier-seeded Preseason ratings, weekly snapshots published in one IndexedDB transaction. Story league/cup results stay the source of truth; background teams play their own seeded fixtures. No Next Level club (owner). See `docs/RANKINGS.md`.
+
+## D50. Team Training learning loop (owner brief, 2026-10-27)
+- Choices shown at a decision are a seeded subset (≤ 4) that always includes a good read; order is shuffled per attempt so position never signals quality. Option meaning (id, target, action) is unchanged by the shuffle.
+- A hint is help, not mastery: hinted decisions are saved as assisted and count half in the session score; the score still goes through the existing weekly grade, so there is no second attribute economy.
+- Replay rewinds the same seeded situation and is practice only: no evidence, no participation seconds, no score. Stale generations reject hint/replay/decide calls.
+- Level-1 routes for all 108 sessions are enabled because every one uses one of the eight implemented level-1 cards and each route is played to a credited finish in unit tests; level 2–3 cards stay unavailable until their drills exist.
+

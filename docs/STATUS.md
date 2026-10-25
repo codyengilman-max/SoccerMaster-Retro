@@ -1,5 +1,12 @@
 # Status
 
+## Team Training learning loop (owner brief + mockup, branch `devin/1792950375-tt-learning-loop`, from `main` 56a6e0c, not merged, not deployed)
+- Mockup layout on the fixed half: TEAM TRAINING header (season, week, session, round, role, the route's real objective), Bell94/Scottsdale surround outside the lines, navy/gold Coach Code panel with his approved portrait, A–D choice buttons, Hint / Pause / Leave, and the OBSERVE › DECIDE › PLAY › LEARN footer. Portrait and landscape; the panel never covers the half.
+- No giveaway before choosing (no arrows, neutral labels, seeded order); hint recorded as assisted; LEARN overlay from the frozen moment; Replay never counts; next attempt varies. Details: `docs/training/v1.2/MAPPING.md`.
+- Level 1 opened for Season 1 weeks 5–18 and Season 2 (864 more routes, each played to a credited finish in unit tests). Levels 2–3 stay "not available yet". Season 2 is not reachable from Career (no Season 2 career). Keeper routes via `?dev` only.
+- Saved runs carry optional `decisions: { independent, assisted }`; older runs load unchanged with no counts invented.
+- Phone emulation only, not tested on a real iPhone.
+
 ## Season One Weeks 6–7 (owner scripts 2026-10-26, branch `devin/1792728226-weeks6-7`, stacked on PR #38, not merged, not deployed)
 - Week 6 "Head Up" (no school scene, League Game 4) and Week 7 "Louder Doesn't Mean Open" (Blake's Next Horizon clips, Riley's showcase, Code's correction of Blake, League Game 5) compiled into the existing story format; `SEASON_RELEASED_WEEKS = 7`. Owner text kept in `docs/story/season-one/owner/`; every spoken line matches it word for word (straight quotes, as in Weeks 1–5). Blake stays on Batavia; no transfer before Week 8.
 - Recess and after-match lines follow the real Crossbar/Jungle Ball and league results; a skipped match shows no result line. Choices are saved (park plan, Riley's request as availability only, Mom's "Making Room" plan).

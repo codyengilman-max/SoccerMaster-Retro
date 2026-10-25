@@ -79,9 +79,10 @@ describe('Team Training v1.2 red team', () => {
       if (p.status === 'selected') throw new Error('should not select');
       throw new Error('unavailable');
     }).toThrow();
-    expect(verifiedRecord('S1-W05-A', '8', 1)).toBeNull();
+    expect(verifiedRecord('S1-W05-A', '8', 2)).toBeNull();
     expect(verifiedRecord('S1-W01-A', '8', 2)).toBeNull();
-    expect(verifiedRecord('S2-W01-A', '8', 1)).toBeNull();
+    expect(verifiedRecord('S2-W01-A', '8', 3)).toBeNull();
+    expect(verifiedRecord('S1-W19-A', '8', 1)).toBeNull();
     expect(verifiedRecord('S1-W01-A', '8', 1)?.verified).toBe(true);
   });
 });

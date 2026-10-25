@@ -182,3 +182,79 @@ test('team training v1.2: rounds 1-2 wait for the player; pause blocks decisions
   expect(c.text).not.toContain('All three sessions counted');
   await page.setViewportSize(vp);
 });
+
+type Loop = Omit<TT, 'options'> & {
+  stage: string | null; hinted: boolean; hintAvailable: boolean; replaying: boolean; choiceTagsVisible: number; coachPortrait: boolean;
+  options: { id: string; letter: string; label: string; good: boolean; quality: number }[];
+  header: { title: string; sub: string; objective: string | null }; decisions: { independent: number; assisted: number } | null;
+  lastAttempt: { optionId: string | null; hinted: boolean; replay: boolean; good: boolean | null; goodIds: string[] } | null;
+  textBottoms: { header: number; headerBottom: number };
+};
+
+test('team training: OBSERVE > DECIDE > PLAY > LEARN, hint is recorded as help, replay counts nothing', async ({ page }, info) => {
+  const mode = modeFor(info);
+  const errors = trackConsoleErrors(page);
+  await toTeamPage(page, mode);
+  await press(page, 'tt12-C', mode);
+  await waitForScene(page, 'tactical');
+  await tt(page, (x) => x.screen === 'role', 'role');
+  await pressElement(page, 'role-8', mode);
+  await tt(page, (x) => x.screen === 'brief', 'brief');
+  await pressElement(page, 'tt-start', mode);
+  const L = (p: (t: Loop) => boolean, what: string) => tt(page, (x) => p(x as unknown as Loop), what) as unknown as Promise<Loop>;
+  let t = await L((x) => x.stage === 'OBSERVE', 'observe');
+  expect(t.header.title).toBe('TEAM TRAINING');
+  expect(t.header.sub).toContain('Week 1');
+  expect(t.header.objective).toBeTruthy();
+  expect(t.textBottoms.header).toBeLessThanOrEqual(t.textBottoms.headerBottom);
+  await page.screenshot({ path: info.outputPath(`loop-1-observe-${info.project.name}.png`) });
+
+  t = await L((x) => x.stage === 'DECIDE' && x.options.length > 0, 'decide');
+  expect(t.options.length).toBeGreaterThanOrEqual(2);
+  expect(t.options.length).toBeLessThanOrEqual(4);
+  expect(t.options.map((o) => o.letter)).toEqual(['A', 'B', 'C', 'D'].slice(0, t.options.length));
+  expect(t.choiceTagsVisible, 'one same-style tag per choice, nothing extra').toBe(t.options.length);
+  expect(t.hinted).toBe(false);
+  expect(t.coachPortrait).toBe(true);
+  // Frozen: nothing moves while the player decides.
+  const frozenAt = JSON.stringify((await diagnostics(page)).gameplay);
+  await page.waitForTimeout(1200);
+  const later = await L(() => true, 'still frozen');
+  expect(later.activeSeconds).toBe(t.activeSeconds);
+  expect(later.phase).toBe('observe');
+  expect(frozenAt.length).toBeGreaterThan(0);
+  const d = await diagnostics(page);
+  const els = d.layout!.elements;
+  for (const [name, rect] of Object.entries(els)) expectInside(name, rect, d.layout!.viewport);
+  const half = els.half!;
+  const panel = els.panel!;
+  const overlap = half.x < panel.x + panel.width && panel.x < half.x + half.width && half.y < panel.y + panel.height && panel.y < half.y + half.height;
+  expect(overlap, 'panel never covers the half').toBe(false);
+  await page.screenshot({ path: info.outputPath(`loop-2-decide-${info.project.name}.png`) });
+
+  await pressReady(page, 'tt-hint', mode);
+  t = await L((x) => x.hinted, 'hint shown');
+  await page.screenshot({ path: info.outputPath(`loop-2b-hint-${info.project.name}.png`) });
+  const pick = [...t.options].sort((a, b) => b.quality - a.quality)[0]!;
+  await pressReady(page, `opt-${pick.id}`, mode);
+  t = await L((x) => x.stage === 'PLAY' || x.stage === 'LEARN', 'play');
+  if (t.stage === 'PLAY') await page.screenshot({ path: info.outputPath(`loop-3-play-${info.project.name}.png`) });
+  t = await L((x) => x.stage === 'LEARN', 'learn', );
+  expect(t.lastAttempt?.optionId).toBe(pick.id);
+  expect(t.lastAttempt?.hinted).toBe(true);
+  expect(t.decisions).toEqual({ independent: 0, assisted: 1 });
+  await page.screenshot({ path: info.outputPath(`loop-4-learn-${info.project.name}.png`) });
+
+  const before = t.attempts;
+  await pressReady(page, 'tt-replay', mode);
+  t = await L((x) => x.replaying && x.stage === 'DECIDE' && x.options.length > 0, 'replay decision');
+  await pressReady(page, `opt-${t.options[0]!.id}`, mode);
+  t = await L((x) => x.stage === 'LEARN' && x.attempts > before, 'replay learn');
+  expect(t.lastAttempt?.replay).toBe(true);
+  expect(t.decisions, 'a replay is never evidence').toEqual({ independent: 0, assisted: 1 });
+  await pressReady(page, 'tt-next', mode);
+  t = await L((x) => x.stage === 'DECIDE' && x.options.length > 0, 'varied next attempt');
+  expect(t.hinted).toBe(false);
+  expect(t.replaying).toBe(false);
+  expect(errors).toEqual([]);
+});
