@@ -271,7 +271,6 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Defenders track only a dangerous runner (behind the line, or running at it); a forward standing on the line is left to offside, so the line is not ratcheted back. When a back-line player presses, the others cover behind him or narrow on the far side and the nearest midfielder fills his lane.
 - Offside: a defender's save or deflection no longer ends the check (Law 11: only deliberate play does). The line is still measured from actual positions at the kick.
 - Spacing numbers (`tuning.teamShape`) are provisional playtest values, not coaching measurements. Reasons per player are in `state.shape[team].why` and the `?debug` dev overlay (O).
-||||||| 714405c
 
 
 ## D52. Team Training learning loop (owner brief, 2026-10-27)
