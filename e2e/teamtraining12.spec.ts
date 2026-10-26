@@ -164,6 +164,10 @@ test('team training v1.2: rounds 1-2 wait for the player; pause blocks decisions
   expect(idle.attempts).toBe(t.attempts);
   await pressElement(page, 'tt-pause', mode);
   t = await tt(page, (x) => x.status === 'paused', 'paused');
+  // Paused means still: player poses do not keep stepping.
+  const pose = ((await diagnostics(page)).gameplay as unknown as Loop).pose;
+  await page.waitForTimeout(700);
+  expect(((await diagnostics(page)).gameplay as unknown as Loop).pose, 'poses hold while paused').toBe(pose);
   expect((await diagnostics(page)).layout!.elements[`opt-${idle.options[0]!.id}`]).toBeUndefined();
   // Rotate while paused: the run survives and the half stays fully visible.
   const vp = page.viewportSize()!;
@@ -181,4 +185,129 @@ test('team training v1.2: rounds 1-2 wait for the player; pause blocks decisions
   const c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'team page');
   expect(c.text).not.toContain('All three sessions counted');
   await page.setViewportSize(vp);
+});
+
+type Loop = Omit<TT, 'options'> & {
+  stage: string | null; hinted: boolean; hintAvailable: boolean; replaying: boolean; choiceTagsVisible: number; coachPortrait: boolean;
+  options: { id: string; letter: string; label: string; good: boolean; quality: number }[];
+  header: { title: string; sub: string; objective: string | null }; decisions: { independent: number; assisted: number } | null;
+  lastAttempt: { optionId: string | null; hinted: boolean; replay: boolean; good: boolean | null; goodIds: string[] } | null;
+  textBottoms: { header: number; headerBottom: number; headerRight: number; headerEdge: number };
+  bodyText: string; bodyDropped: number; pose: number;
+};
+
+/** Runs `check` at the smaller supported phone sizes for this orientation, then restores the project viewport. */
+async function atSmallerSizes(page: Page, portrait: boolean, check: (l: Loop, size: string) => void): Promise<void> {
+  const home = page.viewportSize()!;
+  for (const vp of portrait ? [{ width: 375, height: 667 }, { width: 320, height: 568 }] : [{ width: 844, height: 390 }, { width: 667, height: 375 }, { width: 568, height: 320 }]) {
+    await page.setViewportSize(vp);
+    await expect.poll(async () => (await diagnostics(page)).layout?.viewport.width).toBe(vp.width);
+    await page.waitForTimeout(300);
+    check((await diagnostics(page)).gameplay as unknown as Loop, `${vp.width}x${vp.height}`);
+  }
+  await page.setViewportSize(home);
+  await expect.poll(async () => (await diagnostics(page)).layout?.viewport.width).toBe(home.width);
+}
+
+test('team training: OBSERVE > DECIDE > PLAY > LEARN, hint is recorded as help, replay counts nothing', async ({ page }, info) => {
+  const mode = modeFor(info);
+  const errors = trackConsoleErrors(page);
+  await toTeamPage(page, mode);
+  await press(page, 'tt12-C', mode);
+  await waitForScene(page, 'tactical');
+  await tt(page, (x) => x.screen === 'role', 'role');
+  await pressElement(page, 'role-8', mode);
+  await tt(page, (x) => x.screen === 'brief', 'brief');
+  await pressElement(page, 'tt-start', mode);
+  const L = (p: (t: Loop) => boolean, what: string) => tt(page, (x) => p(x as unknown as Loop), what) as unknown as Promise<Loop>;
+  let t = await L((x) => x.stage === 'OBSERVE', 'observe');
+  expect(t.header.title).toBe('TEAM TRAINING');
+  expect(t.header.sub).toContain('Week 1');
+  expect(t.header.objective).toBeTruthy();
+  expect(t.textBottoms.header).toBeLessThanOrEqual(t.textBottoms.headerBottom);
+  await page.screenshot({ path: info.outputPath(`loop-1-observe-${info.project.name}.png`) });
+
+  t = await L((x) => x.stage === 'DECIDE' && x.options.length > 0, 'decide');
+  expect(t.options.length).toBeGreaterThanOrEqual(2);
+  expect(t.options.length).toBeLessThanOrEqual(4);
+  expect(t.options.map((o) => o.letter)).toEqual(['A', 'B', 'C', 'D'].slice(0, t.options.length));
+  expect(t.choiceTagsVisible, 'one same-style tag per choice, nothing extra').toBe(t.options.length);
+  expect(t.hinted).toBe(false);
+  expect(t.coachPortrait).toBe(true);
+  // Frozen: nothing moves while the player decides.
+  const frozenAt = JSON.stringify((await diagnostics(page)).gameplay);
+  await page.waitForTimeout(1200);
+  const later = await L(() => true, 'still frozen');
+  expect(later.activeSeconds).toBe(t.activeSeconds);
+  expect(later.phase).toBe('observe');
+  expect(frozenAt.length).toBeGreaterThan(0);
+  const d = await diagnostics(page);
+  const els = d.layout!.elements;
+  for (const [name, rect] of Object.entries(els)) expectInside(name, rect, d.layout!.viewport);
+  const half = els.half!;
+  const panel = els.panel!;
+  const overlap = half.x < panel.x + panel.width && panel.x < half.x + half.width && half.y < panel.y + panel.height && panel.y < half.y + half.height;
+  expect(overlap, 'panel never covers the half').toBe(false);
+  await page.screenshot({ path: info.outputPath(`loop-2-decide-${info.project.name}.png`) });
+
+  // The same frozen decision at smaller supported phone sizes: whole half visible, the panel beside or below it,
+  // header text inside the header, every button on screen and at least 36 px tall.
+  const portrait = info.project.name.includes('portrait');
+  const home = page.viewportSize()!;
+  for (const vp of portrait ? [{ width: 375, height: 667 }, { width: 320, height: 568 }] : [{ width: 667, height: 375 }, { width: 568, height: 320 }]) {
+    await page.setViewportSize(vp);
+    await expect.poll(async () => (await diagnostics(page)).layout?.viewport.width).toBe(vp.width);
+    await page.waitForTimeout(300);
+    const dd = await diagnostics(page);
+    const e = dd.layout!.elements;
+    for (const [name, rect] of Object.entries(e)) expectInside(name, rect, dd.layout!.viewport);
+    const half = e.half!, panel = e.panel!;
+    if (portrait) expect(half.y + half.height, `${vp.width}x${vp.height} half above panel`).toBeLessThanOrEqual(panel.y + 0.5);
+    else expect(half.x + half.width, `${vp.width}x${vp.height} half left of panel`).toBeLessThanOrEqual(panel.x + 0.5);
+    expect(half.width / half.height, 'true half-field proportions').toBeCloseTo((50 * 0.9144 + 1.2) / (75 * 0.9144 / 2 + 2.8), 2);
+    const tb = (dd.gameplay as unknown as Loop).textBottoms;
+    expect(tb.header).toBeLessThanOrEqual(tb.headerBottom);
+    expect(tb.headerRight).toBeLessThanOrEqual(tb.headerEdge);
+    for (const [name, rect] of Object.entries(e)) if (name.startsWith('opt-') || name.startsWith('tt-')) expect(rect.height, `${name} touch height`).toBeGreaterThanOrEqual(36);
+    await page.screenshot({ path: info.outputPath(`loop-2-decide-${vp.width}x${vp.height}.png`) });
+  }
+  await page.setViewportSize(home);
+  await expect.poll(async () => (await diagnostics(page)).layout?.viewport.width).toBe(home.width);
+
+  await pressReady(page, 'tt-hint', mode);
+  t = await L((x) => x.hinted, 'hint shown');
+  await page.screenshot({ path: info.outputPath(`loop-2b-hint-${info.project.name}.png`) });
+  // The hint's explanation is never dropped for space, at any supported size.
+  await atSmallerSizes(page, portrait, (l, size) => {
+    expect(l.bodyDropped, `${size} hint text all shown`).toBe(0);
+    expect(l.bodyBottom, `${size} hint text above the buttons`).toBeLessThanOrEqual(l.buttonsTop);
+  });
+  const pick = [...t.options].sort((a, b) => b.quality - a.quality)[0]!;
+  await pressReady(page, `opt-${pick.id}`, mode);
+  t = await L((x) => x.stage === 'PLAY' || x.stage === 'LEARN', 'play');
+  if (t.stage === 'PLAY') await page.screenshot({ path: info.outputPath(`loop-3-play-${info.project.name}.png`) });
+  t = await L((x) => x.stage === 'LEARN', 'learn', );
+  expect(t.lastAttempt?.optionId).toBe(pick.id);
+  expect(t.lastAttempt?.hinted).toBe(true);
+  expect(t.decisions).toEqual({ independent: 0, assisted: 1 });
+  await page.screenshot({ path: info.outputPath(`loop-4-learn-${info.project.name}.png`) });
+  // LEARN always keeps the decision verdict and the separate result.
+  await atSmallerSizes(page, portrait, (l, size) => {
+    expect(l.bodyText, `${size} LEARN verdict`).toContain('Decision:');
+    expect(l.bodyText, `${size} LEARN result`).toContain('Result:');
+    expect(l.bodyBottom, `${size} LEARN text above the buttons`).toBeLessThanOrEqual(l.buttonsTop);
+  });
+
+  const before = t.attempts;
+  await pressReady(page, 'tt-replay', mode);
+  t = await L((x) => x.replaying && x.stage === 'DECIDE' && x.options.length > 0, 'replay decision');
+  await pressReady(page, `opt-${t.options[0]!.id}`, mode);
+  t = await L((x) => x.stage === 'LEARN' && x.attempts > before, 'replay learn');
+  expect(t.lastAttempt?.replay).toBe(true);
+  expect(t.decisions, 'a replay is never evidence').toEqual({ independent: 0, assisted: 1 });
+  await pressReady(page, 'tt-next', mode);
+  t = await L((x) => x.stage === 'DECIDE' && x.options.length > 0, 'varied next attempt');
+  expect(t.hinted).toBe(false);
+  expect(t.replaying).toBe(false);
+  expect(errors).toEqual([]);
 });

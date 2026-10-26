@@ -8,6 +8,7 @@ import { completionRequest, reduceRun, type BoundContext, type CompletionRequest
 import { createScheduledRun, planSession, sessions, type Plan } from './ref/seasons.mjs';
 import { assessAll, choose, createDrill, DRILL, human, options as drillOptions, step, type Assessment, type DrillOption, type DrillState } from './drill';
 import { PRACTICE_CAPABILITIES, RULES_PROFILE, verifiedRecord } from './registry';
+import { createRng } from '../rng';
 
 /** Live-ball seconds per round (the reference allows 30-90). Decision and explanation screens do not count. */
 export const BOUT_SECONDS = 45;
@@ -15,6 +16,9 @@ export const BOUT_SECONDS = 45;
 export const TIMED_DECISION_SECONDS = 5;
 
 export const HUMAN_ID = 'you';
+
+/** At most this many choices are shown at a decision moment. */
+export const MAX_CHOICES = 4;
 
 export interface Attempt {
   readonly round: number;
@@ -24,6 +28,20 @@ export interface Attempt {
   readonly decision: Assessment | null;
   readonly best: readonly string[];
   readonly outcome: string;
+  /** The hint was opened before choosing: assisted, never independent evidence. */
+  readonly hinted: boolean;
+  /** A replay of the previous situation: practice only, never evidence, participation or score. */
+  readonly replay: boolean;
+  /** The decision moment as it was frozen: what LEARN draws and explains. */
+  readonly frozen: FrozenMoment;
+}
+
+/** Positions at the decision pause, the chosen target, and every target judged a good read then. */
+export interface FrozenMoment {
+  readonly actors: readonly { readonly slot: string; readonly side: string; readonly human: boolean; readonly pos: { x: number; y: number } }[];
+  readonly ball: { x: number; y: number };
+  readonly chosen: { x: number; y: number } | null;
+  readonly good: readonly { readonly id: string; readonly label: string; readonly point: { x: number; y: number } }[];
 }
 
 export type SessionStatus = 'unavailable' | 'ready' | 'playing' | 'paused' | 'reflection' | 'complete' | 'aborted';
@@ -64,6 +82,11 @@ export class TrainingSession {
   private windowStart = 0;
   private windowOpen = false;
   private assessed: Map<string, Assessment> | null = null;
+  private shown: string[] | null = null;
+  private hintUsed = false;
+  private replayRun = false;
+  private drillSeed = 0;
+  private drillVariation = 0;
   private readonly bound: BoundContext;
 
   constructor(plan: Plan, careerId: string, runId: string, seed: number) {
@@ -112,10 +135,40 @@ export class TrainingSession {
   private nextAttempt(): void {
     const seed = this.run.seed + this.run.round * 1009 + this.attemptNo * 31;
     // The first attempt of round 1 is the authored layout; every other attempt is a varied situation.
-    this.drill = createDrill(this.plan.definition, seed, this.run.round === 0 && this.attemptNo === 0 ? 0 : 1);
+    this.drillSeed = seed;
+    this.drillVariation = this.run.round === 0 && this.attemptNo === 0 ? 0 : 1;
+    this.replayRun = false;
     this.attemptNo++;
+    this.resetDrill();
+  }
+
+  private resetDrill(): void {
+    this.drill = createDrill(this.plan.definition, this.drillSeed, this.drillVariation);
     this.assessed = null;
+    this.shown = null;
+    this.hintUsed = false;
     this.decideClock = 0;
+  }
+
+  /** Rounds 1 and 2 offer a hint; the game-speed round does not. */
+  get hintAvailable(): boolean { return !this.timed && this.drill?.phase === 'observe' && this.run.status === 'playing'; }
+  get hinted(): boolean { return this.hintUsed; }
+  get replaying(): boolean { return this.replayRun; }
+
+  /** Open the hint for this decision. The attempt is then recorded as assisted. */
+  hint(generation = this.run.generation): boolean {
+    if (!this.hintAvailable || generation !== this.run.generation) return false;
+    this.hintUsed = true;
+    return true;
+  }
+
+  /** Play the same situation again from its start. Practice only: nothing it does is evidence or score. */
+  replay(generation = this.run.generation): boolean {
+    if (this.run.status !== 'playing' || this.drill?.phase !== 'explain' || this.timed || generation !== this.run.generation) return false;
+    this.closeWindow();
+    this.resetDrill();
+    this.replayRun = true;
+    return true;
   }
 
   /** Advance real time. Bout time only runs while the ball is live (release and play-out), not on decision screens. */
@@ -134,9 +187,12 @@ export class TrainingSession {
     while (left > 1e-9 && (d.phase === 'release' || d.phase === 'execute') && this.run.status === 'playing') {
       const dt = Math.min(DRILL.dt, left);
       left -= dt;
-      // Close the participation span before the tick that ends the bout: spans are only accepted during play.
-      if (d.phase === 'execute' && this.run.elapsed + dt >= this.run.boutSeconds - 1e-9) this.closeWindow();
-      if (!this.send({ type: 'tick', tick: ++this.tick, dt } as never)) return;
+      // A replay is practice only: it plays the drill without ticking the round clock, so it never uses up the bout.
+      if (!this.replayRun) {
+        // Close the participation span before the tick that ends the bout: spans are only accepted during play.
+        if (d.phase === 'execute' && this.run.elapsed + dt >= this.run.boutSeconds - 1e-9) this.closeWindow();
+        if (!this.send({ type: 'tick', tick: ++this.tick, dt } as never)) return;
+      }
       step(d, dt);
       if (phaseOf(d) === 'explain') this.closeWindow();
     }
@@ -147,7 +203,9 @@ export class TrainingSession {
     const d = this.drill;
     if (!d || d.phase !== 'observe' || this.run.status !== 'playing') return [];
     this.assessed ??= assessAll(d);
-    return [...this.assessed.entries()].map(([id, a]) => ({ option: optionOf(d, id), assessment: a }));
+    this.shown ??= presented(this.assessed, this.drillSeed * 7 + this.attemptNo + (this.replayRun ? 1 : 0));
+    const assessed = this.assessed;
+    return this.shown.map((id) => ({ option: optionOf(d, id), assessment: assessed.get(id)! }));
   }
 
   /** The player's decision. Ignored unless the run is live, the drill is waiting, and the generation still matches. */
@@ -158,21 +216,34 @@ export class TrainingSession {
     if (!a) return false;
     this.windowStart = this.run.totalPlayed;
     this.windowOpen = true;
+    const frozen = this.freeze(d, a.option);
     if (!choose(d, optionId)) return false;
-    this.record(a.option, a.assessment);
+    this.record(a.option, a.assessment, frozen);
     return true;
   }
 
-  private record(option: DrillOption | null, assessment: Assessment | null = null): void {
+  private freeze(d: DrillState, option: DrillOption | null): FrozenMoment {
+    const good = this.choices().filter((c) => c.assessment.good).map((c) => ({ id: c.option.id, label: c.option.label, point: { ...c.option.point } }));
+    return {
+      actors: d.actors.map((x) => ({ slot: x.slot, side: x.side, human: x.human, pos: { ...x.pos } })),
+      ball: { ...d.ball.pos },
+      chosen: option ? { ...option.point } : null,
+      good,
+    };
+  }
+
+  private record(option: DrillOption | null, assessment: Assessment | null = null, frozen: FrozenMoment | null = null): void {
     const d = this.drill!;
-    const best = [...(this.assessed ?? assessAll(d)).entries()].filter(([, x]) => x.good).map(([id]) => id);
-    if (option && assessment) {
+    frozen ??= this.freeze(d, null);
+    const shown = new Set(this.shown ?? []);
+    const best = [...(this.assessed ?? assessAll(d)).entries()].filter(([id, x]) => x.good && (shown.size === 0 || shown.has(id))).map(([id]) => id);
+    if (option && assessment && !this.replayRun) {
       const opportunityId = `r${this.run.round}-a${this.attemptNo}`;
       const dimension: Evidence['dimension'] = ['press', 'delay', 'cover', 'recover'].includes(option.kind) ? 'defense'
         : ['support', 'width', 'run', 'short'].includes(option.kind) ? 'support' : 'decision';
-      this.send({ type: 'evidence', evidence: { id: `${opportunityId}-${dimension}`, actorId: HUMAN_ID, opportunityId, dimension, quality: assessment.quality, observable: true, eligible: true } } as never);
+      this.send({ type: 'evidence', evidence: { id: `${opportunityId}-${dimension}`, actorId: HUMAN_ID, opportunityId, dimension, quality: assessment.quality, observable: true, eligible: !this.hintUsed } } as never);
     }
-    this.attempts.push({ round: this.run.round, index: this.attemptNo, optionId: option?.id ?? null, kind: option?.kind ?? null, decision: assessment, best, outcome: option ? '' : 'The moment passed before a decision.' });
+    this.attempts.push({ round: this.run.round, index: this.attemptNo, optionId: option?.id ?? null, kind: option?.kind ?? null, decision: assessment, best, outcome: option ? '' : 'The moment passed before a decision.', hinted: this.hintUsed, replay: this.replayRun, frozen });
     if (!option) { d.phase = 'explain'; d.outcome = { kind: 'held', text: 'The moment passed before a decision.' }; }
   }
 
@@ -184,7 +255,7 @@ export class TrainingSession {
     if (last && d?.outcome && last.outcome === '') (last as { outcome: string }).outcome = d.outcome.text;
     // The reference accepts spans of at most 5 s; a transition can play longer, so only its first 5 s count (margin for float error).
     const end = Math.min(this.run.totalPlayed, this.windowStart + 4.999);
-    if (last?.optionId && end > this.windowStart) {
+    if (last?.optionId && !last.replay && end > this.windowStart) {
       const kind = last.kind && ['support', 'width', 'run', 'short'].includes(last.kind) ? 'off-ball-support' : 'active-play';
       this.send({ type: 'participation', actorId: HUMAN_ID, windowId: `w-${this.run.round}-${last.index}`, kind, observable: true, start: this.windowStart, end } as never);
     }
@@ -210,9 +281,43 @@ export class TrainingSession {
   resume(): boolean { return this.run.status === 'paused' && this.send({ type: 'resume' }); }
   abort(): boolean { return this.send({ type: 'abort' }); }
 
+  /** Decisions that count as the player's own read, and those made after opening the hint (replays excluded). */
+  get decisionCounts(): { independent: number; assisted: number } {
+    const real = this.attempts.filter((a) => a.decision && !a.replay);
+    return { independent: real.filter((a) => !a.hinted).length, assisted: real.filter((a) => a.hinted).length };
+  }
+
+  /** Weekly score: mean decision quality, a hinted decision worth half. Replays and missed moments are excluded / zero. */
+  get score(): number {
+    const real = this.attempts.filter((a) => !a.replay);
+    if (!real.length) return 0;
+    return real.reduce((t, a) => t + (a.decision?.quality ?? 0) * (a.hinted ? 0.5 : 1), 0) / real.length;
+  }
+
   /** Seconds of observed play the player has contributed (credit needs 30). */
   get activeSeconds(): number { return this.run.activeSeconds; }
   get humanSlot(): string { return this.drill ? human(this.drill).slot : ''; }
+}
+
+/**
+ * The choices shown for one decision: every good read (the best MAX_CHOICES if more qualify), then the strongest
+ * alternatives of other kinds, up to MAX_CHOICES, in a seeded shuffled order. The order never says which one is best.
+ */
+export function presented(assessed: ReadonlyMap<string, Assessment>, seed: number, max = MAX_CHOICES): string[] {
+  const all = [...assessed.entries()].sort((a, b) => b[1].quality - a[1].quality);
+  const pick: string[] = all.filter(([, a]) => a.good).slice(0, max).map(([id]) => id);
+  const kindOf = (id: string): string => id.split('-')[0]!;
+  for (const [id] of all) {
+    if (pick.length >= max) break;
+    if (!pick.includes(id) && !pick.some((p) => kindOf(p) === kindOf(id) && kindOf(id) !== 'pass')) pick.push(id);
+  }
+  for (const [id] of all) if (pick.length < Math.min(max, all.length) && !pick.includes(id)) pick.push(id);
+  const rand = createRng(seed >>> 0);
+  for (let i = pick.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [pick[i], pick[j]] = [pick[j]!, pick[i]!];
+  }
+  return pick;
 }
 
 function optionOf(d: DrillState, id: string): DrillOption {

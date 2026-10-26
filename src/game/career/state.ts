@@ -110,6 +110,11 @@ export interface Tt12Run {
   /** Mean decision quality (0-1) over the run's assessed decisions. */
   readonly score: number;
   readonly credited: boolean;
+  /**
+   * Decisions made without the hint, and decisions made after opening it (replays excluded). Missing on runs saved
+   * before hints existed: those are not guessed.
+   */
+  readonly decisions?: { readonly independent: number; readonly assisted: number };
 }
 
 export type Action =
@@ -122,7 +127,7 @@ export type Action =
   | { readonly type: 'evidence'; readonly batchId: string; readonly items: readonly EvidenceItem[]; readonly missed: number }
   | { readonly type: 'acceptLevel'; readonly family: SkillFamilyId }
   | { readonly type: 'teamTraining'; readonly week: number; readonly results: readonly SituationResult[] }
-  | { readonly type: 'tt12Run'; readonly week: number; readonly slot: Tt12Slot; readonly runId: string; readonly score: number; readonly creditEligible: boolean }
+  | { readonly type: 'tt12Run'; readonly week: number; readonly slot: Tt12Slot; readonly runId: string; readonly score: number; readonly creditEligible: boolean; readonly decisions?: { readonly independent: number; readonly assisted: number } }
   | { readonly type: 'cloudyResult'; readonly runId: string; readonly difficulty: Difficulty; readonly score: number; readonly stars: 1 | 2 | 3 }
   | { readonly type: 'matchReport'; readonly report: SavedReport }
   | { readonly type: 'endWeek'; readonly recess?: { readonly played: boolean } | null };
@@ -307,13 +312,15 @@ export function reduce(save: CareerSave, action: Action): Outcome {
       if (!TT12_SLOTS.includes(action.slot)) return fail('Unknown Team Training session.');
       if (typeof action.runId !== 'string' || action.runId.length < 1 || action.runId.length > 64) return fail('Invalid Team Training run.');
       if (typeof action.score !== 'number' || !Number.isFinite(action.score) || action.score < 0 || action.score > 1) return fail('Team Training score out of range.');
+      const dc = action.decisions;
+      if (dc !== undefined && ![dc.independent, dc.assisted].every((n) => Number.isInteger(n) && n >= 0 && n <= 500)) return fail('Team Training decision counts out of range.');
       // A replayed completion (same run) or a second run of an already credited session changes nothing.
       if (save.tt12.some((r) => r.runId === action.runId)) return same(save, 'This session is already saved.');
       if (save.tt12.some((r) => r.week === save.week && r.slot === action.slot && r.credited)) return same(save, `Session ${action.slot} for week ${save.week} is already counted; this was practice only.`);
       // Once the week is graded (legacy Team Training or three v1.2 sessions), further runs are practice only.
       const graded = save.teamTraining.some((r) => r.week === save.week);
       const credited = action.creditEligible === true && !graded;
-      const runs = [...save.tt12, { week: save.week, slot: action.slot, runId: action.runId, score: action.score, credited }].slice(-L.historyMax * 4);
+      const runs = [...save.tt12, { week: save.week, slot: action.slot, runId: action.runId, score: action.score, credited, ...(dc ? { decisions: { independent: dc.independent, assisted: dc.assisted } } : {}) }].slice(-L.historyMax * 4);
       let next: CareerSave = { ...save, tt12: runs };
       if (graded) return ok(next, `Team Training for week ${save.week} is already counted; this session was practice only.`);
       if (!credited) return ok(next, 'Session saved, but not counted: it needs at least 30 seconds of your own play.');

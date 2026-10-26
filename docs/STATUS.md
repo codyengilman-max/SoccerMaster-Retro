@@ -1,5 +1,12 @@
 # Status
 
+## Team Training learning loop (owner brief + mockup, branch `devin/1792950375-tt-learning-loop`, from `main` 56a6e0c, not merged, not deployed)
+- Mockup layout on the fixed half: TEAM TRAINING header (season, week, session, round, role, the route's real objective), Bell94/Scottsdale surround outside the lines, navy/gold Coach Code panel with his approved portrait, A–D choice buttons, Hint / Pause / Leave, and the OBSERVE › DECIDE › PLAY › LEARN footer. Portrait and landscape; the panel never covers the half.
+- No giveaway before choosing (no arrows, neutral labels, seeded order); hint recorded as assisted; LEARN overlay from the frozen moment; Replay never counts; next attempt varies. Details: `docs/training/v1.2/MAPPING.md`.
+- Level 1 opened for Season 1 weeks 5–18 and Season 2 (864 more routes, each played to a credited finish in unit tests). Levels 2–3 stay "not available yet". Season 2 is not reachable from Career (no Season 2 career). Keeper routes via `?dev` only.
+- Saved runs carry optional `decisions: { independent, assisted }`; older runs load unchanged with no counts invented.
+- Phone emulation only, not tested on a real iPhone.
+
 ## Juggling + offside referee (owner package SoccerMaster_Juggling_Referee_Devin, 2026-10-28, branch `devin/1792988972-juggling-referee`, from `main` 56a6e0c, not merged, not deployed)
 - Package status kept: `art_review_build_not_shipping_approved` (`src/assets/art/juggling-v1/manifest.json`, copied unchanged). Sheets copied byte-for-byte (boy `614a0210…`, girl `11fb4734…`); the referee PNG (`37c0d849…`) is stored as lossless WebP with its alpha.
 - Home juggling demos Ladders 1–5 (`jg-1`…`jg-5`, laces/bounce/catch only) now play the prepared 6 × 4 sheet of the saved boy or girl (160 × 128 cells, origin (80, 120), nearest-neighbour). Each demo is a timeline (`src/render/art/juggleSheet.ts`): hold → release → prep/touch/recover → flight (or bounce wait) → catch prep/catch/finish; consecutive touches alternate the two foot cycles (6–8, 9–11). "Show a miss" plays miss → chase → reach → pickup → stand and loops back to the hold. The ball is the existing separate ball, ballistic between contacts and placed on the calibrated boot/hands point of the contact frame; the planted boot is held still (≤ 8 px shift per frame). "Slow" plays at 0.4×. Ladders 6–8 (thigh, settle, pass) keep the sprite-v2 poses: the pack has no thigh, settle or pass poses, and no dedicated JU03 air-to-ground cushioning art.
@@ -374,3 +381,9 @@ Real-iPhone playtest of the coached sandbox, then M4 match flow so Coach Moments
 ## Team shape (match AI)
 - Shared team-shape controller (`src/game/match/shape.ts`) moves the back line with the team in and out of possession; offside survives saves/deflections; dev overlay shows the lines, offside boundary, unit gaps and each player's reason. Deterministic scenarios in `tests/teamShape.test.ts`.
 - Open: feel needs a phone playtest; spacing values are provisional.
+||||||| 714405c
+
+
+### Team Training presentation pass (PR #43)
+
+Pitch-first layout at true proportions (390×844 down to 320×568 and 568×320 checked in the loop browser test), cones and a dashed line instead of the orange box, pixel mini-goals coloured by attacking team, muted background goal, team foot discs and carrier ring, tags kept off players and the ball, compact coaching panel with a state-worded question, technical readouts moved to diagnostics. Replays no longer use round time; all good reads are offered. Browser phone emulation only, not a physical iPhone.

@@ -17,9 +17,11 @@ function play(s: TrainingSession, pick: (c: ReturnType<TrainingSession['choices'
 const best = (c: ReturnType<TrainingSession['choices']>) => [...c].sort((a, b) => b.assessment.quality - a.assessment.quality)[0]!.option.id;
 
 describe('Team Training v1.2 session', () => {
-  it('only verified routes are offered: S1 week 1 plans, week 5 is unavailable', () => {
+  it('only verified routes are offered: every level-1 route plans; levels 2-3 have no drill yet', () => {
     expect(planFor('S1-W01-A', '8').status).toBe('selected');
-    expect(planFor('S1-W05-A', '8').status).toBe('unavailable');
+    expect(planFor('S1-W05-A', '8').status).toBe('selected');
+    expect(planFor('S2-W18-C', '9').status).toBe('selected');
+    expect(planFor('S1-W07-A', '8', 2).status).toBe('unavailable');
     expect(planFor('S2-W01-A', '8', 3).status).toBe('unavailable');
   });
 
@@ -68,4 +70,20 @@ describe('Team Training v1.2 session', () => {
       expect(s.rejected).toBe(0);
     }
   }, 120_000);
+
+  it('every Season 1 week 5-18 and Season 2 level-1 route for every role completes with credit when played well', () => {
+    let n = 0;
+    for (const season of [1, 2]) for (let w = season === 1 ? 5 : 1; w <= 18; w++) for (const slot of ['A', 'B', 'C'] as const) for (const role of ['GK', 'CB', 'LB', 'RB', '6', '8', 'LW', 'RW', '9'] as const) {
+      const id = `S${season}-W${String(w).padStart(2, '0')}-${slot}`;
+      const plan = planFor(id, role);
+      expect(plan.status, `${id} ${role}`).toBe('selected');
+      const s = new TrainingSession(plan, 'c', `r-${id}-${role}`, season * 1000 + w * 7);
+      play(s, best);
+      expect(s.status, `${id} ${role}`).toBe('complete');
+      expect(s.completion!.creditEligible, `${id} ${role}`).toBe(true);
+      expect(s.rejected, `${id} ${role}`).toBe(0);
+      n++;
+    }
+    expect(n).toBe(864);
+  }, 900_000);
 });
