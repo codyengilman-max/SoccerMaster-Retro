@@ -306,9 +306,16 @@ Approved technical choices. Add a new entry rather than silently changing an old
 
 ## D55. Team Training is gated on the owner's 9v9 Tactical Library v1 (2026-10-26)
 
-- The library (`docs/training/library-v1/SoccerMaster_9v9_Tactical_Library_v1.md`, SHA-256 pinned) is imported unchanged by `scripts/training/import-tactical-library.py` into `src/game/training12/library/tacticalLibraryV1.generated.ts`. Each brief keeps its verbatim text, cited sources and its own SHA-256.
+- (Superseded by D56.) The library (`docs/training/library-v1/SoccerMaster_9v9_Tactical_Library_v1.md`, SHA-256 pinned) is imported unchanged by `scripts/training/import-tactical-library.py` into `src/game/training12/library/tacticalLibraryV1.generated.ts`. Each brief keeps its verbatim text, cited sources and its own SHA-256.
 - Scored Team Training goes through `scoredSession()` (`library/gate.ts`). A route plays only if an approved session-to-brief mapping exists and every mapped brief has a validated scene plus a Coach Cody sign-off pinned to both the brief hash and the scene hash. Any edit to either makes the sign-off stale. Missing briefs, scenes or sign-offs return exact blockers; there is no fallback to the earlier proposals or to generated drills.
 - Today there are no sign-offs, scenes or mappings, so all 108 sessions × 9 roles are held out. The week page says so, nothing is recorded, and the story's Team Training step offers "Continue story · not counted" (a `declined` outcome, never a completion).
 - The earlier 40 ts-1 situations stay in the code for review only, behind `?debug&ttProposals`; those runs are saved as practice and never counted.
 - Source accuracy now outranks the earlier "all 18 on the half-field" rule: approved scenes will use the source's participants and field area.
 - The review sheet (`docs/training/library-v1/REVIEW_SHEET.md`) compares every brief with its fetched source. Approving a brief there does not activate scoring; the scene built from it needs its own sign-off.
+
+## D56 — Team Training gates on the Audited Library v1.2 (supersedes the v1.0 import in D55)
+
+- The owner replaced v1.0 with `SoccerMaster_9v9_Audited_v1.2.zip`. All six package files are committed unchanged in `docs/training/library-v1.2/` and pinned by SHA-256; v1.0 stays in `docs/training/library-v1/` as history.
+- `scripts/training/import-tactical-library.py` copies all 48 cards from `scenarios.json` verbatim into `src/game/training12/library/tacticalLibrary.generated.ts`, adding only `gameRole` (DM→6, CM→8, ST→9) and `cardSha256` (SHA-256 of the card's key-sorted JSON). A framework-free `sha256()` replaces the 32-bit FNV scene hash.
+- A card scores only when: a numeric scene exists in metres on the 75 x 50 yd profile, uses only the 18 roster actors (no neutrals or extras), shows every required actor, protagonist and ball owner, records every other actor as omitted with a reason, and Coach Cody's sign-off matches the card, rules-profile (pitch + rosters) and scene hashes, with `local_rules_verified` true. Any change makes the sign-off stale.
+- GK01–GK03 are retired: GK routes are blocked outright. The 108-session assignment is not in the package and is not invented (`SESSION_CARDS` is empty), so all 972 routes stay blocked. The package's structural lint is ported to the unit tests.

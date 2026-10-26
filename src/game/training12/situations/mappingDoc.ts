@@ -13,7 +13,7 @@ export function mappingMarkdown(): string {
   const out: string[] = [];
   out.push('# Team Training: curriculum to tactical situation mapping', '');
   out.push(`Generated from \`src/game/training12/situations/\` (model \`${MODEL_VERSION}\`). Do not edit by hand: run \`UPDATE_MAPPING=1 npx vitest run tests/training12-situations-library.test.ts\`.`, '');
-  out.push('**Review only, never scored.** These ts-1 situations are earlier proposals written by Devin, not approved library content. Scored Team Training is gated on Tactical Library v1: see `docs/training/library-v1/SESSION_MAPPING.md` and `REVIEW_SHEET.md`.', '');
+  out.push('**Review only, never scored.** These ts-1 situations are earlier proposals written by Devin, not approved library content. Scored Team Training is gated on the Audited Library v1.2: see `docs/training/library-v1.2/SESSION_MAPPING.md` and `REVIEW_SHEET.md`.', '');
   out.push('## Sources', '');
   out.push(`- Situations: \`${SOURCE_CATALOG}\` (40 seeds; the v0.2 copy is identical). Every seed is \`draft_seed\`, \`production_enabled: false\`, \`not_calibrated\`, with no source ids.`);
   out.push('- Selected seeds: `docs/training/v1.2/references/selected_tactical_seeds.json` (17, marked * below).');

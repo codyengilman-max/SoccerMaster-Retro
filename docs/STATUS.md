@@ -403,3 +403,8 @@ Pitch-first layout at true proportions (390×844 down to 320×568 and 568×320 c
 ## Team Training tactical situations (ts-1)
 
 Done: 40 authored prototype moments (cue + counter, reflected for the other side), full-half scene, 108 x 9 mapping, ts-1 save marker. Unit 1086/1086, Team Training e2e 6/6 (phone portrait + landscape). Open: calibration of authored positions/outcomes; 211 weak route mappings; physical iPhone test.
+
+### Team Training source gate on Audited Library v1.2
+
+- v1.2 (48 outfield cards, 15 sources, GK01–GK03 retired) imported unchanged and hash-pinned; v1.0 kept as history. All 15 cited sources fetched (HTTP 200) and every cited section located.
+- Review sheet `docs/training/library-v1.2/REVIEW_SHEET.md`: 39 cards ready to build a scene for review, 9 need tactical authoring/review, 0 approved. No numeric scene exists and local rules are unverified, so no Team Training session is scored (0 of 972 routes).

@@ -1,54 +1,79 @@
 /**
- * Review state for Team Training content. Fails closed: anything without a current sign-off is held out of scored
- * training, and nothing here generates a replacement. Framework-free.
+ * Review state of each library card. A card is APPROVED only with a validated numeric scene and a sign-off on the
+ * exact card, rules profile and scene hashes, with the library's local rules verified. Anything else fails closed
+ * with the exact blockers. Framework-free.
  */
-import type { Fixture } from '../situations/types';
-import { LIBRARY_V1, LIBRARY_V1_BRIEFS } from './tacticalLibraryV1.generated';
-import type { LibraryBrief, Review, Signoff } from './types';
+import { LIBRARY, LIBRARY_CARDS, LIBRARY_PITCH, LIBRARY_RETIRED_IDS, LIBRARY_ROSTERS } from './tacticalLibrary.generated';
+import { contentSha256 } from './sha256';
+import type { LibraryCard, LibraryPitch, LibraryScene, Review, Signoff } from './types';
 
-/** Executable scenes built from a library brief, keyed by brief id. None are validated yet. */
-export const LIBRARY_SCENES: Readonly<Record<string, Fixture>> = {};
-
-/** Coach Cody's sign-offs. Empty: nothing in the library or the earlier proposals has been approved. */
+/** Reviewed scenes by card ID. Empty: no card has a numeric scene yet (every card's numeric_scene is null). */
+export const LIBRARY_SCENES: Readonly<Record<string, LibraryScene>> = {};
+/** Coach Cody's sign-offs. Empty: nothing is approved. */
 export const SIGNOFFS: readonly Signoff[] = [];
 
-/** Deterministic content hash (FNV-1a 32-bit over the JSON) pinning a sign-off to one exact scene. Not cryptographic. */
-export function contentHash(value: unknown): string {
-  const s = JSON.stringify(value);
-  let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 0x01000193) >>> 0;
-  }
-  return `fnv1a32:${h.toString(16).padStart(8, '0')}`;
+export interface ReviewOpts {
+  readonly cards?: readonly LibraryCard[];
+  readonly scenes?: Readonly<Record<string, LibraryScene>>;
+  readonly signoffs?: readonly Signoff[];
+  readonly pitch?: LibraryPitch;
+  readonly rulesSha256?: string;
 }
 
-export function briefById(id: string, briefs: readonly LibraryBrief[] = LIBRARY_V1_BRIEFS): LibraryBrief | null {
-  return briefs.find((b) => b.id === id) ?? null;
+export const sceneSha256 = (s: LibraryScene): string => contentSha256(s);
+
+export function cardById(id: string, cards: readonly LibraryCard[] = LIBRARY_CARDS): LibraryCard | null {
+  return cards.find((c) => c.id === id) ?? null;
 }
 
-export function briefReview(
-  id: string,
-  opts: { briefs?: readonly LibraryBrief[]; scenes?: Readonly<Record<string, Fixture>>; signoffs?: readonly Signoff[] } = {},
-): Review {
-  const brief = briefById(id, opts.briefs);
-  if (!brief) return { status: 'NEEDS_TACTICAL_AUTHORING_REVIEW', blockers: [`No brief "${id}" in ${LIBRARY_V1.file}.`] };
+/** Structural problems that stop a scene from representing its card. Empty means it can be put up for sign-off. */
+export function sceneProblems(card: LibraryCard, scene: LibraryScene, pitch: LibraryPitch = LIBRARY_PITCH): string[] {
+  const p: string[] = [];
+  const roster = new Set([...LIBRARY_ROSTERS.H, ...LIBRARY_ROSTERS.A].map((a) => a.id));
+  const shown = scene.numeric.actors.map((a) => a.id);
+  const omitted = scene.numeric.omitted.map((a) => a.id);
+  if (scene.cardId !== card.id) p.push(`${card.id}: scene ${scene.sceneId} was built for ${scene.cardId}.`);
+  if (scene.numeric.units !== 'm') p.push(`${card.id}: scene units must be metres.`);
+  if (Math.abs(scene.numeric.pitch.length_m - pitch.length_m) > 1e-6 || Math.abs(scene.numeric.pitch.width_m - pitch.width_m) > 1e-6)
+    p.push(`${card.id}: scene pitch is not the library's ${pitch.length_yards} x ${pitch.width_yards} yd profile.`);
+  if (new Set([...shown, ...omitted]).size !== shown.length + omitted.length) p.push(`${card.id}: an actor appears twice.`);
+  for (const id of [...shown, ...omitted]) if (!roster.has(id)) p.push(`${card.id}: ${id} is not one of the 18 roster actors.`);
+  for (const id of roster) if (!shown.includes(id) && !omitted.includes(id)) p.push(`${card.id}: ${id} is neither shown nor recorded as omitted.`);
+  for (const o of scene.numeric.omitted) if (!o.reason.trim()) p.push(`${card.id}: omitted ${o.id} has no reason it cannot change the decision.`);
+  for (const id of new Set([...card.required_visible_actor_ids, card.protagonist, card.ball_owner_at_freeze]))
+    if (!shown.includes(id)) p.push(`${card.id}: required actor ${id} is not shown.`);
+  if (scene.numeric.ball.owner !== card.ball_owner_at_freeze)
+    p.push(`${card.id}: ball is with ${scene.numeric.ball.owner ?? 'nobody'} at the freeze, card says ${card.ball_owner_at_freeze}.`);
+  if (!scene.numeric.localRules.trim()) p.push(`${card.id}: scene does not name the local rules it uses.`);
+  return p;
+}
+
+export function cardReview(id: string, opts: ReviewOpts = {}): Review {
+  if (LIBRARY_RETIRED_IDS.includes(id))
+    return { status: 'RETIRED', blockers: [`${id} is retired in ${LIBRARY.file} v${LIBRARY.version}: there are no goalkeeper decision sessions.`] };
+  const card = cardById(id, opts.cards);
+  if (!card) return { status: 'NEEDS_TACTICAL_AUTHORING_REVIEW', blockers: [`No card "${id}" in ${LIBRARY.file} v${LIBRARY.version}.`] };
+  const pitch = opts.pitch ?? LIBRARY_PITCH;
+  const rules = opts.rulesSha256 ?? LIBRARY.rulesSha256;
   const scene = (opts.scenes ?? LIBRARY_SCENES)[id];
-  const signs = (opts.signoffs ?? SIGNOFFS).filter((s) => s.briefId === id);
+  const signs = (opts.signoffs ?? SIGNOFFS).filter((s) => s.cardId === id);
   const blockers: string[] = [];
-  if (!scene) blockers.push(`${id}: no executable scene has been built and validated from this brief.`);
-  if (signs.length === 0) blockers.push(`${id}: no Coach Cody sign-off.`);
-  const current = signs.find((s) => s.briefSha256 === brief.briefSha256 && !!scene && s.sceneId === scene.id && s.sceneHash === contentHash(scene));
-  if (current) return { status: 'APPROVED', blockers: [] };
-  if (signs.length > 0) {
-    if (signs.every((s) => s.briefSha256 !== brief.briefSha256)) blockers.push(`${id}: library text changed after sign-off; re-review required.`);
-    else blockers.push(`${id}: scene changed after sign-off; re-review required.`);
-    return { status: 'APPROVAL_STALE', blockers };
+  if (!scene) blockers.push(`${id}: no numeric scene has been built and validated from this card (numeric_scene is null).`);
+  else blockers.push(...sceneProblems(card, scene, pitch));
+  if (!pitch.local_rules_verified) blockers.push(`${id}: local competition rules are not verified (pitch_proposal.local_rules_verified is false).`);
+  if (signs.length === 0) {
+    blockers.push(`${id}: no Coach Cody sign-off.`);
+    return { status: 'DRAFT_BLOCKED_FOR_PLAYER_TRAINING', blockers };
   }
-  return { status: 'SOURCE_INFORMED_DRAFT', blockers };
+  const hash = scene ? sceneSha256(scene) : null;
+  const current = signs.find((s) => s.cardSha256 === card.cardSha256 && s.rulesSha256 === rules && !!scene && s.sceneId === scene.sceneId && s.sceneSha256 === hash);
+  if (current) return blockers.length === 0 ? { status: 'APPROVED', blockers: [] } : { status: 'DRAFT_BLOCKED_FOR_PLAYER_TRAINING', blockers };
+  if (signs.every((s) => s.cardSha256 !== card.cardSha256)) blockers.push(`${id}: library card changed after sign-off; re-review required.`);
+  else if (signs.every((s) => s.rulesSha256 !== rules)) blockers.push(`${id}: rules profile (pitch or rosters) changed after sign-off; re-review required.`);
+  else blockers.push(`${id}: scene changed after sign-off; re-review required.`);
+  return { status: 'APPROVAL_STALE', blockers };
 }
 
-/** The 40 earlier ts-1 fixtures: v0.5 draft seed text plus Devin-authored setup, answers and feedback. */
 export const LEGACY_PROPOSAL_REVIEW: Review = {
   status: 'NEEDS_TACTICAL_AUTHORING_REVIEW',
   blockers: [

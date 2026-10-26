@@ -1,3 +1,5 @@
+> **Superseded** by the Audited Library v1.2 (`docs/training/library-v1.2/`). Kept as history only.
+
 # Tactical Library v1: source-by-source review sheet
 
 For Coach Cody's approval. **Nothing on this sheet is approved.** Every brief is `SOURCE_INFORMED_DRAFT` in `SoccerMaster_9v9_Tactical_Library_v1.md` (v1.0, SHA-256 `49b872ce702dfc141684c4a0341322437798b8daec5e0ea37aebf54ea8686543`, uploaded as `SoccerMaster_9v9_Tactical_Library_v1.zip`, SHA-256 `1505c7dfbd2837c92b0a8f32db3b8aad93f2e2845f7e212cd282deb13b4f18ac`).

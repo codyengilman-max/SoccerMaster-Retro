@@ -2,7 +2,7 @@
 
 Generated from `src/game/training12/situations/` (model `ts-1`). Do not edit by hand: run `UPDATE_MAPPING=1 npx vitest run tests/training12-situations-library.test.ts`.
 
-**Review only, never scored.** These ts-1 situations are earlier proposals written by Devin, not approved library content. Scored Team Training is gated on Tactical Library v1: see `docs/training/library-v1/SESSION_MAPPING.md` and `REVIEW_SHEET.md`.
+**Review only, never scored.** These ts-1 situations are earlier proposals written by Devin, not approved library content. Scored Team Training is gated on the Audited Library v1.2: see `docs/training/library-v1.2/SESSION_MAPPING.md` and `REVIEW_SHEET.md`.
 
 ## Sources
 

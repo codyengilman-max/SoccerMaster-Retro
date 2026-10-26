@@ -3,104 +3,186 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { sessions } from '../src/game/training12/ref/seasons.mjs';
 import { scoredSession } from '../src/game/training12/library/gate';
-import { briefReview, contentHash, LEGACY_PROPOSAL_REVIEW, LIBRARY_SCENES, SIGNOFFS } from '../src/game/training12/library/review';
-import { LIBRARY_V1, LIBRARY_V1_BRIEFS, LIBRARY_V1_SOURCES } from '../src/game/training12/library/tacticalLibraryV1.generated';
-import type { LibraryBrief, Signoff } from '../src/game/training12/library/types';
+import { cardReview, LEGACY_PROPOSAL_REVIEW, LIBRARY_SCENES, sceneProblems, sceneSha256, SIGNOFFS } from '../src/game/training12/library/review';
+import { sha256, stableJson } from '../src/game/training12/library/sha256';
+import { LIBRARY, LIBRARY_CARDS, LIBRARY_PITCH, LIBRARY_RETIRED_IDS, LIBRARY_ROSTERS, LIBRARY_SOURCES } from '../src/game/training12/library/tacticalLibrary.generated';
+import type { LibraryCard, LibraryScene, Signoff } from '../src/game/training12/library/types';
 import { ALL_FIXTURES } from '../src/game/training12/situations/index';
 
-const md = readFileSync(LIBRARY_V1.path, 'utf8');
-const sha = (s: string | Buffer): string => createHash('sha256').update(s).digest('hex');
-const ROLES = ['GK', 'CB', 'LB', 'RB', '6', '8', '9', 'LW', 'RW'] as const;
-const FIELDS = ['setup', 'preferredCondition', 'acceptableAlternative', 'misconception', 'teamResponse', 'coachFeedback', 'counterfactualTest'] as const;
+const node = (s: string | Buffer): string => createHash('sha256').update(s).digest('hex');
+const pkg = JSON.parse(readFileSync(LIBRARY.path, 'utf8')) as {
+  version: string; kind: string; rosters: Record<string, { id: string; role: string; team: string }[]>;
+  pitch_proposal: typeof LIBRARY_PITCH; retired_ids: string[]; sources: unknown[]; scenarios: Record<string, unknown>[];
+};
+const ROLES = ['GK', 'LB', 'CB', 'RB', 'DM', 'CM', 'LW', 'RW', 'ST'];
+const GAME = ['CB', 'LB', 'RB', '6', '8', '9', 'LW', 'RW'] as const;
 
-describe('9v9 Tactical Library v1 import', () => {
-  it('pins the committed library file by SHA-256', () => {
-    expect(sha(readFileSync(LIBRARY_V1.path))).toBe(LIBRARY_V1.sha256);
-    expect(LIBRARY_V1.status).toBe('SOURCE_INFORMED_DRAFT');
+/** TS port of the package's validate_library.py structural lint, run against the imported module. */
+function lint(cards: readonly LibraryCard[], rosters = LIBRARY_ROSTERS, sources = LIBRARY_SOURCES, pitch = LIBRARY_PITCH, retired = LIBRARY_RETIRED_IDS): string[] {
+  const e: string[] = [];
+  const need = (ok: boolean, m: string): void => void (ok || e.push(m));
+  const actors = new Set<string>();
+  need(Object.keys(rosters).sort().join() === 'A,H', 'two teams only');
+  for (const t of ['H', 'A'] as const) {
+    const r = rosters[t] ?? [];
+    need(r.length === 9 && r.map((a) => a.role).sort().join() === [...ROLES].sort().join(), `${t}: eight outfield plus GK`);
+    for (const a of r) { need(a.id === `${t}_${a.role}` && a.team === t && !actors.has(a.id), 'actor identity'); actors.add(a.id); }
+  }
+  const sids = sources.map((s) => s.id);
+  need(new Set(sids).size === 15 && sids.length === 15, 'unique source register');
+  for (const s of sources) need(!!(s.url.startsWith('https://') && s.origin && s.section && s.supports && s.limitations && s.accessed), `source ${s.id}`);
+  need(new Set(cards.map((c) => c.id)).size === 48 && cards.length === 48, '48 unique cards');
+  for (const r of ROLES.slice(1)) need(cards.filter((c) => c.role === r).length === 6, `six ${r} cards`);
+  need([...retired].sort().join() === 'GK01,GK02,GK03', 'GK retired');
+  for (const c of cards) {
+    need(c.role !== 'GK' && c.protagonist === `H_${c.role}`, `${c.id}: protagonist slot`);
+    need(c.home_formation === '1-3-2-3' && c.opponent_formation === '1-3-2-3', `${c.id}: formation`);
+    const v = c.required_visible_actor_ids;
+    need(new Set(v).size === v.length && v.every((a) => actors.has(a)), `${c.id}: visible actors`);
+    need(v.includes(c.protagonist) && v.includes(c.ball_owner_at_freeze), `${c.id}: protagonist/ball owner visible`);
+    need(c.source_ids.length > 0 && c.source_ids.every((s) => sids.includes(s)), `${c.id}: source resolution`);
+    need(Object.keys(c.source_sections).sort().join() === [...c.source_ids].sort().join(), `${c.id}: source sections`);
+    need([...c.format_source_ids].sort().join() === 'S15,S16', `${c.id}: 9v9 framework`);
+    for (const f of ['cue', 'preferred_decision', 'acceptable_alternative', 'misconception', 'coach_feedback', 'changed_cue_test', 'coordination', 'correction'] as const)
+      need(typeof c[f] === 'string' && c[f].length > 0, `${c.id}: ${f}`);
+    need(c.release_status === 'DRAFT_BLOCKED_FOR_PLAYER_TRAINING', `${c.id}: premature release`);
+    need(c.review.independent_coach_approval === null && !c.review.geometry_validated && !c.review.runtime_tested && !c.review.source_exact, `${c.id}: review claims`);
+    need(c.numeric_scene === null && c.required_tests.length >= 6, `${c.id}: scene/tests`);
+  }
+  need(Math.abs(pitch.length_m - pitch.length_yards * 0.9144) < 1e-9 && Math.abs(pitch.width_m - pitch.width_yards * 0.9144) < 1e-9, 'yards/metres');
+  need(!pitch.local_rules_verified, 'unverified local rules');
+  return e;
+}
+
+describe('9v9 Audited Library v1.2 import', () => {
+  it('pins every committed package file by SHA-256 and stays a blocked draft', () => {
+    expect(node(readFileSync(LIBRARY.path))).toBe(LIBRARY.sha256);
+    for (const [f, h] of Object.entries(LIBRARY.packageFiles)) expect(node(readFileSync(`docs/training/library-v1.2/${f}`)), f).toBe(h);
+    expect(Object.keys(LIBRARY.packageFiles)).toHaveLength(6);
+    expect([LIBRARY.version, LIBRARY.status]).toEqual(['1.2', 'DRAFT_BLOCKED_FOR_PLAYER_TRAINING']);
+    expect(LIBRARY.rulesSha256).toBe(node(stableJson({ pitch_proposal: pkg.pitch_proposal, rosters: pkg.rosters })));
   });
 
-  it('imports all 27 briefs verbatim, three per role, with every required field taken from the brief text', () => {
-    expect(LIBRARY_V1_BRIEFS).toHaveLength(27);
-    expect(new Set(LIBRARY_V1_BRIEFS.map((b) => b.id)).size).toBe(27);
-    for (const r of ROLES) expect(LIBRARY_V1_BRIEFS.filter((b) => b.role === r), r).toHaveLength(3);
-    for (const b of LIBRARY_V1_BRIEFS) {
-      expect(md, b.id).toContain(`### ${b.id} — ${b.title} [${b.sourceIds.join(',')}]\n${b.text}\n`);
-      expect(sha(b.text), b.id).toBe(b.briefSha256);
-      for (const f of FIELDS) {
-        expect(b[f].length, `${b.id}.${f}`).toBeGreaterThan(3);
-        expect(b.text, `${b.id}.${f}`).toContain(b[f]);
-      }
-      if (b.mirrorOf) expect(LIBRARY_V1_BRIEFS.some((x) => x.id === b.mirrorOf), b.id).toBe(true);
-    }
+  it('imports all 48 cards unchanged, with a card hash over the exact package record', () => {
+    expect(LIBRARY_CARDS.map((c) => c.id)).toEqual(pkg.scenarios.map((c) => c.id));
+    LIBRARY_CARDS.forEach((c, i) => {
+      const { gameRole, cardSha256, ...rest } = c;
+      expect(rest, c.id).toEqual(pkg.scenarios[i]);
+      expect(cardSha256, c.id).toBe(node(stableJson(pkg.scenarios[i])));
+      expect(sha256(stableJson(pkg.scenarios[i])), c.id).toBe(cardSha256);
+      expect(gameRole, c.id).toBe({ DM: '6', CM: '8', ST: '9' }[c.role] ?? c.role);
+    });
+    for (const r of GAME) expect(LIBRARY_CARDS.filter((c) => c.gameRole === r), r).toHaveLength(6);
+    expect(LIBRARY_ROSTERS).toEqual(pkg.rosters);
+    expect(LIBRARY_SOURCES).toEqual(pkg.sources);
   });
 
-  it('every cited source resolves to the source register', () => {
-    expect(LIBRARY_V1_SOURCES.map((s) => s.id)).toEqual(['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7']);
-    for (const b of LIBRARY_V1_BRIEFS) for (const id of b.sourceIds) expect(LIBRARY_V1_SOURCES.some((s) => s.id === id), `${b.id} ${id}`).toBe(true);
+  it('passes the package structural lint, and the lint rejects the package mutations', () => {
+    expect(lint(LIBRARY_CARDS)).toEqual([]);
+    const c0 = LIBRARY_CARDS[0]!;
+    const bad: [string, () => string[]][] = [
+      ['tenth player', () => lint(LIBRARY_CARDS, { ...LIBRARY_ROSTERS, H: [...LIBRARY_ROSTERS.H, { id: 'H_EXTRA', role: 'CB', team: 'H' }] })],
+      ['neutral actor', () => lint([{ ...c0, required_visible_actor_ids: [...c0.required_visible_actor_ids, 'NEUTRAL_1'] }, ...LIBRARY_CARDS.slice(1)])],
+      ['GK protagonist', () => lint([{ ...c0, role: 'GK', protagonist: 'H_GK' }, ...LIBRARY_CARDS.slice(1)])],
+      ['missing card', () => lint(LIBRARY_CARDS.slice(1))],
+      ['unknown source', () => lint([{ ...c0, source_ids: [...c0.source_ids, 'S99'] }, ...LIBRARY_CARDS.slice(1)])],
+      ['11v11 formation', () => lint([{ ...c0, home_formation: '1-4-3-3' }, ...LIBRARY_CARDS.slice(1)])],
+      ['invented approval', () => lint([{ ...c0, review: { ...c0.review, independent_coach_approval: 'AI approved' } }, ...LIBRARY_CARDS.slice(1)])],
+      ['metres/yards', () => lint(LIBRARY_CARDS, LIBRARY_ROSTERS, LIBRARY_SOURCES, { ...LIBRARY_PITCH, length_m: 75 })],
+      ['missing alternative', () => lint([{ ...c0, acceptable_alternative: '' }, ...LIBRARY_CARDS.slice(1)])],
+    ];
+    for (const [name, run] of bad) expect(run().length, name).toBeGreaterThan(0);
+  });
+
+  it('sha256() matches node:crypto on ASCII, UTF-8 and block-boundary inputs', () => {
+    for (const s of ['', 'abc', '“One pressed; you protected what was behind.”', 'x'.repeat(55), 'x'.repeat(56), 'x'.repeat(64), 'é'.repeat(200)]) expect(sha256(s)).toBe(node(s));
   });
 });
 
 describe('review gate fails closed', () => {
-  it('has no sign-offs or validated scenes, so every brief is a draft with exact blockers', () => {
+  it('has no scenes or sign-offs, so every card is a blocked draft with exact blockers; GK cards are retired', () => {
     expect(SIGNOFFS).toEqual([]);
     expect(Object.keys(LIBRARY_SCENES)).toEqual([]);
-    for (const b of LIBRARY_V1_BRIEFS) {
-      const r = briefReview(b.id);
-      expect(r.status).toBe('SOURCE_INFORMED_DRAFT');
-      expect(r.blockers).toEqual([`${b.id}: no executable scene has been built and validated from this brief.`, `${b.id}: no Coach Cody sign-off.`]);
-    }
+    for (const c of LIBRARY_CARDS) expect(cardReview(c.id)).toEqual({ status: 'DRAFT_BLOCKED_FOR_PLAYER_TRAINING', blockers: [
+      `${c.id}: no numeric scene has been built and validated from this card (numeric_scene is null).`,
+      `${c.id}: local competition rules are not verified (pitch_proposal.local_rules_verified is false).`,
+      `${c.id}: no Coach Cody sign-off.`] });
+    for (const id of ['GK01', 'GK02', 'GK03']) expect(cardReview(id).status).toBe('RETIRED');
     expect(LEGACY_PROPOSAL_REVIEW.status).toBe('NEEDS_TACTICAL_AUTHORING_REVIEW');
   });
 
   it('blocks all 108 sessions x 9 roles from scored training, with no fallback plan', () => {
     let n = 0;
-    for (const s of sessions) for (const r of ROLES) {
+    for (const s of sessions) for (const r of [...GAME, 'GK'] as const) {
       const g = scoredSession(s.id, r);
       expect(g.ok, `${s.id} ${r}`).toBe(false);
-      if (!g.ok) expect(g.blockers[0]).toMatch(/^No approved situation is mapped to/);
+      if (!g.ok) expect(g.blockers[0]).toMatch(r === 'GK' ? /no goalkeeper decision sessions/ : /^No approved situation is mapped to/);
       expect('plan' in g).toBe(false);
       n++;
     }
     expect(n).toBe(972);
-    expect(scoredSession('S9-W99-Z', 'GK')).toEqual({ ok: false, blockers: ['Session S9-W99-Z is not in the schedule.'] });
+    expect(scoredSession('S9-W99-Z', 'CB')).toEqual({ ok: false, blockers: ['Session S9-W99-Z is not in the schedule.'] });
   });
 
-  // Test-only stand-in: a fixture object used as "the scene" to exercise the approval rules. Not real approved content.
-  const scene = ALL_FIXTURES[0]!;
-  const brief = LIBRARY_V1_BRIEFS[0]!;
-  const sign: Signoff = { briefId: brief.id, briefSha256: brief.briefSha256, sceneId: scene.id, sceneHash: contentHash(scene), reviewer: 'test', date: '2026-10-26', note: 'test only' };
+  // Test-only stand-in scene for CB01 to exercise the approval rules. Positions are placeholders, not reviewed content.
+  const card = LIBRARY_CARDS.find((c) => c.id === 'CB01')!;
+  const shown = new Set([...card.required_visible_actor_ids, card.protagonist, card.ball_owner_at_freeze]);
+  const all = [...LIBRARY_ROSTERS.H, ...LIBRARY_ROSTERS.A].map((a) => a.id);
+  const scene: LibraryScene = {
+    cardId: 'CB01', sceneId: 'CB01-test', fixture: ALL_FIXTURES[0]!,
+    numeric: {
+      units: 'm', pitch: { length_m: LIBRARY_PITCH.length_m, width_m: LIBRARY_PITCH.width_m }, view: { kind: 'area', min: { x: 0, y: 0 }, max: { x: 45.72, y: 30 } },
+      actors: [...shown].map((id, i) => ({ id, pos: { x: 5 + i * 5, y: 15 }, vel: { x: 0, y: 0 }, facingDeg: 0 })),
+      omitted: all.filter((id) => !shown.has(id)).map((id) => ({ id, reason: 'test only' })),
+      ball: { pos: { x: 5, y: 15 }, vel: { x: 0, y: 0 }, owner: 'A_RW' }, events: [], localRules: 'test only',
+    },
+  };
+  const pitch = { ...LIBRARY_PITCH, local_rules_verified: true };
+  const sign: Signoff = { cardId: 'CB01', cardSha256: card.cardSha256, rulesSha256: LIBRARY.rulesSha256, sceneId: scene.sceneId, sceneSha256: sceneSha256(scene), reviewer: 'test', date: '2026-10-26', note: 'test only' };
   const s0 = sessions[0]!.id;
-  const mapping = { [s0]: { GK: [brief.id] } };
+  const mapping = { [s0]: { CB: ['CB01'] } };
+  const ok = { mapping, scenes: { CB01: scene }, signoffs: [sign], pitch };
 
-  it('a current sign-off on the exact brief and scene opens only that mapped route', () => {
-    expect(briefReview(brief.id, { scenes: { [brief.id]: scene }, signoffs: [sign] })).toEqual({ status: 'APPROVED', blockers: [] });
-    const g = scoredSession(s0, 'GK', { mapping, scenes: { [brief.id]: scene }, signoffs: [sign] });
+  it('a current sign-off on the exact card, rules and scene opens only that mapped route', () => {
+    expect(sceneProblems(card, scene)).toEqual([]);
+    expect(cardReview('CB01', ok)).toEqual({ status: 'APPROVED', blockers: [] });
+    const g = scoredSession(s0, 'CB', ok);
     expect(g.ok).toBe(true);
-    if (g.ok) expect(g.plan.moments.map((m) => m.fixtureId)).toEqual([scene.id]);
-    expect(scoredSession(s0, 'CB', { mapping, scenes: { [brief.id]: scene }, signoffs: [sign] }).ok).toBe(false);
+    if (g.ok) expect(g.scenes).toEqual([scene.fixture]);
+    expect(scoredSession(s0, 'LB', ok).ok).toBe(false);
+    expect(scoredSession(s0, 'CB', { ...ok, pitch: LIBRARY_PITCH }).ok).toBe(false);
+    expect(scoredSession(s0, 'CB', { ...ok, mapping: { [s0]: { LB: ['CB01'] } } }).ok).toBe(false);
   });
 
-  it('a change to the library text invalidates the sign-off until re-reviewed', () => {
-    const edited: LibraryBrief[] = LIBRARY_V1_BRIEFS.map((b) => (b.id === brief.id ? { ...b, text: b.text + ' x', briefSha256: sha(b.text + ' x') } : b));
-    const r = briefReview(brief.id, { briefs: edited, scenes: { [brief.id]: scene }, signoffs: [sign] });
+  it('card, rules or scene changes invalidate the sign-off until re-reviewed', () => {
+    const edited = LIBRARY_CARDS.map((c) => (c.id === 'CB01' ? { ...c, preferred_decision: 'join LB at the ball.', cardSha256: node(stableJson({ ...c, preferred_decision: 'x' })) } : c));
+    expect(cardReview('CB01', { ...ok, cards: edited }).blockers).toContain('CB01: library card changed after sign-off; re-review required.');
+    expect(cardReview('CB01', { ...ok, rulesSha256: 'other' }).blockers).toContain('CB01: rules profile (pitch or rosters) changed after sign-off; re-review required.');
+    const moved = { ...scene, numeric: { ...scene.numeric, actors: scene.numeric.actors.map((a, i) => (i === 0 ? { ...a, pos: { x: a.pos.x + 1, y: a.pos.y } } : a)) } };
+    const r = cardReview('CB01', { ...ok, scenes: { CB01: moved } });
     expect(r.status).toBe('APPROVAL_STALE');
-    expect(r.blockers).toContain(`${brief.id}: library text changed after sign-off; re-review required.`);
-    expect(scoredSession(s0, 'GK', { mapping, briefs: edited, scenes: { [brief.id]: scene }, signoffs: [sign] }).ok).toBe(false);
+    expect(r.blockers).toContain('CB01: scene changed after sign-off; re-review required.');
   });
 
-  it('a change to the scene (players, pressure, options or grades) invalidates the sign-off', () => {
-    const moved = { ...scene, actors: scene.actors.map((a, i) => (i === 0 ? { ...a, at: { ...a.at, x: a.at.x + 1 } } : a)) };
-    const r = briefReview(brief.id, { scenes: { [brief.id]: moved }, signoffs: [sign] });
-    expect(r.status).toBe('APPROVAL_STALE');
-    expect(r.blockers).toContain(`${brief.id}: scene changed after sign-off; re-review required.`);
+  it('a scene with an extra or neutral player, a hidden required actor or the wrong ball owner cannot be approved', () => {
+    const extra = { ...scene, numeric: { ...scene.numeric, actors: [...scene.numeric.actors, { id: 'NEUTRAL_1', pos: { x: 1, y: 1 }, vel: { x: 0, y: 0 }, facingDeg: 0 }] } };
+    expect(sceneProblems(card, extra)).toContain('CB01: NEUTRAL_1 is not one of the 18 roster actors.');
+    const hidden = { ...scene, numeric: { ...scene.numeric, actors: scene.numeric.actors.filter((a) => a.id !== 'A_ST'), omitted: [...scene.numeric.omitted, { id: 'A_ST', reason: 'x' }] } };
+    expect(sceneProblems(card, hidden)).toContain('CB01: required actor A_ST is not shown.');
+    const dup = { ...scene, numeric: { ...scene.numeric, omitted: [...scene.numeric.omitted, { id: 'H_CB', reason: 'x' }] } };
+    expect(sceneProblems(card, dup)).toContain('CB01: an actor appears twice.');
+    const ball = { ...scene, numeric: { ...scene.numeric, ball: { ...scene.numeric.ball, owner: 'A_ST' } } };
+    expect(sceneProblems(card, ball)[0]).toMatch(/ball is with A_ST/);
+    for (const s of [extra, hidden, ball]) {
+      const sg = { ...sign, sceneSha256: sceneSha256(s) };
+      expect(cardReview('CB01', { scenes: { CB01: s }, signoffs: [sg], pitch }).status, 'signed but invalid').toBe('DRAFT_BLOCKED_FOR_PLAYER_TRAINING');
+    }
   });
 
-  it('a mapping to a missing brief or a missing scene is blocked, never replaced', () => {
-    const g = scoredSession(s0, 'GK', { mapping: { [s0]: { GK: ['NOPE01'] } } });
-    expect(g).toEqual({ ok: false, blockers: [`No brief "NOPE01" in ${LIBRARY_V1.file}.`] });
-    const h = scoredSession(s0, 'GK', { mapping, signoffs: [sign] });
-    expect(h.ok).toBe(false);
-    const half = scoredSession(s0, 'GK', { mapping: { [s0]: { GK: [brief.id, LIBRARY_V1_BRIEFS[1]!.id] } }, scenes: { [brief.id]: scene }, signoffs: [sign] });
-    expect(half.ok).toBe(false);
+  it('a mapping to a missing, retired or unsigned card is blocked, never replaced', () => {
+    expect(scoredSession(s0, 'CB', { mapping: { [s0]: { CB: ['NOPE01'] } } })).toEqual({ ok: false, blockers: [`No card "NOPE01" in ${LIBRARY.file} v${LIBRARY.version}.`] });
+    expect(scoredSession(s0, 'CB', { mapping: { [s0]: { CB: ['GK01'] } } }).ok).toBe(false);
+    expect(scoredSession(s0, 'CB', { ...ok, signoffs: [] }).ok).toBe(false);
+    expect(scoredSession(s0, 'CB', { ...ok, mapping: { [s0]: { CB: ['CB01', 'CB02'] } } }).ok).toBe(false);
   });
 });

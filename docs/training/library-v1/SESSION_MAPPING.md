@@ -1,3 +1,5 @@
+> **Superseded** by the Audited Library v1.2 (`docs/training/library-v1.2/`). Kept as history only.
+
 # Team Training: 108 sessions to Tactical Library v1
 
 Library `SoccerMaster_9v9_Tactical_Library_v1.md` v1.0 (SHA-256 `49b872ce702dfc141684c4a0341322437798b8daec5e0ea37aebf54ea8686543`). The library says it is "not a complete 108-session mapping", and no session-to-brief mapping has been approved, so every session below is held out of scored training. The earlier 40 ts-1 situations are review-only proposals (`?debug&ttProposals`) and never count.
