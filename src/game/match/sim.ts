@@ -23,6 +23,7 @@ import { planUserPass } from './predict';
 import { Referee, type RestartKind } from './referee';
 import { U11_9V9_PITCH } from '../pitch';
 import { TacticalDirector, type TacticsMode } from './tacticalDirector';
+import { newTeamShape } from './shape';
 import { computeAnchor, decideCarrier, planTeams, toTeam, toWorld, velToTeam, type AiContext } from './ai';
 import {
   AWAY_IDS,
@@ -1238,7 +1239,7 @@ export class MatchSim {
       setXY(ball.vel, (ball.vel.x - n.x * (2 * vn)) * T.blockRestitution, (ball.vel.y - n.y * (2 * vn)) * T.blockRestitution);
       setXY(ball.pos, hit.x + n.x * 0.25, hit.y + n.y * 0.25);
       ball.kick = { by: me.id, team: me.team, kind: 'touch', at: s.simTime, target: null, receiver: null };
-      this.touchBall(me);
+      this.touchBall(me, false);
       if (speed > T.blockHardSpeed) ball.ignore.push({ id: me.id, until: s.simTime + T.blockIgnoreSeconds });
       this.emit('deflect', me.id, speed.toFixed(1));
       return copy(ball.pos);
@@ -1689,7 +1690,7 @@ export class MatchSim {
     const side = toTeam(team, ball.pos, T).y >= toTeam(team, gk.pos, T).y ? 1 : -1;
     copyInto(ball.vel, toWorldVel(team, vec(Math.abs(vT.x) * T.keeper.parryFactor, side * speed * 0.3)));
     ball.ignore.push({ id: gk.id, until: s.simTime + T.keeper.ignoreSeconds });
-    this.touchBall(gk);
+    this.touchBall(gk, false);
     s.keeperDiving[team] = false;
     if (shot) s.stats.saves[team] += 1;
     this.emit('parried', gk.id, speed.toFixed(1));
@@ -1757,7 +1758,7 @@ export class MatchSim {
       const cross = ball.vel.x * toBall.y - ball.vel.y * toBall.x;
       copyInto(ball.vel, scale(rotate(ball.vel, (cross >= 0 ? 1 : -1) * T.intercept.deflectAngle), T.intercept.deflectSpeedFactor));
       ball.ignore.push({ id: p.id, until: s.simTime + T.intercept.ignoreSeconds });
-      this.touchBall(p);
+      this.touchBall(p, false);
       ball.kick = { by: p.id, team: p.team, kind: 'touch', at: s.simTime, target: null, receiver: null };
       this.emit('deflected', p.id, 'deflected');
     }
@@ -1830,9 +1831,9 @@ export class MatchSim {
   }
 
   /** Every touch goes through the referee. Returns true when it was an offside offence (play has stopped). */
-  private touchBall(p: MatchPlayer): boolean {
+  private touchBall(p: MatchPlayer, deliberate = true): boolean {
     this.s.ball.lastTouch = p.team;
-    if (!this.referee.touch(p)) return false;
+    if (!this.referee.touch(p, deliberate)) return false;
     const c = this.referee.callOffside(p);
     this.stop('offside', null, `${p.id} offside (line x ${this.referee.lineX.toFixed(1)})`, c.team, c.spot, c.kind);
     return true;
@@ -2065,6 +2066,7 @@ export class MatchSim {
       chaser: { home: { id: null, until: 0 }, away: { id: null, until: 0 } },
       pressRead: vec(Number.NaN, Number.NaN),
       runs: { home: { runnerId: null, until: 0, cooldownUntil: 0 }, away: { runnerId: null, until: 0, cooldownUntil: 0 } },
+      shape: { home: newTeamShape(), away: newTeamShape() },
       nextDecisionAt: 0,
       keeperDiving: { home: false, away: false },
       score: { home: 0, away: 0 },

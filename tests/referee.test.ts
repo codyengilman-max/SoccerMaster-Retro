@@ -157,6 +157,28 @@ describe('referee: offside', () => {
     expect(R.touch(pl.H9)).toBe(false);
   });
 
+  it('a save or deflection by a defender keeps the check: an offside attacker cannot score the rebound', () => {
+    const parried = setup(62);
+    expect(parried.R.touch(parried.pl.A1, false)).toBe(false);
+    expect(parried.R.touch(parried.pl.H9)).toBe(true);
+    const deflected = setup(62);
+    expect(deflected.R.touch(deflected.pl.A2, false)).toBe(false);
+    expect(deflected.R.touch(deflected.pl.H9)).toBe(true);
+    // A deliberate play by a defender (controlling the ball) ends it.
+    const played = setup(62);
+    expect(played.R.touch(played.pl.A2, true)).toBe(false);
+    expect(played.R.touch(played.pl.H9)).toBe(false);
+  });
+
+  it('the line is the second-last opponent counting the keeper, even when the keeper is out of his goal', () => {
+    const { R, pl } = setup(57);
+    put(pl.A1, 55, 25);
+    R.notePass(pl.H6, pl, { x: 45, y: 25 });
+    // Keeper at 55 and A2 at 60: the second-last opponent is now the keeper.
+    expect(R.lineX).toBe(55);
+    expect(R.touch(pl.H9)).toBe(true);
+  });
+
   it('mirrors for the away team (attacking x = 0)', () => {
     const R = new Referee(T.pitch.ballRadius);
     const pl = squad();
