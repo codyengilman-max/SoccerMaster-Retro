@@ -177,6 +177,52 @@ export interface DefenseAssignment {
   until: number;
 }
 
+export type ShapePhase =
+  | 'gkBuild'
+  | 'build'
+  | 'advance'
+  | 'attack'
+  | 'transitionWon'
+  | 'transitionLost'
+  | 'press'
+  | 'midBlock'
+  | 'lowBlock'
+  | 'recover';
+
+/** One team's shared shape (shape.ts), team frame (own goal x = 0). Mutated in place every plan. */
+export interface TeamShape {
+  phase: ShapePhase;
+  phaseSince: number;
+  possessionSince: number;
+  hadPossession: boolean;
+  /** 0..1: how secure our possession is (0 out of possession). */
+  confidence: number;
+  /** 0..1 pressure on the current carrier from the team without the ball; effective = true pressure. */
+  pressure: number;
+  effectivePressure: boolean;
+  /** Their carrier is facing our goal with time (out of possession only). */
+  carrierForward: boolean;
+  /** Desired back-line height this step, and the smoothed height the anchors use. */
+  lineDesired: number;
+  lineX: number;
+  /** Actual height of our deepest back-line player. */
+  lineActual: number;
+  midX: number;
+  frontX: number;
+  shiftY: number;
+  width: number;
+  /** Their outfielder nearest our goal. */
+  threatX: number;
+  /** Actual offside boundary we hold: second-last of our players, the ball or halfway (whichever is nearest our goal). */
+  offsideX: number;
+  stepUntil: number;
+  recoverUntil: number;
+  lastTime: number;
+  reason: string;
+  /** Movement reason for each of our outfielders this step (debug overlay and tests). */
+  why: Partial<Record<MatchPlayerId, string>>;
+}
+
 export interface TeamRun {
   runnerId: MatchPlayerId | null;
   until: number;
@@ -294,6 +340,8 @@ export interface MatchState {
   /** Where pressers think the ball is: the ball focus seen through a short reaction lag (defense.readSeconds). */
   pressRead: MutableVec2;
   runs: Record<TeamId, TeamRun>;
+  /** Shared team shape per team (shape.ts). */
+  shape: Record<TeamId, TeamShape>;
   /** AI carrier's next decision time. */
   nextDecisionAt: number;
   keeperDiving: Record<TeamId, boolean>;

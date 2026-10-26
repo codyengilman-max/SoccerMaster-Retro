@@ -1,6 +1,7 @@
 import type { Vec2 } from '../vec';
 import { add, clamp, distance, distanceToSegment, lerp, normalize, scale, sub, vec, type MutableVec2 } from '../math';
 import { roleDef, type RoleDef } from './formations';
+import { shapeAnchor, updateShape } from './shape';
 import type { MatchTuning } from './tuning';
 import {
   TEAM_PLAYER_IDS,
@@ -10,6 +11,7 @@ import {
   type MatchPlayerId,
   type MatchState,
   type TeamId,
+  type TeamShape,
 } from './types';
 
 /**
@@ -121,8 +123,12 @@ function nearestDistance(p: Vec2, others: readonly Vec2[]): number {
   return best;
 }
 
-function set(p: MatchPlayer, intent: Intent, target: Vec2, speed: number, T: MatchTuning, team: TeamId): void {
+/** Reasons for the team being planned (shape.why); set by planTeam. */
+let WHY: TeamShape['why'] | null = null;
+
+function set(p: MatchPlayer, intent: Intent, target: Vec2, speed: number, T: MatchTuning, team: TeamId, why?: string): void {
   p.intent = intent;
+  if (WHY) WHY[p.id] = why ?? intent;
   // Written in place: p.target is the player's own object and is never shared.
   const wx = team === 'home' ? target.x : T.pitch.length - target.x;
   const wy = team === 'home' ? target.y : T.pitch.width - target.y;
@@ -156,8 +162,10 @@ function planTeam(ctx: AiContext, team: TeamId): void {
   const ownKick = !ball.owner && ball.kick?.team === team ? ball.kick : null;
   const receiverId = ownKick?.kind === 'pass' ? ownKick.receiver : null;
 
+  const shape = updateShape(s, team, T);
+  WHY = shape.why;
   for (const p of outfield(s, team)) {
-    const a = anchorInto(tv(0, 0), roleOf(s, p), focusT, inPossession, T);
+    const a = shapeAnchor(tv(0, 0), s, team, roleOf(s, p), T);
     p.anchor.x = team === 'home' ? a.x : T.pitch.length - a.x;
     p.anchor.y = team === 'home' ? a.y : T.pitch.width - a.y;
   }
@@ -165,21 +173,22 @@ function planTeam(ctx: AiContext, team: TeamId): void {
   // Loose ball: each team sends the player who can reach it first (committed for a short spell).
   updateChaser(ctx, team, receiverId);
 
-  if (inPossession) planAttack(ctx, team, focusT, oppPos, oppOutfield, receiverId);
-  else planDefence(ctx, team, focusT, oppOutfield);
+  if (inPossession) planAttack(ctx, team, focusT, oppPos, oppOutfield, receiverId, shape);
+  else planDefence(ctx, team, focusT, oppOutfield, oppField, shape);
 
   const chaser = s.chaser[team].id;
   if (!ball.owner && chaser && chaser !== receiverId) {
     const p = s.players[chaser];
-    set(p, 'chase', tt(team, chasePointT(s, T), T), M.chaseSpeed, T, team);
+    set(p, 'chase', tt(team, chasePointT(s, T), T), M.chaseSpeed, T, team, 'nearest to the loose ball');
   }
   applyCoachIntent(ctx, team, receiverId);
   if (receiverId) {
     const p = s.players[receiverId];
     const target = ownKick?.target ?? ball.pos;
     const meet = distance(p.pos, target) < T.receive.meetDistance || distance(p.pos, ball.pos) < 4;
-    set(p, 'receive', tt(team, meet ? ball.pos : target, T), meet ? M.supportSpeed : M.runSpeed, T, team);
+    set(p, 'receive', tt(team, meet ? ball.pos : target, T), meet ? M.supportSpeed : M.runSpeed, T, team, 'receiving our pass');
   }
+  WHY = null;
 }
 
 /** A Coach Moment intention steers one player with normal speed caps; the ball owner and the pass receiver are never overridden. */
@@ -192,7 +201,7 @@ function applyCoachIntent(ctx: AiContext, team: TeamId, receiverId: MatchPlayerI
   const speed =
     k === 'support' || k === 'width' ? M.supportSpeed : k === 'run' ? M.runSpeed : k === 'press' ? M.pressSpeed : k === 'cover' ? M.coverSpeed : M.shapeSpeed;
   const intent: Intent = ci.kind === 'width' ? 'width' : ci.kind === 'protect' ? 'protect' : ci.kind;
-  set(s.players[ci.playerId], intent, tt(team, ci.target, T), speed, T, team);
+  set(s.players[ci.playerId], intent, tt(team, ci.target, T), speed, T, team, 'Coach Moment instruction');
 }
 
 export function chasePoint(s: MatchState, T: MatchTuning): MutableVec2 {
@@ -253,10 +262,12 @@ function planAttack(
   oppPos: readonly Vec2[],
   oppOutfield: readonly Vec2[],
   receiverId: MatchPlayerId | null,
+  shape: TeamShape,
 ): void {
   const { s, T } = ctx;
   const M = T.movement;
   const L = T.pitch.length;
+  const gkBuild = shape.phase === 'gkBuild';
   const W = T.pitch.width;
   const ownerId = s.ball.owner;
   const carrierT = ownerId ? tt(team, s.players[ownerId].pos, T) : B;
@@ -280,7 +291,7 @@ function planAttack(
     const own = role.base.y < W / 2 ? -1 : 1;
 
     if (run.runnerId === p.id) {
-      set(p, 'run', tt(team, p.target, T), M.runSpeed, T, team);
+      set(p, 'run', tt(team, p.target, T), M.runSpeed, T, team, 'run in behind');
       taken[n++] = tt(team, p.target, T);
       continue;
     }
@@ -293,12 +304,23 @@ function planAttack(
     let intent: Intent = 'support';
     let target: MutableVec2 = anchor;
     let speed = M.shapeSpeed;
+    let why = 'in the team shape';
     switch (role.inPossession) {
       case 'distribute':
         continue;
       case 'balance': {
         intent = 'balance';
-        const x = Math.min(anchor.x, B.x - T.balance.behindBall);
+        if (gkBuild) {
+          target = openSpot(anchor, carrierT, oppPos, 6, T);
+          why = 'build-up: angle for the keeper';
+          break;
+        }
+        let x = B.x < 20 ? anchor.x : Math.min(anchor.x, B.x - T.balance.behindBall);
+        why = 'rest defence behind the ball';
+        if (role.line === 'defence' && shape.threatX < x + 1) {
+          x = Math.min(x, shape.threatX - 2);
+          why = 'rest defence: goal-side of their forward';
+        }
         target = tv(Math.max(4, x), anchor.y);
         break;
       }
@@ -308,9 +330,12 @@ function planAttack(
         if (role.line === 'defence') {
           // Full-backs give width but stay behind the ball as part of the rest defence.
           intent = sameSide ? 'width' : 'balance';
-          target = tv(Math.min(anchor.x, B.x - (sameSide ? 3 : T.balance.behindBall)), sameSide ? touchY + -own * 2 : anchor.y);
+          const behind = gkBuild || B.x < 20 ? anchor.x : Math.min(anchor.x, B.x - (sameSide ? 3 : T.balance.behindBall));
+          target = tv(behind, sameSide ? touchY + -own * 2 : anchor.y);
+          why = gkBuild ? 'build-up: split wide for the outlet' : sameSide ? 'width behind the ball' : 'far side: balance behind the ball';
         } else if (!sameSide) {
           intent = 'weakSide';
+          why = 'weak side: hold width for the switch';
           const finishing = B.x > T.weakSide.finalThirdX && role.line === 'attack';
           target = finishing
             ? tv(Math.min(B.x + 6, T.shape.maxAttackX), W / 2 + own * T.weakSide.narrowY)
@@ -319,15 +344,23 @@ function planAttack(
           // Carrier is on our touchline: come inside rather than crowd him.
           intent = 'support';
           target = supportSpot(carrierT, pT, -own, taken, n, oppPos, T);
+          why = 'come inside: carrier is on our touchline';
         } else {
           intent = 'width';
+          why = 'width on the ball side';
           target = tv(clamp(B.x + 5, anchor.x - 6, T.shape.maxAttackX), touchY);
         }
         break;
       }
       case 'support':
         intent = 'support';
-        target = supportSpot(carrierT, pT, own, taken, n, oppPos, T);
+        if (gkBuild) {
+          target = openSpot(anchor, carrierT, oppPos, 8, T);
+          why = 'build-up: out of the cover shadow';
+        } else {
+          target = supportSpot(carrierT, pT, own, taken, n, oppPos, T);
+          why = 'short angle for the carrier';
+        }
         speed = M.supportSpeed;
         break;
       case 'depth': {
@@ -338,11 +371,12 @@ function planAttack(
           run.runnerId = p.id;
           run.until = s.simTime + T.run.seconds;
           const t = tv(Math.min(deepestOpp + T.run.beyondLine, T.shape.maxAttackX), clamp(pT.y, 8, W - 8));
-          set(p, 'run', t, M.runSpeed, T, team);
+          set(p, 'run', t, M.runSpeed, T, team, 'run in behind');
           taken[n++] = t;
           continue;
         }
         target = tv(Math.min(anchor.x, deepestOpp - 0.5), anchor.y);
+        why = 'depth: pin their line, stay onside';
         break;
       }
     }
@@ -350,8 +384,33 @@ function planAttack(
     const B2 = role.bounds;
     const clamped = intent === 'weakSide' || intent === 'width' ? spaced : tv(clamp(spaced.x, B2.minX, B2.maxX), clamp(spaced.y, B2.minY, B2.maxY));
     taken[n++] = clamped;
-    set(p, intent, clamped, speed, T, team);
+    set(p, intent, clamped, speed, T, team, why);
   }
+}
+
+/** Near `anchor`, the spot with the clearest lane from `from` (out of a cover shadow), within `reach` yards. */
+function openSpot(anchor: Vec2, from: Vec2, blockers: readonly Vec2[], reach: number, T: MatchTuning): MutableVec2 {
+  const W = T.pitch.width;
+  const p = SUPPORT_CANDIDATE;
+  let bx = anchor.x;
+  let by = anchor.y;
+  let best = -Infinity;
+  for (let i = -2; i <= 2; i++) {
+    for (let j = 0; j < 2; j++) {
+      p.x = anchor.x + j * 3;
+      p.y = clamp(anchor.y + (i * reach) / 2, T.pitch.laneMargin, W - T.pitch.laneMargin);
+      const clear = Math.min(laneClearance(from, p, blockers), 5);
+      const room = Math.min(nearestDistance(p, blockers), 8);
+      const inLine = Math.abs(p.y - from.y) < 3 ? 1.5 : 0;
+      const score = clear + room * 0.3 - Math.abs(i) * 0.15 - j * 0.1 - inLine;
+      if (score > best) {
+        best = score;
+        bx = p.x;
+        by = p.y;
+      }
+    }
+  }
+  return tv(bx, by);
 }
 
 /** Short option beside/behind/ahead of the carrier on `side`, moving off any blocked lane. */
@@ -413,7 +472,7 @@ function spread(target: Vec2, taken: readonly Vec2[], n: number, minSpacing: num
 
 // ---- out of possession ------------------------------------------------------------------------
 
-function planDefence(ctx: AiContext, team: TeamId, B: Vec2, oppOutfield: readonly Vec2[]): void {
+function planDefence(ctx: AiContext, team: TeamId, B: Vec2, oppOutfield: readonly Vec2[], oppField: readonly MatchPlayer[], shape: TeamShape): void {
   const { s, T } = ctx;
   const M = T.movement;
   const D = T.defense;
@@ -447,21 +506,78 @@ function planDefence(ctx: AiContext, team: TeamId, B: Vec2, oppOutfield: readonl
   a.coverId = pickCommitted(s, players, a.presserId, a.coverId, a.until, D);
   if (s.simTime >= a.until || prevCover !== a.coverId) a.until = s.simTime + D.commitSeconds;
 
+  const presser = a.presserId ? s.players[a.presserId] : null;
+  const presserT = presser ? tt(team, presser.pos, T) : null;
+  const defenderPressing = !!presser && roleOf(s, presser).line === 'defence';
+  // A back-line player stepping out leaves a lane: the midfielder nearest it drops in.
+  let filler: MatchPlayerId | null = null;
+  if (defenderPressing && presserT) {
+    const lane = tt(team, presser!.anchor, T);
+    let bd = Infinity;
+    for (const p of players) {
+      if (p.id === a.coverId || roleOf(s, p).line !== 'midfield') continue;
+      const d = distance(tt(team, p.pos, T), lane);
+      if (d < bd) {
+        bd = d;
+        filler = p.id;
+      }
+    }
+  }
+  const S = T.teamShape;
   let marked = 0; // bit i = opponent i already tracked
   for (const p of players) {
     const role = roleOf(s, p);
     const pT = tt(team, p.pos, T);
     const anchor = tt(team, p.anchor, T);
     if (p.id === a.presserId) {
-      set(p, 'press', s.ball.owner ? pressSpot : B, M.pressSpeed, T, team);
+      set(p, 'press', s.ball.owner ? pressSpot : B, M.pressSpeed, T, team, 'pressure the ball');
       continue;
     }
     if (p.id === a.coverId) {
-      set(p, 'cover', coverSpot, M.coverSpeed, T, team);
+      set(p, 'cover', coverSpot, M.coverSpeed, T, team, 'cover the presser');
       continue;
     }
     if (pT.x > B.x + D.recoverBeyond && role.line !== 'attack') {
-      set(p, 'recover', tv(Math.min(anchor.x, B.x - 2), anchor.y), M.recoverSpeed, T, team);
+      set(p, 'recover', tv(Math.min(anchor.x, B.x - 2), anchor.y), M.recoverSpeed, T, team, 'recover: the ball got past');
+      continue;
+    }
+    if (p.id === filler && presser) {
+      const lane = tt(team, presser.anchor, T);
+      set(p, 'protect', tv(Math.max(shape.lineX + 2, Math.min(anchor.x, B.x - 2)), lane.y), M.coverSpeed, T, team, 'fill the lane the stepping defender left');
+      continue;
+    }
+    if (role.line === 'defence') {
+      // Track only a dangerous runner in this zone: at or behind the line, or running at it.
+      let ti = -1;
+      let td = D.trackRadius;
+      for (let i = 0; i < oppOutfield.length; i++) {
+        if (marked & (1 << i)) continue;
+        const o = oppOutfield[i]!;
+        const q = oppField[i]!;
+        const vx = team === 'home' ? q.vel.x : -q.vel.x;
+        // Standing offside is not a threat to track (following him would play him onside); running at the line is.
+        const onside = o.x >= shape.offsideX - S.levelTolerance;
+        const dangerous = (onside && o.x < shape.lineX + 1.5) || (vx < -S.runSpeed && o.x < shape.lineX + S.trackAhead);
+        const d = distance(o, anchor);
+        if (dangerous && d < td) {
+          ti = i;
+          td = d;
+        }
+      }
+      const o = oppOutfield[ti];
+      if (o) {
+        marked |= 1 << ti;
+        const g = tNorm(goal.x - o.x, goal.y - o.y);
+        set(p, 'track', tv(o.x + g.x * 1.5, o.y + g.y * 1.5), M.trackSpeed, T, team, o.x < shape.lineX + 1.5 ? 'track runner behind the line' : 'track a run at the line');
+        continue;
+      }
+      if (defenderPressing && presserT) {
+        const far = Math.abs(anchor.y - presserT.y) > 14;
+        const y = far ? lerp(anchor.y, T.pitch.width / 2, 0.4) : lerp(anchor.y, presserT.y, 0.35);
+        set(p, far ? 'balance' : 'protect', tv(Math.min(anchor.x, shape.lineX - 2), y), M.coverSpeed, T, team, far ? 'far side: narrow to protect the centre' : 'cover behind the stepping defender');
+        continue;
+      }
+      set(p, 'hold', anchor, M.shapeSpeed, T, team, `line: ${shape.reason}`);
       continue;
     }
     switch (role.outOfPossession) {
@@ -473,18 +589,18 @@ function planDefence(ctx: AiContext, team: TeamId, B: Vec2, oppOutfield: readonl
           marked |= 1 << i;
           const g = tNorm(goal.x - o.x, goal.y - o.y);
           const gs = tv(o.x + g.x * 1.5, o.y + g.y * 1.5);
-          set(p, 'track', gs, M.trackSpeed, T, team);
-        } else set(p, 'hold', anchor, M.shapeSpeed, T, team);
+          set(p, 'track', gs, M.trackSpeed, T, team, 'track the runner in our zone');
+        } else set(p, 'hold', anchor, M.shapeSpeed, T, team, 'hold the shape');
         break;
       }
       case 'protectCentre': {
         const screen = tLerp(B, goal, D.protectFraction);
-        set(p, 'protect', tLerp(anchor, screen, 0.5), M.shapeSpeed, T, team);
+        set(p, 'protect', tLerp(anchor, screen, 0.5), M.shapeSpeed, T, team, 'screen the central lane');
         break;
       }
       case 'pressHigh':
       case 'goal':
-        set(p, 'hold', tv(anchor.x, lerp(anchor.y, B.y, 0.25)), M.shapeSpeed, T, team);
+        set(p, 'hold', tv(anchor.x, lerp(anchor.y, B.y, 0.25)), M.shapeSpeed, T, team, 'guide the press, screen the pass');
         break;
     }
   }

@@ -41,6 +41,7 @@ import { TOURNAMENTS } from '../game/season/tournament';
 import { SituationObserver, selectSituations, type SituationResult, type TeamTrainingSituation } from '../game/career/teamTraining';
 import type { Position } from '../game/career/types';
 import { MATCH_TUNING } from '../game/match/tuning';
+import { roleDef } from '../game/match/formations';
 
 /** Sandbox slot the career player occupies (shown in the HUD). */
 const CAREER_SLOT: Readonly<Record<Position, 'H3' | 'H5' | 'H8'>> = { DEF: 'H3', MID: 'H5', FWD: 'H8' };
@@ -316,7 +317,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.devLabels = Object.fromEntries(
       MATCH_PLAYER_IDS.map((id) => [id, text(10, CSS.cream).setOrigin(0.5, 0).setDepth(5501).setVisible(false)]),
     ) as Record<Id, Phaser.GameObjects.Text>;
-    this.devText = text(11, CSS.cream).setOrigin(0, 0).setDepth(5502).setVisible(false);
+    // Top of the pitch, on a dark backing, so it never sits over the touch pads at the bottom.
+    this.devText = text(11, CSS.cream).setOrigin(0, 0).setDepth(5502).setVisible(false).setBackgroundColor('#000000aa').setPadding(4, 3, 4, 3);
     this.hud = this.add.graphics().setDepth(6000);
     this.scoreText = text(15).setOrigin(0.5, 0.5).setDepth(6001);
     this.helpText = text(11, CSS.ink, false).setOrigin(0.5, 1).setDepth(6001).setAlpha(0.9);
@@ -2196,7 +2198,32 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       g.lineStyle(1.5, PALETTE.cream, 0.8);
       g.lineBetween(ap.x - 4, ap.y - 4, ap.x + 4, ap.y + 4);
       g.lineBetween(ap.x - 4, ap.y + 4, ap.x + 4, ap.y - 4);
-      this.devLabels[id].setText(`${id} ${p.role}\n${p.intent}`).setPosition(sp.x, sp.y + 2);
+      // Movement reasons only for back-line players (the shape under review), kept short so labels stay readable.
+      const back = !p.isKeeper && roleDef(s.formations[p.team], p.slot).line === 'defence';
+      const why = back ? s.shape[p.team].why[id] ?? '' : '';
+      this.devLabels[id].setText(`${p.role} ${p.intent}${why ? `\n${why.length > 18 ? `${why.slice(0, 17)}…` : why}` : ''}`).setPosition(sp.x, sp.y + 2);
+    }
+    // Shared team shape: actual back line (solid), desired line (thin), midfield line, and the actual offside boundary.
+    const P = this.sim.tuning.pitch;
+    const vline = (team: 'home' | 'away', xT: number, color: number, width: number, alpha: number, dashed = false): void => {
+      const x = team === 'home' ? xT : P.length - xT;
+      const a = toScreen(L, { x, y: 0 });
+      const b = toScreen(L, { x, y: P.width });
+      g.lineStyle(width, color, alpha);
+      if (!dashed) {
+        g.lineBetween(a.x, a.y, b.x, b.y);
+        return;
+      }
+      const n = 16;
+      for (let i = 0; i < n; i += 2) g.lineBetween(a.x + ((b.x - a.x) * i) / n, a.y + ((b.y - a.y) * i) / n, a.x + ((b.x - a.x) * (i + 1)) / n, a.y + ((b.y - a.y) * (i + 1)) / n);
+    };
+    for (const team of ['home', 'away'] as const) {
+      const sh = s.shape[team];
+      const c = team === 'home' ? PALETTE.tomato : PALETTE.blue;
+      vline(team, sh.lineActual, c, 2.5, 0.9);
+      vline(team, sh.lineDesired, c, 1, 0.9, true);
+      vline(team, sh.midX, PALETTE.sun, 1, 0.6, true);
+      vline(team, sh.offsideX, PALETTE.cream, 1.5, 0.7, true);
     }
     for (const team of ['home', 'away'] as const) {
       const d = s.defense[team];
@@ -2211,13 +2238,20 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       }
     }
     const owner = s.ball.owner;
+    this.devText.setWordWrapWidth(Math.max(160, this.scale.width - 2 * EDGE - 12), true);
     this.devText
       .setText(
         `phase ${s.phase}${s.paused ? ' (paused)' : ''} · owner ${owner ?? 'loose'} · possession ${s.possession}\n` +
           `home press ${s.defense.home.presserId ?? '-'} cover ${s.defense.home.coverId ?? '-'} · away press ${s.defense.away.presserId ?? '-'} cover ${s.defense.away.coverId ?? '-'}\n` +
-          `t ${s.simTime.toFixed(1)}s · ${Math.round(this.fps)} fps · passes ${s.stats.passes.home}/${s.stats.passes.away} shots ${s.stats.shots.home}/${s.stats.shots.away}`,
+          `t ${s.simTime.toFixed(1)}s · ${Math.round(this.fps)} fps · passes ${s.stats.passes.home}/${s.stats.passes.away} shots ${s.stats.shots.home}/${s.stats.shots.away}` +
+          (['home', 'away'] as const)
+            .map((t) => {
+              const sh = s.shape[t];
+              return `\n${t === 'home' ? 'H' : 'A'} ${sh.phase} L${sh.lineActual.toFixed(0)}→${sh.lineDesired.toFixed(0)} M${sh.midX.toFixed(0)} F${sh.frontX.toFixed(0)} gap ${(sh.midX - sh.lineX).toFixed(0)}/${(sh.frontX - sh.midX).toFixed(0)} off ${sh.offsideX.toFixed(0)}: ${sh.reason}`;
+            })
+            .join(''),
       )
-      .setPosition(EDGE, Math.min(this.scale.height - 120, this.viewRect().y + this.viewRect().height - 52));
+      .setPosition(EDGE, Math.max(this.viewRect().y, this.minimapRect().y + this.minimapRect().height) + 8);
   }
 
   private drawHud(): void {

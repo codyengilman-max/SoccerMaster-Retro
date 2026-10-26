@@ -110,9 +110,10 @@ export class Referee {
 
   /**
    * A player touches the ball. Returns true when that touch is an offside offence: a teammate of the
-   * last passer who was in an offside position at the kick instance. Any touch ends the pass check.
+   * last passer who was in an offside position at the kick instance. A teammate's touch or an opponent's
+   * deliberate play ends the pass check; an opponent's save or deflection (`deliberate` false) does not.
    */
-  touch(p: MatchPlayer): boolean {
+  touch(p: MatchPlayer, deliberate = true): boolean {
     if (this.touches[0] !== p.id) {
       this.touches[1] = this.touches[0];
       this.touches[0] = p.id;
@@ -121,6 +122,7 @@ export class Referee {
     if (this.indirectBy !== p.id) this.indirectBy = null;
     const team = this.passTeam;
     if (team === null) return false;
+    if (p.team !== team && !deliberate) return false;
     this.passTeam = null;
     return p.team === team && this.offsideAtKick[p.id];
   }

@@ -111,6 +111,71 @@ export const MATCH_TUNING = {
     /** Attackers stay this far inside the opponent goal line. */
     maxAttackX: 66,
   },
+  /**
+   * Shared team shape (shape.ts): one line height, midfield and front unit per team, which every role's anchor is
+   * placed from. Yards on the 75 x 50 pitch, team frame (own goal x = 0). Provisional playtest values, not coaching
+   * measurements: organised gaps of about 9-14 yd between units and a 22-32 yd settled block.
+   */
+  teamShape: {
+    /** Keeper on the ball: back line height, and how far the outside backs split. */
+    gkLine: 14,
+    widthGk: 1.5,
+    /**
+     * In possession the line sits behindBall yards behind the ball, narrowing to behindBallHigh as the ball goes
+     * from rampFromX to rampToX, so sustained attacks bring it to halfway; clamped to minLineIn..maxLineIn (halfway 37.5).
+     */
+    behindBall: 22,
+    behindBallHigh: 16,
+    rampFromX: 40,
+    rampToX: 60,
+    minLineIn: 12,
+    maxLineIn: 38,
+    /** In possession the line stays within this distance ahead of their most advanced outfielder. */
+    restAhead: 10,
+    /** Seconds of unpressured control to reach full possession confidence; a loose ball caps it here. */
+    confidenceSeconds: 1.2,
+    looseConfidence: 0.3,
+    transitionSeconds: 1.5,
+    /** Out of possession: line depth behind the ball when organised, stepping up, or protecting depth. */
+    blockGap: 15,
+    stepGap: 10,
+    dangerGap: 19,
+    minLineOut: 7,
+    maxLineOut: 36,
+    minBehindBall: 3,
+    /** An opponent this close in front of the line (or behind it) is a runner the line must respect. */
+    runnerNear: 6,
+    /** Space behind the line (beyond the keeper's sweep) that makes a forward pass credible. */
+    spaceBehind: 8,
+    keeperSweep: 4,
+    /** Their loose pass moving toward their own goal faster than this is a backward pass (step up). */
+    backPassSpeed: 3,
+    stepHoldSeconds: 1.5,
+    recoverHoldSeconds: 1.2,
+    /** Effective pressure: within pressTight, or within pressReach, goal-side and closing faster than pressClosing. */
+    pressTight: 2.2,
+    pressReach: 5,
+    pressClosing: 1.2,
+    /** Carrier speed toward/away from our goal that counts as facing forward/backward (yd/s). */
+    facingSpeed: 0.8,
+    /** How fast the shared line height can move (yd/s): it drops faster than it climbs. */
+    lineUpSpeed: 4.5,
+    lineDropSpeed: 7,
+    unitGapMin: 9,
+    unitGapMax: 13,
+    unitGapMaxIn: 16,
+    maxSpan: 30,
+    maxSpanIn: 34,
+    widthIn: 1.15,
+    widthOut: 0.8,
+    shiftIn: 0.25,
+    shiftOut: 0.45,
+    /** A defender tracks a runner moving toward goal faster than runSpeed within this distance in front of the line. */
+    trackAhead: 8,
+    runSpeed: 2,
+    /** Same as the referee's level tolerance: an opponent this close to the offside line is onside. */
+    levelTolerance: 0.25,
+  },
   support: {
     lateral: 9,
     depth: 3,

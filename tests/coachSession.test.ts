@@ -287,6 +287,7 @@ describe('Coach facts', () => {
       }
       m.ball.pos = { x: L - s.ball.pos.x, y: W - s.ball.pos.y };
       m.ball.vel = { x: -s.ball.vel.x, y: -s.ball.vel.y };
+      m.dribbleDir = { x: -s.dribbleDir.x, y: -s.dribbleDir.y };
       m.ball.owner = swap(s.ball.owner) as typeof s.ball.owner;
       m.possession = s.possession === 'home' ? 'away' : 'home';
       m.score = { home: s.score.away, away: s.score.home };
