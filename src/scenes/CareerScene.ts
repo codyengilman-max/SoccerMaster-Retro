@@ -608,7 +608,10 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           const sess = sessions.find((x) => x.id === id);
           return { slot, id, done, open, sess };
         });
-        const rows = slots.map((x) => `Session ${x.slot} · ${x.sess?.theme ?? x.id} · ${x.done ? 'Completed' : x.open ? 'Not started' : 'Not available yet'}\n   ${x.sess?.objective ?? ''}`);
+        // A week graded by the old Team Training match has no credited sessions, and new runs there are practice only.
+        const legacy = !!rec && !slots.some((x) => x.done);
+        const status = (x: (typeof slots)[number]): string => (x.done ? 'Completed' : legacy ? 'Week already counted · practice only' : x.open ? 'Not started' : 'Not available yet');
+        const rows = slots.map((x) => `Session ${x.slot} · ${x.sess?.theme ?? x.id} · ${status(x)}\n   ${x.sess?.objective ?? ''}`);
         return {
           title: `Team Training · Week ${s.week}`,
           body: [
@@ -617,7 +620,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
               ? `\nWeek ${s.week} is complete: ${describeChanges(rec.changes)}. Playing a session again is practice only.`
               : '\nComplete Sessions A, B and C to finish the week. Each session is a set of tactical moments on the half-field: Coach Code sets it up, the play freezes and you choose with the answer buttons. Leaving early counts nothing.',
           ].join('\n'),
-          actions: slots.map((x) => ({ name: `tt12-${x.slot}`, label: `Session ${x.slot}${x.done ? ' · completed' : x.open ? '' : ' · not available yet'}`, onClick: () => { if (x.open) this.playTactical(x.slot); } })),
+          actions: slots.map((x) => ({ name: `tt12-${x.slot}`, label: `Session ${x.slot}${x.done ? ' · completed' : !x.open ? ' · not available yet' : legacy ? ' · practice' : ''}`, onClick: () => { if (x.open) this.playTactical(x.slot); } })),
         };
       }
       case 'player': {
