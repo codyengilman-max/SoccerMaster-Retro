@@ -264,7 +264,12 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const tactics = tacticsParam === 'v05' || tacticsParam === 'classic' ? tacticsParam : undefined;
     // `?kick=classic` restores the previous passing/shooting model (rollback switch; no save changes).
     const kicking = params.get('kick') === 'classic' ? 'classic' : 'v11';
-    this.sim = new MatchSim({ seed, homeFormation: formation, halfSeconds, kicking, ...(tactics ? { tactics } : {}) });
+    // Debug builds may lengthen the dead-ball pause (`deadBall` seconds) so browser tests can inspect a stoppage.
+    const deadBall = Number(params.get('deadBall'));
+    const tuning = shouldExposeDebug(window.location) && Number.isFinite(deadBall) && deadBall > 0
+      ? { ...MATCH_TUNING, stoppage: { ...MATCH_TUNING.stoppage, outSeconds: deadBall } }
+      : undefined;
+    this.sim = new MatchSim({ seed, homeFormation: formation, halfSeconds, kicking, ...(tactics ? { tactics } : {}), ...(tuning ? { tuning } : {}) });
     this.stageLab();
     if (shouldExposeDebug(window.location)) this.applyDebugSetup(params.get('setup'));
     this.passLog = shouldExposeDebug(window.location) && params.has('passlog');
@@ -1471,7 +1476,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
 
   /** Assistant-referee popup for a confirmed offside call: above play, below HUD/pads/dialogue; tap to dismiss. */
   private showOffsidePopup(st: match.Stoppage | null, active: boolean, width: number, height: number): void {
-    const f = this.offsidePopup.update(st, !!st, this.time.now, this.reducedMotion);
+    const f = this.offsidePopup.update(st, !!st, this.sim.state.phaseTime * 1000, this.reducedMotion);
     const hide = () => {
       this.refImg?.setVisible(false);
       this.refCaption?.setVisible(false);

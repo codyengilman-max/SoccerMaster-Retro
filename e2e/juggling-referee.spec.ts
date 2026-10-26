@@ -165,7 +165,7 @@ async function checkPlacement(page: Page): Promise<void> {
 test('offside referee: a confirmed call shows the popup once, above play and clear of every control; the restart and score are unchanged', async ({ page }, info) => {
   const mode = modeFor(info);
   const errors = trackConsoleErrors(page);
-  await openSandbox(page, mode, 'offside');
+  await openSandbox(page, mode, 'offside&deadBall=4');
   const r = await until(() => report(page), (x) => !!x.offsidePopup?.visible && (x.offsidePopup.alpha ?? 0) >= 1, 'offside popup');
   expect(r.stoppage).toMatchObject({ reason: 'offside', restart: 'indirectFreeKick', restartTeam: 'away' });
   expect(r.offsidePopup!.shown).toBe(1);
@@ -182,7 +182,7 @@ test('offside referee: a confirmed call shows the popup once, above play and cle
   );
   await checkPlacement(page);
   await page.screenshot({ path: `test-results/offside-referee-${info.project.name}-rotated.png` });
-  const after = await until(() => report(page), (x) => x.phase === 'live', 'free kick restart', 15_000);
+  const after = await until(() => report(page), (x) => x.phase === 'live', 'free kick restart', 40_000);
   expect(after.offsidePopup).toMatchObject({ visible: false, shown: 1 });
   expect(after.owner?.startsWith('A')).toBe(true);
   expect(after.score).toEqual(score);
@@ -194,7 +194,7 @@ test('offside referee: a confirmed call shows the popup once, above play and cle
 test('offside referee: tap dismisses; reduced motion fades in place; reload clears it', async ({ page }, info) => {
   const mode = modeFor(info);
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await openSandbox(page, mode, 'offside');
+  await openSandbox(page, mode, 'offside&deadBall=4');
   const xs: number[] = [];
   await until(
     async () => {
@@ -212,7 +212,7 @@ test('offside referee: tap dismisses; reduced motion fades in place; reload clea
   expect(r.offsidePopup!.shown).toBe(1);
   await page.waitForTimeout(400);
   expect((await report(page)).offsidePopup?.visible).toBe(false);
-  await until(() => report(page), (x) => x.phase === 'live', 'restart still happens', 15_000);
+  await until(() => report(page), (x) => x.phase === 'live', 'restart still happens', 40_000);
   await page.reload();
   await waitForScene(page, 'start');
   const d = await diagnostics(page);
