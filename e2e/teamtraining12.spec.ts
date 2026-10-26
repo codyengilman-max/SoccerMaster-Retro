@@ -72,7 +72,7 @@ async function saveGender(page: Page, gender: 'boy' | 'girl'): Promise<void> {
 /** New career (girl, MID) through Career setup, then open the Team Training page. */
 async function toTeamPage(page: Page, mode: 'touch' | 'mouse'): Promise<void> {
   page.on('dialog', (d) => void d.accept('Robin'));
-  await page.goto('/?debug=1&dev&ttSpeed=8');
+  await page.goto('/?debug=1&dev&ttSpeed=8&ttProposals');
   await waitForScene(page, 'start');
   await press(page, 'career-button', mode);
   await waitForScene(page, 'career');
@@ -86,7 +86,7 @@ async function toTeamPage(page: Page, mode: 'touch' | 'mouse'): Promise<void> {
   await saveGender(page, 'girl');
 }
 
-test('team training v1.2: whole session on the overhead half, counted once, idle earns nothing', async ({ page }, info) => {
+test('team training v1.2: whole proposal session on the overhead half, never counted, idle earns nothing', async ({ page }, info) => {
   const mode = modeFor(info);
   const errors = trackConsoleErrors(page);
   await toTeamPage(page, mode);
@@ -146,7 +146,7 @@ test('team training v1.2: whole session on the overhead half, counted once, idle
   expect(t.completion?.moments.every((k) => /^ts-1:[A-Z0-9]+@\d+$/.test(k))).toBe(true);
   expect(t.completion?.decided).toBe(9);
   expect(t.smallSided).toEqual({ area: false, miniGoals: 0, gates: 0, endZones: 0 });
-  expect(t.saved).toContain('Session A counted');
+  expect(t.saved).toMatch(/never counted/);
   await pressElement(page, 'tt-back', mode);
   const c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'team page');
   expect(c.text).toBeTruthy();

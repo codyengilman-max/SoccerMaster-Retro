@@ -17,6 +17,7 @@ import { baselineBody, targetBody, TT_ART, ttFrame, ttIdentities, ttScale, type 
 import { orientationOf, type Insets } from '../render/layout';
 import { FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import { shouldExposeDebug } from '../debug/diagnostics';
+import { scoredSession } from '../game/training12/library/gate';
 import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspectable';
 import { SceneKeys } from './keys';
 import { Button } from './ui/Button';
@@ -65,6 +66,8 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
   private message = '';
   private saved = '';
   private leaveArmed = false;
+  /** ?debug&ttProposals: play the unapproved ts-1 proposals for review. Never counted. */
+  private proposals = false;
   private speed = 1;
   private g!: Phaser.GameObjects.Graphics;
   private bgG!: Phaser.GameObjects.Graphics;
@@ -168,8 +171,14 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       this.lookName = g === 'boy' || g === 'girl' ? g : null;
       ensureTtArt(this);
       this.role = ROLE_CHOICES[save.player.position][0]!;
-      const plan = routePlan(sessionId(1, save.week, this.slot), this.role);
-      if (!plan) return this.setScreen('unavailable', `Session ${sessionId(1, save.week, this.slot)} is not available yet. Its scenes have not passed testing, so nothing here is counted. Your weekly Team Training is still on the Team Training page.`);
+      this.proposals = shouldExposeDebug(window.location) && new URLSearchParams(window.location.search).has('ttProposals');
+      const id = sessionId(1, save.week, this.slot);
+      if (this.proposals) {
+        if (!routePlan(id, this.role)) return this.setScreen('unavailable', `Session ${id} has no proposal for this role.`);
+        return this.setScreen('role', '');
+      }
+      const gate = scoredSession(id, this.role);
+      if (!gate.ok) return this.setScreen('unavailable', `Session ${id} is waiting for tactical review, so it can't be played or counted yet. Nothing has been recorded.\n\nBlocker: ${gate.blockers.join(' ')}`);
       this.setScreen('role', '');
     }).catch(() => this.setScreen('unavailable', 'Your career save could not be opened.'));
   }
@@ -197,6 +206,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
 
   /** Review-only roles (the keeper; the career has no keeper position) never count toward the week. */
   private get reviewRole(): boolean {
+    if (this.proposals) return true;
     const pos = this.save?.player?.position;
     return !pos || !ROLE_CHOICES[pos].includes(this.role);
   }
@@ -230,7 +240,8 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
   private begin(): void {
     const save = this.save;
     if (!save?.player) return;
-    const plan = routePlan(this.id, this.role);
+    const gate = this.proposals ? null : scoredSession(this.id, this.role);
+    const plan = this.proposals ? routePlan(this.id, this.role) : gate?.ok ? gate.plan : null;
     if (!plan) return this.setScreen('unavailable', `${ROLE_LABEL[this.role]} is not available for ${this.id} yet.`);
     const rand = Math.floor(Math.random() * 0x7fffffff);
     this.session = new SituationSession(plan, `ts-${Date.now().toString(36)}-${rand.toString(36)}`, rand);
@@ -354,6 +365,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       case 'loading':
       case 'unavailable':
         lines.push(this.message);
+        buttons.push({ name: 'tt-back', label: 'Back to Team Training', onClick: () => this.leave() });
         break;
       case 'role': {
         title = `COACH CODE · ${this.id}`;
@@ -361,7 +373,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
         const roles: RoleId[] = [...ROLE_CHOICES[this.save!.player!.position]];
         if (shouldExposeDebug(window.location)) roles.push('GK');
         for (const r of roles) {
-          const ok = routePlan(this.id, r) !== null;
+          const ok = this.proposals ? routePlan(this.id, r) !== null : scoredSession(this.id, r).ok;
           const review = !ROLE_CHOICES[this.save!.player!.position].includes(r);
           buttons.push({ name: `role-${r}`, label: `${ROLE_LABEL[r]}${review ? ' (review, not counted)' : ''}${ok ? '' : ' (not available yet)'}`, onClick: () => { if (!ok) return; this.role = r; this.begin(); } });
         }
@@ -372,7 +384,8 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
         lines.push(roundTxt, `Your role: ${ROLE_LABEL[this.role]}. ${ROLE_DUTY[this.role]}`, '', `Today's moments: ${s!.plan.moments.map((m) => sideText(fixtureById(m.fixtureId)!.title, m.mirrored)).join('; ')}.`, '');
         lines.push(s!.guided ? 'Watch the play. When it stops, choose what you do, then we play it out and talk about why.'
           : s!.timed ? `Game speed: no hints, and ${TIMED_DECISION_SECONDS} seconds to choose each time.` : 'Read it yourself this round. The hint is still there, but it counts as help.');
-        if (this.reviewRole) lines.push('', 'Review route: this session is never counted.');
+        if (this.proposals) lines.push('', 'Unapproved proposal for tactical review: not from an approved library scene, never counted.');
+        else if (this.reviewRole) lines.push('', 'Review route: this session is never counted.');
         buttons.push({ name: 'tt-start', label: 'Start round', onClick: () => this.startRound() });
         break;
       }

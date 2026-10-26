@@ -303,3 +303,12 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - RETRY OR CONTINUE is its own step after CRITIQUE (one extra tap), so the six stages always appear in order.
 - The legacy `MatchScene` Team Training code is unreachable (`teamTraining = false`) and kept for now so normal-match code paths it shares are not disturbed; it can be deleted in a follow-up.
 
+
+## D55. Team Training is gated on the owner's 9v9 Tactical Library v1 (2026-10-26)
+
+- The library (`docs/training/library-v1/SoccerMaster_9v9_Tactical_Library_v1.md`, SHA-256 pinned) is imported unchanged by `scripts/training/import-tactical-library.py` into `src/game/training12/library/tacticalLibraryV1.generated.ts`. Each brief keeps its verbatim text, cited sources and its own SHA-256.
+- Scored Team Training goes through `scoredSession()` (`library/gate.ts`). A route plays only if an approved session-to-brief mapping exists and every mapped brief has a validated scene plus a Coach Cody sign-off pinned to both the brief hash and the scene hash. Any edit to either makes the sign-off stale. Missing briefs, scenes or sign-offs return exact blockers; there is no fallback to the earlier proposals or to generated drills.
+- Today there are no sign-offs, scenes or mappings, so all 108 sessions × 9 roles are held out. The week page says so, nothing is recorded, and the story's Team Training step offers "Continue story · not counted" (a `declined` outcome, never a completion).
+- The earlier 40 ts-1 situations stay in the code for review only, behind `?debug&ttProposals`; those runs are saved as practice and never counted.
+- Source accuracy now outranks the earlier "all 18 on the half-field" rule: approved scenes will use the source's participants and field area.
+- The review sheet (`docs/training/library-v1/REVIEW_SHEET.md`) compares every brief with its fetched source. Approving a brief there does not activate scoring; the scene built from it needs its own sign-off.

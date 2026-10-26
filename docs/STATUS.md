@@ -1,5 +1,11 @@
 # Status
 
+## Team Training: source review gate (Tactical Library v1, PR #49, not merged, not deployed)
+
+- Library v1 imported unchanged and hash-pinned; 7 cited sources fetched and hashed; review sheet covers all 27 briefs (20 ready to build a scene for review, 7 need tactical authoring/review, 0 approved).
+- No Team Training session is scored until a brief and its scene are signed off. Sessions show "Waiting for tactical review · not counted"; the story can continue without counting the week.
+- Earlier 40 proposals: review only (`?debug&ttProposals`), never counted.
+
 ## Team Training: Sessions A-C only, the full 18, package art (owner package SoccerMaster_Team_Training_Devin, branch `devin/1793043141-tt-18`, from `main` 50c8c59, not merged, not deployed)
 - Weekly Team Training is Sessions A, B and C only. The Career "Play Team Training" match route is gone and `MatchScene` never starts its legacy Team Training mode; the week (and the story's team_training step) counts once all three sessions are credited, through the existing `tt12Run` reducer. Weeks already graded by the old match stay counted, never converted into tactical mastery.
 - Every tactical moment is exactly 18 (`completeSquad` in `src/game/training12/situations/squad.ts`): the authored players plus 1-3-2-3 shape-holders for every missing role, placed clear of players, the ball and the option lanes, shifting with the ball in DEMONSTRATE. Shape-holders never touch the ball or change an authored outcome; the far keeper stays in the other half and shows as an edge marker at halfway.

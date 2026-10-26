@@ -50,7 +50,7 @@ test('Team Training: the saved girl is the player you control in every situation
   test.setTimeout(180_000);
   const errors = trackConsoleErrors(page);
   page.on('dialog', (d) => void d.accept('Ava'));
-  await page.goto('/?debug=1&dev&ttSpeed=8');
+  await page.goto('/?debug=1&dev&ttSpeed=8&ttProposals');
   await waitForScene(page, 'start');
   await pressElement(page, 'career-button', 'touch');
   await waitForScene(page, 'career');
@@ -59,7 +59,7 @@ test('Team Training: the saved girl is the player you control in every situation
   await screen(page, 'setup');
   await saveGender(page, 'girl');
   // Open Team Training straight from a fresh scene load so the saved gender is read.
-  await page.goto('/?debug=1&dev&ttSpeed=8');
+  await page.goto('/?debug=1&dev&ttSpeed=8&ttProposals');
   await waitForScene(page, 'start');
   await pressElement(page, 'career-button', 'touch');
   await waitForScene(page, 'career');

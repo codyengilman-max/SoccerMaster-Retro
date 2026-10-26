@@ -13,7 +13,9 @@ import { DRAFT_PREFIX, DRAFT_STATUS, draftActivityId } from '../game/career/curr
 import { LOGIC_CATALOG, LOGIC_GROUPS, SCENARIO_GOAL, activeLogicScenarios, currentText, type LogicGroup } from '../game/logic/catalog';
 import { describeChanges } from '../game/career/teamTraining';
 import { sessionId } from '../game/training12/session';
+import { scoredSession } from '../game/training12/library/gate';
 import { routePlan } from '../game/training12/situations/index';
+import { shouldExposeDebug } from '../debug/diagnostics';
 import { sessions } from '../game/training12/ref/seasons.mjs';
 import { ROLE_CHOICES } from './TacticalTrainingScene';
 import { orientationOf } from '../render/layout';
@@ -601,26 +603,30 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         if (!p) return { title: 'Team Training', body: 'No player yet.', actions: [] };
         const rec = s.teamTraining.find((r) => r.week === s.week);
         const role = ROLE_CHOICES[p.position][0]!;
+        const proposals = shouldExposeDebug(window.location) && new URLSearchParams(window.location.search).has('ttProposals');
         const slots = TT12_SLOTS.map((slot) => {
           const id = sessionId(1, s.week, slot);
           const done = s.tt12.some((r) => r.week === s.week && r.slot === slot && r.credited);
-          const open = routePlan(id, role) !== null;
+          const gate = scoredSession(id, role);
+          const open = gate.ok || (proposals && routePlan(id, role) !== null);
           const sess = sessions.find((x) => x.id === id);
           return { slot, id, done, open, sess };
         });
         // A week graded by the old Team Training match has no credited sessions, and new runs there are practice only.
         const legacy = !!rec && !slots.some((x) => x.done);
-        const status = (x: (typeof slots)[number]): string => (x.done ? 'Completed' : !x.open ? 'Not available yet' : legacy ? 'Week already counted · practice only' : 'Not started');
+        const status = (x: (typeof slots)[number]): string => (x.done ? 'Completed' : !x.open ? 'Waiting for tactical review · not counted' : legacy ? 'Week already counted · practice only' : 'Not started');
         const rows = slots.map((x) => `Session ${x.slot} · ${x.sess?.theme ?? x.id} · ${status(x)}\n   ${x.sess?.objective ?? ''}`);
         return {
           title: `Team Training · Week ${s.week}`,
           body: [
             ...rows,
-            rec
+            slots.every((x) => !x.open)
+              ? '\nNo session this week has an approved tactical scene yet, so none can be played or counted. Each situation must be traced to the 9v9 Tactical Library and signed off by Coach Cody first. Nothing has been recorded.'
+              : rec
               ? `\nWeek ${s.week} is complete: ${describeChanges(rec.changes)}. Playing a session again is practice only.`
               : '\nComplete Sessions A, B and C to finish the week. Each session is a set of tactical moments on the half-field: Coach Code sets it up, the play freezes and you choose with the answer buttons. Leaving early counts nothing.',
           ].join('\n'),
-          actions: slots.map((x) => ({ name: `tt12-${x.slot}`, label: `Session ${x.slot}${x.done ? ' · completed' : !x.open ? ' · not available yet' : legacy ? ' · practice' : ''}`, onClick: () => { if (x.open) this.playTactical(x.slot); } })),
+          actions: slots.map((x) => ({ name: `tt12-${x.slot}`, label: `Session ${x.slot}${x.done ? ' · completed' : !x.open ? ' · waiting for review' : legacy ? ' · practice' : ''}`, onClick: () => { if (x.open) this.playTactical(x.slot); } })),
         };
       }
       case 'player': {

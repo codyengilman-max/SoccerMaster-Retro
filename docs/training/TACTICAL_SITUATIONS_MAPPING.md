@@ -2,6 +2,8 @@
 
 Generated from `src/game/training12/situations/` (model `ts-1`). Do not edit by hand: run `UPDATE_MAPPING=1 npx vitest run tests/training12-situations-library.test.ts`.
 
+**Review only, never scored.** These ts-1 situations are earlier proposals written by Devin, not approved library content. Scored Team Training is gated on Tactical Library v1: see `docs/training/library-v1/SESSION_MAPPING.md` and `REVIEW_SHEET.md`.
+
 ## Sources
 
 - Situations: `research/logic/v0.5/data/scenario_catalog.json` (40 seeds; the v0.2 copy is identical). Every seed is `draft_seed`, `production_enabled: false`, `not_calibrated`, with no source ids.

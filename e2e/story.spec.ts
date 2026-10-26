@@ -1,7 +1,7 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { idealPower } from '../src/game/story/crossbar';
 import { thresholdsFor } from '../src/input';
-import { Finger, diagnostics, playTacticalSession, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
+import { Finger, diagnostics, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
 
 // Season One on one isolated save: identity -> prologue -> week one (aquarium, recess, Coach Code with the
 // real Team Training handoff) -> week close -> week 2, then reload. Later weeks: tests/season-story.test.ts.
@@ -157,31 +157,17 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
       await press(page, 'career-menu', mode);
       await story(page, resolved(s), `${s.adapter} completed`);
     } else if (s.adapter === 'team_training') {
+      // No session has a signed-off library scene yet: the week page says so, nothing is counted, and the story offers
+      // a not-counted continue instead of trapping the player.
       await pressStory(page, 'handoff-career', mode);
       await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'team', 'team screen');
-      // Leaving during the first session counts nothing and the story handoff stays open.
-      await press(page, 'tt12-A', mode);
-      await waitForScene(page, 'tactical');
-      await expect.poll(async () => Object.keys((await diagnostics(page)).layout?.elements ?? {}).some((k) => k.startsWith('role-')), { timeout: 30_000 }).toBe(true);
-      const role = Object.keys((await diagnostics(page)).layout!.elements).find((k) => k.startsWith('role-') && !k.endsWith('GK'))!;
-      await pressAny(page, role, mode);
-      await pressAny(page, 'tt-start', mode);
-      await expect.poll(async () => ((await diagnostics(page)).gameplay as { screen?: string } | null)?.screen, { timeout: 30_000 }).toBe('play');
-      await pressAny(page, 'tt-leave', mode);
-      await pressAny(page, 'tt-leave', mode);
-      await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'team', 'back on team screen');
+      expect(String(((await diagnostics(page)).gameplay as { text?: string } | null)?.text)).toContain('Waiting for tactical review');
       await press(page, 'career-menu', mode);
-      const early = await story(page, (x) => x.mode === 'story', 'story after leaving early');
-      expect(resolved(s)(early)).toBe(false);
-      await pressStory(page, 'handoff-career', mode);
-      await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'team', 'team screen again');
-      for (const slot of ['A', 'B', 'C'] as const) {
-        await playTacticalSession(page, slot, mode);
-        await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'team', `session ${slot} saved`);
-      }
-      await page.waitForTimeout(300);
-      await press(page, 'career-menu', mode);
-      await story(page, resolved(s), 'team training completed');
+      const back = await story(page, (x) => x.mode === 'story' && x.buttons.includes('handoff-skip'), 'not-counted continue offered');
+      expect(resolved(s)(back)).toBe(false);
+      expect(back.text).toContain('waiting for tactical review');
+      await pressStory(page, 'handoff-skip', mode);
+      await story(page, resolved(s), 'team training continued, not counted');
     } else if (s.adapter === 'match') {
       await pressStory(page, 'handoff-match', mode);
       await waitForScene(page, 'formation');
@@ -223,10 +209,12 @@ test('Season One week one: identity, prologue, aquarium, recess, Team Training h
   expect(end.scene).toBe('S1_W02_M');
   expect(end.player).toEqual({ name: 'Zoë', gender: 'girl' });
   const by = (id: string) => end.outcomes.find((o) => o.scene === id);
-  for (const id of ['S1_PRO_IDENTITY', 'S1_W01_S', 'S1_W01_C', 'S1_W01_E']) expect(by(id), id).toMatchObject({ state: 'resolved', outcome: 'completed' });
+  for (const id of ['S1_PRO_IDENTITY', 'S1_W01_S', 'S1_W01_E']) expect(by(id), id).toMatchObject({ state: 'resolved', outcome: 'completed' });
+  // Team Training has no approved scene yet: the story moved on, but the step is declined, never completed.
+  expect(by('S1_W01_C')).toMatchObject({ state: 'resolved', outcome: 'declined' });
   expect(end.outcomes.filter((o) => o.scene === 'S1_W01_C')).toHaveLength(1);
 
-  // Reload: cursor, outcomes and identity persist; the career is in week 2 with week 1's Team Training counted once.
+  // Reload: cursor, outcomes and identity persist; the career is in week 2 and week 1's Team Training was not counted.
   const again = await openStory(page, mode);
   expect(again).toMatchObject({ scene: 'S1_W02_M', complete: false, revision: end.revision, player: end.player });
   expect(again.outcomes).toEqual(end.outcomes);

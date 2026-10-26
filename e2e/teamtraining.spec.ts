@@ -28,7 +28,7 @@ async function career(page: Page, pred: (c: Career) => boolean, what: string): P
 }
 const total = (a: Record<string, number> | null) => Object.values(a ?? {}).reduce((x, y) => x + y, 0);
 
-test('team training: the week is Sessions A-C only, no match route; leaving counts nothing; a session counts once', async ({ page }, info) => {
+test('team training: the week is Sessions A-C only, no match route; unapproved sessions are held out; proposals never count', async ({ page }, info) => {
   const mode = modeFor(info);
   const errors = trackConsoleErrors(page);
   page.on('dialog', (d) => void d.accept('Robin'));
@@ -45,15 +45,29 @@ test('team training: the week is Sessions A-C only, no match route; leaving coun
   let c = await career(page, (x) => x.screen === 'team', 'team screen');
   const before = total(c.attributes);
   // Topic, short description and status for each session; no legacy match button or "normal controls" text.
-  for (const slot of ['A', 'B', 'C']) expect(c.text).toMatch(new RegExp(`Session ${slot} · .+ · Not started`));
+  // Nothing is signed off yet: every session is held out of scored training with the blocker, and tapping it starts nothing.
+  for (const slot of ['A', 'B', 'C']) expect(c.text).toMatch(new RegExp(`Session ${slot} · .+ · Waiting for tactical review · not counted`));
   expect(c.text).not.toMatch(/normal controls|30 seconds|Play Team Training/i);
-  expect(c.text).toContain('Leaving early counts nothing');
+  expect(c.text).toContain('No session this week has an approved tactical scene yet');
   let d = await diagnostics(page);
   const names = Object.keys(d.layout!.elements);
   expect(names.filter((n) => n.startsWith('tt12-')).sort()).toEqual(['tt12-A', 'tt12-B', 'tt12-C']);
   expect(names).not.toContain('team-play');
   for (const [name, rect] of Object.entries(d.layout!.elements)) if (name !== 'body') expectInside(name, rect, d.layout!.viewport);
   await page.screenshot({ path: info.outputPath(`team-week-${info.project.name}.png`) });
+  await press(page, 'tt12-A', mode);
+  await page.waitForTimeout(500);
+  expect((await diagnostics(page)).activeScenes).not.toContain('tactical');
+
+  // Review build: the unapproved proposals can be played for review, and they are never counted.
+  await page.goto('/?debug=1&dev&ttSpeed=8&ttProposals');
+  await waitForScene(page, 'start');
+  await press(page, 'career-button', mode);
+  await waitForScene(page, 'career');
+  await career(page, (x) => x.status !== 'loading' && x.screen === 'home', 'proposal review');
+  await press(page, 'nav-team', mode);
+  c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'team screen (proposals)');
+  for (const slot of ['A', 'B', 'C']) expect(c.text).toMatch(new RegExp(`Session ${slot} · .+ · Not started`));
 
   // Leave during the first session: two taps, nothing recorded.
   await press(page, 'tt12-A', mode);
@@ -73,11 +87,11 @@ test('team training: the week is Sessions A-C only, no match route; leaving coun
   d = await diagnostics(page);
   expect(d.activeScenes).not.toContain('match');
 
-  // Session A counts once; playing it again is practice only, and a reload keeps the result.
-  expect(await playTacticalSession(page, 'A', mode)).toContain('Session A counted');
-  c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'counted');
-  expect(c.text).toMatch(/Session A · .+ · Completed/);
-  expect(await playTacticalSession(page, 'A', mode)).toMatch(/already counted/);
+  // A finished proposal session is saved as practice only: no completion, no attribute change, and a reload agrees.
+  expect(await playTacticalSession(page, 'A', mode)).toMatch(/never counted/);
+  c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'not counted');
+  expect(c.text).toMatch(/Session A · .+ · Not started/);
+  expect(total(c.attributes)).toBe(before);
   await page.reload();
   await waitForScene(page, 'start');
   await press(page, 'career-button', mode);
@@ -85,7 +99,7 @@ test('team training: the week is Sessions A-C only, no match route; leaving coun
   await career(page, (x) => x.status !== 'loading' && x.screen === 'home', 'reloaded');
   await press(page, 'nav-team', mode);
   c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'team after reload');
-  expect(c.text).toMatch(/Session A · .+ · Completed/);
-  expect(c.text).toMatch(/Session B · .+ · Not started/);
+  expect(c.text).toMatch(/Session A · .+ · Not started/);
+  expect(total(c.attributes)).toBe(before);
   expect(errors).toEqual([]);
 });
