@@ -230,6 +230,47 @@ describe('team shape out of possession', () => {
       expect(sh.lineDesired).toBeLessThan(tx(team, sim.state.players[runner].pos.x));
     });
 
+    it(`${team}: a forward standing offside does not pull the line back or get tracked`, () => {
+      const sim = newSim('1-3-2-3');
+      const carrier = TEAM_PLAYER_IDS[opp][5]!;
+      const loiterer = TEAM_PLAYER_IDS[opp][7]!;
+      const park: Partial<Record<MatchPlayer['id'], [number, number]>> = {};
+      for (const p of outfield(sim.state, team)) {
+        const [x, y] = line(sim.state, team, p) === 'defence' ? [25, 5 + p.slot * 10] : [62, p.slot * 5];
+        park[p.id] = [L - x, W - y];
+      }
+      // Our frame: their forward stands still at x 20, behind our line at 25 (offside), carrier unpressured at 45.
+      park[loiterer] = [L - 20, W - 25];
+      stage(sim, opp, carrier, { x: L - 45, y: 25 }, park);
+      hold(sim, F);
+      // Staged as an organised block already holding at 25 (not a fresh turnover).
+      sim.arrange((s) => {
+        const sh = s.shape[team];
+        sh.lineX = 25;
+        sh.possessionSince = s.simTime - 5;
+      });
+      expect(tx(team, sim.state.players[loiterer].pos.x)).toBeLessThan(sim.state.shape[team].offsideX);
+      // The carrier waits, then comes forward unpressured; their forward never moves.
+      let checked = 0;
+      for (let i = 0; i < Math.round(3 / F); i++) {
+        sim.arrange((s) => {
+          const r = s.players[loiterer];
+          r.pos = world(team, 20, 25);
+          r.vel = { x: 0, y: 0 };
+        });
+        hold(sim, F, i * F > 1.6 ? { x: 2.5, y: 0 } : undefined);
+        const sh = sim.state.shape[team];
+        if (sim.state.simTime - sh.possessionSince <= T.teamShape.transitionSeconds) continue;
+        // He stays offside because the line does not drop to him, and nobody follows him.
+        expect(tx(team, sim.state.players[loiterer].pos.x)).toBeLessThan(sh.offsideX);
+        expect(sh.reason).not.toMatch(/protect depth/);
+        expect(sh.lineDesired).toBeGreaterThan(21);
+        for (const d of defenders(sim.state, team)) expect(sh.why[d.id] ?? '').not.toMatch(/track/);
+        checked++;
+      }
+      expect(checked).toBeGreaterThan(60);
+    });
+
     it(`${team}: through ball beyond the line drops the line toward the runner`, () => {
       const sim = newSim('1-3-2-3');
       const carrier = TEAM_PLAYER_IDS[opp][5]!;

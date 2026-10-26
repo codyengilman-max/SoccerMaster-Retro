@@ -173,6 +173,8 @@ export const MATCH_TUNING = {
     /** A defender tracks a runner moving toward goal faster than runSpeed within this distance in front of the line. */
     trackAhead: 8,
     runSpeed: 2,
+    /** Same as the referee's level tolerance: an opponent this close to the offside line is onside. */
+    levelTolerance: 0.25,
   },
   support: {
     lateral: 9,

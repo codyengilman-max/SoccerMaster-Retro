@@ -555,7 +555,9 @@ function planDefence(ctx: AiContext, team: TeamId, B: Vec2, oppOutfield: readonl
         const o = oppOutfield[i]!;
         const q = oppField[i]!;
         const vx = team === 'home' ? q.vel.x : -q.vel.x;
-        const dangerous = o.x < shape.lineX + 1.5 || (vx < -S.runSpeed && o.x < shape.lineX + S.trackAhead);
+        // Standing offside is not a threat to track (following him would play him onside); running at the line is.
+        const onside = o.x >= shape.offsideX - S.levelTolerance;
+        const dangerous = (onside && o.x < shape.lineX + 1.5) || (vx < -S.runSpeed && o.x < shape.lineX + S.trackAhead);
         const d = distance(o, anchor);
         if (dangerous && d < td) {
           ti = i;

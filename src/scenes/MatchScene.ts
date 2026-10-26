@@ -300,7 +300,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.devLabels = Object.fromEntries(
       MATCH_PLAYER_IDS.map((id) => [id, text(10, CSS.cream).setOrigin(0.5, 0).setDepth(5501).setVisible(false)]),
     ) as Record<Id, Phaser.GameObjects.Text>;
-    this.devText = text(11, CSS.cream).setOrigin(0, 0).setDepth(5502).setVisible(false);
+    // Top of the pitch, on a dark backing, so it never sits over the touch pads at the bottom.
+    this.devText = text(11, CSS.cream).setOrigin(0, 0).setDepth(5502).setVisible(false).setBackgroundColor('#000000aa').setPadding(4, 3, 4, 3);
     this.hud = this.add.graphics().setDepth(6000);
     this.scoreText = text(15).setOrigin(0.5, 0.5).setDepth(6001);
     this.helpText = text(11, CSS.ink, false).setOrigin(0.5, 1).setDepth(6001).setAlpha(0.9);
@@ -2140,7 +2141,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
             })
             .join(''),
       )
-      .setPosition(EDGE, Math.min(this.scale.height - 150, this.viewRect().y + this.viewRect().height - 80));
+      .setPosition(EDGE, Math.max(this.viewRect().y, this.minimapRect().y + this.minimapRect().height) + 8);
   }
 
   private drawHud(): void {
