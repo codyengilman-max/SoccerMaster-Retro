@@ -178,15 +178,16 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     const url = artUrl(COACH_ART);
     if (!url) return;
     const key = artTextureKey(COACH_ART);
-    const place = (): void => {
-      if (!this.sys.isActive() || !this.textures.exists(key) || this.coach) return;
+    // Synchronous on re-entry (texture cached): the scene is still CREATING, so only the async loader path checks isActive.
+    const place = (sync = false): void => {
+      if ((!sync && !this.sys.isActive()) || !this.textures.exists(key) || this.coach) return;
       this.coach = this.add.image(0, 0, key).setDepth(2001).setCrop(150, 0, 230, 230).setOrigin(0, 0).setVisible(!this.coachCompact);
       this.layout();
     };
-    if (this.textures.exists(key)) place();
+    if (this.textures.exists(key)) place(true);
     else {
       this.load.image(key, url);
-      this.load.once(`filecomplete-image-${key}`, place);
+      this.load.once(`filecomplete-image-${key}`, () => place());
       this.load.start();
     }
   }
