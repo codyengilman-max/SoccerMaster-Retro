@@ -163,6 +163,10 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
       await press(page, 'tt12-A', mode);
       await waitForScene(page, 'tactical');
       await expect.poll(async () => Object.keys((await diagnostics(page)).layout?.elements ?? {}).some((k) => k.startsWith('role-')), { timeout: 30_000 }).toBe(true);
+      const role = Object.keys((await diagnostics(page)).layout!.elements).find((k) => k.startsWith('role-') && !k.endsWith('GK'))!;
+      await pressAny(page, role, mode);
+      await pressAny(page, 'tt-start', mode);
+      await expect.poll(async () => ((await diagnostics(page)).gameplay as { screen?: string } | null)?.screen, { timeout: 30_000 }).toBe('play');
       await pressAny(page, 'tt-leave', mode);
       await pressAny(page, 'tt-leave', mode);
       await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'team', 'back on team screen');

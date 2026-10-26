@@ -610,7 +610,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         });
         // A week graded by the old Team Training match has no credited sessions, and new runs there are practice only.
         const legacy = !!rec && !slots.some((x) => x.done);
-        const status = (x: (typeof slots)[number]): string => (x.done ? 'Completed' : legacy ? 'Week already counted · practice only' : x.open ? 'Not started' : 'Not available yet');
+        const status = (x: (typeof slots)[number]): string => (x.done ? 'Completed' : !x.open ? 'Not available yet' : legacy ? 'Week already counted · practice only' : 'Not started');
         const rows = slots.map((x) => `Session ${x.slot} · ${x.sess?.theme ?? x.id} · ${status(x)}\n   ${x.sess?.objective ?? ''}`);
         return {
           title: `Team Training · Week ${s.week}`,
