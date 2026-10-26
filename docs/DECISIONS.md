@@ -260,14 +260,19 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - The supplied 1024×1536 images are downscaled exactly 2:1 with nearest-neighbour and saved lossless with their own transparency (`scripts/art/build-phone-poses.py`); no matte, recolour or crop.
 - Rankings: one 120-team registry with permanent IDs (`src/game/rankings/teams.json`), K = 24 Elo with tier-seeded Preseason ratings, weekly snapshots published in one IndexedDB transaction. Story league/cup results stay the source of truth; background teams play their own seeded fixtures. No Next Level club (owner). See `docs/RANKINGS.md`.
 
-## D50. Team Training learning loop (owner brief, 2026-10-27)
+## D50. Juggling pack timelines and the offside referee popup (owner package, 2026-10-28)
+- The prepared runtime sheets are used as-is (no re-slicing of the irregular source sheets). Body frames come from action-specific segments, never a 24-frame loop; the ball is never parented to a foot. Contact/catch points, ball radius (7 px) and per-frame planted-boot offsets are measured from the sheet pixels and kept in `JUGGLE_CAL`; an offset over 8 px is not applied (it would make the body jump) and the frame is listed as deficient instead.
+- Only patterns the pack can show (laces, bounce, catch) use it; thigh, settle and pass ladders keep sprite-v2 rather than faking those poses.
+- The popup is presentation only: it reads `stoppage.reason === 'offside'` from the sim and keeps its own once-per-call identity, so it cannot affect referee transitions. Its 2.6 s cap runs on the sim's dead-ball phase time, so a slow frame rate or a pause cannot cut it short (pausing hides it; the call does not re-show). Debug builds accept `deadBall=<seconds>` to lengthen the dead-ball pause for browser tests; normal play keeps 1.2 s.
+
+## D52. Team Training learning loop (owner brief, 2026-10-27)
 - Choices shown at a decision are a seeded subset (≤ 4) that always includes a good read; order is shuffled per attempt so position never signals quality. Option meaning (id, target, action) is unchanged by the shuffle.
 - A hint is help, not mastery: hinted decisions are saved as assisted and count half in the session score; the score still goes through the existing weekly grade, so there is no second attribute economy.
 - Replay rewinds the same seeded situation and is practice only: no evidence, no participation seconds, no score. Stale generations reject hint/replay/decide calls.
 - Level-1 routes for all 108 sessions are enabled because every one uses one of the eight implemented level-1 cards and each route is played to a credited finish in unit tests; level 2–3 cards stay unavailable until their drills exist.
 
 
-## D51 — Team Training presentation: pitch first, drill marked by cones, targets as mini-goals
+## D53 — Team Training presentation: pitch first, drill marked by cones, targets as mini-goals
 
 - The half is framed at true proportions with a 0.6 m strip past the lines and the goal's depth; the pitch takes the screen width (portrait) or height (landscape) first, the panel takes the rest. A slim Bell94 fence band sits behind the goal only when there is room.
 - The practice area keeps its authored size and position (`drillToHalf`, unchanged). It is marked by corner cones and a thin dashed line; the rest of the half is dimmed. Targets are drawn as small goals (posts, net, frame in the attacking team's colour, chevron into the mouth) on the engine's own target geometry; the full-size goal is drawn muted because it is not a target.

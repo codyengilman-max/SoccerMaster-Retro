@@ -6,6 +6,7 @@
  */
 import type { Activity, DemoSpec } from '../../game/career/types';
 import { protagonistSet, type ProtagonistSex, type SpriteSetId } from './spriteSets';
+import { juggleTimeline, sheetPoseAt, type JuggleBeat, type JuggleSex } from './juggleSheet';
 
 export type Contact = 'laces' | 'thigh' | 'inside' | 'outside' | 'sole' | 'catch' | 'strike' | 'none';
 export interface DemoPose {
@@ -17,6 +18,14 @@ export interface DemoPose {
   readonly ball: { readonly x: number; readonly y: number; readonly h: number };
   readonly contact: Contact;
   readonly caption: string | null;
+  /** Juggling-pack frame (sheet cell px): body frame, planted-boot shift and the separately drawn ball. */
+  readonly art?: { readonly sheet: 'juggle'; readonly sex: JuggleSex; readonly index: number; readonly dx: number; readonly ball: { readonly x: number; readonly y: number; readonly r: number } };
+}
+
+export interface DemoOptions {
+  readonly sex?: ProtagonistSex;
+  /** Juggling: play the miss → retrieve → reset branch instead of the final catch. */
+  readonly miss?: boolean;
 }
 
 /** The one place a demo picks its sheet: saved boy/girl, training kit, keeper sheet for keeper exercises. */
@@ -62,13 +71,31 @@ const at = (k: readonly { t: number; x: number; y: number }[], t: number) => {
 };
 
 /** Total loop length of a demo in seconds (one second rest for path demos, matching the old player). */
-export function demoLength(a: Activity): number {
+/** Ladder steps the juggling pack can show (drop, laces touches, bounce, catch); thigh/settle/pass keep the sprite-v2 poses. */
+export function sheetBeats(a: Activity): readonly JuggleBeat[] | null {
+  const j = JUGGLE_PATTERNS[a.id];
+  return j && j.every((b) => b.s === 'laces' || b.s === 'bounce' || b.s === 'catch') ? (j as readonly JuggleBeat[]) : null;
+}
+const sexOf = (o?: DemoOptions): JuggleSex => (o?.sex === 'girl' ? 'girl' : 'boy');
+
+export function demoLength(a: Activity, opts?: DemoOptions): number {
+  const sb = opts && sheetBeats(a);
+  if (sb) return juggleTimeline(a.id, sb, sexOf(opts), !!opts.miss).length;
   const j = JUGGLE_PATTERNS[a.id];
   if (j) return j.length * BEAT_SECONDS + 0.6;
   return a.demo.kind === 'path' ? a.demo.seconds + 1 : a.demo.frames.length * 1.4;
 }
 
-export function demoPose(a: Activity, time: number): DemoPose {
+/** Without `opts` the sprite-v2 poses are used (legacy callers); with `opts` juggling ladders 1–5 use the juggling pack. */
+export function demoPose(a: Activity, time: number, opts?: DemoOptions): DemoPose {
+  const sb = opts && sheetBeats(a);
+  if (sb) {
+    const sex = sexOf(opts);
+    const p = sheetPoseAt(juggleTimeline(a.id, sb, sex, !!opts.miss), sex, time);
+    const contact: Contact = p.contact === 'laces' ? 'laces' : p.contact === 'catch' ? 'catch' : 'none';
+    // Practice-area coordinates kept for diagnostics: 100 cell px ≈ one body height.
+    return { frame: `juggle-${sex}-${p.index}`, flip: false, px: 5, py: 3.2, ball: { x: 5 + (p.ball.x - 80) / 100, y: 3.2, h: Math.max(0, (120 - p.ball.y - p.ball.r) / 55) }, contact, caption: p.caption, art: { sheet: 'juggle', sex, index: p.index, dx: p.dx, ball: p.ball } };
+  }
   const j = JUGGLE_PATTERNS[a.id];
   if (j) return jugglePose(j, time % demoLength(a));
   const d = a.demo;
