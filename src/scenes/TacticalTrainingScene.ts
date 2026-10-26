@@ -10,9 +10,9 @@ import { SituationSession, TIMED_DECISION_SECONDS, type SitAttempt } from '../ga
 import { laneGap, pressureOn, type SitActor } from '../game/training12/situations/sim';
 import { sessions } from '../game/training12/ref/seasons.mjs';
 import { artTextureKey, artUrl } from '../render/art/urls';
-import { PlayerArt } from '../render/art/playerArt';
-import { sideLooks, type ProtagonistLook, type RosterLook } from '../render/art/roster';
-import { dirFromScreen } from '../render/art/spriteFactory';
+import type { ProtagonistLook } from '../render/art/roster';
+import { ensureTtArt, ttKey } from '../render/art/teamTrainingArt';
+import { baselineBody, targetBody, TT_ART, ttFrame, ttIdentities, ttScale, type TtAction, type TtSheet } from '../render/art/teamTrainingFrames';
 import { orientationOf, type Insets } from '../render/layout';
 import { FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import { shouldExposeDebug } from '../debug/diagnostics';
@@ -86,12 +86,15 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
   private body!: Phaser.GameObjects.Text;
   private buttons: Button[] = [];
   private tokenText: Phaser.GameObjects.Text[] = [];
-  private art!: PlayerArt;
-  private look: RosterLook | null = null;
   private lookName: ProtagonistLook | null = null;
   private me!: Phaser.GameObjects.Image;
   private sprites: Phaser.GameObjects.Image[] = [];
-  private kits: { A: RosterLook[]; B: RosterLook[]; N: RosterLook[] } | null = null;
+  /** Supplied sheet per slot for the current moment: stable through observe, decide, demonstrate, critique, retry and replay. */
+  private ids: { key: string; map: ReadonlyMap<string, TtSheet> } | null = null;
+  /** Per player: last position and distance run (drives the run cycle), and when they last took the ball. */
+  private gait = new Map<string, { x: number; y: number; dist: number; got: number }>();
+  private lastOwner: string | null = null;
+  private frames: { slot: string; sheet: TtSheet; frame: number; flip: boolean; action: TtAction }[] = [];
   private field: Rect = { x: 0, y: 0, width: 1, height: 1 };
   private panel: Rect = { x: 0, y: 0, width: 1, height: 1 };
   private px = 1;
@@ -115,7 +118,10 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     this.buttons = [];
     this.tokenText = [];
     this.sprites = [];
-    this.kits = null;
+    this.ids = null;
+    this.gait.clear();
+    this.lastOwner = null;
+    this.frames = [];
     this.buttonKey = '';
     const params = new URLSearchParams(window.location.search);
     const sp = Number(params.get('ttSpeed'));
@@ -138,7 +144,6 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     this.hObj = this.add.text(0, 0, '', { ...style, fontSize: '12px', wordWrap: { width: 300 } }).setDepth(2001).setResolution(textResolution());
     for (const st of STAGES) this.stageText.push(this.add.text(0, 0, st, { fontFamily: FONT_FAMILY, color: UI_CSS.cream, fontStyle: 'bold', fontSize: '11px' }).setOrigin(0.5).setDepth(2002).setResolution(textResolution()));
     this.loadCoach();
-    this.art = new PlayerArt(this);
     this.me = this.add.image(-100, -100, '__DEFAULT').setVisible(false).setDepth(900);
     this.scale.on(Phaser.Scale.Events.RESIZE, this.onResize, this);
     this.game.events.on(Phaser.Core.Events.BLUR, this.onBlur, this);
@@ -156,14 +161,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       if (!save.player) return this.setScreen('unavailable', 'Create your player first.');
       const g = save.player.gender;
       this.lookName = g === 'boy' || g === 'girl' ? g : null;
-      const home = sideLooks('home', this.lookName ? { slot: 1, look: this.lookName } : null, { club: 'batavia', kit: 'training' });
-      this.kits = {
-        A: home,
-        B: sideLooks('away', null, { club: 'batavia', kit: 'match' }),
-        N: sideLooks('away', null, { club: 'sol_vista', kit: 'match' }),
-      };
-      if (this.lookName) this.look = home[1]!;
-      this.art.ensure([...new Set([...this.kits.A, ...this.kits.B, ...this.kits.N].map((l) => l.set))]);
+      ensureTtArt(this);
       this.role = ROLE_CHOICES[save.player.position][0]!;
       const plan = routePlan(sessionId(1, save.week, this.slot), this.role);
       if (!plan) return this.setScreen('unavailable', `Session ${sessionId(1, save.week, this.slot)} is not available yet. Its scenes have not passed testing, so nothing here is counted. Your weekly Team Training is still on the Team Training page.`);
@@ -668,44 +666,58 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     }
     this.drawTactical(s!, k);
     const r = Math.max(6, k * 0.55);
-    const h = spriteHeight(k);
-    const pose = Math.floor(this.walk * 8) % 6;
-    const used = { A: 0, B: 0, N: 0 };
+    const sc = ttScale(k);
+    const ids = this.identities(d);
+    const ownerTeam = d.ball.owner ? d.actors.find((x) => x.slot === d.ball.owner)?.side : null;
+    if (d.ball.owner !== this.lastOwner && d.ball.owner) this.gait.set(d.ball.owner, { ...(this.gait.get(d.ball.owner) ?? { x: 0, y: 0, dist: 0 }), got: d.t });
+    this.lastOwner = d.ball.owner;
+    this.frames = [];
+    let mine = false;
     d.actors.forEach((a, i) => {
+      const im = a.human ? this.me : (this.sprites[i] ??= this.add.image(-100, -100, '__DEFAULT').setDepth(900));
+      const sheet = ids.get(a.slot);
+      if (a.offHalf) {
+        // The far keeper is one of the 18 but stands in the other half: an edge marker at halfway shows where.
+        im.setVisible(false);
+        const q = this.toScreen(a.pos.x, 0);
+        g.fillStyle(a.side === 'GK_B' ? 0xe0558f : 0x2bb3a3, 1).fillTriangle(q.x - r * 0.7, q.y - r * 0.2, q.x + r * 0.7, q.y - r * 0.2, q.x, q.y + r * 0.8);
+        g.lineStyle(1, 0xffffff, 0.9).strokeTriangle(q.x - r * 0.7, q.y - r * 0.2, q.x + r * 0.7, q.y - r * 0.2, q.x, q.y + r * 0.8);
+        return;
+      }
       const p = this.actorScreen(a);
       const keeper = a.side.startsWith('GK');
-      const team = keeper ? (a.side.endsWith('B') ? 'B' : 'A') : a.side === 'A' || a.side === 'B' ? a.side : 'N';
-      const moving = Math.hypot(a.vel.x, a.vel.y) > 0.4;
-      const dir = moving ? dirFromScreen(a.vel.y, -a.vel.x) : 2;
-      g.fillStyle(PALETTE.shadow, 0.25).fillEllipse(p.x, p.y + r * 0.2, r * 2.2, r);
-      g.fillStyle(team === 'A' ? PALETTE.blue : team === 'B' ? PALETTE.tomato : PALETTE.cream, 0.55).fillEllipse(p.x, p.y + r * 0.2, r * 1.9, r * 0.85);
-      if (a.slot === d.ball.owner && !a.human) g.lineStyle(1.5, 0xffffff, 0.95).strokeEllipse(p.x, p.y + r * 0.2, r * 2.6, r * 1.2);
-      if (a.human) g.lineStyle(2.5, PALETTE.sun, 1).strokeEllipse(p.x, p.y + r * 0.2, r * 2.8, r * 1.3);
-      const im = (this.sprites[i] ??= this.add.image(-100, -100, '__DEFAULT').setDepth(900));
-      if (a.human) {
+      const st = this.gait.get(a.slot) ?? { x: a.pos.x, y: a.pos.y, dist: 0, got: -9 };
+      st.dist += Math.hypot(a.pos.x - st.x, a.pos.y - st.y);
+      st.x = a.pos.x;
+      st.y = a.pos.y;
+      this.gait.set(a.slot, st);
+      const speed = Math.hypot(a.vel.x, a.vel.y);
+      const moving = speed > 0.4;
+      const defending = !!ownerTeam && (ownerTeam === 'A' || ownerTeam === 'GK_A') !== (a.side === 'A' || a.side === 'GK_A');
+      const passing = d.ball.owner === null && d.ball.passer === a.slot && d.ball.kickT < 0.3;
+      const receiving = d.ball.owner === a.slot && d.t - st.got < 0.35;
+      const nearBall = Math.hypot(a.pos.x - d.ball.pos.x, a.pos.y - d.ball.pos.y) < 9;
+      const action: TtAction = passing ? 'pass' : receiving ? 'receive' : moving ? (defending && nearBall ? 'shuffle' : 'run') : keeper && defending ? 'keeper-ready' : 'stand';
+      const frame = ttFrame(keeper, action, st.dist / 1.7, passing ? d.ball.kickT : d.t - st.got);
+      // Sheets face right: flip toward where they run, or toward the ball when standing.
+      const ahead = moving ? this.toScreen(a.pos.x + a.vel.x, a.pos.y + a.vel.y) : this.halfScreen(d.ball.pos);
+      const flip = ahead.x < p.x - 0.5;
+      // Grounding shadow at the feet; the protagonist's highlight is only the outline drawn into the supplied sheet.
+      g.fillStyle(PALETTE.shadow, 0.3).fillEllipse(p.x, p.y, r * 1.9, r * 0.6);
+      if (a.slot === d.ball.owner && !a.human) g.lineStyle(1, 0xffffff, 0.8).strokeEllipse(p.x, p.y, r * 2.2, r * 0.8);
+      if (!sheet || !this.textures.exists(ttKey(sheet))) {
         im.setVisible(false);
+        g.fillStyle(keeper ? 0x2bb3a3 : a.side === 'A' ? 0xf07a1a : 0x3fae49, 1).fillCircle(p.x, p.y - r, r);
         return;
       }
-      const kit = this.kits?.[team];
-      // Home slot 1 is the protagonist's sheet, so home teammates use slots 2-8.
-      const look = kit ? (keeper ? kit[0]! : team === 'A' ? kit[2 + (used.A++ % 7)]! : kit[1 + (used[team]++ % 8)]!) : null;
-      if (!look) {
-        im.setVisible(false);
-        g.fillStyle(team === 'A' ? PALETTE.blue : team === 'B' ? PALETTE.tomato : PALETTE.mustard, 1).fillCircle(p.x, p.y, r);
-        return;
-      }
-      im.setDepth(900 + p.y / 10000);
-      this.art.apply(im, look, moving ? 'run' : 'idle', dir, pose, h).setPosition(p.x, p.y).setVisible(true);
+      if (a.human) mine = true;
+      this.frames.push({ slot: a.slot, sheet, frame, flip, action });
+      im.setTexture(ttKey(sheet), frame).setOrigin(TT_ART.anchor.x / TT_ART.cell.w, TT_ART.anchor.y / TT_ART.cell.h).setScale(sc).setFlipX(flip)
+        .setPosition(p.x, p.y).setDepth(900 + p.y / 10000 + (a.human ? 0.00001 : 0)).setVisible(true);
     });
     for (let i = d.actors.length; i < this.sprites.length; i++) this.sprites[i]!.setVisible(false);
-    const me = d.actors.find((x) => x.human)!;
-    const mp = this.actorScreen(me);
-    const mine = this.look ?? this.kits?.A[1] ?? null;
-    if (mine) {
-      const moving = Math.hypot(me.vel.x, me.vel.y) > 0.4;
-      const dir = moving ? dirFromScreen(me.vel.y, -me.vel.x) : 2;
-      this.art.apply(this.me, mine, moving ? 'run' : 'idle', dir, pose, h).setPosition(mp.x, mp.y).setDepth(901).setVisible(true);
-    } else this.me.setVisible(false);
+    for (const [i, a] of d.actors.entries()) if (a.human) this.sprites[i]?.setVisible(false);
+    if (!mine) this.me.setVisible(false);
     const bs = this.toScreen(d.ball.pos.x, d.ball.pos.y);
     this.ballG.fillStyle(0xffffff, 1).fillCircle(bs.x, bs.y, Math.max(4, k * 0.3));
     this.ballG.lineStyle(1.5, PALETTE.ink, 1).strokeCircle(bs.x, bs.y, Math.max(4, k * 0.3));
@@ -772,6 +784,18 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     }
   }
 
+  /** Supplied sheets for this moment's 18: your saved boy or girl, the 7 teammates, the 8 opponents and both keepers. */
+  private identities(d: { fixture: { id: string }; variant: string; actors: readonly SitActor[] }): ReadonlyMap<string, TtSheet> {
+    const key = `${d.fixture.id}:${d.variant}`;
+    if (this.ids?.key === key) return this.ids.map;
+    const home = d.actors.filter((a) => a.side === 'A' || a.side === 'GK_A').map((a) => a.slot);
+    const away = d.actors.filter((a) => a.side === 'B' || a.side === 'GK_B').map((a) => a.slot);
+    const me = d.actors.find((a) => a.human)!.slot;
+    const map = ttIdentities(this.lookName ?? 'boy', home, away, me, d.actors.find((a) => a.side === 'GK_A')?.slot ?? null, d.actors.find((a) => a.side === 'GK_B')?.slot ?? null);
+    this.ids = { key, map };
+    return map;
+  }
+
   private actorScreen(a: SitActor): { x: number; y: number } {
     return this.toScreen(a.pos.x, a.pos.y);
   }
@@ -817,8 +841,10 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       slot: this.slot,
       role: this.role,
       look: this.lookName,
-      sprite: this.me.visible ? (this.look?.set ?? null) : null,
-      squadSprites: this.sprites.filter((im) => im.visible).map((im) => im.texture.key),
+      sprite: this.me.visible ? this.me.texture.key : null,
+      art: { set: 'team-training-v1', reviewBuild: true, bodyPx: d ? targetBody(this.px) : null, baselineBodyPx: d ? baselineBody(this.px) : null, scale: d ? ttScale(this.px) : null, frames: this.frames },
+      squadSprites: [this.me, ...this.sprites].filter((im) => im.visible).map((im) => im.texture.key),
+      fixturePlayers: d?.actors.length ?? null,
       bodyBottom: this.body.y + this.body.height,
       bodyText: this.body.text,
       bodyDropped: this.bodyDropped,
@@ -854,7 +880,6 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     this.scale.off(Phaser.Scale.Events.RESIZE, this.onResize, this);
     this.game.events.off(Phaser.Core.Events.BLUR, this.onBlur, this);
     this.game.events.off(Phaser.Core.Events.HIDDEN, this.onBlur, this);
-    this.art.destroy();
     this.store?.close();
     this.store = null;
     this.session = null;
