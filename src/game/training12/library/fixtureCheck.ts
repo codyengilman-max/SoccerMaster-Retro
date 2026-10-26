@@ -57,11 +57,18 @@ function compare(id: string, label: string, fx: Fixture, variant: Variant, num: 
   for (const w of want) {
     const a = fx.actors.find((x) => x.slot === w.slot)!;
     if (a.side !== w.side || a.role !== w.role) p.push(`${id} (${label}): ${w.slot} is ${a.side}/${a.role} in the fixture, ${w.side}/${w.role} in the scene.`);
+    const at = spec.moves?.[w.slot] ?? a.at;
+    const raw = spec.passage?.[w.slot] ?? a.passage;
+    const passage = raw && near(raw, at) ? undefined : raw;
+    if (!near(at, w.at) || !near(passage, w.passage))
+      p.push(`${id} (${label}): ${w.slot} starts ${fmt(at)} → ${fmt(passage)} in the fixture, the scene needs ${fmt(w.at)} → ${fmt(w.passage)}.`);
   }
   if (spec.passageBall) p.push(`${id} (${label}): the fixture plays a ball during the passage that the scene does not record.`);
   const ball = spec.ball ?? fx.ball;
   const owner = 'owner' in ball ? ball.owner : null;
   if (owner !== num.ball.owner) p.push(`${id} (${label}): fixture ball is with ${owner ?? 'nobody'}, the scene has ${num.ball.owner ?? 'nobody'}.`);
+  if (owner !== null && !fx.actors.some((a) => a.slot === owner)) return [...p, `${id} (${label}): fixture ball owner ${owner} is not one of its players, so it cannot be played.`];
+  if (owner === null && !('at' in ball)) return [...p, `${id} (${label}): the fixture's loose ball has no position.`];
   const played = playedFreeze(fx, variant);
   if (played.actors.length !== want.length) p.push(`${id} (${label}): the simulator plays ${played.actors.length} players, the scene shows ${want.length}.`);
   for (const a of num.actors) {

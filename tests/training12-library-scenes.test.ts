@@ -139,6 +139,12 @@ describe('fixtureMatchesScene: the played fixture must be the signed scene', () 
     const q = still();
     const off = { ...q, numeric: { ...q.numeric, ball: { ...q.numeric.ball, pos: { x: q.numeric.ball.pos.x - 1.2, y: q.numeric.ball.pos.y } } } };
     expect(fixtureMatchesScene(asScene(off, compiled(q))).some((m) => m.startsWith('CB01 (cue): the ball freezes at'))).toBe(true);
+    // A still player who starts 1 m away but runs to the signed spot freezes in the right place: the start check still catches it.
+    const f = compiled(q);
+    const sneak = { ...f, actors: f.actors.map((a) => (a.slot === 'H_RB' ? { ...a, at: { x: a.at.x + 1, y: a.at.y }, passage: a.at } : a)) };
+    const probs = fixtureMatchesScene(asScene(q, sneak));
+    expect(probs.some((m) => m.startsWith('CB01 (cue): H_RB starts'))).toBe(true);
+    expect(probs.some((m) => m.startsWith('CB01 (cue): H_RB freezes at'))).toBe(false);
   });
 
   it('the changed cue must show its required players and ball inside its own view', () => {
@@ -158,6 +164,8 @@ describe('fixtureMatchesScene: the played fixture must be the signed scene', () 
     const extra = { ...fx, actors: [...fx.actors, { ...fx.actors[0]!, slot: 'H_CM', role: '8' as const }] };
     expect(scene(extra)[0]).toMatch(/^CB01 \(cue\): fixture players/);
     expect(scene({ ...fx, ball: { owner: 'A_ST' } })).toContain('CB01 (cue): fixture ball is with A_ST, the scene has A_RW.');
+    expect(scene({ ...fx, ball: { owner: 'A_MISSING' } })).toEqual(expect.arrayContaining(['CB01 (cue): fixture ball owner A_MISSING is not one of its players, so it cannot be played.']));
+    expect(scene({ ...fx, counter: { ...fx.counter, ball: { owner: 'A_MISSING' } } })).toContain('CB01 (changed cue): fixture ball owner A_MISSING is not one of its players, so it cannot be played.');
     const counter = { ...fx, counter: { ...fx.counter, moves: { ...fx.counter.moves, A_RW: { x: 1, y: 1 } } } };
     expect(scene(counter).some((m) => m.startsWith('CB01 (changed cue): A_RW freezes at'))).toBe(true);
     expect(fixtureMatchesScene({ ...asScene(p, fx), changedCue: undefined } as unknown as LibraryScene)).toContain('CB01: no signed changed-cue scene to check the retry against.');
