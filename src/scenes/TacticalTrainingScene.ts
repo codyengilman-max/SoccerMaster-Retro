@@ -661,7 +661,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     const d = s?.sit;
     for (const t of this.tokenText) t.setVisible(false);
     if (!d) {
-      for (const im of this.sprites) im.setVisible(false);
+      for (const im of this.sprites) im?.setVisible(false);
       return void this.me.setVisible(false);
     }
     this.drawTactical(s!, k);
@@ -715,7 +715,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       im.setTexture(ttKey(sheet), frame).setOrigin(TT_ART.anchor.x / TT_ART.cell.w, TT_ART.anchor.y / TT_ART.cell.h).setScale(sc).setFlipX(flip)
         .setPosition(p.x, p.y).setDepth(900 + p.y / 10000 + (a.human ? 0.00001 : 0)).setVisible(true);
     });
-    for (let i = d.actors.length; i < this.sprites.length; i++) this.sprites[i]!.setVisible(false);
+    for (let i = d.actors.length; i < this.sprites.length; i++) this.sprites[i]?.setVisible(false);
     for (const [i, a] of d.actors.entries()) if (a.human) this.sprites[i]?.setVisible(false);
     if (!mine) this.me.setVisible(false);
     const bs = this.toScreen(d.ball.pos.x, d.ball.pos.y);
@@ -843,7 +843,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       look: this.lookName,
       sprite: this.me.visible ? this.me.texture.key : null,
       art: { set: 'team-training-v1', reviewBuild: true, bodyPx: d ? targetBody(this.px) : null, baselineBodyPx: d ? baselineBody(this.px) : null, scale: d ? ttScale(this.px) : null, frames: this.frames },
-      squadSprites: [this.me, ...this.sprites].filter((im) => im.visible).map((im) => im.texture.key),
+      squadSprites: [this.me, ...this.sprites].filter((im): im is Phaser.GameObjects.Image => !!im?.visible).map((im) => im.texture.key),
       fixturePlayers: d?.actors.length ?? null,
       bodyBottom: this.body.y + this.body.height,
       bodyText: this.body.text,
