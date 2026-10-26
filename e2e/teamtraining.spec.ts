@@ -1,11 +1,10 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
-import { diagnostics, expectInside, finishTeamTraining, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
+import { diagnostics, expectInside, playTacticalSession, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
 
-test.describe.configure({ timeout: 180_000 });
+test.describe.configure({ timeout: 600_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 
 type Career = { screen: string; week: number; attributes: Record<string, number> | null; status: string; toast: string; text: string };
-type Team = { phase: string; week: number; index: number; ids: string[]; scores: number[]; message: string; hud: string; half: string };
 
 async function press(page: Page, name: string, mode: 'touch' | 'mouse'): Promise<void> {
   for (let i = 0; i < 6; i++) {
@@ -27,23 +26,13 @@ async function career(page: Page, pred: (c: Career) => boolean, what: string): P
     await page.waitForTimeout(50);
   }
 }
-async function team(page: Page, pred: (t: Team) => boolean, what: string, ms = 60_000): Promise<Team> {
-  const start = Date.now();
-  for (;;) {
-    const d = await diagnostics(page);
-    const t = (d.gameplay as { teamTraining?: Team | null } | null)?.teamTraining ?? null;
-    if (d.activeScenes.includes('match') && t && pred(t)) return t;
-    if (Date.now() - start > ms) throw new Error(`timed out waiting for ${what}: ${JSON.stringify(t)}`);
-    await page.waitForTimeout(100);
-  }
-}
 const total = (a: Record<string, number> | null) => Object.values(a ?? {}).reduce((x, y) => x + y, 0);
 
-test('team training: three catalog situations, counted once, leaving early counts nothing', async ({ page }, info) => {
+test('team training: the week is Sessions A-C only, no match route; leaving counts nothing; a session counts once', async ({ page }, info) => {
   const mode = modeFor(info);
   const errors = trackConsoleErrors(page);
   page.on('dialog', (d) => void d.accept('Robin'));
-  await page.goto('/?debug=1&dev&ttSeconds=2');
+  await page.goto('/?debug=1&dev&ttSpeed=8');
   await waitForScene(page, 'start');
   await press(page, 'career-button', mode);
   await waitForScene(page, 'career');
@@ -54,51 +43,35 @@ test('team training: three catalog situations, counted once, leaving early count
   await career(page, (c) => c.screen === 'home', 'home');
   await press(page, 'nav-team', mode);
   let c = await career(page, (x) => x.screen === 'team', 'team screen');
-  expect(c.text).toContain('WING01');
-  expect(c.text).toContain('Leaving early counts nothing');
   const before = total(c.attributes);
-  const d = await diagnostics(page);
-  for (const [name, rect] of Object.entries(d.layout!.elements)) if (name !== 'body') expectInside(name, rect, d.layout!.viewport);
-
-  // Leave during the first situation: nothing is recorded.
-  await press(page, 'team-play', mode);
-  await waitForScene(page, 'match');
-  await team(page, (t) => t.phase === 'playing', 'first situation');
-  await pressAny(page, 'menu-button', mode);
-  c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'back on team screen');
+  // Topic, short description and status for each session; no legacy match button or "normal controls" text.
+  for (const slot of ['A', 'B', 'C']) expect(c.text).toMatch(new RegExp(`Session ${slot} · .+ · Not started`));
+  expect(c.text).not.toMatch(/normal controls|30 seconds|Play Team Training/i);
   expect(c.text).toContain('Leaving early counts nothing');
+  let d = await diagnostics(page);
+  const names = Object.keys(d.layout!.elements);
+  expect(names.filter((n) => n.startsWith('tt12-')).sort()).toEqual(['tt12-A', 'tt12-B', 'tt12-C']);
+  expect(names).not.toContain('team-play');
+  for (const [name, rect] of Object.entries(d.layout!.elements)) if (name !== 'body') expectInside(name, rect, d.layout!.viewport);
+  await page.screenshot({ path: info.outputPath(`team-week-${info.project.name}.png`) });
+
+  // Leave during the first session: two taps, nothing recorded.
+  await press(page, 'tt12-A', mode);
+  await waitForScene(page, 'tactical');
+  await expect.poll(async () => !!(await diagnostics(page)).layout?.elements['role-9'] || Object.keys((await diagnostics(page)).layout?.elements ?? {}).some((k) => k.startsWith('role-')), { timeout: 30_000 }).toBe(true);
+  await pressAny(page, 'tt-leave', mode);
+  await pressAny(page, 'tt-leave', mode);
+  c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'back on team screen');
+  expect(c.text).toMatch(/Session A · .+ · Not started/);
   expect(total(c.attributes)).toBe(before);
+  d = await diagnostics(page);
+  expect(d.activeScenes).not.toContain('match');
 
-  // Play all three: one result for the week. The HUD is training-only and Retry replays without adding a result.
-  await press(page, 'team-play', mode);
-  await waitForScene(page, 'match');
-  const first = await team(page, (t) => t.phase === 'playing', 'attempt 1');
-  expect(first.hud).toContain('Team Training');
-  expect(first.hud).toContain('Attempt 1/3');
-  expect(first.hud).not.toMatch(/SANDBOX|Home \d|Away/);
-  await team(page, (t) => t.phase === 'review', 'attempt 1 result');
-  await pressAny(page, 'tt-retry', mode);
-  const retried = await team(page, (t) => t.phase === 'playing', 'retry');
-  expect(retried.index).toBe(0);
-  expect(retried.scores).toEqual([]);
-  await finishTeamTraining(page, mode);
-  const done = await team(page, (t) => t.phase === 'done', 'three situations');
-  expect(done.ids).toEqual(['DEF01', 'WING01', 'NINE02']);
-  expect(done.scores).toHaveLength(3);
-  expect(done.message, JSON.stringify(done)).toMatch(/Team Training week 1/);
-  await pressAny(page, 'menu-button', mode);
+  // Session A counts once; playing it again is practice only, and a reload keeps the result.
+  expect(await playTacticalSession(page, 'A', mode)).toContain('Session A counted');
   c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'counted');
-  expect(c.text, JSON.stringify({ toast: c.toast, status: c.status, attrs: c.attributes, done })).toContain('Counted for week 1');
-  const after = total(c.attributes);
-  expect(Math.abs(after - before)).toBeLessThanOrEqual(2);
-  for (const v of Object.values(c.attributes ?? {})) expect(v).toBeGreaterThanOrEqual(40);
-
-  // Playing again is practice only, and a reload keeps the result.
-  await press(page, 'team-play', mode);
-  await waitForScene(page, 'match');
-  await finishTeamTraining(page, mode);
-  const again = await team(page, (t) => t.phase === 'done', 'practice run');
-  expect(again.message).toMatch(/already counted/);
+  expect(c.text).toMatch(/Session A · .+ · Completed/);
+  expect(await playTacticalSession(page, 'A', mode)).toMatch(/already counted/);
   await page.reload();
   await waitForScene(page, 'start');
   await press(page, 'career-button', mode);
@@ -106,7 +79,7 @@ test('team training: three catalog situations, counted once, leaving early count
   await career(page, (x) => x.status !== 'loading' && x.screen === 'home', 'reloaded');
   await press(page, 'nav-team', mode);
   c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'team after reload');
-  expect(c.text).toContain('Counted for week 1');
-  expect(total(c.attributes)).toBe(after);
+  expect(c.text).toMatch(/Session A · .+ · Completed/);
+  expect(c.text).toMatch(/Session B · .+ · Not started/);
   expect(errors).toEqual([]);
 });

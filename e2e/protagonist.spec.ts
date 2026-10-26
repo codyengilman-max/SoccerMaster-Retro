@@ -50,7 +50,7 @@ test('Team Training: the saved girl is the player you control in every situation
   test.setTimeout(180_000);
   const errors = trackConsoleErrors(page);
   page.on('dialog', (d) => void d.accept('Ava'));
-  await page.goto('/?debug=1&dev&ttSeconds=2');
+  await page.goto('/?debug=1&dev&ttSpeed=8');
   await waitForScene(page, 'start');
   await pressElement(page, 'career-button', 'touch');
   await waitForScene(page, 'career');
@@ -59,19 +59,18 @@ test('Team Training: the saved girl is the player you control in every situation
   await screen(page, 'setup');
   await saveGender(page, 'girl');
   // Open Team Training straight from a fresh scene load so the saved gender is read.
-  await page.goto('/?debug=1&dev&ttSeconds=2');
+  await page.goto('/?debug=1&dev&ttSpeed=8');
   await waitForScene(page, 'start');
   await pressElement(page, 'career-button', 'touch');
   await waitForScene(page, 'career');
   await page.waitForFunction(() => (window.__SMR__?.diagnostics().gameplay as { status?: string } | null)?.status !== 'loading');
   await press(page, 'nav-team');
   await screen(page, 'team');
-  await press(page, 'team-play');
-  await waitForScene(page, 'match');
-  await page.waitForFunction(() => (window.__SMR__?.diagnostics().gameplay as { teamTraining?: { phase?: string } } | null)?.teamTraining?.phase === 'playing', null, { timeout: 30_000 });
-  const g = await gameplay(page);
-  expect(g.teamTraining?.protagonist?.set).toBe('girl-training');
-  expect(g.teamTraining?.protagonist?.id).toBe(g.controlledId);
+  await press(page, 'tt12-A');
+  await waitForScene(page, 'tactical');
+  await page.waitForFunction(() => (window.__SMR__?.diagnostics().gameplay as { screen?: string } | null)?.screen === 'role', null, { timeout: 30_000 });
+  const g = (await gameplay(page)) as unknown as { look: string | null };
+  expect(g.look).toBe('girl');
 
   // Player start screen: New game needs a second tap, then the career is archived and the story starts fresh.
   await page.goto('/?debug=1');

@@ -263,18 +263,62 @@ export class Finger {
 }
 
 
-/** Team Training: press Continue after each attempt until the week is saved (phase 'done'). */
-export async function finishTeamTraining(page: Page, via: 'mouse' | 'touch', ms = 120_000): Promise<void> {
+type TacticalView = { screen: string; phase: string | null; options: { id: string; quality: number }[]; attempts: number; saved: string };
+
+async function tacticalView(page: Page, pred: (t: TacticalView) => boolean, what: string, ms: number): Promise<TacticalView> {
   const start = Date.now();
   for (;;) {
     const d = await diagnostics(page);
-    const t = (d.gameplay as { teamTraining?: { phase: string } | null } | null)?.teamTraining;
-    if (t?.phase === 'done') return;
-    if (t?.phase === 'review' && d.layout?.elements['tt-continue']) {
-      await pressElement(page, 'tt-continue', via);
-      await page.waitForTimeout(150);
-    }
-    if (Date.now() - start > ms) throw new Error(`team training did not finish: ${JSON.stringify(t)}`);
-    await page.waitForTimeout(100);
+    const t = d.gameplay as TacticalView | null;
+    if (d.activeScenes.includes('tactical') && t && pred(t)) return t;
+    if (Date.now() - start > ms) throw new Error(`timed out waiting for ${what}: ${JSON.stringify(t)}`);
+    await page.waitForTimeout(50);
   }
+}
+
+async function pressWhenShown(page: Page, name: string, via: 'mouse' | 'touch', ms = 15_000): Promise<void> {
+  const start = Date.now();
+  for (;;) {
+    const els = (await diagnostics(page)).layout?.elements ?? {};
+    if (els[name]) return pressElement(page, name, via);
+    if (els.more) await pressElement(page, 'more', via);
+    if (Date.now() - start > ms) throw new Error(`no ${name} button`);
+    await page.waitForTimeout(80);
+  }
+}
+
+/**
+ * Weekly Team Training: from the Team Training page, play one tactical session (A, B or C) to its saved screen with the
+ * best-graded answer each time, then return to the Team Training page. Returns the saved message.
+ */
+export async function playTacticalSession(page: Page, slot: 'A' | 'B' | 'C', via: 'mouse' | 'touch', ms = 420_000): Promise<string> {
+  const start = Date.now();
+  const left = () => Math.max(5_000, ms - (Date.now() - start));
+  await pressWhenShown(page, `tt12-${slot}`, via);
+  await waitForScene(page, 'tactical');
+  await tacticalView(page, (t) => t.screen === 'role', 'role choice', 30_000);
+  const role = Object.keys((await diagnostics(page)).layout?.elements ?? {}).find((k) => k.startsWith('role-') && !k.endsWith('GK'));
+  if (!role) throw new Error('no role button');
+  await pressElement(page, role, via);
+  for (let round = 0; round < 3; round++) {
+    await tacticalView(page, (t) => t.screen === 'brief', `round ${round + 1} brief`, left());
+    await pressWhenShown(page, 'tt-start', via);
+    for (;;) {
+      const t = await tacticalView(page, (x) => x.screen === 'reflection' || (x.screen === 'play' && ((x.phase === 'observe' && x.options.length > 0) || x.phase === 'explain')), `round ${round + 1} play`, left());
+      if (t.screen === 'reflection') break;
+      if (t.phase === 'observe') {
+        const best = [...t.options].sort((a, b) => b.quality - a.quality)[0]!;
+        await pressWhenShown(page, `opt-${best.id}`, via);
+        await tacticalView(page, (x) => x.phase !== 'observe' || x.attempts > t.attempts, 'decision taken', left());
+      } else {
+        await pressWhenShown(page, 'tt-next', via);
+        await tacticalView(page, (x) => x.phase !== 'explain' || x.screen === 'reflection', 'next moment', left());
+      }
+    }
+    await pressWhenShown(page, 'tt-continue', via);
+  }
+  const done = await tacticalView(page, (t) => t.screen === 'done', 'session saved', 60_000);
+  await pressWhenShown(page, 'tt-back', via);
+  await waitForScene(page, 'career');
+  return done.saved;
 }

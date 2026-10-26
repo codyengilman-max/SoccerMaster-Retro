@@ -1,7 +1,7 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { idealPower } from '../src/game/story/crossbar';
 import { thresholdsFor } from '../src/input';
-import { Finger, diagnostics, finishTeamTraining, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
+import { Finger, diagnostics, playTacticalSession, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
 
 // Season One on one isolated save: identity -> prologue -> week one (aquarium, recess, Coach Code with the
 // real Team Training handoff) -> week close -> week 2, then reload. Later weeks: tests/season-story.test.ts.
@@ -63,7 +63,7 @@ async function layout(page: Page): Promise<Layout> {
   return (await diagnostics(page)).layout as unknown as Layout;
 }
 async function openStory(page: Page, mode: 'touch' | 'mouse'): Promise<Story> {
-  await page.goto('/?debug=1&dev&halfSeconds=8&ttSeconds=2');
+  await page.goto('/?debug=1&dev&halfSeconds=8&ttSpeed=8');
   await waitForScene(page, 'start');
   await pressAny(page, 'story-button', mode);
   return story(page, () => true, 'story loaded');
@@ -157,24 +157,24 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
       await press(page, 'career-menu', mode);
       await story(page, resolved(s), `${s.adapter} completed`);
     } else if (s.adapter === 'team_training') {
-      const team = (phase: string) => (g: Record<string, unknown>) => (g.teamTraining as { phase?: string } | null | undefined)?.phase === phase;
       await pressStory(page, 'handoff-career', mode);
       await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'team', 'team screen');
-      // Leaving during the first situation counts nothing and the story handoff stays open.
-      await press(page, 'team-play', mode);
-      await scene(page, 'match', team('playing'), 'first situation', 60_000);
-      await pressAny(page, 'menu-button', mode);
+      // Leaving during the first session counts nothing and the story handoff stays open.
+      await press(page, 'tt12-A', mode);
+      await waitForScene(page, 'tactical');
+      await expect.poll(async () => Object.keys((await diagnostics(page)).layout?.elements ?? {}).some((k) => k.startsWith('role-')), { timeout: 30_000 }).toBe(true);
+      await pressAny(page, 'tt-leave', mode);
+      await pressAny(page, 'tt-leave', mode);
       await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'team', 'back on team screen');
       await press(page, 'career-menu', mode);
       const early = await story(page, (x) => x.mode === 'story', 'story after leaving early');
       expect(resolved(s)(early)).toBe(false);
       await pressStory(page, 'handoff-career', mode);
       await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'team', 'team screen again');
-      await press(page, 'team-play', mode);
-      await finishTeamTraining(page, mode);
-      await scene(page, 'match', team('done'), 'three situations', 120_000);
-      await pressAny(page, 'menu-button', mode);
-      await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'team', 'counted');
+      for (const slot of ['A', 'B', 'C'] as const) {
+        await playTacticalSession(page, slot, mode);
+        await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'team', `session ${slot} saved`);
+      }
       await page.waitForTimeout(300);
       await press(page, 'career-menu', mode);
       await story(page, resolved(s), 'team training completed');
