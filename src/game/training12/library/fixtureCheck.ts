@@ -1,9 +1,11 @@
 /**
- * Proves a played fixture implements its signed numeric scene: same players (no shape-holders), sides, roles, freeze
- * positions, movement into the freeze and ball, for the cue and the changed cue. Framework-free.
+ * Proves a played fixture implements its signed numeric scene: it runs the fixture's passage in the simulator and
+ * compares the frozen players, sides, roles, positions, velocities and ball with the scene, for the cue and the changed
+ * cue. Anything the player cannot reproduce (today: facing) is a blocker. Framework-free.
  */
 import type { RoleId } from '../ref/catalog.mjs';
-import type { Fixture, FixtureActor, P, Side, VariantSpec } from '../situations/types';
+import { createSituation, step, type SituationState } from '../situations/sim';
+import type { Fixture, FixtureActor, P, Side, Variant } from '../situations/types';
 import { LIBRARY_CARDS, LIBRARY_PITCH } from './tacticalLibrary.generated';
 import type { LibraryScene, NumericScene } from './types';
 
@@ -34,28 +36,45 @@ export function sceneActors(num: NumericScene, goal: Fixture['goal'], passageSec
   });
 }
 
-const near = (a: P | undefined, b: P | undefined): boolean => (!a && !b) || (!!a && !!b && Math.abs(a.x - b.x) <= TOL && Math.abs(a.y - b.y) <= TOL);
+const PLAY_TOL = 0.05;
+const near = (a: P | undefined, b: P | undefined, tol = TOL): boolean => (!a && !b) || (!!a && !!b && Math.abs(a.x - b.x) <= tol && Math.abs(a.y - b.y) <= tol);
 const fmt = (v: P | undefined): string => (v ? `(${v.x.toFixed(2)}, ${v.y.toFixed(2)})` : 'none');
 
-function compare(id: string, label: string, fx: Fixture, spec: VariantSpec, num: NumericScene): string[] {
-  const p: string[] = [];
+/** Runs the fixture's passage in the simulator and returns the state it actually freezes on. */
+export function playedFreeze(fx: Fixture, variant: Variant): SituationState {
+  const s = createSituation(fx, variant);
+  let guard = 0;
+  while (s.phase === 'release' && guard++ < 6000) step(s);
+  return s;
+}
+
+function compare(id: string, label: string, fx: Fixture, variant: Variant, num: NumericScene): string[] {
+  const spec = fx[variant];
   const want = sceneActors(num, fx.goal, fx.passageSeconds);
   const have = fx.actors.map((a) => a.slot).sort().join(', ');
   if (have !== want.map((a) => a.slot).sort().join(', ')) return [`${id} (${label}): fixture players [${have}] differ from the scene's shown players [${want.map((a) => a.slot).sort().join(', ')}].`];
+  const p: string[] = [];
   for (const w of want) {
     const a = fx.actors.find((x) => x.slot === w.slot)!;
     if (a.side !== w.side || a.role !== w.role) p.push(`${id} (${label}): ${w.slot} is ${a.side}/${a.role} in the fixture, ${w.side}/${w.role} in the scene.`);
-    const at = spec.moves?.[w.slot] ?? a.at;
-    const raw = spec.passage?.[w.slot] ?? a.passage;
-    const passage = raw && near(raw, at) ? undefined : raw;
-    if (!near(at, w.at) || !near(passage, w.passage))
-      p.push(`${id} (${label}): ${w.slot} starts ${fmt(at)} → ${fmt(passage)} in the fixture, the scene needs ${fmt(w.at)} → ${fmt(w.passage)}.`);
   }
+  if (spec.passageBall) p.push(`${id} (${label}): the fixture plays a ball during the passage that the scene does not record.`);
   const ball = spec.ball ?? fx.ball;
   const owner = 'owner' in ball ? ball.owner : null;
   if (owner !== num.ball.owner) p.push(`${id} (${label}): fixture ball is with ${owner ?? 'nobody'}, the scene has ${num.ball.owner ?? 'nobody'}.`);
-  else if (!owner && !near((ball as { at: P }).at, toFixtureFrame(num.ball.pos, fx.goal))) p.push(`${id} (${label}): loose ball is not where the scene has it.`);
-  if (spec.passageBall) p.push(`${id} (${label}): the fixture plays a ball during the passage that the scene does not record.`);
+  const played = playedFreeze(fx, variant);
+  if (played.actors.length !== want.length) p.push(`${id} (${label}): the simulator plays ${played.actors.length} players, the scene shows ${want.length}.`);
+  for (const a of num.actors) {
+    const got = played.actors.find((x) => x.slot === a.id);
+    if (!got) continue;
+    const pos = toFixtureFrame(a.pos, fx.goal);
+    if (!near(got.pos, pos, PLAY_TOL)) p.push(`${id} (${label}): ${a.id} freezes at ${fmt(got.pos)} in play, the scene has ${fmt(pos)}.`);
+    const vel = toFixtureFrame(a.vel, fx.goal, true);
+    if (!near(got.vel, vel, PLAY_TOL)) p.push(`${id} (${label}): ${a.id} is moving at ${fmt(vel)} m/s in the scene; the simulator freezes it at ${fmt(got.vel)}.`);
+  }
+  const bp = toFixtureFrame(num.ball.pos, fx.goal);
+  if (!near(played.ball.pos, bp, PLAY_TOL)) p.push(`${id} (${label}): the ball freezes at ${fmt(played.ball.pos)} in play, the scene has it at ${fmt(bp)}.`);
+  if (num.actors.length) p.push(`${id} (${label}): the half-field player does not model facing, so the scene's signed facing cannot be shown.`);
   return p;
 }
 
@@ -77,5 +96,5 @@ export function fixtureMatchesScene(scene: LibraryScene): string[] {
   }
   if (!scene.changedCue) p.push(`${id}: no signed changed-cue scene to check the retry against.`);
   if (p.length) return p;
-  return [...compare(id, 'cue', fx, fx.cue, scene.numeric), ...compare(id, 'changed cue', fx, fx.counter, scene.changedCue!)];
+  return [...compare(id, 'cue', fx, 'cue', scene.numeric), ...compare(id, 'changed cue', fx, 'counter', scene.changedCue!)];
 }

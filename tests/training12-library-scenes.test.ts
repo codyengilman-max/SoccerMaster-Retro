@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { fixtureMatchesScene, sceneActors } from '../src/game/training12/library/fixtureCheck';
+import { fixtureMatchesScene, playedFreeze, sceneActors } from '../src/game/training12/library/fixtureCheck';
 import { SESSION_CARDS, scoredSession } from '../src/game/training12/library/gate';
 import { cardReview, LIBRARY_SCENES, rulesSha256, sceneProblems, sceneSha256, SIGNOFFS } from '../src/game/training12/library/review';
 import { LIBRARY_CARDS, LIBRARY_PITCH, LIBRARY_ROSTERS } from '../src/game/training12/library/tacticalLibrary.generated';
@@ -110,11 +110,43 @@ describe('fixtureMatchesScene: the played fixture must be the signed scene', () 
   const p = prop('CB01');
   const fx = compiled(p);
 
-  it('a fixture compiled from the scene matches it, and plays exactly those players (no shape-holders)', () => {
-    expect(fixtureMatchesScene(asScene(p, fx))).toEqual([]);
-    const s = createSituation(fx, 'cue');
+  const half = LIBRARY_PITCH.length_m / 2;
+  /** CB01 with nobody moving and the ball where the simulator freezes it: what the half-field player can reproduce. */
+  function still(): Proposal {
+    const stop = (n: NumericScene): NumericScene => ({ ...n, actors: n.actors.map((a) => ({ ...a, vel: { x: 0, y: 0 } })) });
+    const base: Proposal = { ...p, numeric: stop(p.numeric), changedCue: { ...p.changedCue, numeric: stop(p.changedCue.numeric) } };
+    const f = compiled(base);
+    const ball = (v: 'cue' | 'counter') => { const b = playedFreeze(f, v).ball.pos; return { x: half - b.y, y: b.x }; };
+    return { ...base, numeric: { ...base.numeric, ball: { ...base.numeric.ball, pos: ball('cue') } }, changedCue: { ...base.changedCue, numeric: { ...base.changedCue.numeric, ball: { ...base.changedCue.numeric.ball, pos: ball('counter') } } } };
+  }
+
+  it('a fixture compiled from a still scene freezes exactly there, with only those players; facing still blocks it', () => {
+    const q = still();
+    const f = compiled(q);
+    expect(fixtureMatchesScene(asScene(q, f))).toEqual([
+      'CB01 (cue): the half-field player does not model facing, so the scene\'s signed facing cannot be shown.',
+      'CB01 (changed cue): the half-field player does not model facing, so the scene\'s signed facing cannot be shown.',
+    ]);
+    const s = createSituation(f, 'cue');
     expect(s.actors.map((a) => a.slot).sort()).toEqual(p.numeric.actors.map((a) => a.id).sort());
     expect(s.actors.find((a) => a.human)?.slot).toBe('H_CB');
+  });
+
+  it('signed movement into the freeze and a signed ball position must be what the simulator actually plays', () => {
+    const moving = fixtureMatchesScene(asScene(p, fx));
+    expect(moving.some((m) => m.startsWith('CB01 (cue): A_RW is moving at'))).toBe(true);
+    expect(moving.some((m) => m.startsWith('CB01 (cue): A_ST is moving at'))).toBe(true);
+    const q = still();
+    const off = { ...q, numeric: { ...q.numeric, ball: { ...q.numeric.ball, pos: { x: q.numeric.ball.pos.x - 1.2, y: q.numeric.ball.pos.y } } } };
+    expect(fixtureMatchesScene(asScene(off, compiled(q))).some((m) => m.startsWith('CB01 (cue): the ball freezes at'))).toBe(true);
+  });
+
+  it('the changed cue must show its required players and ball inside its own view', () => {
+    const narrow = { ...p.changedCue.numeric, view: { kind: 'area' as const, min: { x: 0, y: 0 }, max: { x: 5, y: 45.72 } } };
+    const probs = sceneProblems(card('CB01'), { ...asScene(p, fx), changedCue: narrow });
+    expect(probs).toContain('CB01 (changed cue): the ball is outside the area view.');
+    expect(probs).toContain('CB01 (changed cue): required actor H_CB is outside the area view.');
+    expect(sceneProblems(card('CB01'), asScene(p, fx))).toEqual([]);
   });
 
   it('rejects a non-exact fixture, a moved player, an extra player, a wrong ball and a different changed cue', () => {
@@ -122,12 +154,12 @@ describe('fixtureMatchesScene: the played fixture must be the signed scene', () 
     const { exact: _e, ...loose } = fx;
     expect(scene(loose as Fixture)).toContain('CB01: the played fixture is not exact (squad.ts would add shape-holders the scene does not have).');
     const moved = { ...fx, actors: fx.actors.map((a) => (a.slot === 'H_CB' ? { ...a, at: { x: a.at.x + 2, y: a.at.y } as P } : a)) };
-    expect(scene(moved).some((m) => m.startsWith('CB01 (cue): H_CB starts'))).toBe(true);
+    expect(scene(moved).some((m) => m.startsWith('CB01 (cue): H_CB freezes at'))).toBe(true);
     const extra = { ...fx, actors: [...fx.actors, { ...fx.actors[0]!, slot: 'H_CM', role: '8' as const }] };
     expect(scene(extra)[0]).toMatch(/^CB01 \(cue\): fixture players/);
     expect(scene({ ...fx, ball: { owner: 'A_ST' } })).toContain('CB01 (cue): fixture ball is with A_ST, the scene has A_RW.');
     const counter = { ...fx, counter: { ...fx.counter, moves: { ...fx.counter.moves, A_RW: { x: 1, y: 1 } } } };
-    expect(scene(counter).some((m) => m.startsWith('CB01 (changed cue): A_RW starts'))).toBe(true);
+    expect(scene(counter).some((m) => m.startsWith('CB01 (changed cue): A_RW freezes at'))).toBe(true);
     expect(fixtureMatchesScene({ ...asScene(p, fx), changedCue: undefined } as unknown as LibraryScene)).toContain('CB01: no signed changed-cue scene to check the retry against.');
     expect(scene({ ...fx, id: 'CB01' })).toContain('CB01: fixture CB01 was not built for scene CB01-p1.');
   });
@@ -137,11 +169,14 @@ describe('fixtureMatchesScene: the played fixture must be the signed scene', () 
     expect(fixtureMatchesScene(asScene(st, compiled(st, 'theirs')))).toContain("ST06 (cue): the scene's area view is not inside the away half; the half-field player cannot show it yet.");
   });
 
-  it('with a matching fixture, verified rules and a current sign-off, the default check approves; any drift stales or blocks it', () => {
+  it('a current sign-off still cannot score while the player cannot reproduce the scene; drift stales or blocks it', () => {
     const pitch = { ...LIBRARY_PITCH, local_rules_verified: true };
     const sc = asScene(p, fx);
     const sign: Signoff = { cardId: 'CB01', cardSha256: card('CB01').cardSha256, rulesSha256: rulesSha256(pitch), sceneId: sc.sceneId, sceneSha256: sceneSha256(sc), reviewer: 'test', date: '2026-10-26', note: 'test only' };
-    expect(cardReview('CB01', { scenes: { CB01: sc }, signoffs: [sign], pitch })).toEqual({ status: 'APPROVED', blockers: [] });
+    const r = cardReview('CB01', { scenes: { CB01: sc }, signoffs: [sign], pitch });
+    expect(r.status).toBe('DRAFT_BLOCKED_FOR_PLAYER_TRAINING');
+    expect(r.blockers).toContain("CB01 (cue): the half-field player does not model facing, so the scene's signed facing cannot be shown.");
+    expect(cardReview('CB01', { scenes: { CB01: sc }, signoffs: [sign], pitch, fixtureCheck: () => [] })).toEqual({ status: 'APPROVED', blockers: [] });
     expect(cardReview('CB01', { scenes: { CB01: sc }, signoffs: [sign] }).status).not.toBe('APPROVED');
     const drift = { ...sc, fixture: { ...fx, actors: fx.actors.map((a) => (a.slot === 'A_ST' ? { ...a, at: { x: 0, y: 0 } } : a)) } };
     expect(cardReview('CB01', { scenes: { CB01: drift }, signoffs: [sign], pitch }).status).toBe('APPROVAL_STALE');

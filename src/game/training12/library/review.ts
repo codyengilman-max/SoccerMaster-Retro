@@ -6,7 +6,7 @@
 import { LIBRARY, LIBRARY_CARDS, LIBRARY_PITCH, LIBRARY_RETIRED_IDS, LIBRARY_ROSTERS } from './tacticalLibrary.generated';
 import { fixtureMatchesScene } from './fixtureCheck';
 import { contentSha256 } from './sha256';
-import type { LibraryCard, LibraryPitch, LibraryScene, Review, Signoff } from './types';
+import type { LibraryCard, LibraryPitch, LibraryScene, NumericScene, Review, Signoff } from './types';
 
 /** Reviewed scenes by card ID. Empty: no card has a numeric scene yet (every card's numeric_scene is null). */
 export const LIBRARY_SCENES: Readonly<Record<string, LibraryScene>> = {};
@@ -32,6 +32,23 @@ export function cardById(id: string, cards: readonly LibraryCard[] = LIBRARY_CAR
   return cards.find((c) => c.id === id) ?? null;
 }
 
+/** The protagonist, required actors and ball must be on the pitch and inside the freeze's view. */
+function freezeProblems(card: LibraryCard, num: NumericScene, label: string): string[] {
+  const p: string[] = [];
+  const tag = label === 'cue' ? card.id : `${card.id} (${label})`;
+  const { min, max } = num.view;
+  const inView = (v: { x: number; y: number }): boolean => v.x >= min.x && v.x <= max.x && v.y >= min.y && v.y <= max.y;
+  const need = new Set([...card.required_visible_actor_ids, card.protagonist]);
+  if (label === 'cue') need.add(card.ball_owner_at_freeze);
+  for (const id of need) {
+    const a = num.actors.find((x) => x.id === id);
+    if (!a) p.push(`${tag}: required actor ${id} is not shown.`);
+    else if (!inView(a.pos)) p.push(`${tag}: required actor ${id} is outside the ${num.view.kind} view.`);
+  }
+  if (!inView(num.ball.pos)) p.push(`${tag}: the ball is outside the ${num.view.kind} view.`);
+  return p;
+}
+
 /** Structural problems that stop a scene from representing its card. Empty means it can be put up for sign-off. */
 export function sceneProblems(card: LibraryCard, scene: LibraryScene, pitch: LibraryPitch = LIBRARY_PITCH): string[] {
   const p: string[] = [];
@@ -46,14 +63,12 @@ export function sceneProblems(card: LibraryCard, scene: LibraryScene, pitch: Lib
   for (const id of [...shown, ...omitted]) if (!roster.has(id)) p.push(`${card.id}: ${id} is not one of the 18 roster actors.`);
   for (const id of roster) if (!shown.includes(id) && !omitted.includes(id)) p.push(`${card.id}: ${id} is neither shown nor recorded as omitted.`);
   for (const o of scene.numeric.omitted) if (!o.reason.trim()) p.push(`${card.id}: omitted ${o.id} has no reason it cannot change the decision.`);
-  for (const id of new Set([...card.required_visible_actor_ids, card.protagonist, card.ball_owner_at_freeze]))
-    if (!shown.includes(id)) p.push(`${card.id}: required actor ${id} is not shown.`);
-  const { min, max } = scene.numeric.view;
-  const inView = (v: { x: number; y: number }): boolean => v.x >= min.x && v.x <= max.x && v.y >= min.y && v.y <= max.y;
-  for (const a of scene.numeric.actors)
-    if (!inView(a.pos) && new Set([...card.required_visible_actor_ids, card.protagonist, card.ball_owner_at_freeze]).has(a.id))
-      p.push(`${card.id}: required actor ${a.id} is outside the ${scene.numeric.view.kind} view.`);
-  if (!inView(scene.numeric.ball.pos)) p.push(`${card.id}: the ball is outside the ${scene.numeric.view.kind} view.`);
+  p.push(...freezeProblems(card, scene.numeric, 'cue'));
+  if (scene.changedCue) {
+    const ch = scene.changedCue;
+    if (ch.actors.map((a) => a.id).sort().join() !== [...shown].sort().join()) p.push(`${card.id} (changed cue): shows different players from the cue.`);
+    p.push(...freezeProblems(card, ch, 'changed cue'));
+  }
   if (scene.numeric.ball.owner !== card.ball_owner_at_freeze)
     p.push(`${card.id}: ball is with ${scene.numeric.ball.owner ?? 'nobody'} at the freeze, card says ${card.ball_owner_at_freeze}.`);
   if (!scene.numeric.localRules.trim()) p.push(`${card.id}: scene does not name the local rules it uses.`);
