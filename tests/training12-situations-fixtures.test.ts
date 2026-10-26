@@ -35,7 +35,8 @@ describe('authored tactical situation fixtures (prototype, uncalibrated)', () =>
       for (const v of ['cue', 'counter'] as const) {
         const s = toDecision(createSituation(f, v));
         expect(s.phase, `${f.id} ${v}`).toBe('observe');
-        for (const a of s.actors) expect(inHalf(a.pos), `${f.id} ${v} ${a.slot} at freeze`).toBe(true);
+        // The far keeper of the 18 stands beyond halfway in the other half (drawn as an edge marker); everyone else is on this half.
+        for (const a of s.actors) expect(a.offHalf ? a.side.startsWith('GK') && a.pos.y < 0 : inHalf(a.pos), `${f.id} ${v} ${a.slot} at freeze`).toBe(true);
         expect(inHalf(s.ball.pos), `${f.id} ${v} ball`).toBe(true);
         const verdicts = f.options.map((o) => f[v].grades[o.id]!.verdict);
         expect(verdicts, `${f.id} ${v}`).toContain('good');

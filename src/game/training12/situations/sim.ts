@@ -7,6 +7,7 @@
 import { clamp, distance, type MutableVec2 } from '../../math';
 import { GOAL_W, HALF_L, HALF_W, type Fixture, type FixtureOption, type OptionGrade, type OutcomeKind, type P, type Side, type Variant, type VariantSpec } from './types';
 import type { RoleId } from '../ref/catalog.mjs';
+import { completeSquad, SHIFT } from './squad';
 
 export const SIM = {
   dt: 1 / 60,
@@ -36,6 +37,10 @@ export interface SitActor {
   goal: P | null;
   /** Seconds left before a player who was just tackled can play the ball again. */
   stun: number;
+  /** Added to complete the 18 (squad.ts): holds team shape, never plays the ball or changes the read. */
+  readonly filler?: boolean;
+  /** The far keeper, beyond halfway: drawn as an edge marker. */
+  readonly offHalf?: boolean;
 }
 
 export interface SitBall {
@@ -61,6 +66,8 @@ export interface SituationState {
   readonly spec: VariantSpec;
   readonly options: readonly FixtureOption[];
   readonly actors: SitActor[];
+  /** Ball position at the start: the added players' shape follows the ball from here. */
+  readonly ballStart: P;
   readonly ball: SitBall;
   phase: SituationPhase;
   t: number;
@@ -100,6 +107,13 @@ export function createSituation(fx: Fixture, variant: Variant, mirrored = false)
   });
   const ballSpec = spec.ball ?? fx.ball;
   const owner = 'owner' in ballSpec ? ballSpec.owner : null;
+  const raw = fx.actors.map((a) => ({ slot: a.slot, side: a.side, role: a.role, at: spec.moves?.[a.slot] ?? a.at }));
+  const rawOwner = owner ? raw.find((a) => a.slot === owner)! : null;
+  const ball0 = rawOwner ? rawOwner.at : (ballSpec as { at: P }).at;
+  for (const q of completeSquad(fx, raw, ball0, fx.options.map((op) => op.point), rawOwner ? teamOf(rawOwner.side) : null, fx.actors.flatMap((a) => { const g = spec.passage?.[a.slot] ?? a.passage; return g ? [g] : []; }))) {
+    const at = mirrorP(q.at, mirrored);
+    actors.push({ slot: q.slot, side: q.side, role: roleIn(q.role, mirrored), task: q.task, human: false, start: at, pos: { x: at.x, y: at.y }, vel: { x: 0, y: 0 }, goal: null, stun: 0, filler: true, ...(q.offHalf ? { offHalf: true } : {}) });
+  }
   const o = owner ? actors.find((a) => a.slot === owner)! : null;
   const bp = o ? o.pos : mirrorP((ballSpec as { at: P }).at, mirrored);
   const options = fx.options.map((op) => ({ ...op, point: mirrorP(op.point, mirrored) }));
@@ -107,12 +121,23 @@ export function createSituation(fx: Fixture, variant: Variant, mirrored = false)
     fixture: fx, variant, mirrored, spec, options, actors,
     ball: { pos: { x: bp.x, y: bp.y }, vel: { x: 0, y: 0 }, owner, target: null, passer: null, lastTeam: o ? teamOf(o.side) : null, shot: false, kickT: 0, airUntil: 0, travelled: 0 },
     phase: fx.passageSeconds > 0 ? 'release' : 'observe', t: 0, execT: 0, chosen: null, grade: null, outcome: null, settleT: 0, pending: null, pendingSoft: false,
-    events: [], startOwner: owner, startTeam: o ? teamOf(o.side) : null, decisionBall: null,
+    ballStart: { x: bp.x, y: bp.y }, events: [], startOwner: owner, startTeam: o ? teamOf(o.side) : null, decisionBall: null,
   };
 }
 
 export const actor = (s: SituationState, slot: string | null | undefined): SitActor | undefined => (slot ? s.actors.find((a) => a.slot === slot) : undefined);
 export const human = (s: SituationState): SitActor => s.actors.find((a) => a.human)!;
+/** The players the situation is about (everyone except the shape-holders added by squad.ts). */
+export const involved = (s: SituationState): SitActor[] => s.actors.filter((a) => !a.filler);
+
+/** Where an added player holds the shape now: its start, shifted with the ball like the rest of its block. */
+export function shapeTarget(s: SituationState, a: SitActor): P {
+  if (a.offHalf || a.side.startsWith('GK')) return a.start;
+  return {
+    x: clamp(a.start.x + (s.ball.pos.x - s.ballStart.x) * SHIFT.x, 1.5, HALF_W - 1.5),
+    y: clamp(a.start.y + (s.ball.pos.y - s.ballStart.y) * SHIFT.y, 1, HALF_L - 1.5),
+  };
+}
 
 /** Which way team A attacks on screen: +1 toward the goal line at the top, -1 toward halfway. */
 export function attackDir(s: SituationState): 1 | -1 {
@@ -192,7 +217,7 @@ function nearestPresser(s: SituationState): SitActor | undefined {
   if (!o) return undefined;
   let best: SitActor | undefined;
   for (const a of s.actors) {
-    if (teamOf(a.side) === teamOf(o.side) || a.side.startsWith('GK') || a.human || a.goal) continue;
+    if (a.filler || teamOf(a.side) === teamOf(o.side) || a.side.startsWith('GK') || a.human || a.goal) continue;
     if (!best || distance(a.pos, o.pos) < distance(best.pos, o.pos)) best = a;
   }
   return best;
@@ -280,7 +305,8 @@ export function step(s: SituationState, dt = SIM.dt): void {
   s.t += dt;
   const b = s.ball;
   if (s.phase === 'release') {
-    for (const a of s.actors) if (a.goal) moveTo(a, a.goal, SIM.npcSpeed * 0.8, dt);
+    for (const a of s.actors) if (a.filler) moveTo(a, shapeTarget(s, a), SIM.npcSpeed * 0.6, dt);
+    else if (a.goal) moveTo(a, a.goal, SIM.npcSpeed * 0.8, dt);
     const pb = s.spec.passageBall;
     if (pb && s.t >= pb.at && !s.events.includes('passage-ball') && b.owner === pb.from) {
       s.events.push('passage-ball');
@@ -304,6 +330,10 @@ export function step(s: SituationState, dt = SIM.dt): void {
   npcActions(s);
   const ballPos = { x: b.pos.x, y: b.pos.y };
   for (const a of s.actors) {
+    if (a.filler) {
+      moveTo(a, shapeTarget(s, a), SIM.npcSpeed * 0.7, dt);
+      continue;
+    }
     if (a.human) {
       if (op && (op.kind === 'press' || op.kind === 'track')) {
         const t = actor(s, op.toSlot);
@@ -419,7 +449,7 @@ function ballFlight(s: SituationState, dt: number, live = true): void {
   }
   // Control: the keeper first, then the intended receiver, then anyone close enough (interceptions).
   if (b.kickT < 0.12 || b.travelled < b.airUntil) return;
-  const candidates = s.actors
+  const candidates = involved(s)
     .filter((a) => a.slot !== b.passer || b.kickT > 0.6)
     .filter((a) => !(a.human && s.grade?.noTackle))
     .filter((a) => a.stun <= 0)
@@ -430,7 +460,7 @@ function ballFlight(s: SituationState, dt: number, live = true): void {
   if (c) take(s, c.a);
   else if (sp < 0.4) {
     b.vel = { x: 0, y: 0 };
-    const near = s.actors.filter((a) => !a.human).sort((p, q) => distance(p.pos, b.pos) - distance(q.pos, b.pos))[0];
+    const near = involved(s).filter((a) => !a.human).sort((p, q) => distance(p.pos, b.pos) - distance(q.pos, b.pos))[0];
     if (near) near.goal = { x: b.pos.x, y: b.pos.y };
   }
 }
@@ -483,7 +513,7 @@ function review(s: SituationState): void {
   if (s.startTeam === 'A') return end(s, 'lost', 'They have the ball.');
   const their = (b.pos.y - (s.decisionBall ?? start).y) * -dir;
   // A defender right beside him on the goal side still has him: that is delay, not beaten.
-  const marked = s.actors.some((a) => teamOf(a.side) === 'A' && !a.side.startsWith('GK') && !(a.human && s.grade?.noTackle) && (a.pos.y - b.pos.y) * -dir > 0 && distance(a.pos, b.pos) < 2);
+  const marked = involved(s).some((a) => teamOf(a.side) === 'A' && !a.side.startsWith('GK') && !(a.human && s.grade?.noTackle) && (a.pos.y - b.pos.y) * -dir > 0 && distance(a.pos, b.pos) < 2);
   const danger = !marked && (s.fixture.goal === 'ours' ? b.pos.y > HALF_L - 16 : b.pos.y < 6);
   const broke = their >= 12 && !marked;
   return end(s, (their > 5 && danger) || broke ? 'beaten' : 'delayed', (their > 5 && danger) || broke ? 'They got forward past our cover.' : 'They kept it but could not go forward: delayed.');
@@ -519,12 +549,12 @@ const segDist = (a: P, b: P, p: P): number => distance(interceptPoint(a, b, p), 
 /** Closest opponent of `from`'s team to the straight lane from a to b (metres). */
 export function laneGap(s: SituationState, a: P, b: P, team: 'A' | 'B'): number {
   let best = Infinity;
-  for (const o of s.actors) if (teamOf(o.side) !== team && !o.side.startsWith('GK')) best = Math.min(best, segDist(a, b, o.pos));
+  for (const o of involved(s)) if (teamOf(o.side) !== team && !o.side.startsWith('GK')) best = Math.min(best, segDist(a, b, o.pos));
   return best;
 }
 
 export function pressureOn(s: SituationState, slot: string): SitActor[] {
   const a = actor(s, slot);
   if (!a) return [];
-  return s.actors.filter((o) => teamOf(o.side) !== teamOf(a.side) && distance(o.pos, a.pos) <= SIM.pressure);
+  return involved(s).filter((o) => teamOf(o.side) !== teamOf(a.side) && distance(o.pos, a.pos) <= SIM.pressure);
 }
