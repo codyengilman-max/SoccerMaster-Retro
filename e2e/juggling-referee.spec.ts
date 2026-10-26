@@ -116,22 +116,21 @@ for (const gender of ['boy', 'girl'] as const)
     await page.setViewportSize(vp);
     await press(page, 'demo-slow', mode);
     await until(() => career(page), (x) => x.demo?.sheet?.speed === 0.4, 'slow');
-    // Watch for the slow touch frames (7, 10) every animation frame in the page: a full diagnostics
-    // round trip can take longer than a touch frame on a slow runner, so polling from the test misses it.
+    // Sample every animation frame in the page and keep the first laces contact snapshot: a full
+    // diagnostics round trip can outlast a slow touch on a loaded runner, so polling from the test misses it.
     let touches = 0;
-    const touched = await page
+    const hit = await page
       .waitForFunction(
         () => {
-          const d = (window.__SMR__?.diagnostics().gameplay as { demo?: { sheet?: { index: number } } } | null)?.demo;
-          return !!d?.sheet && (d.sheet.index === 7 || d.sheet.index === 10);
+          const d = (window.__SMR__?.diagnostics().gameplay as { demo?: Career['demo'] } | null)?.demo;
+          return d?.sheet && d.contact === 'laces' ? d : null;
         },
         undefined,
         { polling: 'raf', timeout: 14_000 },
       )
-      .then(() => true, () => false);
-    if (touched) {
-      const x = (await career(page)).demo!;
-      if (x.contact === 'laces') expect(inside(x.ball, x.player, x.sheet!.ballR)).toBe(true);
+      .then((h) => h.jsonValue() as Promise<NonNullable<Career['demo']>>, () => null);
+    if (hit) {
+      expect(inside(hit.ball, hit.player, hit.sheet!.ballR), 'slow laces ball on the body').toBe(true);
       touches++;
       await page.screenshot({ path: `test-results/juggle-${gender}-touch-slow.png` });
     }
