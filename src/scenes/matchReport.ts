@@ -53,6 +53,7 @@ export interface MatchReport {
   readonly stoppage: { readonly reason: string; readonly scorer: match.TeamId | null; readonly restartTeam: match.TeamId; readonly restart?: string } | null;
   /** Goal-banner / referee art shown for real goal and foul stoppages (counted once per stoppage). */
   readonly eventArt?: { readonly goal: number; readonly foul: number; readonly visible: boolean };
+  readonly offsidePopup?: { readonly shown: number; readonly visible: boolean; readonly bounds: { x: number; y: number; width: number; height: number } | null; readonly caption: { x: number; y: number; width: number; height: number } | null; readonly alpha: number };
   readonly defense: Readonly<Record<match.TeamId, { presserId: string | null; coverId: string | null }>>;
   readonly stats: match.MatchState['stats'];
   readonly events: readonly { readonly seq: number; readonly type: match.MatchEventType; readonly by: string | null; readonly detail: string; readonly at: number }[];

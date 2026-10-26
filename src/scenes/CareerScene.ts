@@ -18,7 +18,9 @@ import { ROLE_CHOICES } from './TacticalTrainingScene';
 import { orientationOf } from '../render/layout';
 import { PlayerArt, atlasKey } from '../render/art/playerArt';
 import { SPRITE_CELL } from '../render/art/spriteSets';
-import { DEMO_BALL_PEAK, JUGGLE_PATTERNS, demoPose, demoSet, isKeeperExercise } from '../render/art/homeDemo';
+import { DEMO_BALL_PEAK, JUGGLE_PATTERNS, demoPose, demoSet, isKeeperExercise, sheetBeats } from '../render/art/homeDemo';
+import { ensureJuggleSheet, juggleKey } from '../render/art/juggleArt';
+import { JUGGLE_SHEET } from '../render/art/juggleSheet';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspectable';
 import { SceneKeys } from './keys';
@@ -86,7 +88,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private demoArt!: PlayerArt;
   private demoImg!: Phaser.GameObjects.Image;
   private demoBall!: Phaser.GameObjects.Graphics;
-  private demoInfo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number } } | null = null;
+  private demoInfo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number } } | null = null;
   private title!: Phaser.GameObjects.Text;
   private body!: Phaser.GameObjects.Text;
   private note!: Phaser.GameObjects.Text;
@@ -96,6 +98,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private demoSide: 'left' | 'right' = 'right';
   private demoPaused = false;
   private demoSpeed = 1;
+  /** Juggling-pack demos: play the miss → retrieve → reset branch. */
+  private demoMiss = false;
   private reducedMotion = false;
   private unsub: (() => void) | null = null;
 
@@ -113,6 +117,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.navigating = false;
     this.reducedMotion = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.demoPaused = this.reducedMotion;
+    this.demoSpeed = 1;
+    this.demoMiss = false;
     this.screen = data?.open === 'reviewHub' ? { kind: 'reviewHub' } : data?.open === 'team' ? { kind: 'team' } : { kind: 'home' };
     this.history = [];
     this.page = 0;
@@ -177,7 +183,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   /** Debug snapshot for browser tests. */
-  describeGameplay(): { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; text: string; textPage: string; overflow: string[]; evidence: number; coachEvidence: number; demo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number } } | null } {
+  describeGameplay(): { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; text: string; textPage: string; overflow: string[]; evidence: number; coachEvidence: number; demo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number } } | null } {
     return {
       screen: this.screen.kind,
       week: this.save.week,
@@ -530,6 +536,12 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         if (sc.sessionId && s.plan && !s.completedSessions.includes(sc.sessionId))
           for (const alt of substitutes(s.plan, sc.sessionId, sc.index).slice(0, 3))
             actions.push({ name: `swap-${alt.id}`, label: `Swap for ${alt.title}`, onClick: () => void this.act({ type: 'substitute', sessionId: sc.sessionId!, index: sc.index, activityId: alt.id }, { kind: 'activity', id: alt.id, sessionId: sc.sessionId, index: sc.index }) });
+        if (sheetBeats(a))
+          actions.push(
+            { name: 'demo-slow', label: this.demoSpeed < 1 ? 'Normal speed' : 'Slow', on: this.demoSpeed < 1, onClick: () => ((this.demoSpeed = this.demoSpeed < 1 ? 1 : 0.4), this.render()) },
+            { name: 'demo-miss', label: this.demoMiss ? 'Show the catch' : 'Show a miss', on: this.demoMiss, onClick: () => ((this.demoMiss = !this.demoMiss), (this.demoT = 0), this.render()) },
+            { name: 'demo-replay', label: 'Replay', onClick: () => ((this.demoT = 0), this.render()) },
+          );
         return { title: a.title, body, actions, ...(a.id.startsWith(DRAFT_PREFIX) ? {} : { demo: a }) };
       }
       case 'log': {
@@ -893,6 +905,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
 
   /** The created player (saved boy/girl, training kit) demonstrates the exercise; the ball is drawn separately. */
   private drawSpriteDemo(a: Activity, sx: (x: number) => number, sy: (y: number) => number, unit: number): boolean {
+    // Juggling ladders 1–5 use the juggling pack; the sprite-v2 poses stay as the fallback while the sheet loads.
+    if (sheetBeats(a) && this.drawSheetJuggle(a, unit)) return true;
     const set = demoSet(this.save.player?.gender, isKeeperExercise(a));
     this.demoArt.ensure([set]);
     const key = atlasKey(set);
@@ -919,6 +933,36 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       if (!this.demoCaption?.active) this.demoCaption = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: CSS.ink, fontStyle: 'bold' }).setOrigin(0.5, 1).setResolution(textResolution());
       this.demoCaption.setFontSize(Math.round(Math.max(12, Math.min(unit * 0.45, 16)))).setPosition(r.x + r.w / 2, r.y + r.h - 4).setWordWrapWidth(r.w - 16).setText(pose.caption).setVisible(true);
     } else this.demoCaption?.setVisible(false);
+    return true;
+  }
+
+  /** Juggling pack: body frame on the saved boy/girl sheet, planted boot held still, ball drawn separately in front. */
+  private drawSheetJuggle(a: Activity, unit: number): boolean {
+    const sex = this.save.player?.gender === 'girl' ? 'girl' : 'boy';
+    if (!ensureJuggleSheet(this, sex)) return false;
+    const key = juggleKey(sex);
+    const pose = demoPose(a, this.demoT, { sex, miss: this.demoMiss });
+    const art = pose.art!;
+    const r = this.demoRect!;
+    const { cell, anchor } = JUGGLE_SHEET;
+    const footY = r.y + r.h - 26;
+    // Fit the head (y 17) and the ball's apex (y ~17 at its top) above the boots, and the kick reach across.
+    const s = Math.max(0.4, Math.min((footY - r.y - 8) / (anchor.y - 10), (r.w * 0.92) / cell.w));
+    const cx = Math.round(r.x + r.w / 2 - 12 * s);
+    this.demoImg.setTexture(key, art.index).setOrigin(anchor.x / cell.w, anchor.y / cell.h).setScale(s).setFlipX(false).setPosition(cx + art.dx * s, footY).setVisible(true);
+    const g = this.demoBall;
+    g.clear();
+    const bx = cx + (art.ball.x - anchor.x) * s;
+    const by = footY + (art.ball.y - anchor.y) * s;
+    const br = art.ball.r * s;
+    const lift = Math.min(1, Math.max(0, (anchor.y - art.ball.r - art.ball.y) / 100));
+    g.fillStyle(PALETTE.ink, 0.28 * (1 - lift * 0.6)).fillEllipse(bx, footY, br * 2.2 * (1 - lift * 0.4), br * 0.8);
+    g.fillStyle(0xffffff, 1).fillCircle(bx, by, br);
+    g.lineStyle(Math.max(1.5, s * 1.2), pose.contact === 'none' ? PALETTE.ink : PALETTE.sun, 1).strokeCircle(bx, by, br);
+    const ib = this.demoImg.getBounds();
+    this.demoInfo = { set: key, frame: pose.frame, flip: false, contact: pose.contact, scale: { x: this.demoImg.scaleX, y: this.demoImg.scaleY }, player: { x: ib.x, y: ib.y, width: ib.width, height: ib.height }, ball: { x: bx, y: by }, rect: { x: r.x, y: r.y, width: r.w, height: r.h }, sheet: { sex, index: art.index, dx: art.dx, ballR: br, miss: this.demoMiss, speed: this.demoSpeed } };
+    if (!this.demoCaption?.active) this.demoCaption = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: CSS.ink, fontStyle: 'bold' }).setOrigin(0.5, 1).setResolution(textResolution());
+    this.demoCaption.setFontSize(Math.round(Math.max(12, Math.min(unit * 0.45, 16)))).setPosition(r.x + r.w / 2, r.y + r.h - 4).setWordWrapWidth(r.w - 16).setText(pose.caption ?? '').setVisible(!!pose.caption);
     return true;
   }
 
