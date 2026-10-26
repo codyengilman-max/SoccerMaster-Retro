@@ -41,6 +41,7 @@ import { TOURNAMENTS } from '../game/season/tournament';
 import { SituationObserver, selectSituations, type SituationResult, type TeamTrainingSituation } from '../game/career/teamTraining';
 import type { Position } from '../game/career/types';
 import { MATCH_TUNING } from '../game/match/tuning';
+import { roleDef } from '../game/match/formations';
 
 /** Sandbox slot the career player occupies (shown in the HUD). */
 const CAREER_SLOT: Readonly<Record<Position, 'H3' | 'H5' | 'H8'>> = { DEF: 'H3', MID: 'H5', FWD: 'H8' };
@@ -2086,8 +2087,10 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       g.lineStyle(1.5, PALETTE.cream, 0.8);
       g.lineBetween(ap.x - 4, ap.y - 4, ap.x + 4, ap.y + 4);
       g.lineBetween(ap.x - 4, ap.y + 4, ap.x + 4, ap.y - 4);
-      const why = p.isKeeper ? '' : s.shape[p.team].why[id] ?? '';
-      this.devLabels[id].setText(`${id} ${p.role}\n${p.intent}${why ? `\n${why.length > 28 ? `${why.slice(0, 27)}…` : why}` : ''}`).setPosition(sp.x, sp.y + 2);
+      // Movement reasons only for back-line players (the shape under review), kept short so labels stay readable.
+      const back = !p.isKeeper && roleDef(s.formations[p.team], p.slot).line === 'defence';
+      const why = back ? s.shape[p.team].why[id] ?? '' : '';
+      this.devLabels[id].setText(`${p.role} ${p.intent}${why ? `\n${why.length > 18 ? `${why.slice(0, 17)}…` : why}` : ''}`).setPosition(sp.x, sp.y + 2);
     }
     // Shared team shape: actual back line (solid), desired line (thin), midfield line, and the actual offside boundary.
     const P = this.sim.tuning.pitch;
@@ -2124,6 +2127,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       }
     }
     const owner = s.ball.owner;
+    this.devText.setWordWrapWidth(Math.max(160, this.scale.width - 2 * EDGE), true);
     this.devText
       .setText(
         `phase ${s.phase}${s.paused ? ' (paused)' : ''} · owner ${owner ?? 'loose'} · possession ${s.possession}\n` +
@@ -2132,7 +2136,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
           (['home', 'away'] as const)
             .map((t) => {
               const sh = s.shape[t];
-              return `\n${t} ${sh.phase} · line ${sh.lineActual.toFixed(0)} (want ${sh.lineDesired.toFixed(0)}) mid ${sh.midX.toFixed(0)} front ${sh.frontX.toFixed(0)} · gaps ${(sh.midX - sh.lineX).toFixed(0)}/${(sh.frontX - sh.midX).toFixed(0)} · offside ${sh.offsideX.toFixed(0)} · ${sh.reason}`;
+              return `\n${t === 'home' ? 'H' : 'A'} ${sh.phase} L${sh.lineActual.toFixed(0)}→${sh.lineDesired.toFixed(0)} M${sh.midX.toFixed(0)} F${sh.frontX.toFixed(0)} gap ${(sh.midX - sh.lineX).toFixed(0)}/${(sh.frontX - sh.midX).toFixed(0)} off ${sh.offsideX.toFixed(0)}: ${sh.reason}`;
             })
             .join(''),
       )

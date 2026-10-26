@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FORMATION_IDS, roleDef, type FormationId } from '../src/game/match/formations';
+import { behindBallAt } from '../src/game/match/shape';
 import { MatchSim } from '../src/game/match/sim';
 import { MATCH_TUNING as T } from '../src/game/match/tuning';
 import { TEAM_PLAYER_IDS, type MatchPlayer, type MatchState, type TeamId } from '../src/game/match/types';
@@ -75,6 +76,15 @@ function parkOpponents(team: TeamId, x = 64): Partial<Record<MatchPlayer['id'], 
 describe('team shape: one shared controller for both teams, every formation, both directions', () => {
   for (const f of FORMATION_IDS) {
     for (const team of TEAMS) {
+      it(`${f} ${team}: possession at the edge of the attacking third already has the back line within 6 yd of halfway`, () => {
+        const sim = newSim(f);
+        const fwd = outfield(sim.state, team).find((p) => line(sim.state, team, p) === 'attack')!;
+        stage(sim, team, fwd.id, { x: 52, y: 20 }, parkOpponents(team, 64));
+        hold(sim, 6);
+        const d = defenders(sim.state, team).map((p) => posT(team, p).x);
+        expect(avg(d)).toBeGreaterThan(L / 2 - 6);
+      });
+
       it(`${f} ${team}: keeper build-up splits the back line and midfield is not stacked in front of him`, () => {
         const sim = newSim(f);
         const gk = TEAM_PLAYER_IDS[team][0]!;
@@ -103,8 +113,8 @@ describe('team shape: one shared controller for both teams, every formation, bot
         const after = defenders(s, team).map((p) => posT(team, p).x);
         expect(bx).toBeGreaterThan(44);
         // The shared line wants to sit behindBall yards back; its smoothed height trails a moving ball a little.
-        expect(s.shape[team].lineDesired).toBeGreaterThan(bx - T.teamShape.behindBall - 1);
-        expect(s.shape[team].lineX).toBeGreaterThan(bx - T.teamShape.behindBall - 3);
+        expect(s.shape[team].lineDesired).toBeGreaterThan(bx - behindBallAt(bx, T) - 1);
+        expect(s.shape[team].lineX).toBeGreaterThan(bx - behindBallAt(bx, T) - 3);
         expect(avg(after)).toBeGreaterThan(before + 6);
         for (const x of after) expect(x).toBeLessThan(bx);
       });

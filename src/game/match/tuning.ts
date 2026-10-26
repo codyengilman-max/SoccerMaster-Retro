@@ -120,8 +120,14 @@ export const MATCH_TUNING = {
     /** Keeper on the ball: back line height, and how far the outside backs split. */
     gkLine: 14,
     widthGk: 1.5,
-    /** In possession: the line sits this far behind the ball, between these heights (halfway is 37.5). */
+    /**
+     * In possession the line sits behindBall yards behind the ball, narrowing to behindBallHigh as the ball goes
+     * from rampFromX to rampToX, so sustained attacks bring it to halfway; clamped to minLineIn..maxLineIn (halfway 37.5).
+     */
     behindBall: 22,
+    behindBallHigh: 16,
+    rampFromX: 40,
+    rampToX: 60,
     minLineIn: 12,
     maxLineIn: 38,
     /** In possession the line stays within this distance ahead of their most advanced outfielder. */

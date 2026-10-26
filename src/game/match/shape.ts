@@ -133,7 +133,7 @@ export function updateShape(s: MatchState, team: TeamId, T: MatchTuning): TeamSh
     if (controlled) sh.confidence = Math.min(1, sh.confidence + (dt / S.confidenceSeconds) * (effective ? 0.35 : 1));
     else sh.confidence = Math.max(0, Math.min(sh.confidence, S.looseConfidence) - dt * 0.5);
     const keeperBall = controlled && owner.isKeeper;
-    line = keeperBall ? S.gkLine : clamp(bx - S.behindBall, S.minLineIn, S.maxLineIn);
+    line = keeperBall ? S.gkLine : clamp(bx - behindBallAt(bx, T), S.minLineIn, S.maxLineIn);
     reason = keeperBall ? 'keeper has it: back line splits for the outlet' : 'behind the ball, in support';
     const cap = Math.max(S.minLineIn, threatX + S.restAhead);
     if (line > cap) {
@@ -225,6 +225,12 @@ export function updateShape(s: MatchState, team: TeamId, T: MatchTuning): TeamSh
   }
   sh.reason = reason;
   return sh;
+}
+
+/** In possession, how far the back line sits behind a ball at team-frame x (closer as the attack goes deeper). */
+export function behindBallAt(bx: number, T: MatchTuning): number {
+  const S = T.teamShape;
+  return lerp(S.behindBall, S.behindBallHigh, clamp((bx - S.rampFromX) / (S.rampToX - S.rampFromX), 0, 1));
 }
 
 /** A role's place in the shared shape: its unit's height plus its formation stagger, width scaled and shifted. */
