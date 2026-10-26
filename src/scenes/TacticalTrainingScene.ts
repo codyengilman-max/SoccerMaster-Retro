@@ -8,6 +8,7 @@ import { sessionId } from '../game/training12/session';
 import { fixtureById, routePlan, sideText } from '../game/training12/situations/index';
 import { SituationSession, TIMED_DECISION_SECONDS, type SitAttempt } from '../game/training12/situations/session';
 import { laneGap, pressureOn, type SitActor } from '../game/training12/situations/sim';
+import { ROLE_DUTY } from '../game/training12/situations/squad';
 import { sessions } from '../game/training12/ref/seasons.mjs';
 import { artTextureKey, artUrl } from '../render/art/urls';
 import type { ProtagonistLook } from '../render/art/roster';
@@ -36,7 +37,8 @@ const ROLE_LABEL: Readonly<Record<RoleId, string>> = { GK: 'Keeper', CB: 'Centre
 /** Team Training interface colours: navy panels, cream text, gold borders, cyan tactical highlights. */
 const UI = { navy: 0x14213d, navyDeep: 0x0d1630, gold: 0xf2c14e, cyan: 0x4cc9f0, cream: 0xfff4dc, desert: 0xd9bb8c, path: 0xc9a46a, shrub: 0x6f8a4a } as const;
 const UI_CSS = { cream: '#fff4dc', gold: '#f2c14e', navy: '#14213d' } as const;
-export const STAGES = ['OBSERVE', 'DECIDE', 'PLAY', 'LEARN'] as const;
+/** Coach Code's sequence for every moment, in this exact order. */
+export const STAGES = ['INTRODUCE', 'OBSERVE', 'DECIDE', 'DEMONSTRATE', 'CRITIQUE', 'RETRY OR CONTINUE'] as const;
 /** Metres framed around the half: a thin strip past each touchline and the halfway line, the goal's depth behind the goal line. */
 const FRAME = { w: HALF.width + 1.2, h: HALF.length + 0.6 + 2.2 } as const;
 /** Pixels of Bell94 scenery (fence, palms) allowed beyond the framed half. */
@@ -82,6 +84,8 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
   /** Tight panel with long text (e.g. a landscape hint): the portrait steps aside so the text gets the full width. */
   private coachCompact = false;
   private stageIdx = -1;
+  /** Attempt count when the player moved from CRITIQUE to RETRY OR CONTINUE for the current result. */
+  private critiqued: number | null = null;
   private title!: Phaser.GameObjects.Text;
   private body!: Phaser.GameObjects.Text;
   private buttons: Button[] = [];
@@ -130,6 +134,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     this.stageText = [];
     this.coach = null;
     this.stageIdx = -1;
+    this.critiqued = null;
     // Layers: scenery + pitch, tactical overlay, sprites (900), ball, choice tags (950), interface (2000+).
     this.bgG = this.add.graphics().setDepth(0);
     this.g = this.add.graphics().setDepth(1);
@@ -142,7 +147,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     this.hTitle = this.add.text(0, 0, 'TEAM TRAINING', { fontFamily: FONT_FAMILY, color: UI_CSS.gold, fontStyle: 'bold', fontSize: '15px' }).setDepth(2001).setResolution(textResolution());
     this.hSub = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: UI_CSS.cream, fontSize: '12px' }).setDepth(2001).setResolution(textResolution());
     this.hObj = this.add.text(0, 0, '', { ...style, fontSize: '12px', wordWrap: { width: 300 } }).setDepth(2001).setResolution(textResolution());
-    for (const st of STAGES) this.stageText.push(this.add.text(0, 0, st, { fontFamily: FONT_FAMILY, color: UI_CSS.cream, fontStyle: 'bold', fontSize: '11px' }).setOrigin(0.5).setDepth(2002).setResolution(textResolution()));
+    for (const st of STAGES) this.stageText.push(this.add.text(0, 0, st.replace(' OR ', ' OR\n'), { fontFamily: FONT_FAMILY, color: UI_CSS.cream, fontStyle: 'bold', fontSize: '9px', align: 'center' }).setOrigin(0.5).setDepth(2002).setResolution(textResolution()));
     this.loadCoach();
     this.me = this.add.image(-100, -100, '__DEFAULT').setVisible(false).setDepth(900);
     this.scale.on(Phaser.Scale.Events.RESIZE, this.onResize, this);
@@ -196,11 +201,23 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     return !pos || !ROLE_CHOICES[pos].includes(this.role);
   }
 
-  /** OBSERVE / DECIDE / PLAY / LEARN for the live moment, or -1 off the pitch loop. */
+  /** Index into STAGES for what is on screen, or -1 off the coaching loop. */
   private stage(): number {
+    if (this.screen === 'brief') return 0;
     const d = this.session?.sit;
     if (this.screen !== 'play' || !d) return -1;
-    return d.phase === 'release' ? 0 : d.phase === 'observe' ? 1 : d.phase === 'execute' ? 2 : 3;
+    return d.phase === 'release' ? 1 : d.phase === 'observe' ? 2 : d.phase === 'execute' ? 3 : this.isCritiqued() ? 5 : 4;
+  }
+
+  private isCritiqued(): boolean {
+    return this.critiqued !== null && this.critiqued === this.session?.attempts.length;
+  }
+
+  private endCritique(): void {
+    const s = this.session;
+    if (!s || this.screen !== 'play' || s.sit?.phase !== 'explain') return;
+    this.critiqued = s.attempts.length;
+    this.buttonKey = '';
   }
 
   private setScreen(s: Screen, message: string): void {
@@ -351,8 +368,8 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
         break;
       }
       case 'brief': {
-        title = `COACH CODE · ${sess?.theme ?? this.id}`;
-        lines.push(roundTxt, '', `Today's moments: ${s!.plan.moments.map((m) => sideText(fixtureById(m.fixtureId)!.title, m.mirrored)).join('; ')}.`, '');
+        title = `COACH CODE · INTRODUCE · ${sess?.theme ?? this.id}`;
+        lines.push(roundTxt, `Your role: ${ROLE_LABEL[this.role]}. ${ROLE_DUTY[this.role]}`, '', `Today's moments: ${s!.plan.moments.map((m) => sideText(fixtureById(m.fixtureId)!.title, m.mirrored)).join('; ')}.`, '');
         lines.push(s!.guided ? 'Watch the play. When it stops, choose what you do, then we play it out and talk about why.'
           : s!.timed ? `Game speed: no hints, and ${TIMED_DECISION_SECONDS} seconds to choose each time.` : 'Read it yourself this round. The hint is still there, but it counts as help.');
         if (this.reviewRole) lines.push('', 'Review route: this session is never counted.');
@@ -373,14 +390,21 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
           s!.choices().forEach((c, i) => buttons.push({ name: `opt-${c.option.id}`, label: `${LETTERS[i]}  ${c.label}`, onClick: () => this.decide(c.option.id), fill: PALETTE.cream }));
           if (s!.hintAvailable) util({ name: 'tt-hint', label: s!.hinted ? 'Hint used' : 'Hint', onClick: () => this.hint(), fill: PALETTE.sand });
         } else if (d?.phase === 'explain') {
-          title = 'COACH CODE · LEARN';
           const a = s!.attempts.at(-1);
-          lines.push(...learnLines(a, s!, d.outcome?.text ?? ''));
-          if (!s!.timed) buttons.push({ name: 'tt-replay', label: 'Replay this one', onClick: () => this.replay() });
-          buttons.push({ name: 'tt-next', label: 'Next situation', onClick: () => this.next() });
+          if (!this.isCritiqued()) {
+            title = 'COACH CODE · CRITIQUE';
+            lines.push(...learnLines(a, s!, d.outcome?.text ?? ''));
+            buttons.push({ name: 'tt-critique-done', label: 'Retry or continue', onClick: () => this.endCritique() });
+          } else {
+            title = 'COACH CODE · RETRY OR CONTINUE';
+            lines.push(s!.timed ? 'Game speed: on to the next situation.' : 'Replay this moment from the same start (practice only, never counted), or go on to a changed situation.');
+            if (s!.replaying) lines.push('That was a replay: practice only, not counted.');
+            if (!s!.timed) buttons.push({ name: 'tt-replay', label: 'Replay this one', onClick: () => this.replay() });
+            buttons.push({ name: 'tt-next', label: 'Next situation', onClick: () => this.next() });
+          }
         } else {
-          title = d?.phase === 'execute' ? 'COACH CODE · PLAY' : 'COACH CODE · OBSERVE';
-          lines.push(d?.phase === 'execute' ? 'Playing it out from where you paused…' : `${d ? s!.text(d.fixture.title) : ''}. ${d?.fixture.goal === 'ours' ? 'We defend this goal.' : 'We attack this goal.'} Watch the pressure, the movement and the space.`);
+          title = d?.phase === 'execute' ? 'COACH CODE · DEMONSTRATE' : 'COACH CODE · OBSERVE';
+          lines.push(d?.phase === 'execute' ? 'Both teams play it out from the exact frozen moment…' : `${d ? s!.text(d.fixture.title) : ''}. ${d?.fixture.goal === 'ours' ? 'We defend this goal.' : 'We attack this goal.'} Watch the pressure, the movement and the space.`);
           if (s!.replaying) lines.push('Replay: practice only, not counted.');
         }
         util({ name: 'tt-pause', label: 'II Pause', onClick: () => this.togglePause(), fill: PALETTE.sand });
@@ -532,7 +556,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     const ext = FRAME;
     const usable = { x: ins.left, y: ins.top, width: w - ins.left - ins.right, height: h - ins.top - ins.bottom };
     const hdrH = portrait ? 70 : 40;
-    const ftrH = portrait ? 24 : 22;
+    const ftrH = portrait ? 28 : 26;
     this.header = { x: usable.x, y: usable.y, width: usable.width, height: hdrH };
     this.footer = { x: usable.x, y: usable.y + usable.height - ftrH, width: usable.width, height: ftrH };
     const midY = usable.y + hdrH;
@@ -567,7 +591,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     this.buttonKey = '';
   }
 
-  /** Header, coaching/decision panel and the OBSERVE > DECIDE > PLAY > LEARN footer with the current stage lit. */
+  /** Header, coaching/decision panel and the Coach Code stage footer with the current stage lit. */
   private drawChrome(): void {
     const pg = this.panelG.clear();
     for (const r of [this.header, this.panel, this.footer]) {

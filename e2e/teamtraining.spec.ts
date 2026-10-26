@@ -58,8 +58,14 @@ test('team training: the week is Sessions A-C only, no match route; leaving coun
   // Leave during the first session: two taps, nothing recorded.
   await press(page, 'tt12-A', mode);
   await waitForScene(page, 'tactical');
-  await expect.poll(async () => !!(await diagnostics(page)).layout?.elements['role-9'] || Object.keys((await diagnostics(page)).layout?.elements ?? {}).some((k) => k.startsWith('role-')), { timeout: 30_000 }).toBe(true);
+  await expect.poll(async () => Object.keys((await diagnostics(page)).layout?.elements ?? {}).some((k) => k.startsWith('role-')), { timeout: 30_000 }).toBe(true);
+  const role = Object.keys((await diagnostics(page)).layout!.elements).find((k) => k.startsWith('role-') && !k.endsWith('GK'))!;
+  await pressAny(page, role, mode);
+  await pressAny(page, 'tt-start', mode);
+  await expect.poll(async () => ((await diagnostics(page)).gameplay as { screen?: string } | null)?.screen, { timeout: 30_000 }).toBe('play');
+  // Mid-session, the first tap only arms Leave; the second leaves and nothing is recorded.
   await pressAny(page, 'tt-leave', mode);
+  expect((await diagnostics(page)).activeScenes).toContain('tactical');
   await pressAny(page, 'tt-leave', mode);
   c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'back on team screen');
   expect(c.text).toMatch(/Session A · .+ · Not started/);

@@ -131,6 +131,7 @@ test('team training v1.2: whole session on the overhead half, counted once, idle
         await pressReady(page, `opt-${best.id}`, mode);
         await tt(page, (x) => x.phase !== 'observe' || x.attempts > t.attempts, 'decision taken');
       } else {
+        await pressReady(page, 'tt-critique-done', mode);
         await pressReady(page, 'tt-next', mode);
         await tt(page, (x) => x.phase !== 'explain' || x.screen === 'reflection', 'next attempt');
       }
@@ -223,7 +224,7 @@ async function atSmallerSizes(page: Page, portrait: boolean, check: (l: Loop, si
   await expect.poll(async () => (await diagnostics(page)).layout?.viewport.width).toBe(home.width);
 }
 
-test('team training: OBSERVE > DECIDE > PLAY > LEARN, hint is recorded as help, replay counts nothing', async ({ page }, info) => {
+test('team training: INTRODUCE > OBSERVE > DECIDE > DEMONSTRATE > CRITIQUE > RETRY OR CONTINUE, hint is recorded as help, replay counts nothing', async ({ page }, info) => {
   const mode = modeFor(info);
   const errors = trackConsoleErrors(page);
   await toTeamPage(page, mode);
@@ -231,7 +232,9 @@ test('team training: OBSERVE > DECIDE > PLAY > LEARN, hint is recorded as help, 
   await waitForScene(page, 'tactical');
   await tt(page, (x) => x.screen === 'role', 'role');
   await pressElement(page, 'role-8', mode);
-  await tt(page, (x) => x.screen === 'brief', 'brief');
+  const intro = await tt(page, (x) => x.screen === 'brief', 'brief');
+  expect((intro as unknown as Loop).stage).toBe('INTRODUCE');
+  expect((intro as unknown as Loop).bodyText).toContain('Your role: Box-to-box (8).');
   await pressElement(page, 'tt-start', mode);
   const L = (p: (t: Loop) => boolean, what: string) => tt(page, (x) => p(x as unknown as Loop), what) as unknown as Promise<Loop>;
   let t = await L((x) => x.stage === 'OBSERVE', 'observe');
@@ -298,27 +301,32 @@ test('team training: OBSERVE > DECIDE > PLAY > LEARN, hint is recorded as help, 
   });
   const pick = [...t.options].sort((a, b) => b.quality - a.quality)[0]!;
   await pressReady(page, `opt-${pick.id}`, mode);
-  t = await L((x) => x.stage === 'PLAY' || x.stage === 'LEARN', 'play');
-  if (t.stage === 'PLAY') await page.screenshot({ path: info.outputPath(`loop-3-play-${info.project.name}.png`) });
-  t = await L((x) => x.stage === 'LEARN', 'learn', );
+  t = await L((x) => x.stage === 'DEMONSTRATE' || x.stage === 'CRITIQUE', 'demonstrate');
+  if (t.stage === 'DEMONSTRATE') await page.screenshot({ path: info.outputPath(`loop-3-play-${info.project.name}.png`) });
+  t = await L((x) => x.stage === 'CRITIQUE', 'critique');
   expect(t.lastAttempt?.optionId).toBe(pick.id);
   expect(t.lastAttempt?.hinted).toBe(true);
   expect(t.decisions).toEqual({ independent: 0, assisted: 1 });
   await page.screenshot({ path: info.outputPath(`loop-4-learn-${info.project.name}.png`) });
-  // LEARN always keeps the decision verdict and the separate result.
+  // CRITIQUE always keeps the decision verdict and the separate result.
   await atSmallerSizes(page, portrait, (l, size) => {
-    expect(l.bodyText, `${size} LEARN verdict`).toContain('Decision:');
-    expect(l.bodyText, `${size} LEARN result`).toContain('Result:');
-    expect(l.bodyBottom, `${size} LEARN text above the buttons`).toBeLessThanOrEqual(l.buttonsTop);
+    expect(l.bodyText, `${size} CRITIQUE verdict`).toContain('Decision:');
+    expect(l.bodyText, `${size} CRITIQUE result`).toContain('Result:');
+    expect(l.bodyBottom, `${size} CRITIQUE text above the buttons`).toBeLessThanOrEqual(l.buttonsTop);
   });
 
   const before = t.attempts;
+  await pressReady(page, 'tt-critique-done', mode);
+  t = await L((x) => x.stage === 'RETRY OR CONTINUE', 'retry or continue');
+  await page.screenshot({ path: info.outputPath(`loop-5-retry-${info.project.name}.png`) });
   await pressReady(page, 'tt-replay', mode);
   t = await L((x) => x.replaying && x.stage === 'DECIDE' && x.options.length > 0, 'replay decision');
   await pressReady(page, `opt-${t.options[0]!.id}`, mode);
-  t = await L((x) => x.stage === 'LEARN' && x.attempts > before, 'replay learn');
+  t = await L((x) => x.stage === 'CRITIQUE' && x.attempts > before, 'replay critique');
   expect(t.lastAttempt?.replay).toBe(true);
   expect(t.decisions, 'a replay is never evidence').toEqual({ independent: 0, assisted: 1 });
+  await pressReady(page, 'tt-critique-done', mode);
+  await L((x) => x.stage === 'RETRY OR CONTINUE', 'retry or continue after replay');
   await pressReady(page, 'tt-next', mode);
   t = await L((x) => x.stage === 'DECIDE' && x.options.length > 0, 'varied next attempt');
   expect(t.hinted).toBe(false);

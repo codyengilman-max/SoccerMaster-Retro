@@ -150,3 +150,16 @@ function place(want: P, authored: readonly { at: P }[], added: readonly SquadAct
   }
   return best;
 }
+
+/** INTRODUCE: what each 1-3-2-3 role is responsible for, in Coach Code's words. Never names a moment's answer. */
+export const ROLE_DUTY: Readonly<Record<RoleId, string>> = {
+  GK: 'Protect the goal, organise the back three and start our build-up.',
+  CB: 'Hold the middle of the back three, cover behind the pressure and keep the line together.',
+  LB: 'Give width on the left when we have it, tuck in and track your winger when we lose it.',
+  RB: 'Give width on the right when we have it, tuck in and track your winger when we lose it.',
+  '6': 'Screen in front of the back three, offer the safe angle and switch the play.',
+  '8': 'Link the lines: find space between their midfield and defence and turn when it is on.',
+  LW: 'Hold width on the left, stretch their back line and attack the space behind.',
+  RW: 'Hold width on the right, stretch their back line and attack the space behind.',
+  '9': 'Pin their centre-backs, show for the ball and attack the goal.',
+};

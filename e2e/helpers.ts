@@ -311,6 +311,8 @@ export async function playTacticalSession(page: Page, slot: 'A' | 'B' | 'C', via
         await pressWhenShown(page, `opt-${best.id}`, via);
         await tacticalView(page, (x) => x.phase !== 'observe' || x.attempts > t.attempts, 'decision taken', left());
       } else {
+        // CRITIQUE first, then RETRY OR CONTINUE.
+        await pressWhenShown(page, 'tt-critique-done', via);
         await pressWhenShown(page, 'tt-next', via);
         await tacticalView(page, (x) => x.phase !== 'explain' || x.screen === 'reflection', 'next moment', left());
       }
