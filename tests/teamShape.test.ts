@@ -202,7 +202,18 @@ describe('team shape out of possession', () => {
       park[runner] = [L - 23, W - 25];
       stage(sim, opp, carrier, { x: L - 45, y: 25 }, park);
       hold(sim, 1.6);
-      hold(sim, 0.4, { x: 2.5, y: 0 });
+      // Their runner sprints at our line while the carrier comes forward.
+      const runFrom = { ...sim.state.players[runner].pos };
+      for (let i = 0; i < 24; i++) {
+        sim.arrange((s) => {
+          const r = s.players[runner];
+          const v = world(team, -6, 0);
+          const o = world(team, 0, 0);
+          r.vel = { x: v.x - o.x, y: 0 };
+          r.pos = { x: runFrom.x + r.vel.x * F * (i + 1), y: runFrom.y };
+        });
+        hold(sim, F, { x: 2.5, y: 0 });
+      }
       const sh = sim.state.shape[team];
       expect(sh.carrierForward).toBe(true);
       expect(sh.reason).toMatch(/protect depth/);

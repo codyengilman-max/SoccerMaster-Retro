@@ -363,3 +363,7 @@ Real-iPhone playtest of the coached sandbox, then M4 match flow so Coach Moments
 
 ## Rankings (League, National, Team Profile)
 - 120-team registry, background season, Elo rankings with weekly snapshots, Rankings / Team Profile / League / Compare screens, THIS SEASON panel on the Home menu, TEAM IMPACT on the Match Report. See `docs/RANKINGS.md` and `docs/RANKINGS_REGISTRY.md`.
+
+## Team shape (match AI)
+- Shared team-shape controller (`src/game/match/shape.ts`) moves the back line with the team in and out of possession; offside survives saves/deflections; dev overlay shows the lines, offside boundary, unit gaps and each player's reason. Deterministic scenarios in `tests/teamShape.test.ts`.
+- Open: feel needs a phone playtest; spacing values are provisional.

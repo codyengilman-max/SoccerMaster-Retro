@@ -162,8 +162,10 @@ export function updateShape(s: MatchState, team: TeamId, T: MatchTuning): TeamSh
     for (const id of TEAM_PLAYER_IDS[opp]) {
       const p = s.players[id];
       if (p.isKeeper || p.id === ball.owner) continue;
+      // A runner is already in behind, or running at the line; a forward standing on it is left to offside.
       const x = fx(team, p.pos.x, L);
-      if (x < lineActual + S.runnerNear) runnerX = Math.min(runnerX, x);
+      const vx = team === 'home' ? p.vel.x : -p.vel.x;
+      if (x < lineActual - 0.5 || (x < lineActual + S.runnerNear && vx < -S.runSpeed)) runnerX = Math.min(runnerX, x);
     }
     const spaceBehind = lineActual - S.keeperSweep > S.spaceBehind;
     const danger = !!owner && sh.carrierForward && spaceBehind && runnerX < Infinity;
