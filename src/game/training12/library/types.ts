@@ -99,6 +99,8 @@ export interface LibraryScene {
   readonly cardId: string;
   readonly sceneId: string;
   readonly numeric: NumericScene;
+  /** The changed-cue freeze the retry shows; required before the fixture can be checked. */
+  readonly changedCue?: NumericScene;
   readonly fixture: Fixture;
 }
 

@@ -110,7 +110,7 @@ export function createSituation(fx: Fixture, variant: Variant, mirrored = false)
   const raw = fx.actors.map((a) => ({ slot: a.slot, side: a.side, role: a.role, at: spec.moves?.[a.slot] ?? a.at }));
   const rawOwner = owner ? raw.find((a) => a.slot === owner)! : null;
   const ball0 = rawOwner ? rawOwner.at : (ballSpec as { at: P }).at;
-  for (const q of completeSquad(fx, raw, ball0, fx.options.map((op) => op.point), rawOwner ? teamOf(rawOwner.side) : null, fx.actors.flatMap((a) => { const g = spec.passage?.[a.slot] ?? a.passage; return g ? [g] : []; }))) {
+  for (const q of fx.exact ? [] : completeSquad(fx, raw, ball0, fx.options.map((op) => op.point), rawOwner ? teamOf(rawOwner.side) : null, fx.actors.flatMap((a) => { const g = spec.passage?.[a.slot] ?? a.passage; return g ? [g] : []; }))) {
     const at = mirrorP(q.at, mirrored);
     actors.push({ slot: q.slot, side: q.side, role: roleIn(q.role, mirrored), task: q.task, human: false, start: at, pos: { x: at.x, y: at.y }, vel: { x: 0, y: 0 }, goal: null, stun: 0, filler: true, ...(q.offHalf ? { offHalf: true } : {}) });
   }

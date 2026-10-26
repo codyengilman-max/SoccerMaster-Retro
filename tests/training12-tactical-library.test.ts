@@ -170,7 +170,8 @@ describe('review gate fails closed', () => {
     const noCheck = { mapping, scenes, signoffs: ok.signoffs, pitch };
     const r = cardReview('CB01', noCheck);
     expect(r.status).toBe('DRAFT_BLOCKED_FOR_PLAYER_TRAINING');
-    expect(r.blockers).toEqual(['CB01: the played fixture cannot yet be checked against the signed numeric scene (no numeric-scene player exists).']);
+    expect(r.blockers).toContain('CB01: the played fixture is not exact (squad.ts would add shape-holders the scene does not have).');
+    expect(r.blockers).toContain('CB01: no signed changed-cue scene to check the retry against.');
     expect(scoredSession(s0, 'CB', noCheck).ok).toBe(false);
     expect(scoredSession(s0, 'CB', { ...ok, fixtureCheck: (x) => (x.cardId === 'CB02' ? ['CB02: fixture places H_CB elsewhere.'] : []) })).toEqual({ ok: false, blockers: ['CB02: fixture places H_CB elsewhere.'] });
   });

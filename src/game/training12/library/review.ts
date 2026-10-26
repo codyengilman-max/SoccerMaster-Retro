@@ -4,6 +4,7 @@
  * with the exact blockers. Framework-free.
  */
 import { LIBRARY, LIBRARY_CARDS, LIBRARY_PITCH, LIBRARY_RETIRED_IDS, LIBRARY_ROSTERS } from './tacticalLibrary.generated';
+import { fixtureMatchesScene } from './fixtureCheck';
 import { contentSha256 } from './sha256';
 import type { LibraryCard, LibraryPitch, LibraryScene, Review, Signoff } from './types';
 
@@ -18,17 +19,9 @@ export interface ReviewOpts {
   readonly signoffs?: readonly Signoff[];
   readonly pitch?: LibraryPitch;
   readonly rulesSha256?: string;
-  /** Proves the playable fixture implements the signed numeric scene; returns problems. */
+  /** Proves the playable fixture implements the signed numeric scene; returns problems. Default fixtureMatchesScene. */
   readonly fixtureCheck?: (scene: LibraryScene) => string[];
 }
-
-/**
- * Default fixture check: fails closed. Nothing yet builds or checks the played fixture from the numeric scene, so a
- * signed scene cannot reach scored play until that exists and replaces this.
- */
-export const NO_FIXTURE_CHECK = (s: LibraryScene): string[] => [
-  `${s.cardId}: the played fixture cannot yet be checked against the signed numeric scene (no numeric-scene player exists).`,
-];
 
 /** SHA-256 of the rules profile a sign-off covers: the pitch proposal actually in force plus the two rosters. */
 export const rulesSha256 = (pitch: LibraryPitch = LIBRARY_PITCH): string => contentSha256({ pitch_proposal: pitch, rosters: LIBRARY_ROSTERS });
@@ -78,7 +71,7 @@ export function cardReview(id: string, opts: ReviewOpts = {}): Review {
   const signs = (opts.signoffs ?? SIGNOFFS).filter((s) => s.cardId === id);
   const blockers: string[] = [];
   if (!scene) blockers.push(`${id}: no numeric scene has been built and validated from this card (numeric_scene is null).`);
-  else blockers.push(...sceneProblems(card, scene, pitch), ...(opts.fixtureCheck ?? NO_FIXTURE_CHECK)(scene));
+  else blockers.push(...sceneProblems(card, scene, pitch), ...(opts.fixtureCheck ?? fixtureMatchesScene)(scene));
   if (!pitch.local_rules_verified) blockers.push(`${id}: local competition rules are not verified (pitch_proposal.local_rules_verified is false).`);
   if (signs.length === 0) {
     blockers.push(`${id}: no Coach Cody sign-off.`);

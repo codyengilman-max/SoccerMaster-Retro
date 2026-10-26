@@ -16,6 +16,13 @@
 ## Team Training learning loop (owner brief + mockup, branch `devin/1792950375-tt-learning-loop`, from `main` 56a6e0c, not merged, not deployed)
 - Mockup layout on the fixed half: TEAM TRAINING header (season, week, session, round, role, the route's real objective), Bell94/Scottsdale surround outside the lines, navy/gold Coach Code panel with his approved portrait, A–D choice buttons, Hint / Pause / Leave, and the OBSERVE › DECIDE › PLAY › LEARN footer. Portrait and landscape; the panel never covers the half.
 - No giveaway before choosing (no arrows, neutral labels, seeded order); hint recorded as assisted; LEARN overlay from the frozen moment; Replay never counts; next attempt varies. Details: `docs/training/v1.2/MAPPING.md`.
+
+- **v1.2 scene proposals (not approved):**
+  - 39 proposed scenes (cue and changed cue) are in `docs/training/library-v1.2/scenes/SCENE_REVIEW.html` for Coach Cody's review.
+  - Only 8 fit the half-field player.
+  - The real fixture-vs-scene check is in place (`fixtureMatchesScene`).
+  - The session proposal has 1454 weak card slots out of 2592.
+  - 0 scenes signed, 0 routes open.
 - Level 1 opened for Season 1 weeks 5–18 and Season 2 (864 more routes, each played to a credited finish in unit tests). Levels 2–3 stay "not available yet". Season 2 is not reachable from Career (no Season 2 career). Keeper routes via `?dev` only.
 - Saved runs carry optional `decisions: { independent, assisted }`; older runs load unchanged with no counts invented.
 - Phone emulation only, not tested on a real iPhone.

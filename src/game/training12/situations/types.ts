@@ -106,6 +106,8 @@ export interface Fixture {
   readonly why: string;
   /** Players that exist in the 9v9 shape but are off this half and play no part. */
   readonly offscreen?: string;
+  /** Library scenes: play exactly these players; squad.ts adds no shape-holders. */
+  readonly exact?: true;
   readonly actors: readonly FixtureActor[];
   readonly ball: { readonly owner: string } | { readonly at: P };
   readonly passageSeconds: number;
