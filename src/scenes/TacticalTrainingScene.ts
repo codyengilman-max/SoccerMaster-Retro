@@ -311,7 +311,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     let out: { ok: true; message: string } | { ok: false; error: string };
     try {
       const r = await this.store.dispatch({ type: 'tt12Run', week: this.save.week, slot: this.slot, runId: c.runId, score: c.score, creditEligible: c.creditEligible && !this.reviewRole, decisions: c.decisions, model: c.model });
-      out = r.ok ? { ok: true, message: r.message } : { ok: false, error: r.error };
+      out = r.ok ? { ok: true, message: this.reviewRole ? 'Review route: saved as practice, never counted.' : r.message } : { ok: false, error: r.error };
     } catch (e) {
       out = { ok: false, error: e instanceof Error ? e.message : 'The save could not be written.' };
     }
