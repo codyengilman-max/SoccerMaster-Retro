@@ -4,9 +4,8 @@ Source notes are what Devin read in the originals fetched on 2026-10-26; verdict
 import json, re, sys
 D = 'docs/training/library-v1.2'
 pkg = json.load(open(D + '/scenarios.json'))
-gen = open('src/game/training12/library/tacticalLibrary.generated.ts').read()
-meta = json.loads(re.search(r'LIBRARY: LibraryMeta = (\{.*?\n\});', gen, re.S).group(1))
-cards = json.loads(re.search(r'LIBRARY_CARDS: readonly LibraryCard\[\] = (\[.*\]);', gen, re.S).group(1))
+gen = json.load(open('src/game/training12/library/tacticalLibrary.generated.json'))
+meta, cards = gen['meta'], gen['cards']
 sessions = json.load(open(sys.argv[1]))
 src = {s['id']: s for s in pkg['sources']}
 v1ids = re.findall(r'^### (\w+) —', open('docs/training/library-v1/SoccerMaster_9v9_Tactical_Library_v1.md').read(), re.M)
