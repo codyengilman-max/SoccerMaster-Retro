@@ -135,7 +135,7 @@ describe('review gate fails closed', () => {
       cardId: id, sceneId: `${id}-test`, fixture: { ...ALL_FIXTURES[i]!, id: `${id}-reviewed` },
       numeric: {
         units: 'm', pitch: { length_m: LIBRARY_PITCH.length_m, width_m: LIBRARY_PITCH.width_m }, view: { kind: 'area', min: { x: 0, y: 0 }, max: { x: 45.72, y: 30 } },
-        actors: [...shown].map((a, k) => ({ id: a, pos: { x: 5 + k * 5, y: 15 }, vel: { x: 0, y: 0 }, facingDeg: 0 })),
+        actors: [...shown].map((a, k) => ({ id: a, pos: { x: 2 + k * 3, y: 15 }, vel: { x: 0, y: 0 }, facingDeg: 0 })),
         omitted: all.filter((a) => !shown.has(a)).map((a) => ({ id: a, reason: 'test only' })),
         ball: { pos: { x: 5, y: 15 }, vel: { x: 0, y: 0 }, owner: c.ball_owner_at_freeze }, events: [], localRules: 'test only',
       },
@@ -149,7 +149,8 @@ describe('review gate fails closed', () => {
   const sign = signFor(scene);
   const s0 = sessions[0]!.id;
   const mapping = { [s0]: { CB: ids } };
-  const ok = { mapping, scenes, signoffs: ids.map((id) => signFor(scenes[id]!)), pitch };
+  const fixtureCheck = (): string[] => [];
+  const ok = { mapping, scenes, signoffs: ids.map((id) => signFor(scenes[id]!)), pitch, fixtureCheck };
 
   it('current sign-offs on the exact cards, rules and scenes open only that mapped route, and it plays the signed scenes', () => {
     expect(sceneProblems(card, scene)).toEqual([]);
@@ -163,6 +164,15 @@ describe('review gate fails closed', () => {
     expect(run.fixtureOf(ALL_FIXTURES[0]!.id)).toBeNull();
     expect(scoredSession(s0, 'LB', ok).ok).toBe(false);
     expect(scoredSession(s0, 'CB', { ...ok, mapping: { [s0]: { LB: ids } } }).ok).toBe(false);
+  });
+
+  it('a signed scene stays blocked until its played fixture is checked against the numeric scene', () => {
+    const noCheck = { mapping, scenes, signoffs: ok.signoffs, pitch };
+    const r = cardReview('CB01', noCheck);
+    expect(r.status).toBe('DRAFT_BLOCKED_FOR_PLAYER_TRAINING');
+    expect(r.blockers).toEqual(['CB01: the played fixture cannot yet be checked against the signed numeric scene (no numeric-scene player exists).']);
+    expect(scoredSession(s0, 'CB', noCheck).ok).toBe(false);
+    expect(scoredSession(s0, 'CB', { ...ok, fixtureCheck: (x) => (x.cardId === 'CB02' ? ['CB02: fixture places H_CB elsewhere.'] : []) })).toEqual({ ok: false, blockers: ['CB02: fixture places H_CB elsewhere.'] });
   });
 
   it('a route needs exactly three approved moments', () => {
@@ -198,9 +208,13 @@ describe('review gate fails closed', () => {
     expect(sceneProblems(card, dup)).toContain('CB01: an actor appears twice.');
     const ball = { ...scene, numeric: { ...scene.numeric, ball: { ...scene.numeric.ball, owner: 'A_ST' } } };
     expect(sceneProblems(card, ball)[0]).toMatch(/ball is with A_ST/);
-    for (const s of [extra, hidden, ball]) {
+    const off = { ...scene, numeric: { ...scene.numeric, actors: scene.numeric.actors.map((a) => (a.id === 'A_ST' ? { ...a, pos: { x: 60, y: 15 } } : a)) } };
+    expect(sceneProblems(card, off)).toEqual(['CB01: required actor A_ST is outside the area view.']);
+    const half = { ...scene, numeric: { ...scene.numeric, view: { kind: 'half' as const, min: { x: 0, y: 34.29 }, max: { x: 45.72, y: 68.58 } } } };
+    expect(sceneProblems(card, half)).toContain('CB01: the ball is outside the half view.');
+    for (const s of [extra, hidden, ball, off, half]) {
       const sg = { ...sign, sceneSha256: sceneSha256(s) };
-      expect(cardReview('CB01', { scenes: { CB01: s }, signoffs: [sg], pitch }).status, 'signed but invalid').toBe('DRAFT_BLOCKED_FOR_PLAYER_TRAINING');
+      expect(cardReview('CB01', { scenes: { CB01: s }, signoffs: [sg], pitch, fixtureCheck }).status, 'signed but invalid').toBe('DRAFT_BLOCKED_FOR_PLAYER_TRAINING');
     }
   });
 

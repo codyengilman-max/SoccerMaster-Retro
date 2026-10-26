@@ -18,7 +18,17 @@ export interface ReviewOpts {
   readonly signoffs?: readonly Signoff[];
   readonly pitch?: LibraryPitch;
   readonly rulesSha256?: string;
+  /** Proves the playable fixture implements the signed numeric scene; returns problems. */
+  readonly fixtureCheck?: (scene: LibraryScene) => string[];
 }
+
+/**
+ * Default fixture check: fails closed. Nothing yet builds or checks the played fixture from the numeric scene, so a
+ * signed scene cannot reach scored play until that exists and replaces this.
+ */
+export const NO_FIXTURE_CHECK = (s: LibraryScene): string[] => [
+  `${s.cardId}: the played fixture cannot yet be checked against the signed numeric scene (no numeric-scene player exists).`,
+];
 
 /** SHA-256 of the rules profile a sign-off covers: the pitch proposal actually in force plus the two rosters. */
 export const rulesSha256 = (pitch: LibraryPitch = LIBRARY_PITCH): string => contentSha256({ pitch_proposal: pitch, rosters: LIBRARY_ROSTERS });
@@ -45,6 +55,12 @@ export function sceneProblems(card: LibraryCard, scene: LibraryScene, pitch: Lib
   for (const o of scene.numeric.omitted) if (!o.reason.trim()) p.push(`${card.id}: omitted ${o.id} has no reason it cannot change the decision.`);
   for (const id of new Set([...card.required_visible_actor_ids, card.protagonist, card.ball_owner_at_freeze]))
     if (!shown.includes(id)) p.push(`${card.id}: required actor ${id} is not shown.`);
+  const { min, max } = scene.numeric.view;
+  const inView = (v: { x: number; y: number }): boolean => v.x >= min.x && v.x <= max.x && v.y >= min.y && v.y <= max.y;
+  for (const a of scene.numeric.actors)
+    if (!inView(a.pos) && new Set([...card.required_visible_actor_ids, card.protagonist, card.ball_owner_at_freeze]).has(a.id))
+      p.push(`${card.id}: required actor ${a.id} is outside the ${scene.numeric.view.kind} view.`);
+  if (!inView(scene.numeric.ball.pos)) p.push(`${card.id}: the ball is outside the ${scene.numeric.view.kind} view.`);
   if (scene.numeric.ball.owner !== card.ball_owner_at_freeze)
     p.push(`${card.id}: ball is with ${scene.numeric.ball.owner ?? 'nobody'} at the freeze, card says ${card.ball_owner_at_freeze}.`);
   if (!scene.numeric.localRules.trim()) p.push(`${card.id}: scene does not name the local rules it uses.`);
@@ -62,7 +78,7 @@ export function cardReview(id: string, opts: ReviewOpts = {}): Review {
   const signs = (opts.signoffs ?? SIGNOFFS).filter((s) => s.cardId === id);
   const blockers: string[] = [];
   if (!scene) blockers.push(`${id}: no numeric scene has been built and validated from this card (numeric_scene is null).`);
-  else blockers.push(...sceneProblems(card, scene, pitch));
+  else blockers.push(...sceneProblems(card, scene, pitch), ...(opts.fixtureCheck ?? NO_FIXTURE_CHECK)(scene));
   if (!pitch.local_rules_verified) blockers.push(`${id}: local competition rules are not verified (pitch_proposal.local_rules_verified is false).`);
   if (signs.length === 0) {
     blockers.push(`${id}: no Coach Cody sign-off.`);
