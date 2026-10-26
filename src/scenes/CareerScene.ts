@@ -11,9 +11,10 @@ import { CATEGORY_SKILL_AREA, COACHING_REVIEW, CURRICULUM, EMPTY_STATE, FAMILY_M
 import { prototypeFor, resolveSteps, stepAt } from '../game/career/curriculum/demos';
 import { DRAFT_PREFIX, DRAFT_STATUS, draftActivityId } from '../game/career/curriculum/drafts';
 import { LOGIC_CATALOG, LOGIC_GROUPS, SCENARIO_GOAL, activeLogicScenarios, currentText, type LogicGroup } from '../game/logic/catalog';
-import { describeChanges, selectSituations } from '../game/career/teamTraining';
+import { describeChanges } from '../game/career/teamTraining';
 import { sessionId } from '../game/training12/session';
 import { routePlan } from '../game/training12/situations/index';
+import { sessions } from '../game/training12/ref/seasons.mjs';
 import { ROLE_CHOICES } from './TacticalTrainingScene';
 import { orientationOf } from '../render/layout';
 import { PlayerArt, atlasKey } from '../render/art/playerArt';
@@ -297,7 +298,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             ? [
                 ...req.map((t) => ({ name: `req-${t.key}`, label: `${t.short}: ${t.done ? 'done' : 'to do'}`, on: t.done, onClick: () => this.go(this.taskScreen(t)) })),
                 { name: 'nav-focus', label: `This week: ${f ? f.label : 'choose a focus'}`, onClick: () => this.go({ kind: 'focus' }) },
-                { name: 'nav-team', label: `Team Training · ${s.teamTraining.some((r) => r.week === s.week) ? 'Complete' : 'Not started'}`, onClick: () => this.go({ kind: 'team' }) },
+                { name: 'nav-team', label: `Team Training · ${s.teamTraining.some((r) => r.week === s.week) ? 'Complete' : `${TT12_SLOTS.filter((slot) => s.tt12.some((r) => r.week === s.week && r.slot === slot && r.credited)).length} of 3 sessions`}`, onClick: () => this.go({ kind: 'team' }) },
                 { name: 'nav-practice', label: `Home Practice (optional) · ${s.completedSessions.length} of 3`, onClick: () => this.go({ kind: 'practice' }) },
                 { name: 'nav-progress', label: 'Progress', onClick: () => this.go({ kind: 'progress' }) },
               ]
@@ -599,29 +600,24 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       case 'team': {
         if (!p) return { title: 'Team Training', body: 'No player yet.', actions: [] };
         const rec = s.teamTraining.find((r) => r.week === s.week);
-        const rows = selectSituations(p.position, s.week).map((x, i) => {
-          const c = LOGIC_CATALOG.scenarios.find((sc) => sc.id === x.id);
-          const score = rec ? `  ${Math.round((rec.scores[i] ?? 0) * 100)}%` : '';
-          return `${i + 1}. ${x.title} (${x.id}${c ? `: ${c.original.situation}` : ''})${score}\n   ${x.goal}\n   Trains: ${x.attributes.map((a) => ATTRIBUTE_LABELS[a]).join(', ')}`;
+        const role = ROLE_CHOICES[p.position][0]!;
+        const slots = TT12_SLOTS.map((slot) => {
+          const id = sessionId(1, s.week, slot);
+          const done = s.tt12.some((r) => r.week === s.week && r.slot === slot && r.credited);
+          const open = routePlan(id, role) !== null;
+          const sess = sessions.find((x) => x.id === id);
+          return { slot, id, done, open, sess };
         });
+        const rows = slots.map((x) => `Session ${x.slot} · ${x.sess?.theme ?? x.id} · ${x.done ? 'Completed' : x.open ? 'Not started' : 'Not available yet'}\n   ${x.sess?.objective ?? ''}`);
         return {
           title: `Team Training · Week ${s.week}`,
           body: [
             ...rows,
             rec
-              ? `\nCounted for week ${s.week}: ${describeChanges(rec.changes)}. Playing again is practice only.`
-                : '\nPlay Team Training (the list above) uses the normal controls. A good week adds up to +2 attribute points, a poor week costs 1 (never below the starting value). Leaving early counts nothing.',
-            'Situations come from the soccer-logic catalog draft (not coach-certified).',
-            'Sessions A–C: three tactical moments each on the full half-field; you decide with the answer buttons. Positions are authored prototypes, not calibrated.',
+              ? `\nWeek ${s.week} is complete: ${describeChanges(rec.changes)}. Playing a session again is practice only.`
+              : '\nComplete Sessions A, B and C to finish the week. Each session is a set of tactical moments on the half-field: Coach Code sets it up, the play freezes and you choose with the answer buttons. Leaving early counts nothing.',
           ].join('\n'),
-          actions: [
-            ...TT12_SLOTS.map((slot) => {
-              const done = s.tt12.some((r) => r.week === s.week && r.slot === slot && r.credited);
-              const open = routePlan(sessionId(1, s.week, slot), ROLE_CHOICES[p.position][0]!) !== null;
-              return { name: `tt12-${slot}`, label: `Session ${slot}${done ? ' · counted' : open ? '' : ' · not available yet'}`, onClick: () => { if (open) this.playTactical(slot); } };
-            }),
-            { name: 'team-play', label: rec ? 'Practise again' : 'Play Team Training', onClick: () => this.playTeamTraining() },
-          ],
+          actions: slots.map((x) => ({ name: `tt12-${x.slot}`, label: `Session ${x.slot}${x.done ? ' · completed' : x.open ? '' : ' · not available yet'}`, onClick: () => { if (x.open) this.playTactical(x.slot); } })),
         };
       }
       case 'player': {
@@ -636,12 +632,6 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     if (this.navigating) return;
     this.navigating = true;
     this.scene.start(SceneKeys.Tactical, { slot, ...(this.returnTo === 'story' ? { returnTo: 'story' as const } : {}) });
-  }
-
-  private playTeamTraining(): void {
-    if (this.navigating) return;
-    this.navigating = true;
-    this.scene.start(SceneKeys.Match, { teamTraining: true, ...(this.returnTo === 'story' ? { returnTo: 'story' as const } : {}) });
   }
 
   private playSandbox(): void {

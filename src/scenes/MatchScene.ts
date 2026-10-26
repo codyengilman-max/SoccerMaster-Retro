@@ -253,7 +253,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     // Only the Lab picker launches a scenario; `?lab` itself just opens the picker.
     const labId = __LAB__ ? data.lab : null;
     this.labId = match.isLabScenarioId(labId) ? labId : null;
-    const teamTraining = data.teamTraining === true && !this.labId;
+    // Weekly Team Training is the tactical Sessions A-C only (TacticalTrainingScene); this legacy match route is never started.
+    const teamTraining = false;
     const halfSeconds = params.has('sandbox') || this.labId || teamTraining
       ? null
       : shouldExposeDebug(window.location) && Number.isFinite(halfParam) && halfParam > 0
