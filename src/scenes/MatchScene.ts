@@ -47,6 +47,12 @@ const CAREER_SLOT: Readonly<Record<Position, 'H3' | 'H5' | 'H8'>> = { DEF: 'H3',
 const CAREER_FLUSH_SECONDS = 30;
 import { SceneKeys } from './keys';
 import { artTextureKey, artUrl } from '../render/art/urls';
+import { OffsidePopup } from '../render/offsidePopup';
+
+/** Juggling/Referee pack: assistant referee for confirmed offside calls (art review build, not shipping approved). */
+const REFEREE_URL = Object.values(import.meta.glob('../assets/art/referee-v1/offside_referee.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>)[0];
+const REFEREE_KEY = 'ref1:offside';
+const rectOf = (r: Phaser.Geom.Rectangle) => ({ x: Math.round(r.x), y: Math.round(r.y), width: Math.round(r.width), height: Math.round(r.height) });
 import { Button } from './ui/Button';
 import { COACH_OVERLAY_DEPTH, CoachOverlay } from './ui/CoachOverlay';
 import { PLAYER_ART, PlayerArt, atlasKey } from '../render/art/playerArt';
@@ -166,6 +172,12 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private eventArt: Phaser.GameObjects.Image | null = null;
   private eventArtFor: unknown = null;
   private eventArtShown = { goal: 0, foul: 0 };
+  private readonly offsidePopup = new OffsidePopup();
+  private refImg: Phaser.GameObjects.Image | null = null;
+  private refCaption: Phaser.GameObjects.Text | null = null;
+  private reducedMotion = false;
+  /** Debug-only staging that needs live play (offside calls). */
+  private debugStage: 'offside' | 'offside-position' | null = null;
   private devText!: Phaser.GameObjects.Text;
   private panel!: Phaser.GameObjects.Graphics;
   private panelTitle!: Phaser.GameObjects.Text;
@@ -310,6 +322,10 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.eventArt = null;
     this.eventArtFor = null;
     this.eventArtShown = { goal: 0, foul: 0 };
+    this.offsidePopup.reset();
+    this.refImg = null;
+    this.refCaption = null;
+    this.reducedMotion = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const hudButton = (name: string, label: string, onClick: () => void, cream = false): Button =>
       new Button(this, 0, 0, {
@@ -395,6 +411,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     if (this.sim.state.controlEpoch !== this.lastEpoch) this.lastEpoch = this.sim.state.controlEpoch;
     // Availability comes from the authoritative sim; a held button that loses it goes inert.
     if (this.pad) this.handlePad(this.pad.controls.setAvailable(this.sim.padAvailability()));
+    if (this.debugStage && this.sim.state.phase === 'live') this.stageOffside(this.debugStage);
     this.sim.step(dt);
     this.consumeEvents();
     this.observeCareer();
@@ -562,6 +579,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       minimap: this.minimapRect(),
     };
     Object.assign(elements, this.coachOverlay.bounds());
+    if (this.refImg?.visible) elements['offside-referee'] = rectOf(this.refImg.getBounds());
     if (this.pad) {
       const PL = this.pad.controls.currentLayout;
       const box = (c: { x: number; y: number; r: number }): Rect => ({ x: c.x - c.r, y: c.y - c.r, width: c.r * 2, height: c.r * 2 });
@@ -627,6 +645,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       score: { ...s.score },
       stoppage: s.stoppage ? { reason: s.stoppage.reason, scorer: s.stoppage.scorer, restartTeam: s.stoppage.restartTeam, restart: s.stoppage.restart } : null,
       eventArt: { ...this.eventArtShown, visible: this.eventArt?.visible ?? false },
+      offsidePopup: { shown: this.offsidePopup.shown, visible: !!this.refImg?.visible, bounds: this.refImg?.visible ? rectOf(this.refImg.getBounds()) : null, caption: this.refCaption?.visible ? rectOf(this.refCaption.getBounds()) : null, alpha: this.refImg?.alpha ?? 0 },
       defense: {
         home: { presserId: s.defense.home.presserId, coverId: s.defense.home.coverId },
         away: { presserId: s.defense.away.presserId, coverId: s.defense.away.coverId },
@@ -712,6 +731,10 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   }
 
   private applyDebugSetup(setup: string | null): void {
+    if (setup === 'offside' || setup === 'offside-position') {
+      this.debugStage = setup;
+      return;
+    }
     if (setup !== 'pass' && setup !== 'final-third' && setup !== 'space') return;
     // 'space': H8 in their own half with every away outfielder 45+ yd upfield, for control tests that need seconds on the ball.
     const carrierX = setup === 'pass' ? 30 : setup === 'space' ? 10 : 52;
@@ -1379,6 +1402,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private handleShutdown(): void {
     for (const id of ['goal-banner', 'referee-foul']) if (this.textures.exists(artTextureKey(id))) this.textures.remove(artTextureKey(id));
     this.eventArt = null;
+    if (this.textures.exists(REFEREE_KEY)) this.textures.remove(REFEREE_KEY);
+    this.offsidePopup.reset();
+    this.refImg = null;
+    this.refCaption = null;
+    this.debugStage = null;
     this.art?.destroy();
     const store = this.careerStore;
     const saving = this.reportSaving ?? Promise.resolve();
@@ -1409,6 +1437,83 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
    * Goal banner / referee art bound to the sim's own stoppage: shown only for a confirmed goal or a
    * foul decision, counted once per stoppage object, hidden when play restarts. Presentation only.
    */
+  /**
+   * `offside`: H6 has just passed to H9, who received it beyond the second-last defender (the rules engine makes the
+   * call). `offside-position`: H9 stands in the same place but the user-controlled H8 keeps the ball, so no call.
+   */
+  private stageOffside(setup: 'offside' | 'offside-position'): void {
+    this.debugStage = null;
+    this.sim.arrange((s) => {
+      const put = (id: match.MatchPlayerId, x: number, y: number) => {
+        s.players[id].pos = { x, y };
+        s.players[id].vel = { x: 0, y: 0 };
+      };
+      for (const id of match.AWAY_IDS) put(id, 50, 10);
+      put('A1', 74, 25);
+      put('A2', 60, 10);
+      put('H9', 66, 25);
+      if (setup === 'offside') {
+        put('H6', 45, 25);
+        this.sim.referee.notePass(s.players.H6, s.players, { x: 45, y: 25 });
+        s.ball.owner = null;
+        s.ball.pos = { x: 65, y: 25 };
+        s.ball.vel = { x: 1.5, y: 0 };
+        s.ball.lastTouch = 'home';
+        s.ball.kick = { by: 'H6', team: 'home', kind: 'pass', at: s.simTime - 1, target: { x: 66, y: 25 }, receiver: 'H9' };
+      } else {
+        put('H8', 30, 25);
+        s.ball.owner = 'H8';
+        s.ball.pos = { x: 30.6, y: 25 };
+        s.ball.vel = { x: 0, y: 0 };
+      }
+    });
+  }
+
+  /** Assistant-referee popup for a confirmed offside call: above play, below HUD/pads/dialogue; tap to dismiss. */
+  private showOffsidePopup(st: match.Stoppage | null, active: boolean, width: number, height: number): void {
+    const f = this.offsidePopup.update(st, !!st, this.time.now, this.reducedMotion);
+    const hide = () => {
+      this.refImg?.setVisible(false);
+      this.refCaption?.setVisible(false);
+    };
+    if (!f.visible || !active || !REFEREE_URL) return hide();
+    if (!this.textures.exists(REFEREE_KEY)) {
+      if (!this.load.isLoading()) {
+        this.load.image(REFEREE_KEY, REFEREE_URL);
+        this.load.start();
+      }
+      return hide();
+    }
+    if (!this.refImg) {
+      this.refImg = this.add.image(0, 0, REFEREE_KEY).setOrigin(0.5, 0).setDepth(6001).setName('offside-referee').setInteractive({ useHandCursor: true });
+      this.refImg.on('pointerdown', () => {
+        this.offsidePopup.dismiss();
+        hide();
+      });
+    }
+    if (!this.refCaption)
+      this.refCaption = this.add.text(0, 0, 'OFFSIDE!', { fontFamily: FONT_FAMILY, color: CSS.cream, fontStyle: 'bold' }).setOrigin(0.5, 0).setDepth(6001).setStroke(CSS.ink, 4).setResolution(textResolution()).setName('offside-caption');
+    // Box: under the HUD row and the minimap, above the centre restart banner, clear of the corner pads.
+    const portrait = orientationOf({ width, height }) === 'portrait';
+    const mm = this.minimapRect();
+    const top = Math.max(EDGE + HUD_HEIGHT + 8, portrait ? mm.y + mm.height + 8 : EDGE + HUD_HEIGHT + 8);
+    const captionH = 22;
+    // Portrait: stop above the centre restart banner. Landscape: the left column runs down to the joystick.
+    const stick = this.pad?.controls.currentLayout.stick;
+    const bottom = portrait ? height / 2 - 26 : (stick ? stick.y - stick.r : height - 48) - 8;
+    const boxH = Math.max(40, Math.min(bottom - top - captionH, height * (portrait ? 0.3 : 0.55)));
+    const left = portrait ? EDGE : EDGE;
+    const right = portrait ? width - EDGE : mm.x - 8;
+    const boxW = Math.max(40, Math.min(right - left, width * (portrait ? 0.5 : 0.3)));
+    const k = Math.min(boxW / this.refImg.width, boxH / this.refImg.height);
+    const w = this.refImg.width * k;
+    const cx = portrait ? width - EDGE - w / 2 : left + 4 + w / 2;
+    const dir = portrait ? 1 : -1;
+    const x = cx + dir * f.slide * (w + EDGE * 2);
+    this.refImg.setScale(k).setPosition(x, top).setAlpha(f.alpha).setVisible(true);
+    this.refCaption.setFontSize(Math.round(Math.max(13, Math.min(18, w * 0.14)))).setPosition(x, top + this.refImg.height * k + 2).setAlpha(f.alpha).setVisible(true);
+  }
+
   private showEventArt(st: { reason: string } | null, width: number, height: number): void {
     if (!st) {
       this.eventArt?.setVisible(false);
@@ -2152,6 +2257,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     // Team Training has its own attempt cards; no match/sandbox restart banners.
     if (this.team) banner = '';
     this.showEventArt(s.phase === 'stopped' && st && (st.reason === 'goal' || st.reason === 'foul') ? st : null, width, height);
+    this.showOffsidePopup(s.phase === 'stopped' && !this.team ? st : null, !s.paused && !this.navigating, width, height);
     this.bannerMessage = banner;
     this.bannerText.setVisible(banner !== '' && !s.paused).setText(banner).setPosition(width / 2, height / 2);
     const toastOn = this.toastUntil > performance.now() && (!s.paused || (this.team !== null && this.team.phase !== 'playing'));
