@@ -390,3 +390,6 @@ Pitch-first layout at true proportions (390×844 down to 320×568 and 568×320 c
 ## Team Training tactical situations (ts-1)
 
 Done: 40 authored prototype moments (cue + counter, reflected for the other side), full-half scene, 108 x 9 mapping, ts-1 save marker. Unit 1086/1086, Team Training e2e 6/6 (phone portrait + landscape). Open: calibration of authored positions/outcomes; 211 weak route mappings; physical iPhone test.
+
+## Standing Mom portrait
+- Owner's standing Mom (3 faces × casual/dressy, `mom3-*`) replaces the shorter v2 busts on every spoken Mom line in cutscenes. Outfit follows the scene; the line's beat picks the closest face. v2 busts remain in the gallery only. See D54 and `docs/art/season-one/MOM_V2.md`.

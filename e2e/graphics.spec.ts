@@ -132,7 +132,7 @@ test('Art Gallery is reachable from Review & Lab, lists every asset with its sta
   await press(page, 'hub-art', mode);
   await waitForScene(page, 'gallery');
   const seen = new Set<string>();
-  for (let i = 0; i < 11; i++) {
+  for (let i = 0; i < 12; i++) { // 70 assets / 6 per page
     const g = await (async () => {
       let v: { page: { kind: string }; shown: string[]; loaded: string[]; title: string; gaps: number } | null = null;
       await expect.poll(async () => {
@@ -148,7 +148,7 @@ test('Art Gallery is reachable from Review & Lab, lists every asset with its sta
     if (g.page.kind === 'gaps') expect(g.gaps).toBeGreaterThan(0);
     await press(page, 'gallery-next', mode);
   }
-  expect(seen.size).toBe(64); // 42 + v1.2 crossbar-schoolyard and training-bell94 + 12 Mom v2 portraits, 2 aquarium paintings, the V3 home menu and 5 phone poses
+  expect(seen.size).toBe(70); // 42 + v1.2 crossbar-schoolyard and training-bell94 + 12 Mom v2 portraits, 2 aquarium paintings, the V3 home menu, 5 phone poses and 6 standing Mom portraits
   await press(page, 'gallery-back', mode);
   await waitForScene(page, 'career');
   const career = (await diagnostics(page)).gameplay as { player: string | null; screen: string };
@@ -168,16 +168,17 @@ async function stage(page: Page, sceneId: string, nodeId: string): Promise<Story
 }
 const shown = (s: Story) => s.art!.cast.filter((c) => c.visible).map((c) => `${c.role}:${c.assetId}`);
 
-test('Mom v2: casual expression per line over an empty backdrop, cleared on narration and choices, never stale across scenes', async ({ page }, info) => {
+test('Mom: standing casual portrait, face per line, over an empty backdrop, cleared on narration and choices, never stale across scenes', async ({ page }, info) => {
   const errors = trackConsoleErrors(page);
   await toDeparture(page, modeFor(info));
   await stage(page, 'S1_W01_P', 'v2n43');
   const laugh = await story(page, (x) => x.art!.cast.every((c) => c.state === 'shown'), 'home cast loaded');
   expect(laugh.art!.embedded).toEqual([]);
-  expect(shown(laugh)).toContain('caregiver:mom2-casual-laughing');
-  // Same scene, next beat: her expression changes, her outfit does not.
+  expect(shown(laugh)).toContain('caregiver:mom3-casual-smiling');
+  // Same scene, next beat: her face changes, her outfit does not, and no v2 bust is ever loaded.
   const firm = await stage(page, 'S1_W01_P', 'v2n21');
-  expect(shown(firm)).toContain('caregiver:mom2-casual-firm');
+  expect(shown(firm)).toContain('caregiver:mom3-casual-confident');
+  expect(((await diagnostics(page)).textureKeys as readonly string[]).some((k) => k.startsWith('art-v1:mom2-'))).toBe(false);
   // Narration and choices clear every portrait.
   expect(shown(await stage(page, 'S1_W01_P', 'v2n47'))).toEqual([]);
   expect(shown(await stage(page, 'S1_W01_P', 'worry'))).toEqual([]);
@@ -189,7 +190,7 @@ test('Mom v2: casual expression per line over an empty backdrop, cleared on narr
   const tank = await stage(page, 'S1_W02_F', 'v2n3');
   await story(page, (x) => x.art!.backgroundShown && x.art!.cast.every((c) => c.state === 'shown'), 'aquarium loaded');
   expect(tank.art!.embedded).toEqual(['player', 'fish']);
-  expect(shown(await story(page, (x) => x.art!.cast.some((c) => c.visible), 'mom shown'))).toEqual(['caregiver:mom2-casual-neutral']);
+  expect(shown(await story(page, (x) => x.art!.cast.some((c) => c.visible), 'mom shown'))).toEqual(['caregiver:mom3-casual-confident']);
   expect(errors).toEqual([]);
 });
 

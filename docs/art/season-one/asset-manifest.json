@@ -827,6 +827,132 @@
       ],
       "use": "Shown only on story lines where this character is explicitly using a phone",
       "runtime": true
+    },
+    {
+      "assetId": "mom3-casual-confident",
+      "path": "assets/mom-v3/mom_sheet_confident.png",
+      "crop": "left",
+      "sourcePath": "owner chat attachment (standing Mom sheet, confident, 2026-10-26)",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom standing (casual teal overshirt, confident)",
+      "outfitId": "casual",
+      "width": 1448,
+      "height": 1086,
+      "hasAlpha": true,
+      "sha256": "87ec9e1bbb2884cdd6c0f7ded0e0e6840447ef18602d7e1fae153cee1dbbdaee",
+      "sizeBytes": 2210763,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_mom_v3"
+      ],
+      "use": "Mom standalone cutscene portrait (left figure of the sheet, bottom-anchored on a 2:3 canvas)",
+      "runtime": true
+    },
+    {
+      "assetId": "mom3-dressy-confident",
+      "path": "assets/mom-v3/mom_sheet_confident.png",
+      "crop": "right",
+      "sourcePath": "owner chat attachment (standing Mom sheet, confident, 2026-10-26)",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom standing (dressy burgundy wrap top, confident)",
+      "outfitId": "dressy",
+      "width": 1448,
+      "height": 1086,
+      "hasAlpha": true,
+      "sha256": "87ec9e1bbb2884cdd6c0f7ded0e0e6840447ef18602d7e1fae153cee1dbbdaee",
+      "sizeBytes": 2210763,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_mom_v3"
+      ],
+      "use": "Mom standalone cutscene portrait (right figure of the sheet, bottom-anchored on a 2:3 canvas)",
+      "runtime": true
+    },
+    {
+      "assetId": "mom3-casual-worried",
+      "path": "assets/mom-v3/mom_sheet_worried.png",
+      "crop": "left",
+      "sourcePath": "owner chat attachment (standing Mom sheet, worried, 2026-10-26)",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom standing (casual teal overshirt, worried)",
+      "outfitId": "casual",
+      "width": 1448,
+      "height": 1086,
+      "hasAlpha": true,
+      "sha256": "2abc2886f2aa2b3433097a0774390d88cedce7f8b85dc375179c3fbca5370e92",
+      "sizeBytes": 2139949,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_mom_v3"
+      ],
+      "use": "Mom standalone cutscene portrait (left figure of the sheet, bottom-anchored on a 2:3 canvas)",
+      "runtime": true
+    },
+    {
+      "assetId": "mom3-dressy-worried",
+      "path": "assets/mom-v3/mom_sheet_worried.png",
+      "crop": "right",
+      "sourcePath": "owner chat attachment (standing Mom sheet, worried, 2026-10-26)",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom standing (dressy burgundy wrap top, worried)",
+      "outfitId": "dressy",
+      "width": 1448,
+      "height": 1086,
+      "hasAlpha": true,
+      "sha256": "2abc2886f2aa2b3433097a0774390d88cedce7f8b85dc375179c3fbca5370e92",
+      "sizeBytes": 2139949,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_mom_v3"
+      ],
+      "use": "Mom standalone cutscene portrait (right figure of the sheet, bottom-anchored on a 2:3 canvas)",
+      "runtime": true
+    },
+    {
+      "assetId": "mom3-casual-smiling",
+      "path": "assets/mom-v3/mom_sheet_smiling.png",
+      "crop": "left",
+      "sourcePath": "owner chat attachment (standing Mom sheet, smiling, 2026-10-26)",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom standing (casual teal overshirt, smiling)",
+      "outfitId": "casual",
+      "width": 1448,
+      "height": 1086,
+      "hasAlpha": true,
+      "sha256": "de0a14216e33ef733a2c7dbb6c10f8c52e71cd225fefb6d5f6bce034431cf252",
+      "sizeBytes": 2166794,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_mom_v3"
+      ],
+      "use": "Mom standalone cutscene portrait (left figure of the sheet, bottom-anchored on a 2:3 canvas)",
+      "runtime": true
+    },
+    {
+      "assetId": "mom3-dressy-smiling",
+      "path": "assets/mom-v3/mom_sheet_smiling.png",
+      "crop": "right",
+      "sourcePath": "owner chat attachment (standing Mom sheet, smiling, 2026-10-26)",
+      "type": "portrait",
+      "characterId": "caregiver",
+      "label": "Mom standing (dressy burgundy wrap top, smiling)",
+      "outfitId": "dressy",
+      "width": 1448,
+      "height": 1086,
+      "hasAlpha": true,
+      "sha256": "de0a14216e33ef733a2c7dbb6c10f8c52e71cd225fefb6d5f6bce034431cf252",
+      "sizeBytes": 2166794,
+      "status": "REFERENCE_APPROVED",
+      "continuityFlags": [
+        "owner_supplied_mom_v3"
+      ],
+      "use": "Mom standalone cutscene portrait (right figure of the sheet, bottom-anchored on a 2:3 canvas)",
+      "runtime": true
     }
   ]
 }

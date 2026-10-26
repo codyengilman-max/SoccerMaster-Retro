@@ -518,6 +518,54 @@
       "height": 768,
       "masterSha256": "907c80af721dff374500c49e74e9855e0925fc8d76729be52536da3f04fe91cc",
       "bytes": 241390
+    },
+    {
+      "assetId": "mom3-casual-confident",
+      "file": "mom3-casual-confident.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "87ec9e1bbb2884cdd6c0f7ded0e0e6840447ef18602d7e1fae153cee1dbbdaee",
+      "bytes": 273552
+    },
+    {
+      "assetId": "mom3-dressy-confident",
+      "file": "mom3-dressy-confident.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "87ec9e1bbb2884cdd6c0f7ded0e0e6840447ef18602d7e1fae153cee1dbbdaee",
+      "bytes": 258800
+    },
+    {
+      "assetId": "mom3-casual-worried",
+      "file": "mom3-casual-worried.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "2abc2886f2aa2b3433097a0774390d88cedce7f8b85dc375179c3fbca5370e92",
+      "bytes": 261716
+    },
+    {
+      "assetId": "mom3-dressy-worried",
+      "file": "mom3-dressy-worried.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "2abc2886f2aa2b3433097a0774390d88cedce7f8b85dc375179c3fbca5370e92",
+      "bytes": 254224
+    },
+    {
+      "assetId": "mom3-casual-smiling",
+      "file": "mom3-casual-smiling.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "de0a14216e33ef733a2c7dbb6c10f8c52e71cd225fefb6d5f6bce034431cf252",
+      "bytes": 265448
+    },
+    {
+      "assetId": "mom3-dressy-smiling",
+      "file": "mom3-dressy-smiling.webp",
+      "width": 512,
+      "height": 768,
+      "masterSha256": "de0a14216e33ef733a2c7dbb6c10f8c52e71cd225fefb6d5f6bce034431cf252",
+      "bytes": 257410
     }
   ]
 }

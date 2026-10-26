@@ -296,3 +296,9 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Saves: `tt12Run.model = 'ts-1'` marks tactical runs; old runs without it stay readable. runId idempotency and once-per-session credit are unchanged.
 - Mapping of the 108 x 9 routes: `docs/training/TACTICAL_SITUATIONS_MAPPING.md` (generated, test-checked). 328 direct, 433 partial, 211 weak (flagged); weak routes are mostly winger defending and full-back transition/switch, where the library has no seed for that role.
 - Limit: fixtures are partial-participant authored states, not the canonical 18-player match engine. Normal matches are unchanged.
+
+## D54. Standing Mom replaces the v2 bust portraits in cutscenes (owner art, 2026-10-26)
+- The v2 Mom portraits are 512×512 busts padded onto the 512×768 slot, so her head sat 256 px down and she read as short next to Sam and Code. The owner's three standing sheets (confident, worried, smiling; casual teal left, dressy burgundy right) replace them: `mom3-<outfit>-<face>`, head about 65 px from the top.
+- Cut out by alpha only (largest shape per side plus its stray hair pixels), bottom-anchored on one shared 780×1170 canvas so her size and position do not jump when her face changes, then resized to 512×768 with Lanczos (the sheets are not on an integer pixel grid). `scripts/art/build-mom-v3.py`.
+- Outfit still follows the scene (casual by default, dressy set empty). The six scripted beats map to the closest face: neutral/firm → confident, worried → worried, laughing/reassuring/proud → smiling (`MOM_FACE`). No line text or beat changed.
+- The v2 busts stay loadable for the art gallery but are never selected in the story. Phone lines still use `phone-mom-dressy`; scenes that paint Mom into the backdrop still show no portrait.
