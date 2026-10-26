@@ -1,0 +1,254 @@
+[
+  {
+    "file": "01_Protagonists/boy_highlight.png",
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "sha256": "bc7b82759ad5f22e98d41d5e72b2022acafd98515d23a87e51032b696ed41f4a"
+  },
+  {
+    "file": "01_Protagonists/girl_highlight.png",
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "sha256": "cddbd788f1704c06517203d22f13ab2ced974a9c6f90df74090dd7e4928ffb10"
+  },
+  {
+    "file": "02_Teammates/teammate_01.png",
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "sha256": "94c0371e04c2282934ac4be985bb3390cf0e280b8385c6e5efa37447ba789045"
+  },
+  {
+    "file": "02_Teammates/teammate_02.png",
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "sha256": "3f64fa1ccd4d85f38c84c13d8680f7acf913a80adc7324467f2181a26ccfb143"
+  },
+  {
+    "file": "02_Teammates/teammate_03.png",
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "sha256": "dc25b4d9bbb14a30efff6344233d543ed5297eb7b01552ff9e55f3c83e987473"
+  },
+  {
+    "file": "02_Teammates/teammate_04.png",
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "sha256": "a7af0c1e690c7e60c5357ad7552deccf3587fad6f55bdbe56017e3001cf13dbe"
+  },
+  {
+    "file": "02_Teammates/teammate_05.png",
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "sha256": "60626709f85fcea467f55e76a0ee160457a9af0d6189f50e3bf9df3e4866c8b4"
+  },
+  {
+    "file": "02_Teammates/teammate_06.png",
+    "dimensions": [
+      1535,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "sha256": "766ddf41a5b49d74b67be5671bb6a4cecb3686239df71c9d6cec58a3d6100e36"
+  },
+  {
+    "file": "02_Teammates/teammate_07.png",
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "sha256": "0c3388302f2d22272fcf29297cabc2669e0808f31bbc53c4b2e30ff673292126"
+  },
+  {
+    "file": "03_Opponents/opponent_01.png",
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "sha256": "8224c0127b1227bbd1505503d9a6b41e5aef562dc5b328611cc3d665bf9c7523"
+  },
+  {
+    "file": "03_Opponents/opponent_02.png",
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "sha256": "217fc5c323c24bb3c8744b12c62bf58bd4b089c3a908bc8b95bec2e39632cf0c"
+  },
+  {
+    "file": "03_Opponents/opponent_03.png",
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "sha256": "cb0948b7a7fc98661bb5419f5c268bd27a6ded8c89bc631519407b602f778631"
+  },
+  {
+    "file": "03_Opponents/opponent_04.png",
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "sha256": "b96c1da7c3919350dee9c64795902ef9e1668ee6161e963e97fb0cbee7960e6f"
+  },
+  {
+    "file": "03_Opponents/opponent_05.png",
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "sha256": "2caa927a383ecaf163e856442c4619be99e2787c85471e7ca8c9ef989784fabf"
+  },
+  {
+    "file": "03_Opponents/opponent_06.png",
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "sha256": "7fde387544df5e97c64d04f8371f26acf55e4f88994aef5d766d623ccb99aba0"
+  },
+  {
+    "file": "03_Opponents/opponent_07.png",
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "sha256": "adcd026638a5a552612b69d795f4d8dd9c53ceee9bf0827f13d6da8eaaf88952"
+  },
+  {
+    "file": "03_Opponents/opponent_08.png",
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "sha256": "47532a446251494ad9abb87f98b1ce83830bd6fabcf2c7b16a30c120eaff39ec"
+  },
+  {
+    "file": "04_Goalkeepers/home_keeper_keyposes.png",
+    "dimensions": [
+      177,
+      887
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "sha256": "4c30e967edfd079bd53253920dfc3a99f74f0d1ab6fcc62f9800eb038ae02878"
+  },
+  {
+    "file": "04_Goalkeepers/opposition_keeper_keyposes.png",
+    "dimensions": [
+      197,
+      887
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "sha256": "e6d1e4e8e14c7d810c3c6da0a529a2177cc21eda465fc3d3534693942ef1c7e1"
+  },
+  {
+    "file": "05_Roster_References/home_roster.png",
+    "dimensions": [
+      1774,
+      887
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "sha256": "733d0ee4fa66cde46a293fee67bab58b526373f90479b9cf8e2f4b620de2df37"
+  },
+  {
+    "file": "05_Roster_References/opposition_roster.png",
+    "dimensions": [
+      1774,
+      887
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "sha256": "af19f1fe06e76767f373958d43dafd20c1cc449932424dfa01208783aa64c47e"
+  }
+]

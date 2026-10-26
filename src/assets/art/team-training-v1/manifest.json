@@ -1,0 +1,6920 @@
+{
+ "status": "art_review_build_not_shipping_approved",
+ "package": "SoccerMaster_Team_Training_Devin.zip",
+ "inventoryEntries": 21,
+ "cell": [
+  160,
+  160
+ ],
+ "anchor": [
+  80,
+  154
+ ],
+ "rows": [
+  "run",
+  "pass",
+  "receive",
+  "shuffle"
+ ],
+ "columns": 6,
+ "facing": "right three-quarter (mirror for left)",
+ "referenceVisibleHeight": 119.5,
+ "standVisibleHeight": 119.0,
+ "referenceVisibleHeightNote": "median running-row body height in atlas px after per-sheet normalisation on the standing frame, protagonist outline excluded",
+ "keeperPoses": [
+  "stand",
+  "run",
+  "stride",
+  "ready"
+ ],
+ "missingKeeperCycles": [
+  "save",
+  "dive",
+  "catch",
+  "recovery",
+  "throw",
+  "punt"
+ ],
+ "ball": "separate runtime ball; no ball is drawn into these frames",
+ "sources": {
+  "boy_highlight.png": "bc7b82759ad5f22e98d41d5e72b2022acafd98515d23a87e51032b696ed41f4a",
+  "girl_highlight.png": "cddbd788f1704c06517203d22f13ab2ced974a9c6f90df74090dd7e4928ffb10",
+  "teammate_01.png": "94c0371e04c2282934ac4be985bb3390cf0e280b8385c6e5efa37447ba789045",
+  "teammate_02.png": "3f64fa1ccd4d85f38c84c13d8680f7acf913a80adc7324467f2181a26ccfb143",
+  "teammate_03.png": "dc25b4d9bbb14a30efff6344233d543ed5297eb7b01552ff9e55f3c83e987473",
+  "teammate_04.png": "a7af0c1e690c7e60c5357ad7552deccf3587fad6f55bdbe56017e3001cf13dbe",
+  "teammate_05.png": "60626709f85fcea467f55e76a0ee160457a9af0d6189f50e3bf9df3e4866c8b4",
+  "teammate_06.png": "766ddf41a5b49d74b67be5671bb6a4cecb3686239df71c9d6cec58a3d6100e36",
+  "teammate_07.png": "0c3388302f2d22272fcf29297cabc2669e0808f31bbc53c4b2e30ff673292126",
+  "opponent_01.png": "8224c0127b1227bbd1505503d9a6b41e5aef562dc5b328611cc3d665bf9c7523",
+  "opponent_02.png": "217fc5c323c24bb3c8744b12c62bf58bd4b089c3a908bc8b95bec2e39632cf0c",
+  "opponent_03.png": "cb0948b7a7fc98661bb5419f5c268bd27a6ded8c89bc631519407b602f778631",
+  "opponent_04.png": "b96c1da7c3919350dee9c64795902ef9e1668ee6161e963e97fb0cbee7960e6f",
+  "opponent_05.png": "2caa927a383ecaf163e856442c4619be99e2787c85471e7ca8c9ef989784fabf",
+  "opponent_06.png": "7fde387544df5e97c64d04f8371f26acf55e4f88994aef5d766d623ccb99aba0",
+  "opponent_07.png": "adcd026638a5a552612b69d795f4d8dd9c53ceee9bf0827f13d6da8eaaf88952",
+  "opponent_08.png": "47532a446251494ad9abb87f98b1ce83830bd6fabcf2c7b16a30c120eaff39ec",
+  "home_keeper_keyposes.png": "4c30e967edfd079bd53253920dfc3a99f74f0d1ab6fcc62f9800eb038ae02878",
+  "opposition_keeper_keyposes.png": "e6d1e4e8e14c7d810c3c6da0a529a2177cc21eda465fc3d3534693942ef1c7e1",
+  "home_roster.png": "733d0ee4fa66cde46a293fee67bab58b526373f90479b9cf8e2f4b620de2df37",
+  "opposition_roster.png": "af19f1fe06e76767f373958d43dafd20c1cc449932424dfa01208783aa64c47e",
+  "asset_inventory.json": "fd2e15cdb593b4b55f8ca1812b69bf9de21db7ac935100c45686bf6c5df8569a",
+  "START_HERE_DEVIN.md": "30cc9f6a35e27b274d28de48fadecef2c1da2a467edfbe727a22f1a988691345",
+  "DEVIN_PROMPT.txt": "9f160c20f07ec611cd00b2f45507853be42a31aebbf347e378df3f0221d0b628"
+ },
+ "sheets": {
+  "boy": {
+   "kind": "outfield",
+   "side": "home",
+   "protagonist": true,
+   "source": "docs/art/team-training-v1/source/boy_highlight.png",
+   "sourceSha256": "bc7b82759ad5f22e98d41d5e72b2022acafd98515d23a87e51032b696ed41f4a",
+   "file": "boy.png",
+   "sha256": "ccc25be967c399e962fb638ff3e096f3e787aeb28ca55e85a3f8178a0fe7cd47",
+   "scale": 0.52423,
+   "sheetNormalisation": 1.0485,
+   "standSourceHeight": 227.0,
+   "bakedBallCandidates": 0,
+   "frames": [
+    {
+     "index": 0,
+     "row": "run",
+     "column": 1,
+     "sourceRect": [
+      25,
+      15,
+      191,
+      236
+     ],
+     "visibleSourceHeight": 230,
+     "visibleHeight": 120.6,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.446
+    },
+    {
+     "index": 1,
+     "row": "run",
+     "column": 2,
+     "sourceRect": [
+      314,
+      25,
+      153,
+      227
+     ],
+     "visibleSourceHeight": 221,
+     "visibleHeight": 115.9,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.438
+    },
+    {
+     "index": 2,
+     "row": "run",
+     "column": 3,
+     "sourceRect": [
+      547,
+      18,
+      174,
+      234
+     ],
+     "visibleSourceHeight": 228,
+     "visibleHeight": 119.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.264
+    },
+    {
+     "index": 3,
+     "row": "run",
+     "column": 4,
+     "sourceRect": [
+      796,
+      17,
+      180,
+      234
+     ],
+     "visibleSourceHeight": 228,
+     "visibleHeight": 119.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.491
+    },
+    {
+     "index": 4,
+     "row": "run",
+     "column": 5,
+     "sourceRect": [
+      1082,
+      25,
+      145,
+      227
+     ],
+     "visibleSourceHeight": 221,
+     "visibleHeight": 115.9,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.5
+    },
+    {
+     "index": 5,
+     "row": "run",
+     "column": 6,
+     "sourceRect": [
+      1302,
+      16,
+      184,
+      235
+     ],
+     "visibleSourceHeight": 229,
+     "visibleHeight": 120.0,
+     "raisedFoot": true,
+     "clipped": false
+    },
+    {
+     "index": 6,
+     "row": "pass",
+     "column": 1,
+     "sourceRect": [
+      36,
+      268,
+      141,
+      233
+     ],
+     "visibleSourceHeight": 227,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.314
+    },
+    {
+     "index": 7,
+     "row": "pass",
+     "column": 2,
+     "sourceRect": [
+      301,
+      274,
+      164,
+      226
+     ],
+     "visibleSourceHeight": 220,
+     "visibleHeight": 115.3,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.405
+    },
+    {
+     "index": 8,
+     "row": "pass",
+     "column": 3,
+     "sourceRect": [
+      539,
+      275,
+      194,
+      226
+     ],
+     "visibleSourceHeight": 220,
+     "visibleHeight": 115.3,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.419
+    },
+    {
+     "index": 9,
+     "row": "pass",
+     "column": 4,
+     "sourceRect": [
+      785,
+      275,
+      208,
+      227
+     ],
+     "visibleSourceHeight": 221,
+     "visibleHeight": 115.9,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.509
+    },
+    {
+     "index": 10,
+     "row": "pass",
+     "column": 5,
+     "sourceRect": [
+      1051,
+      275,
+      192,
+      227
+     ],
+     "visibleSourceHeight": 221,
+     "visibleHeight": 115.9,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.529
+    },
+    {
+     "index": 11,
+     "row": "pass",
+     "column": 6,
+     "sourceRect": [
+      1337,
+      270,
+      138,
+      232
+     ],
+     "visibleSourceHeight": 226,
+     "visibleHeight": 118.5,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 12,
+     "row": "receive",
+     "column": 1,
+     "sourceRect": [
+      29,
+      526,
+      170,
+      231
+     ],
+     "visibleSourceHeight": 225,
+     "visibleHeight": 118.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.427
+    },
+    {
+     "index": 13,
+     "row": "receive",
+     "column": 2,
+     "sourceRect": [
+      291,
+      527,
+      191,
+      230
+     ],
+     "visibleSourceHeight": 224,
+     "visibleHeight": 117.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.324
+    },
+    {
+     "index": 14,
+     "row": "receive",
+     "column": 3,
+     "sourceRect": [
+      546,
+      518,
+      154,
+      239
+     ],
+     "visibleSourceHeight": 233,
+     "visibleHeight": 122.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.407
+    },
+    {
+     "index": 15,
+     "row": "receive",
+     "column": 4,
+     "sourceRect": [
+      799,
+      526,
+      155,
+      231
+     ],
+     "visibleSourceHeight": 225,
+     "visibleHeight": 118.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.478
+    },
+    {
+     "index": 16,
+     "row": "receive",
+     "column": 5,
+     "sourceRect": [
+      1035,
+      526,
+      214,
+      230
+     ],
+     "visibleSourceHeight": 224,
+     "visibleHeight": 117.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.384
+    },
+    {
+     "index": 17,
+     "row": "receive",
+     "column": 6,
+     "sourceRect": [
+      1326,
+      526,
+      166,
+      230
+     ],
+     "visibleSourceHeight": 224,
+     "visibleHeight": 117.4,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 18,
+     "row": "shuffle",
+     "column": 1,
+     "sourceRect": [
+      29,
+      778,
+      184,
+      218
+     ],
+     "visibleSourceHeight": 212,
+     "visibleHeight": 111.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.375
+    },
+    {
+     "index": 19,
+     "row": "shuffle",
+     "column": 2,
+     "sourceRect": [
+      275,
+      779,
+      197,
+      217
+     ],
+     "visibleSourceHeight": 211,
+     "visibleHeight": 110.6,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.373
+    },
+    {
+     "index": 20,
+     "row": "shuffle",
+     "column": 3,
+     "sourceRect": [
+      553,
+      779,
+      166,
+      218
+     ],
+     "visibleSourceHeight": 212,
+     "visibleHeight": 111.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.133
+    },
+    {
+     "index": 21,
+     "row": "shuffle",
+     "column": 4,
+     "sourceRect": [
+      801,
+      779,
+      167,
+      218
+     ],
+     "visibleSourceHeight": 212,
+     "visibleHeight": 111.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.206
+    },
+    {
+     "index": 22,
+     "row": "shuffle",
+     "column": 5,
+     "sourceRect": [
+      1058,
+      779,
+      195,
+      216
+     ],
+     "visibleSourceHeight": 210,
+     "visibleHeight": 110.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.283
+    },
+    {
+     "index": 23,
+     "row": "shuffle",
+     "column": 6,
+     "sourceRect": [
+      1327,
+      779,
+      166,
+      219
+     ],
+     "visibleSourceHeight": 213,
+     "visibleHeight": 111.7,
+     "raisedFoot": false,
+     "clipped": false
+    }
+   ]
+  },
+  "girl": {
+   "kind": "outfield",
+   "side": "home",
+   "protagonist": true,
+   "source": "docs/art/team-training-v1/source/girl_highlight.png",
+   "sourceSha256": "cddbd788f1704c06517203d22f13ab2ced974a9c6f90df74090dd7e4928ffb10",
+   "file": "girl.png",
+   "sha256": "0a99bc304283b768543ab04f71ae0d94f255aba82c345ae8c8477db311b5ea59",
+   "scale": 0.51515,
+   "sheetNormalisation": 1.0303,
+   "standSourceHeight": 231.0,
+   "bakedBallCandidates": 0,
+   "frames": [
+    {
+     "index": 0,
+     "row": "run",
+     "column": 1,
+     "sourceRect": [
+      31,
+      10,
+      168,
+      236
+     ],
+     "visibleSourceHeight": 230,
+     "visibleHeight": 118.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.363
+    },
+    {
+     "index": 1,
+     "row": "run",
+     "column": 2,
+     "sourceRect": [
+      303,
+      16,
+      161,
+      234
+     ],
+     "visibleSourceHeight": 228,
+     "visibleHeight": 117.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.346
+    },
+    {
+     "index": 2,
+     "row": "run",
+     "column": 3,
+     "sourceRect": [
+      549,
+      13,
+      167,
+      233
+     ],
+     "visibleSourceHeight": 227,
+     "visibleHeight": 116.9,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.325
+    },
+    {
+     "index": 3,
+     "row": "run",
+     "column": 4,
+     "sourceRect": [
+      799,
+      14,
+      182,
+      232
+     ],
+     "visibleSourceHeight": 226,
+     "visibleHeight": 116.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.435
+    },
+    {
+     "index": 4,
+     "row": "run",
+     "column": 5,
+     "sourceRect": [
+      1074,
+      15,
+      160,
+      235
+     ],
+     "visibleSourceHeight": 229,
+     "visibleHeight": 118.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.31
+    },
+    {
+     "index": 5,
+     "row": "run",
+     "column": 6,
+     "sourceRect": [
+      1332,
+      14,
+      157,
+      231
+     ],
+     "visibleSourceHeight": 225,
+     "visibleHeight": 115.9,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 6,
+     "row": "pass",
+     "column": 1,
+     "sourceRect": [
+      31,
+      265,
+      160,
+      237
+     ],
+     "visibleSourceHeight": 231,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.285
+    },
+    {
+     "index": 7,
+     "row": "pass",
+     "column": 2,
+     "sourceRect": [
+      293,
+      265,
+      173,
+      236
+     ],
+     "visibleSourceHeight": 230,
+     "visibleHeight": 118.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.316
+    },
+    {
+     "index": 8,
+     "row": "pass",
+     "column": 3,
+     "sourceRect": [
+      550,
+      267,
+      174,
+      236
+     ],
+     "visibleSourceHeight": 230,
+     "visibleHeight": 118.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.438
+    },
+    {
+     "index": 9,
+     "row": "pass",
+     "column": 4,
+     "sourceRect": [
+      796,
+      267,
+      211,
+      236
+     ],
+     "visibleSourceHeight": 230,
+     "visibleHeight": 118.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.139
+    },
+    {
+     "index": 10,
+     "row": "pass",
+     "column": 5,
+     "sourceRect": [
+      1051,
+      265,
+      204,
+      238
+     ],
+     "visibleSourceHeight": 232,
+     "visibleHeight": 119.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.462
+    },
+    {
+     "index": 11,
+     "row": "pass",
+     "column": 6,
+     "sourceRect": [
+      1323,
+      265,
+      161,
+      237
+     ],
+     "visibleSourceHeight": 231,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 12,
+     "row": "receive",
+     "column": 1,
+     "sourceRect": [
+      34,
+      521,
+      164,
+      235
+     ],
+     "visibleSourceHeight": 229,
+     "visibleHeight": 118.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.439
+    },
+    {
+     "index": 13,
+     "row": "receive",
+     "column": 2,
+     "sourceRect": [
+      289,
+      525,
+      201,
+      233
+     ],
+     "visibleSourceHeight": 227,
+     "visibleHeight": 116.9,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.329
+    },
+    {
+     "index": 14,
+     "row": "receive",
+     "column": 3,
+     "sourceRect": [
+      546,
+      523,
+      154,
+      236
+     ],
+     "visibleSourceHeight": 230,
+     "visibleHeight": 118.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.349
+    },
+    {
+     "index": 15,
+     "row": "receive",
+     "column": 4,
+     "sourceRect": [
+      810,
+      524,
+      174,
+      231
+     ],
+     "visibleSourceHeight": 225,
+     "visibleHeight": 115.9,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.409
+    },
+    {
+     "index": 16,
+     "row": "receive",
+     "column": 5,
+     "sourceRect": [
+      1059,
+      528,
+      213,
+      229
+     ],
+     "visibleSourceHeight": 223,
+     "visibleHeight": 114.9,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.397
+    },
+    {
+     "index": 17,
+     "row": "receive",
+     "column": 6,
+     "sourceRect": [
+      1323,
+      523,
+      172,
+      232
+     ],
+     "visibleSourceHeight": 226,
+     "visibleHeight": 116.4,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 18,
+     "row": "shuffle",
+     "column": 1,
+     "sourceRect": [
+      39,
+      776,
+      173,
+      228
+     ],
+     "visibleSourceHeight": 222,
+     "visibleHeight": 114.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.256
+    },
+    {
+     "index": 19,
+     "row": "shuffle",
+     "column": 2,
+     "sourceRect": [
+      291,
+      777,
+      198,
+      227
+     ],
+     "visibleSourceHeight": 221,
+     "visibleHeight": 113.8,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.285
+    },
+    {
+     "index": 20,
+     "row": "shuffle",
+     "column": 3,
+     "sourceRect": [
+      546,
+      776,
+      164,
+      228
+     ],
+     "visibleSourceHeight": 222,
+     "visibleHeight": 114.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.217
+    },
+    {
+     "index": 21,
+     "row": "shuffle",
+     "column": 4,
+     "sourceRect": [
+      813,
+      775,
+      171,
+      229
+     ],
+     "visibleSourceHeight": 223,
+     "visibleHeight": 114.9,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.271
+    },
+    {
+     "index": 22,
+     "row": "shuffle",
+     "column": 5,
+     "sourceRect": [
+      1054,
+      776,
+      197,
+      228
+     ],
+     "visibleSourceHeight": 222,
+     "visibleHeight": 114.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.311
+    },
+    {
+     "index": 23,
+     "row": "shuffle",
+     "column": 6,
+     "sourceRect": [
+      1334,
+      777,
+      167,
+      227
+     ],
+     "visibleSourceHeight": 221,
+     "visibleHeight": 113.8,
+     "raisedFoot": false,
+     "clipped": false
+    }
+   ]
+  },
+  "teammate_01": {
+   "kind": "outfield",
+   "side": "home",
+   "protagonist": false,
+   "source": "docs/art/team-training-v1/source/teammate_01.png",
+   "sourceSha256": "94c0371e04c2282934ac4be985bb3390cf0e280b8385c6e5efa37447ba789045",
+   "file": "teammate_01.png",
+   "sha256": "ec7a0c1f905e1fcadc1cc10ce77ca35418e36f62f31ef4b5876ccf035fdf1ef5",
+   "scale": 0.47036,
+   "sheetNormalisation": 0.9407,
+   "standSourceHeight": 253.0,
+   "bakedBallCandidates": 0,
+   "frames": [
+    {
+     "index": 0,
+     "row": "run",
+     "column": 1,
+     "sourceRect": [
+      48,
+      18,
+      191,
+      249
+     ],
+     "visibleSourceHeight": 249,
+     "visibleHeight": 117.1,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.174
+    },
+    {
+     "index": 1,
+     "row": "run",
+     "column": 2,
+     "sourceRect": [
+      293,
+      19,
+      188,
+      248
+     ],
+     "visibleSourceHeight": 248,
+     "visibleHeight": 116.6,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.277
+    },
+    {
+     "index": 2,
+     "row": "run",
+     "column": 3,
+     "sourceRect": [
+      538,
+      17,
+      202,
+      248
+     ],
+     "visibleSourceHeight": 248,
+     "visibleHeight": 116.6,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.552
+    },
+    {
+     "index": 3,
+     "row": "run",
+     "column": 4,
+     "sourceRect": [
+      826,
+      19,
+      155,
+      250
+     ],
+     "visibleSourceHeight": 250,
+     "visibleHeight": 117.6,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.498
+    },
+    {
+     "index": 4,
+     "row": "run",
+     "column": 5,
+     "sourceRect": [
+      1041,
+      18,
+      203,
+      249
+     ],
+     "visibleSourceHeight": 249,
+     "visibleHeight": 117.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.328
+    },
+    {
+     "index": 5,
+     "row": "run",
+     "column": 6,
+     "sourceRect": [
+      1295,
+      25,
+      200,
+      242
+     ],
+     "visibleSourceHeight": 242,
+     "visibleHeight": 113.8,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 6,
+     "row": "pass",
+     "column": 1,
+     "sourceRect": [
+      36,
+      277,
+      176,
+      253
+     ],
+     "visibleSourceHeight": 253,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.463
+    },
+    {
+     "index": 7,
+     "row": "pass",
+     "column": 2,
+     "sourceRect": [
+      289,
+      278,
+      186,
+      252
+     ],
+     "visibleSourceHeight": 252,
+     "visibleHeight": 118.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.483
+    },
+    {
+     "index": 8,
+     "row": "pass",
+     "column": 3,
+     "sourceRect": [
+      522,
+      285,
+      216,
+      244
+     ],
+     "visibleSourceHeight": 244,
+     "visibleHeight": 114.8,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.478
+    },
+    {
+     "index": 9,
+     "row": "pass",
+     "column": 4,
+     "sourceRect": [
+      796,
+      290,
+      213,
+      241
+     ],
+     "visibleSourceHeight": 241,
+     "visibleHeight": 113.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.458
+    },
+    {
+     "index": 10,
+     "row": "pass",
+     "column": 5,
+     "sourceRect": [
+      1067,
+      284,
+      209,
+      247
+     ],
+     "visibleSourceHeight": 247,
+     "visibleHeight": 116.2,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.53
+    },
+    {
+     "index": 11,
+     "row": "pass",
+     "column": 6,
+     "sourceRect": [
+      1324,
+      279,
+      159,
+      251
+     ],
+     "visibleSourceHeight": 251,
+     "visibleHeight": 118.1,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 12,
+     "row": "receive",
+     "column": 1,
+     "sourceRect": [
+      37,
+      544,
+      180,
+      244
+     ],
+     "visibleSourceHeight": 244,
+     "visibleHeight": 114.8,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.506
+    },
+    {
+     "index": 13,
+     "row": "receive",
+     "column": 2,
+     "sourceRect": [
+      289,
+      542,
+      203,
+      246
+     ],
+     "visibleSourceHeight": 246,
+     "visibleHeight": 115.7,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.557
+    },
+    {
+     "index": 14,
+     "row": "receive",
+     "column": 3,
+     "sourceRect": [
+      566,
+      540,
+      165,
+      248
+     ],
+     "visibleSourceHeight": 248,
+     "visibleHeight": 116.6,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.279
+    },
+    {
+     "index": 15,
+     "row": "receive",
+     "column": 4,
+     "sourceRect": [
+      805,
+      543,
+      159,
+      245
+     ],
+     "visibleSourceHeight": 245,
+     "visibleHeight": 115.2,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.453
+    },
+    {
+     "index": 16,
+     "row": "receive",
+     "column": 5,
+     "sourceRect": [
+      1043,
+      546,
+      211,
+      242
+     ],
+     "visibleSourceHeight": 242,
+     "visibleHeight": 113.8,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.516
+    },
+    {
+     "index": 17,
+     "row": "receive",
+     "column": 6,
+     "sourceRect": [
+      1300,
+      544,
+      194,
+      243
+     ],
+     "visibleSourceHeight": 243,
+     "visibleHeight": 114.3,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 18,
+     "row": "shuffle",
+     "column": 1,
+     "sourceRect": [
+      36,
+      796,
+      191,
+      215
+     ],
+     "visibleSourceHeight": 215,
+     "visibleHeight": 101.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.294
+    },
+    {
+     "index": 19,
+     "row": "shuffle",
+     "column": 2,
+     "sourceRect": [
+      282,
+      797,
+      205,
+      214
+     ],
+     "visibleSourceHeight": 214,
+     "visibleHeight": 100.7,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.35
+    },
+    {
+     "index": 20,
+     "row": "shuffle",
+     "column": 3,
+     "sourceRect": [
+      543,
+      796,
+      177,
+      215
+     ],
+     "visibleSourceHeight": 215,
+     "visibleHeight": 101.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.27
+    },
+    {
+     "index": 21,
+     "row": "shuffle",
+     "column": 4,
+     "sourceRect": [
+      796,
+      796,
+      191,
+      215
+     ],
+     "visibleSourceHeight": 215,
+     "visibleHeight": 101.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.34
+    },
+    {
+     "index": 22,
+     "row": "shuffle",
+     "column": 5,
+     "sourceRect": [
+      1050,
+      796,
+      202,
+      215
+     ],
+     "visibleSourceHeight": 215,
+     "visibleHeight": 101.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.269
+    },
+    {
+     "index": 23,
+     "row": "shuffle",
+     "column": 6,
+     "sourceRect": [
+      1306,
+      797,
+      194,
+      214
+     ],
+     "visibleSourceHeight": 214,
+     "visibleHeight": 100.7,
+     "raisedFoot": false,
+     "clipped": false
+    }
+   ]
+  },
+  "teammate_02": {
+   "kind": "outfield",
+   "side": "home",
+   "protagonist": false,
+   "source": "docs/art/team-training-v1/source/teammate_02.png",
+   "sourceSha256": "3f64fa1ccd4d85f38c84c13d8680f7acf913a80adc7324467f2181a26ccfb143",
+   "file": "teammate_02.png",
+   "sha256": "7fa0226cfdc501b2b8274bb34543e30d1dff75da06ca22894cee39c614a2276d",
+   "scale": 0.5,
+   "sheetNormalisation": 1.0,
+   "standSourceHeight": 238.0,
+   "bakedBallCandidates": 0,
+   "frames": [
+    {
+     "index": 0,
+     "row": "run",
+     "column": 1,
+     "sourceRect": [
+      33,
+      16,
+      194,
+      239
+     ],
+     "visibleSourceHeight": 239,
+     "visibleHeight": 119.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.459
+    },
+    {
+     "index": 1,
+     "row": "run",
+     "column": 2,
+     "sourceRect": [
+      293,
+      12,
+      219,
+      243
+     ],
+     "visibleSourceHeight": 243,
+     "visibleHeight": 121.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.301
+    },
+    {
+     "index": 2,
+     "row": "run",
+     "column": 3,
+     "sourceRect": [
+      558,
+      11,
+      211,
+      244
+     ],
+     "visibleSourceHeight": 244,
+     "visibleHeight": 122.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.44
+    },
+    {
+     "index": 3,
+     "row": "run",
+     "column": 4,
+     "sourceRect": [
+      828,
+      11,
+      174,
+      244
+     ],
+     "visibleSourceHeight": 244,
+     "visibleHeight": 122.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.366
+    },
+    {
+     "index": 4,
+     "row": "run",
+     "column": 5,
+     "sourceRect": [
+      1038,
+      15,
+      220,
+      240
+     ],
+     "visibleSourceHeight": 240,
+     "visibleHeight": 120.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.281
+    },
+    {
+     "index": 5,
+     "row": "run",
+     "column": 6,
+     "sourceRect": [
+      1307,
+      14,
+      200,
+      241
+     ],
+     "visibleSourceHeight": 241,
+     "visibleHeight": 120.5,
+     "raisedFoot": true,
+     "clipped": false
+    },
+    {
+     "index": 6,
+     "row": "pass",
+     "column": 1,
+     "sourceRect": [
+      36,
+      266,
+      180,
+      238
+     ],
+     "visibleSourceHeight": 238,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.351
+    },
+    {
+     "index": 7,
+     "row": "pass",
+     "column": 2,
+     "sourceRect": [
+      305,
+      270,
+      172,
+      233
+     ],
+     "visibleSourceHeight": 233,
+     "visibleHeight": 116.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.542
+    },
+    {
+     "index": 8,
+     "row": "pass",
+     "column": 3,
+     "sourceRect": [
+      566,
+      266,
+      210,
+      239
+     ],
+     "visibleSourceHeight": 239,
+     "visibleHeight": 119.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.465
+    },
+    {
+     "index": 9,
+     "row": "pass",
+     "column": 4,
+     "sourceRect": [
+      829,
+      270,
+      242,
+      236
+     ],
+     "visibleSourceHeight": 236,
+     "visibleHeight": 118.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.562
+    },
+    {
+     "index": 10,
+     "row": "pass",
+     "column": 5,
+     "sourceRect": [
+      1083,
+      269,
+      200,
+      238
+     ],
+     "visibleSourceHeight": 238,
+     "visibleHeight": 119.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.556
+    },
+    {
+     "index": 11,
+     "row": "pass",
+     "column": 6,
+     "sourceRect": [
+      1337,
+      268,
+      163,
+      238
+     ],
+     "visibleSourceHeight": 238,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 12,
+     "row": "receive",
+     "column": 1,
+     "sourceRect": [
+      29,
+      522,
+      186,
+      243
+     ],
+     "visibleSourceHeight": 243,
+     "visibleHeight": 121.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.476
+    },
+    {
+     "index": 13,
+     "row": "receive",
+     "column": 2,
+     "sourceRect": [
+      293,
+      522,
+      221,
+      242
+     ],
+     "visibleSourceHeight": 242,
+     "visibleHeight": 121.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.419
+    },
+    {
+     "index": 14,
+     "row": "receive",
+     "column": 3,
+     "sourceRect": [
+      577,
+      522,
+      165,
+      237
+     ],
+     "visibleSourceHeight": 237,
+     "visibleHeight": 118.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.473
+    },
+    {
+     "index": 15,
+     "row": "receive",
+     "column": 4,
+     "sourceRect": [
+      824,
+      523,
+      180,
+      244
+     ],
+     "visibleSourceHeight": 244,
+     "visibleHeight": 122.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.306
+    },
+    {
+     "index": 16,
+     "row": "receive",
+     "column": 5,
+     "sourceRect": [
+      1081,
+      527,
+      166,
+      237
+     ],
+     "visibleSourceHeight": 237,
+     "visibleHeight": 118.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.384
+    },
+    {
+     "index": 17,
+     "row": "receive",
+     "column": 6,
+     "sourceRect": [
+      1324,
+      523,
+      183,
+      239
+     ],
+     "visibleSourceHeight": 239,
+     "visibleHeight": 119.5,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 18,
+     "row": "shuffle",
+     "column": 1,
+     "sourceRect": [
+      33,
+      780,
+      196,
+      224
+     ],
+     "visibleSourceHeight": 224,
+     "visibleHeight": 112.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.199
+    },
+    {
+     "index": 19,
+     "row": "shuffle",
+     "column": 2,
+     "sourceRect": [
+      293,
+      779,
+      188,
+      225
+     ],
+     "visibleSourceHeight": 225,
+     "visibleHeight": 112.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.193
+    },
+    {
+     "index": 20,
+     "row": "shuffle",
+     "column": 3,
+     "sourceRect": [
+      548,
+      779,
+      191,
+      225
+     ],
+     "visibleSourceHeight": 225,
+     "visibleHeight": 112.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.24
+    },
+    {
+     "index": 21,
+     "row": "shuffle",
+     "column": 4,
+     "sourceRect": [
+      811,
+      779,
+      189,
+      225
+     ],
+     "visibleSourceHeight": 225,
+     "visibleHeight": 112.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.221
+    },
+    {
+     "index": 22,
+     "row": "shuffle",
+     "column": 5,
+     "sourceRect": [
+      1068,
+      784,
+      195,
+      217
+     ],
+     "visibleSourceHeight": 217,
+     "visibleHeight": 108.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.21
+    },
+    {
+     "index": 23,
+     "row": "shuffle",
+     "column": 6,
+     "sourceRect": [
+      1326,
+      781,
+      182,
+      224
+     ],
+     "visibleSourceHeight": 224,
+     "visibleHeight": 112.0,
+     "raisedFoot": false,
+     "clipped": false
+    }
+   ]
+  },
+  "teammate_03": {
+   "kind": "outfield",
+   "side": "home",
+   "protagonist": false,
+   "source": "docs/art/team-training-v1/source/teammate_03.png",
+   "sourceSha256": "dc25b4d9bbb14a30efff6344233d543ed5297eb7b01552ff9e55f3c83e987473",
+   "file": "teammate_03.png",
+   "sha256": "0bf3ae2c6166ba54c174e06e627b4ec8a73d2c133ec62892996835a9c7535f83",
+   "scale": 0.48571,
+   "sheetNormalisation": 0.9714,
+   "standSourceHeight": 245.0,
+   "bakedBallCandidates": 0,
+   "frames": [
+    {
+     "index": 0,
+     "row": "run",
+     "column": 1,
+     "sourceRect": [
+      37,
+      23,
+      222,
+      261
+     ],
+     "visibleSourceHeight": 261,
+     "visibleHeight": 126.8,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.26
+    },
+    {
+     "index": 1,
+     "row": "run",
+     "column": 2,
+     "sourceRect": [
+      293,
+      23,
+      222,
+      264
+     ],
+     "visibleSourceHeight": 264,
+     "visibleHeight": 128.2,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.419
+    },
+    {
+     "index": 2,
+     "row": "run",
+     "column": 3,
+     "sourceRect": [
+      573,
+      23,
+      195,
+      262
+     ],
+     "visibleSourceHeight": 262,
+     "visibleHeight": 127.3,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.467
+    },
+    {
+     "index": 3,
+     "row": "run",
+     "column": 4,
+     "sourceRect": [
+      791,
+      22,
+      240,
+      263
+     ],
+     "visibleSourceHeight": 263,
+     "visibleHeight": 127.7,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.38
+    },
+    {
+     "index": 4,
+     "row": "run",
+     "column": 5,
+     "sourceRect": [
+      1082,
+      25,
+      184,
+      263
+     ],
+     "visibleSourceHeight": 263,
+     "visibleHeight": 127.7,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.303
+    },
+    {
+     "index": 5,
+     "row": "run",
+     "column": 6,
+     "sourceRect": [
+      1296,
+      23,
+      216,
+      261
+     ],
+     "visibleSourceHeight": 261,
+     "visibleHeight": 126.8,
+     "raisedFoot": true,
+     "clipped": false
+    },
+    {
+     "index": 6,
+     "row": "pass",
+     "column": 1,
+     "sourceRect": [
+      30,
+      298,
+      179,
+      245
+     ],
+     "visibleSourceHeight": 245,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.388
+    },
+    {
+     "index": 7,
+     "row": "pass",
+     "column": 2,
+     "sourceRect": [
+      281,
+      298,
+      200,
+      247
+     ],
+     "visibleSourceHeight": 247,
+     "visibleHeight": 120.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.483
+    },
+    {
+     "index": 8,
+     "row": "pass",
+     "column": 3,
+     "sourceRect": [
+      529,
+      294,
+      239,
+      252
+     ],
+     "visibleSourceHeight": 252,
+     "visibleHeight": 122.4,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.282
+    },
+    {
+     "index": 9,
+     "row": "pass",
+     "column": 4,
+     "sourceRect": [
+      772,
+      297,
+      252,
+      249
+     ],
+     "visibleSourceHeight": 249,
+     "visibleHeight": 120.9,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.402
+    },
+    {
+     "index": 10,
+     "row": "pass",
+     "column": 5,
+     "sourceRect": [
+      1068,
+      303,
+      227,
+      242
+     ],
+     "visibleSourceHeight": 242,
+     "visibleHeight": 117.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.528
+    },
+    {
+     "index": 11,
+     "row": "pass",
+     "column": 6,
+     "sourceRect": [
+      1328,
+      294,
+      164,
+      252
+     ],
+     "visibleSourceHeight": 252,
+     "visibleHeight": 122.4,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 12,
+     "row": "receive",
+     "column": 1,
+     "sourceRect": [
+      30,
+      555,
+      191,
+      242
+     ],
+     "visibleSourceHeight": 242,
+     "visibleHeight": 117.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.559
+    },
+    {
+     "index": 13,
+     "row": "receive",
+     "column": 2,
+     "sourceRect": [
+      268,
+      559,
+      251,
+      240
+     ],
+     "visibleSourceHeight": 240,
+     "visibleHeight": 116.6,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.494
+    },
+    {
+     "index": 14,
+     "row": "receive",
+     "column": 3,
+     "sourceRect": [
+      575,
+      559,
+      166,
+      240
+     ],
+     "visibleSourceHeight": 240,
+     "visibleHeight": 116.6,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.452
+    },
+    {
+     "index": 15,
+     "row": "receive",
+     "column": 4,
+     "sourceRect": [
+      795,
+      559,
+      184,
+      235
+     ],
+     "visibleSourceHeight": 235,
+     "visibleHeight": 114.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.478
+    },
+    {
+     "index": 16,
+     "row": "receive",
+     "column": 5,
+     "sourceRect": [
+      1033,
+      555,
+      213,
+      244
+     ],
+     "visibleSourceHeight": 244,
+     "visibleHeight": 118.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.538
+    },
+    {
+     "index": 17,
+     "row": "receive",
+     "column": 6,
+     "sourceRect": [
+      1293,
+      561,
+      202,
+      236
+     ],
+     "visibleSourceHeight": 236,
+     "visibleHeight": 114.6,
+     "raisedFoot": true,
+     "clipped": false
+    },
+    {
+     "index": 18,
+     "row": "shuffle",
+     "column": 1,
+     "sourceRect": [
+      36,
+      806,
+      199,
+      202
+     ],
+     "visibleSourceHeight": 202,
+     "visibleHeight": 98.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.292
+    },
+    {
+     "index": 19,
+     "row": "shuffle",
+     "column": 2,
+     "sourceRect": [
+      280,
+      807,
+      216,
+      201
+     ],
+     "visibleSourceHeight": 201,
+     "visibleHeight": 97.6,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.417
+    },
+    {
+     "index": 20,
+     "row": "shuffle",
+     "column": 3,
+     "sourceRect": [
+      553,
+      808,
+      167,
+      200
+     ],
+     "visibleSourceHeight": 200,
+     "visibleHeight": 97.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.355
+    },
+    {
+     "index": 21,
+     "row": "shuffle",
+     "column": 4,
+     "sourceRect": [
+      791,
+      805,
+      191,
+      203
+     ],
+     "visibleSourceHeight": 203,
+     "visibleHeight": 98.6,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.364
+    },
+    {
+     "index": 22,
+     "row": "shuffle",
+     "column": 5,
+     "sourceRect": [
+      1059,
+      808,
+      194,
+      198
+     ],
+     "visibleSourceHeight": 198,
+     "visibleHeight": 96.2,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.207
+    },
+    {
+     "index": 23,
+     "row": "shuffle",
+     "column": 6,
+     "sourceRect": [
+      1305,
+      806,
+      191,
+      201
+     ],
+     "visibleSourceHeight": 201,
+     "visibleHeight": 97.6,
+     "raisedFoot": false,
+     "clipped": false
+    }
+   ]
+  },
+  "teammate_04": {
+   "kind": "outfield",
+   "side": "home",
+   "protagonist": false,
+   "source": "docs/art/team-training-v1/source/teammate_04.png",
+   "sourceSha256": "a7af0c1e690c7e60c5357ad7552deccf3587fad6f55bdbe56017e3001cf13dbe",
+   "file": "teammate_04.png",
+   "sha256": "982f4a44e2fa39fc4c0ff98f6cca23e896848273ff0f8d1c43e0554524c8bef8",
+   "scale": 0.48374,
+   "sheetNormalisation": 0.9675,
+   "standSourceHeight": 246.0,
+   "bakedBallCandidates": 0,
+   "frames": [
+    {
+     "index": 0,
+     "row": "run",
+     "column": 1,
+     "sourceRect": [
+      43,
+      16,
+      197,
+      252
+     ],
+     "visibleSourceHeight": 252,
+     "visibleHeight": 121.9,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.216
+    },
+    {
+     "index": 1,
+     "row": "run",
+     "column": 2,
+     "sourceRect": [
+      303,
+      16,
+      200,
+      253
+     ],
+     "visibleSourceHeight": 253,
+     "visibleHeight": 122.4,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.283
+    },
+    {
+     "index": 2,
+     "row": "run",
+     "column": 3,
+     "sourceRect": [
+      559,
+      14,
+      202,
+      253
+     ],
+     "visibleSourceHeight": 253,
+     "visibleHeight": 122.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.483
+    },
+    {
+     "index": 3,
+     "row": "run",
+     "column": 4,
+     "sourceRect": [
+      839,
+      16,
+      167,
+      258
+     ],
+     "visibleSourceHeight": 258,
+     "visibleHeight": 124.8,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.458
+    },
+    {
+     "index": 4,
+     "row": "run",
+     "column": 5,
+     "sourceRect": [
+      1050,
+      15,
+      198,
+      251
+     ],
+     "visibleSourceHeight": 251,
+     "visibleHeight": 121.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.33
+    },
+    {
+     "index": 5,
+     "row": "run",
+     "column": 6,
+     "sourceRect": [
+      1302,
+      16,
+      201,
+      256
+     ],
+     "visibleSourceHeight": 256,
+     "visibleHeight": 123.8,
+     "raisedFoot": true,
+     "clipped": false
+    },
+    {
+     "index": 6,
+     "row": "pass",
+     "column": 1,
+     "sourceRect": [
+      50,
+      280,
+      158,
+      246
+     ],
+     "visibleSourceHeight": 246,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.319
+    },
+    {
+     "index": 7,
+     "row": "pass",
+     "column": 2,
+     "sourceRect": [
+      297,
+      280,
+      175,
+      239
+     ],
+     "visibleSourceHeight": 239,
+     "visibleHeight": 115.6,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.566
+    },
+    {
+     "index": 8,
+     "row": "pass",
+     "column": 3,
+     "sourceRect": [
+      531,
+      280,
+      217,
+      247
+     ],
+     "visibleSourceHeight": 247,
+     "visibleHeight": 119.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.396
+    },
+    {
+     "index": 9,
+     "row": "pass",
+     "column": 4,
+     "sourceRect": [
+      795,
+      285,
+      209,
+      242
+     ],
+     "visibleSourceHeight": 242,
+     "visibleHeight": 117.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.481
+    },
+    {
+     "index": 10,
+     "row": "pass",
+     "column": 5,
+     "sourceRect": [
+      1045,
+      281,
+      235,
+      245
+     ],
+     "visibleSourceHeight": 245,
+     "visibleHeight": 118.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.588
+    },
+    {
+     "index": 11,
+     "row": "pass",
+     "column": 6,
+     "sourceRect": [
+      1329,
+      281,
+      157,
+      241
+     ],
+     "visibleSourceHeight": 241,
+     "visibleHeight": 116.6,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 12,
+     "row": "receive",
+     "column": 1,
+     "sourceRect": [
+      41,
+      538,
+      174,
+      241
+     ],
+     "visibleSourceHeight": 241,
+     "visibleHeight": 116.6,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.544
+    },
+    {
+     "index": 13,
+     "row": "receive",
+     "column": 2,
+     "sourceRect": [
+      286,
+      538,
+      212,
+      242
+     ],
+     "visibleSourceHeight": 242,
+     "visibleHeight": 117.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.308
+    },
+    {
+     "index": 14,
+     "row": "receive",
+     "column": 3,
+     "sourceRect": [
+      561,
+      537,
+      159,
+      242
+     ],
+     "visibleSourceHeight": 242,
+     "visibleHeight": 117.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.433
+    },
+    {
+     "index": 15,
+     "row": "receive",
+     "column": 4,
+     "sourceRect": [
+      798,
+      538,
+      176,
+      243
+     ],
+     "visibleSourceHeight": 243,
+     "visibleHeight": 117.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.403
+    },
+    {
+     "index": 16,
+     "row": "receive",
+     "column": 5,
+     "sourceRect": [
+      1058,
+      538,
+      191,
+      237
+     ],
+     "visibleSourceHeight": 237,
+     "visibleHeight": 114.6,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.499
+    },
+    {
+     "index": 17,
+     "row": "receive",
+     "column": 6,
+     "sourceRect": [
+      1327,
+      540,
+      165,
+      237
+     ],
+     "visibleSourceHeight": 237,
+     "visibleHeight": 114.6,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 18,
+     "row": "shuffle",
+     "column": 1,
+     "sourceRect": [
+      38,
+      789,
+      188,
+      216
+     ],
+     "visibleSourceHeight": 216,
+     "visibleHeight": 104.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.46
+    },
+    {
+     "index": 19,
+     "row": "shuffle",
+     "column": 2,
+     "sourceRect": [
+      278,
+      788,
+      211,
+      220
+     ],
+     "visibleSourceHeight": 220,
+     "visibleHeight": 106.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.428
+    },
+    {
+     "index": 20,
+     "row": "shuffle",
+     "column": 3,
+     "sourceRect": [
+      547,
+      790,
+      183,
+      215
+     ],
+     "visibleSourceHeight": 215,
+     "visibleHeight": 104.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.204
+    },
+    {
+     "index": 21,
+     "row": "shuffle",
+     "column": 4,
+     "sourceRect": [
+      810,
+      790,
+      178,
+      218
+     ],
+     "visibleSourceHeight": 218,
+     "visibleHeight": 105.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.486
+    },
+    {
+     "index": 22,
+     "row": "shuffle",
+     "column": 5,
+     "sourceRect": [
+      1066,
+      788,
+      215,
+      220
+     ],
+     "visibleSourceHeight": 220,
+     "visibleHeight": 106.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.316
+    },
+    {
+     "index": 23,
+     "row": "shuffle",
+     "column": 6,
+     "sourceRect": [
+      1319,
+      787,
+      188,
+      218
+     ],
+     "visibleSourceHeight": 218,
+     "visibleHeight": 105.5,
+     "raisedFoot": false,
+     "clipped": false
+    }
+   ]
+  },
+  "teammate_05": {
+   "kind": "outfield",
+   "side": "home",
+   "protagonist": false,
+   "source": "docs/art/team-training-v1/source/teammate_05.png",
+   "sourceSha256": "60626709f85fcea467f55e76a0ee160457a9af0d6189f50e3bf9df3e4866c8b4",
+   "file": "teammate_05.png",
+   "sha256": "648552dab468d357130979d00f281338f9749b32d9697bc6fcd9c21db61068b4",
+   "scale": 0.53604,
+   "sheetNormalisation": 1.0721,
+   "standSourceHeight": 222.0,
+   "bakedBallCandidates": 0,
+   "frames": [
+    {
+     "index": 0,
+     "row": "run",
+     "column": 1,
+     "sourceRect": [
+      38,
+      32,
+      169,
+      220
+     ],
+     "visibleSourceHeight": 220,
+     "visibleHeight": 117.9,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.421
+    },
+    {
+     "index": 1,
+     "row": "run",
+     "column": 2,
+     "sourceRect": [
+      281,
+      30,
+      179,
+      222
+     ],
+     "visibleSourceHeight": 222,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.431
+    },
+    {
+     "index": 2,
+     "row": "run",
+     "column": 3,
+     "sourceRect": [
+      537,
+      31,
+      167,
+      215
+     ],
+     "visibleSourceHeight": 215,
+     "visibleHeight": 115.2,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.53
+    },
+    {
+     "index": 3,
+     "row": "run",
+     "column": 4,
+     "sourceRect": [
+      784,
+      28,
+      197,
+      224
+     ],
+     "visibleSourceHeight": 224,
+     "visibleHeight": 120.1,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.317
+    },
+    {
+     "index": 4,
+     "row": "run",
+     "column": 5,
+     "sourceRect": [
+      1043,
+      26,
+      193,
+      223
+     ],
+     "visibleSourceHeight": 223,
+     "visibleHeight": 119.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.32
+    },
+    {
+     "index": 5,
+     "row": "run",
+     "column": 6,
+     "sourceRect": [
+      1304,
+      31,
+      184,
+      219
+     ],
+     "visibleSourceHeight": 219,
+     "visibleHeight": 117.4,
+     "raisedFoot": true,
+     "clipped": false
+    },
+    {
+     "index": 6,
+     "row": "pass",
+     "column": 1,
+     "sourceRect": [
+      38,
+      278,
+      147,
+      222
+     ],
+     "visibleSourceHeight": 222,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.438
+    },
+    {
+     "index": 7,
+     "row": "pass",
+     "column": 2,
+     "sourceRect": [
+      283,
+      281,
+      183,
+      220
+     ],
+     "visibleSourceHeight": 220,
+     "visibleHeight": 117.9,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.488
+    },
+    {
+     "index": 8,
+     "row": "pass",
+     "column": 3,
+     "sourceRect": [
+      530,
+      281,
+      193,
+      220
+     ],
+     "visibleSourceHeight": 220,
+     "visibleHeight": 117.9,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.441
+    },
+    {
+     "index": 9,
+     "row": "pass",
+     "column": 4,
+     "sourceRect": [
+      806,
+      283,
+      185,
+      219
+     ],
+     "visibleSourceHeight": 219,
+     "visibleHeight": 117.4,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.421
+    },
+    {
+     "index": 10,
+     "row": "pass",
+     "column": 5,
+     "sourceRect": [
+      1057,
+      285,
+      214,
+      217
+     ],
+     "visibleSourceHeight": 217,
+     "visibleHeight": 116.3,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.497
+    },
+    {
+     "index": 11,
+     "row": "pass",
+     "column": 6,
+     "sourceRect": [
+      1331,
+      284,
+      150,
+      218
+     ],
+     "visibleSourceHeight": 218,
+     "visibleHeight": 116.9,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 12,
+     "row": "receive",
+     "column": 1,
+     "sourceRect": [
+      45,
+      527,
+      159,
+      229
+     ],
+     "visibleSourceHeight": 229,
+     "visibleHeight": 122.8,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.507
+    },
+    {
+     "index": 13,
+     "row": "receive",
+     "column": 2,
+     "sourceRect": [
+      295,
+      525,
+      192,
+      231
+     ],
+     "visibleSourceHeight": 231,
+     "visibleHeight": 123.8,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.344
+    },
+    {
+     "index": 14,
+     "row": "receive",
+     "column": 3,
+     "sourceRect": [
+      556,
+      528,
+      155,
+      228
+     ],
+     "visibleSourceHeight": 228,
+     "visibleHeight": 122.2,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.456
+    },
+    {
+     "index": 15,
+     "row": "receive",
+     "column": 4,
+     "sourceRect": [
+      803,
+      525,
+      172,
+      231
+     ],
+     "visibleSourceHeight": 231,
+     "visibleHeight": 123.8,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.47
+    },
+    {
+     "index": 16,
+     "row": "receive",
+     "column": 5,
+     "sourceRect": [
+      1066,
+      528,
+      182,
+      226
+     ],
+     "visibleSourceHeight": 226,
+     "visibleHeight": 121.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.495
+    },
+    {
+     "index": 17,
+     "row": "receive",
+     "column": 6,
+     "sourceRect": [
+      1325,
+      528,
+      168,
+      226
+     ],
+     "visibleSourceHeight": 226,
+     "visibleHeight": 121.1,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 18,
+     "row": "shuffle",
+     "column": 1,
+     "sourceRect": [
+      32,
+      784,
+      169,
+      208
+     ],
+     "visibleSourceHeight": 208,
+     "visibleHeight": 111.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.355
+    },
+    {
+     "index": 19,
+     "row": "shuffle",
+     "column": 2,
+     "sourceRect": [
+      282,
+      781,
+      201,
+      211
+     ],
+     "visibleSourceHeight": 211,
+     "visibleHeight": 113.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.166
+    },
+    {
+     "index": 20,
+     "row": "shuffle",
+     "column": 3,
+     "sourceRect": [
+      543,
+      782,
+      200,
+      212
+     ],
+     "visibleSourceHeight": 212,
+     "visibleHeight": 113.6,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.445
+    },
+    {
+     "index": 21,
+     "row": "shuffle",
+     "column": 4,
+     "sourceRect": [
+      811,
+      781,
+      178,
+      213
+     ],
+     "visibleSourceHeight": 213,
+     "visibleHeight": 114.2,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.358
+    },
+    {
+     "index": 22,
+     "row": "shuffle",
+     "column": 5,
+     "sourceRect": [
+      1091,
+      786,
+      180,
+      208
+     ],
+     "visibleSourceHeight": 208,
+     "visibleHeight": 111.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.428
+    },
+    {
+     "index": 23,
+     "row": "shuffle",
+     "column": 6,
+     "sourceRect": [
+      1331,
+      781,
+      173,
+      213
+     ],
+     "visibleSourceHeight": 213,
+     "visibleHeight": 114.2,
+     "raisedFoot": false,
+     "clipped": false
+    }
+   ]
+  },
+  "teammate_06": {
+   "kind": "outfield",
+   "side": "home",
+   "protagonist": false,
+   "source": "docs/art/team-training-v1/source/teammate_06.png",
+   "sourceSha256": "766ddf41a5b49d74b67be5671bb6a4cecb3686239df71c9d6cec58a3d6100e36",
+   "file": "teammate_06.png",
+   "sha256": "8fd4875b6cd2b28a793bf36f446348e1db263c7f3afeb498ea0d1b72437c6532",
+   "scale": 0.4877,
+   "sheetNormalisation": 0.9754,
+   "standSourceHeight": 244.0,
+   "bakedBallCandidates": 0,
+   "frames": [
+    {
+     "index": 0,
+     "row": "run",
+     "column": 1,
+     "sourceRect": [
+      41,
+      15,
+      203,
+      243
+     ],
+     "visibleSourceHeight": 243,
+     "visibleHeight": 118.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.404
+    },
+    {
+     "index": 1,
+     "row": "run",
+     "column": 2,
+     "sourceRect": [
+      320,
+      15,
+      187,
+      243
+     ],
+     "visibleSourceHeight": 243,
+     "visibleHeight": 118.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.371
+    },
+    {
+     "index": 2,
+     "row": "run",
+     "column": 3,
+     "sourceRect": [
+      561,
+      17,
+      195,
+      241
+     ],
+     "visibleSourceHeight": 241,
+     "visibleHeight": 117.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.251
+    },
+    {
+     "index": 3,
+     "row": "run",
+     "column": 4,
+     "sourceRect": [
+      815,
+      16,
+      197,
+      242
+     ],
+     "visibleSourceHeight": 242,
+     "visibleHeight": 118.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.186
+    },
+    {
+     "index": 4,
+     "row": "run",
+     "column": 5,
+     "sourceRect": [
+      1073,
+      19,
+      200,
+      239
+     ],
+     "visibleSourceHeight": 239,
+     "visibleHeight": 116.6,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.226
+    },
+    {
+     "index": 5,
+     "row": "run",
+     "column": 6,
+     "sourceRect": [
+      1327,
+      19,
+      197,
+      239
+     ],
+     "visibleSourceHeight": 239,
+     "visibleHeight": 116.6,
+     "raisedFoot": true,
+     "clipped": false
+    },
+    {
+     "index": 6,
+     "row": "pass",
+     "column": 1,
+     "sourceRect": [
+      41,
+      269,
+      185,
+      244
+     ],
+     "visibleSourceHeight": 244,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.256
+    },
+    {
+     "index": 7,
+     "row": "pass",
+     "column": 2,
+     "sourceRect": [
+      284,
+      270,
+      202,
+      242
+     ],
+     "visibleSourceHeight": 242,
+     "visibleHeight": 118.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.392
+    },
+    {
+     "index": 8,
+     "row": "pass",
+     "column": 3,
+     "sourceRect": [
+      537,
+      270,
+      225,
+      241
+     ],
+     "visibleSourceHeight": 241,
+     "visibleHeight": 117.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.433
+    },
+    {
+     "index": 9,
+     "row": "pass",
+     "column": 4,
+     "sourceRect": [
+      793,
+      274,
+      236,
+      238
+     ],
+     "visibleSourceHeight": 238,
+     "visibleHeight": 116.1,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.417
+    },
+    {
+     "index": 10,
+     "row": "pass",
+     "column": 5,
+     "sourceRect": [
+      1062,
+      272,
+      249,
+      241
+     ],
+     "visibleSourceHeight": 241,
+     "visibleHeight": 117.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.5
+    },
+    {
+     "index": 11,
+     "row": "pass",
+     "column": 6,
+     "sourceRect": [
+      1326,
+      269,
+      185,
+      243
+     ],
+     "visibleSourceHeight": 243,
+     "visibleHeight": 118.5,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 12,
+     "row": "receive",
+     "column": 1,
+     "sourceRect": [
+      30,
+      522,
+      196,
+      247
+     ],
+     "visibleSourceHeight": 247,
+     "visibleHeight": 120.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.351
+    },
+    {
+     "index": 13,
+     "row": "receive",
+     "column": 2,
+     "sourceRect": [
+      288,
+      524,
+      223,
+      246
+     ],
+     "visibleSourceHeight": 246,
+     "visibleHeight": 120.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.287
+    },
+    {
+     "index": 14,
+     "row": "receive",
+     "column": 3,
+     "sourceRect": [
+      558,
+      522,
+      193,
+      248
+     ],
+     "visibleSourceHeight": 248,
+     "visibleHeight": 121.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.393
+    },
+    {
+     "index": 15,
+     "row": "receive",
+     "column": 4,
+     "sourceRect": [
+      820,
+      529,
+      188,
+      241
+     ],
+     "visibleSourceHeight": 241,
+     "visibleHeight": 117.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.368
+    },
+    {
+     "index": 16,
+     "row": "receive",
+     "column": 5,
+     "sourceRect": [
+      1076,
+      535,
+      186,
+      235
+     ],
+     "visibleSourceHeight": 235,
+     "visibleHeight": 114.6,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.372
+    },
+    {
+     "index": 17,
+     "row": "receive",
+     "column": 6,
+     "sourceRect": [
+      1318,
+      523,
+      184,
+      247
+     ],
+     "visibleSourceHeight": 247,
+     "visibleHeight": 120.5,
+     "raisedFoot": true,
+     "clipped": false
+    },
+    {
+     "index": 18,
+     "row": "shuffle",
+     "column": 1,
+     "sourceRect": [
+      42,
+      779,
+      198,
+      227
+     ],
+     "visibleSourceHeight": 227,
+     "visibleHeight": 110.7,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.33
+    },
+    {
+     "index": 19,
+     "row": "shuffle",
+     "column": 2,
+     "sourceRect": [
+      291,
+      786,
+      214,
+      219
+     ],
+     "visibleSourceHeight": 219,
+     "visibleHeight": 106.8,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.322
+    },
+    {
+     "index": 20,
+     "row": "shuffle",
+     "column": 3,
+     "sourceRect": [
+      543,
+      785,
+      211,
+      219
+     ],
+     "visibleSourceHeight": 219,
+     "visibleHeight": 106.8,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.224
+    },
+    {
+     "index": 21,
+     "row": "shuffle",
+     "column": 4,
+     "sourceRect": [
+      809,
+      785,
+      191,
+      223
+     ],
+     "visibleSourceHeight": 223,
+     "visibleHeight": 108.8,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.365
+    },
+    {
+     "index": 22,
+     "row": "shuffle",
+     "column": 5,
+     "sourceRect": [
+      1045,
+      796,
+      224,
+      209
+     ],
+     "visibleSourceHeight": 209,
+     "visibleHeight": 101.9,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.365
+    },
+    {
+     "index": 23,
+     "row": "shuffle",
+     "column": 6,
+     "sourceRect": [
+      1315,
+      786,
+      187,
+      220
+     ],
+     "visibleSourceHeight": 220,
+     "visibleHeight": 107.3,
+     "raisedFoot": false,
+     "clipped": false
+    }
+   ]
+  },
+  "teammate_07": {
+   "kind": "outfield",
+   "side": "home",
+   "protagonist": false,
+   "source": "docs/art/team-training-v1/source/teammate_07.png",
+   "sourceSha256": "0c3388302f2d22272fcf29297cabc2669e0808f31bbc53c4b2e30ff673292126",
+   "file": "teammate_07.png",
+   "sha256": "446d565912efd57eee2ea45a8ad5dba341957330d2d8756df8ddb143281736a3",
+   "scale": 0.51515,
+   "sheetNormalisation": 1.0303,
+   "standSourceHeight": 231.0,
+   "bakedBallCandidates": 0,
+   "frames": [
+    {
+     "index": 0,
+     "row": "run",
+     "column": 1,
+     "sourceRect": [
+      39,
+      19,
+      178,
+      244
+     ],
+     "visibleSourceHeight": 244,
+     "visibleHeight": 125.7,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.408
+    },
+    {
+     "index": 1,
+     "row": "run",
+     "column": 2,
+     "sourceRect": [
+      288,
+      18,
+      202,
+      244
+     ],
+     "visibleSourceHeight": 244,
+     "visibleHeight": 125.7,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.433
+    },
+    {
+     "index": 2,
+     "row": "run",
+     "column": 3,
+     "sourceRect": [
+      553,
+      19,
+      191,
+      241
+     ],
+     "visibleSourceHeight": 241,
+     "visibleHeight": 124.2,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.181
+    },
+    {
+     "index": 3,
+     "row": "run",
+     "column": 4,
+     "sourceRect": [
+      824,
+      18,
+      191,
+      243
+     ],
+     "visibleSourceHeight": 243,
+     "visibleHeight": 125.2,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.326
+    },
+    {
+     "index": 4,
+     "row": "run",
+     "column": 5,
+     "sourceRect": [
+      1097,
+      21,
+      182,
+      239
+     ],
+     "visibleSourceHeight": 239,
+     "visibleHeight": 123.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.287
+    },
+    {
+     "index": 5,
+     "row": "run",
+     "column": 6,
+     "sourceRect": [
+      1339,
+      17,
+      172,
+      246
+     ],
+     "visibleSourceHeight": 246,
+     "visibleHeight": 126.7,
+     "raisedFoot": true,
+     "clipped": false
+    },
+    {
+     "index": 6,
+     "row": "pass",
+     "column": 1,
+     "sourceRect": [
+      32,
+      278,
+      172,
+      231
+     ],
+     "visibleSourceHeight": 231,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.214
+    },
+    {
+     "index": 7,
+     "row": "pass",
+     "column": 2,
+     "sourceRect": [
+      277,
+      278,
+      170,
+      231
+     ],
+     "visibleSourceHeight": 231,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.545
+    },
+    {
+     "index": 8,
+     "row": "pass",
+     "column": 3,
+     "sourceRect": [
+      546,
+      278,
+      182,
+      231
+     ],
+     "visibleSourceHeight": 231,
+     "visibleHeight": 119.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.495
+    },
+    {
+     "index": 9,
+     "row": "pass",
+     "column": 4,
+     "sourceRect": [
+      765,
+      278,
+      228,
+      231
+     ],
+     "visibleSourceHeight": 231,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.272
+    },
+    {
+     "index": 10,
+     "row": "pass",
+     "column": 5,
+     "sourceRect": [
+      1028,
+      278,
+      221,
+      230
+     ],
+     "visibleSourceHeight": 230,
+     "visibleHeight": 118.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.564
+    },
+    {
+     "index": 11,
+     "row": "pass",
+     "column": 6,
+     "sourceRect": [
+      1299,
+      278,
+      171,
+      233
+     ],
+     "visibleSourceHeight": 233,
+     "visibleHeight": 120.0,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 12,
+     "row": "receive",
+     "column": 1,
+     "sourceRect": [
+      27,
+      527,
+      175,
+      237
+     ],
+     "visibleSourceHeight": 237,
+     "visibleHeight": 122.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.518
+    },
+    {
+     "index": 13,
+     "row": "receive",
+     "column": 2,
+     "sourceRect": [
+      314,
+      530,
+      187,
+      233
+     ],
+     "visibleSourceHeight": 233,
+     "visibleHeight": 120.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.335
+    },
+    {
+     "index": 14,
+     "row": "receive",
+     "column": 3,
+     "sourceRect": [
+      561,
+      530,
+      172,
+      234
+     ],
+     "visibleSourceHeight": 234,
+     "visibleHeight": 120.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.324
+    },
+    {
+     "index": 15,
+     "row": "receive",
+     "column": 4,
+     "sourceRect": [
+      824,
+      529,
+      128,
+      231
+     ],
+     "visibleSourceHeight": 231,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.311
+    },
+    {
+     "index": 16,
+     "row": "receive",
+     "column": 5,
+     "sourceRect": [
+      1062,
+      530,
+      178,
+      229
+     ],
+     "visibleSourceHeight": 229,
+     "visibleHeight": 118.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.456
+    },
+    {
+     "index": 17,
+     "row": "receive",
+     "column": 6,
+     "sourceRect": [
+      1310,
+      528,
+      185,
+      236
+     ],
+     "visibleSourceHeight": 236,
+     "visibleHeight": 121.6,
+     "raisedFoot": true,
+     "clipped": false
+    },
+    {
+     "index": 18,
+     "row": "shuffle",
+     "column": 1,
+     "sourceRect": [
+      37,
+      774,
+      192,
+      222
+     ],
+     "visibleSourceHeight": 222,
+     "visibleHeight": 114.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.229
+    },
+    {
+     "index": 19,
+     "row": "shuffle",
+     "column": 2,
+     "sourceRect": [
+      304,
+      777,
+      195,
+      222
+     ],
+     "visibleSourceHeight": 222,
+     "visibleHeight": 114.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.399
+    },
+    {
+     "index": 20,
+     "row": "shuffle",
+     "column": 3,
+     "sourceRect": [
+      547,
+      778,
+      201,
+      215
+     ],
+     "visibleSourceHeight": 215,
+     "visibleHeight": 110.8,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.566
+    },
+    {
+     "index": 21,
+     "row": "shuffle",
+     "column": 4,
+     "sourceRect": [
+      802,
+      773,
+      188,
+      227
+     ],
+     "visibleSourceHeight": 227,
+     "visibleHeight": 116.9,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.347
+    },
+    {
+     "index": 22,
+     "row": "shuffle",
+     "column": 5,
+     "sourceRect": [
+      1054,
+      776,
+      212,
+      224
+     ],
+     "visibleSourceHeight": 224,
+     "visibleHeight": 115.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.197
+    },
+    {
+     "index": 23,
+     "row": "shuffle",
+     "column": 6,
+     "sourceRect": [
+      1307,
+      777,
+      200,
+      220
+     ],
+     "visibleSourceHeight": 220,
+     "visibleHeight": 113.3,
+     "raisedFoot": false,
+     "clipped": false
+    }
+   ]
+  },
+  "opponent_01": {
+   "kind": "outfield",
+   "side": "away",
+   "protagonist": false,
+   "source": "docs/art/team-training-v1/source/opponent_01.png",
+   "sourceSha256": "8224c0127b1227bbd1505503d9a6b41e5aef562dc5b328611cc3d665bf9c7523",
+   "file": "opponent_01.png",
+   "sha256": "569a95b0aeba2a4ed70eb506d8dda940543af0773d72fb6f2bbbb413edd46612",
+   "scale": 0.49791,
+   "sheetNormalisation": 0.9958,
+   "standSourceHeight": 239.0,
+   "bakedBallCandidates": 0,
+   "frames": [
+    {
+     "index": 0,
+     "row": "run",
+     "column": 1,
+     "sourceRect": [
+      31,
+      22,
+      178,
+      240
+     ],
+     "visibleSourceHeight": 240,
+     "visibleHeight": 119.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.237
+    },
+    {
+     "index": 1,
+     "row": "run",
+     "column": 2,
+     "sourceRect": [
+      275,
+      21,
+      185,
+      241
+     ],
+     "visibleSourceHeight": 241,
+     "visibleHeight": 120.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.359
+    },
+    {
+     "index": 2,
+     "row": "run",
+     "column": 3,
+     "sourceRect": [
+      540,
+      21,
+      209,
+      235
+     ],
+     "visibleSourceHeight": 235,
+     "visibleHeight": 117.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.418
+    },
+    {
+     "index": 3,
+     "row": "run",
+     "column": 4,
+     "sourceRect": [
+      820,
+      24,
+      172,
+      238
+     ],
+     "visibleSourceHeight": 238,
+     "visibleHeight": 118.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.402
+    },
+    {
+     "index": 4,
+     "row": "run",
+     "column": 5,
+     "sourceRect": [
+      1049,
+      20,
+      213,
+      236
+     ],
+     "visibleSourceHeight": 236,
+     "visibleHeight": 117.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.328
+    },
+    {
+     "index": 5,
+     "row": "run",
+     "column": 6,
+     "sourceRect": [
+      1341,
+      24,
+      166,
+      238
+     ],
+     "visibleSourceHeight": 238,
+     "visibleHeight": 118.5,
+     "raisedFoot": true,
+     "clipped": false
+    },
+    {
+     "index": 6,
+     "row": "pass",
+     "column": 1,
+     "sourceRect": [
+      30,
+      277,
+      175,
+      239
+     ],
+     "visibleSourceHeight": 239,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.36
+    },
+    {
+     "index": 7,
+     "row": "pass",
+     "column": 2,
+     "sourceRect": [
+      290,
+      277,
+      175,
+      237
+     ],
+     "visibleSourceHeight": 237,
+     "visibleHeight": 118.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.427
+    },
+    {
+     "index": 8,
+     "row": "pass",
+     "column": 3,
+     "sourceRect": [
+      525,
+      278,
+      201,
+      239
+     ],
+     "visibleSourceHeight": 239,
+     "visibleHeight": 119.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.337
+    },
+    {
+     "index": 9,
+     "row": "pass",
+     "column": 4,
+     "sourceRect": [
+      812,
+      279,
+      221,
+      238
+     ],
+     "visibleSourceHeight": 238,
+     "visibleHeight": 118.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.369
+    },
+    {
+     "index": 10,
+     "row": "pass",
+     "column": 5,
+     "sourceRect": [
+      1047,
+      279,
+      231,
+      238
+     ],
+     "visibleSourceHeight": 238,
+     "visibleHeight": 118.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.562
+    },
+    {
+     "index": 11,
+     "row": "pass",
+     "column": 6,
+     "sourceRect": [
+      1336,
+      275,
+      170,
+      241
+     ],
+     "visibleSourceHeight": 241,
+     "visibleHeight": 120.0,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 12,
+     "row": "receive",
+     "column": 1,
+     "sourceRect": [
+      31,
+      534,
+      174,
+      237
+     ],
+     "visibleSourceHeight": 237,
+     "visibleHeight": 118.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.333
+    },
+    {
+     "index": 13,
+     "row": "receive",
+     "column": 2,
+     "sourceRect": [
+      304,
+      534,
+      196,
+      236
+     ],
+     "visibleSourceHeight": 236,
+     "visibleHeight": 117.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.3
+    },
+    {
+     "index": 14,
+     "row": "receive",
+     "column": 3,
+     "sourceRect": [
+      564,
+      537,
+      177,
+      235
+     ],
+     "visibleSourceHeight": 235,
+     "visibleHeight": 117.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.373
+    },
+    {
+     "index": 15,
+     "row": "receive",
+     "column": 4,
+     "sourceRect": [
+      814,
+      537,
+      138,
+      234
+     ],
+     "visibleSourceHeight": 234,
+     "visibleHeight": 116.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.359
+    },
+    {
+     "index": 16,
+     "row": "receive",
+     "column": 5,
+     "sourceRect": [
+      1062,
+      537,
+      189,
+      234
+     ],
+     "visibleSourceHeight": 234,
+     "visibleHeight": 116.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.49
+    },
+    {
+     "index": 17,
+     "row": "receive",
+     "column": 6,
+     "sourceRect": [
+      1317,
+      535,
+      171,
+      234
+     ],
+     "visibleSourceHeight": 234,
+     "visibleHeight": 116.5,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 18,
+     "row": "shuffle",
+     "column": 1,
+     "sourceRect": [
+      34,
+      789,
+      186,
+      214
+     ],
+     "visibleSourceHeight": 214,
+     "visibleHeight": 106.6,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.233
+    },
+    {
+     "index": 19,
+     "row": "shuffle",
+     "column": 2,
+     "sourceRect": [
+      281,
+      790,
+      198,
+      214
+     ],
+     "visibleSourceHeight": 214,
+     "visibleHeight": 106.6,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.281
+    },
+    {
+     "index": 20,
+     "row": "shuffle",
+     "column": 3,
+     "sourceRect": [
+      560,
+      790,
+      173,
+      213
+     ],
+     "visibleSourceHeight": 213,
+     "visibleHeight": 106.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.233
+    },
+    {
+     "index": 21,
+     "row": "shuffle",
+     "column": 4,
+     "sourceRect": [
+      801,
+      788,
+      183,
+      214
+     ],
+     "visibleSourceHeight": 214,
+     "visibleHeight": 106.6,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.456
+    },
+    {
+     "index": 22,
+     "row": "shuffle",
+     "column": 5,
+     "sourceRect": [
+      1072,
+      791,
+      210,
+      212
+     ],
+     "visibleSourceHeight": 212,
+     "visibleHeight": 105.6,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.308
+    },
+    {
+     "index": 23,
+     "row": "shuffle",
+     "column": 6,
+     "sourceRect": [
+      1339,
+      790,
+      172,
+      213
+     ],
+     "visibleSourceHeight": 213,
+     "visibleHeight": 106.1,
+     "raisedFoot": false,
+     "clipped": false
+    }
+   ]
+  },
+  "opponent_02": {
+   "kind": "outfield",
+   "side": "away",
+   "protagonist": false,
+   "source": "docs/art/team-training-v1/source/opponent_02.png",
+   "sourceSha256": "217fc5c323c24bb3c8744b12c62bf58bd4b089c3a908bc8b95bec2e39632cf0c",
+   "file": "opponent_02.png",
+   "sha256": "6e23db7634dda01d7214eec76b4ecec2bb952242b8c2fb157201b0c90a906f05",
+   "scale": 0.50638,
+   "sheetNormalisation": 1.0128,
+   "standSourceHeight": 235.0,
+   "bakedBallCandidates": 0,
+   "frames": [
+    {
+     "index": 0,
+     "row": "run",
+     "column": 1,
+     "sourceRect": [
+      37,
+      13,
+      184,
+      242
+     ],
+     "visibleSourceHeight": 242,
+     "visibleHeight": 122.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.306
+    },
+    {
+     "index": 1,
+     "row": "run",
+     "column": 2,
+     "sourceRect": [
+      295,
+      13,
+      183,
+      234
+     ],
+     "visibleSourceHeight": 234,
+     "visibleHeight": 118.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.326
+    },
+    {
+     "index": 2,
+     "row": "run",
+     "column": 3,
+     "sourceRect": [
+      552,
+      12,
+      180,
+      240
+     ],
+     "visibleSourceHeight": 240,
+     "visibleHeight": 121.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.388
+    },
+    {
+     "index": 3,
+     "row": "run",
+     "column": 4,
+     "sourceRect": [
+      819,
+      13,
+      158,
+      244
+     ],
+     "visibleSourceHeight": 244,
+     "visibleHeight": 123.6,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.406
+    },
+    {
+     "index": 4,
+     "row": "run",
+     "column": 5,
+     "sourceRect": [
+      1050,
+      14,
+      184,
+      236
+     ],
+     "visibleSourceHeight": 236,
+     "visibleHeight": 119.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.222
+    },
+    {
+     "index": 5,
+     "row": "run",
+     "column": 6,
+     "sourceRect": [
+      1309,
+      11,
+      182,
+      239
+     ],
+     "visibleSourceHeight": 239,
+     "visibleHeight": 121.0,
+     "raisedFoot": true,
+     "clipped": false
+    },
+    {
+     "index": 6,
+     "row": "pass",
+     "column": 1,
+     "sourceRect": [
+      28,
+      267,
+      168,
+      235
+     ],
+     "visibleSourceHeight": 235,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.351
+    },
+    {
+     "index": 7,
+     "row": "pass",
+     "column": 2,
+     "sourceRect": [
+      290,
+      267,
+      184,
+      235
+     ],
+     "visibleSourceHeight": 235,
+     "visibleHeight": 119.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.5
+    },
+    {
+     "index": 8,
+     "row": "pass",
+     "column": 3,
+     "sourceRect": [
+      545,
+      269,
+      214,
+      226
+     ],
+     "visibleSourceHeight": 226,
+     "visibleHeight": 114.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.535
+    },
+    {
+     "index": 9,
+     "row": "pass",
+     "column": 4,
+     "sourceRect": [
+      818,
+      270,
+      212,
+      233
+     ],
+     "visibleSourceHeight": 233,
+     "visibleHeight": 118.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.37
+    },
+    {
+     "index": 10,
+     "row": "pass",
+     "column": 5,
+     "sourceRect": [
+      1077,
+      272,
+      202,
+      232
+     ],
+     "visibleSourceHeight": 232,
+     "visibleHeight": 117.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.545
+    },
+    {
+     "index": 11,
+     "row": "pass",
+     "column": 6,
+     "sourceRect": [
+      1322,
+      267,
+      163,
+      235
+     ],
+     "visibleSourceHeight": 235,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 12,
+     "row": "receive",
+     "column": 1,
+     "sourceRect": [
+      33,
+      520,
+      172,
+      240
+     ],
+     "visibleSourceHeight": 240,
+     "visibleHeight": 121.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.518
+    },
+    {
+     "index": 13,
+     "row": "receive",
+     "column": 2,
+     "sourceRect": [
+      293,
+      518,
+      212,
+      242
+     ],
+     "visibleSourceHeight": 242,
+     "visibleHeight": 122.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.384
+    },
+    {
+     "index": 14,
+     "row": "receive",
+     "column": 3,
+     "sourceRect": [
+      570,
+      520,
+      133,
+      243
+     ],
+     "visibleSourceHeight": 243,
+     "visibleHeight": 123.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.421
+    },
+    {
+     "index": 15,
+     "row": "receive",
+     "column": 4,
+     "sourceRect": [
+      800,
+      520,
+      177,
+      240
+     ],
+     "visibleSourceHeight": 240,
+     "visibleHeight": 121.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.312
+    },
+    {
+     "index": 16,
+     "row": "receive",
+     "column": 5,
+     "sourceRect": [
+      1078,
+      523,
+      183,
+      240
+     ],
+     "visibleSourceHeight": 240,
+     "visibleHeight": 121.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.384
+    },
+    {
+     "index": 17,
+     "row": "receive",
+     "column": 6,
+     "sourceRect": [
+      1325,
+      520,
+      175,
+      239
+     ],
+     "visibleSourceHeight": 239,
+     "visibleHeight": 121.0,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 18,
+     "row": "shuffle",
+     "column": 1,
+     "sourceRect": [
+      27,
+      780,
+      178,
+      221
+     ],
+     "visibleSourceHeight": 221,
+     "visibleHeight": 111.9,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.259
+    },
+    {
+     "index": 19,
+     "row": "shuffle",
+     "column": 2,
+     "sourceRect": [
+      284,
+      777,
+      180,
+      219
+     ],
+     "visibleSourceHeight": 219,
+     "visibleHeight": 110.9,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.36
+    },
+    {
+     "index": 20,
+     "row": "shuffle",
+     "column": 3,
+     "sourceRect": [
+      539,
+      777,
+      177,
+      222
+     ],
+     "visibleSourceHeight": 222,
+     "visibleHeight": 112.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.223
+    },
+    {
+     "index": 21,
+     "row": "shuffle",
+     "column": 4,
+     "sourceRect": [
+      792,
+      779,
+      184,
+      222
+     ],
+     "visibleSourceHeight": 222,
+     "visibleHeight": 112.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.327
+    },
+    {
+     "index": 22,
+     "row": "shuffle",
+     "column": 5,
+     "sourceRect": [
+      1060,
+      779,
+      196,
+      220
+     ],
+     "visibleSourceHeight": 220,
+     "visibleHeight": 111.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.383
+    },
+    {
+     "index": 23,
+     "row": "shuffle",
+     "column": 6,
+     "sourceRect": [
+      1311,
+      780,
+      176,
+      221
+     ],
+     "visibleSourceHeight": 221,
+     "visibleHeight": 111.9,
+     "raisedFoot": false,
+     "clipped": false
+    }
+   ]
+  },
+  "opponent_03": {
+   "kind": "outfield",
+   "side": "away",
+   "protagonist": false,
+   "source": "docs/art/team-training-v1/source/opponent_03.png",
+   "sourceSha256": "cb0948b7a7fc98661bb5419f5c268bd27a6ded8c89bc631519407b602f778631",
+   "file": "opponent_03.png",
+   "sha256": "dafd57d60dda4bbef48565e22efc54db6416a9d7020a3887dbdf97d61cc866c8",
+   "scale": 0.49378,
+   "sheetNormalisation": 0.9876,
+   "standSourceHeight": 241.0,
+   "bakedBallCandidates": 0,
+   "frames": [
+    {
+     "index": 0,
+     "row": "run",
+     "column": 1,
+     "sourceRect": [
+      37,
+      16,
+      194,
+      238
+     ],
+     "visibleSourceHeight": 238,
+     "visibleHeight": 117.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.421
+    },
+    {
+     "index": 1,
+     "row": "run",
+     "column": 2,
+     "sourceRect": [
+      296,
+      11,
+      172,
+      244
+     ],
+     "visibleSourceHeight": 244,
+     "visibleHeight": 120.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.469
+    },
+    {
+     "index": 2,
+     "row": "run",
+     "column": 3,
+     "sourceRect": [
+      533,
+      16,
+      195,
+      236
+     ],
+     "visibleSourceHeight": 236,
+     "visibleHeight": 116.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.395
+    },
+    {
+     "index": 3,
+     "row": "run",
+     "column": 4,
+     "sourceRect": [
+      782,
+      16,
+      193,
+      236
+     ],
+     "visibleSourceHeight": 236,
+     "visibleHeight": 116.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.426
+    },
+    {
+     "index": 4,
+     "row": "run",
+     "column": 5,
+     "sourceRect": [
+      1006,
+      18,
+      232,
+      235
+     ],
+     "visibleSourceHeight": 235,
+     "visibleHeight": 116.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.342
+    },
+    {
+     "index": 5,
+     "row": "run",
+     "column": 6,
+     "sourceRect": [
+      1329,
+      14,
+      172,
+      242
+     ],
+     "visibleSourceHeight": 242,
+     "visibleHeight": 119.5,
+     "raisedFoot": true,
+     "clipped": false
+    },
+    {
+     "index": 6,
+     "row": "pass",
+     "column": 1,
+     "sourceRect": [
+      42,
+      263,
+      166,
+      241
+     ],
+     "visibleSourceHeight": 241,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.32
+    },
+    {
+     "index": 7,
+     "row": "pass",
+     "column": 2,
+     "sourceRect": [
+      292,
+      265,
+      170,
+      244
+     ],
+     "visibleSourceHeight": 244,
+     "visibleHeight": 120.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.501
+    },
+    {
+     "index": 8,
+     "row": "pass",
+     "column": 3,
+     "sourceRect": [
+      538,
+      262,
+      194,
+      244
+     ],
+     "visibleSourceHeight": 244,
+     "visibleHeight": 120.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.504
+    },
+    {
+     "index": 9,
+     "row": "pass",
+     "column": 4,
+     "sourceRect": [
+      794,
+      268,
+      215,
+      241
+     ],
+     "visibleSourceHeight": 241,
+     "visibleHeight": 119.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.361
+    },
+    {
+     "index": 10,
+     "row": "pass",
+     "column": 5,
+     "sourceRect": [
+      1057,
+      266,
+      226,
+      244
+     ],
+     "visibleSourceHeight": 244,
+     "visibleHeight": 120.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.59
+    },
+    {
+     "index": 11,
+     "row": "pass",
+     "column": 6,
+     "sourceRect": [
+      1317,
+      259,
+      172,
+      246
+     ],
+     "visibleSourceHeight": 246,
+     "visibleHeight": 121.5,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 12,
+     "row": "receive",
+     "column": 1,
+     "sourceRect": [
+      38,
+      517,
+      173,
+      242
+     ],
+     "visibleSourceHeight": 242,
+     "visibleHeight": 119.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.469
+    },
+    {
+     "index": 13,
+     "row": "receive",
+     "column": 2,
+     "sourceRect": [
+      289,
+      523,
+      204,
+      235
+     ],
+     "visibleSourceHeight": 235,
+     "visibleHeight": 116.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.418
+    },
+    {
+     "index": 14,
+     "row": "receive",
+     "column": 3,
+     "sourceRect": [
+      559,
+      518,
+      160,
+      241
+     ],
+     "visibleSourceHeight": 241,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.44
+    },
+    {
+     "index": 15,
+     "row": "receive",
+     "column": 4,
+     "sourceRect": [
+      799,
+      518,
+      177,
+      243
+     ],
+     "visibleSourceHeight": 243,
+     "visibleHeight": 120.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.475
+    },
+    {
+     "index": 16,
+     "row": "receive",
+     "column": 5,
+     "sourceRect": [
+      1061,
+      522,
+      218,
+      240
+     ],
+     "visibleSourceHeight": 240,
+     "visibleHeight": 118.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.515
+    },
+    {
+     "index": 17,
+     "row": "receive",
+     "column": 6,
+     "sourceRect": [
+      1328,
+      516,
+      162,
+      243
+     ],
+     "visibleSourceHeight": 243,
+     "visibleHeight": 120.0,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 18,
+     "row": "shuffle",
+     "column": 1,
+     "sourceRect": [
+      30,
+      779,
+      187,
+      220
+     ],
+     "visibleSourceHeight": 220,
+     "visibleHeight": 108.6,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.333
+    },
+    {
+     "index": 19,
+     "row": "shuffle",
+     "column": 2,
+     "sourceRect": [
+      281,
+      778,
+      197,
+      223
+     ],
+     "visibleSourceHeight": 223,
+     "visibleHeight": 110.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.279
+    },
+    {
+     "index": 20,
+     "row": "shuffle",
+     "column": 3,
+     "sourceRect": [
+      552,
+      778,
+      175,
+      223
+     ],
+     "visibleSourceHeight": 223,
+     "visibleHeight": 110.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.21
+    },
+    {
+     "index": 21,
+     "row": "shuffle",
+     "column": 4,
+     "sourceRect": [
+      798,
+      779,
+      183,
+      220
+     ],
+     "visibleSourceHeight": 220,
+     "visibleHeight": 108.6,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.352
+    },
+    {
+     "index": 22,
+     "row": "shuffle",
+     "column": 5,
+     "sourceRect": [
+      1059,
+      780,
+      193,
+      221
+     ],
+     "visibleSourceHeight": 221,
+     "visibleHeight": 109.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.261
+    },
+    {
+     "index": 23,
+     "row": "shuffle",
+     "column": 6,
+     "sourceRect": [
+      1319,
+      779,
+      179,
+      222
+     ],
+     "visibleSourceHeight": 222,
+     "visibleHeight": 109.6,
+     "raisedFoot": false,
+     "clipped": false
+    }
+   ]
+  },
+  "opponent_04": {
+   "kind": "outfield",
+   "side": "away",
+   "protagonist": false,
+   "source": "docs/art/team-training-v1/source/opponent_04.png",
+   "sourceSha256": "b96c1da7c3919350dee9c64795902ef9e1668ee6161e963e97fb0cbee7960e6f",
+   "file": "opponent_04.png",
+   "sha256": "36d72fb4fc054f07434759483dfd411fce67d5ff84237970c5fb21c1db742fa0",
+   "scale": 0.50855,
+   "sheetNormalisation": 1.0171,
+   "standSourceHeight": 234.0,
+   "bakedBallCandidates": 0,
+   "frames": [
+    {
+     "index": 0,
+     "row": "run",
+     "column": 1,
+     "sourceRect": [
+      46,
+      15,
+      194,
+      248
+     ],
+     "visibleSourceHeight": 248,
+     "visibleHeight": 126.1,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.347
+    },
+    {
+     "index": 1,
+     "row": "run",
+     "column": 2,
+     "sourceRect": [
+      287,
+      16,
+      212,
+      247
+     ],
+     "visibleSourceHeight": 247,
+     "visibleHeight": 125.6,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.23
+    },
+    {
+     "index": 2,
+     "row": "run",
+     "column": 3,
+     "sourceRect": [
+      555,
+      15,
+      199,
+      247
+     ],
+     "visibleSourceHeight": 247,
+     "visibleHeight": 125.6,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.246
+    },
+    {
+     "index": 3,
+     "row": "run",
+     "column": 4,
+     "sourceRect": [
+      802,
+      15,
+      210,
+      248
+     ],
+     "visibleSourceHeight": 248,
+     "visibleHeight": 126.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.392
+    },
+    {
+     "index": 4,
+     "row": "run",
+     "column": 5,
+     "sourceRect": [
+      1050,
+      16,
+      217,
+      247
+     ],
+     "visibleSourceHeight": 247,
+     "visibleHeight": 125.6,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.16
+    },
+    {
+     "index": 5,
+     "row": "run",
+     "column": 6,
+     "sourceRect": [
+      1305,
+      16,
+      216,
+      247
+     ],
+     "visibleSourceHeight": 247,
+     "visibleHeight": 125.6,
+     "raisedFoot": true,
+     "clipped": false
+    },
+    {
+     "index": 6,
+     "row": "pass",
+     "column": 1,
+     "sourceRect": [
+      44,
+      274,
+      175,
+      234
+     ],
+     "visibleSourceHeight": 234,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.458
+    },
+    {
+     "index": 7,
+     "row": "pass",
+     "column": 2,
+     "sourceRect": [
+      278,
+      275,
+      211,
+      233
+     ],
+     "visibleSourceHeight": 233,
+     "visibleHeight": 118.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.482
+    },
+    {
+     "index": 8,
+     "row": "pass",
+     "column": 3,
+     "sourceRect": [
+      541,
+      275,
+      224,
+      233
+     ],
+     "visibleSourceHeight": 233,
+     "visibleHeight": 118.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.343
+    },
+    {
+     "index": 9,
+     "row": "pass",
+     "column": 4,
+     "sourceRect": [
+      786,
+      277,
+      230,
+      231
+     ],
+     "visibleSourceHeight": 231,
+     "visibleHeight": 117.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.425
+    },
+    {
+     "index": 10,
+     "row": "pass",
+     "column": 5,
+     "sourceRect": [
+      1056,
+      274,
+      200,
+      235
+     ],
+     "visibleSourceHeight": 235,
+     "visibleHeight": 119.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.534
+    },
+    {
+     "index": 11,
+     "row": "pass",
+     "column": 6,
+     "sourceRect": [
+      1301,
+      275,
+      186,
+      232
+     ],
+     "visibleSourceHeight": 232,
+     "visibleHeight": 118.0,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 12,
+     "row": "receive",
+     "column": 1,
+     "sourceRect": [
+      36,
+      527,
+      184,
+      233
+     ],
+     "visibleSourceHeight": 233,
+     "visibleHeight": 118.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.474
+    },
+    {
+     "index": 13,
+     "row": "receive",
+     "column": 2,
+     "sourceRect": [
+      296,
+      524,
+      207,
+      236
+     ],
+     "visibleSourceHeight": 236,
+     "visibleHeight": 120.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.184
+    },
+    {
+     "index": 14,
+     "row": "receive",
+     "column": 3,
+     "sourceRect": [
+      550,
+      527,
+      195,
+      233
+     ],
+     "visibleSourceHeight": 233,
+     "visibleHeight": 118.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.458
+    },
+    {
+     "index": 15,
+     "row": "receive",
+     "column": 4,
+     "sourceRect": [
+      792,
+      530,
+      190,
+      231
+     ],
+     "visibleSourceHeight": 231,
+     "visibleHeight": 117.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.411
+    },
+    {
+     "index": 16,
+     "row": "receive",
+     "column": 5,
+     "sourceRect": [
+      1041,
+      529,
+      217,
+      231
+     ],
+     "visibleSourceHeight": 231,
+     "visibleHeight": 117.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.395
+    },
+    {
+     "index": 17,
+     "row": "receive",
+     "column": 6,
+     "sourceRect": [
+      1305,
+      528,
+      185,
+      232
+     ],
+     "visibleSourceHeight": 232,
+     "visibleHeight": 118.0,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 18,
+     "row": "shuffle",
+     "column": 1,
+     "sourceRect": [
+      33,
+      780,
+      188,
+      219
+     ],
+     "visibleSourceHeight": 219,
+     "visibleHeight": 111.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.419
+    },
+    {
+     "index": 19,
+     "row": "shuffle",
+     "column": 2,
+     "sourceRect": [
+      273,
+      778,
+      213,
+      222
+     ],
+     "visibleSourceHeight": 222,
+     "visibleHeight": 112.9,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.399
+    },
+    {
+     "index": 20,
+     "row": "shuffle",
+     "column": 3,
+     "sourceRect": [
+      536,
+      778,
+      199,
+      221
+     ],
+     "visibleSourceHeight": 221,
+     "visibleHeight": 112.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.219
+    },
+    {
+     "index": 21,
+     "row": "shuffle",
+     "column": 4,
+     "sourceRect": [
+      790,
+      780,
+      191,
+      219
+     ],
+     "visibleSourceHeight": 219,
+     "visibleHeight": 111.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.296
+    },
+    {
+     "index": 22,
+     "row": "shuffle",
+     "column": 5,
+     "sourceRect": [
+      1047,
+      778,
+      196,
+      222
+     ],
+     "visibleSourceHeight": 222,
+     "visibleHeight": 112.9,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.296
+    },
+    {
+     "index": 23,
+     "row": "shuffle",
+     "column": 6,
+     "sourceRect": [
+      1306,
+      778,
+      193,
+      221
+     ],
+     "visibleSourceHeight": 221,
+     "visibleHeight": 112.4,
+     "raisedFoot": false,
+     "clipped": false
+    }
+   ]
+  },
+  "opponent_05": {
+   "kind": "outfield",
+   "side": "away",
+   "protagonist": false,
+   "source": "docs/art/team-training-v1/source/opponent_05.png",
+   "sourceSha256": "2caa927a383ecaf163e856442c4619be99e2787c85471e7ca8c9ef989784fabf",
+   "file": "opponent_05.png",
+   "sha256": "c3a423449134201cccb6e1db0611bf6ea9b97abf9cc4937f29bf286930745949",
+   "scale": 0.51515,
+   "sheetNormalisation": 1.0303,
+   "standSourceHeight": 231.0,
+   "bakedBallCandidates": 0,
+   "frames": [
+    {
+     "index": 0,
+     "row": "run",
+     "column": 1,
+     "sourceRect": [
+      44,
+      13,
+      182,
+      235
+     ],
+     "visibleSourceHeight": 235,
+     "visibleHeight": 121.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.324
+    },
+    {
+     "index": 1,
+     "row": "run",
+     "column": 2,
+     "sourceRect": [
+      292,
+      14,
+      204,
+      233
+     ],
+     "visibleSourceHeight": 233,
+     "visibleHeight": 120.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.355
+    },
+    {
+     "index": 2,
+     "row": "run",
+     "column": 3,
+     "sourceRect": [
+      566,
+      14,
+      177,
+      234
+     ],
+     "visibleSourceHeight": 234,
+     "visibleHeight": 120.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.267
+    },
+    {
+     "index": 3,
+     "row": "run",
+     "column": 4,
+     "sourceRect": [
+      827,
+      17,
+      164,
+      232
+     ],
+     "visibleSourceHeight": 232,
+     "visibleHeight": 119.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.469
+    },
+    {
+     "index": 4,
+     "row": "run",
+     "column": 5,
+     "sourceRect": [
+      1063,
+      12,
+      200,
+      235
+     ],
+     "visibleSourceHeight": 235,
+     "visibleHeight": 121.1,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.411
+    },
+    {
+     "index": 5,
+     "row": "run",
+     "column": 6,
+     "sourceRect": [
+      1330,
+      14,
+      179,
+      234
+     ],
+     "visibleSourceHeight": 234,
+     "visibleHeight": 120.5,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 6,
+     "row": "pass",
+     "column": 1,
+     "sourceRect": [
+      30,
+      271,
+      174,
+      231
+     ],
+     "visibleSourceHeight": 231,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.287
+    },
+    {
+     "index": 7,
+     "row": "pass",
+     "column": 2,
+     "sourceRect": [
+      288,
+      266,
+      175,
+      237
+     ],
+     "visibleSourceHeight": 237,
+     "visibleHeight": 122.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.496
+    },
+    {
+     "index": 8,
+     "row": "pass",
+     "column": 3,
+     "sourceRect": [
+      527,
+      273,
+      223,
+      233
+     ],
+     "visibleSourceHeight": 233,
+     "visibleHeight": 120.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.406
+    },
+    {
+     "index": 9,
+     "row": "pass",
+     "column": 4,
+     "sourceRect": [
+      796,
+      276,
+      216,
+      230
+     ],
+     "visibleSourceHeight": 230,
+     "visibleHeight": 118.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.454
+    },
+    {
+     "index": 10,
+     "row": "pass",
+     "column": 5,
+     "sourceRect": [
+      1057,
+      278,
+      221,
+      228
+     ],
+     "visibleSourceHeight": 228,
+     "visibleHeight": 117.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.53
+    },
+    {
+     "index": 11,
+     "row": "pass",
+     "column": 6,
+     "sourceRect": [
+      1331,
+      268,
+      161,
+      235
+     ],
+     "visibleSourceHeight": 235,
+     "visibleHeight": 121.1,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 12,
+     "row": "receive",
+     "column": 1,
+     "sourceRect": [
+      31,
+      526,
+      179,
+      234
+     ],
+     "visibleSourceHeight": 234,
+     "visibleHeight": 120.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.52
+    },
+    {
+     "index": 13,
+     "row": "receive",
+     "column": 2,
+     "sourceRect": [
+      287,
+      525,
+      210,
+      237
+     ],
+     "visibleSourceHeight": 237,
+     "visibleHeight": 122.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.442
+    },
+    {
+     "index": 14,
+     "row": "receive",
+     "column": 3,
+     "sourceRect": [
+      559,
+      523,
+      165,
+      236
+     ],
+     "visibleSourceHeight": 236,
+     "visibleHeight": 121.6,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.41
+    },
+    {
+     "index": 15,
+     "row": "receive",
+     "column": 4,
+     "sourceRect": [
+      822,
+      526,
+      163,
+      237
+     ],
+     "visibleSourceHeight": 237,
+     "visibleHeight": 122.1,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.369
+    },
+    {
+     "index": 16,
+     "row": "receive",
+     "column": 5,
+     "sourceRect": [
+      1068,
+      526,
+      163,
+      233
+     ],
+     "visibleSourceHeight": 233,
+     "visibleHeight": 120.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.517
+    },
+    {
+     "index": 17,
+     "row": "receive",
+     "column": 6,
+     "sourceRect": [
+      1318,
+      526,
+      175,
+      232
+     ],
+     "visibleSourceHeight": 232,
+     "visibleHeight": 119.5,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 18,
+     "row": "shuffle",
+     "column": 1,
+     "sourceRect": [
+      29,
+      783,
+      191,
+      222
+     ],
+     "visibleSourceHeight": 222,
+     "visibleHeight": 114.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.226
+    },
+    {
+     "index": 19,
+     "row": "shuffle",
+     "column": 2,
+     "sourceRect": [
+      272,
+      779,
+      196,
+      224
+     ],
+     "visibleSourceHeight": 224,
+     "visibleHeight": 115.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.378
+    },
+    {
+     "index": 20,
+     "row": "shuffle",
+     "column": 3,
+     "sourceRect": [
+      532,
+      778,
+      192,
+      225
+     ],
+     "visibleSourceHeight": 225,
+     "visibleHeight": 115.9,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.332
+    },
+    {
+     "index": 21,
+     "row": "shuffle",
+     "column": 4,
+     "sourceRect": [
+      787,
+      779,
+      202,
+      224
+     ],
+     "visibleSourceHeight": 224,
+     "visibleHeight": 115.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.307
+    },
+    {
+     "index": 22,
+     "row": "shuffle",
+     "column": 5,
+     "sourceRect": [
+      1050,
+      783,
+      201,
+      220
+     ],
+     "visibleSourceHeight": 220,
+     "visibleHeight": 113.3,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.189
+    },
+    {
+     "index": 23,
+     "row": "shuffle",
+     "column": 6,
+     "sourceRect": [
+      1310,
+      783,
+      187,
+      220
+     ],
+     "visibleSourceHeight": 220,
+     "visibleHeight": 113.3,
+     "raisedFoot": false,
+     "clipped": false
+    }
+   ]
+  },
+  "opponent_06": {
+   "kind": "outfield",
+   "side": "away",
+   "protagonist": false,
+   "source": "docs/art/team-training-v1/source/opponent_06.png",
+   "sourceSha256": "7fde387544df5e97c64d04f8371f26acf55e4f88994aef5d766d623ccb99aba0",
+   "file": "opponent_06.png",
+   "sha256": "e576166604c3b4971bd70b4388d0857a25ecfc58ec8d36d5595d446117d27c6b",
+   "scale": 0.49174,
+   "sheetNormalisation": 0.9835,
+   "standSourceHeight": 242.0,
+   "bakedBallCandidates": 0,
+   "frames": [
+    {
+     "index": 0,
+     "row": "run",
+     "column": 1,
+     "sourceRect": [
+      39,
+      10,
+      194,
+      241
+     ],
+     "visibleSourceHeight": 241,
+     "visibleHeight": 118.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.22
+    },
+    {
+     "index": 1,
+     "row": "run",
+     "column": 2,
+     "sourceRect": [
+      283,
+      10,
+      213,
+      241
+     ],
+     "visibleSourceHeight": 241,
+     "visibleHeight": 118.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.274
+    },
+    {
+     "index": 2,
+     "row": "run",
+     "column": 3,
+     "sourceRect": [
+      551,
+      10,
+      203,
+      241
+     ],
+     "visibleSourceHeight": 241,
+     "visibleHeight": 118.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.219
+    },
+    {
+     "index": 3,
+     "row": "run",
+     "column": 4,
+     "sourceRect": [
+      803,
+      10,
+      212,
+      240
+     ],
+     "visibleSourceHeight": 240,
+     "visibleHeight": 118.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.299
+    },
+    {
+     "index": 4,
+     "row": "run",
+     "column": 5,
+     "sourceRect": [
+      1071,
+      10,
+      193,
+      236
+     ],
+     "visibleSourceHeight": 236,
+     "visibleHeight": 116.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.302
+    },
+    {
+     "index": 5,
+     "row": "run",
+     "column": 6,
+     "sourceRect": [
+      1324,
+      10,
+      190,
+      241
+     ],
+     "visibleSourceHeight": 241,
+     "visibleHeight": 118.5,
+     "raisedFoot": true,
+     "clipped": false
+    },
+    {
+     "index": 6,
+     "row": "pass",
+     "column": 1,
+     "sourceRect": [
+      40,
+      261,
+      165,
+      242
+     ],
+     "visibleSourceHeight": 242,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.35
+    },
+    {
+     "index": 7,
+     "row": "pass",
+     "column": 2,
+     "sourceRect": [
+      286,
+      264,
+      189,
+      240
+     ],
+     "visibleSourceHeight": 240,
+     "visibleHeight": 118.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.502
+    },
+    {
+     "index": 8,
+     "row": "pass",
+     "column": 3,
+     "sourceRect": [
+      545,
+      261,
+      195,
+      243
+     ],
+     "visibleSourceHeight": 243,
+     "visibleHeight": 119.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.565
+    },
+    {
+     "index": 9,
+     "row": "pass",
+     "column": 4,
+     "sourceRect": [
+      795,
+      265,
+      246,
+      240
+     ],
+     "visibleSourceHeight": 240,
+     "visibleHeight": 118.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.372
+    },
+    {
+     "index": 10,
+     "row": "pass",
+     "column": 5,
+     "sourceRect": [
+      1058,
+      268,
+      234,
+      237
+     ],
+     "visibleSourceHeight": 237,
+     "visibleHeight": 116.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.556
+    },
+    {
+     "index": 11,
+     "row": "pass",
+     "column": 6,
+     "sourceRect": [
+      1322,
+      262,
+      174,
+      241
+     ],
+     "visibleSourceHeight": 241,
+     "visibleHeight": 118.5,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 12,
+     "row": "receive",
+     "column": 1,
+     "sourceRect": [
+      38,
+      524,
+      171,
+      233
+     ],
+     "visibleSourceHeight": 233,
+     "visibleHeight": 114.6,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.357
+    },
+    {
+     "index": 13,
+     "row": "receive",
+     "column": 2,
+     "sourceRect": [
+      281,
+      524,
+      202,
+      236
+     ],
+     "visibleSourceHeight": 236,
+     "visibleHeight": 116.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.368
+    },
+    {
+     "index": 14,
+     "row": "receive",
+     "column": 3,
+     "sourceRect": [
+      544,
+      523,
+      191,
+      239
+     ],
+     "visibleSourceHeight": 239,
+     "visibleHeight": 117.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.316
+    },
+    {
+     "index": 15,
+     "row": "receive",
+     "column": 4,
+     "sourceRect": [
+      796,
+      523,
+      193,
+      240
+     ],
+     "visibleSourceHeight": 240,
+     "visibleHeight": 118.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.246
+    },
+    {
+     "index": 16,
+     "row": "receive",
+     "column": 5,
+     "sourceRect": [
+      1059,
+      524,
+      197,
+      238
+     ],
+     "visibleSourceHeight": 238,
+     "visibleHeight": 117.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.455
+    },
+    {
+     "index": 17,
+     "row": "receive",
+     "column": 6,
+     "sourceRect": [
+      1331,
+      524,
+      176,
+      235
+     ],
+     "visibleSourceHeight": 235,
+     "visibleHeight": 115.6,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 18,
+     "row": "shuffle",
+     "column": 1,
+     "sourceRect": [
+      33,
+      780,
+      179,
+      220
+     ],
+     "visibleSourceHeight": 220,
+     "visibleHeight": 108.2,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.357
+    },
+    {
+     "index": 19,
+     "row": "shuffle",
+     "column": 2,
+     "sourceRect": [
+      290,
+      781,
+      200,
+      220
+     ],
+     "visibleSourceHeight": 220,
+     "visibleHeight": 108.2,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.207
+    },
+    {
+     "index": 20,
+     "row": "shuffle",
+     "column": 3,
+     "sourceRect": [
+      552,
+      781,
+      190,
+      220
+     ],
+     "visibleSourceHeight": 220,
+     "visibleHeight": 108.2,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.293
+    },
+    {
+     "index": 21,
+     "row": "shuffle",
+     "column": 4,
+     "sourceRect": [
+      813,
+      780,
+      183,
+      219
+     ],
+     "visibleSourceHeight": 219,
+     "visibleHeight": 107.7,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.396
+    },
+    {
+     "index": 22,
+     "row": "shuffle",
+     "column": 5,
+     "sourceRect": [
+      1058,
+      780,
+      213,
+      217
+     ],
+     "visibleSourceHeight": 217,
+     "visibleHeight": 106.7,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.416
+    },
+    {
+     "index": 23,
+     "row": "shuffle",
+     "column": 6,
+     "sourceRect": [
+      1333,
+      780,
+      178,
+      220
+     ],
+     "visibleSourceHeight": 220,
+     "visibleHeight": 108.2,
+     "raisedFoot": false,
+     "clipped": false
+    }
+   ]
+  },
+  "opponent_07": {
+   "kind": "outfield",
+   "side": "away",
+   "protagonist": false,
+   "source": "docs/art/team-training-v1/source/opponent_07.png",
+   "sourceSha256": "adcd026638a5a552612b69d795f4d8dd9c53ceee9bf0827f13d6da8eaaf88952",
+   "file": "opponent_07.png",
+   "sha256": "5b26618b2752cc157cb9c0eef2bf152eb2dbda0c2178f13c080173b2faaba055",
+   "scale": 0.51073,
+   "sheetNormalisation": 1.0215,
+   "standSourceHeight": 233.0,
+   "bakedBallCandidates": 0,
+   "frames": [
+    {
+     "index": 0,
+     "row": "run",
+     "column": 1,
+     "sourceRect": [
+      49,
+      21,
+      180,
+      234
+     ],
+     "visibleSourceHeight": 234,
+     "visibleHeight": 119.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.301
+    },
+    {
+     "index": 1,
+     "row": "run",
+     "column": 2,
+     "sourceRect": [
+      299,
+      21,
+      183,
+      234
+     ],
+     "visibleSourceHeight": 234,
+     "visibleHeight": 119.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.306
+    },
+    {
+     "index": 2,
+     "row": "run",
+     "column": 3,
+     "sourceRect": [
+      540,
+      20,
+      195,
+      235
+     ],
+     "visibleSourceHeight": 235,
+     "visibleHeight": 120.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.309
+    },
+    {
+     "index": 3,
+     "row": "run",
+     "column": 4,
+     "sourceRect": [
+      778,
+      18,
+      196,
+      234
+     ],
+     "visibleSourceHeight": 234,
+     "visibleHeight": 119.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.186
+    },
+    {
+     "index": 4,
+     "row": "run",
+     "column": 5,
+     "sourceRect": [
+      1030,
+      22,
+      196,
+      233
+     ],
+     "visibleSourceHeight": 233,
+     "visibleHeight": 119.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.216
+    },
+    {
+     "index": 5,
+     "row": "run",
+     "column": 6,
+     "sourceRect": [
+      1292,
+      20,
+      191,
+      235
+     ],
+     "visibleSourceHeight": 235,
+     "visibleHeight": 120.0,
+     "raisedFoot": true,
+     "clipped": false
+    },
+    {
+     "index": 6,
+     "row": "pass",
+     "column": 1,
+     "sourceRect": [
+      49,
+      269,
+      157,
+      233
+     ],
+     "visibleSourceHeight": 233,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.438
+    },
+    {
+     "index": 7,
+     "row": "pass",
+     "column": 2,
+     "sourceRect": [
+      294,
+      274,
+      180,
+      229
+     ],
+     "visibleSourceHeight": 229,
+     "visibleHeight": 117.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.44
+    },
+    {
+     "index": 8,
+     "row": "pass",
+     "column": 3,
+     "sourceRect": [
+      523,
+      275,
+      228,
+      224
+     ],
+     "visibleSourceHeight": 224,
+     "visibleHeight": 114.4,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.544
+    },
+    {
+     "index": 9,
+     "row": "pass",
+     "column": 4,
+     "sourceRect": [
+      795,
+      278,
+      234,
+      224
+     ],
+     "visibleSourceHeight": 224,
+     "visibleHeight": 114.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.53
+    },
+    {
+     "index": 10,
+     "row": "pass",
+     "column": 5,
+     "sourceRect": [
+      1042,
+      271,
+      238,
+      231
+     ],
+     "visibleSourceHeight": 231,
+     "visibleHeight": 118.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.556
+    },
+    {
+     "index": 11,
+     "row": "pass",
+     "column": 6,
+     "sourceRect": [
+      1323,
+      271,
+      161,
+      231
+     ],
+     "visibleSourceHeight": 231,
+     "visibleHeight": 118.0,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 12,
+     "row": "receive",
+     "column": 1,
+     "sourceRect": [
+      46,
+      520,
+      177,
+      231
+     ],
+     "visibleSourceHeight": 231,
+     "visibleHeight": 118.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.468
+    },
+    {
+     "index": 13,
+     "row": "receive",
+     "column": 2,
+     "sourceRect": [
+      295,
+      522,
+      205,
+      230
+     ],
+     "visibleSourceHeight": 230,
+     "visibleHeight": 117.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.416
+    },
+    {
+     "index": 14,
+     "row": "receive",
+     "column": 3,
+     "sourceRect": [
+      581,
+      521,
+      142,
+      233
+     ],
+     "visibleSourceHeight": 233,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.372
+    },
+    {
+     "index": 15,
+     "row": "receive",
+     "column": 4,
+     "sourceRect": [
+      795,
+      522,
+      179,
+      230
+     ],
+     "visibleSourceHeight": 230,
+     "visibleHeight": 117.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.443
+    },
+    {
+     "index": 16,
+     "row": "receive",
+     "column": 5,
+     "sourceRect": [
+      1059,
+      526,
+      191,
+      228
+     ],
+     "visibleSourceHeight": 228,
+     "visibleHeight": 116.4,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.516
+    },
+    {
+     "index": 17,
+     "row": "receive",
+     "column": 6,
+     "sourceRect": [
+      1312,
+      525,
+      181,
+      226
+     ],
+     "visibleSourceHeight": 226,
+     "visibleHeight": 115.4,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 18,
+     "row": "shuffle",
+     "column": 1,
+     "sourceRect": [
+      34,
+      770,
+      193,
+      217
+     ],
+     "visibleSourceHeight": 217,
+     "visibleHeight": 110.8,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.173
+    },
+    {
+     "index": 19,
+     "row": "shuffle",
+     "column": 2,
+     "sourceRect": [
+      282,
+      772,
+      206,
+      216
+     ],
+     "visibleSourceHeight": 216,
+     "visibleHeight": 110.3,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.207
+    },
+    {
+     "index": 20,
+     "row": "shuffle",
+     "column": 3,
+     "sourceRect": [
+      536,
+      775,
+      189,
+      214
+     ],
+     "visibleSourceHeight": 214,
+     "visibleHeight": 109.3,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.2
+    },
+    {
+     "index": 21,
+     "row": "shuffle",
+     "column": 4,
+     "sourceRect": [
+      784,
+      770,
+      191,
+      217
+     ],
+     "visibleSourceHeight": 217,
+     "visibleHeight": 110.8,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.338
+    },
+    {
+     "index": 22,
+     "row": "shuffle",
+     "column": 5,
+     "sourceRect": [
+      1046,
+      776,
+      200,
+      213
+     ],
+     "visibleSourceHeight": 213,
+     "visibleHeight": 108.8,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.22
+    },
+    {
+     "index": 23,
+     "row": "shuffle",
+     "column": 6,
+     "sourceRect": [
+      1309,
+      776,
+      193,
+      212
+     ],
+     "visibleSourceHeight": 212,
+     "visibleHeight": 108.3,
+     "raisedFoot": false,
+     "clipped": false
+    }
+   ]
+  },
+  "opponent_08": {
+   "kind": "outfield",
+   "side": "away",
+   "protagonist": false,
+   "source": "docs/art/team-training-v1/source/opponent_08.png",
+   "sourceSha256": "47532a446251494ad9abb87f98b1ce83830bd6fabcf2c7b16a30c120eaff39ec",
+   "file": "opponent_08.png",
+   "sha256": "efa4b383429f7ad9c53cc945c16dfc969d807fbe6ef3ab4ea472f57aeb09d5b3",
+   "scale": 0.5,
+   "sheetNormalisation": 1.0,
+   "standSourceHeight": 238.0,
+   "bakedBallCandidates": 0,
+   "frames": [
+    {
+     "index": 0,
+     "row": "run",
+     "column": 1,
+     "sourceRect": [
+      40,
+      15,
+      199,
+      234
+     ],
+     "visibleSourceHeight": 234,
+     "visibleHeight": 117.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.233
+    },
+    {
+     "index": 1,
+     "row": "run",
+     "column": 2,
+     "sourceRect": [
+      295,
+      12,
+      192,
+      237
+     ],
+     "visibleSourceHeight": 237,
+     "visibleHeight": 118.5,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.348
+    },
+    {
+     "index": 2,
+     "row": "run",
+     "column": 3,
+     "sourceRect": [
+      554,
+      13,
+      183,
+      236
+     ],
+     "visibleSourceHeight": 236,
+     "visibleHeight": 118.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.346
+    },
+    {
+     "index": 3,
+     "row": "run",
+     "column": 4,
+     "sourceRect": [
+      786,
+      14,
+      197,
+      235
+     ],
+     "visibleSourceHeight": 235,
+     "visibleHeight": 117.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.173
+    },
+    {
+     "index": 4,
+     "row": "run",
+     "column": 5,
+     "sourceRect": [
+      1042,
+      18,
+      199,
+      232
+     ],
+     "visibleSourceHeight": 232,
+     "visibleHeight": 116.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.242
+    },
+    {
+     "index": 5,
+     "row": "run",
+     "column": 6,
+     "sourceRect": [
+      1308,
+      15,
+      190,
+      234
+     ],
+     "visibleSourceHeight": 234,
+     "visibleHeight": 117.0,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 6,
+     "row": "pass",
+     "column": 1,
+     "sourceRect": [
+      39,
+      264,
+      173,
+      238
+     ],
+     "visibleSourceHeight": 238,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.374
+    },
+    {
+     "index": 7,
+     "row": "pass",
+     "column": 2,
+     "sourceRect": [
+      290,
+      266,
+      179,
+      236
+     ],
+     "visibleSourceHeight": 236,
+     "visibleHeight": 118.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.488
+    },
+    {
+     "index": 8,
+     "row": "pass",
+     "column": 3,
+     "sourceRect": [
+      534,
+      267,
+      226,
+      240
+     ],
+     "visibleSourceHeight": 240,
+     "visibleHeight": 120.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.502
+    },
+    {
+     "index": 9,
+     "row": "pass",
+     "column": 4,
+     "sourceRect": [
+      803,
+      274,
+      247,
+      232
+     ],
+     "visibleSourceHeight": 232,
+     "visibleHeight": 116.0,
+     "raisedFoot": true,
+     "clipped": false,
+     "diffToNext": 0.431
+    },
+    {
+     "index": 10,
+     "row": "pass",
+     "column": 5,
+     "sourceRect": [
+      1072,
+      271,
+      219,
+      231
+     ],
+     "visibleSourceHeight": 231,
+     "visibleHeight": 115.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.511
+    },
+    {
+     "index": 11,
+     "row": "pass",
+     "column": 6,
+     "sourceRect": [
+      1335,
+      265,
+      165,
+      237
+     ],
+     "visibleSourceHeight": 237,
+     "visibleHeight": 118.5,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 12,
+     "row": "receive",
+     "column": 1,
+     "sourceRect": [
+      37,
+      521,
+      175,
+      238
+     ],
+     "visibleSourceHeight": 238,
+     "visibleHeight": 119.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.523
+    },
+    {
+     "index": 13,
+     "row": "receive",
+     "column": 2,
+     "sourceRect": [
+      308,
+      526,
+      191,
+      233
+     ],
+     "visibleSourceHeight": 233,
+     "visibleHeight": 116.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.404
+    },
+    {
+     "index": 14,
+     "row": "receive",
+     "column": 3,
+     "sourceRect": [
+      577,
+      532,
+      134,
+      227
+     ],
+     "visibleSourceHeight": 227,
+     "visibleHeight": 113.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.368
+    },
+    {
+     "index": 15,
+     "row": "receive",
+     "column": 4,
+     "sourceRect": [
+      800,
+      528,
+      180,
+      232
+     ],
+     "visibleSourceHeight": 232,
+     "visibleHeight": 116.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.433
+    },
+    {
+     "index": 16,
+     "row": "receive",
+     "column": 5,
+     "sourceRect": [
+      1058,
+      528,
+      176,
+      229
+     ],
+     "visibleSourceHeight": 229,
+     "visibleHeight": 114.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.212
+    },
+    {
+     "index": 17,
+     "row": "receive",
+     "column": 6,
+     "sourceRect": [
+      1316,
+      527,
+      185,
+      231
+     ],
+     "visibleSourceHeight": 231,
+     "visibleHeight": 115.5,
+     "raisedFoot": false,
+     "clipped": false
+    },
+    {
+     "index": 18,
+     "row": "shuffle",
+     "column": 1,
+     "sourceRect": [
+      31,
+      785,
+      201,
+      217
+     ],
+     "visibleSourceHeight": 217,
+     "visibleHeight": 108.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.295
+    },
+    {
+     "index": 19,
+     "row": "shuffle",
+     "column": 2,
+     "sourceRect": [
+      278,
+      784,
+      207,
+      214
+     ],
+     "visibleSourceHeight": 214,
+     "visibleHeight": 107.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.2
+    },
+    {
+     "index": 20,
+     "row": "shuffle",
+     "column": 3,
+     "sourceRect": [
+      536,
+      784,
+      204,
+      218
+     ],
+     "visibleSourceHeight": 218,
+     "visibleHeight": 109.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.224
+    },
+    {
+     "index": 21,
+     "row": "shuffle",
+     "column": 4,
+     "sourceRect": [
+      800,
+      784,
+      199,
+      218
+     ],
+     "visibleSourceHeight": 218,
+     "visibleHeight": 109.0,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.333
+    },
+    {
+     "index": 22,
+     "row": "shuffle",
+     "column": 5,
+     "sourceRect": [
+      1069,
+      785,
+      198,
+      213
+     ],
+     "visibleSourceHeight": 213,
+     "visibleHeight": 106.5,
+     "raisedFoot": false,
+     "clipped": false,
+     "diffToNext": 0.432
+    },
+    {
+     "index": 23,
+     "row": "shuffle",
+     "column": 6,
+     "sourceRect": [
+      1311,
+      784,
+      203,
+      218
+     ],
+     "visibleSourceHeight": 218,
+     "visibleHeight": 109.0,
+     "raisedFoot": false,
+     "clipped": false
+    }
+   ]
+  },
+  "keeper_home": {
+   "kind": "keeper",
+   "side": "home",
+   "protagonist": false,
+   "source": "docs/art/team-training-v1/source/home_keeper_keyposes.png",
+   "sourceSha256": "4c30e967edfd079bd53253920dfc3a99f74f0d1ab6fcc62f9800eb038ae02878",
+   "file": "keeper_home.png",
+   "sha256": "291d9bc7191329cdc2fbcab0b55fff777284d21c1e754ca3e9b97d2eee4cf57e",
+   "scale": 0.50855,
+   "sheetNormalisation": 1.0171,
+   "frames": [
+    {
+     "index": 0,
+     "pose": "stand",
+     "sourceRect": [
+      20,
+      46,
+      129,
+      234
+     ],
+     "visibleSourceHeight": 234,
+     "visibleHeight": 119.0,
+     "sourceEdge": false,
+     "clipped": false
+    },
+    {
+     "index": 1,
+     "pose": "run",
+     "sourceRect": [
+      0,
+      288,
+      165,
+      221
+     ],
+     "visibleSourceHeight": 221,
+     "visibleHeight": 112.4,
+     "sourceEdge": true,
+     "clipped": false
+    },
+    {
+     "index": 2,
+     "pose": "stride",
+     "sourceRect": [
+      1,
+      515,
+      160,
+      215
+     ],
+     "visibleSourceHeight": 215,
+     "visibleHeight": 109.3,
+     "sourceEdge": false,
+     "clipped": false
+    },
+    {
+     "index": 3,
+     "pose": "ready",
+     "sourceRect": [
+      7,
+      726,
+      151,
+      161
+     ],
+     "visibleSourceHeight": 161,
+     "visibleHeight": 81.9,
+     "sourceEdge": true,
+     "clipped": false
+    }
+   ]
+  },
+  "keeper_away": {
+   "kind": "keeper",
+   "side": "away",
+   "protagonist": false,
+   "source": "docs/art/team-training-v1/source/opposition_keeper_keyposes.png",
+   "sourceSha256": "e6d1e4e8e14c7d810c3c6da0a529a2177cc21eda465fc3d3534693942ef1c7e1",
+   "file": "keeper_away.png",
+   "sha256": "6e0a21ddcfe76124cadbf7ed1a07eaac685fdeda6981e8d4bce4bce6257e22e3",
+   "scale": 0.50424,
+   "sheetNormalisation": 1.0085,
+   "frames": [
+    {
+     "index": 0,
+     "pose": "stand",
+     "sourceRect": [
+      29,
+      24,
+      138,
+      236
+     ],
+     "visibleSourceHeight": 236,
+     "visibleHeight": 119.0,
+     "sourceEdge": false,
+     "clipped": false
+    },
+    {
+     "index": 1,
+     "pose": "run",
+     "sourceRect": [
+      0,
+      260,
+      182,
+      217
+     ],
+     "visibleSourceHeight": 217,
+     "visibleHeight": 109.4,
+     "sourceEdge": true,
+     "clipped": false
+    },
+    {
+     "index": 2,
+     "pose": "stride",
+     "sourceRect": [
+      4,
+      486,
+      186,
+      205
+     ],
+     "visibleSourceHeight": 205,
+     "visibleHeight": 103.4,
+     "sourceEdge": false,
+     "clipped": false
+    },
+    {
+     "index": 3,
+     "pose": "ready",
+     "sourceRect": [
+      20,
+      691,
+      163,
+      196
+     ],
+     "visibleSourceHeight": 196,
+     "visibleHeight": 98.8,
+     "sourceEdge": true,
+     "clipped": false
+    }
+   ]
+  }
+ }
+}

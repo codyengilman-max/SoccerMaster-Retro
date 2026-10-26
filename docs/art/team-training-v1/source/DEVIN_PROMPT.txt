@@ -1,0 +1,11 @@
+Import the attached SoccerMaster_Team_Training_Devin folder. Read START_HERE_DEVIN.md and asset_inventory.json first.
+
+Use the individual sheets for the selected boy/girl protagonist, seven orange teammates and eight green-pinnie opponents. Add one keeper per side for18total. Goalkeeper strips are existing four-key-pose artwork only; report missing keeper animation cycles honestly.
+
+The selected protagonist must retain a subtle gold highlight at all times during training, regardless of possession. Other players must never receive it. Avoid doubling the outline already drawn into the protagonist artwork.
+
+Set training visible body size to1.2075×the original baseline, or1.05×if the earlier1.15×is already implemented. Apply once, preserve proportions and stable foot anchors, and retain full-half-field bird's-eye framing on phone rotation.
+
+Extract and review frames carefully: the generated source grid is not a validated atlas. Correct clipping, repeated-frame loops, support-foot drift and ball contact. Keep the ball separate. Do not assume all24cells are a single loop. Intended rows are run, pass, receive and defensive shuffle.
+
+Use tactical sessions with Coach Code's directions, choices, scripted demonstrations and feedback; do not introduce free-play training matches. Validate both protagonist choices, all18participants, persistent highlighting, readable team kits and portrait/landscape behavior. Report exact missing or defective frames instead of claiming complete animation coverage.
