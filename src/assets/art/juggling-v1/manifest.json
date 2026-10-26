@@ -1,0 +1,941 @@
+{
+  "status": "art_review_build_not_shipping_approved",
+  "cell": [
+    160,
+    128
+  ],
+  "anchor": [
+    80,
+    120
+  ],
+  "ball": "separate existing runtime ball",
+  "contact_coordinates_status": "unassigned; requires per-frame manual calibration",
+  "sheets": {
+    "boy_juggling": {
+      "image": "runtime/boy_juggling.png",
+      "frame_count": 24,
+      "intended_actions": "Front three-quarter view. Row1: ready stance; hands cupped holding invisible ball at waist; hands open release; gaze following drop; bend knees anticipation; reset. Row2: RIGHT foot backswing for low instep juggle; RIGHT foot low upward contact with level instep; RIGHT foot recovery; LEFT foot backswing; LEFT foot low upward contact; LEFT foot recovery. Row3: look down waiting for bounce; balanced step right; balanced step left; both hands open catch preparation; hands cupped catch at chest; relaxed successful catch. Row4: miss look down; step after missed ball; bend knees reach down; squat pickup hands cupped; stand holding invisible ball; small happy fist pump.",
+      "frames": [
+        {
+          "index": 0,
+          "row": 1,
+          "column": 1,
+          "source_rect": [
+            78,
+            27,
+            215,
+            262
+          ],
+          "runtime_rect": [
+            0,
+            0,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 1,
+          "row": 1,
+          "column": 2,
+          "source_rect": [
+            351,
+            27,
+            468,
+            262
+          ],
+          "runtime_rect": [
+            160,
+            0,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 2,
+          "row": 1,
+          "column": 3,
+          "source_rect": [
+            596,
+            27,
+            730,
+            262
+          ],
+          "runtime_rect": [
+            320,
+            0,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 3,
+          "row": 1,
+          "column": 4,
+          "source_rect": [
+            830,
+            40,
+            954,
+            262
+          ],
+          "runtime_rect": [
+            480,
+            0,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 4,
+          "row": 1,
+          "column": 5,
+          "source_rect": [
+            1060,
+            62,
+            1203,
+            261
+          ],
+          "runtime_rect": [
+            640,
+            0,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 5,
+          "row": 1,
+          "column": 6,
+          "source_rect": [
+            1322,
+            27,
+            1454,
+            262
+          ],
+          "runtime_rect": [
+            800,
+            0,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 6,
+          "row": 2,
+          "column": 1,
+          "source_rect": [
+            62,
+            275,
+            220,
+            509
+          ],
+          "runtime_rect": [
+            0,
+            128,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 7,
+          "row": 2,
+          "column": 2,
+          "source_rect": [
+            296,
+            286,
+            496,
+            511
+          ],
+          "runtime_rect": [
+            160,
+            128,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 8,
+          "row": 2,
+          "column": 3,
+          "source_rect": [
+            580,
+            280,
+            717,
+            511
+          ],
+          "runtime_rect": [
+            320,
+            128,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 9,
+          "row": 2,
+          "column": 4,
+          "source_rect": [
+            797,
+            273,
+            968,
+            511
+          ],
+          "runtime_rect": [
+            480,
+            128,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 10,
+          "row": 2,
+          "column": 5,
+          "source_rect": [
+            1036,
+            284,
+            1245,
+            511
+          ],
+          "runtime_rect": [
+            640,
+            128,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 11,
+          "row": 2,
+          "column": 6,
+          "source_rect": [
+            1311,
+            278,
+            1464,
+            511
+          ],
+          "runtime_rect": [
+            800,
+            128,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 12,
+          "row": 3,
+          "column": 1,
+          "source_rect": [
+            80,
+            527,
+            203,
+            749
+          ],
+          "runtime_rect": [
+            0,
+            256,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 13,
+          "row": 3,
+          "column": 2,
+          "source_rect": [
+            290,
+            526,
+            481,
+            747
+          ],
+          "runtime_rect": [
+            160,
+            256,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 14,
+          "row": 3,
+          "column": 3,
+          "source_rect": [
+            549,
+            528,
+            731,
+            748
+          ],
+          "runtime_rect": [
+            320,
+            256,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 15,
+          "row": 3,
+          "column": 4,
+          "source_rect": [
+            810,
+            524,
+            976,
+            751
+          ],
+          "runtime_rect": [
+            480,
+            256,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 16,
+          "row": 3,
+          "column": 5,
+          "source_rect": [
+            1064,
+            519,
+            1205,
+            751
+          ],
+          "runtime_rect": [
+            640,
+            256,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 17,
+          "row": 3,
+          "column": 6,
+          "source_rect": [
+            1320,
+            515,
+            1454,
+            751
+          ],
+          "runtime_rect": [
+            800,
+            256,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 18,
+          "row": 4,
+          "column": 1,
+          "source_rect": [
+            78,
+            774,
+            208,
+            995
+          ],
+          "runtime_rect": [
+            0,
+            384,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 19,
+          "row": 4,
+          "column": 2,
+          "source_rect": [
+            298,
+            778,
+            476,
+            994
+          ],
+          "runtime_rect": [
+            160,
+            384,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 20,
+          "row": 4,
+          "column": 3,
+          "source_rect": [
+            572,
+            795,
+            715,
+            993
+          ],
+          "runtime_rect": [
+            320,
+            384,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 21,
+          "row": 4,
+          "column": 4,
+          "source_rect": [
+            816,
+            808,
+            960,
+            992
+          ],
+          "runtime_rect": [
+            480,
+            384,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 22,
+          "row": 4,
+          "column": 5,
+          "source_rect": [
+            1071,
+            754,
+            1193,
+            999
+          ],
+          "runtime_rect": [
+            640,
+            384,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 23,
+          "row": 4,
+          "column": 6,
+          "source_rect": [
+            1323,
+            758,
+            1460,
+            999
+          ],
+          "runtime_rect": [
+            800,
+            384,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        }
+      ]
+    },
+    "girl_juggling": {
+      "image": "runtime/girl_juggling.png",
+      "frame_count": 24,
+      "intended_actions": "Front three-quarter view. Row1: ready stance; hands cupped holding invisible ball at waist; hands open release; gaze following drop; bend knees anticipation; reset. Row2: RIGHT foot backswing for low instep juggle; RIGHT foot low upward contact with level instep; RIGHT foot recovery; LEFT foot backswing; LEFT foot low upward contact; LEFT foot recovery. Row3: look down waiting for bounce; balanced step right; balanced step left; both hands open catch preparation; hands cupped catch at chest; relaxed successful catch. Row4: miss look down; step after missed ball; bend knees reach down; squat pickup hands cupped; stand holding invisible ball; small happy fist pump.",
+      "frames": [
+        {
+          "index": 0,
+          "row": 1,
+          "column": 1,
+          "source_rect": [
+            80,
+            26,
+            204,
+            260
+          ],
+          "runtime_rect": [
+            0,
+            0,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 1,
+          "row": 1,
+          "column": 2,
+          "source_rect": [
+            328,
+            28,
+            456,
+            260
+          ],
+          "runtime_rect": [
+            160,
+            0,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 2,
+          "row": 1,
+          "column": 3,
+          "source_rect": [
+            583,
+            27,
+            715,
+            260
+          ],
+          "runtime_rect": [
+            320,
+            0,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 3,
+          "row": 1,
+          "column": 4,
+          "source_rect": [
+            823,
+            29,
+            946,
+            260
+          ],
+          "runtime_rect": [
+            480,
+            0,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 4,
+          "row": 1,
+          "column": 5,
+          "source_rect": [
+            1083,
+            55,
+            1209,
+            260
+          ],
+          "runtime_rect": [
+            640,
+            0,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 5,
+          "row": 1,
+          "column": 6,
+          "source_rect": [
+            1340,
+            22,
+            1466,
+            260
+          ],
+          "runtime_rect": [
+            800,
+            0,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 6,
+          "row": 2,
+          "column": 1,
+          "source_rect": [
+            56,
+            277,
+            235,
+            511
+          ],
+          "runtime_rect": [
+            0,
+            128,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 7,
+          "row": 2,
+          "column": 2,
+          "source_rect": [
+            318,
+            282,
+            524,
+            513
+          ],
+          "runtime_rect": [
+            160,
+            128,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 8,
+          "row": 2,
+          "column": 3,
+          "source_rect": [
+            562,
+            275,
+            723,
+            513
+          ],
+          "runtime_rect": [
+            320,
+            128,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 9,
+          "row": 2,
+          "column": 4,
+          "source_rect": [
+            804,
+            280,
+            967,
+            511
+          ],
+          "runtime_rect": [
+            480,
+            128,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 10,
+          "row": 2,
+          "column": 5,
+          "source_rect": [
+            1067,
+            283,
+            1267,
+            512
+          ],
+          "runtime_rect": [
+            640,
+            128,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 11,
+          "row": 2,
+          "column": 6,
+          "source_rect": [
+            1325,
+            274,
+            1483,
+            512
+          ],
+          "runtime_rect": [
+            800,
+            128,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 12,
+          "row": 3,
+          "column": 1,
+          "source_rect": [
+            75,
+            526,
+            207,
+            754
+          ],
+          "runtime_rect": [
+            0,
+            256,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 13,
+          "row": 3,
+          "column": 2,
+          "source_rect": [
+            317,
+            530,
+            474,
+            753
+          ],
+          "runtime_rect": [
+            160,
+            256,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 14,
+          "row": 3,
+          "column": 3,
+          "source_rect": [
+            560,
+            536,
+            721,
+            753
+          ],
+          "runtime_rect": [
+            320,
+            256,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 15,
+          "row": 3,
+          "column": 4,
+          "source_rect": [
+            818,
+            526,
+            988,
+            754
+          ],
+          "runtime_rect": [
+            480,
+            256,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 16,
+          "row": 3,
+          "column": 5,
+          "source_rect": [
+            1082,
+            526,
+            1230,
+            754
+          ],
+          "runtime_rect": [
+            640,
+            256,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 17,
+          "row": 3,
+          "column": 6,
+          "source_rect": [
+            1337,
+            524,
+            1472,
+            755
+          ],
+          "runtime_rect": [
+            800,
+            256,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 18,
+          "row": 4,
+          "column": 1,
+          "source_rect": [
+            75,
+            769,
+            203,
+            1000
+          ],
+          "runtime_rect": [
+            0,
+            384,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 19,
+          "row": 4,
+          "column": 2,
+          "source_rect": [
+            326,
+            774,
+            477,
+            999
+          ],
+          "runtime_rect": [
+            160,
+            384,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 20,
+          "row": 4,
+          "column": 3,
+          "source_rect": [
+            589,
+            800,
+            730,
+            999
+          ],
+          "runtime_rect": [
+            320,
+            384,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 21,
+          "row": 4,
+          "column": 4,
+          "source_rect": [
+            823,
+            809,
+            960,
+            999
+          ],
+          "runtime_rect": [
+            480,
+            384,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 22,
+          "row": 4,
+          "column": 5,
+          "source_rect": [
+            1085,
+            765,
+            1223,
+            1002
+          ],
+          "runtime_rect": [
+            640,
+            384,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        },
+        {
+          "index": 23,
+          "row": 4,
+          "column": 6,
+          "source_rect": [
+            1345,
+            778,
+            1491,
+            1001
+          ],
+          "runtime_rect": [
+            800,
+            384,
+            160,
+            128
+          ],
+          "contact": null,
+          "working_foot_verified": false
+        }
+      ]
+    }
+  }
+}
