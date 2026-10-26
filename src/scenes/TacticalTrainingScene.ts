@@ -610,7 +610,9 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       const on = i === this.stageIdx;
       if (on) pg.fillStyle(UI.gold, 1).fillRect(F.x + cell * i + 4, F.y + 4, cell - 8, F.height - 8);
       if (i > 0) pg.fillStyle(UI.cyan, 0.9).fillTriangle(F.x + cell * i - 3, F.y + F.height / 2 - 4, F.x + cell * i - 3, F.y + F.height / 2 + 4, F.x + cell * i + 3, F.y + F.height / 2);
-      t.setPosition(cx, F.y + F.height / 2).setColor(on ? UI_CSS.navy : UI_CSS.cream).setAlpha(on ? 1 : 0.75);
+      t.setScale(1).setPosition(cx, F.y + F.height / 2).setColor(on ? UI_CSS.navy : UI_CSS.cream).setAlpha(on ? 1 : 0.75);
+      // Long labels (DEMONSTRATE) shrink to clear the arrows on narrow phones.
+      t.setScale(Math.min(1, (cell - 12) / t.width));
     });
   }
 
