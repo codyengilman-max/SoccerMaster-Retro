@@ -8,7 +8,7 @@ import type { RoleId } from '../ref/catalog.mjs';
 import { createRng } from '../../rng';
 import { fixtureById, fixtureKey, sideText, type RoutePlan } from './index';
 import { choose, createSituation, SIM, step, type SituationState } from './sim';
-import { MODEL_VERSION, type FixtureOption, type OptionGrade, type Variant, type Verdict } from './types';
+import { MODEL_VERSION, type Fixture, type FixtureOption, type OptionGrade, type Variant, type Verdict } from './types';
 
 export const ROUNDS = 3;
 export const MOMENTS_PER_ROUND = 3;
@@ -68,8 +68,13 @@ export class SituationSession {
   private readonly rand: () => number;
   private readonly round3: Variant[];
 
-  constructor(readonly plan: RoutePlan, readonly runId: string, readonly seed: number) {
-    if (plan.moments.length !== MOMENTS_PER_ROUND || plan.moments.some((m) => !fixtureById(m.fixtureId))) throw new Error('A complete route plan is required');
+  /** fixtures: the approved library scenes for a scored route; they are the only fixtures it resolves. Without it, the review-only proposals. */
+  fixtureOf(id: string): Fixture | null {
+    return this.fixtures ? this.fixtures.find((f) => f.id === id) ?? null : fixtureById(id);
+  }
+
+  constructor(readonly plan: RoutePlan, readonly runId: string, readonly seed: number, private readonly fixtures?: readonly Fixture[]) {
+    if (plan.moments.length !== MOMENTS_PER_ROUND || plan.moments.some((m) => !this.fixtureOf(m.fixtureId))) throw new Error('A complete route plan is required');
     this.rand = createRng(seed >>> 0);
     this.round3 = plan.moments.map(() => (this.rand() < 0.5 ? 'cue' : 'counter'));
   }
@@ -96,7 +101,7 @@ export class SituationSession {
 
   private load(replay: boolean): void {
     const m = this.plan.moments[this.moment]!;
-    this.sit = createSituation(fixtureById(m.fixtureId)!, this.variant, m.mirrored);
+    this.sit = createSituation(this.fixtureOf(m.fixtureId)!, this.variant, m.mirrored);
     this.hintUsed = false;
     this.replayRun = replay;
     this.decideClock = 0;
@@ -165,7 +170,7 @@ export class SituationSession {
     const frozen = { actors: s.actors.map((a) => ({ slot: a.slot, side: a.side, human: a.human, pos: { x: a.pos.x, y: a.pos.y } })), ball: { x: s.ball.pos.x, y: s.ball.pos.y }, chosen: chosen ? { ...chosen.point } : null, good };
     if (!choose(s, optionId)) return false;
     const m = this.plan.moments[this.moment]!;
-    this.attempts.push({ round: this.round, moment: this.moment, key: fixtureKey(fixtureById(m.fixtureId)!), variant: s.variant, mirrored: s.mirrored, optionId, verdict: g?.verdict ?? null, quality: g?.quality ?? 0, hinted: this.hintUsed, replay: this.replayRun, outcome: '', frozen });
+    this.attempts.push({ round: this.round, moment: this.moment, key: fixtureKey(this.fixtureOf(m.fixtureId)!), variant: s.variant, mirrored: s.mirrored, optionId, verdict: g?.verdict ?? null, quality: g?.quality ?? 0, hinted: this.hintUsed, replay: this.replayRun, outcome: '', frozen });
     return true;
   }
 
@@ -192,7 +197,7 @@ export class SituationSession {
     const dc = this.decisionCounts;
     return {
       model: MODEL_VERSION, runId: this.runId, sessionId: this.plan.sessionId, role: this.plan.role,
-      moments: this.plan.moments.map((m) => fixtureKey(fixtureById(m.fixtureId)!)),
+      moments: this.plan.moments.map((m) => fixtureKey(this.fixtureOf(m.fixtureId)!)),
       score: this.score, decisions: dc, decided,
       creditEligible: real.length === ROUNDS * MOMENTS_PER_ROUND && decided >= MIN_DECIDED && dc.independent >= MIN_INDEPENDENT,
     };

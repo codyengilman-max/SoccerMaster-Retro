@@ -6,6 +6,7 @@ import type { RoleId } from '../ref/catalog.mjs';
 import { sessions } from '../ref/seasons.mjs';
 import type { Moment, RoutePlan } from '../situations';
 import type { Fixture } from '../situations/types';
+import { MOMENTS_PER_ROUND } from '../situations/session';
 import { LIBRARY } from './tacticalLibrary.generated';
 import { cardById, cardReview, LIBRARY_SCENES, type ReviewOpts } from './review';
 
@@ -33,6 +34,7 @@ export function scoredSession(sessionId: string, role: RoleId, opts: GateOpts = 
   if (!ids || ids.length === 0)
     return { ok: false, blockers: [`No approved situation is mapped to ${sessionId} for ${role}. ${LIBRARY.file} v${LIBRARY.version} has no session assignment and none of its cards is approved yet.`] };
   const blockers: string[] = [];
+  if (ids.length !== MOMENTS_PER_ROUND) blockers.push(`${sessionId} ${role} maps ${ids.length} card(s); a round needs exactly ${MOMENTS_PER_ROUND} approved moments.`);
   const scenes: Fixture[] = [];
   for (const id of ids) {
     const card = cardById(id, opts.cards);

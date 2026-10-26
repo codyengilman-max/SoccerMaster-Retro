@@ -20,6 +20,9 @@ export interface ReviewOpts {
   readonly rulesSha256?: string;
 }
 
+/** SHA-256 of the rules profile a sign-off covers: the pitch proposal actually in force plus the two rosters. */
+export const rulesSha256 = (pitch: LibraryPitch = LIBRARY_PITCH): string => contentSha256({ pitch_proposal: pitch, rosters: LIBRARY_ROSTERS });
+
 export const sceneSha256 = (s: LibraryScene): string => contentSha256(s);
 
 export function cardById(id: string, cards: readonly LibraryCard[] = LIBRARY_CARDS): LibraryCard | null {
@@ -54,7 +57,7 @@ export function cardReview(id: string, opts: ReviewOpts = {}): Review {
   const card = cardById(id, opts.cards);
   if (!card) return { status: 'NEEDS_TACTICAL_AUTHORING_REVIEW', blockers: [`No card "${id}" in ${LIBRARY.file} v${LIBRARY.version}.`] };
   const pitch = opts.pitch ?? LIBRARY_PITCH;
-  const rules = opts.rulesSha256 ?? LIBRARY.rulesSha256;
+  const rules = opts.rulesSha256 ?? rulesSha256(pitch);
   const scene = (opts.scenes ?? LIBRARY_SCENES)[id];
   const signs = (opts.signoffs ?? SIGNOFFS).filter((s) => s.cardId === id);
   const blockers: string[] = [];

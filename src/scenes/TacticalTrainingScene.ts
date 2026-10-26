@@ -5,7 +5,7 @@ import type { CareerSave, Tt12Slot } from '../game/career/state';
 import type { Position } from '../game/career/types';
 import type { RoleId } from '../game/training12/ref/catalog.mjs';
 import { sessionId } from '../game/training12/session';
-import { fixtureById, routePlan, sideText } from '../game/training12/situations/index';
+import { routePlan, sideText } from '../game/training12/situations/index';
 import { SituationSession, TIMED_DECISION_SECONDS, type SitAttempt } from '../game/training12/situations/session';
 import { laneGap, pressureOn, type SitActor } from '../game/training12/situations/sim';
 import { ROLE_DUTY } from '../game/training12/situations/squad';
@@ -244,7 +244,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     const plan = this.proposals ? routePlan(this.id, this.role) : gate?.ok ? gate.plan : null;
     if (!plan) return this.setScreen('unavailable', `${ROLE_LABEL[this.role]} is not available for ${this.id} yet.`);
     const rand = Math.floor(Math.random() * 0x7fffffff);
-    this.session = new SituationSession(plan, `ts-${Date.now().toString(36)}-${rand.toString(36)}`, rand);
+    this.session = new SituationSession(plan, `ts-${Date.now().toString(36)}-${rand.toString(36)}`, rand, gate?.ok ? gate.scenes : undefined);
     this.setScreen('brief', '');
   }
 
@@ -381,7 +381,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       }
       case 'brief': {
         title = `COACH CODE · INTRODUCE · ${sess?.theme ?? this.id}`;
-        lines.push(roundTxt, `Your role: ${ROLE_LABEL[this.role]}. ${ROLE_DUTY[this.role]}`, '', `Today's moments: ${s!.plan.moments.map((m) => sideText(fixtureById(m.fixtureId)!.title, m.mirrored)).join('; ')}.`, '');
+        lines.push(roundTxt, `Your role: ${ROLE_LABEL[this.role]}. ${ROLE_DUTY[this.role]}`, '', `Today's moments: ${s!.plan.moments.map((m) => sideText(s!.fixtureOf(m.fixtureId)!.title, m.mirrored)).join('; ')}.`, '');
         lines.push(s!.guided ? 'Watch the play. When it stops, choose what you do, then we play it out and talk about why.'
           : s!.timed ? `Game speed: no hints, and ${TIMED_DECISION_SECONDS} seconds to choose each time.` : 'Read it yourself this round. The hint is still there, but it counts as help.');
         if (this.proposals) lines.push('', 'Unapproved proposal for tactical review: not from an approved library scene, never counted.');

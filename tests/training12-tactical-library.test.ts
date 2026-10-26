@@ -3,11 +3,12 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { sessions } from '../src/game/training12/ref/seasons.mjs';
 import { scoredSession } from '../src/game/training12/library/gate';
-import { cardReview, LEGACY_PROPOSAL_REVIEW, LIBRARY_SCENES, sceneProblems, sceneSha256, SIGNOFFS } from '../src/game/training12/library/review';
+import { cardReview, LEGACY_PROPOSAL_REVIEW, LIBRARY_SCENES, rulesSha256, sceneProblems, sceneSha256, SIGNOFFS } from '../src/game/training12/library/review';
 import { sha256, stableJson } from '../src/game/training12/library/sha256';
 import { LIBRARY, LIBRARY_CARDS, LIBRARY_PITCH, LIBRARY_RETIRED_IDS, LIBRARY_ROSTERS, LIBRARY_SOURCES } from '../src/game/training12/library/tacticalLibrary.generated';
 import type { LibraryCard, LibraryScene, Signoff } from '../src/game/training12/library/types';
 import { ALL_FIXTURES } from '../src/game/training12/situations/index';
+import { SituationSession } from '../src/game/training12/situations/session';
 
 const node = (s: string | Buffer): string => createHash('sha256').update(s).digest('hex');
 const pkg = JSON.parse(readFileSync(LIBRARY.path, 'utf8')) as {
@@ -124,42 +125,66 @@ describe('review gate fails closed', () => {
     expect(scoredSession('S9-W99-Z', 'CB')).toEqual({ ok: false, blockers: ['Session S9-W99-Z is not in the schedule.'] });
   });
 
-  // Test-only stand-in scene for CB01 to exercise the approval rules. Positions are placeholders, not reviewed content.
-  const card = LIBRARY_CARDS.find((c) => c.id === 'CB01')!;
-  const shown = new Set([...card.required_visible_actor_ids, card.protagonist, card.ball_owner_at_freeze]);
+  // Test-only stand-in scenes for CB01-CB03 to exercise the approval rules. Positions are placeholders, not reviewed content.
   const all = [...LIBRARY_ROSTERS.H, ...LIBRARY_ROSTERS.A].map((a) => a.id);
-  const scene: LibraryScene = {
-    cardId: 'CB01', sceneId: 'CB01-test', fixture: ALL_FIXTURES[0]!,
-    numeric: {
-      units: 'm', pitch: { length_m: LIBRARY_PITCH.length_m, width_m: LIBRARY_PITCH.width_m }, view: { kind: 'area', min: { x: 0, y: 0 }, max: { x: 45.72, y: 30 } },
-      actors: [...shown].map((id, i) => ({ id, pos: { x: 5 + i * 5, y: 15 }, vel: { x: 0, y: 0 }, facingDeg: 0 })),
-      omitted: all.filter((id) => !shown.has(id)).map((id) => ({ id, reason: 'test only' })),
-      ball: { pos: { x: 5, y: 15 }, vel: { x: 0, y: 0 }, owner: 'A_RW' }, events: [], localRules: 'test only',
-    },
-  };
   const pitch = { ...LIBRARY_PITCH, local_rules_verified: true };
-  const sign: Signoff = { cardId: 'CB01', cardSha256: card.cardSha256, rulesSha256: LIBRARY.rulesSha256, sceneId: scene.sceneId, sceneSha256: sceneSha256(scene), reviewer: 'test', date: '2026-10-26', note: 'test only' };
+  const make = (id: string, i: number): LibraryScene => {
+    const c = LIBRARY_CARDS.find((x) => x.id === id)!;
+    const shown = new Set([...c.required_visible_actor_ids, c.protagonist, c.ball_owner_at_freeze]);
+    return {
+      cardId: id, sceneId: `${id}-test`, fixture: { ...ALL_FIXTURES[i]!, id: `${id}-reviewed` },
+      numeric: {
+        units: 'm', pitch: { length_m: LIBRARY_PITCH.length_m, width_m: LIBRARY_PITCH.width_m }, view: { kind: 'area', min: { x: 0, y: 0 }, max: { x: 45.72, y: 30 } },
+        actors: [...shown].map((a, k) => ({ id: a, pos: { x: 5 + k * 5, y: 15 }, vel: { x: 0, y: 0 }, facingDeg: 0 })),
+        omitted: all.filter((a) => !shown.has(a)).map((a) => ({ id: a, reason: 'test only' })),
+        ball: { pos: { x: 5, y: 15 }, vel: { x: 0, y: 0 }, owner: c.ball_owner_at_freeze }, events: [], localRules: 'test only',
+      },
+    };
+  };
+  const ids = ['CB01', 'CB02', 'CB03'];
+  const scenes = Object.fromEntries(ids.map((id, i) => [id, make(id, i)]));
+  const signFor = (s: LibraryScene): Signoff => ({ cardId: s.cardId, cardSha256: LIBRARY_CARDS.find((c) => c.id === s.cardId)!.cardSha256, rulesSha256: rulesSha256(pitch), sceneId: s.sceneId, sceneSha256: sceneSha256(s), reviewer: 'test', date: '2026-10-26', note: 'test only' });
+  const card = LIBRARY_CARDS.find((c) => c.id === 'CB01')!;
+  const scene = scenes.CB01!;
+  const sign = signFor(scene);
   const s0 = sessions[0]!.id;
-  const mapping = { [s0]: { CB: ['CB01'] } };
-  const ok = { mapping, scenes: { CB01: scene }, signoffs: [sign], pitch };
+  const mapping = { [s0]: { CB: ids } };
+  const ok = { mapping, scenes, signoffs: ids.map((id) => signFor(scenes[id]!)), pitch };
 
-  it('a current sign-off on the exact card, rules and scene opens only that mapped route', () => {
+  it('current sign-offs on the exact cards, rules and scenes open only that mapped route, and it plays the signed scenes', () => {
     expect(sceneProblems(card, scene)).toEqual([]);
     expect(cardReview('CB01', ok)).toEqual({ status: 'APPROVED', blockers: [] });
     const g = scoredSession(s0, 'CB', ok);
     expect(g.ok).toBe(true);
-    if (g.ok) expect(g.scenes).toEqual([scene.fixture]);
+    if (!g.ok) return;
+    expect(g.scenes).toEqual(ids.map((id) => scenes[id]!.fixture));
+    const run = new SituationSession(g.plan, 'run-test', 7, g.scenes);
+    expect(g.plan.moments.map((m) => run.fixtureOf(m.fixtureId)?.id)).toEqual(['CB01-reviewed', 'CB02-reviewed', 'CB03-reviewed']);
+    expect(run.fixtureOf(ALL_FIXTURES[0]!.id)).toBeNull();
     expect(scoredSession(s0, 'LB', ok).ok).toBe(false);
-    expect(scoredSession(s0, 'CB', { ...ok, pitch: LIBRARY_PITCH }).ok).toBe(false);
-    expect(scoredSession(s0, 'CB', { ...ok, mapping: { [s0]: { LB: ['CB01'] } } }).ok).toBe(false);
+    expect(scoredSession(s0, 'CB', { ...ok, mapping: { [s0]: { LB: ids } } }).ok).toBe(false);
+  });
+
+  it('a route needs exactly three approved moments', () => {
+    for (const m of [['CB01'], ['CB01', 'CB02'], [...ids, 'CB01']]) {
+      const g = scoredSession(s0, 'CB', { ...ok, mapping: { [s0]: { CB: m } } });
+      expect(g.ok, m.join()).toBe(false);
+      if (!g.ok) expect(g.blockers).toContain(`${s0} CB maps ${m.length} card(s); a round needs exactly 3 approved moments.`);
+    }
   });
 
   it('card, rules or scene changes invalidate the sign-off until re-reviewed', () => {
     const edited = LIBRARY_CARDS.map((c) => (c.id === 'CB01' ? { ...c, preferred_decision: 'join LB at the ball.', cardSha256: node(stableJson({ ...c, preferred_decision: 'x' })) } : c));
     expect(cardReview('CB01', { ...ok, cards: edited }).blockers).toContain('CB01: library card changed after sign-off; re-review required.');
-    expect(cardReview('CB01', { ...ok, rulesSha256: 'other' }).blockers).toContain('CB01: rules profile (pitch or rosters) changed after sign-off; re-review required.');
+    // Signed while local rules were unverified: flipping the flag changes the rules profile, so the old sign-off is stale.
+    const old = { ...sign, rulesSha256: LIBRARY.rulesSha256 };
+    expect(rulesSha256()).toBe(LIBRARY.rulesSha256);
+    const flipped = cardReview('CB01', { ...ok, signoffs: [old] });
+    expect(flipped.status).toBe('APPROVAL_STALE');
+    expect(flipped.blockers).toContain('CB01: rules profile (pitch or rosters) changed after sign-off; re-review required.');
+    expect(cardReview('CB01', { ...ok, pitch: { ...pitch, width_m: 40 } }).status).not.toBe('APPROVED');
     const moved = { ...scene, numeric: { ...scene.numeric, actors: scene.numeric.actors.map((a, i) => (i === 0 ? { ...a, pos: { x: a.pos.x + 1, y: a.pos.y } } : a)) } };
-    const r = cardReview('CB01', { ...ok, scenes: { CB01: moved } });
+    const r = cardReview('CB01', { ...ok, scenes: { ...scenes, CB01: moved } });
     expect(r.status).toBe('APPROVAL_STALE');
     expect(r.blockers).toContain('CB01: scene changed after sign-off; re-review required.');
   });
@@ -180,9 +205,11 @@ describe('review gate fails closed', () => {
   });
 
   it('a mapping to a missing, retired or unsigned card is blocked, never replaced', () => {
-    expect(scoredSession(s0, 'CB', { mapping: { [s0]: { CB: ['NOPE01'] } } })).toEqual({ ok: false, blockers: [`No card "NOPE01" in ${LIBRARY.file} v${LIBRARY.version}.`] });
-    expect(scoredSession(s0, 'CB', { mapping: { [s0]: { CB: ['GK01'] } } }).ok).toBe(false);
+    const missing = scoredSession(s0, 'CB', { ...ok, mapping: { [s0]: { CB: ['CB01', 'CB02', 'NOPE01'] } } });
+    expect(missing.ok).toBe(false);
+    if (!missing.ok) expect(missing.blockers).toEqual([`No card "NOPE01" in ${LIBRARY.file} v${LIBRARY.version}.`]);
+    expect(scoredSession(s0, 'CB', { ...ok, mapping: { [s0]: { CB: ['CB01', 'CB02', 'GK01'] } } }).ok).toBe(false);
     expect(scoredSession(s0, 'CB', { ...ok, signoffs: [] }).ok).toBe(false);
-    expect(scoredSession(s0, 'CB', { ...ok, mapping: { [s0]: { CB: ['CB01', 'CB02'] } } }).ok).toBe(false);
+    expect(scoredSession(s0, 'CB', { ...ok, mapping: { [s0]: { CB: ['CB01', 'CB02', 'CB04'] } } }).ok).toBe(false);
   });
 });
