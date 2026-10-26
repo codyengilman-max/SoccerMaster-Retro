@@ -12,7 +12,8 @@ import { prototypeFor, resolveSteps, stepAt } from '../game/career/curriculum/de
 import { DRAFT_PREFIX, DRAFT_STATUS, draftActivityId } from '../game/career/curriculum/drafts';
 import { LOGIC_CATALOG, LOGIC_GROUPS, SCENARIO_GOAL, activeLogicScenarios, currentText, type LogicGroup } from '../game/logic/catalog';
 import { describeChanges, selectSituations } from '../game/career/teamTraining';
-import { planFor, sessionId } from '../game/training12/session';
+import { sessionId } from '../game/training12/session';
+import { routePlan } from '../game/training12/situations/index';
 import { ROLE_CHOICES } from './TacticalTrainingScene';
 import { orientationOf } from '../render/layout';
 import { PlayerArt, atlasKey } from '../render/art/playerArt';
@@ -597,14 +598,15 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             ...rows,
             rec
               ? `\nCounted for week ${s.week}: ${describeChanges(rec.changes)}. Playing again is practice only.`
-              : '\nPlay all three with the normal controls. A good week adds up to +2 attribute points, a poor week costs 1 (never below the starting value). Leaving early counts nothing.',
+                : '\nPlay Team Training (the list above) uses the normal controls. A good week adds up to +2 attribute points, a poor week costs 1 (never below the starting value). Leaving early counts nothing.',
             'Situations come from the soccer-logic catalog draft (not coach-certified).',
+            'Sessions A–C: three tactical moments each on the full half-field; you decide with the answer buttons. Positions are authored prototypes, not calibrated.',
           ].join('\n'),
           actions: [
             ...TT12_SLOTS.map((slot) => {
               const done = s.tt12.some((r) => r.week === s.week && r.slot === slot && r.credited);
-              const open = planFor(sessionId(1, s.week, slot), ROLE_CHOICES[p.position][0]!).status === 'selected';
-              return { name: `tt12-${slot}`, label: `Session ${slot} (v1.2)${done ? ' · counted' : open ? '' : ' · not available yet'}`, onClick: () => { if (open) this.playTactical(slot); } };
+              const open = routePlan(sessionId(1, s.week, slot), ROLE_CHOICES[p.position][0]!) !== null;
+              return { name: `tt12-${slot}`, label: `Session ${slot}${done ? ' · counted' : open ? '' : ' · not available yet'}`, onClick: () => { if (open) this.playTactical(slot); } };
             }),
             { name: 'team-play', label: rec ? 'Practise again' : 'Play Team Training', onClick: () => this.playTeamTraining() },
           ],

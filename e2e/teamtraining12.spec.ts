@@ -188,6 +188,15 @@ test('team training v1.2: rounds 1-2 wait for the player; pause blocks decisions
   const c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'team page');
   expect(c.text).not.toContain('All three sessions counted');
   await page.setViewportSize(vp);
+  // Re-entering with Coach Code's texture already cached still shows his portrait (it used to stay null).
+  await press(page, 'tt12-B', mode);
+  await waitForScene(page, 'tactical');
+  await tt(page, (x) => x.screen === 'role', 'role again');
+  await pressElement(page, 'role-6', mode);
+  await tt(page, (x) => x.screen === 'brief', 'brief again');
+  await pressElement(page, 'tt-start', mode);
+  const again = await tt(page, (x) => x.phase === 'observe' && x.options.length > 0, 'decision after re-entry');
+  expect((again as unknown as Loop).coachPortrait, 'portrait after re-entry').toBe(true);
 });
 
 type Loop = Omit<TT, 'options'> & {
