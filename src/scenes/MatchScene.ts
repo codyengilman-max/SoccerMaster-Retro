@@ -2128,7 +2128,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       }
     }
     const owner = s.ball.owner;
-    this.devText.setWordWrapWidth(Math.max(160, this.scale.width - 2 * EDGE), true);
+    this.devText.setWordWrapWidth(Math.max(160, this.scale.width - 2 * EDGE - 12), true);
     this.devText
       .setText(
         `phase ${s.phase}${s.paused ? ' (paused)' : ''} · owner ${owner ?? 'loose'} · possession ${s.possession}\n` +
