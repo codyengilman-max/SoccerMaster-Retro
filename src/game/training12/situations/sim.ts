@@ -249,7 +249,7 @@ function end(s: SituationState, kind: OutcomeKind, text: string): void {
     s.settleT = 0;
     return;
   }
-  // A reception can still be undone during the settle window (the marker wins it straight back).
+  // A reception can still be undone during the settle period (the marker wins it straight back).
   if (s.pending && !(s.pending.kind === 'kept' || s.pending.kind === 'progressed') ) return;
   if (s.pending && kind !== 'lost') return;
   s.pending = { kind, text };

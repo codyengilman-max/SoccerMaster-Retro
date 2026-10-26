@@ -112,6 +112,7 @@ const SIX03: Fixture = {
     opt('screen', 'screen', 'Stay central behind the ball', p(21.8, 9)),
     opt('join', 'support', 'Join the attack', p(30, 18)),
     opt('wide', 'support', 'Drift out to the left', p(12, 11)),
+    opt('shift', 'screen', 'Shift across to the right', p(30.5, 9.5)),
   ],
   cue: {
     teaches: 'Protect central counter route',
@@ -121,6 +122,7 @@ const SIX03: Fixture = {
       screen: grade('good', 'regained', ['You stayed in the line to their 9, so the counter pass was yours.'], { tackle: ['o6'], responses: { o6: p(26, 22.4) }, then: [{ at: 0.6, from: 'o6', kind: 'pass', to: 'o9' }] }),
       join: grade('poor', 'lost', ['Joining left the middle open for their counter.'], { tackle: ['o6'], responses: { o6: p(26, 22.4) }, then: [{ at: 0.6, from: 'o6', kind: 'pass', to: 'o9' }] }),
       wide: grade('poor', 'lost', ['Drifting wide left the middle open for their counter.'], { tackle: ['o6'], responses: { o6: p(26, 22.4) }, then: [{ at: 0.6, from: 'o6', kind: 'pass', to: 'o9' }] }),
+      shift: grade('poor', 'lost', ['Their 9 was still central: shifting right opened the line to him.'], { tackle: ['o6'], responses: { o6: p(26, 22.4) }, then: [{ at: 0.6, from: 'o6', kind: 'pass', to: 'o9' }] }),
     },
   },
   counter: {
@@ -131,7 +133,8 @@ const SIX03: Fixture = {
     grades: {
       screen: grade('poor', 'lost', ['Their outlet had moved: staying central left the line to him open.'], { tackle: ['o6'], responses: { o6: p(26, 22.4) }, then: [{ at: 0.6, from: 'o6', kind: 'pass', to: 'o9' }] }),
       join: grade('poor', 'lost', ['Joining left their outlet free.'], { tackle: ['o6'], responses: { o6: p(26, 22.4) }, then: [{ at: 0.6, from: 'o6', kind: 'pass', to: 'o9' }] }),
-      wide: grade('ok', 'lost', ['You moved, but to the wrong side: their outlet was on the right.'], { tackle: ['o6'], responses: { o6: p(26, 22.4) }, then: [{ at: 0.6, from: 'o6', kind: 'pass', to: 'o9' }] }),
+      wide: grade('poor', 'lost', ['You moved, but to the wrong side: their outlet was on the right.'], { tackle: ['o6'], responses: { o6: p(26, 22.4) }, then: [{ at: 0.6, from: 'o6', kind: 'pass', to: 'o9' }] }),
+      shift: grade('good', 'regained', ['Their outlet had moved right, so you shifted into the line to him and the counter pass was yours.'], { tackle: ['o6'], responses: { o6: p(26, 22.4) }, then: [{ at: 0.6, from: 'o6', kind: 'pass', to: 'o9' }] }),
     },
   },
 };

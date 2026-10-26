@@ -56,7 +56,7 @@ describe('tactical situation session (ts-1)', () => {
     s.startRound();
     while (s.sit!.phase !== 'observe') s.update(0.25);
     s.decide(best(s));
-    while (s.sit!.phase !== 'explain') s.update(0.25);
+    while ((s.sit!.phase as string) !== 'explain') s.update(0.25);
     expect(s.replay()).toBe(true);
     while (s.sit!.phase !== 'observe') s.update(0.25);
     s.decide(best(s));
