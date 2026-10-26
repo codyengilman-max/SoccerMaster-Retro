@@ -296,3 +296,10 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Saves: `tt12Run.model = 'ts-1'` marks tactical runs; old runs without it stay readable. runId idempotency and once-per-session credit are unchanged.
 - Mapping of the 108 x 9 routes: `docs/training/TACTICAL_SITUATIONS_MAPPING.md` (generated, test-checked). 328 direct, 433 partial, 211 weak (flagged); weak routes are mostly winger defending and full-back transition/switch, where the library has no seed for that role.
 - Limit: fixtures are partial-participant authored states, not the canonical 18-player match engine. Normal matches are unchanged.
+
+## D54. Team Training: the full 18, package art, Coach Code sequence (owner package, 2026-10-29)
+- Fixtures keep their authored players and outcomes; `completeSquad` adds the missing 1-3-2-3 roles so every state is 9 v 9. The added players hold and shift the team shape (width, depth, cover, weak side) but are excluded from passing targets, pressure, interceptions and tackles, so no authored lesson changes. Re-authoring all 40 fixtures as full 18-player decision states is left for review.
+- Atlases are cut by connected components (not a fixed grid), feet on one baseline, one scale per sheet from the standing pose, protagonist outline excluded from the height. Keepers keep their 4 key poses; no save, dive, catch, throw or punt cycle is invented.
+- RETRY OR CONTINUE is its own step after CRITIQUE (one extra tap), so the six stages always appear in order.
+- The legacy `MatchScene` Team Training code is unreachable (`teamTraining = false`) and kept for now so normal-match code paths it shares are not disturbed; it can be deleted in a follow-up.
+
