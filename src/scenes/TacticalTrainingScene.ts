@@ -4,9 +4,10 @@ import { CareerStore } from '../game/career/store';
 import type { CareerSave, Tt12Slot } from '../game/career/state';
 import type { Position } from '../game/career/types';
 import type { RoleId } from '../game/training12/ref/catalog.mjs';
-import { planFor, sessionId, TrainingSession, TIMED_DECISION_SECONDS, type Attempt } from '../game/training12/session';
-import type { DrillActor } from '../game/training12/drill';
-import { coachQuestion, situationCues } from '../game/training12/cues';
+import { sessionId } from '../game/training12/session';
+import { fixtureById, routePlan, sideText } from '../game/training12/situations/index';
+import { SituationSession, TIMED_DECISION_SECONDS, type SitAttempt } from '../game/training12/situations/session';
+import { laneGap, pressureOn, type SitActor } from '../game/training12/situations/sim';
 import { sessions } from '../game/training12/ref/seasons.mjs';
 import { artTextureKey, artUrl } from '../render/art/urls';
 import { PlayerArt } from '../render/art/playerArt';
@@ -54,7 +55,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
   private save: CareerSave | null = null;
   private entry = 0;
   private bodyMax = Number.POSITIVE_INFINITY;
-  private session: TrainingSession | null = null;
+  private session: SituationSession | null = null;
   private screen: Screen = 'loading';
   private slot: Tt12Slot = 'A';
   private role: RoleId = '8';
@@ -164,8 +165,8 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       if (this.lookName) this.look = home[1]!;
       this.art.ensure([...new Set([...this.kits.A, ...this.kits.B, ...this.kits.N].map((l) => l.set))]);
       this.role = ROLE_CHOICES[save.player.position][0]!;
-      const plan = planFor(sessionId(1, save.week, this.slot), this.role);
-      if (plan.status !== 'selected') return this.setScreen('unavailable', `Session ${sessionId(1, save.week, this.slot)} is not available yet. Its scenes have not passed testing, so nothing here is counted. Your weekly Team Training is still on the Team Training page.`);
+      const plan = routePlan(sessionId(1, save.week, this.slot), this.role);
+      if (!plan) return this.setScreen('unavailable', `Session ${sessionId(1, save.week, this.slot)} is not available yet. Its scenes have not passed testing, so nothing here is counted. Your weekly Team Training is still on the Team Training page.`);
       this.setScreen('role', '');
     }).catch(() => this.setScreen('unavailable', 'Your career save could not be opened.'));
   }
@@ -177,15 +178,16 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     const url = artUrl(COACH_ART);
     if (!url) return;
     const key = artTextureKey(COACH_ART);
-    const place = (): void => {
-      if (!this.sys.isActive() || !this.textures.exists(key) || this.coach) return;
+    // Synchronous on re-entry (texture cached): the scene is still CREATING, so only the async loader path checks isActive.
+    const place = (sync = false): void => {
+      if ((!sync && !this.sys.isActive()) || !this.textures.exists(key) || this.coach) return;
       this.coach = this.add.image(0, 0, key).setDepth(2001).setCrop(150, 0, 230, 230).setOrigin(0, 0).setVisible(!this.coachCompact);
       this.layout();
     };
-    if (this.textures.exists(key)) place();
+    if (this.textures.exists(key)) place(true);
     else {
       this.load.image(key, url);
-      this.load.once(`filecomplete-image-${key}`, place);
+      this.load.once(`filecomplete-image-${key}`, () => place());
       this.load.start();
     }
   }
@@ -196,9 +198,9 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     return !pos || !ROLE_CHOICES[pos].includes(this.role);
   }
 
-  /** OBSERVE / DECIDE / PLAY / LEARN for the live drill, or -1 off the pitch loop. */
+  /** OBSERVE / DECIDE / PLAY / LEARN for the live moment, or -1 off the pitch loop. */
   private stage(): number {
-    const d = this.session?.drill;
+    const d = this.session?.sit;
     if (this.screen !== 'play' || !d) return -1;
     return d.phase === 'release' ? 0 : d.phase === 'observe' ? 1 : d.phase === 'execute' ? 2 : 3;
   }
@@ -213,10 +215,10 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
   private begin(): void {
     const save = this.save;
     if (!save?.player) return;
-    const plan = planFor(this.id, this.role);
-    if (plan.status !== 'selected') return this.setScreen('unavailable', `${ROLE_LABEL[this.role]} is not available for ${this.id} yet.`);
+    const plan = routePlan(this.id, this.role);
+    if (!plan) return this.setScreen('unavailable', `${ROLE_LABEL[this.role]} is not available for ${this.id} yet.`);
     const rand = Math.floor(Math.random() * 0x7fffffff);
-    this.session = new TrainingSession(plan, save.player.id, `tt-${Date.now().toString(36)}-${rand.toString(36)}`, rand);
+    this.session = new SituationSession(plan, `ts-${Date.now().toString(36)}-${rand.toString(36)}`, rand);
     this.setScreen('brief', '');
   }
 
@@ -224,7 +226,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     const s = this.session;
     if (s && this.screen === 'play') {
       // ?ttSpeed (debug) speeds up play only; the timed decision window always runs in real seconds.
-      if (s.status === 'playing') s.update(Math.min(deltaMs / 1000, 0.1) * (s.drill?.phase === 'observe' ? 1 : this.speed));
+      if (s.status === 'playing') s.update(Math.min(deltaMs / 1000, 0.1) * (s.sit?.phase === 'observe' ? 1 : this.speed));
       if (s.status === 'reflection') this.setScreen('reflection', '');
     }
     // Poses only step while play runs, so Pause and the DECIDE freeze hold every player still.
@@ -298,7 +300,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     this.scene.start(SceneKeys.Career, { open: 'team', ...(this.returnTo ? { returnTo: this.returnTo } : {}) });
   }
 
-  /** Save the finished run once. The completion request comes from the reference engine; the score from assessed decisions. */
+  /** Save the finished run once (tactical-situation model ts-1). Credit and score come from the decisions, never from play time. */
   private async finish(): Promise<void> {
     const s = this.session;
     const c = s?.completion;
@@ -306,12 +308,11 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     if (this.screen === 'saving') return;
     this.leaveArmed = false;
     this.setScreen('saving', 'Saving…');
-    const score = s.score;
     // The same runId is idempotent in the reducer, so a failed save can be retried safely.
     let out: { ok: true; message: string } | { ok: false; error: string };
     try {
-      const r = await this.store.dispatch({ type: 'tt12Run', week: this.save.week, slot: this.slot, runId: c.runId, score, creditEligible: c.creditEligible && !this.reviewRole, decisions: s.decisionCounts });
-      out = r.ok ? { ok: true, message: r.message } : { ok: false, error: r.error };
+      const r = await this.store.dispatch({ type: 'tt12Run', week: this.save.week, slot: this.slot, runId: c.runId, score: c.score, creditEligible: c.creditEligible && !this.reviewRole, decisions: c.decisions, model: c.model });
+      out = r.ok ? { ok: true, message: this.reviewRole ? 'Review route: saved as practice, never counted.' : r.message } : { ok: false, error: r.error };
     } catch (e) {
       out = { ok: false, error: e instanceof Error ? e.message : 'The save could not be written.' };
     }
@@ -324,7 +325,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
 
   private panelUpdate(): void {
     const s = this.session;
-    const d = s?.drill ?? null;
+    const d = s?.sit ?? null;
     const lines: string[] = [];
     let title = 'COACH CODE';
     type B = { name: string; label: string; onClick: () => void; fill?: number; small?: boolean };
@@ -333,7 +334,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     const roundTxt = s ? `Round ${s.roundNumber} of 3 · ${s.guided ? 'Guided' : s.timed ? 'Game speed' : 'Your read'}` : '';
     const sess = sessions.find((x) => x.id === this.id);
     this.setSub([this.save ? `S1 · Week ${this.save.week} · Session ${this.slot}` : '', s ? `Round ${s.roundNumber}/3` : '', this.screen === 'play' || this.screen === 'brief' ? ROLE_LABEL[this.role] : ''].filter(Boolean));
-    this.setObjective(s ? s.plan.definition.objective : (sess?.objective ?? ''));
+    this.setObjective(s && d ? s.text(d.fixture.objective) : (sess?.objective ?? ''));
     switch (this.screen) {
       case 'loading':
       case 'unavailable':
@@ -345,15 +346,15 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
         const roles: RoleId[] = [...ROLE_CHOICES[this.save!.player!.position]];
         if (shouldExposeDebug(window.location)) roles.push('GK');
         for (const r of roles) {
-          const ok = planFor(this.id, r).status === 'selected';
+          const ok = routePlan(this.id, r) !== null;
           const review = !ROLE_CHOICES[this.save!.player!.position].includes(r);
           buttons.push({ name: `role-${r}`, label: `${ROLE_LABEL[r]}${review ? ' (review, not counted)' : ''}${ok ? '' : ' (not available yet)'}`, onClick: () => { if (!ok) return; this.role = r; this.begin(); } });
         }
         break;
       }
       case 'brief': {
-        title = `COACH CODE · ${s!.plan.practice.name}`;
-        lines.push(roundTxt, '');
+        title = `COACH CODE · ${sess?.theme ?? this.id}`;
+        lines.push(roundTxt, '', `Today's moments: ${s!.plan.moments.map((m) => sideText(fixtureById(m.fixtureId)!.title, m.mirrored)).join('; ')}.`, '');
         lines.push(s!.guided ? 'Watch the play. When it stops, choose what you do, then we play it out and talk about why.'
           : s!.timed ? `Game speed: no hints, and ${TIMED_DECISION_SECONDS} seconds to choose each time.` : 'Read it yourself this round. The hint is still there, but it counts as help.');
         if (this.reviewRole) lines.push('', 'Review route: this session is never counted.');
@@ -369,19 +370,19 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
         }
         if (d?.phase === 'observe') {
           title = s!.timed ? `COACH CODE · ${Math.ceil(s!.decideSecondsLeft)} s to choose` : 'COACH CODE · YOUR DECISION';
-          lines.push(coachQuestion(d));
-          if (s!.hinted) lines.push(...situationCues(d).lines);
-          s!.choices().forEach((c, i) => buttons.push({ name: `opt-${c.option.id}`, label: `${LETTERS[i]}  ${c.option.label}`, onClick: () => this.decide(c.option.id), fill: PALETTE.cream }));
+          lines.push(s!.text(d.spec.question));
+          if (s!.hinted) lines.push(...d.spec.cues.map((c) => `• ${s!.text(c)}`));
+          s!.choices().forEach((c, i) => buttons.push({ name: `opt-${c.option.id}`, label: `${LETTERS[i]}  ${c.label}`, onClick: () => this.decide(c.option.id), fill: PALETTE.cream }));
           if (s!.hintAvailable) util({ name: 'tt-hint', label: s!.hinted ? 'Hint used' : 'Hint', onClick: () => this.hint(), fill: PALETTE.sand });
         } else if (d?.phase === 'explain') {
           title = 'COACH CODE · LEARN';
           const a = s!.attempts.at(-1);
-          lines.push(...learnLines(a, d.outcome?.text ?? '', s!.timed));
+          lines.push(...learnLines(a, s!, d.outcome?.text ?? ''));
           if (!s!.timed) buttons.push({ name: 'tt-replay', label: 'Replay this one', onClick: () => this.replay() });
           buttons.push({ name: 'tt-next', label: 'Next situation', onClick: () => this.next() });
         } else {
           title = d?.phase === 'execute' ? 'COACH CODE · PLAY' : 'COACH CODE · OBSERVE';
-          lines.push(d?.phase === 'execute' ? 'Playing it out from where you paused…' : 'Watch the pressure, the movement and the space.');
+          lines.push(d?.phase === 'execute' ? 'Playing it out from where you paused…' : `${d ? s!.text(d.fixture.title) : ''}. ${d?.fixture.goal === 'ours' ? 'We defend this goal.' : 'We attack this goal.'} Watch the pressure, the movement and the space.`);
           if (s!.replaying) lines.push('Replay: practice only, not counted.');
         }
         util({ name: 'tt-pause', label: 'II Pause', onClick: () => this.togglePause(), fill: PALETTE.sand });
@@ -389,12 +390,12 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       }
       case 'reflection': {
         title = `COACH CODE · Round ${s!.roundNumber} done`;
-        const mine = s!.attempts.filter((a) => a.round === s!.run.round && !a.replay);
-        const good = mine.filter((a) => a.decision?.good).length;
+        const mine = s!.attempts.filter((a) => a.round === s!.round && !a.replay);
+        const good = mine.filter((a) => a.verdict === 'good').length;
         const helped = mine.filter((a) => a.hinted).length;
         lines.push(`${good} of ${mine.length} decisions were good reads.`, ...summary(mine));
         if (helped) lines.push(`${helped} used the hint: those count as help, not your own read.`);
-        buttons.push({ name: 'tt-continue', label: s!.run.round >= 2 ? 'Finish session' : 'Next round', onClick: () => this.continueRound() });
+        buttons.push({ name: 'tt-continue', label: s!.round >= 2 ? 'Finish session' : 'Next round', onClick: () => this.continueRound() });
         break;
       }
       case 'saving':
@@ -410,8 +411,8 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
         const c = s?.completion;
         const real = s?.attempts.filter((a) => !a.replay) ?? [];
         const dc = s?.decisionCounts ?? { independent: 0, assisted: 0 };
-        lines.push(`${real.filter((a) => a.decision?.good).length} of ${real.length} decisions were good reads (${dc.independent} on your own, ${dc.assisted} with the hint).`);
-        lines.push(this.reviewRole ? 'Review route: not counted.' : c?.creditEligible ? 'Your play was observed: this session can count.' : 'Not enough of your own play to count this session.');
+        lines.push(`${real.filter((a) => a.verdict === 'good').length} of ${real.length} decisions were good reads (${dc.independent} on your own, ${dc.assisted} with the hint).`);
+        lines.push(this.reviewRole ? 'Review route: not counted.' : c?.creditEligible ? 'Enough of your own decisions: this session can count.' : 'Not enough decisions of your own to count this session.');
         lines.push('', this.saved);
         buttons.push({ name: 'tt-back', label: 'Back to Team Training', onClick: () => this.leave() });
         break;
@@ -424,7 +425,7 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     this.title.setText(title);
     const st = this.stage();
     if (st !== this.stageIdx) { this.stageIdx = st; this.drawChrome(); }
-    const key = `${this.screen}|${s?.status}|${s?.drill?.phase}|${s?.attempts.length}|${this.leaveArmed}|${buttons.map((b) => b.name + b.label).join(',')}|${this.panel.width}x${this.panel.height}`;
+    const key = `${this.screen}|${s?.status}|${s?.sit?.phase}|${s?.moment}|${s?.hinted}|${s?.attempts.length}|${this.leaveArmed}|${buttons.map((b) => b.name + b.label).join(',')}|${this.panel.width}x${this.panel.height}`;
     if (key === this.buttonKey) return this.fitBody(lines);
     this.buttonKey = key;
     for (const b of this.buttons) b.destroy();
@@ -631,13 +632,6 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     return { x: cx + (x - HALF.width / 2) * k, y: base - (FRAME.h - HALF.length - 2.2 + y) * k };
   }
 
-  /** Drill-area metres to half-field metres: the area is centred across and sits mid-half. */
-  private drillToHalf(p: { x: number; y: number }): { x: number; y: number } {
-    const d = this.session?.drill;
-    if (!d) return p;
-    return { x: (HALF.width - d.W) / 2 + p.y, y: (HALF.length - d.L) / 2 + p.x };
-  }
-
   private draw(): void {
     const g = this.g;
     g.clear();
@@ -658,17 +652,20 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     box(26, 11);
     box(12, 4);
     const ga = this.toScreen(HALF.width / 2 - HALF.goalWidth / 2, HALF.length);
-    // The full-size goal is background in these drills (they score on their own targets), so it is drawn muted.
-    g.fillStyle(PALETTE.net, 0.15).fillRect(ga.x, ga.y - 1.6 * k, HALF.goalWidth * k, 1.6 * k);
-    g.lineStyle(Math.max(1.5, k * 0.15), 0xffffff, 0.45).strokeRect(ga.x, ga.y - 1.6 * k, HALF.goalWidth * k, 1.6 * k);
+    // The regulation 9v9 goal is the only target in a tactical moment: net behind the goal line, white posts and bar.
+    g.fillStyle(PALETTE.net, 0.55).fillRect(ga.x, ga.y - 1.6 * k, HALF.goalWidth * k, 1.6 * k);
+    g.lineStyle(1, 0xffffff, 0.5);
+    for (let x = ga.x + 3; x < ga.x + HALF.goalWidth * k; x += 3) g.lineBetween(x, ga.y - 1.6 * k, x, ga.y);
+    g.lineStyle(Math.max(2, k * 0.18), 0xffffff, 1).strokeRect(ga.x, ga.y - 1.6 * k, HALF.goalWidth * k, 1.6 * k);
+    const spot = this.toScreen(HALF.width / 2, HALF.length - 8.2);
+    g.fillStyle(PALETTE.line, 1).fillCircle(spot.x, spot.y, Math.max(1.5, k * 0.12));
     const s = this.session;
-    const d = s?.drill;
+    const d = s?.sit;
     for (const t of this.tokenText) t.setVisible(false);
     if (!d) {
       for (const im of this.sprites) im.setVisible(false);
       return void this.me.setVisible(false);
     }
-    this.drawArea(g, d, k);
     this.drawTactical(s!, k);
     const r = Math.max(6, k * 0.55);
     const h = spriteHeight(k);
@@ -709,108 +706,38 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       const dir = moving ? dirFromScreen(me.vel.y, -me.vel.x) : 2;
       this.art.apply(this.me, mine, moving ? 'run' : 'idle', dir, pose, h).setPosition(mp.x, mp.y).setDepth(901).setVisible(true);
     } else this.me.setVisible(false);
-    const bp = this.drillToHalf(d.ball.pos);
-    const bs = this.toScreen(bp.x, bp.y);
+    const bs = this.toScreen(d.ball.pos.x, d.ball.pos.y);
     this.ballG.fillStyle(0xffffff, 1).fillCircle(bs.x, bs.y, Math.max(4, k * 0.3));
     this.ballG.lineStyle(1.5, PALETTE.ink, 1).strokeCircle(bs.x, bs.y, Math.max(4, k * 0.3));
-  }
-
-  /**
-   * The practice area: the pitch outside it is dimmed, the area itself is marked by corner cones and a thin dashed
-   * line, and each target is a small pixel goal (posts, net) in the colour of the team that attacks it.
-   */
-  private drawArea(g: Phaser.GameObjects.Graphics, d: NonNullable<TrainingSession['drill']>, k: number): void {
-    const a0 = this.drillScreen({ x: 0, y: 0 });
-    const a1 = this.drillScreen({ x: d.L, y: d.W });
-    const x0 = Math.min(a0.x, a1.x), x1 = Math.max(a0.x, a1.x), y0 = Math.min(a0.y, a1.y), y1 = Math.max(a0.y, a1.y);
-    const tl = this.toScreen(0, HALF.length);
-    const br = this.toScreen(HALF.width, 0);
-    g.fillStyle(UI.navyDeep, 0.16);
-    g.fillRect(tl.x, tl.y, br.x - tl.x, y0 - tl.y).fillRect(tl.x, y1, br.x - tl.x, br.y - y1);
-    g.fillRect(tl.x, y0, x0 - tl.x, y1 - y0).fillRect(x1, y0, br.x - x1, y1 - y0);
-    g.lineStyle(1.5, 0xffffff, 0.55);
-    const dash = (ax: number, ay: number, bx: number, by: number): void => {
-      const len = Math.hypot(bx - ax, by - ay);
-      for (let t = 0; t < len; t += 10) {
-        const e = Math.min(len, t + 5);
-        g.lineBetween(ax + ((bx - ax) * t) / len, ay + ((by - ay) * t) / len, ax + ((bx - ax) * e) / len, ay + ((by - ay) * e) / len);
-      }
-    };
-    dash(x0, y0, x1, y0);
-    dash(x1, y0, x1, y1);
-    dash(x1, y1, x0, y1);
-    dash(x0, y1, x0, y0);
-    const cone = Math.max(4, k * 0.5);
-    for (const [cx, cy] of [[x0, y0], [x1, y0], [x0, y1], [x1, y1]] as const) {
-      g.fillStyle(0xff7a1a, 1).fillTriangle(cx, cy - cone, cx - cone * 0.75, cy + cone * 0.6, cx + cone * 0.75, cy + cone * 0.6);
-      g.fillStyle(0xffffff, 1).fillRect(cx - cone * 0.35, cy - cone * 0.1, cone * 0.7, cone * 0.25);
-    }
-    for (const t of d.targets) {
-      const col = t.scoresFor === 'A' ? PALETTE.blue : t.scoresFor === 'B' ? PALETTE.tomato : PALETTE.cream;
-      if (t.type === 'end-zone') {
-        const z0 = this.drillScreen({ x: t.cx, y: 0 });
-        const z1 = this.drillScreen({ x: t.cx + (t.cx < d.L / 2 ? 2 : -2), y: d.W });
-        g.fillStyle(col, 0.18).fillRect(Math.min(z0.x, z1.x), Math.min(z0.y, z1.y), Math.abs(z1.x - z0.x), Math.abs(z1.y - z0.y));
-        continue;
-      }
-      // The net sits behind the scoring line, away from the area, so the mouth faces the play.
-      const out = t.cx < d.L / 2 ? -1 : 1;
-      const p = this.drillScreen({ x: t.cx, y: t.cy - t.half });
-      const q = this.drillScreen({ x: t.cx, y: t.cy + t.half });
-      const back = this.drillScreen({ x: t.cx + out, y: t.cy + t.half });
-      const gx = Math.min(p.x, q.x);
-      const gw = Math.max(3, Math.abs(q.x - p.x));
-      const gy = Math.min(p.y, back.y);
-      const gh = Math.max(3, Math.abs(back.y - p.y));
-      g.fillStyle(0xffffff, 0.35).fillRect(gx, gy, gw, gh);
-      g.lineStyle(1, 0xffffff, 0.6);
-      for (let x = gx + 3; x < gx + gw; x += 3) g.lineBetween(x, gy, x, gy + gh);
-      g.lineBetween(gx, gy + gh / 2, gx + gw, gy + gh / 2);
-      g.lineStyle(Math.max(2, k * 0.22), col, 1).strokeRect(gx, gy, gw, gh);
-      const post = Math.max(3, k * 0.3);
-      g.fillStyle(0xffffff, 1).fillRect(p.x - post / 2, p.y - post / 2, post, post).fillRect(q.x - post / 2, q.y - post / 2, post, post);
-      g.lineStyle(1, PALETTE.ink, 1).strokeRect(p.x - post / 2, p.y - post / 2, post, post).strokeRect(q.x - post / 2, q.y - post / 2, post, post);
-      // A chevron in front of the mouth, in the attacking team's colour, pointing into the goal.
-      const m = this.drillScreen({ x: t.cx - out * 1.2, y: t.cy });
-      const dir = Math.sign(back.y - p.y) || 1;
-      const c = Math.max(4, k * 0.45);
-      g.fillStyle(col, 0.95).fillTriangle(m.x - c, m.y - dir * c * 0.4, m.x + c, m.y - dir * c * 0.4, m.x, m.y + dir * c * 0.6);
-    }
-  }
-
-  private drillScreen(p: { x: number; y: number }): { x: number; y: number } {
-    const h = this.drillToHalf(p);
-    return this.toScreen(h.x, h.y);
   }
 
   /**
    * Tactical overlay. DECIDE: a same-style letter tag where each choice goes (no arrows, no colour for the best one);
    * the hint adds cyan pressure rings and pass lanes. LEARN: the frozen moment, your choice in gold, good reads in cyan.
    */
-  private drawTactical(s: TrainingSession, k: number): void {
-    const d = s.drill!;
+  private drawTactical(s: SituationSession, k: number): void {
+    const d = s.sit!;
     const t = this.tacG;
     const tagR = Math.max(9, k * 0.65);
     if (d.phase === 'observe' && s.status === 'playing') {
       if (s.hinted) {
-        const cues = situationCues(d);
+        // Hint only: the ball holder's pass lanes to teammates (faint when an opponent is in the lane) and who is pressing.
         const holder = d.actors.find((a) => a.slot === d.ball.owner);
-        for (const l of cues.lanes) {
-          const to = d.actors.find((a) => a.slot === l.to);
-          if (!holder || !to) continue;
-          const a = this.actorScreen(holder);
-          const b = this.actorScreen(to);
-          t.lineStyle(2, UI.cyan, l.open ? 0.9 : 0.25).lineBetween(a.x, a.y, b.x, b.y);
-        }
-        for (const slot of cues.pressure) {
-          const o = d.actors.find((a) => a.slot === slot);
-          if (o) { const p = this.actorScreen(o); t.lineStyle(2, UI.cyan, 0.9).strokeCircle(p.x, p.y, Math.max(10, k * 1.2)); }
+        if (holder) {
+          const team = holder.side === 'A' || holder.side === 'GK_A' ? 'A' : 'B';
+          for (const to of d.actors) {
+            if (to === holder || (to.side === 'A' || to.side === 'GK_A' ? 'A' : 'B') !== team) continue;
+            const a = this.actorScreen(holder);
+            const b = this.actorScreen(to);
+            t.lineStyle(2, UI.cyan, laneGap(d, holder.pos, to.pos, team) > 2 ? 0.9 : 0.25).lineBetween(a.x, a.y, b.x, b.y);
+          }
+          for (const o of pressureOn(d, holder.slot)) { const p = this.actorScreen(o); t.lineStyle(2, UI.cyan, 0.9).strokeCircle(p.x, p.y, Math.max(10, k * 1.2)); }
         }
       }
-      const bodies = [...d.actors.flatMap((a) => { const p = this.actorScreen(a); return [p, { x: p.x, y: p.y - spriteHeight(k) * 0.6 }]; }), this.drillScreen(d.ball.pos)];
+      const bodies = [...d.actors.flatMap((a) => { const p = this.actorScreen(a); return [p, { x: p.x, y: p.y - spriteHeight(k) * 0.6 }]; }), this.halfScreen(d.ball.pos)];
       const placed: { x: number; y: number }[] = [];
       s.choices().forEach((ch, i) => {
-        const at = this.drillScreen(ch.option.point);
+        const at = this.halfScreen(ch.option.point);
         const tag = clearSpot(at, bodies, placed, tagR + spriteHeight(k) * 0.3, tagR * 2.1);
         placed.push(tag);
         if (tag.x !== at.x || tag.y !== at.y) {
@@ -827,27 +754,30 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
     if (d.phase !== 'explain' || !a) return;
     const fz = a.frozen;
     for (const x of fz.actors) {
-      const p = this.drillScreen(x.pos);
+      const p = this.halfScreen(x.pos);
       t.fillStyle(x.human ? UI.gold : 0xffffff, 0.35).fillCircle(p.x, p.y, Math.max(4, k * 0.4));
     }
     const me = fz.actors.find((x) => x.human);
     if (!me) return;
-    const from = this.drillScreen(me.pos);
+    const from = this.halfScreen(me.pos);
     for (const g of fz.good) {
-      const to = this.drillScreen(g.point);
+      const to = this.halfScreen(g.point);
       t.lineStyle(2, UI.cyan, 0.95).lineBetween(from.x, from.y, to.x, to.y);
       t.fillStyle(UI.cyan, 1).fillCircle(to.x, to.y, Math.max(5, k * 0.4));
     }
     if (fz.chosen) {
-      const to = this.drillScreen(fz.chosen);
+      const to = this.halfScreen(fz.chosen);
       t.lineStyle(3, UI.gold, 1).lineBetween(from.x, from.y, to.x, to.y);
       t.lineStyle(3, UI.gold, 1).strokeCircle(to.x, to.y, Math.max(7, k * 0.6));
     }
   }
 
-  private actorScreen(a: DrillActor): { x: number; y: number } {
-    const h = this.drillToHalf(a.pos);
-    return this.toScreen(h.x, h.y);
+  private actorScreen(a: SitActor): { x: number; y: number } {
+    return this.toScreen(a.pos.x, a.pos.y);
+  }
+
+  private halfScreen(p: { x: number; y: number }): { x: number; y: number } {
+    return this.toScreen(p.x, p.y);
   }
 
   private label(key: string, text: string, x: number, y: number): void {
@@ -876,9 +806,13 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
 
   describeGameplay(): unknown {
     const s = this.session;
-    const d = s?.drill;
+    const d = s?.sit;
+    const last = s?.attempts.at(-1);
     return {
       screen: this.screen,
+      model: 'ts-1',
+      fixture: d ? { id: d.fixture.id, key: `${d.fixture.id}@${d.fixture.version}`, variant: d.variant, mirrored: d.mirrored, goal: d.fixture.goal, players: d.actors.length, outcome: d.outcome?.kind ?? null } : null,
+      moment: s?.moment ?? null,
       sessionId: this.id,
       slot: this.slot,
       role: this.role,
@@ -892,9 +826,9 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       titleBottom: this.title.y + this.title.height,
       buttonsTop: Math.min(...this.buttons.map((b) => b.y - b.height / 2)),
       status: s?.status ?? null,
-      round: s?.run.round ?? null,
+      round: s?.round ?? null,
       phase: d?.phase ?? null,
-      options: d?.phase === 'observe' && s?.status === 'playing' ? s.choices().map((c, i) => ({ id: c.option.id, letter: LETTERS[i], label: c.option.label, kind: c.option.kind, good: c.assessment.good, quality: c.assessment.quality })) : [],
+      options: d?.phase === 'observe' && s?.status === 'playing' ? s.choices().map((c, i) => ({ id: c.option.id, letter: LETTERS[i], label: c.option.label, kind: c.option.kind, good: s.grade(c.option.id)?.verdict === 'good', verdict: s.grade(c.option.id)?.verdict ?? null, quality: s.grade(c.option.id)?.quality ?? 0 })) : [],
       stage: STAGES[this.stage()] ?? null,
       hinted: s?.hinted ?? false,
       hintAvailable: s?.hintAvailable ?? false,
@@ -904,13 +838,12 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
       header: { title: this.hTitle.text, sub: this.hSub.text, objective: this.hObj.getData('full') as string | null, objectiveShown: this.hObj.text },
       choiceTagsVisible: this.tokenText.filter((t) => t.visible).length,
       coachPortrait: this.coach?.visible ?? false,
-      lastAttempt: s?.attempts.at(-1) ? { optionId: s.attempts.at(-1)!.optionId, hinted: s.attempts.at(-1)!.hinted, replay: s.attempts.at(-1)!.replay, good: s.attempts.at(-1)!.decision?.good ?? null, goodIds: s.attempts.at(-1)!.frozen.good.map((g) => g.id) } : null,
+      lastAttempt: last ? { optionId: last.optionId, key: last.key, variant: last.variant, hinted: last.hinted, replay: last.replay, good: last.verdict === null ? null : last.verdict === 'good', verdict: last.verdict, outcome: last.outcome, goodIds: last.frozen.good.map((g) => g.id) } : null,
       textBottoms: { header: this.hObj.y + this.hObj.height, headerBottom: this.header.y + this.header.height, headerRight: Math.max(this.hSub.x + this.hSub.width, this.hObj.x + this.hObj.width), headerEdge: this.header.x + this.header.width },
       attempts: s?.attempts.length ?? 0,
-      activeSeconds: s?.activeSeconds ?? 0,
-      rejected: s?.rejected ?? 0,
       generation: s?.generation ?? null,
-      completion: s?.completion ? { creditEligible: s.completion.creditEligible, masteryGranted: s.completion.masteryGranted, runId: s.completion.runId } : null,
+      completion: s?.completion ? { creditEligible: s.completion.creditEligible, runId: s.completion.runId, model: s.completion.model, moments: s.completion.moments, decided: s.completion.decided, score: s.completion.score } : null,
+      smallSided: { area: false, miniGoals: 0, gates: 0, endZones: 0 },
       saved: this.saved,
       message: this.message,
       pxPerMetre: this.px,
@@ -928,25 +861,24 @@ export class TacticalTrainingScene extends Phaser.Scene implements InspectableSc
   }
 }
 
-/** LEARN text: the decision verdict, then the result, kept apart, then reasons read from the frozen moment (trimmed first). */
-export function learnLines(a: Attempt | undefined, fallback: string, timed: boolean): string[] {
+/** LEARN text: the decision verdict, then the result, kept apart, then the authored reasons for this moment. */
+export function learnLines(a: SitAttempt | undefined, s: Pick<SituationSession, 'text' | 'timed' | 'grade'>, fallback: string): string[] {
   if (!a) return [fallback];
   const out: string[] = [];
   if (a.replay) out.push('Replay: practice only, not counted.');
-  if (a.decision) {
-    out.push(`Decision: ${a.decision.good ? 'a good read' : 'another option was stronger here'}${a.hinted ? ' (with the hint)' : ''}.`);
-    out.push(`Result: ${a.outcome || fallback}`);
-    out.push(...a.decision.reasons.slice(0, timed ? 1 : 2).map((r) => `• ${r}`));
-    const others = a.frozen.good.filter((g) => g.id !== a.optionId).map((g) => g.label);
-    if (others.length) out.push(`${a.decision.good ? 'Also a good read' : 'Stronger here'}: ${others.join(' or ')} (cyan).`);
-    return out;
-  }
+  const g = a.optionId ? s.grade(a.optionId) : null;
+  if (!g) return [...out, 'No decision in time.', `Result: ${a.outcome || fallback}`];
+  const verdict = g.verdict === 'good' ? 'a good read' : g.verdict === 'ok' ? 'defensible, but another option was stronger' : 'another option was stronger here';
+  out.push(`Decision: ${verdict}${a.hinted ? ' (with the hint)' : ''}.`);
   out.push(`Result: ${a.outcome || fallback}`);
+  out.push(...g.reasons.slice(0, s.timed ? 1 : 2).map((r) => `• ${s.text(r)}`));
+  const others = a.frozen.good.filter((x) => x.id !== a.optionId).map((x) => x.label);
+  if (others.length) out.push(`${g.verdict === 'good' ? 'Also a good read' : 'Stronger here'}: ${others.join(' or ')} (cyan).`);
   return out;
 }
 
-function summary(attempts: readonly { decision: { good: boolean } | null; kind: string | null }[]): string[] {
-  const missed = attempts.filter((a) => !a.decision).length;
+function summary(attempts: readonly SitAttempt[]): string[] {
+  const missed = attempts.filter((a) => a.optionId === null).length;
   return missed ? [`${missed} moment${missed === 1 ? '' : 's'} passed without a decision.`] : [];
 }
 

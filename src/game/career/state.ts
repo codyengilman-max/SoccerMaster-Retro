@@ -110,6 +110,8 @@ export interface Tt12Run {
   /** Mean decision quality (0-1) over the run's assessed decisions. */
   readonly score: number;
   readonly credited: boolean;
+  /** 'ts-1': a tactical-situation run. Missing on small-sided (v1.2 drill) runs saved before the situation model. */
+  readonly model?: 'ts-1';
   /**
    * Decisions made without the hint, and decisions made after opening it (replays excluded). Missing on runs saved
    * before hints existed: those are not guessed.
@@ -127,7 +129,7 @@ export type Action =
   | { readonly type: 'evidence'; readonly batchId: string; readonly items: readonly EvidenceItem[]; readonly missed: number }
   | { readonly type: 'acceptLevel'; readonly family: SkillFamilyId }
   | { readonly type: 'teamTraining'; readonly week: number; readonly results: readonly SituationResult[] }
-  | { readonly type: 'tt12Run'; readonly week: number; readonly slot: Tt12Slot; readonly runId: string; readonly score: number; readonly creditEligible: boolean; readonly decisions?: { readonly independent: number; readonly assisted: number } }
+  | { readonly type: 'tt12Run'; readonly week: number; readonly slot: Tt12Slot; readonly runId: string; readonly score: number; readonly creditEligible: boolean; readonly decisions?: { readonly independent: number; readonly assisted: number }; readonly model?: 'ts-1' }
   | { readonly type: 'cloudyResult'; readonly runId: string; readonly difficulty: Difficulty; readonly score: number; readonly stars: 1 | 2 | 3 }
   | { readonly type: 'matchReport'; readonly report: SavedReport }
   | { readonly type: 'endWeek'; readonly recess?: { readonly played: boolean } | null };
@@ -320,10 +322,11 @@ export function reduce(save: CareerSave, action: Action): Outcome {
       // Once the week is graded (legacy Team Training or three v1.2 sessions), further runs are practice only.
       const graded = save.teamTraining.some((r) => r.week === save.week);
       const credited = action.creditEligible === true && !graded;
-      const runs = [...save.tt12, { week: save.week, slot: action.slot, runId: action.runId, score: action.score, credited, ...(dc ? { decisions: { independent: dc.independent, assisted: dc.assisted } } : {}) }].slice(-L.historyMax * 4);
+      if (action.model !== undefined && action.model !== 'ts-1') return fail('Unknown Team Training model.');
+      const runs = [...save.tt12, { week: save.week, slot: action.slot, runId: action.runId, score: action.score, credited, ...(dc ? { decisions: { independent: dc.independent, assisted: dc.assisted } } : {}), ...(action.model ? { model: action.model } : {}) }].slice(-L.historyMax * 4);
       let next: CareerSave = { ...save, tt12: runs };
       if (graded) return ok(next, `Team Training for week ${save.week} is already counted; this session was practice only.`);
-      if (!credited) return ok(next, 'Session saved, but not counted: it needs at least 30 seconds of your own play.');
+      if (!credited) return ok(next, action.model === 'ts-1' ? 'Session saved, but not counted: it needs at least 6 decisions, 3 of them without a hint.' : 'Session saved, but not counted: it needs at least 30 seconds of your own play.');
       const week = TT12_SLOTS.map((slot) => runs.find((r) => r.week === save.week && r.slot === slot && r.credited));
       if (week.some((r) => !r)) {
         return ok(next, `Session ${action.slot} counted (${week.filter(Boolean).length} of 3 this week).`);

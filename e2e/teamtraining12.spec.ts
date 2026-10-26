@@ -6,8 +6,8 @@ const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mous
 
 type TT = {
   screen: string; sessionId: string; role: string; look: string | null; status: string | null; round: number | null; phase: string | null;
-  options: { id: string; good: boolean; quality: number }[]; attempts: number; activeSeconds: number; rejected: number;
-  completion: { creditEligible: boolean; masteryGranted: boolean } | null; saved: string; pxPerMetre: number; sprite: string | null; squadSprites: string[]; bodyBottom: number; buttonsTop: number; titleBottom: number;
+  options: { id: string; good: boolean; quality: number }[]; attempts: number;
+  completion: { creditEligible: boolean; model: string; moments: string[]; decided: number } | null; smallSided: unknown; saved: string; pxPerMetre: number; sprite: string | null; squadSprites: string[]; bodyBottom: number; buttonsTop: number; titleBottom: number;
 };
 /** The panel rebuilds its buttons on the next frame after the phase changes; on a slow runner wait for the button to exist. */
 async function pressReady(page: Page, name: string, mode: 'mouse' | 'touch'): Promise<void> {
@@ -138,8 +138,11 @@ test('team training v1.2: whole session on the overhead half, counted once, idle
   t = await tt(page, (x) => x.screen === 'done', 'session saved', 30_000);
   await page.screenshot({ path: info.outputPath(`tt12-done-${info.project.name}.png`) });
   expect(t.completion?.creditEligible).toBe(true);
-  expect(t.completion?.masteryGranted).toBe(false);
-  expect(t.rejected).toBe(0);
+  // Tactical-situation run (ts-1): versioned moment keys, credit from decisions, and no small-sided area, goals, gates or zones.
+  expect(t.completion?.model).toBe('ts-1');
+  expect(t.completion?.moments.every((k) => /^ts-1:[A-Z0-9]+@\d+$/.test(k))).toBe(true);
+  expect(t.completion?.decided).toBe(9);
+  expect(t.smallSided).toEqual({ area: false, miniGoals: 0, gates: 0, endZones: 0 });
   expect(t.saved).toContain('Session A counted');
   await pressElement(page, 'tt-back', mode);
   const c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'team page');
@@ -185,6 +188,15 @@ test('team training v1.2: rounds 1-2 wait for the player; pause blocks decisions
   const c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'team page');
   expect(c.text).not.toContain('All three sessions counted');
   await page.setViewportSize(vp);
+  // Re-entering with Coach Code's texture already cached still shows his portrait (it used to stay null).
+  await press(page, 'tt12-B', mode);
+  await waitForScene(page, 'tactical');
+  await tt(page, (x) => x.screen === 'role', 'role again');
+  await pressElement(page, 'role-6', mode);
+  await tt(page, (x) => x.screen === 'brief', 'brief again');
+  await pressElement(page, 'tt-start', mode);
+  const again = await tt(page, (x) => x.phase === 'observe' && x.options.length > 0, 'decision after re-entry');
+  expect((again as unknown as Loop).coachPortrait, 'portrait after re-entry').toBe(true);
 });
 
 type Loop = Omit<TT, 'options'> & {
@@ -238,7 +250,7 @@ test('team training: OBSERVE > DECIDE > PLAY > LEARN, hint is recorded as help, 
   const frozenAt = JSON.stringify((await diagnostics(page)).gameplay);
   await page.waitForTimeout(1200);
   const later = await L(() => true, 'still frozen');
-  expect(later.activeSeconds).toBe(t.activeSeconds);
+  expect(later.attempts).toBe(t.attempts);
   expect(later.phase).toBe('observe');
   expect(frozenAt.length).toBeGreaterThan(0);
   const d = await diagnostics(page);

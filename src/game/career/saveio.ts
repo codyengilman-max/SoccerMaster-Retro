@@ -229,7 +229,7 @@ function tt12Run(v: unknown, week: number): Tt12Run {
   const o = obj(v, 'tt12');
   if (typeof o.score !== 'number' || !Number.isFinite(o.score) || o.score < 0 || o.score > 1) throw new Invalid('tt12 score: out of range');
   if (typeof o.credited !== 'boolean') throw new Invalid('tt12 credited: not a boolean');
-  return { week: int(o.week, 'tt12 week', 1, week), slot: oneOf(o.slot, 'tt12 slot', TT12_SLOTS), runId: str(o.runId, 'tt12 runId', 64), score: o.score, credited: o.credited, ...(o.decisions === undefined ? {} : { decisions: tt12Decisions(o.decisions) }) };
+  return { week: int(o.week, 'tt12 week', 1, week), slot: oneOf(o.slot, 'tt12 slot', TT12_SLOTS), runId: str(o.runId, 'tt12 runId', 64), score: o.score, credited: o.credited, ...(o.decisions === undefined ? {} : { decisions: tt12Decisions(o.decisions) }), ...(o.model === undefined ? {} : { model: oneOf(o.model, 'tt12 model', ['ts-1'] as const) }) };
 }
 
 function tt12Decisions(v: unknown): { independent: number; assisted: number } {
