@@ -3,6 +3,8 @@ import type { Rect } from '../game';
 import { ATTRIBUTE_EVIDENCE, CAREER_CONFIG } from '../game/career/config';
 import { CareerStore } from '../game/career/store';
 import { SPENDABLE, awardTitle, balance } from '../game/career/bonus';
+import { HOME_SKILLS, specFor, type HomeSkillId } from '../game/career/homeMastery';
+import { SKILL_LABEL, entryHint, feedbackLine, masteryLines, parseAttempts } from '../game/career/homeEntry';
 import type { CareerSave } from '../game/career/state';
 import { ATTRIBUTES, ATTRIBUTE_LABELS, type AttributeId } from '../game/career/types';
 import { NOT_TRACKED } from '../game/report/registry';
@@ -70,7 +72,7 @@ export function recentLines(save: CareerSave): string[] {
 interface Hit { readonly name: string; readonly rect: Rect; readonly on: () => void }
 
 export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
-  private view: 'player' | 'history' = 'player';
+  private view: 'player' | 'history' | 'mastery' = 'player';
   private returnTo: 'story' | 'start' = 'start';
   private storyWeek: number | null = null;
   private save: CareerSave | null = null;
@@ -194,6 +196,14 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
     const top = y;
     let col1 = top;
     let col2 = top;
+    if (this.view === 'mastery') {
+      const fw = landscape ? colW * 2 + pad : colW;
+      col1 = this.masteryCard(x0, col1, fw, fs, pad) + pad;
+      col1 = this.nav(x0, col1, fw, fs, pad);
+      this.contentH = col1 + ins.bottom + pad;
+      this.clampScroll();
+      return;
+    }
     if (this.view === 'history') {
       col1 = this.historyCard(x0, col1, landscape ? colW * 2 + pad : colW, fs, pad);
       col1 = this.nav(x0, col1 + pad, landscape ? colW * 2 + pad : colW, fs, pad);
@@ -358,6 +368,92 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
     });
   }
 
+  /** Last saved practice entry and its Coach Code feedback (a "check" entry offers correct or confirm). */
+  private homeNote: { id: string; kind: string; text: string } | null = null;
+
+  private masteryCard(x: number, y: number, w: number, fs: number, pad: number): number {
+    const s = this.save;
+    return this.card(x, y, w, pad, (cy) => {
+      const inner = w - pad * 2;
+      cy = this.text(x + pad, cy, 'HOME TRAINING MASTERY', fs * 1.15, 0, true) + 4;
+      if (!s?.player) return this.text(x + pad, cy, 'Create your player first.', fs, 0, false, INK, inner);
+      const tasks = this.tasks();
+      const weekly = tasks.length ? `This week's required home training: ${tasks.filter((t) => t.done).length} of ${tasks.length} complete (separate from mastery).` : 'No required home training this week. Extra practice still builds mastery.';
+      cy = this.text(x + pad, cy, weekly, fs * 0.85, 0, false, INK, inner) + 8;
+      if (this.homeNote) {
+        cy = this.text(x + pad, cy, this.homeNote.text, fs * 0.9, 0, true, INK, inner) + 6;
+        if (this.homeNote.kind === 'check') {
+          const bw = (inner - pad * 0.5) / 2;
+          const id = this.homeNote.id;
+          this.button('home-correct', x + pad, cy, bw, 44, 'Correct my score', fs * 0.85, BLUE, () => void this.logHome(null, id));
+          cy = this.button('home-confirm', x + pad + bw + pad * 0.5, cy, bw, 44, 'My score is right', fs * 0.85, CARD, () => void this.confirmHome(id), INK) + 8;
+        }
+      }
+      for (const skill of HOME_SKILLS) {
+        const m = masteryLines(s.homeLogs, skill);
+        cy = this.text(x + pad, cy, SKILL_LABEL[skill].toUpperCase(), fs, 0, true) + 2;
+        this.bar(x + pad, cy + 2, inner * 0.6, fs * 0.9, (m.progress.phase - 1 + m.progress.qualifying / 2) / 5);
+        cy += fs * 1.4;
+        for (const l of m.lines) cy = this.text(x + pad, cy, l, fs * 0.82, 0, false, INK, inner) + 2;
+        const task = tasks.find((t) => t.key === skill);
+        const bw = task ? (inner - pad * 0.5) / 2 : inner;
+        if (task) this.button(`home-demo-${skill}`, x + pad, cy + 4, bw, 44, 'Watch demo', fs * 0.85, CARD, () => this.openTask(task), INK);
+        cy = this.button(`home-log-${skill}`, x + pad + (task ? bw + pad * 0.5 : 0), cy + 4, bw, 44, 'Log scores', fs * 0.85, BLUE, () => void this.logHome(skill)) + 10;
+      }
+      return cy;
+    });
+  }
+
+  private async withStore<T>(fn: (store: CareerStore) => Promise<T>): Promise<T | null> {
+    if (this.spending) return null;
+    this.spending = true;
+    const store = await CareerStore.open();
+    try {
+      return await fn(store);
+    } finally {
+      this.spending = false;
+      store.close();
+    }
+  }
+
+  /** New entry for `skill`, or a correction of entry `fixId` (same session, never a second one). */
+  private async logHome(skill: HomeSkillId | null, fixId?: string): Promise<void> {
+    const s = this.save;
+    if (!s?.player) return;
+    const old = fixId ? s.homeLogs.find((l) => l.id === fixId) : undefined;
+    const sk = old?.skill ?? skill;
+    if (!sk) return;
+    const prog = masteryLines(s.homeLogs, sk).progress;
+    const spec = old ? specFor(old.skill, old.phase) : prog.spec;
+    if (!spec) return;
+    const typed = window.prompt(`${SKILL_LABEL[sk]} Phase ${old?.phase ?? prog.phase}: ${spec.record}. ${entryHint(spec)}`, '');
+    if (typed === null) return;
+    const attempts = parseAttempts(spec, typed);
+    if (typeof attempts === 'string') {
+      this.homeNote = { id: '', kind: 'error', text: `${attempts} Nothing was saved.` };
+      this.build();
+      return;
+    }
+    const id = old?.id ?? `home-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+    const r = await this.withStore((store) =>
+      store.dispatch(old ? { type: 'homeCorrect', id, attempts } : { type: 'homeLog', log: { id, week: s.week, skill: sk, phase: prog.phase, activityId: spec.activityIds[0]!, variation: spec.variation, foot: null, source: 'self-reported', attempts, at: Date.now(), confirmed: false, revision: 0 } }),
+    );
+    if (!r || !this.sys.isActive()) return;
+    if (r.ok) this.save = r.save;
+    const f = r.ok ? feedbackLine(r.save.homeLogs, id) : null;
+    this.homeNote = r.ok ? { id, kind: f?.kind ?? 'first', text: f?.text ?? r.message } : { id: '', kind: 'error', text: r.error };
+    this.build();
+  }
+
+  private async confirmHome(id: string): Promise<void> {
+    const r = await this.withStore((store) => store.dispatch({ type: 'homeConfirm', id }));
+    if (!r || !this.sys.isActive()) return;
+    if (r.ok) this.save = r.save;
+    const f = r.ok ? feedbackLine(r.save.homeLogs, id) : null;
+    this.homeNote = r.ok ? { id, kind: f?.kind ?? 'first', text: `Score kept as you reported it. ${f?.text ?? ''}` } : { id: '', kind: 'error', text: r.error };
+    this.build();
+  }
+
   private bonusNote: string | null = null;
   private spending = false;
 
@@ -413,7 +509,8 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
     const h = Math.max(50, fs * 2.7);
     this.button('my-player-rankings', x, y, bw, h, 'Rankings', fs, BLUE, () => void this.openRankings());
     this.button('my-player-review', x + bw + pad, y, bw, h, 'Weekly review', fs, BLUE, () => this.openCareer({ open: 'review' }));
-    return this.button('my-player-history', x, y + h + pad * 0.6, w, Math.max(44, fs * 2.4), 'Match history', fs * 0.95, CARD, () => ((this.view = 'history'), (this.page = 0), this.build()), INK);
+    const hy = this.button('my-player-history', x, y + h + pad * 0.6, w, Math.max(44, fs * 2.4), 'Match history', fs * 0.95, CARD, () => ((this.view = 'history'), (this.page = 0), this.build()), INK);
+    return this.button('my-player-mastery', x, hy + pad * 0.6, w, Math.max(44, fs * 2.4), 'Home Training mastery  ›', fs * 0.95, CARD, () => ((this.view = 'mastery'), (this.cameras.main.scrollY = 0), this.build()), INK);
   }
 
   private historyCard(x: number, y: number, w: number, fs: number, pad: number): number {
@@ -437,7 +534,7 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
 
   /** The one way out: back to the player view from history, otherwise back where My Player was opened from. */
   private nav(x: number, y: number, w: number, fs: number, _pad: number): number {
-    const label = this.view === 'history' ? 'Back to My Player' : this.returnTo === 'story' ? 'Back to story' : 'Back to menu';
+    const label = this.view !== 'player' ? 'Back to My Player' : this.returnTo === 'story' ? 'Back to story' : 'Back to menu';
     return this.button('my-player-back', x, y, w, Math.max(50, fs * 2.7), label, fs, CARD, () => this.back(), '#2a56a8');
   }
 
@@ -490,7 +587,7 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
   }
 
   private back(): void {
-    if (this.view === 'history') {
+    if (this.view !== 'player') {
       this.view = 'player';
       this.page = 0;
       this.build();
