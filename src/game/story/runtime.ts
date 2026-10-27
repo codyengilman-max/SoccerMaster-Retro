@@ -104,8 +104,13 @@ function migrateRewritten(s: StoryState): StoryState {
   const scene = sceneById(s.sceneId);
   // Only a scene revised by the compiler (`v2n1`-style ids) whose saved node has the pre-revision shape
   // (`n10`, `a3`) is restarted; any other unknown position stays unknown and is kept aside by the store.
-  // Weeks 1–10 restart in place (the owner rewrite of weeks 2–10 is revision v3); later weeks are never remapped.
-  if (!scene || seasonWeek(scene.id) > 10 || nodeById(scene, s.nodeId) || !/^v\d+/.test(scene.entry) || !/^(v\d+)?[a-z]+\d+$/.test(s.nodeId)) return s;
+  // Weeks 1–2 restart in place on that shape. The owner rewrite of weeks 2–10 (revision v3) restarts any position
+  // the new text does not have, and a choice the save already answered (old saves reuse ids such as `activity`).
+  const node = scene ? nodeById(scene, s.nodeId) : undefined;
+  const wk = scene ? seasonWeek(scene.id) : 0;
+  const rewritten = !!scene && wk >= 2 && wk <= 10 && /^v3/.test(scene.entry) && (!node || (node.type === 'choice' && s.decisions[scene.id]?.[node.id] !== undefined));
+  if (!rewritten && (!scene || wk > 2 || node || !/^v\d+/.test(scene.entry) || !/^[a-z]\d+$/.test(s.nodeId))) return s;
+  if (!scene) return s;
   const { [scene.id]: _dropped, ...decisions } = s.decisions;
   const runs = Object.fromEntries(Object.entries(s.runs).filter(([, r]) => r.sceneId !== scene.id || nodeById(scene, r.nodeId)));
   return enter({ ...s, decisions, runs, complete: false }, scene.id, scene.entry, s.lastSeq);

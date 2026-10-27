@@ -526,7 +526,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     }
     // Season One reads the week's real Team Training grade so Code's reply follows what happened.
     const rec = n.adapter === 'team_training' && this.state.sceneId.startsWith('S1_') ? s.teamTraining.find((r) => r.week === snap.week) : undefined;
-    await this.complete(run.runId, 'completed', null, rec ? ((this.seasonWeekNo() ?? 0) >= 6 ? decisionDetail(rec) : trainingDetail(rec.delta)) : null);
+    await this.complete(run.runId, 'completed', null, rec ? ((this.seasonWeekNo() ?? 0) >= 3 ? decisionDetail(rec) : trainingDetail(rec.delta)) : null);
   }
 
   /** The story week of the current match scene (W2_MATCH → 2), never the separately advancing career week. */
@@ -1130,6 +1130,12 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       }
       case 'tournament_match': {
         const tid = this.tournamentId();
+        // A game Batavia is not in (no final after a non-winning group, or an earlier withdrawal) is passed over, never played.
+        if (s.sceneId.startsWith('S1_') && evaluatePredicate(s, n.predicate) === false) {
+          setBody(/=final\b/.test(n.predicate ?? '') ? "Batavia didn't win the group, so there is no final to play. Nothing is recorded." : 'An earlier game was withdrawn, so this one is not played. Nothing is recorded.');
+          acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.decline() });
+          return;
+        }
         setBody(`${tid ? TOURNAMENTS[tid].name : 'Tournament'}: ${this.tournamentSummary || 'next game'}\nA full 9v9 game. Tournament results never count in the league table.`);
         acts.push({ name: 'handoff-match', label: 'Play the game', onClick: () => void this.openCareer('tournament_match') });
         acts.push({ name: 'handoff-skip', label: 'Withdraw', onClick: () => void this.skipRun('declined') });

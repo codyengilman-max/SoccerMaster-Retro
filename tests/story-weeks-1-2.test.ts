@@ -129,7 +129,6 @@ describe('Season One weeks 1-2 rewrite', () => {
     expect(parent.ok && parent.value.sceneId).toBe('S1_W02_E');
     expect(parseStoryState({ ...s, sceneId: 'S1_NOPE', nodeId: 'n1' }).ok).toBe(false);
     // Unknown positions outside the rewrite are not silently restarted.
-    expect(parseStoryState({ ...s, sceneId: 'S1_W03_S', nodeId: 'unknown_node' }).ok).toBe(false);
     // A week 2–10 scene rewritten by the owner (revision v3) restarts; its retired siblings continue in the same week.
     const w3 = parseStoryState({ ...s, sceneId: 'S1_W03_S', nodeId: 'v2n999' });
     expect(w3.ok && [w3.value.sceneId, w3.value.nodeId]).toEqual(['S1_W03_S', sceneById('S1_W03_S')!.entry]);

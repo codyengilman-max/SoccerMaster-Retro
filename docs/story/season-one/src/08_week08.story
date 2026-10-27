@@ -17,9 +17,9 @@ Coach Code: Looking early, a useful first touch, a good decision, then movement.
 Coach Code: One good action doesn't finish your job. Pass it, then become useful again.
 @if detail:S1_W08_T=strong
 Coach Code: You're connecting the actions. Keep doing it when the pressure changes.
-@elif detail:S1_W08_T=pass_weight
+@elif detail:S1_W08_T=execution
 Coach Code: You've shown you can do it. Now we work on repeating it.
-@elif detail:S1_W08_T=struggled
+@elif detail:S1_W08_T=poor_decision
 Coach Code: Start with the information. Find the pressure before you rush the next action.
 @end
 === S1_W08_S recess v3

@@ -113,7 +113,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
 
   create(data?: { open?: string; returnTo?: 'story'; week?: number }): void {
     this.returnTo = data?.returnTo === 'story' ? 'story' : null;
-    this.storyWeek = this.returnTo === 'story' && typeof data?.week === 'number' && data.week >= 5 ? data.week : null;
+    this.storyWeek = this.returnTo === 'story' && typeof data?.week === 'number' && data.week >= 2 ? data.week : null;
     this.navigating = false;
     this.reducedMotion = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.demoPaused = this.reducedMotion;

@@ -15,9 +15,9 @@ Coach Code: Look for pressure, teammates, and space. Check again if the picture 
 @activity team_training
 @if detail:S1_W03_T=strong
 Coach Code: You saw the pressure. Your first touch dealt with it.
-@elif detail:S1_W03_T=pass_weight
+@elif detail:S1_W03_T=execution
 Coach Code: Good idea. Now give the touch the right weight.
-@elif detail:S1_W03_T=struggled
+@elif detail:S1_W03_T=poor_decision
 Coach Code: What was behind you? Reset. Find out before it arrives.
 @end
 === S1_W03_H home_v3 v3

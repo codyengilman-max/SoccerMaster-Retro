@@ -96,7 +96,9 @@ describe('Season One weeks 2–10 (owner rewrite)', () => {
 
   it('Team Training feedback follows the recorded detail; missing data says nothing invented', () => {
     const at = (d: string | null) => play({ detail: (sc, a) => (sc === 'S1_W03_T' && a === 'team_training' ? d : null) }).said('S1_W03_T');
-    const said = ['strong', 'pass_weight', 'struggled'].map(at);
+    const said = ['strong', 'execution', 'poor_decision'].map(at);
+    // A steady week with no evaluator evidence says nothing extra.
+    expect(at('steady')).toBe(at(null));
     expect(new Set(said).size).toBe(3);
     const none = at(null);
     for (const s of said) expect(s.length).toBeGreaterThan(none.length);
@@ -146,6 +148,14 @@ describe('Season One weeks 2–10 (owner rewrite)', () => {
       const m = migrateStory({ ...base, sceneId: old, nodeId: 'v2n3' });
       expect([m.sceneId, m.nodeId], old).toEqual([to, sceneById(to)!.entry]);
     }
+    // Old named positions (removed choices) and a reused choice id the save already answered both restart.
+    for (const [sc, node, dec] of [['S1_W06_H', 'park', { park: 'yes' }], ['S1_W06_S', 'activity', { activity: 'crossbar' }], ['S1_W07_T', 'question', {}]] as const) {
+      const m = migrateStory({ ...base, sceneId: sc, nodeId: node, decisions: { [sc]: dec } });
+      expect([m.sceneId, m.nodeId, m.decisions[sc]], `${sc}.${node}`).toEqual([sc, sceneById(sc)!.entry, undefined]);
+    }
+    // An unanswered new choice is a valid position and is left alone.
+    const live = migrateStory({ ...base, sceneId: 'S1_W06_S', nodeId: 'activity', decisions: {} });
+    expect(live.nodeId).toBe('activity');
     const r = migrateStory({ ...base, sceneId: 'S1_W06_G', nodeId: 'v2n12', decisions: { S1_W06_G: { old: 'x' } } });
     expect([r.sceneId, r.nodeId, r.decisions.S1_W06_G]).toEqual(['S1_W06_G', sceneById('S1_W06_G')!.entry, undefined]);
   });
@@ -157,12 +167,12 @@ describe('Season One registered source hashes', () => {
     'docs/story/season-one/src/00_prologue.story': '806cae9dcd70f697dd89c829fffb174247739cc695b7e00fe2a344786418c672',
     'docs/story/season-one/src/01_week01.story': '88f7533af27970dd2745bd8dff35d27afaf349e72ac15e86e749f45398b20b6e',
     'docs/story/season-one/src/02_week02.story': '6558cd649d865aa9ee71fd34c60b9190902fcdbcbc2646ab274f2592cafbcef9',
-    'docs/story/season-one/src/03_week03.story': 'bfe959b925531d1bc7491382050ef494c8648e7eeb5e9a11afc37a29114336a3',
+    'docs/story/season-one/src/03_week03.story': '527373eaba3842efa904f6facd0532080aa32574336b148c2865fbb73b44cdbd',
     'docs/story/season-one/src/04_week04.story': '0482bb87c8d167a4020fd47c73799fed768dba0cfd5e14fda94b19dc327e8286',
     'docs/story/season-one/src/05_week05.story': '96354f1e436ce7efae28e432585ac4b0093b2f0af830052a76b7cf397892bd0e',
-    'docs/story/season-one/src/06_week06.story': '2b9fb1cd206ceb93dcdb120966b4fc7df6eb491c496c62e1d6bce0c6f6b14125',
-    'docs/story/season-one/src/07_week07.story': '395c25537ce143d0ef7fd58854b14142f70a8c73b234433874a4c23a85874f27',
-    'docs/story/season-one/src/08_week08.story': 'b84eaa5b8f546b073823ded19a11686557be608c7a4bc74829cf934746441a8d',
+    'docs/story/season-one/src/06_week06.story': '72a98480a1b601e4e9f2af2676b621e8b5a4167fe842e65425ea4fbb0b2fa075',
+    'docs/story/season-one/src/07_week07.story': '3b7abaefecf0e8ac7de1ac453c21352b14fc3e25453ab54f2b4226ef7d0684c1',
+    'docs/story/season-one/src/08_week08.story': '37f6aeedc91902320473b1f3607f69896b5389f25f6da619560f95088931cebf',
     'docs/story/season-one/src/09_week09.story': 'd687ce8f982143defc4dbfc0c43c374c4900e7610b95b8597692a9aecafbdbd8',
     'docs/story/season-one/src/10_week10.story': '66e226d4ad310efde13335abada7325555ddcdc26b1796ced1202f42fdc28447',
   };

@@ -2830,11 +2830,11 @@
        "next": "v3n1"
       },
       {
-       "predicate": "detail:S1_W03_T=pass_weight",
+       "predicate": "detail:S1_W03_T=execution",
        "next": "v3n2"
       },
       {
-       "predicate": "detail:S1_W03_T=struggled",
+       "predicate": "detail:S1_W03_T=poor_decision",
        "next": "v3n3"
       }
      ],
@@ -3850,11 +3850,11 @@
        "next": "v3n1"
       },
       {
-       "predicate": "detail:S1_W06_T=pass_weight",
+       "predicate": "detail:S1_W06_T=execution",
        "next": "v3n2"
       },
       {
-       "predicate": "detail:S1_W06_T=struggled",
+       "predicate": "detail:S1_W06_T=poor_decision",
        "next": "v3n3"
       }
      ],
@@ -4410,11 +4410,11 @@
        "next": "v3n1"
       },
       {
-       "predicate": "detail:S1_W07_T=pass_weight",
+       "predicate": "detail:S1_W07_T=execution",
        "next": "v3n2"
       },
       {
-       "predicate": "detail:S1_W07_T=struggled",
+       "predicate": "detail:S1_W07_T=poor_decision",
        "next": "v3n3"
       }
      ],
@@ -4712,11 +4712,11 @@
        "next": "v3n1"
       },
       {
-       "predicate": "detail:S1_W08_T=pass_weight",
+       "predicate": "detail:S1_W08_T=execution",
        "next": "v3n2"
       },
       {
-       "predicate": "detail:S1_W08_T=struggled",
+       "predicate": "detail:S1_W08_T=poor_decision",
        "next": "v3n3"
       }
      ],

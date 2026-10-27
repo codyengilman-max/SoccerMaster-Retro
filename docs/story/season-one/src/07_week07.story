@@ -21,9 +21,9 @@ Coach Code: We're building options. Don't force the weaker foot when it makes no
 @activity team_training
 @if detail:S1_W07_T=strong
 Coach Code: You kept the option open. That's why we practice both.
-@elif detail:S1_W07_T=pass_weight
+@elif detail:S1_W07_T=execution
 Coach Code: Right idea. Slow the repetition down and clean it up.
-@elif detail:S1_W07_T=struggled
+@elif detail:S1_W07_T=poor_decision
 Coach Code: You took an extra touch to get comfortable. What closed while you waited?
 @end
 ? assignment

@@ -15,9 +15,9 @@ Coach Code: A useful pass might be available now. Carrying might improve the pic
 Coach Code: Don't wait for a tackle to tell you it was time to pass.
 @if detail:S1_W06_T=strong
 Coach Code: You used what the defender gave you.
-@elif detail:S1_W06_T=pass_weight
+@elif detail:S1_W06_T=execution
 Coach Code: Good choice. Now get the weight right.
-@elif detail:S1_W06_T=struggled
+@elif detail:S1_W06_T=poor_decision
 Coach Code: Look again. What was available before the pressure arrived?
 @end
 === S1_W06_A neutral_pitch v3
