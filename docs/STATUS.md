@@ -1,9 +1,10 @@
 # Status
 
-## PR C step 1: All36 data, fingerprints and schedule (not merged, not deployed)
+## PR C: All36 data, fingerprints, schedule and weekly Team Training (not merged, not deployed)
 
 - Package data imported unchanged and fingerprinted; 36/36 per-situation approval hashes reproduced; 324 runtime routes mapped or blocked by exact ID (`docs/training/all36/`).
-- Nothing scores yet: step 2 adds facing, authored continuations, the scene, the save record and credit.
+- Current release (D60): one approved All36 scenario per week per category (54 assignments, `docs/training/all36/WEEKLY.md`), played on `WeeklyTrainingScene`; first completion pays the existing weekly credit once; replays raise best mastery only; Team Training is optional for the story.
+- Not yet: authored movement continuations and facing (static ball targets only), owner review of rendered previews, real-iPhone check.
 
 ## Team Training: source review gate (Tactical Library v1, PR #49, not merged, not deployed)
 

@@ -151,8 +151,7 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
     const s = this.save;
     if (!s) return '';
     if (s.teamTraining.some((t) => t.week === s.week)) return 'Done';
-    const n = new Set(s.tt12.filter((t) => t.week === s.week && t.credited).map((t) => t.slot)).size;
-    return n >= 3 ? 'Done' : n > 0 ? `${n} of 3 sessions` : 'Not started';
+    return 'Not started';
   }
 
   private list(): (Row | SavedReport)[] {

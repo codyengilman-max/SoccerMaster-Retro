@@ -2,6 +2,7 @@
 import { POSITIONS } from '../../career/types';
 import { ALL36_ARCHIVE_SHA256 } from './package';
 import { ALL36_SCHEDULE } from './schedule';
+import { WEEKLY_ASSIGNMENTS } from './weekly';
 
 export function scheduleMarkdown(): string {
   const rows = ALL36_SCHEDULE;
@@ -59,5 +60,27 @@ export function scheduleMarkdown(): string {
     ).map((l) => `| ${l} |`),
     '',
   ];
+  return lines.join('\n');
+}
+
+/** docs/training/all36/WEEKLY.md: the current-release one-scenario-per-week table (54 assignments). */
+export function weeklyMarkdown(): string {
+  const lines: string[] = [
+    '# Weekly Team Training assignments (current release)',
+    '',
+    `Generated from the package with archive SHA-256 \`${ALL36_ARCHIVE_SHA256}\` by \`weeklyMarkdown()\` in \`src/game/training12/all36/report.ts\` (\`npm run all36:schedule\`). A test fails if this file is stale.`,
+    '',
+    'One coach-approved All36 scenario per story week for each saved category, normal (base) version only. Every eligible scenario is used once before any repeats; repeats (marked) reinforce the earliest-used scenarios, least recently used first. The same role group never runs three weeks in a row, and inside each role group the curriculum difficulty never goes down in the first pass.',
+    '',
+    '| Week | ' + POSITIONS.join(' | ') + ' |',
+    '|---|' + POSITIONS.map(() => '---').join('|') + '|',
+  ];
+  for (let w = 1; w <= 18; w++) {
+    lines.push(`| ${w} | ` + POSITIONS.map((c) => {
+      const a = WEEKLY_ASSIGNMENTS[c][w - 1]!;
+      return `${a.situationId} ${a.topic} · ${a.role} (${a.mode})${a.reinforces ? ` · repeat of week ${a.reinforces}` : ''}`;
+    }).join(' | ') + ' |');
+  }
+  lines.push('', 'Keys: completion `all36.v1/weekly/S1-W<week>/<category>`; credit is the existing weekly Team Training record (`teamTraining`, one per week).', '');
   return lines.join('\n');
 }

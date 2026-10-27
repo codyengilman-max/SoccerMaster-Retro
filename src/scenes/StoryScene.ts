@@ -15,10 +15,7 @@ import type { Rect } from '../game';
 import { POSITION_SLOT } from '../game/career/player';
 import type { CareerSave } from '../game/career/state';
 import { CareerStore } from '../game/career/store';
-import { TT12_SLOTS } from '../game/career/state';
-import { scoredSession } from '../game/training12/library/gate';
-import { sessionId } from '../game/training12/session';
-import { ROLE_CHOICES } from './TacticalTrainingScene';
+import { teamTrainingHandoff } from '../game/career/weeklyTraining';
 import type { Position } from '../game/career/types';
 import { type Background, type StoryNode } from '../game/story/content';
 import { attemptKey, commitLaunch, commitResolve, contestResult, CROSSBAR, describeShot, launchAttempt, newContest, nextSlot, opponentKick, points, resolveAttempt, restoreContest, simulateShot, type Contest, type KickInput, type Participant, type ShotOutcome } from '../game/story/crossbar';
@@ -1117,18 +1114,14 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         acts.push({ name: 'handoff-match', label: 'Play the match', onClick: () => void this.openCareer('match') });
         acts.push({ name: 'handoff-skip', label: 'Skip the match', onClick: () => void this.skipRun('declined') });
         return;
-      case 'team_training':
-        setBody(`This week's Team Training (career week ${this.save?.week ?? 1}): three situations from the team's logic catalog. Same rules as always: up to +2 attribute points for a good week, one per week.`);
-        acts.push({ name: 'handoff-career', label: 'Open Team Training', onClick: () => void this.openCareer('team_training') });
-        if (this.teamTrainingBlocked()) {
-          // Nothing approved to play: continue the story without counting the week, never by marking it complete.
-          setBody(`This week's Team Training (career week ${this.save?.week ?? 1}) is waiting for tactical review: no session has an approved scene yet, so nothing can be played or counted.`);
-          acts.push({ name: 'handoff-skip', label: 'Continue story · not counted', onClick: () => void this.skipRun('declined') });
-        } else if ((this.seasonWeekNo() ?? 0) < 5) {
-          // From week 5 (V3) Team Training is required: no skip.
-          acts.push({ name: 'handoff-skip', label: 'Not this week', onClick: () => void this.skipRun('declined') });
-        }
+      case 'team_training': {
+        // Current release: one approved All36 scenario per week; Team Training never blocks the story.
+        const h = teamTrainingHandoff(this.save);
+        setBody(h.body);
+        if (h.playable) acts.push({ name: 'handoff-career', label: 'Open Team Training', onClick: () => void this.openCareer('team_training') });
+        acts.push({ name: 'handoff-skip', label: h.skipLabel, onClick: () => void this.skipRun('declined') });
         return;
+      }
       case 'league_match': {
         const week = this.seasonWeekNo() ?? 0;
         const f = fixtureForSeasonWeek(week);
@@ -1269,14 +1262,6 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
 
   private standingsText(): string {
     return this.seasonSummary || 'No league result recorded yet.';
-  }
-
-  /** True when none of this week's Sessions A–C has an approved, signed-off scene for the player's role. */
-  private teamTrainingBlocked(): boolean {
-    const p = this.save?.player;
-    if (!p) return false;
-    const role = ROLE_CHOICES[p.position][0]!;
-    return TT12_SLOTS.every((slot) => !scoredSession(sessionId(1, this.save!.week, slot), role).ok);
   }
 
   private async skipRun(outcome: 'declined'): Promise<void> {

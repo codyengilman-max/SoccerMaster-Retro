@@ -1,6 +1,56 @@
-# All36 runtime schema and schedule mapping (PR C step 1)
+# All36 runtime schema and schedule mapping (PR C)
 
-Status: **data, fingerprints and mapping only.** Nothing here can score yet: `SESSION_CARDS` is still empty and no scene reads this data. Step 2 adds facing, authored continuations, the scene, the save record and credit.
+## Current release: one scenario per week (owner decision D60)
+
+The owner replaced Sessions A/B/C for this release with one weekly assignment. The A/B/C metadata below (`ALL36_SCHEDULE`, `SCHEDULE.md`) is kept for later expansion. It is not a weekly requirement and is never shown.
+
+**Assignment** (`src/game/training12/all36/weekly.ts`, table in [WEEKLY.md](WEEKLY.md)):
+- `weeklyAssignment(week, category)` returns one approved scenario for Season 1 weeks 1–18 and DEF / MID / FWD, which is 54 assignments.
+- Anything else returns `null`: a corrupt week, `GK`, or an unknown category.
+- **Base versions only.** No changed-cue, mirrored or re-authored versions.
+- **Pools:**
+  - DEF: 13 scenarios (CB 5, LB 4, RB 4);
+  - MID: 11 (6: 5, 8: 6);
+  - FWD: 12 (LW 4, RW 4, 9: 4).
+- **Order:** every scenario once in curriculum order, then repeats as reinforcement, least recently used first. Repeats are at least 8 weeks apart.
+- **Role groups rotate:** outside back / centre back, 6 / 8, winger / 9. The same group never runs three weeks in a row. Inside a group, the curriculum mode never goes down in the first pass.
+
+**Grading** (`gradeWeekly`), read from the package only:
+- The answer, package grade (`preferred` / `acceptable` / `misread`) and display band (Elite / Playable / Low-value) are recorded.
+- A timeout is `no-decision`.
+- The rationale is the branch feedback plus the variant reason. The better option is the preferred choice when it wasn't picked.
+- Score uses the existing Team Training quality: 1 / 0.5 / 0.
+
+**Save** (`CareerSave.all36`, action `all36Weekly`): each run stores week, category, scenario, run ID, time, choice, grade, band, score, rationale and credited.
+- **Checks on dispatch:** the reducer accepts only this week's assignment for the saved position, and works out the grade itself.
+- **Checks on load:** `parseSave` recomputes the assignment and grade for every stored run. It rejects a run whose category, scenario or grade doesn't match, or a week credited twice.
+
+**Credit:** the first run of the week is credited, whatever the answer, unless the week was already counted by an older route. Crediting calls the existing `countTeamWeek` with the run's score for each of the week's legacy situations, so the amount and settlement are unchanged. Later runs and reloads never pay again; they can only raise the best mastery (`weeklyProgress`).
+
+**UI:**
+- **Career → Team Training** shows one "Weekly Team Training" panel: scenario, tactical topic, role, status, best mastery and earned credit.
+- **The scenario screen** (`WeeklyTrainingScene`) draws the approved geometry and shows the cues and A–D. The result shows answer, classification, band, rationale and better option.
+- **Not yet built:** movement demonstrations wait for authored continuations; the result shows only the package's static ball targets.
+- **Developer review:** `?ttProposals` still shows the old A/B/C review sessions.
+
+**Story:** the Team Training step always offers a way on (`teamTrainingHandoff`), so training is optional.
+
+## Acceptance criteria (current release)
+
+1. DEF, MID and FWD each get exactly one compatible All36 scenario in all 18 weeks.
+2. Every assignment is a coach-approved All36 base scenario whose semantic hash matches `MANIFEST.json`.
+3. Unknown, unapproved, other-category or other-week scenarios and unknown answers are refused.
+4. The first completion pays the existing weekly credit once, for any answer.
+5. Reloading, replaying or a re-sent run never pays again, and a save edited to do so doesn't load.
+6. The story can always continue without Team Training.
+7. The same week and position always get the same scenario.
+8. A changed position or a corrupt save never yields an incompatible assignment.
+
+Each criterion is covered by `tests/all36Weekly.test.ts`. The browser flow is covered by `e2e/teamtraining.spec.ts`.
+
+## Step 1: data, fingerprints and A/B/C mapping
+
+Status of the A/B/C mapping: data only, kept for later expansion.
 
 ## Source of truth
 
@@ -72,7 +122,7 @@ Status: **data, fingerprints and mapping only.** Nothing here can score yet: `SE
   - MID: 6 21, 8 30;
   - FWD: 9 17, LW 18, RW 15.
 
-## Conflicts with the existing credit system (to settle in step 2 before any save-schema change)
+## Conflicts with the existing credit system (A/B/C model; resolved for this release by D60)
 
 1. **Weekly credit needs all three sessions.** `tt12Run` grades the week only when A, B and C are all credited (`career/state.ts`). Only 9 (DEF), 10 (MID) and 9 (FWD) of the 18 Season 1 weeks have all three sessions mapped for the category. In every other week the existing Team Training credit can never be paid. This doesn't stop the story: weeks advance without Team Training, as today.
 2. **Mapped routes have 1–3 situations, not 9 moments.** The current `ts-1` round model needs `MOMENTS_PER_ROUND` = 3 approved moments per round. Its `creditEligible` rule needs 6 decisions, 3 without a hint. The owner rule replaces this: a session completes when every assigned situation has a decision or a timeout.

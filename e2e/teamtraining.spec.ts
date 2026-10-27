@@ -26,9 +26,20 @@ async function career(page: Page, pred: (c: Career) => boolean, what: string): P
     await page.waitForTimeout(50);
   }
 }
+interface Weekly { screen: string; assignment: { week: number; category: string; variant: string } | null; options: { id: string; grade: string }[]; bodyText: string; saved: string; progress: { completed: boolean; credited: boolean; best: string | null; runs: number } | null }
+async function weekly(page: Page, pred: (w: Weekly) => boolean, what: string): Promise<Weekly> {
+  const start = Date.now();
+  for (;;) {
+    const d = await diagnostics(page);
+    const w = d.gameplay as Weekly | null;
+    if (d.activeScenes.includes('weekly') && w && pred(w)) return w;
+    if (Date.now() - start > 20_000) throw new Error(`timed out waiting for ${what}: ${JSON.stringify(w)}`);
+    await page.waitForTimeout(50);
+  }
+}
 const total = (a: Record<string, number> | null) => Object.values(a ?? {}).reduce((x, y) => x + y, 0);
 
-test('team training: the week is Sessions A-C only, no match route; unapproved sessions are held out; proposals never count', async ({ page }, info) => {
+test('team training: one approved All36 scenario a week counts once (any answer), replays are practice; proposals never count', async ({ page }, info) => {
   const mode = modeFor(info);
   const errors = trackConsoleErrors(page);
   page.on('dialog', (d) => void d.accept('Robin'));
@@ -43,23 +54,60 @@ test('team training: the week is Sessions A-C only, no match route; unapproved s
   await career(page, (c) => c.screen === 'home', 'home');
   await press(page, 'nav-team', mode);
   let c = await career(page, (x) => x.screen === 'team', 'team screen');
-  const before = total(c.attributes);
-  // Topic, short description and status for each session; no legacy match button or "normal controls" text.
-  // Nothing is signed off yet: every session is held out of scored training with the blocker, and tapping it starts nothing.
-  for (const slot of ['A', 'B', 'C']) expect(c.text).toMatch(new RegExp(`Session ${slot} · .+ · Waiting for tactical review · not counted`));
-  expect(c.text).not.toMatch(/normal controls|30 seconds|Play Team Training/i);
-  expect(c.text).toContain('No session this week has an approved tactical scene yet');
+  // Current release: one coach-approved All36 scenario this week; no Sessions A-C, no empty slots, no legacy match route.
+  expect(c.text).toMatch(/Scenario: .+ \(D\d\d\)/);
+  expect(c.text).toMatch(/Tactical topic: .+/);
+  expect(c.text).toMatch(/Your role: (Left winger|Right winger|Striker)/);
+  expect(c.text).toContain('Status: Not started');
+  expect(c.text).toContain('Earned credit: none yet');
+  expect(c.text).not.toMatch(/Session [ABC]|Not Applicable|normal controls|30 seconds|Play Team Training/i);
   let d = await diagnostics(page);
   const names = Object.keys(d.layout!.elements);
-  expect(names.filter((n) => n.startsWith('tt12-')).sort()).toEqual(['tt12-A', 'tt12-B', 'tt12-C']);
+  expect(names.filter((n) => n.startsWith('tt12-'))).toEqual([]);
+  expect(names).toContain('tt-weekly');
   expect(names).not.toContain('team-play');
   for (const [name, rect] of Object.entries(d.layout!.elements)) if (name !== 'body') expectInside(name, rect, d.layout!.viewport);
   await page.screenshot({ path: info.outputPath(`team-week-${info.project.name}.png`) });
-  await press(page, 'tt12-A', mode);
-  await page.waitForTimeout(500);
-  expect((await diagnostics(page)).activeScenes).not.toContain('tactical');
 
-  // Review build: the unapproved proposals can be played for review, and they are never counted.
+  // Play it with the wrong read: the week still completes and counts once; the result explains the better option.
+  await press(page, 'tt-weekly', mode);
+  await waitForScene(page, 'weekly');
+  let wv = await weekly(page, (x) => x.screen === 'observe' && x.options.length === 4, 'observe');
+  expect(wv.assignment).toMatchObject({ week: 1, category: 'FWD', variant: 'base' });
+  for (const [name, rect] of Object.entries((await diagnostics(page)).layout!.elements)) if (name !== 'body') expectInside(name, rect, (await diagnostics(page)).layout!.viewport);
+  await page.screenshot({ path: info.outputPath(`team-weekly-observe-${info.project.name}.png`) });
+  const wrong = wv.options.find((o) => o.grade === 'misread') ?? wv.options.find((o) => o.grade !== 'preferred')!;
+  await pressAny(page, `opt-${wrong.id}`, mode);
+  wv = await weekly(page, (x) => x.screen === 'result', 'result');
+  expect(wv.bodyText).toMatch(/Coach classification: (wrong read|acceptable)/);
+  expect(wv.bodyText).toMatch(/Better option: [A-D]\. /);
+  expect(wv.progress).toMatchObject({ completed: true, credited: true });
+  await page.screenshot({ path: info.outputPath(`team-weekly-result-${info.project.name}.png`) });
+  // Replay with the best answer: practice only, the best mastery rises, credit is not paid again.
+  await pressAny(page, 'tt-replay', mode);
+  wv = await weekly(page, (x) => x.screen === 'observe' && x.options.length === 4, 'replay observe');
+  await pressAny(page, `opt-${wv.options.find((o) => o.grade === 'preferred')!.id}`, mode);
+  wv = await weekly(page, (x) => x.screen === 'result', 'replay result');
+  expect(wv.saved).toMatch(/already counted/);
+  expect(wv.progress).toMatchObject({ credited: true, best: 'Elite', runs: 2 });
+  await pressAny(page, 'tt-done', mode);
+  c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'team after weekly');
+  expect(c.text).toContain('Status: Complete');
+  expect(c.text).toContain('Best mastery: Elite');
+  const counted = total(c.attributes);
+  // Reload: still complete, counted once.
+  await page.reload();
+  await waitForScene(page, 'start');
+  await press(page, 'career-button', mode);
+  await waitForScene(page, 'career');
+  await career(page, (x) => x.status !== 'loading' && x.screen === 'home', 'reloaded');
+  await press(page, 'nav-team', mode);
+  c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'team after reload');
+  expect(c.text).toContain('Status: Complete');
+  expect(total(c.attributes)).toBe(counted);
+
+  // Review build: the unapproved proposals can be played for review, and they are never counted. This week was
+  // already counted by the weekly scenario above, so every proposal session is practice only.
   await page.goto('/?debug=1&dev&ttSpeed=8&ttProposals');
   await waitForScene(page, 'start');
   await press(page, 'career-button', mode);
@@ -67,7 +115,7 @@ test('team training: the week is Sessions A-C only, no match route; unapproved s
   await career(page, (x) => x.status !== 'loading' && x.screen === 'home', 'proposal review');
   await press(page, 'nav-team', mode);
   c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'team screen (proposals)');
-  for (const slot of ['A', 'B', 'C']) expect(c.text).toMatch(new RegExp(`Session ${slot} · .+ · Not started`));
+  for (const slot of ['A', 'B', 'C']) expect(c.text).toMatch(new RegExp(`Session ${slot} · .+ · Week already counted · practice only`));
 
   // Leave during the first session: two taps, nothing recorded.
   await press(page, 'tt12-A', mode);
@@ -82,16 +130,16 @@ test('team training: the week is Sessions A-C only, no match route; unapproved s
   expect((await diagnostics(page)).activeScenes).toContain('tactical');
   await pressAny(page, 'tt-leave', mode);
   c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'back on team screen');
-  expect(c.text).toMatch(/Session A · .+ · Not started/);
-  expect(total(c.attributes)).toBe(before);
+  expect(c.text).toMatch(/Session A · .+ · Week already counted · practice only/);
+  expect(total(c.attributes)).toBe(counted);
   d = await diagnostics(page);
   expect(d.activeScenes).not.toContain('match');
 
   // A finished proposal session is saved as practice only: no completion, no attribute change, and a reload agrees.
   expect(await playTacticalSession(page, 'A', mode)).toMatch(/never counted/);
   c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'not counted');
-  expect(c.text).toMatch(/Session A · .+ · Not started/);
-  expect(total(c.attributes)).toBe(before);
+  expect(c.text).toMatch(/Session A · .+ · Week already counted · practice only/);
+  expect(total(c.attributes)).toBe(counted);
   await page.reload();
   await waitForScene(page, 'start');
   await press(page, 'career-button', mode);
@@ -99,7 +147,7 @@ test('team training: the week is Sessions A-C only, no match route; unapproved s
   await career(page, (x) => x.status !== 'loading' && x.screen === 'home', 'reloaded');
   await press(page, 'nav-team', mode);
   c = await career(page, (x) => x.screen === 'team' && x.status !== 'loading', 'team after reload');
-  expect(c.text).toMatch(/Session A · .+ · Not started/);
-  expect(total(c.attributes)).toBe(before);
+  expect(c.text).toMatch(/Session A · .+ · Week already counted · practice only/);
+  expect(total(c.attributes)).toBe(counted);
   expect(errors).toEqual([]);
 });

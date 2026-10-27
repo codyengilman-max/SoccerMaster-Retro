@@ -18,6 +18,8 @@ import { routePlan } from '../game/training12/situations/index';
 import { shouldExposeDebug } from '../debug/diagnostics';
 import { sessions } from '../game/training12/ref/seasons.mjs';
 import { ROLE_CHOICES } from './TacticalTrainingScene';
+import { ROLE_NAME } from './WeeklyTrainingScene';
+import { weeklyProgress } from '../game/career/weeklyTraining';
 import { orientationOf } from '../render/layout';
 import { PlayerArt, atlasKey } from '../render/art/playerArt';
 import { SPRITE_CELL } from '../render/art/spriteSets';
@@ -307,7 +309,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             ? [
                 ...req.map((t) => ({ name: `req-${t.key}`, label: `${t.short}: ${t.done ? 'done' : 'to do'}`, on: t.done, onClick: () => this.go(this.taskScreen(t)) })),
                 { name: 'nav-focus', label: `This week: ${f ? f.label : 'choose a focus'}`, onClick: () => this.go({ kind: 'focus' }) },
-                { name: 'nav-team', label: `Team Training · ${s.teamTraining.some((r) => r.week === s.week) ? 'Complete' : `${TT12_SLOTS.filter((slot) => s.tt12.some((r) => r.week === s.week && r.slot === slot && r.credited)).length} of 3 sessions`}`, onClick: () => this.go({ kind: 'team' }) },
+                { name: 'nav-team', label: `Team Training · ${s.teamTraining.some((r) => r.week === s.week) ? 'Complete' : 'Not started'}`, onClick: () => this.go({ kind: 'team' }) },
                 { name: 'nav-practice', label: `Home Practice (optional) · ${s.completedSessions.length} of 3`, onClick: () => this.go({ kind: 'practice' }) },
                 { name: 'nav-progress', label: 'Progress', onClick: () => this.go({ kind: 'progress' }) },
               ]
@@ -608,6 +610,27 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       }
       case 'team': {
         if (!p) return { title: 'Team Training', body: 'No player yet.', actions: [] };
+        if (!(shouldExposeDebug(window.location) && new URLSearchParams(window.location.search).has('ttProposals'))) {
+          // Current release: one coach-approved All36 scenario per week (Sessions A–C are kept for later, not shown).
+          const w = weeklyProgress(s);
+          const a = w.assignment;
+          if (!a) return { title: `Team Training · Week ${s.week}`, body: `Week ${s.week} has no approved Team Training scenario for ${p.position}. Nothing can be played or counted.`, actions: [] };
+          const credit = w.credited && w.record ? describeChanges(w.record.changes) : w.countedElsewhere ? 'this week was already counted; runs are practice' : 'none yet';
+          return {
+            title: `Weekly Team Training · Week ${s.week}`,
+            body: [
+              `Scenario: ${a.title} (${a.situationId})`,
+              `Tactical topic: ${a.topic}`,
+              `Your role: ${ROLE_NAME[a.role] ?? a.role}${a.reinforces ? ` · reinforcement of week ${a.reinforces}` : ''}`,
+              `Status: ${w.completed ? 'Complete' : 'Not started'}`,
+              `Best mastery: ${w.best ? w.best.band : '—'}`,
+              `Earned credit: ${credit}`,
+              '',
+              'One coach-approved scenario this week. Finishing it once counts the week, whatever your answer. Playing again can raise your best but never counts twice.',
+            ].join('\n'),
+            actions: [{ name: 'tt-weekly', label: w.completed ? 'Play again (practice)' : 'Start Weekly Team Training', onClick: () => this.playWeekly() }],
+          };
+        }
         const rec = s.teamTraining.find((r) => r.week === s.week);
         const role = ROLE_CHOICES[p.position][0]!;
         const proposals = shouldExposeDebug(window.location) && new URLSearchParams(window.location.search).has('ttProposals');
@@ -642,6 +665,12 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         return { title: `${p.name} (${p.position})`, body: rows.join('\n'), actions: [] };
       }
     }
+  }
+
+  private playWeekly(): void {
+    if (this.navigating) return;
+    this.navigating = true;
+    this.scene.start(SceneKeys.Weekly, this.returnTo === 'story' ? { returnTo: 'story' as const } : {});
   }
 
   private playTactical(slot: Tt12Slot): void {

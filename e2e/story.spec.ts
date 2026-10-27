@@ -157,15 +157,18 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
       await press(page, 'career-menu', mode);
       await story(page, resolved(s), `${s.adapter} completed`);
     } else if (s.adapter === 'team_training') {
-      // No session has a signed-off library scene yet: the week page says so, nothing is counted, and the story offers
-      // a not-counted continue instead of trapping the player.
+      // One approved All36 scenario this week. Team Training is optional: the story offers a way on without it, and
+      // skipping counts nothing.
       await pressStory(page, 'handoff-career', mode);
       await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'team', 'team screen');
-      expect(String(((await diagnostics(page)).gameplay as { text?: string } | null)?.text)).toContain('Waiting for tactical review');
+      const teamText = String(((await diagnostics(page)).gameplay as { text?: string } | null)?.text);
+      expect(teamText).toMatch(/Scenario: .+ \(D\d\d\)/);
+      expect(teamText).toContain('Status: Not started');
+      expect(teamText).not.toMatch(/Session [ABC]/);
       await press(page, 'career-menu', mode);
-      const back = await story(page, (x) => x.mode === 'story' && x.buttons.includes('handoff-skip'), 'not-counted continue offered');
+      const back = await story(page, (x) => x.mode === 'story' && x.buttons.includes('handoff-skip'), 'continue without training offered');
       expect(resolved(s)(back)).toBe(false);
-      expect(back.text).toContain('waiting for tactical review');
+      expect(back.text).toContain('optional');
       await pressStory(page, 'handoff-skip', mode);
       await story(page, resolved(s), 'team training continued, not counted');
     } else if (s.adapter === 'match') {
@@ -210,7 +213,7 @@ test('Season One week one: identity, prologue, aquarium, recess, Team Training h
   expect(end.player).toEqual({ name: 'Zoë', gender: 'girl' });
   const by = (id: string) => end.outcomes.find((o) => o.scene === id);
   for (const id of ['S1_PRO_IDENTITY', 'S1_W01_S', 'S1_W01_E']) expect(by(id), id).toMatchObject({ state: 'resolved', outcome: 'completed' });
-  // Team Training has no approved scene yet: the story moved on, but the step is declined, never completed.
+  // Team Training was skipped: the story moved on, and the step is declined, never completed.
   expect(by('S1_W01_C')).toMatchObject({ state: 'resolved', outcome: 'declined' });
   expect(end.outcomes.filter((o) => o.scene === 'S1_W01_C')).toHaveLength(1);
 

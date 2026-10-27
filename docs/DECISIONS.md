@@ -354,3 +354,13 @@ Approved technical choices. Add a new entry rather than silently changing an old
   - Result: Season 1 maps 28 DEF, 38 MID and 28 FWD routes.
 - Scoring is unchanged: `SESSION_CARDS` stays empty. Conflicts with the existing weekly credit are listed in `docs/training/all36/RUNTIME_SCHEMA.md` for step 2.
 
+## D60. Current release: one coach-approved All36 scenario per story week (owner, 2026-10-27)
+- **One scenario per week:** each saved category (DEF / MID / FWD) gets one base-version All36 scenario per Season 1 week, from a deterministic 18-week table (`WEEKLY_ASSIGNMENTS`, `docs/training/all36/WEEKLY.md`).
+  - Every eligible scenario is used before a repeat; repeats are spaced at least 8 weeks apart.
+  - Narrow roles rotate inside the category.
+  - Sessions A/B/C stay as metadata only.
+- **Completion and credit:** the week completes when the scenario is completed once, at any accuracy. That run pays the existing weekly Team Training credit once, through `countTeamWeek`, with score 1 / 0.5 / 0 for best / acceptable / wrong read (the existing quality scale).
+- **Saved per run:** answer, grade, band, rationale, time and credit status (`CareerSave.all36`). Replays only raise the best mastery.
+- **Story:** Team Training is optional; the story step always offers a way on, including the week 5+ step that used to have no skip.
+- **Not built yet:** movement demonstrations wait for authored continuations and owner review.
+

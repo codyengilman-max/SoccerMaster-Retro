@@ -6,6 +6,8 @@ import { FOCUSES, activityById, focusById } from './catalog';
 import { DEFAULT_INPUT, normalizeInput, planWeek, substitute, workableFocuses, type PlannerInput, type WeekPlan } from './planner';
 import { cleanName, cleanText, createPlayer, type CareerPlayer } from './player';
 import { applyGrowth, computeGrowth, type AttributeOutcome, type EvidenceItem } from './progression';
+import { weeklyAssignment, gradeWeekly } from '../training12/all36/weekly';
+import type { ChoiceId, DisplayBand, NoDecision, PackageGrade } from '../training12/all36/types';
 import { selectSituations, situationById, teamTrainingChanges, describeChanges, weekDelta, type AttributeChange, type SituationResult } from './teamTraining';
 import { SKILL_FAMILIES, type AttributeId, type Foot, type Level, type Position, type Rating, type SkillFamilyId } from './types';
 
@@ -83,6 +85,8 @@ export interface CareerSave {
   readonly teamTraining: readonly TeamTrainingRecord[];
   /** Team Training v1.2 runs that finished all three rounds (older saves: empty). */
   readonly tt12: readonly Tt12Run[];
+  /** Weekly All36 Team Training runs, one per attempt (older saves: empty). The first completion of a week credits it. */
+  readonly all36: readonly All36Run[];
   /** Cloudy's Feeding Frenzy best score and best stars per difficulty (no growth, no match statistics). */
   readonly cloudy: readonly CloudyBest[];
   /** Recently saved Cloudy round ids, so a replayed save never counts twice. */
@@ -100,9 +104,25 @@ export interface CloudyBest {
 }
 
 export type Tt12Slot = 'A' | 'B' | 'C';
+export const CHOICE_IDS: readonly ChoiceId[] = ['A', 'B', 'C', 'D'];
 export const TT12_SLOTS: readonly Tt12Slot[] = ['A', 'B', 'C'];
 
 /** One completed v1.2 scheduled session. Only credited runs count toward the week. */
+export interface All36Run {
+  readonly week: number;
+  readonly category: Position;
+  readonly situationId: string;
+  readonly runId: string;
+  /** Epoch milliseconds when the run finished. */
+  readonly at: number;
+  readonly choice: ChoiceId | null;
+  readonly grade: PackageGrade | null;
+  readonly band: DisplayBand | NoDecision;
+  readonly score: number;
+  readonly rationale: string;
+  readonly credited: boolean;
+}
+
 export interface Tt12Run {
   readonly week: number;
   readonly slot: Tt12Slot;
@@ -129,6 +149,7 @@ export type Action =
   | { readonly type: 'evidence'; readonly batchId: string; readonly items: readonly EvidenceItem[]; readonly missed: number }
   | { readonly type: 'acceptLevel'; readonly family: SkillFamilyId }
   | { readonly type: 'teamTraining'; readonly week: number; readonly results: readonly SituationResult[] }
+  | { readonly type: 'all36Weekly'; readonly week: number; readonly situationId: string; readonly runId: string; readonly at: number; readonly choice: ChoiceId | null }
   | { readonly type: 'tt12Run'; readonly week: number; readonly slot: Tt12Slot; readonly runId: string; readonly score: number; readonly creditEligible: boolean; readonly decisions?: { readonly independent: number; readonly assisted: number }; readonly model?: 'ts-1' }
   | { readonly type: 'cloudyResult'; readonly runId: string; readonly difficulty: Difficulty; readonly score: number; readonly stars: 1 | 2 | 3 }
   | { readonly type: 'matchReport'; readonly report: SavedReport }
@@ -157,6 +178,7 @@ export function emptySave(): CareerSave {
     history: [],
     teamTraining: [],
     tt12: [],
+    all36: [],
     cloudy: [],
     cloudyRuns: [],
     reports: [],
@@ -307,6 +329,28 @@ export function reduce(save: CareerSave, action: Action): Outcome {
         { ...save, cloudy: [...save.cloudy.filter((b) => b.difficulty !== action.difficulty), best], cloudyRuns: [...save.cloudyRuns, action.runId].slice(-CLOUDY_RUNS_KEPT) },
         record ? `New best on ${action.difficulty}: ${action.score}.` : `Best on ${action.difficulty}: ${best.bestScore}.`,
       );
+    }
+    case 'all36Weekly': {
+      if (!save.player) return fail('No career player.');
+      if (action.week !== save.week) return fail('That Team Training belongs to another week.');
+      if (typeof action.runId !== 'string' || action.runId.length < 1 || action.runId.length > 64) return fail('Invalid Team Training run.');
+      if (!Number.isSafeInteger(action.at) || action.at < 0) return fail('Invalid Team Training time.');
+      // Only this week's assignment for the saved category can be recorded; the grade is read from the package.
+      const a = weeklyAssignment(save.week, save.player.position);
+      if (!a || action.situationId !== a.situationId) return fail('That scenario is not this week\'s Team Training.');
+      if (action.choice !== null && !CHOICE_IDS.includes(action.choice)) return fail('Unknown answer.');
+      const v = gradeWeekly(a, action.choice);
+      if (!v) return fail('That scenario is not approved.');
+      if (save.all36.some((r) => r.runId === action.runId)) return same(save, 'This Team Training run is already saved.');
+      const credited = !save.teamTraining.some((r) => r.week === save.week) && !save.all36.some((r) => r.week === save.week && r.credited);
+      const run: All36Run = { week: save.week, category: a.category, situationId: a.situationId, runId: action.runId, at: action.at, choice: v.choice, grade: v.grade, band: v.band, score: v.score, rationale: v.rationale, credited };
+      const next: CareerSave = { ...save, all36: [...save.all36, run].slice(-L.historyMax * 4) };
+      if (!credited) return ok(next, `Week ${save.week} Team Training is already counted; this run updates your best only.`);
+      // First completion: the existing weekly Team Training credit, once, through the shared economy.
+      const results = selectSituations(save.player.position, save.week).map((x) => ({ id: x.id, score: v.score, notes: [] }));
+      const counted = countTeamWeek(next, results);
+      if ('error' in counted) return fail(counted.error);
+      return ok(counted.save, `Weekly Team Training complete. ${counted.message}`);
     }
     case 'tt12Run': {
       if (!save.player) return fail('No career player.');

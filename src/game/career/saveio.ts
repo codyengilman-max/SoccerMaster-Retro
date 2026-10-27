@@ -5,7 +5,8 @@ import { FOCUSES, HOME_ACTIVITIES, activityById } from './catalog';
 import type { PlannedItem, PlannedSession, PlannerInput, WeekPlan } from './planner';
 import { cleanText, type CareerPlayer } from './player';
 import type { AttributeOutcome, EvidenceItem } from './progression';
-import { CLOUDY_RUNS_KEPT, SAVE_SCHEMA, emptySave, type CareerSave, type CloudyBest, type FamilyLevel, type JournalEntry, type TeamTrainingRecord, type Tt12Run, type WeekReview, TT12_SLOTS } from './state';
+import { CLOUDY_RUNS_KEPT, SAVE_SCHEMA, emptySave, type CareerSave, type CloudyBest, type FamilyLevel, type JournalEntry, type TeamTrainingRecord, type Tt12Run, type WeekReview, TT12_SLOTS, CHOICE_IDS, type All36Run } from './state';
+import { gradeWeekly, weeklyAssignment } from '../training12/all36/weekly';
 import { DIFFICULTIES } from '../cloudy/sim';
 import { TEAM_TRAINING_IDS, weekDelta } from './teamTraining';
 import { ATTRIBUTES, LEVELS, POSITIONS, RATINGS, SKILL_FAMILIES, type AttributeId, type Level, type SkillFamilyId } from './types';
@@ -232,6 +233,19 @@ function tt12Run(v: unknown, week: number): Tt12Run {
   return { week: int(o.week, 'tt12 week', 1, week), slot: oneOf(o.slot, 'tt12 slot', TT12_SLOTS), runId: str(o.runId, 'tt12 runId', 64), score: o.score, credited: o.credited, ...(o.decisions === undefined ? {} : { decisions: tt12Decisions(o.decisions) }), ...(o.model === undefined ? {} : { model: oneOf(o.model, 'tt12 model', ['ts-1'] as const) }) };
 }
 
+/** A stored run must still be the approved assignment for its week and category, with the package's own grade. */
+function all36Run(v: unknown, week: number): All36Run {
+  const o = obj(v, 'all36');
+  const w = int(o.week, 'all36 week', 1, week);
+  const a = weeklyAssignment(w, o.category);
+  if (!a || o.situationId !== a.situationId) throw new Invalid('all36: not the approved assignment');
+  const choice = o.choice === null ? null : oneOf(o.choice, 'all36 choice', CHOICE_IDS);
+  const g = gradeWeekly(a, choice);
+  if (!g || o.grade !== g.grade || o.band !== g.band || o.score !== g.score) throw new Invalid('all36: grade does not match the package');
+  if (typeof o.credited !== 'boolean') throw new Invalid('all36 credited: not a boolean');
+  return { week: w, category: a.category, situationId: a.situationId, runId: str(o.runId, 'all36 runId', 64), at: int(o.at, 'all36 at', 0, Number.MAX_SAFE_INTEGER), choice, grade: g.grade, band: g.band, score: g.score, rationale: g.rationale, credited: o.credited };
+}
+
 function tt12Decisions(v: unknown): { independent: number; assisted: number } {
   const o = obj(v, 'tt12 decisions');
   return { independent: int(o.independent, 'tt12 independent', 0, 500), assisted: int(o.assisted, 'tt12 assisted', 0, 500) };
@@ -283,6 +297,7 @@ export function parseSave(raw: unknown): R<CareerSave> {
       history: arr(o.history, 'history', L.historyMax).map((h) => review(h, week)),
       teamTraining: arr(o.teamTraining ?? [], 'teamTraining', L.historyMax).map((t) => teamTraining(t, week)),
       tt12: arr(o.tt12 ?? [], 'tt12', L.historyMax * 4).map((t) => tt12Run(t, week)),
+      all36: arr(o.all36 ?? [], 'all36', L.historyMax * 4).map((t) => all36Run(t, week)),
       cloudy: arr(o.cloudy ?? [], 'cloudy', DIFFICULTIES.length).map(cloudyBest),
       cloudyRuns: arr(o.cloudyRuns ?? [], 'cloudyRuns', CLOUDY_RUNS_KEPT).map((r) => str(r, 'cloudy run', 64)),
       reports: arr(o.reports ?? [], 'reports', REPORTS_KEPT).map(savedReport),
@@ -292,6 +307,9 @@ export function parseSave(raw: unknown): R<CareerSave> {
     if (new Set(save.teamTraining.map((t) => t.week)).size !== save.teamTraining.length) throw new Invalid('team training counted twice for a week');
     if (new Set(save.cloudy.map((c) => c.difficulty)).size !== save.cloudy.length) throw new Invalid('cloudy best saved twice');
     if (new Set(save.tt12.map((t) => t.runId)).size !== save.tt12.length) throw new Invalid('team training run saved twice');
+    if (new Set(save.all36.map((t) => t.runId)).size !== save.all36.length) throw new Invalid('team training run saved twice');
+    const weeks36 = save.all36.filter((t) => t.credited).map((t) => t.week);
+    if (new Set(weeks36).size !== weeks36.length) throw new Invalid('weekly team training counted twice');
     const credited = save.tt12.filter((t) => t.credited).map((t) => `${t.week}${t.slot}`);
     if (new Set(credited).size !== credited.length) throw new Invalid('team training session counted twice');
     return { ok: true, value: save };

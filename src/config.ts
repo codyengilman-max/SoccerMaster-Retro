@@ -7,6 +7,7 @@ import { ArtGalleryScene } from './scenes/ArtGalleryScene';
 import { MatchScene } from './scenes/MatchScene';
 import { JungleScene } from './scenes/JungleScene';
 import { TacticalTrainingScene } from './scenes/TacticalTrainingScene';
+import { WeeklyTrainingScene } from './scenes/WeeklyTrainingScene';
 import { CloudyScene } from './scenes/CloudyScene';
 import { MatchReportScene } from './scenes/MatchReportScene';
 import { MyPlayerScene } from './scenes/MyPlayerScene';
@@ -33,6 +34,6 @@ export function createGameConfig(parent: HTMLElement): Phaser.Types.Core.GameCon
       activePointers: 2,
     },
     // First scene auto-starts; the rest wait for scene.start().
-    scene: [StartScene, FormationScene, MatchScene, CareerScene, LabScene, StoryScene, ArtGalleryScene, JungleScene, TacticalTrainingScene, CloudyScene, MatchReportScene, MyPlayerScene, RankingsScene],
+    scene: [StartScene, FormationScene, MatchScene, CareerScene, LabScene, StoryScene, ArtGalleryScene, JungleScene, TacticalTrainingScene, CloudyScene, MatchReportScene, MyPlayerScene, RankingsScene, WeeklyTrainingScene],
   };
 }
