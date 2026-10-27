@@ -23,6 +23,7 @@
   - The real fixture-vs-scene check is in place (`fixtureMatchesScene`).
   - The session proposal has 1454 weak card slots out of 2592.
   - 0 scenes signed, 0 routes open.
+  - Local checks on `200eab7`: unit 1195/1195, typecheck and build pass, e2e 142 phone passed / 0 failed / 8 skipped and 14/14 desktop, `validate_library.py` passes.
 - Level 1 opened for Season 1 weeks 5–18 and Season 2 (864 more routes, each played to a credited finish in unit tests). Levels 2–3 stay "not available yet". Season 2 is not reachable from Career (no Season 2 career). Keeper routes via `?dev` only.
 - Saved runs carry optional `decisions: { independent, assisted }`; older runs load unchanged with no counts invented.
 - Phone emulation only, not tested on a real iPhone.
