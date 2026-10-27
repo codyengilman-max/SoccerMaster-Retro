@@ -58,6 +58,30 @@ describe('All36 content and grade bands', () => {
     expect(Object.values(GRADE_BAND)).not.toContain('Forced');
   });
 
+  it('matches the declared schema, including loose balls and null owners', () => {
+    const pt = (v: unknown) => Array.isArray(v) && v.length === 2 && v.every((n) => typeof n === 'number' && Number.isFinite(n));
+    let loose = 0;
+    for (const e of ALL36_EPISODES) {
+      const ids = new Set(e.actors.map((a) => a.id));
+      expect(e.actors.every((a) => pt(a.position_m) && (a.team === 'H' || a.team === 'A')), e.id).toBe(true);
+      expect(e.choices.map((c) => c.id), e.id).toEqual(['A', 'B', 'C', 'D']);
+      for (const v of e.variants) {
+        const where = `${e.id}/${v.id}`;
+        if (v.ball_owner === null) loose++;
+        else expect(ids.has(v.ball_owner), where).toBe(true);
+        expect(pt(v.ball_position_m), where).toBe(true);
+        expect(Object.keys(v.actor_overrides).every((k) => ids.has(k)) && Object.values(v.actor_overrides).every(pt), where).toBe(true);
+        expect(Object.keys(v.grades).sort(), where).toEqual(['A', 'B', 'C', 'D']);
+        expect(Object.keys(v.branches).sort(), where).toEqual(['A', 'B', 'C', 'D']);
+        for (const b of Object.values(v.branches)) {
+          expect(b.owner_after === null || ids.has(b.owner_after), where).toBe(true);
+          expect(pt(b.ball_target) && Object.keys(b.actor_targets).every((k) => ids.has(k)) && Object.values(b.actor_targets).every(pt), where).toBe(true);
+        }
+      }
+    }
+    expect(loose).toBe(5);
+  });
+
   it('has no goalkeeper learner and maps DM/CM/ST to 6/8/9', () => {
     expect(PACKAGE_ROLE).toMatchObject({ DM: '6', CM: '8', ST: '9' });
     for (const e of ALL36_EPISODES) expect(protagonistRole(e)).not.toBe('GK');

@@ -23,7 +23,8 @@ export interface PackageBranch {
 }
 export interface PackageVariant {
   readonly id: VariantId;
-  readonly ball_owner: string;
+  /** null for a loose ball (five approved variants, e.g. D19 base). */
+  readonly ball_owner: string | null;
   readonly ball_position_m: Metres;
   readonly actor_overrides: Readonly<Record<string, Metres>>;
   readonly visible_cues: readonly string[];
