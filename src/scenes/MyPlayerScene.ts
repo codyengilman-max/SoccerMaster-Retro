@@ -6,6 +6,7 @@ import type { CareerSave } from '../game/career/state';
 import { ATTRIBUTES, ATTRIBUTE_LABELS } from '../game/career/types';
 import { NOT_TRACKED } from '../game/report/registry';
 import { homeTasks, weekAssignments, type HomeTask } from '../game/story/facts';
+import { StoryStore, STORY_CAREER_ID } from '../game/story/store';
 import type { SavedReport } from '../game/report/report';
 import { artTextureKey, artUrl } from '../render/art/urls';
 import { orientationOf } from '../render/layout';
@@ -18,6 +19,8 @@ export interface MyPlayerData {
   readonly returnTo?: 'story' | 'start';
   /** Story week, when the story opens My Player; otherwise the career week is used. */
   readonly week?: number;
+  /** Returning from a screen My Player opened (Rankings): keep the saved back route and week. */
+  readonly resume?: boolean;
 }
 
 const INK = '#2a1d14';
@@ -74,6 +77,8 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
   private detail: string | null = null;
   private status = 'loading';
   private leaving = false;
+  /** Coming back from a screen My Player opened: keep the saved back route and story week. */
+  private resume = false;
   private root!: Phaser.GameObjects.Container;
   private hits: Hit[] = [];
   private contentH = 0;
@@ -87,6 +92,7 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
 
   init(data: MyPlayerData): void {
     this.view = data?.view === 'history' ? 'history' : 'player';
+    this.resume = this.view === 'history' || data?.resume === true;
     this.returnTo = data?.returnTo === 'story' ? 'story' : 'start';
     this.storyWeek = typeof data?.week === 'number' ? data.week : null;
     this.save = null;
@@ -102,7 +108,7 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
   }
 
   create(): void {
-    if (this.view === 'history') this.registry.set('myPlayerReturn', this.registry.get('myPlayerReturn') ?? 'start');
+    if (this.resume) this.registry.set('myPlayerReturn', this.registry.get('myPlayerReturn') ?? 'start');
     else this.registry.set('myPlayerReturn', this.returnTo);
     this.returnTo = this.registry.get('myPlayerReturn') === 'story' ? 'story' : 'start';
     if (this.storyWeek !== null) this.registry.set('myPlayerWeek', this.storyWeek);
@@ -350,8 +356,8 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
   private secondary(x: number, y: number, w: number, fs: number, pad: number): number {
     const bw = (w - pad) / 2;
     const h = Math.max(50, fs * 2.7);
-    this.button('my-player-rankings', x, y, bw, h, 'Rankings', fs, BLUE, () => this.go(() => this.scene.start(SceneKeys.Rankings)));
-    this.button('my-player-review', x + bw + pad, y, bw, h, 'Weekly review', fs, BLUE, () => this.openCareer({ open: 'reviewHub' }));
+    this.button('my-player-rankings', x, y, bw, h, 'Rankings', fs, BLUE, () => void this.openRankings());
+    this.button('my-player-review', x + bw + pad, y, bw, h, 'Weekly review', fs, BLUE, () => this.openCareer({ open: 'review' }));
     return this.button('my-player-history', x, y + h + pad * 0.6, w, Math.max(44, fs * 2.4), 'Match history', fs * 0.95, CARD, () => ((this.view = 'history'), (this.page = 0), this.build()), INK);
   }
 
@@ -383,6 +389,26 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
   private openCareer(extra: { open?: string; task?: string }): void {
     const data = { ...(this.returnTo === 'story' ? { returnTo: 'story' as const } : {}), week: this.week(), ...extra };
     this.go(() => this.scene.start(SceneKeys.Career, data));
+  }
+
+  /** Rankings for the story career: its saved season week (or the story week My Player was opened with); no story → Rankings' own no-career state. */
+  private async openRankings(): Promise<void> {
+    if (this.leaving) return;
+    this.leaving = true;
+    let careerId = '';
+    let week = this.storyWeek ?? 1;
+    const store = await StoryStore.open().catch(() => null);
+    if (store) {
+      const st = await store.load(STORY_CAREER_ID).catch(() => null);
+      store.close();
+      if (st) {
+        careerId = st.careerId;
+        const m = /^S1_W(\d\d)_/.exec(st.sceneId);
+        if (this.storyWeek === null && m) week = Number(m[1]);
+      }
+    }
+    if (!this.sys.isActive()) return;
+    this.scene.start(SceneKeys.Rankings, { careerId, week, returnTo: 'myPlayer' });
   }
 
   private openTask(t: HomeTask): void {

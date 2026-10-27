@@ -123,7 +123,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.demoPaused = this.reducedMotion;
     this.demoSpeed = 1;
     this.demoMiss = false;
-    this.screen = data?.open === 'reviewHub' ? { kind: 'reviewHub' } : data?.open === 'team' ? { kind: 'team' } : { kind: 'home' };
+    this.screen = data?.open === 'reviewHub' ? { kind: 'reviewHub' } : data?.open === 'review' ? { kind: 'review' } : data?.open === 'team' ? { kind: 'team' } : { kind: 'home' };
     this.history = [];
     this.page = 0;
     this.textPage = 0;

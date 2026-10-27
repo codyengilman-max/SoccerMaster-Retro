@@ -141,7 +141,17 @@ test('full-time Match Report, My Player, Match History reopen without changing t
   await page.waitForTimeout(400);
   await pressElement(page, 'my-player-back', mode);
   await gameplay<MyPlayer>(page, 'myPlayer', (g) => g.view === 'player', 'player view');
+  // Rankings returns to My Player (no story here, so Rankings shows its own no-career state).
+  await pressElement(page, 'my-player-rankings', mode);
+  await gameplay<{ status: string }>(page, 'rankings', (g) => g.status === 'no-career', 'rankings without a story');
+  await pressAny(page, 'rank-back', mode);
+  await gameplay<MyPlayer>(page, 'myPlayer', (g) => g.status === 'ready' && g.view === 'player', 'back from rankings');
   await pressElement(page, 'my-player-back', mode);
   await sceneOrDump(page, 'start');
+  // Weekly review opens the saved weekly review, not Review & Lab.
+  await pressAny(page, 'my-player-button', mode);
+  await gameplay<MyPlayer>(page, 'myPlayer', (g) => g.status === 'ready', 'my player again');
+  await pressElement(page, 'my-player-review', mode);
+  await gameplay<{ screen: string; status: string }>(page, 'career', (g) => g.status !== 'loading' && g.screen === 'review', 'weekly review');
   expect(errors).toEqual([]);
 });

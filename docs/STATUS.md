@@ -7,6 +7,7 @@
 - Team Training shows its real status from the saved week (`Done`, `n of 3 sessions`, `Not started`). Extra practice opens normal Home Training and is labelled optional; it is not counted as required.
 - My development shows compact bars for the six tracked attributes; "View all attributes" expands the paged list and tapping a row shows its explanation. Untracked attributes still show "-".
 - One back route: "Back to story" when opened from the story, otherwise "Back to menu"; Match history returns to My Player. The corner `<` and `?` buttons are gone.
+- Secondary actions: Rankings reads the saved story career (`STORY_CAREER_ID`, its saved season week, or the story week My Player was opened with) and Back returns to My Player with the same back route (`resume`); with no story, Rankings shows its own no-career state. Weekly review opens Career's saved weekly review (`open: 'review'`, no Finish Week when opened from the story), not Review & Lab.
 - Portrait and landscape (two columns), drag/wheel scrolling, safe-area insets, touch targets at least 44 × 44. Phone emulation only, not tested on a real iPhone.
 
 ## Team Training learning loop (owner brief + mockup, branch `devin/1792950375-tt-learning-loop`, from `main` 56a6e0c, not merged, not deployed)
