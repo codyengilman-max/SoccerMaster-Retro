@@ -1,0 +1,1514 @@
+[
+  {
+    "season": 1,
+    "week": 1,
+    "theme": "Own-half superiority",
+    "mode": "guided",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D01",
+          "D02",
+          "D03"
+        ],
+        "variant_to_author": "Base scene; explicit cues",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D01",
+          "D02",
+          "D03"
+        ],
+        "variant_to_author": "Reverse the cue that justified the base answer",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D02",
+          "D04",
+          "D06"
+        ],
+        "variant_to_author": "Different role or flank with reviewed geometry",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 1,
+    "week": 2,
+    "theme": "Escape the first press",
+    "mode": "guided",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D04",
+          "D05",
+          "D06"
+        ],
+        "variant_to_author": "Base scene; explicit cues",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D04",
+          "D05",
+          "D06"
+        ],
+        "variant_to_author": "Reverse the cue that justified the base answer",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D05",
+          "D07",
+          "D09"
+        ],
+        "variant_to_author": "Different role or flank with reviewed geometry",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 1,
+    "week": 3,
+    "theme": "Create a local overload",
+    "mode": "guided",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D07",
+          "D08",
+          "D09"
+        ],
+        "variant_to_author": "Base scene; explicit cues",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D07",
+          "D08",
+          "D09"
+        ],
+        "variant_to_author": "Reverse the cue that justified the base answer",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D08",
+          "D10",
+          "D12"
+        ],
+        "variant_to_author": "Different role or flank with reviewed geometry",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 1,
+    "week": 4,
+    "theme": "Switch and exploit space",
+    "mode": "guided",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D10",
+          "D11",
+          "D12"
+        ],
+        "variant_to_author": "Base scene; explicit cues",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D10",
+          "D11",
+          "D12"
+        ],
+        "variant_to_author": "Reverse the cue that justified the base answer",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D11",
+          "D13",
+          "D15"
+        ],
+        "variant_to_author": "Different role or flank with reviewed geometry",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 1,
+    "week": 5,
+    "theme": "Beat recovery pressure",
+    "mode": "guided",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D13",
+          "D14",
+          "D15"
+        ],
+        "variant_to_author": "Base scene; explicit cues",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D13",
+          "D14",
+          "D15"
+        ],
+        "variant_to_author": "Reverse the cue that justified the base answer",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D14",
+          "D16",
+          "D18"
+        ],
+        "variant_to_author": "Different role or flank with reviewed geometry",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 1,
+    "week": 6,
+    "theme": "Complement finishing runs",
+    "mode": "guided",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D16",
+          "D17",
+          "D18"
+        ],
+        "variant_to_author": "Base scene; explicit cues",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D16",
+          "D17",
+          "D18"
+        ],
+        "variant_to_author": "Reverse the cue that justified the base answer",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D17",
+          "D19",
+          "D21"
+        ],
+        "variant_to_author": "Different role or flank with reviewed geometry",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 1,
+    "week": 7,
+    "theme": "Coordinate central pressure",
+    "mode": "supported",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D19",
+          "D20",
+          "D21"
+        ],
+        "variant_to_author": "Base scene; explicit cues",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D19",
+          "D20",
+          "D21"
+        ],
+        "variant_to_author": "Reverse the cue that justified the base answer",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D20",
+          "D22",
+          "D24"
+        ],
+        "variant_to_author": "Different role or flank with reviewed geometry",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 1,
+    "week": 8,
+    "theme": "Press as a front unit",
+    "mode": "supported",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D22",
+          "D23",
+          "D24"
+        ],
+        "variant_to_author": "Base scene; explicit cues",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D22",
+          "D23",
+          "D24"
+        ],
+        "variant_to_author": "Reverse the cue that justified the base answer",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D23",
+          "D25",
+          "D27"
+        ],
+        "variant_to_author": "Different role or flank with reviewed geometry",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 1,
+    "week": 9,
+    "theme": "Pressure and cover",
+    "mode": "supported",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D25",
+          "D26",
+          "D27"
+        ],
+        "variant_to_author": "Base scene; explicit cues",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D25",
+          "D26",
+          "D27"
+        ],
+        "variant_to_author": "Reverse the cue that justified the base answer",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D26",
+          "D28",
+          "D30"
+        ],
+        "variant_to_author": "Different role or flank with reviewed geometry",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 1,
+    "week": 10,
+    "theme": "Keep a connected block",
+    "mode": "supported",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D28",
+          "D29",
+          "D30"
+        ],
+        "variant_to_author": "Base scene; explicit cues",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D28",
+          "D29",
+          "D30"
+        ],
+        "variant_to_author": "Reverse the cue that justified the base answer",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D29",
+          "D31",
+          "D33"
+        ],
+        "variant_to_author": "Different role or flank with reviewed geometry",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 1,
+    "week": 11,
+    "theme": "Defend the inside route",
+    "mode": "supported",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D31",
+          "D32",
+          "D33"
+        ],
+        "variant_to_author": "Base scene; explicit cues",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D31",
+          "D32",
+          "D33"
+        ],
+        "variant_to_author": "Reverse the cue that justified the base answer",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D32",
+          "D34",
+          "D36"
+        ],
+        "variant_to_author": "Different role or flank with reviewed geometry",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 1,
+    "week": 12,
+    "theme": "Defend a wide delivery",
+    "mode": "supported",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D34",
+          "D35",
+          "D36"
+        ],
+        "variant_to_author": "Base scene; explicit cues",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D34",
+          "D35",
+          "D36"
+        ],
+        "variant_to_author": "Reverse the cue that justified the base answer",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D35",
+          "D01",
+          "D03"
+        ],
+        "variant_to_author": "Different role or flank with reviewed geometry",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 1,
+    "week": 13,
+    "theme": "Own-half superiority + Escape the first press",
+    "mode": "mixed_review",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D01",
+          "D02",
+          "D03"
+        ],
+        "variant_to_author": "Base scene; explicit cues",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D01",
+          "D02",
+          "D03"
+        ],
+        "variant_to_author": "Reverse the cue that justified the base answer",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D02",
+          "D04",
+          "D06"
+        ],
+        "variant_to_author": "Different role or flank with reviewed geometry",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 1,
+    "week": 14,
+    "theme": "Create a local overload + Switch and exploit space",
+    "mode": "mixed_review",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D07",
+          "D08",
+          "D09"
+        ],
+        "variant_to_author": "Base scene; explicit cues",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D07",
+          "D08",
+          "D09"
+        ],
+        "variant_to_author": "Reverse the cue that justified the base answer",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D08",
+          "D10",
+          "D12"
+        ],
+        "variant_to_author": "Different role or flank with reviewed geometry",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 1,
+    "week": 15,
+    "theme": "Beat recovery pressure + Complement finishing runs",
+    "mode": "mixed_review",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D13",
+          "D14",
+          "D15"
+        ],
+        "variant_to_author": "Base scene; explicit cues",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D13",
+          "D14",
+          "D15"
+        ],
+        "variant_to_author": "Reverse the cue that justified the base answer",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D14",
+          "D16",
+          "D18"
+        ],
+        "variant_to_author": "Different role or flank with reviewed geometry",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 1,
+    "week": 16,
+    "theme": "Coordinate central pressure + Press as a front unit",
+    "mode": "mixed_review",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D19",
+          "D20",
+          "D21"
+        ],
+        "variant_to_author": "Base scene; explicit cues",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D19",
+          "D20",
+          "D21"
+        ],
+        "variant_to_author": "Reverse the cue that justified the base answer",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D20",
+          "D22",
+          "D24"
+        ],
+        "variant_to_author": "Different role or flank with reviewed geometry",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 1,
+    "week": 17,
+    "theme": "Pressure and cover + Keep a connected block",
+    "mode": "mixed_review",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D25",
+          "D26",
+          "D27"
+        ],
+        "variant_to_author": "Base scene; explicit cues",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D25",
+          "D26",
+          "D27"
+        ],
+        "variant_to_author": "Reverse the cue that justified the base answer",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D26",
+          "D28",
+          "D30"
+        ],
+        "variant_to_author": "Different role or flank with reviewed geometry",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 1,
+    "week": 18,
+    "theme": "Defend the inside route + Defend a wide delivery",
+    "mode": "mixed_review",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D31",
+          "D32",
+          "D33"
+        ],
+        "variant_to_author": "Base scene; explicit cues",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D31",
+          "D32",
+          "D33"
+        ],
+        "variant_to_author": "Reverse the cue that justified the base answer",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D32",
+          "D34",
+          "D36"
+        ],
+        "variant_to_author": "Different role or flank with reviewed geometry",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 2,
+    "week": 1,
+    "theme": "Own-half superiority",
+    "mode": "faded_hints",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D01",
+          "D02",
+          "D03"
+        ],
+        "variant_to_author": "New opponent approach and support positioning",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D01",
+          "D02",
+          "D03"
+        ],
+        "variant_to_author": "Combine pressure and support changes; preserve defensible alternatives",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D02",
+          "D04",
+          "D06"
+        ],
+        "variant_to_author": "Mixed unfamiliar arrangement; no correctness cue revealed before answer",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 2,
+    "week": 2,
+    "theme": "Escape the first press",
+    "mode": "faded_hints",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D04",
+          "D05",
+          "D06"
+        ],
+        "variant_to_author": "New opponent approach and support positioning",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D04",
+          "D05",
+          "D06"
+        ],
+        "variant_to_author": "Combine pressure and support changes; preserve defensible alternatives",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D05",
+          "D07",
+          "D09"
+        ],
+        "variant_to_author": "Mixed unfamiliar arrangement; no correctness cue revealed before answer",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 2,
+    "week": 3,
+    "theme": "Create a local overload",
+    "mode": "faded_hints",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D07",
+          "D08",
+          "D09"
+        ],
+        "variant_to_author": "New opponent approach and support positioning",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D07",
+          "D08",
+          "D09"
+        ],
+        "variant_to_author": "Combine pressure and support changes; preserve defensible alternatives",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D08",
+          "D10",
+          "D12"
+        ],
+        "variant_to_author": "Mixed unfamiliar arrangement; no correctness cue revealed before answer",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 2,
+    "week": 4,
+    "theme": "Switch and exploit space",
+    "mode": "faded_hints",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D10",
+          "D11",
+          "D12"
+        ],
+        "variant_to_author": "New opponent approach and support positioning",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D10",
+          "D11",
+          "D12"
+        ],
+        "variant_to_author": "Combine pressure and support changes; preserve defensible alternatives",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D11",
+          "D13",
+          "D15"
+        ],
+        "variant_to_author": "Mixed unfamiliar arrangement; no correctness cue revealed before answer",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 2,
+    "week": 5,
+    "theme": "Beat recovery pressure",
+    "mode": "faded_hints",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D13",
+          "D14",
+          "D15"
+        ],
+        "variant_to_author": "New opponent approach and support positioning",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D13",
+          "D14",
+          "D15"
+        ],
+        "variant_to_author": "Combine pressure and support changes; preserve defensible alternatives",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D14",
+          "D16",
+          "D18"
+        ],
+        "variant_to_author": "Mixed unfamiliar arrangement; no correctness cue revealed before answer",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 2,
+    "week": 6,
+    "theme": "Complement finishing runs",
+    "mode": "faded_hints",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D16",
+          "D17",
+          "D18"
+        ],
+        "variant_to_author": "New opponent approach and support positioning",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D16",
+          "D17",
+          "D18"
+        ],
+        "variant_to_author": "Combine pressure and support changes; preserve defensible alternatives",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D17",
+          "D19",
+          "D21"
+        ],
+        "variant_to_author": "Mixed unfamiliar arrangement; no correctness cue revealed before answer",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 2,
+    "week": 7,
+    "theme": "Coordinate central pressure",
+    "mode": "competing_cues",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D19",
+          "D20",
+          "D21"
+        ],
+        "variant_to_author": "New opponent approach and support positioning",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D19",
+          "D20",
+          "D21"
+        ],
+        "variant_to_author": "Combine pressure and support changes; preserve defensible alternatives",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D20",
+          "D22",
+          "D24"
+        ],
+        "variant_to_author": "Mixed unfamiliar arrangement; no correctness cue revealed before answer",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 2,
+    "week": 8,
+    "theme": "Press as a front unit",
+    "mode": "competing_cues",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D22",
+          "D23",
+          "D24"
+        ],
+        "variant_to_author": "New opponent approach and support positioning",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D22",
+          "D23",
+          "D24"
+        ],
+        "variant_to_author": "Combine pressure and support changes; preserve defensible alternatives",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D23",
+          "D25",
+          "D27"
+        ],
+        "variant_to_author": "Mixed unfamiliar arrangement; no correctness cue revealed before answer",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 2,
+    "week": 9,
+    "theme": "Pressure and cover",
+    "mode": "competing_cues",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D25",
+          "D26",
+          "D27"
+        ],
+        "variant_to_author": "New opponent approach and support positioning",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D25",
+          "D26",
+          "D27"
+        ],
+        "variant_to_author": "Combine pressure and support changes; preserve defensible alternatives",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D26",
+          "D28",
+          "D30"
+        ],
+        "variant_to_author": "Mixed unfamiliar arrangement; no correctness cue revealed before answer",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 2,
+    "week": 10,
+    "theme": "Keep a connected block",
+    "mode": "competing_cues",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D28",
+          "D29",
+          "D30"
+        ],
+        "variant_to_author": "New opponent approach and support positioning",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D28",
+          "D29",
+          "D30"
+        ],
+        "variant_to_author": "Combine pressure and support changes; preserve defensible alternatives",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D29",
+          "D31",
+          "D33"
+        ],
+        "variant_to_author": "Mixed unfamiliar arrangement; no correctness cue revealed before answer",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 2,
+    "week": 11,
+    "theme": "Defend the inside route",
+    "mode": "competing_cues",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D31",
+          "D32",
+          "D33"
+        ],
+        "variant_to_author": "New opponent approach and support positioning",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D31",
+          "D32",
+          "D33"
+        ],
+        "variant_to_author": "Combine pressure and support changes; preserve defensible alternatives",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D32",
+          "D34",
+          "D36"
+        ],
+        "variant_to_author": "Mixed unfamiliar arrangement; no correctness cue revealed before answer",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 2,
+    "week": 12,
+    "theme": "Defend a wide delivery",
+    "mode": "competing_cues",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D34",
+          "D35",
+          "D36"
+        ],
+        "variant_to_author": "New opponent approach and support positioning",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D34",
+          "D35",
+          "D36"
+        ],
+        "variant_to_author": "Combine pressure and support changes; preserve defensible alternatives",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D35",
+          "D01",
+          "D03"
+        ],
+        "variant_to_author": "Mixed unfamiliar arrangement; no correctness cue revealed before answer",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 2,
+    "week": 13,
+    "theme": "Own-half superiority + Escape the first press",
+    "mode": "transfer_review",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D01",
+          "D02",
+          "D03"
+        ],
+        "variant_to_author": "New opponent approach and support positioning",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D01",
+          "D02",
+          "D03"
+        ],
+        "variant_to_author": "Combine pressure and support changes; preserve defensible alternatives",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D02",
+          "D04",
+          "D06"
+        ],
+        "variant_to_author": "Mixed unfamiliar arrangement; no correctness cue revealed before answer",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 2,
+    "week": 14,
+    "theme": "Create a local overload + Switch and exploit space",
+    "mode": "transfer_review",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D07",
+          "D08",
+          "D09"
+        ],
+        "variant_to_author": "New opponent approach and support positioning",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D07",
+          "D08",
+          "D09"
+        ],
+        "variant_to_author": "Combine pressure and support changes; preserve defensible alternatives",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D08",
+          "D10",
+          "D12"
+        ],
+        "variant_to_author": "Mixed unfamiliar arrangement; no correctness cue revealed before answer",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 2,
+    "week": 15,
+    "theme": "Beat recovery pressure + Complement finishing runs",
+    "mode": "transfer_review",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D13",
+          "D14",
+          "D15"
+        ],
+        "variant_to_author": "New opponent approach and support positioning",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D13",
+          "D14",
+          "D15"
+        ],
+        "variant_to_author": "Combine pressure and support changes; preserve defensible alternatives",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D14",
+          "D16",
+          "D18"
+        ],
+        "variant_to_author": "Mixed unfamiliar arrangement; no correctness cue revealed before answer",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 2,
+    "week": 16,
+    "theme": "Coordinate central pressure + Press as a front unit",
+    "mode": "transfer_review",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D19",
+          "D20",
+          "D21"
+        ],
+        "variant_to_author": "New opponent approach and support positioning",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D19",
+          "D20",
+          "D21"
+        ],
+        "variant_to_author": "Combine pressure and support changes; preserve defensible alternatives",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D20",
+          "D22",
+          "D24"
+        ],
+        "variant_to_author": "Mixed unfamiliar arrangement; no correctness cue revealed before answer",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 2,
+    "week": 17,
+    "theme": "Pressure and cover + Keep a connected block",
+    "mode": "transfer_review",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D25",
+          "D26",
+          "D27"
+        ],
+        "variant_to_author": "New opponent approach and support positioning",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D25",
+          "D26",
+          "D27"
+        ],
+        "variant_to_author": "Combine pressure and support changes; preserve defensible alternatives",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D26",
+          "D28",
+          "D30"
+        ],
+        "variant_to_author": "Mixed unfamiliar arrangement; no correctness cue revealed before answer",
+        "runtime_ready": false
+      }
+    ]
+  },
+  {
+    "season": 2,
+    "week": 18,
+    "theme": "Defend the inside route + Defend a wide delivery",
+    "mode": "transfer_review",
+    "status": "planning_only_not_108_authored_levels",
+    "sessions": [
+      {
+        "slot": "A",
+        "purpose": "Recognize the cue and explain the preferred action",
+        "decision_ids": [
+          "D31",
+          "D32",
+          "D33"
+        ],
+        "variant_to_author": "New opponent approach and support positioning",
+        "runtime_ready": false
+      },
+      {
+        "slot": "B",
+        "purpose": "Change the cue; reconsider rather than memorize",
+        "decision_ids": [
+          "D31",
+          "D32",
+          "D33"
+        ],
+        "variant_to_author": "Combine pressure and support changes; preserve defensible alternatives",
+        "runtime_ready": false
+      },
+      {
+        "slot": "C",
+        "purpose": "Transfer and recall; explain teammates' jobs",
+        "decision_ids": [
+          "D32",
+          "D34",
+          "D36"
+        ],
+        "variant_to_author": "Mixed unfamiliar arrangement; no correctness cue revealed before answer",
+        "runtime_ready": false
+      }
+    ]
+  }
+]

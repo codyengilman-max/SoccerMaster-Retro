@@ -1,0 +1,254 @@
+[
+  {
+    "file": "03_Opponents/opponent_04.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  },
+  {
+    "file": "03_Opponents/opponent_06.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  },
+  {
+    "file": "03_Opponents/opponent_07.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  },
+  {
+    "file": "03_Opponents/opponent_02.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  },
+  {
+    "file": "03_Opponents/opponent_08.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  },
+  {
+    "file": "03_Opponents/opponent_05.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  },
+  {
+    "file": "03_Opponents/opponent_01.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  },
+  {
+    "file": "03_Opponents/opponent_03.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  },
+  {
+    "file": "02_Teammates/teammate_05.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  },
+  {
+    "file": "02_Teammates/teammate_02.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  },
+  {
+    "file": "02_Teammates/teammate_01.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  },
+  {
+    "file": "02_Teammates/teammate_03.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  },
+  {
+    "file": "02_Teammates/teammate_07.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  },
+  {
+    "file": "02_Teammates/teammate_04.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  },
+  {
+    "file": "02_Teammates/teammate_06.png",
+    "size": [
+      1535,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  },
+  {
+    "file": "05_Roster_References/home_roster.png",
+    "size": [
+      1774,
+      887
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  },
+  {
+    "file": "05_Roster_References/opposition_roster.png",
+    "size": [
+      1774,
+      887
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  },
+  {
+    "file": "04_Goalkeepers/home_keeper_keyposes.png",
+    "size": [
+      177,
+      887
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  },
+  {
+    "file": "04_Goalkeepers/opposition_keeper_keyposes.png",
+    "size": [
+      197,
+      887
+    ],
+    "alpha_range": [
+      0,
+      255
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  },
+  {
+    "file": "01_Protagonists/girl_highlight.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  },
+  {
+    "file": "01_Protagonists/boy_highlight.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alpha_range": [
+      0,
+      254
+    ],
+    "review": "metadata only; not frame-by-frame approval"
+  }
+]

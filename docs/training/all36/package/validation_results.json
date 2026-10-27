@@ -1,0 +1,11 @@
+{
+  "structural_checks": "PASS",
+  "negative_mutations_rejected": 12,
+  "situations": 36,
+  "variants": 72,
+  "choice_grade_records": 288,
+  "SVG_panels": 288,
+  "missing_situations": 0,
+  "independent_coach_approval": false,
+  "animation_physics_validated": false
+}

@@ -1,0 +1,3899 @@
+{
+ "generatedBy": "scripts/all36-manifest.mjs",
+ "archive": {
+  "file": "SoccerMaster_Coach_Approved_All36.zip",
+  "sha256": "1a57ffe32a17975bf117972e2a304c428abaeda2f41372d22af3e57c4a30fb87",
+  "topFolder": "SoccerMaster_All36",
+  "files": 420
+ },
+ "packageManifest": {
+  "listed": 419,
+  "matched": 419,
+  "unlisted": [
+   "SHA256_MANIFEST.json"
+  ]
+ },
+ "approval": {
+  "status": "coach_approved",
+  "reviewer": "Cody Engilman",
+  "date": "2026-10-27",
+  "reviewedPackageSha256": "f0462a6727c4a1981e1a0513c8a033a22785fd6c0cba4ec7bbd4c6b6505f37e9",
+  "runtimeValidation": "pending"
+ },
+ "normalization": {
+  "json-canonical": "UTF-8 JSON parsed and re-serialized with sorted keys and no whitespace",
+  "text-lf": "UTF-8, BOM removed, CRLF/CR to LF, exactly one trailing newline",
+  "png-critical-chunks": "type+data of IHDR, PLTE, tRNS, IDAT, IEND (ancillary metadata chunks dropped)",
+  "raw": "bytes as extracted",
+  "semanticSha256": "json-canonical of the episode without status and approval (the tactical content)",
+  "reviewedEpisodeSha256": "COACH_APPROVAL.json value; reproduced as SHA-256 of compact JSON (key order as authored) of the matching review_history/episodes_before_approval.json entry"
+ },
+ "scenarios": [
+  {
+   "id": "D01",
+   "index": 0,
+   "family": "F01",
+   "title": "Own-half superiority — CB",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "31b6412adde8ffa90eb70849da0263d7879525bd1224146656cf066ef42c33cd",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "7605c64b0535ed50a844b2673627df16f18d58b1ab15dcad33d195066aed9932",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D02",
+   "index": 1,
+   "family": "F01",
+   "title": "Own-half superiority — LB",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "294fc6785cc9a3f93905bd764a0d94ee02bc10a919763413614ed79377149238",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "8e2082b74fb2444a09c0063fd89319182855b4eea4fb012d16ab1504cc44b506",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D03",
+   "index": 2,
+   "family": "F01",
+   "title": "Own-half superiority — DM",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "427af3ebffb54258d19a3fffcf93328310ad02c6c82fb2924cd351771eab70e6",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "d9094a6fb292da8330e10dc90103d9b1013472dbae75804269e0e6f778dcbf74",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D04",
+   "index": 3,
+   "family": "F02",
+   "title": "Escape the first press — LB",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "5f792a446ee2d814590825e0c456539d6068a106cc8df177cfa0b1db9510bfa1",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "8b7d4bb7909416463192c60d9d6cfa0225e142afd3083a8c8b93626608b1d1f6",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D05",
+   "index": 4,
+   "family": "F02",
+   "title": "Escape the first press — RB",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "d74e6a18a9e6164e6f4c46215290714fc866e8efbebe5c18a142577b6faf631a",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "49a0a68365c5cea828e7b7a5b8cc19d27434bcd406ad791be3e4820ed7edee6a",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D06",
+   "index": 5,
+   "family": "F02",
+   "title": "Escape the first press — DM",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "58dece24d3e8985c1f98c3a4753b350dca3c6223d04d9346748d4d1adc9dc4db",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "a8f05dd43478a7a99715b83825382e07c44b2672abb3f4278452dda4c39c75f6",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D07",
+   "index": 6,
+   "family": "F03",
+   "title": "Create a local overload — LW",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "6593d1bfe381015679420dd79cb07bf18d45402bf39072c7596089243e073aa1",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "63c3dd54cbbb3794db01b3880d596732006f6e13374e874e5d4add85508d3925",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D08",
+   "index": 7,
+   "family": "F03",
+   "title": "Create a local overload — CM",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "8728002774c5c148df01c7c7fafaee0e8f545a81e9e7932c5c1d6d3da654806a",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "db70669d5881c7942b7fbe740d9f209878082355ad095f9cf4759af4b6c14b8a",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D09",
+   "index": 8,
+   "family": "F03",
+   "title": "Create a local overload — RW",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "2f7437ce2109313f63f4765a3ba0ddd6c7f5eff3bb201a50c4ce9cd7b5bba5e8",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "5b1fa7a6d23f798da1b3fb2c2da7b6165c761e5820f0239a13f07e5c0f40c373",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D10",
+   "index": 9,
+   "family": "F04",
+   "title": "Switch and exploit space — CM",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "e5a60296485c9f06a5779abbf018811dd0168e4df9e7e39631a527249eb304c6",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "2a8cc7ea2e35dacfcbba5ef319e63ca67dade9c654c1ff9107cdb00e18107bc2",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D11",
+   "index": 10,
+   "family": "F04",
+   "title": "Switch and exploit space — RW",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "07e95094c475a6490b8afc6be276c9e13ba5fcff63e36b5d9da78f527771350d",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "b12a469b00dfe30bf4c5fc44f735ca73540f1053983be323da23d596e746d35d",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D12",
+   "index": 11,
+   "family": "F04",
+   "title": "Switch and exploit space — LW",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "9fa5799729c2d666da35690444925d7e09cf208591c2710388b143daf8e36fca",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "ed557ec9d67c42bf4c848964d3738b8077c0c4fb6d2a76ae8b8cc210f31bda7e",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D13",
+   "index": 12,
+   "family": "F05",
+   "title": "Beat recovery pressure — ST",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "2789a0bc81728db6e9a09d893b54670e260c7ebc9647b074a4209661ce13aa1b",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "11573f3ee5805ed57e017cf8e0e07bb8b487181261a18608ec0715bf1e379e28",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D14",
+   "index": 13,
+   "family": "F05",
+   "title": "Beat recovery pressure — CM",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "8175ac68e0053e8c543ee1f6b9da01a3bb91143c98b2ace9c791dfd285f40a1d",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "7ffa4f53864b7e4601895277a0b8c24156d8749e668527f6d4dc5d75f2ab6576",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D15",
+   "index": 14,
+   "family": "F05",
+   "title": "Beat recovery pressure — LW",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "2871b74b421d24e5b0c5e9b2b7268ce7d874d1c8b434d8d7ad56f16c7fdfb614",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "f42ee98eb96a41d024c5c0590fff82766dec24ca261bac7271ae4fdfe7fd4d97",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D16",
+   "index": 15,
+   "family": "F06",
+   "title": "Complement finishing runs — RW",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "df3353b557731f65ddcca19807dc67fbbc0c701f07faa662c1a2312fee6823db",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "2f58f9a171b3265b0b4f500af3a3d8073c77744a03217c45dc262bd6824d7025",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D17",
+   "index": 16,
+   "family": "F06",
+   "title": "Complement finishing runs — ST",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "130ebe339f4abb47b4f3517ab00cae21f626f53594a1c361de311047d2a29d62",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "9f801d072de4e3bf4e113a8659c4bb07abcc344091b6193d62d2387e3d346758",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D18",
+   "index": 17,
+   "family": "F06",
+   "title": "Complement finishing runs — CM",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "d5c0067d2711fa0f32a2ff0984c5e928875ad344559a63b8156b0f38c2e70996",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "510fc9df821610f08b8d1ba3bf0bb63c4aabcdf01a1398374529364958de2377",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D19",
+   "index": 18,
+   "family": "F07",
+   "title": "Coordinate central pressure — ST",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "6a6cebfb8d20a19a9762a47e71e3a948a01fbff88d870b0f2f171d4bb4f4b1b4",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "8a1f119f92bc6bb5314f39eda82e9d626b95274f28bd300fc5451ab66708c598",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D20",
+   "index": 19,
+   "family": "F07",
+   "title": "Coordinate central pressure — CM",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "4fc8784813e2b4d2d94069a82e65c528468d44c9273a8781169a342625a6dc40",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "6011cc16c3fe4b6aab8009ebad58b4f68b248e3b0d6a554bdc22a4f64d8badff",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D21",
+   "index": 20,
+   "family": "F07",
+   "title": "Coordinate central pressure — DM",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "cb63314a56ad195522f198fe8d3c701a811d62e43f30edc6a27adf6f098cea3e",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "69ef63f83ba7d03cf51411b141728c1f449a463e8590a9a8a1dd6e4fd70f3eea",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D22",
+   "index": 21,
+   "family": "F08",
+   "title": "Press as a front unit — LW",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "979629c767bbd439c9d8c5419ee45cd19ca492369aae03d2a440b6b4beeab06a",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "9faddb80bc22eaa5a6dddc9ab3740642275194f7e5b4a8bc3a7520e2ffb98b82",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D23",
+   "index": 22,
+   "family": "F08",
+   "title": "Press as a front unit — RW",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "36d811a5f5e00a224ab6bc55a62c146f4d1ef75c43a17686a485f9b53aa42b5d",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "2491c76bf0e13f8376b366eed131defa847d70c5a87598ff82f9981a3ecd4b56",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D24",
+   "index": 23,
+   "family": "F08",
+   "title": "Press as a front unit — ST",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "528a9570ecd1dc982952876f533cfcc12f6281ada5c03538593f55b74a6a8264",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "ee240bf376bc220f1c5bae9bd1ad2d339ff8dd11d77ffb5f7d6768996a360e5c",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D25",
+   "index": 24,
+   "family": "F09",
+   "title": "Pressure and cover — LB",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "a76c1de4473021719674b07ccf2f81b8c9a1663f4ca436c83cbd8f6490d3fc8f",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "0b900084a31692c25ea1d269c3b6a5f4eac3eed22d2559112f1269552f65dfb8",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D26",
+   "index": 25,
+   "family": "F09",
+   "title": "Pressure and cover — CB",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "5a957dbda44a5248c6a1d28b25bbfa8fbe3801cd9b7d35c43695a37c80d36384",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "fda5c3bba10b72a8c70e5dddfe7e5bfcc69c8178bf106c8c18adeb5996aaeaef",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D27",
+   "index": 26,
+   "family": "F09",
+   "title": "Pressure and cover — RB",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "d981b3a0a4fde8b5253c7209ded8ff3e680d32e5e6e0f3a80fe8ff19adf54729",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "a2b5938816b2ee498b65768ff4d02148b70c4fbc24fea0d0f4130fb0b42ea54f",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D28",
+   "index": 27,
+   "family": "F10",
+   "title": "Keep a connected block — DM",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "c7d2da38d72589114e95d46e88f8d203ad7f5c8afd2ccd5a81cc0b18c26070cd",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "08e9e2a1af4b5103d8d64f86324ae7636990b22773e0d938a9592d5ffb1e24b3",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D29",
+   "index": 28,
+   "family": "F10",
+   "title": "Keep a connected block — CB",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "df6c422e5a6bfdbbc0441116277ef6bc2b3f659464234e023c6e951b1d542f42",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "75397bb7e1e3e20e1625fa336e4eaea7c6306cc30eeb35ae747a391a361219ee",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D30",
+   "index": 29,
+   "family": "F10",
+   "title": "Keep a connected block — CM",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "7536f35be0e0e12a421a754259a66a7417b434c2fc744aa38ed9212866777e31",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "26175c2f57243ceeca36e2d90148922b569372dccf13a0d7cbc3427e4abf0163",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D31",
+   "index": 30,
+   "family": "F11",
+   "title": "Defend the inside route — RB",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "675a7c65278323584e07e8bd37f5eeeb89d563771778aca288e285506ffc5763",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "230ce51079cdcd571ff5e47878c2a13f31ba39193608e80f2b9ac83cec50bd5e",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D32",
+   "index": 31,
+   "family": "F11",
+   "title": "Defend the inside route — LB",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "57f957b867df5ec53d4af21bac5aae5a371c73ead5723cc07a0c11da0b68c0dc",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "0839d9c6e9a1c2c388793f9ecbc2513cfd309b4350f22b15d9b72517c2c5b54b",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D33",
+   "index": 32,
+   "family": "F11",
+   "title": "Defend the inside route — CB",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "d54ecb38cf2f0201fb8ef74b1ff18dd85e84b8bdad18561adb03a4c2bc168edf",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "a0a030cc3ce3812ef89c398a7413d7843b7ca792bd323c461ba067e7ab5b5210",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D34",
+   "index": 33,
+   "family": "F12",
+   "title": "Defend a wide delivery — CB",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "4d00683a8e3b0f22de32b15b84a0bbd21f986a44f023266abf05ff1052403de4",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "f4ea2ea2e5c57d41853f388f25fdc267f327e3c1eca74a68443065deb8dedeb6",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D35",
+   "index": 34,
+   "family": "F12",
+   "title": "Defend a wide delivery — DM",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "09ac9bceb2322bf2e8813e7d228c9c4af582ca102c9a9bf3ffcf8e4b039d9235",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "5fd2ece80533829d69606057d8ec181106d5103b13909e4b13453e7132193584",
+   "reviewedHashReproduced": true
+  },
+  {
+   "id": "D36",
+   "index": 35,
+   "family": "F12",
+   "title": "Defend a wide delivery — RB",
+   "variants": [
+    "base",
+    "changed"
+   ],
+   "semanticSha256": "7e65c80045b66a1976de06921d2ae42d7656b7374edfa70918636755bb25a796",
+   "unchangedSinceReview": true,
+   "reviewedEpisodeSha256": "1c015b225e771f0a438c754f0f2aa9510840c40823da2ba59dc8d9d738c39ad9",
+   "reviewedHashReproduced": true
+  }
+ ],
+ "files": [
+  {
+   "path": "COACH_APPROVAL.json",
+   "bytes": 8025,
+   "sha256": "04a01c0d25b0b55906906e07c43308d611bf0cb73a8833ee17edfb86974d0e78",
+   "normalized": "json-canonical",
+   "normalizedSha256": "d2b07e5335ec6841460942c4445841bb8b384a5b5c288d739b66f702162f1a14",
+   "packageManifest": "match"
+  },
+  {
+   "path": "CONTACT_SHEETS/consequence_1.png",
+   "bytes": 216728,
+   "sha256": "92f848b6be2eb6c7edc432cf0f0d164101fc675c52b197416c54f7c0b5820776",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "269adfc4ed5bb4cf86fafda04bf90fa2b8681c4b1c8f203fdc8e7d84ca82f19e",
+   "packageManifest": "match"
+  },
+  {
+   "path": "CONTACT_SHEETS/consequence_1.svg",
+   "bytes": 1330,
+   "sha256": "5909b8f47f3203d8e3629df0fe8ce0cb913494edf9af4ea634397d4077374333",
+   "normalized": "text-lf",
+   "normalizedSha256": "008c354211c95ca065fac60d9987e2603dbe1d5207a23cb29160ca245f64a16e",
+   "packageManifest": "match"
+  },
+  {
+   "path": "CONTACT_SHEETS/consequence_2.png",
+   "bytes": 231416,
+   "sha256": "7737a4caf089e8c4967a04f6e5b3f89e9c18e78054cf990349a53eab60683760",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "35ad7c471fe6db599a62073c8e11fa617e5e3eb856989c88c3ee78c8cf6a2976",
+   "packageManifest": "match"
+  },
+  {
+   "path": "CONTACT_SHEETS/consequence_2.svg",
+   "bytes": 1330,
+   "sha256": "15467d167ba8184f083384a1f0703f6034fad18e3b72b1637226f3c9a4cbed3e",
+   "normalized": "text-lf",
+   "normalizedSha256": "456f4d567666048d039ff36beed1c41a0c1d7bc508778a176601a85a866f81d5",
+   "packageManifest": "match"
+  },
+  {
+   "path": "CONTACT_SHEETS/consequence_3.png",
+   "bytes": 226519,
+   "sha256": "90d1057cd7d5ac99830dafbf071fb7e940a8091460720da2d4baa64184158f24",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "041ffe10c50f1645ad9b4788954679f73cdb6d1904c5fca956512b4235f8191d",
+   "packageManifest": "match"
+  },
+  {
+   "path": "CONTACT_SHEETS/consequence_3.svg",
+   "bytes": 1330,
+   "sha256": "6538097e908f847fc999feaadcd52b87b704617f86f24f9bfce60673c7fa2e1b",
+   "normalized": "text-lf",
+   "normalizedSha256": "965cd82c6a84893ec42490277fc55c454dc5b46cced0b0013bdec18fb40aeca8",
+   "packageManifest": "match"
+  },
+  {
+   "path": "CONTACT_SHEETS/decision_1.png",
+   "bytes": 190651,
+   "sha256": "6d0716a18b030874a3a7d121343eb4e3eea099f4121921614359308f1fa19393",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "8e9819cf01f983c5bef2f6cb1495d22bb49f67c7b7aed02de49b01dbcdf6415d",
+   "packageManifest": "match"
+  },
+  {
+   "path": "CONTACT_SHEETS/decision_1.svg",
+   "bytes": 1294,
+   "sha256": "c25506ffcb7eb4f51135cd4c7d437b077240de52fbb53d7adb0f70e0e6fc2250",
+   "normalized": "text-lf",
+   "normalizedSha256": "1aef6b4d895aa44faabadb603f42e9bca25d90def88694fc03c24743e962f582",
+   "packageManifest": "match"
+  },
+  {
+   "path": "CONTACT_SHEETS/decision_2.png",
+   "bytes": 204862,
+   "sha256": "67ab83895abb5a3c2e732b74edaa69afb5378935bf61ef7da2b6a5b95fef8b78",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "10704b7db3c14c2e1c038ed716dfba70bc899fdc43a07fb53affcc6c4a85d4aa",
+   "packageManifest": "match"
+  },
+  {
+   "path": "CONTACT_SHEETS/decision_2.svg",
+   "bytes": 1294,
+   "sha256": "526e0b5d40085a9369e599a86bec91aadaee79d1a69727f4070b7eb8ce4ceac2",
+   "normalized": "text-lf",
+   "normalizedSha256": "0f75cac8f21a7b428fe374eef8323e3027afd839fb19e5f30659273c17646d9a",
+   "packageManifest": "match"
+  },
+  {
+   "path": "CONTACT_SHEETS/decision_3.png",
+   "bytes": 196246,
+   "sha256": "2c51d833c09d3fe74d8734f4e8d6f7855e5b33a0a22ee081a8af5bef0f8766d9",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "293284195eda96f049b311f1ac4a8baa1bef62cc3cece8ea77a59a6d0814c3d1",
+   "packageManifest": "match"
+  },
+  {
+   "path": "CONTACT_SHEETS/decision_3.svg",
+   "bytes": 1294,
+   "sha256": "221275eccf96f78c55bc83713f55b414d6e5022698b7c13adb329435faa4dc66",
+   "normalized": "text-lf",
+   "normalizedSha256": "4946172f2837fe062d7d358c4d622fd275a22efa19d2080d8bd6f17a8bd9a78a",
+   "packageManifest": "match"
+  },
+  {
+   "path": "DEVIN_READ_FIRST.md",
+   "bytes": 1958,
+   "sha256": "5531e2107758158fce1f567613ced3f77c204430513190257557534563787974",
+   "normalized": "text-lf",
+   "normalizedSha256": "5531e2107758158fce1f567613ced3f77c204430513190257557534563787974",
+   "packageManifest": "match"
+  },
+  {
+   "path": "OPEN_ALL_PREVIEWS.html",
+   "bytes": 38548,
+   "sha256": "880a3d506ff0a9065c786d0211ff8c9c305ae6d831230528e7fe323a8849b3e8",
+   "normalized": "text-lf",
+   "normalizedSha256": "9002b55f76117808c208ab1e12f07b99bd2c9402a340693509ec310c30bee5ed",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D01_base_boy_consequence.png",
+   "bytes": 73893,
+   "sha256": "84e8f2005950988f637726b3c5c67c41a2320621f539315b3f4ed46e79d9fce0",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "c4560de0ce725c7fd7a5c1cfdd3bc1c853b2189940295b2abbeba9df27e50cad",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D01_base_boy_decision.png",
+   "bytes": 74386,
+   "sha256": "9ba8208bba390966c6de151a42fb1cf05e6227a16eaf2b76c6694ba3b1771e17",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "82f797e007f43c7d122c0da9fe2f4d81cbf549b6fc32d0d50b2bbfdfd779ca0f",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D02_base_boy_consequence.png",
+   "bytes": 81239,
+   "sha256": "760ca009df39193048cdcfd54da9338e290d7ef0f1482e9c624b7df123c45c8c",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "743f11edef707abb6fc1ebea99656bfcee0b4d786fcc45f498cf6e707ff4b931",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D02_base_boy_decision.png",
+   "bytes": 76270,
+   "sha256": "a44110436070a5dd74b099ab086ec81470053954c48c1e94a694e8fe2814d5d6",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "d150b49c052aa5ec3928050e87a071cd72585c7587e263a6fa0d60fc6faaffbb",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D03_base_boy_consequence.png",
+   "bytes": 78526,
+   "sha256": "dcdc7656a396f1565cfae9cf00025076d9e0d8332e21118e015c3976fda1a401",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "7562db2018b009aa32bf4a2078b9017c4d6bd7ef93835068331f1e0fb67af801",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D03_base_boy_decision.png",
+   "bytes": 75918,
+   "sha256": "feeac43952a8ce723f9c3707db9a0c0d8a780da001d716a331199a1d3693b774",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "6228bde23087ff5350516c4ba099657405afff6634a4311455a7af974be315df",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D04_base_boy_consequence.png",
+   "bytes": 75145,
+   "sha256": "17e9545c18ea7a3149819adf60314bccba3c2c77b3e2508ab20fa9535239517f",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "0b01a61b49dceb4a58a0c1db1ff6c4e14d1969b6b55345234d6aa6d0ec8cfaed",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D04_base_boy_decision.png",
+   "bytes": 74140,
+   "sha256": "db76050e84bf52f3bd84051b9e778d7757a61a94a6d5f39be1dbf6f3bd70b742",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "bf0a02bec60811ad40c621952080ab1e1d269a54e6b757388191ae11acd10d6e",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D05_base_boy_consequence.png",
+   "bytes": 77265,
+   "sha256": "61000eb36aa4ed5e18004b041e2c454dc40425030b1666e515f31561a7acfd7f",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "0417402bd82677438c6ad81c4535d70358fea6b0b5967cb2bf2f12c6dacb027c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D05_base_boy_decision.png",
+   "bytes": 74575,
+   "sha256": "88e302d29f0b3b293d7c853ed463942cd9b3212bd0189e432f3c2292f311f307",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "ec878d99b500dc22f778e078429452923cc3544855a4d9fc393b7e1ed282ec3f",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D06_base_boy_consequence.png",
+   "bytes": 79628,
+   "sha256": "f2c9054ec290ddaec4089af9cf8fc4fcbc8d30bf5b95d6e7afa07fb7eabe47d5",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "57fb537d8b77985340df0a30b310c0413a8435b87b5160835ab6fb23faa9f223",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D06_base_boy_decision.png",
+   "bytes": 74308,
+   "sha256": "dd02495986c0e84acec1efb079628c6f6b4dc99151a0e961db050fb4cb6f00ef",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "94ae5c2ebeafa3ca31a4a2762c8645454ebcff2b4bd11d8bda8c7587d39d5d1d",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D07_base_boy_consequence.png",
+   "bytes": 90254,
+   "sha256": "aa9db9020d7860baa2b6ee83736ff16ad5c894d1808b4075020894d4366fa89d",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "ca76232e2cd8cf3cd14e0ec7db53ed49ef43b24daf4dea0443f772175ad6a3e6",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D07_base_boy_decision.png",
+   "bytes": 85250,
+   "sha256": "ec3ea9ef772eb1c2b6295a25023b3b7c23093075a540af2fd9477c3820caa1c6",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "5459fd720d39a4c29d453f1ea56eacadd4c162c6c34508a063034917289c5258",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D08_base_boy_consequence.png",
+   "bytes": 84187,
+   "sha256": "6d058a788a0f9c62fac86bc0c5240ad52d4a82972ab07bd1bcfe7cce2b894adf",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "d7b605f9bd5ba0509256ccbb4e287b0665a48c47a21904065ab0cf4c9fc47535",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D08_base_boy_decision.png",
+   "bytes": 83342,
+   "sha256": "4abf3a44eab16d08a765b71db43b5e8590d0bef9091dcc49931ffbd2ef0d52a3",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "b8cb6aa8681ad36f35af6ece5673cb5ccdd0f9e34851508da3f985e56738db09",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D09_base_boy_consequence.png",
+   "bytes": 89127,
+   "sha256": "7b44862e61e9d91a5f8ae2f6c570e34534025e9ee1290569a60858858297ef46",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "24de9e0389333ba2f06b1847d0259f46a7a093d8d2c86633ea3406a36987ae9f",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D09_base_boy_decision.png",
+   "bytes": 84290,
+   "sha256": "7fdf20cd3177b4df5de12ed4db11ca9eabaa082636ad12ea7f22cd98d99525e1",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "ed08a15986546d50ae82c5306f424d167a8bef09ee6c42f3e279f7c6172d48f7",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D10_base_boy_consequence.png",
+   "bytes": 84931,
+   "sha256": "2971ea51ff3b9bdb6e097bd3e3dcfd7be85f54944c6418f9980ed4eb3595ed57",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "b09bb52d428402ca6ce117691b4b126e1dbd063bea21557abb558ea22f8b621e",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D10_base_boy_decision.png",
+   "bytes": 83096,
+   "sha256": "4157725b814137c4a36a71cf3a8a6bddbf32b636c1a470e23e35f31daacdf621",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "064d8e69bed6ea4df55780b7289c2a3a36df291a4cada194e0bd506a6bc4af5c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D11_base_boy_consequence.png",
+   "bytes": 88433,
+   "sha256": "645efa06dc8679d2b19f114d54db57a272f0b9fb6a0f0c82fcd4e8136af19ec3",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "de0a84243612266d3e7e271a769dd63035659c3145c2bc85d5a4a3a2bec27e6b",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D11_base_boy_decision.png",
+   "bytes": 83812,
+   "sha256": "3b8deaaf2dd844644ef30d4e001ad62072c1da52ff7ceb53daf78965ccc378ac",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "e9af2466c689814d5287fb621f13eb94c4c25c6e44a5dae2e1a26baa7e1ad493",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D12_base_boy_consequence.png",
+   "bytes": 92237,
+   "sha256": "35a657e4a4bbe73fd5ba049b124a2d577986bc353950ecd46652903735c0ce77",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "7ad32429ebd5d62b19b1812558825b3ced7528ee9a4c5d445e712bcf6935acf4",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D12_base_boy_decision.png",
+   "bytes": 85632,
+   "sha256": "1eadc8936e0ac5cc116ef17f68a07a3430d090b60c6e7b2905640b37c4fe6b47",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "de3700536d13615e0cacf6f2095e93df402634d0e0119cbc48ff02f0a954a618",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D13_base_boy_consequence.png",
+   "bytes": 82101,
+   "sha256": "91de67695640933f57b3c97ef4f685d5e1f420c7b72680a9c3df2d2276d34f27",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "0b8edb8a1c2542e786fea33b094e503104413228977b5fd8018e023f0eba754b",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D13_base_boy_decision.png",
+   "bytes": 78092,
+   "sha256": "a9891e04559f9eb224c115d192c72aaeeac9fb3840b6085a9fbab53a5dcec763",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "bdfe35bfc278e991e195b23e0668a1aaf43a79b9fd69f20c93dd78b134d37d19",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D14_base_boy_consequence.png",
+   "bytes": 81194,
+   "sha256": "9e3cfdabbb341dd4a3293b45d3bb91229579b9c2a650438a8210821fc89ef38b",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "20b47b54a2997de7822f82f7a4b2acde2c8a374646ece9dafe0651fb31d7d196",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D14_base_boy_decision.png",
+   "bytes": 78519,
+   "sha256": "67483d3a327d231935ea2991bb13964541ce76288400cac32a626b120f1213fe",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "796b7047c3860e6506f16cf5d97bf21487afcecc43d30b1d9f2b92cf71f40bbf",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D15_base_boy_consequence.png",
+   "bytes": 83043,
+   "sha256": "16232cc33ea84dd0c628f64ae60dce93e2df56988c75fee28e3aa8581cb7990b",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "634823f3f8438c167f0f8e6ecb9f246f6379d46d199511bdcc0ce2f325227744",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D15_base_boy_decision.png",
+   "bytes": 77586,
+   "sha256": "773dade7386d23250844764977df68ebdc75869f2d3082bc14da27139f66d7aa",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "8a540c096b66c2d53aad1f41c89070769b9e3f11430ecc63a8b1f2640b43691c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D16_base_boy_consequence.png",
+   "bytes": 80899,
+   "sha256": "fe656841cfff1ef3cbcf3bd9ae2f471543ed7593c596011476f44fb3ca840537",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "50fce61aad499ee4ce71ecde99c20d336bfb973d7c98411a8dcbfadf9429ebaa",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D16_base_boy_decision.png",
+   "bytes": 78370,
+   "sha256": "c6611e0ddda297583856e76be3618642fb41542764179b89948e42109f98b656",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "ab24db79f16abacd8de199e4a17c343003926b6344b88fd5874d4b42abcb9b15",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D17_base_boy_consequence.png",
+   "bytes": 79441,
+   "sha256": "99e03eb39e7738b15710b5722b8fbd7af1b2fdae3c8d37cd2da49790ed897bfc",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "d4ac22eec2972f16a84d1243214e4ed226e0a871c365572751d12d744a1fe5cc",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D17_base_boy_decision.png",
+   "bytes": 77855,
+   "sha256": "c30d8f969df3ad5112e1890b8e164ac4d79d63eb45f94503ac3d6e4a4690c201",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "338c2be4a0c5e671ab0d16382ca3d9c19c6958d07f2f166a9c8162ec55b594ae",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D18_base_boy_consequence.png",
+   "bytes": 80954,
+   "sha256": "c92883a53664d408e9f8d4c9c377b43bd353717626991f98cde7a164e0feb6ce",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "46f5d6ab8671548be8a31e484d230e79983b2761c43346836b2504ae83f70b60",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D18_base_boy_decision.png",
+   "bytes": 78277,
+   "sha256": "d5d5558638f6f66888871c46d972538b8925948feb24ad23d28a56a40c4c8439",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "3f6d24981c34401151ae6692dc8a869aa60cb0b7171599bb9820105596354cb4",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D19_base_boy_consequence.png",
+   "bytes": 86622,
+   "sha256": "ddfb50be71ff0d4fda98daa4edc1930395d95a47a58ca044196e29ae441995fc",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "28cb8d47654875e7e7790638486652923a0e15bc53352e22695c27d6c20aa001",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D19_base_boy_decision.png",
+   "bytes": 84430,
+   "sha256": "382fd9dbc182b166ce99883c0f45c3347c49b1c1550bb9cfddddd52e476ddc90",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "b72849718563bfc63700a89f01982fb0bc2141603431b5308ffc16ea85d1e2d1",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D20_base_boy_consequence.png",
+   "bytes": 86461,
+   "sha256": "30c3afffd5c8feb6e7ec9d234e62c87211f71a76358298dedb28c2c795a5e0c5",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "4339f0a92342beb65e89883b02ac4089c959f9b638e32119f80f4f1efd99b26c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D20_base_boy_decision.png",
+   "bytes": 83674,
+   "sha256": "c0253ca52641fbe6505956e0d251d166d5e9d5ac51613266ab872745c8005b58",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "61b79d724906c224a1da852fc749398ad500c1f1a6c873b364d4488a63308324",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D21_base_boy_consequence.png",
+   "bytes": 86488,
+   "sha256": "a2997c4a8df6ff114f5ae207d13410f29d4c6a9b6094ce183e763623ddeac596",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "3e19caad7ed170de3d1bf885fa5a11f7c2af3dc44de12384604c3d255333a095",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D21_base_boy_decision.png",
+   "bytes": 83574,
+   "sha256": "ee43fa7370ebc9a7db6e7169e3b221a91bdc0195a3911f26dc3f0dfe6146cc60",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "49d74aba55157995c5c8492f5ef28e7effc46ede1437518916eb4e462f553a8a",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D22_base_boy_consequence.png",
+   "bytes": 87595,
+   "sha256": "41fcdfa4f1f063bd67feb52a4f53c0270113998cbf206e6997f21ad21c9afa29",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "20f9d3dd5d14d1ad766bcb8d2cc1d7d2fddba5b55c193fb5cc173210586299c5",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D22_base_boy_decision.png",
+   "bytes": 83366,
+   "sha256": "5aa5effe9fbc3a15ed909a5cf3eb04a4e4fd19980e094cee2993abd2a5849240",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "a36c474f571e8ed37c485650025f7f0a0220d0c3e7b5b5bacb575e1289032c5a",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D23_base_boy_consequence.png",
+   "bytes": 85969,
+   "sha256": "bde22477f5006cc2d498c5ba97d3aaee227c325aae8a557239efa8e48e9007cd",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "fa05b63a7476d2f62b36104f5d1f89daf1b37b62b9e52ffdcd5ad4d4753e31b6",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D23_base_boy_decision.png",
+   "bytes": 83265,
+   "sha256": "118c8fb4a755450230d0460dfa518db631e69878cee75206266554ec04cb5b12",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "62c4a8e0971a71cf4313660d5cfcd5d898e1cdccd9e83fbc31cfff7bc030a988",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D24_base_boy_consequence.png",
+   "bytes": 84897,
+   "sha256": "962e98a5e6902a76a0030726e89234fe2d2c27caea9715f38efa88f84ad31d4d",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "6fe45dd586a96066ffa59438a732a5d5310c6c87fa275069133eef9634d031d8",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D24_base_boy_decision.png",
+   "bytes": 80907,
+   "sha256": "7022e38df2e445102f5527ec48c84879469af5078a9a634537372449a85c76ff",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "838730a27f48d22fb3d813592e53c765a63a7c105344a92ce6fe024f4b6152eb",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D25_base_boy_consequence.png",
+   "bytes": 79702,
+   "sha256": "fb58b0c38c2709eef585ae3e638c6be3cd1bdb10ae174ef50a49455c521e9b56",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "a1c0f9e4c26a2e4c9ebc8af5d35652838fac1da5e06cf6219d3c0024cc0eba78",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D25_base_boy_decision.png",
+   "bytes": 76720,
+   "sha256": "3088b29657f569868ac362d147f1d84810ab64d0dae5ebf276241e7656f72d26",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "f6b7473dab5df59ba51e28bdd0e083a1b614fa2dbbaaf4acf381aa37af2bc00d",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D26_base_boy_consequence.png",
+   "bytes": 82285,
+   "sha256": "2d93b611315a97ab12d1bb0dc27d3bba820bef45dd2ef9a7bc0ecf43ef17a607",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "b7249743295f5f6205b19182ff444958e0bbbdf0e33aaabf7ca1816596faa74d",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D26_base_boy_decision.png",
+   "bytes": 79199,
+   "sha256": "3ef74bad96d55a1b1c949471c07f82483dd96cd553d309a64d7f2115e6246718",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "1e344af437df80105a463da7f798fd3691adca3ecc60a76c033424bb5e70fb9c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D27_base_boy_consequence.png",
+   "bytes": 80281,
+   "sha256": "83c8ff5113d5aeb513dd2e68e529ce3ac180b0ab20e25831f867ea829922dab5",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "29a7b53b5f05d492160c8b16cab236bedc232d25a799b315c47f59bd14b81ae6",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D27_base_boy_decision.png",
+   "bytes": 76747,
+   "sha256": "007d1388e02d87a6dab65078164eca8e13c3e465b8fe2aa4c4890c132d0f8ee9",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "209b7a77cb2fd95062eafdd86799e1fb2de64eba8eb6b041d5685fd7399c3285",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D28_base_boy_consequence.png",
+   "bytes": 81899,
+   "sha256": "5e383d6f4116dd06429d669cb0d757b526bfdce0bfce13c7b4e71e699af2737d",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "1f24c0470f6e9e319d19edebff3c87db1eb41db41037b3fa422fcd3a0fd15ddc",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D28_base_boy_decision.png",
+   "bytes": 76982,
+   "sha256": "60b44d6573d8e458e8b33b129bb8c907e84dee6a807ce305862cc67bd58393b4",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "58d4f3954edffb89970cbd60451de61acf69f6b9c32775445edc1d9a1692b26d",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D29_base_boy_consequence.png",
+   "bytes": 79165,
+   "sha256": "b9e188f21c63704dab42e28234fb049afab4dd56eca300ddc2c683f43d7aaf56",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "1f64aea85387859116e9bfc24533dd1f4a54aa75d06608618b3c23cba4880cc5",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D29_base_boy_decision.png",
+   "bytes": 77249,
+   "sha256": "adb4906b858dda5439ffb4ea52bd24d58b12828b75818a499397821768a64fbd",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "12b52ef2cfee03daa8f1d988f48f84852ec28a6c0de1e2ca70795e8a5fbf5ad4",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D30_base_boy_consequence.png",
+   "bytes": 89078,
+   "sha256": "8278657c238677830e8038472c9ab60e2e4c264e5193f2d650b82a1ea106744c",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "d183223fabeed0d809f9be14a3ed73130d273e8ca7b76c2be6acacb3e650b54a",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D30_base_boy_decision.png",
+   "bytes": 85024,
+   "sha256": "b555add2c669b9642092d8c0b1f7325c389b566718025c667b728a160c78a684",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "7d7c05519c0242cfd14b4711ec637e930f337fd9f092ffbd3c9a3a7c26622210",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D31_base_boy_consequence.png",
+   "bytes": 80456,
+   "sha256": "c701cb5875a0c8ba51516183e781107436d31aab0cab735fc9d357ee5c0777de",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "a757f63567abb45c938d8425a53196776e33c9e04d1529191059d96c11a85158",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D31_base_boy_decision.png",
+   "bytes": 75431,
+   "sha256": "74dcfe2de472bb3d9a74f329d093d05692e2a91398cca505cc7a8622b42ff4ad",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "1d96f9c7d2c1a1beb945b939a44faa88f1d276cabadff9d93937debcf9954b36",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D32_base_boy_consequence.png",
+   "bytes": 80281,
+   "sha256": "c83add0f0130305cd7e0969928150ae45ac5f9353aca98cea6614cb01e9658b5",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "48f249251da1424aa7c7978d7a2bcb341cbd8991c0ad478f3ca7b34112b8aa2c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D32_base_boy_decision.png",
+   "bytes": 76602,
+   "sha256": "aa7edd2c0c085ed187a1542130a686cda2c6ba37201bca420d3477dcfd99576c",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "c2fbd1df6ca206169b477613801a7a47a0676a35e05f0016eccef66a3b0ee082",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D33_base_boy_consequence.png",
+   "bytes": 81381,
+   "sha256": "80c519b0a755336040b9d4eae970dfd39464ff2cdc02d4177071107377b44ab4",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "0d81ccd3dd498d18e46c1b91cc16fcf0e6547d5317a0d0af7091348410a1e5ed",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D33_base_boy_decision.png",
+   "bytes": 76590,
+   "sha256": "360b9b61d4f1c11af119b56c6308678b6935cdfaa0176ebe65277f14b9b028bf",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "9b3a241353657435cb081841a9ce04ea461b00928db1a6fe6eb906c6361ee2cd",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D34_base_boy_consequence.png",
+   "bytes": 79879,
+   "sha256": "e962926c958bcafb0fbfd827a7fbc010092e5c1499d1bb7eb1e8466d8ad4d6ae",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "ace2c63bbb50201090fc536ffe9e02992a0e1da361c9d1941b95923f64cd91ac",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D34_base_boy_decision.png",
+   "bytes": 74560,
+   "sha256": "1cdac5e1013f4feb6d80ce0c6530ef543f0acda8189252b1710e867e68fdb2c2",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "5430de89cefc7dccc2eba626cc84c3f7de588ed40a30a7af68af5781e5ed487f",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D35_base_boy_consequence.png",
+   "bytes": 77722,
+   "sha256": "7733fa93fa8e721e9b478a53884141f0c6862967895e0bc35c43d86f08e1ec54",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "1b97b229d7397b803eb83435481ed7de2abcc12d57225ba3e95dbdb19161064a",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D35_base_boy_decision.png",
+   "bytes": 75348,
+   "sha256": "a0559005bd7b22df55df0e8dcb7d60dc72224f8b334b184914be880fb0a8160f",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "97016e950a9830b26c6a1a2fc030b05f05d1f0f70039c260a6e735e75eb473ab",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D36_base_boy_consequence.png",
+   "bytes": 77282,
+   "sha256": "f18f3583ad2c92eac6b1e785473c8c83045e2e6db039d14294d6daf07c40a859",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "7629c04e8183224a31b2eec0595a1284151ca91a50ae99dfb15ca0c3159b3956",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PNG/D36_base_boy_decision.png",
+   "bytes": 75178,
+   "sha256": "104050034aef23bdce41086a3c657f71b149ffdc8e1e70c497d2c3942006219b",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "904e3c04646b7bbe3eb1ce7916dd5bad6316c77ff83dfb29d68b92a689e20219",
+   "packageManifest": "match"
+  },
+  {
+   "path": "PRIOR_SOURCE_AUDIT.md",
+   "bytes": 5586,
+   "sha256": "210f1dbde0004ce4e1fbcb3b2944056a19ffbc23767d20677075a6f6b0b77b06",
+   "normalized": "text-lf",
+   "normalizedSha256": "210f1dbde0004ce4e1fbcb3b2944056a19ffbc23767d20677075a6f6b0b77b06",
+   "packageManifest": "match"
+  },
+  {
+   "path": "README.md",
+   "bytes": 1519,
+   "sha256": "c2d9a9cbd013327d24bd9503b16e0ea61466cad238a2a1b818aca3ae1011f23c",
+   "normalized": "text-lf",
+   "normalizedSha256": "c2d9a9cbd013327d24bd9503b16e0ea61466cad238a2a1b818aca3ae1011f23c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "REVIEW_FINDINGS.md",
+   "bytes": 2206,
+   "sha256": "dead8fb5759460094cbbf46bc1ad9d9fa0693d4b34dbb568761d69d4c913c057",
+   "normalized": "text-lf",
+   "normalizedSha256": "dead8fb5759460094cbbf46bc1ad9d9fa0693d4b34dbb568761d69d4c913c057",
+   "packageManifest": "match"
+  },
+  {
+   "path": "REVIEW_PACKAGE_ID.txt",
+   "bytes": 150,
+   "sha256": "2cf99a8b42612a5c4bac758aab1a1e2762ee733a8bab12e316e92fc51c8342cd",
+   "normalized": "text-lf",
+   "normalizedSha256": "2cf99a8b42612a5c4bac758aab1a1e2762ee733a8bab12e316e92fc51c8342cd",
+   "packageManifest": "match"
+  },
+  {
+   "path": "SCENE_REVIEW.md",
+   "bytes": 32022,
+   "sha256": "f1e122c6801f0309736eb03f34059d6face4c21250f84a9aa1f4053d38688caf",
+   "normalized": "text-lf",
+   "normalizedSha256": "c4c3751eadbae242b715732e657264beeaadd9fa01da9a8d8e9a09d3b06621d9",
+   "packageManifest": "match"
+  },
+  {
+   "path": "SHA256_MANIFEST.json",
+   "bytes": 45790,
+   "sha256": "4e21f9ce5f9d28a1c143b666b8be717d6f8e5b75bdaa3e732c8d30a50460da4c",
+   "normalized": "json-canonical",
+   "normalizedSha256": "01d20720ceaa7d951500ee040d31ac1c1ff43746a0a51338752a3407b80b4b7b",
+   "packageManifest": "unlisted"
+  },
+  {
+   "path": "SOURCES.md",
+   "bytes": 9710,
+   "sha256": "01360e2074d98d1943e918a3d96617c52aa8fae5eca9a66af3d19f366993c883",
+   "normalized": "text-lf",
+   "normalizedSha256": "5e6c3c1cf2df44e98fc91e470083db5e03ae0b7b85632acc9baadaf2003dc16b",
+   "packageManifest": "match"
+  },
+  {
+   "path": "asset_metadata.json",
+   "bytes": 4320,
+   "sha256": "6945e5136fe262f62725b1ae919c08ac8b76a223c1390c023eeb130b72150caf",
+   "normalized": "json-canonical",
+   "normalizedSha256": "c75ea2f59e1a9dd9d06db554073241cb8bcd9251f9f0e33e8fb7595b4f24f015",
+   "packageManifest": "match"
+  },
+  {
+   "path": "assets/01_Protagonists/boy_highlight.png",
+   "bytes": 2379113,
+   "sha256": "bc7b82759ad5f22e98d41d5e72b2022acafd98515d23a87e51032b696ed41f4a",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "452c05be85bf1f89c3221603a52b908a9d7ee283f66ca54a3d77fd49077e202b",
+   "packageManifest": "match"
+  },
+  {
+   "path": "assets/01_Protagonists/girl_highlight.png",
+   "bytes": 2544845,
+   "sha256": "cddbd788f1704c06517203d22f13ab2ced974a9c6f90df74090dd7e4928ffb10",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "f4c144f2e5c2a91618bd49f8b8b66d4b4d2022ec3ffd856cf4bed1a4ada2a561",
+   "packageManifest": "match"
+  },
+  {
+   "path": "assets/02_Teammates/teammate_01.png",
+   "bytes": 2361056,
+   "sha256": "94c0371e04c2282934ac4be985bb3390cf0e280b8385c6e5efa37447ba789045",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "d6e07483710011649dd66a14968aca820b5ae8372b27d40ade1a7ba51d218d87",
+   "packageManifest": "match"
+  },
+  {
+   "path": "assets/02_Teammates/teammate_02.png",
+   "bytes": 2315706,
+   "sha256": "3f64fa1ccd4d85f38c84c13d8680f7acf913a80adc7324467f2181a26ccfb143",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "7fa010f1dc9e8404bf17db113ecaea5888c6992f8d0611875cdd9763fd7e371f",
+   "packageManifest": "match"
+  },
+  {
+   "path": "assets/02_Teammates/teammate_03.png",
+   "bytes": 2377571,
+   "sha256": "dc25b4d9bbb14a30efff6344233d543ed5297eb7b01552ff9e55f3c83e987473",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "213ce48e8e19ec92e469600dfe15f71ceb47a4996f19779b79bf2096a76fa389",
+   "packageManifest": "match"
+  },
+  {
+   "path": "assets/02_Teammates/teammate_04.png",
+   "bytes": 2391473,
+   "sha256": "a7af0c1e690c7e60c5357ad7552deccf3587fad6f55bdbe56017e3001cf13dbe",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "673c6b3dcb7950a3c974ee315d5544663835352cfd10c3cfdf85d1c78c78f175",
+   "packageManifest": "match"
+  },
+  {
+   "path": "assets/02_Teammates/teammate_05.png",
+   "bytes": 2199767,
+   "sha256": "60626709f85fcea467f55e76a0ee160457a9af0d6189f50e3bf9df3e4866c8b4",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "ab176402b646bd9f7d727b4de95e383b5f23df977937fe3770e981b458379b06",
+   "packageManifest": "match"
+  },
+  {
+   "path": "assets/02_Teammates/teammate_06.png",
+   "bytes": 1831124,
+   "sha256": "766ddf41a5b49d74b67be5671bb6a4cecb3686239df71c9d6cec58a3d6100e36",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "5caeade0a4724bc2b69635e5baf7628f5b15a934d96bc496cb22318fc7ccf254",
+   "packageManifest": "match"
+  },
+  {
+   "path": "assets/02_Teammates/teammate_07.png",
+   "bytes": 2379667,
+   "sha256": "0c3388302f2d22272fcf29297cabc2669e0808f31bbc53c4b2e30ff673292126",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "db0bf733cca5edfc2e7044533ac728aa5badd4976e4dbe481a4437931cb0432d",
+   "packageManifest": "match"
+  },
+  {
+   "path": "assets/03_Opponents/opponent_01.png",
+   "bytes": 2302978,
+   "sha256": "8224c0127b1227bbd1505503d9a6b41e5aef562dc5b328611cc3d665bf9c7523",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "a93e402ca37659a4f6f20db5d1c6b32e7afc4e0d122013656c01e42aa842bb2f",
+   "packageManifest": "match"
+  },
+  {
+   "path": "assets/03_Opponents/opponent_02.png",
+   "bytes": 2302202,
+   "sha256": "217fc5c323c24bb3c8744b12c62bf58bd4b089c3a908bc8b95bec2e39632cf0c",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "22723d5ba224b7d9abefd1252f080b39dbca1cfce06429cb6cc30cd8a8f19594",
+   "packageManifest": "match"
+  },
+  {
+   "path": "assets/03_Opponents/opponent_03.png",
+   "bytes": 2377287,
+   "sha256": "cb0948b7a7fc98661bb5419f5c268bd27a6ded8c89bc631519407b602f778631",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "bf529c4f05088ae2f8365414a79aa456884bbdc920562aa46ca4588b9ac87c17",
+   "packageManifest": "match"
+  },
+  {
+   "path": "assets/03_Opponents/opponent_04.png",
+   "bytes": 2407336,
+   "sha256": "b96c1da7c3919350dee9c64795902ef9e1668ee6161e963e97fb0cbee7960e6f",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "aff288eebad15cfdd18968092e659850d10a09c288e18f2e6f5f781814810aa8",
+   "packageManifest": "match"
+  },
+  {
+   "path": "assets/03_Opponents/opponent_05.png",
+   "bytes": 2298245,
+   "sha256": "2caa927a383ecaf163e856442c4619be99e2787c85471e7ca8c9ef989784fabf",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "564d133fe715ba58d3e553df02f98a1235af8a1fbeee9cc89732bbda41d90790",
+   "packageManifest": "match"
+  },
+  {
+   "path": "assets/03_Opponents/opponent_06.png",
+   "bytes": 2437183,
+   "sha256": "7fde387544df5e97c64d04f8371f26acf55e4f88994aef5d766d623ccb99aba0",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "e5e377b5fac514d22142163b8d065c94a1cc38b3aab0cb1e8b7a299e25b38727",
+   "packageManifest": "match"
+  },
+  {
+   "path": "assets/03_Opponents/opponent_07.png",
+   "bytes": 2398356,
+   "sha256": "adcd026638a5a552612b69d795f4d8dd9c53ceee9bf0827f13d6da8eaaf88952",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "361f29886b06f63b6649986e99678c33baf93fdc74ec304ec0cc93e4b1404165",
+   "packageManifest": "match"
+  },
+  {
+   "path": "assets/03_Opponents/opponent_08.png",
+   "bytes": 2290977,
+   "sha256": "47532a446251494ad9abb87f98b1ce83830bd6fabcf2c7b16a30c120eaff39ec",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "52801f2d605392471fa09a2b86e9cb0e80ae2029fa800fc467b1e9c5dbbb3bb8",
+   "packageManifest": "match"
+  },
+  {
+   "path": "assets/04_Goalkeepers/home_keeper_keyposes.png",
+   "bytes": 229032,
+   "sha256": "4c30e967edfd079bd53253920dfc3a99f74f0d1ab6fcc62f9800eb038ae02878",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "03878ca6307b0182831195e5f464a25293864c7e70c0c158c58433e0ca6db3ef",
+   "packageManifest": "match"
+  },
+  {
+   "path": "assets/04_Goalkeepers/opposition_keeper_keyposes.png",
+   "bytes": 245943,
+   "sha256": "e6d1e4e8e14c7d810c3c6da0a529a2177cc21eda465fc3d3534693942ef1c7e1",
+   "normalized": "png-critical-chunks",
+   "normalizedSha256": "1fd83aab6d7c932655ed3627306e35f2d72ede55efdd04cfc70cc9994f45801a",
+   "packageManifest": "match"
+  },
+  {
+   "path": "build_scripts/build_complete_library.py",
+   "bytes": 15644,
+   "sha256": "08a33d725851bdeadaaeeeb91e1a3ace9227b4bafe9833a38d779694270c56df",
+   "normalized": "text-lf",
+   "normalizedSha256": "08a33d725851bdeadaaeeeb91e1a3ace9227b4bafe9833a38d779694270c56df",
+   "packageManifest": "match"
+  },
+  {
+   "path": "build_scripts/export_complete_png.py",
+   "bytes": 635,
+   "sha256": "d9269f69400b4ba9dab405ee67a05ff0b71da6519b85e0dc9151617960d5356c",
+   "normalized": "text-lf",
+   "normalizedSha256": "d9269f69400b4ba9dab405ee67a05ff0b71da6519b85e0dc9151617960d5356c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "build_scripts/finish_complete_pack.py",
+   "bytes": 2094,
+   "sha256": "9daa3a145cafed15e3d947aab9a308dd4806bc5c43020e0bda205f4305953dd3",
+   "normalized": "text-lf",
+   "normalizedSha256": "9daa3a145cafed15e3d947aab9a308dd4806bc5c43020e0bda205f4305953dd3",
+   "packageManifest": "match"
+  },
+  {
+   "path": "build_scripts/render_complete_previews.py",
+   "bytes": 8026,
+   "sha256": "592d62bf84a3a7d8cf39d9de28fc5639332993a76cbcd5437bc380c44dfacd65",
+   "normalized": "text-lf",
+   "normalizedSha256": "592d62bf84a3a7d8cf39d9de28fc5639332993a76cbcd5437bc380c44dfacd65",
+   "packageManifest": "match"
+  },
+  {
+   "path": "build_scripts/validate_complete.py",
+   "bytes": 3478,
+   "sha256": "2b11731c482fa08ba45ca1538c975dacad4797438d4213dc2143a3d596eaac02",
+   "normalized": "text-lf",
+   "normalizedSha256": "2b11731c482fa08ba45ca1538c975dacad4797438d4213dc2143a3d596eaac02",
+   "packageManifest": "match"
+  },
+  {
+   "path": "coverage.json",
+   "bytes": 8355,
+   "sha256": "e82206b7309f493b1a0c2c1e7d8843f6be9ff01ab9228632627b09f925373330",
+   "normalized": "json-canonical",
+   "normalizedSha256": "faf15ebb80dd288b96da43abe6cfa0c3f77e55dff847bf08f9c75523f0ebc899",
+   "packageManifest": "match"
+  },
+  {
+   "path": "curriculum.json",
+   "bytes": 40433,
+   "sha256": "f5ea09abbea355b8bba3b945882c31fb28739bb237b4f39b57d184b4dc1eabdc",
+   "normalized": "json-canonical",
+   "normalizedSha256": "5d660d4f98c9aeace687fb641651c11a3d6dfb187905ff462da7010a1cd8b9e6",
+   "packageManifest": "match"
+  },
+  {
+   "path": "episodes.json",
+   "bytes": 279065,
+   "sha256": "100aec123d679a0c190dc033166a47c24302cf4186ffef000d7ebfc2a0656b5f",
+   "normalized": "json-canonical",
+   "normalizedSha256": "872dc04f32ba6a2e09eb1bbc614e63c47a0cec17496532c6e8e09680ce3e92ee",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D01_base_boy_consequence.svg",
+   "bytes": 6989,
+   "sha256": "319aefca460b8a5e9b6ab7479d34be909924f8284e13e45c64e95a20a9051610",
+   "normalized": "text-lf",
+   "normalizedSha256": "f85ddf954626d108e52115b88933a60e501f3964e81bbade8fc1c05c31b38f2a",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D01_base_boy_decision.svg",
+   "bytes": 6999,
+   "sha256": "9ed9f7d45a2de96374a4862694fba888cdecfc3f6dde6f38091a2868c66c2c2f",
+   "normalized": "text-lf",
+   "normalizedSha256": "97c5f69e6a76ff25fbcdcc010471f176e82bbae16bca173364d47dc7b7c9984c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D01_base_girl_consequence.svg",
+   "bytes": 6990,
+   "sha256": "78ea9d7db2e79875f731aaa493d37917d3ec3396eeec47b1672d6a05a1ef6ed5",
+   "normalized": "text-lf",
+   "normalizedSha256": "7944e1acb9088544bb1e9667e62913f135e2017e11995cf9c684a48bea9a82cd",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D01_base_girl_decision.svg",
+   "bytes": 7000,
+   "sha256": "0b2ed8585c3aa593a8ce0ef49ed626e5a9b6f28436d664f78d848f2e232b75c8",
+   "normalized": "text-lf",
+   "normalizedSha256": "5e9c3169809adbe473704d3847f3c82e74dd4961fe30d0b2fb63ab083512cc32",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D01_changed_boy_consequence.svg",
+   "bytes": 7299,
+   "sha256": "bdaa4da88862811c4648b3e112c4c783846779926082b98297532cee18b0c3be",
+   "normalized": "text-lf",
+   "normalizedSha256": "06afa48b546c8ff8175636b610589ff0eea79d4442c5389b8cdf57b848c50218",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D01_changed_boy_decision.svg",
+   "bytes": 7034,
+   "sha256": "39a681585f0ef5b8c752245f897415fc38e089dc10684ca1b209135cb3c9e3f4",
+   "normalized": "text-lf",
+   "normalizedSha256": "411a52567ffc3ed96f25d1bb4cfab2f3615c795f64c7d15751ee6614e9d766ea",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D01_changed_girl_consequence.svg",
+   "bytes": 7301,
+   "sha256": "6bfcd4d6b15064788c15e9d776e329461495e4638f73a61a3779a20fd1e003fd",
+   "normalized": "text-lf",
+   "normalizedSha256": "b63e93c493420040ba0aa75af7dd18a1149a19d984ec97ddd7260720437f9d00",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D01_changed_girl_decision.svg",
+   "bytes": 7035,
+   "sha256": "5853afeee5028d56896727b2774efcc053d268444e9b174d58b09932536b5b7a",
+   "normalized": "text-lf",
+   "normalizedSha256": "3a1c989b6818b92982e99133d3f490e9c2dfb53e56011d72f094363021e23844",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D02_base_boy_consequence.svg",
+   "bytes": 7241,
+   "sha256": "79e9c04cdbb7c24cd25b22fa89e50e139cb3fe88f67166153957f71a55f9f90f",
+   "normalized": "text-lf",
+   "normalizedSha256": "8e9ce1128366f44d99f6e5fb3dc4eefcf79dc90e1440f16f0ba249ec462f915f",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D02_base_boy_decision.svg",
+   "bytes": 7012,
+   "sha256": "73eca76239137cf854e85029a31d09b5958ac6d0db56394524ee3d3b455c6760",
+   "normalized": "text-lf",
+   "normalizedSha256": "b4c4e7fc6e526ee98e56ccf71dc75c6742171d636addee3fd44c6d0b99664b81",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D02_base_girl_consequence.svg",
+   "bytes": 7240,
+   "sha256": "40b7a780f55ba12fcc08cf60d35a1ac56ae0172b9d008b9a6cab36db839b702c",
+   "normalized": "text-lf",
+   "normalizedSha256": "e5d5d6092745c4bee7cd5220e8cd1242348cbe90d7734c6f28793ba9235d1d1c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D02_base_girl_decision.svg",
+   "bytes": 7013,
+   "sha256": "ee2b583e30716e96ed3a0bd66796894da4b5c83b8259615a2af52fc5aa5626be",
+   "normalized": "text-lf",
+   "normalizedSha256": "35f9d7738d8cee5a277b68ebf9502ae778dfef3233752b8e4e009d651c7987a4",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D02_changed_boy_consequence.svg",
+   "bytes": 7296,
+   "sha256": "f999cd3c62b796a63b90ddd83462713a1c582eb375dbe08cec35a0ab50d6112d",
+   "normalized": "text-lf",
+   "normalizedSha256": "211fbfca1b3c74dc0970408d8f362e0a9772b4490e38769c21db34d92f738a15",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D02_changed_boy_decision.svg",
+   "bytes": 7129,
+   "sha256": "e72c44f3483615afa4b938d6a945fd0fd09f357a5547298c77d301ac4b44bc68",
+   "normalized": "text-lf",
+   "normalizedSha256": "021502210de91d273d79119ea4016ab1826ad15d0a62c7090b6ba0cd73e5041b",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D02_changed_girl_consequence.svg",
+   "bytes": 7296,
+   "sha256": "b325de14e8ae1c4ce0d65cb6be2bc6dc153df29a168bb1e1b2ee65200e2b25c5",
+   "normalized": "text-lf",
+   "normalizedSha256": "b69e24b0414a74b14f62d6777858b61818835f9d2bcdba151ae50f82c756b86f",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D02_changed_girl_decision.svg",
+   "bytes": 7130,
+   "sha256": "1e383b127929a22adda9084e168449336e57a2d7716fca9ace71cb0805c8cdbc",
+   "normalized": "text-lf",
+   "normalizedSha256": "2056a8ce68ce2db0729e6683c542c697573c7c1b6b40b7e7d8576ae07be9adbc",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D03_base_boy_consequence.svg",
+   "bytes": 7167,
+   "sha256": "08f8ac43e3cdd6a8a4f4dfbd18c8807a608468d6ef5ebaec0115a8fdda92a01c",
+   "normalized": "text-lf",
+   "normalizedSha256": "5e8ec26459f3d3a42048fa66b89773e800690094bafb120ec0b51e4d4a541c1c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D03_base_boy_decision.svg",
+   "bytes": 7009,
+   "sha256": "e865eaf9c1df769a98f6acf525aa8af02b9cf714869ab68cfe56a5b9f995cfd9",
+   "normalized": "text-lf",
+   "normalizedSha256": "3a1d75e83f05ab705cfb0610e81bcb53c4c28b02a2a806bcfab0cae8cf9885aa",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D03_base_girl_consequence.svg",
+   "bytes": 7169,
+   "sha256": "be4fc689c125db3f049674f6acbe2ffe251ac710ef55c59d91e113a8e2862e28",
+   "normalized": "text-lf",
+   "normalizedSha256": "6e89a384968ad0e924138519d29173fb986d55c0634574efc830ae3f61284375",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D03_base_girl_decision.svg",
+   "bytes": 7011,
+   "sha256": "8c2e1b582502e2eb694a4127a91317074cb9e445794db2f5c98d6cec4a05656f",
+   "normalized": "text-lf",
+   "normalizedSha256": "6afa21d45b6e42387825e1d78a26ec63e0841e5ba46074605ee3ac4e3f811221",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D03_changed_boy_consequence.svg",
+   "bytes": 7293,
+   "sha256": "1aba8a54f0332049ae98ad72254530f01d01c07e9d86c0d6171b77583582cf38",
+   "normalized": "text-lf",
+   "normalizedSha256": "805bc6228c23c565eefc76b664c2522f4d95bf67feb31508919e93f1dfc72cf6",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D03_changed_boy_decision.svg",
+   "bytes": 7033,
+   "sha256": "4d236bf4decb120af53855596ca49d00d1672cc49bac3d5a326988469e3b6d1f",
+   "normalized": "text-lf",
+   "normalizedSha256": "a2cfc48fb1793ed17a3acd4abc72eca5178b1ed32562244db99e46ddea8e0e51",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D03_changed_girl_consequence.svg",
+   "bytes": 7293,
+   "sha256": "bf271b5dfa5fded25b2cad60728b045780930a2eaa49ed1a441a26ae8691821b",
+   "normalized": "text-lf",
+   "normalizedSha256": "f7cb6fb5d730334549157f120fd0cd007a1d834ecaf55853f27b8da44c5b7440",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D03_changed_girl_decision.svg",
+   "bytes": 7035,
+   "sha256": "8f1fd8713ce35219559951678f48b49b99c786820eaebf16bbe93c18a0bea500",
+   "normalized": "text-lf",
+   "normalizedSha256": "4971bfad571f50e0bdcb96b9d1bb77ebd97a4bad0776174392456f90f6d655f8",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D04_base_boy_consequence.svg",
+   "bytes": 7000,
+   "sha256": "68e1bde8be0f47ce895cd19c9f7b5704247a95a7c3ada43bc0abcb965c4ab620",
+   "normalized": "text-lf",
+   "normalizedSha256": "9bea1ad6cbd40b934b84f06f80dd7968aeb06b2b71e00c0bcd21b767deef68e3",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D04_base_boy_decision.svg",
+   "bytes": 7003,
+   "sha256": "2da223933bfa4bf276db4e88c188159b3162490f3707e9e081f626b52630b901",
+   "normalized": "text-lf",
+   "normalizedSha256": "35ceead6d69b6b3029978868b60a44c92e423c74395aa2efdafa88da04e83f29",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D04_base_girl_consequence.svg",
+   "bytes": 7002,
+   "sha256": "0b9f4f0058df8853d0d19ee6f495e189f7973d7b19045dbea500742fcee98e33",
+   "normalized": "text-lf",
+   "normalizedSha256": "6e3cea99cf2e6dc0dbb797d3884fa272fc70f51e4f7162dc4e99d36fa68e5d60",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D04_base_girl_decision.svg",
+   "bytes": 7005,
+   "sha256": "f49906300b797e97afdf8529138f79b2f63c13fd30860f338d11bf27fd3e1e08",
+   "normalized": "text-lf",
+   "normalizedSha256": "7b9e8723bffee1fb53b0344f84b66f2ff401002556ca8d9cd420fa6305d20268",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D04_changed_boy_consequence.svg",
+   "bytes": 7287,
+   "sha256": "a41f99f01a1e4fb2168380c17468e1ad8d2e18b3d3ebaa9a6b4ffb2d7c9b3ab8",
+   "normalized": "text-lf",
+   "normalizedSha256": "5bf3f28f02a4a10229b90afc26ee6504a370da0841d3b84562aea268c1dc07b7",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D04_changed_boy_decision.svg",
+   "bytes": 7023,
+   "sha256": "e4ae049534f61989109cd3c9f960bd3f8bd4651920712fa01f76fb327e6ccaa0",
+   "normalized": "text-lf",
+   "normalizedSha256": "dc3f50a6b8ae44d4b7f80c62ea1a6c2a0d163b03fae3b8b16ea9b6f9213c7f7c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D04_changed_girl_consequence.svg",
+   "bytes": 7288,
+   "sha256": "95bc5731a75d1d608cab9e8abf74bc2c89dd5c61f20af139faa02465485b1d23",
+   "normalized": "text-lf",
+   "normalizedSha256": "7873199dd560f619fe63974b7cce9d81266100aa77f6e45ad656ab358519b77b",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D04_changed_girl_decision.svg",
+   "bytes": 7025,
+   "sha256": "392336fb2626b0a448fd651a2110563d3cb7776bddd3736b870b665ccb35ff4d",
+   "normalized": "text-lf",
+   "normalizedSha256": "8d41afb2206139688eda3e7bfadb0ff6f5761f0fc9b10f133b0b3bfc570aa20b",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D05_base_boy_consequence.svg",
+   "bytes": 7163,
+   "sha256": "2e818a12d4138c37c7cf8718e0cda1b36922692a00b1d8dbbd826a8aae4ffcd4",
+   "normalized": "text-lf",
+   "normalizedSha256": "17dff96c6802fc37fd0856195e24b70fb68afd29a8b0847501b67f238f17fd8f",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D05_base_boy_decision.svg",
+   "bytes": 7007,
+   "sha256": "db1c65e7ebe15cd0aef4484e395f9916990d36b52171355e77249430527ae0cf",
+   "normalized": "text-lf",
+   "normalizedSha256": "71df7cb25818994e55d252f1c117d3bcf099d88136ef1cba750b904c1824e950",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D05_base_girl_consequence.svg",
+   "bytes": 7164,
+   "sha256": "5770c190bb9d8e5bce1d3be9051e6d47167d40f441ccd40bcaa339317f05a36f",
+   "normalized": "text-lf",
+   "normalizedSha256": "51c57602b8fd684dc2ce7638e63d8173a81e23fa45f27e6caba9a48b91909bea",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D05_base_girl_decision.svg",
+   "bytes": 7010,
+   "sha256": "ee3e2c4426dcb20e91457d40315198eaf2857495c3930605beac5f2ae5c81a7f",
+   "normalized": "text-lf",
+   "normalizedSha256": "2f1d13ef2220033a88baa57305a491bb2de7cabb3665edac431d0988ff9c9c00",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D05_changed_boy_consequence.svg",
+   "bytes": 7307,
+   "sha256": "bea77a0073cfedb0544eb94c0f929429aa5e7cfb9904e19fd8d7a31d9e49f917",
+   "normalized": "text-lf",
+   "normalizedSha256": "235914840a066a1653e6c20a6deb188f54db2a3353d350eec6f2cc9ebf7c62b6",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D05_changed_boy_decision.svg",
+   "bytes": 7142,
+   "sha256": "886cacfe36344b5a19fefb78f2075fef450b177416ac0e2f5e92657219e3fb21",
+   "normalized": "text-lf",
+   "normalizedSha256": "08a66d5900ccb0261cc3be8d192e87b3a2c74ac7623c6ec5fb967d4f01b97440",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D05_changed_girl_consequence.svg",
+   "bytes": 7309,
+   "sha256": "d6744acc3f06fd0cf941d8dfe7d5b9166e99d85272a6ea4cb14bc1c803d8d0d6",
+   "normalized": "text-lf",
+   "normalizedSha256": "1e8893dad3cbe7ada690563a5ae858ad35fbe50e33940a8f4ff784a2d76c9d37",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D05_changed_girl_decision.svg",
+   "bytes": 7145,
+   "sha256": "8ce3527f1330455034a56e19fbc831c757b2b987b802e164afe2ed52e20a9366",
+   "normalized": "text-lf",
+   "normalizedSha256": "8d1c03ba796edc7b24df28139d2f7e5d50f0c7988f038022d862c9c4d20d2d56",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D06_base_boy_consequence.svg",
+   "bytes": 7130,
+   "sha256": "f073bfcd2b604314617eedbad3ab1efafe3a3dfd3906d95bbb1ea94ab81b0499",
+   "normalized": "text-lf",
+   "normalizedSha256": "e364090495ac0a48e500b4eed369f73c767ecd14e5135eb151c70dbfdc34fca4",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D06_base_boy_decision.svg",
+   "bytes": 6997,
+   "sha256": "db8762600b8ca83eb12ef9963d5e4375c2bef9cc9f8666b20dee287b45e8b963",
+   "normalized": "text-lf",
+   "normalizedSha256": "ec49640ccea605adbd0aec1d200aa0238d8cf91cb92178b6841aecec8fb330fe",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D06_base_girl_consequence.svg",
+   "bytes": 7131,
+   "sha256": "70959a32eb71371aa5f9436f3433b6179bc74865a58fa18b637a475a275a8729",
+   "normalized": "text-lf",
+   "normalizedSha256": "c1e9fbf30217e8988bb4a4c554b36b2cf7acefa81a30926c0193e251db638bdd",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D06_base_girl_decision.svg",
+   "bytes": 6999,
+   "sha256": "ddd755c5adadf17498e3ec684c25636eaf94e3dc980555cb4fd35e25b742aaa7",
+   "normalized": "text-lf",
+   "normalizedSha256": "6b0363040afe1fa1928cbb44d1f8223ae0c09959c8b8c1d1bd6e3ae9be40f7c5",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D06_changed_boy_consequence.svg",
+   "bytes": 7295,
+   "sha256": "ee58e6ec1f73fea55db9a6c3c82860995664afe0cc27198eb21ec257ea7c82c3",
+   "normalized": "text-lf",
+   "normalizedSha256": "53af0e7ed41fc62a66c033cccbb7fe474917d8ee56d4b7500c47631428f9969e",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D06_changed_boy_decision.svg",
+   "bytes": 7029,
+   "sha256": "4b04722fd8a799d661a2580c170a82d9537fa3b727dfb1f8ea69839480638fab",
+   "normalized": "text-lf",
+   "normalizedSha256": "129cb5aabc8ceeeed20c8e69f237c91b88913b5ee849c9368b78b3edb104272c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D06_changed_girl_consequence.svg",
+   "bytes": 7298,
+   "sha256": "23f4ef9acc2383e076779233c9e7bc920d6e1ea475411d9a060edd23f7b02d45",
+   "normalized": "text-lf",
+   "normalizedSha256": "eec16f989c2d0067f724ec65e0eca98ece12256d7132dc2de7a41fb22fcf6384",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D06_changed_girl_decision.svg",
+   "bytes": 7031,
+   "sha256": "4ee1d2b65b359fb50e3094387fa34133457d6bf659efda31568a13317fc7b950",
+   "normalized": "text-lf",
+   "normalizedSha256": "4c33facbcdb5a775b56b374081978dac8f663b8d34f957f9a5aba21feafd63bc",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D07_base_boy_consequence.svg",
+   "bytes": 7960,
+   "sha256": "82d2393ecda2713393255805ab31ed7082787d001e60d1be4302f9a3b1b6f67a",
+   "normalized": "text-lf",
+   "normalizedSha256": "e26da5f40f51c3df7c4fb32b1e0b64e548b27093b7292ba7d5da672ed29ad273",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D07_base_boy_decision.svg",
+   "bytes": 7691,
+   "sha256": "a9f69abcb2276e478b54711644174c851d5ab111c30a69d3e06efd8f5a8d9244",
+   "normalized": "text-lf",
+   "normalizedSha256": "5e5271d180896c826b77510cdeb8cfdfd543d1e6e7139be675167d0b01bdf890",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D07_base_girl_consequence.svg",
+   "bytes": 7961,
+   "sha256": "78733d23d053c151db833730d37cec4dffd6eb37e7c35dc1c990643c76ec7819",
+   "normalized": "text-lf",
+   "normalizedSha256": "e280d2ea89407e11a0d7546629e531913d70f10fc92f532cad2f6f5ffd75b17d",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D07_base_girl_decision.svg",
+   "bytes": 7692,
+   "sha256": "0e46daab07cacbe4850c146f27d68a2f605aa3cc6eb133f12d17f022b58d4fd2",
+   "normalized": "text-lf",
+   "normalizedSha256": "0333cf3b9cccc2df72fb664c2b8088ba1f5f3adc67a70ce991ff75b2fe4a4f2a",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D07_changed_boy_consequence.svg",
+   "bytes": 7813,
+   "sha256": "5a45ed423d10d3807f60899fb033a07714eca64fdaae280f564a1dcdb8eed0d7",
+   "normalized": "text-lf",
+   "normalizedSha256": "59d39f421f7f8e6c05f5b8957aab7becfcf0336ab0faca6b79b5076708f2a887",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D07_changed_boy_decision.svg",
+   "bytes": 7709,
+   "sha256": "70e4d6f41a24e6f7316f6f1b5029dbfed7a38ebfdd1424ca08904459eaa6efa0",
+   "normalized": "text-lf",
+   "normalizedSha256": "997827736131e4817eeccaeb779ffea58fa8e6ba801d170e8093615fa7a16375",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D07_changed_girl_consequence.svg",
+   "bytes": 7814,
+   "sha256": "6320a9fcb997d654741ba6cd79892520b57c60c24d96e55452adc044d48703c5",
+   "normalized": "text-lf",
+   "normalizedSha256": "a90c4afb9ef01eb969a5d29eeb5ce318e8afd65cd9ad48fc4b02e854bbf5b865",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D07_changed_girl_decision.svg",
+   "bytes": 7710,
+   "sha256": "e17a41c65a25ec31278f9e3968ee9225aecded39441b6b34a32bf3a4270b1de9",
+   "normalized": "text-lf",
+   "normalizedSha256": "f90cd8c2f2f0f3a4d4d6a6c35ff9e9bbc5786c22b3caf34cdbb1df4463b96fd2",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D08_base_boy_consequence.svg",
+   "bytes": 7658,
+   "sha256": "874841202a9070bb7ebb521781683990b6d2efc467e12eadeba048e616ec7ee0",
+   "normalized": "text-lf",
+   "normalizedSha256": "05383ce6f91e679a18f43084618ba6b7d4cd53ef0292f440199cbf16847de337",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D08_base_boy_decision.svg",
+   "bytes": 7665,
+   "sha256": "511ad71cdd5ad4ae666e8cd7d9e171375f429d3610348604ee08c695e3a8dc1d",
+   "normalized": "text-lf",
+   "normalizedSha256": "c83af652bff0570326ee97f796f7ae05643212967e5527ca7598b82b044d8c37",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D08_base_girl_consequence.svg",
+   "bytes": 7660,
+   "sha256": "ec72698cc320491eeff3795333b281c5f9d7bfc0a58727f7dcbf88b4821de37e",
+   "normalized": "text-lf",
+   "normalizedSha256": "6c13d9431e9574f16375cb5cf0a829d596b95cc2fcc8102ef5ea52ecab399c7f",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D08_base_girl_decision.svg",
+   "bytes": 7667,
+   "sha256": "b2310ca1affff2d125de1746bc095debd0bfdcddd3a05e1f07f774b2b56fed91",
+   "normalized": "text-lf",
+   "normalizedSha256": "f25badc253f283a3611ea2f7f3f3ab9cbe0f5147735beb5be42ee340c8ecfb4f",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D08_changed_boy_consequence.svg",
+   "bytes": 7812,
+   "sha256": "3d640348aa225180b97f71468f0a2cc489a9a1b520d362d136f9671102266943",
+   "normalized": "text-lf",
+   "normalizedSha256": "23c38c11b88e362c595c0506156e4c1ce2dbe98e513842013b9e93f881aa97dc",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D08_changed_boy_decision.svg",
+   "bytes": 7699,
+   "sha256": "cb115f689aa068bd10e5126d8ac2c222404605b2a5d8a77d6516a9c0b6371a95",
+   "normalized": "text-lf",
+   "normalizedSha256": "9a19e323ef876dccf9fbfe79de1829e47008039d53581d4a0dc9955f2b7e4b19",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D08_changed_girl_consequence.svg",
+   "bytes": 7814,
+   "sha256": "1a11f76feb4ffbc2c826e0d43a5b54ec2cdd00387e11348cee093c0b01242b4d",
+   "normalized": "text-lf",
+   "normalizedSha256": "355e91a4374cf8b2a574c79f55cd6340e3516dda51a66a03b3d77cd671cceed8",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D08_changed_girl_decision.svg",
+   "bytes": 7701,
+   "sha256": "ec30383b87c474f6eb305183f187729e5c39da17236246fa8f2ee8d0f6f7e22b",
+   "normalized": "text-lf",
+   "normalizedSha256": "8edbf5fdeed09ce5e9986582c99b65b8e8dde324b84af26134971ca2549d8e36",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D09_base_boy_consequence.svg",
+   "bytes": 7842,
+   "sha256": "f64689d8f9a6bdabc9dcb63be843dd3b4dceee0b8ce3eb1896bdce9be9d91ea7",
+   "normalized": "text-lf",
+   "normalizedSha256": "11274dd54dbb77de7d8ee0311dc5434e51147f96ec5f930bdf2a943e91314a50",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D09_base_boy_decision.svg",
+   "bytes": 7672,
+   "sha256": "ddab85cd742c5b85ab0c95b3083b893d2fd03a7570e85f230327ebef1feff20c",
+   "normalized": "text-lf",
+   "normalizedSha256": "04da722309375ed63764a4811b0a0a23fd6076bba6814e1f9c8a07b36c362291",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D09_base_girl_consequence.svg",
+   "bytes": 7844,
+   "sha256": "af36f7d032b7e7dff2355506f0d476c31d22d7fb4fb838ec8b1a6f0446efb882",
+   "normalized": "text-lf",
+   "normalizedSha256": "2de549b156af002a6a7f437684d03e02d483f271183a0d45954e742f897c751c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D09_base_girl_decision.svg",
+   "bytes": 7672,
+   "sha256": "3ed810336786cbc4bd9a7b1dd7f0e6b48ec3eac8fb48ac40575ef2513780dd4e",
+   "normalized": "text-lf",
+   "normalizedSha256": "7c8e806b867e4f34aae8083798ba5d51f13dbba90b0905985a72753b0db56fbf",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D09_changed_boy_consequence.svg",
+   "bytes": 7967,
+   "sha256": "043bdd6e2be406630bdc204aa70c5c4798717b3c67bd190a03fc76e7fa412063",
+   "normalized": "text-lf",
+   "normalizedSha256": "0cc7c11e3b381c3054e2e747e97c7ec1f1d98d98bb758e7b8cfee9762f0245cc",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D09_changed_boy_decision.svg",
+   "bytes": 7803,
+   "sha256": "c17d6cf6f68b5df0a6f3f46b85514eb963f12c8ff9079578b42982e7ac6032ed",
+   "normalized": "text-lf",
+   "normalizedSha256": "0eecb13fe4ac2dde2e7bf5cddceb013a41e1446d76436303e2828b9d84384652",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D09_changed_girl_consequence.svg",
+   "bytes": 7968,
+   "sha256": "f5689b253f94d928ed71a88b8e2a5b3c1c98e090feb76bfdd5287f5bb1f21122",
+   "normalized": "text-lf",
+   "normalizedSha256": "c516ef8948b1f82bca750398d8c2dbd72d3d313e6bf421d760ba59a1e8a5c0bd",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D09_changed_girl_decision.svg",
+   "bytes": 7803,
+   "sha256": "39fcdaa9f1585a8feb5c20b64b04e9ede434cf763918d7eff0711a8eb669df10",
+   "normalized": "text-lf",
+   "normalizedSha256": "a41c838adac9589ed30c4d3adc20e019a97fe62f09415a7ae8d4d7b9341631f9",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D10_base_boy_consequence.svg",
+   "bytes": 7665,
+   "sha256": "33709e6bdc0c89dcc1e042d5f60f26c02dc7f9784fa3cac7fe98c4a4b8aac755",
+   "normalized": "text-lf",
+   "normalizedSha256": "325e7a1f3fda548fbd2166098eeda2d10c63a75adae73763be84e7c05e914cbe",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D10_base_boy_decision.svg",
+   "bytes": 7660,
+   "sha256": "f0e3aee2aa32670a219bd1213dc29985d98436b9d9b9c7c3d744aab613f01845",
+   "normalized": "text-lf",
+   "normalizedSha256": "f02db0b59eb13e75033b4e3f8c452ca9fc1a166e34dfc5dfe443c50eaaac50ac",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D10_base_girl_consequence.svg",
+   "bytes": 7667,
+   "sha256": "7202912918bd87d1a707d0632e0e9c25ae8df6f2ade97462a0ea1e97590904d1",
+   "normalized": "text-lf",
+   "normalizedSha256": "f94647abf038b729faaaf037331fa2d79fcb441f2db5e175c35ee87448152d9a",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D10_base_girl_decision.svg",
+   "bytes": 7662,
+   "sha256": "47c7595bcc181ab5afbf994f5576da067c30893606d9cf04e37adba641b351f1",
+   "normalized": "text-lf",
+   "normalizedSha256": "99a94ed3632739de306012cfca9f9731186f66ca08bc56409d4ab822a25da864",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D10_changed_boy_consequence.svg",
+   "bytes": 7803,
+   "sha256": "a5708c442964f509f0cc9d974e5b3caab67e6f3c1988daee40db8bff62dc72cd",
+   "normalized": "text-lf",
+   "normalizedSha256": "c8b9cd74a06fde081c71db1da149d74339f705659fe344fdf446c98c7bd7a89c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D10_changed_boy_decision.svg",
+   "bytes": 7700,
+   "sha256": "6bcc392150bdd616bba3ded2ca1d053b2ae5ff4118edab6c85798e628012e09e",
+   "normalized": "text-lf",
+   "normalizedSha256": "3cf00720106727a656164708ca9046a01c3cb8feb911425795b1d405492bb745",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D10_changed_girl_consequence.svg",
+   "bytes": 7805,
+   "sha256": "2bd86e1ca57a94ee61f85204eec19b382a4b77c12f97e3b3043b6377618e6cbc",
+   "normalized": "text-lf",
+   "normalizedSha256": "d40f258d9b277367d0904064ea7a59831b7cf2cbabcffe2060921df35b0223fe",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D10_changed_girl_decision.svg",
+   "bytes": 7702,
+   "sha256": "68928f70c17d3ae170b9fc9590add4686d2c0777faea7ea6c005b0771f816b9e",
+   "normalized": "text-lf",
+   "normalizedSha256": "31a701a1614d60d0c46f54f0b0c7adf057a2527676ae7f395aee66903f7b83dc",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D11_base_boy_consequence.svg",
+   "bytes": 7848,
+   "sha256": "85cd25aed86a8b0d54ad16435f1852ab279f4def414f7f24ffe14ea3c4caad05",
+   "normalized": "text-lf",
+   "normalizedSha256": "b621ee8dd6eec4c1b8f68a39c1e58adac3dd301419ad0ae6ee35e37f0cebb49d",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D11_base_boy_decision.svg",
+   "bytes": 7673,
+   "sha256": "f30125c06569a473ba5e32099eb22fb5382a80d814ba633ebde01504a4707491",
+   "normalized": "text-lf",
+   "normalizedSha256": "7e58ce4a32426519723934fdfd037d1abb2fa4864669275dbbb23f8f6ab06546",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D11_base_girl_consequence.svg",
+   "bytes": 7849,
+   "sha256": "919df2d56e8bc7098d80ef7edf0e6ce896caf1e014e81b22f5849ebfea833de4",
+   "normalized": "text-lf",
+   "normalizedSha256": "08e538ad6e2f49f7577c229a73c350b40ec68ab505006f6c2bf51f1752cbe7d3",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D11_base_girl_decision.svg",
+   "bytes": 7674,
+   "sha256": "1516878a40970139a7e07027ca75df1ccb32fe719ac694472dfe018bbb8d9bb4",
+   "normalized": "text-lf",
+   "normalizedSha256": "18f4ad619166d52eedca47f47cc125ca3e074312b1b83e82eb1472138f9c2e9a",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D11_changed_boy_consequence.svg",
+   "bytes": 7822,
+   "sha256": "4fb54e715ba50e7050df3b72775e333fb7af12ebdf2e482546058df712939245",
+   "normalized": "text-lf",
+   "normalizedSha256": "8e599e476d6e625345d740b606379359bff3a5f203d706b6d7207c13382802e7",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D11_changed_boy_decision.svg",
+   "bytes": 7706,
+   "sha256": "31922c7aef2804a29ef5d5e345d3227f79a0d15bc04f155725b058d469164ff5",
+   "normalized": "text-lf",
+   "normalizedSha256": "5fac417c97c1192f48c8c03ac9c77cdac76a4b9d52172f5d5733ae137c6c6a6f",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D11_changed_girl_consequence.svg",
+   "bytes": 7823,
+   "sha256": "cfa6777ec3cef2523ed4420d682293fbbdec433d173538ed6256b2e207c056d3",
+   "normalized": "text-lf",
+   "normalizedSha256": "7b26234e6de7faf2ce434901c3e51ccfdd6c779ddfef55b8d1db1a4f73007113",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D11_changed_girl_decision.svg",
+   "bytes": 7707,
+   "sha256": "23e7c1e4a3a39bbb1e10f47c9a2832c7665d59a13fc0b3f04f64fce0f8b95318",
+   "normalized": "text-lf",
+   "normalizedSha256": "de380fb3efbcb3c1013f4b4660127370eb252f367d01d9a9bf6957363b05b743",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D12_base_boy_consequence.svg",
+   "bytes": 7955,
+   "sha256": "adb8a86fe1994d58ac0e08c1d9912d47d0534e6d32f45eaeefc3b9086af1e8a4",
+   "normalized": "text-lf",
+   "normalizedSha256": "1449fd1c3e4e7650f09c64777702fa5a1d1bb5f530799235bb102e4fc6df6b24",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D12_base_boy_decision.svg",
+   "bytes": 7688,
+   "sha256": "5c7094bc8462fdbbc80888ab0f349ab33e2bc1777b170e9522f7a48bdffd2973",
+   "normalized": "text-lf",
+   "normalizedSha256": "f2082321e2870d8bdbb7361569339deec128603f2e94431719213857989b1a8e",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D12_base_girl_consequence.svg",
+   "bytes": 7956,
+   "sha256": "d95b091459766aedc73258e151f6519f21a4ed8df024509dc9f412cb3099f531",
+   "normalized": "text-lf",
+   "normalizedSha256": "24b3bdee0fd9889bfe2508e3e724c5a3b8f19b17cfce424fc2b6853f1b3cb23e",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D12_base_girl_decision.svg",
+   "bytes": 7689,
+   "sha256": "f1b4d7b29b98ea5213e79c3b033f64c2e18345f9b3fe3937055c95a7b29c7141",
+   "normalized": "text-lf",
+   "normalizedSha256": "292032b500900a542d4297c7493b567579712fc900314342f4425492cd28e846",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D12_changed_boy_consequence.svg",
+   "bytes": 7980,
+   "sha256": "f7e3ff611185f56e099cdaf98a1a6020c2fc9c1e29a393c3c65aa182bcf6e67a",
+   "normalized": "text-lf",
+   "normalizedSha256": "a1d73ad3a939f4ecc2aeaadf353c50d5def5d534f2fdb0a62aeaa6bb185f24f0",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D12_changed_boy_decision.svg",
+   "bytes": 7819,
+   "sha256": "289f5add60a31d749407f1b55b5ee9fea7163944f731e6b937442db832ee1d48",
+   "normalized": "text-lf",
+   "normalizedSha256": "f22726d64c7a91ba8bc7c7ef8954dae7f5e856916ae474604ddd1f2b021e2bc9",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D12_changed_girl_consequence.svg",
+   "bytes": 7979,
+   "sha256": "5fded53c50d0f39b3c28e257ba3edb1bdb792f888066a0809a70408d531ff9b2",
+   "normalized": "text-lf",
+   "normalizedSha256": "7f1327882dfedfd4f96a2c8bc9eda45f07707d97f70023c77886761eb6caaa00",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D12_changed_girl_decision.svg",
+   "bytes": 7820,
+   "sha256": "088a0e1411ad4c7df27781aa5b13a265b5d9f4d7902aebfbf95fab132271eba1",
+   "normalized": "text-lf",
+   "normalizedSha256": "6c5d35242397f6b908b2943820b7e79dbb95f7404ce2126bc97bb9fecb1be9bc",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D13_base_boy_consequence.svg",
+   "bytes": 7714,
+   "sha256": "b4b1b17d8ffe7e80f766431a366685aa2574bfa467e11a0755f9e1a448048c68",
+   "normalized": "text-lf",
+   "normalizedSha256": "fd9a038aab77db6352bf1a11a65338fff9705094e3459b2b45132d6971c2e2e7",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D13_base_boy_decision.svg",
+   "bytes": 7543,
+   "sha256": "30ef352553f5378590202dc4fdd73d04a0d0f33d75d9f656417fcbcc68890a3e",
+   "normalized": "text-lf",
+   "normalizedSha256": "7535fd24f30bdbc1321ea3b847d18bbcc8f96e2af90f7cd6314521426076691e",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D13_base_girl_consequence.svg",
+   "bytes": 7714,
+   "sha256": "e82e6b0acf2e77a95ea71643714c5db18b9ca474883add667350c9633d7870cb",
+   "normalized": "text-lf",
+   "normalizedSha256": "040aa74d4710f728bb1472151a9881c16f22c923298102f8fbee27f00c964b0c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D13_base_girl_decision.svg",
+   "bytes": 7544,
+   "sha256": "ab9706917c81d1edb7eb176a7e246d858543a071e990ae1028d6566a407574a4",
+   "normalized": "text-lf",
+   "normalizedSha256": "39b4fcddd6afc9c0d1fc55614c2b870b24d4afcf4a4651719644cb1135429ad5",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D13_changed_boy_consequence.svg",
+   "bytes": 7837,
+   "sha256": "f824b64e7144ece2c8c6cf3579d41ff9a51a0bcdd2f2aa721b008c947f4706db",
+   "normalized": "text-lf",
+   "normalizedSha256": "53b6d7d9b537e2cfe32dd9a83f34cbd43e1a7a1250c0ffaa122a7fea817639a1",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D13_changed_boy_decision.svg",
+   "bytes": 7674,
+   "sha256": "d70b83198a11234e6f2b364dfe7864c5ffdd2bdaa4a8055044d1a0c7333074f7",
+   "normalized": "text-lf",
+   "normalizedSha256": "b8c32a7fe0e17c1a92ab506b41a94a3cc3262c123d2d259497bd88d94d5a3ab7",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D13_changed_girl_consequence.svg",
+   "bytes": 7837,
+   "sha256": "99aa8cc4dfb6125531d3fcd5a27efd3d04ffd531cdbb30fc11a6744ef472e8df",
+   "normalized": "text-lf",
+   "normalizedSha256": "3d8931690b98b1cba80214cda33cd43e68f7a32317c0d24fa88c8f52f91ecbd1",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D13_changed_girl_decision.svg",
+   "bytes": 7675,
+   "sha256": "401ac0a03b1d9e88cd35ebe19190862d1863269b38d2ff5d4e8a5941e1e0b21b",
+   "normalized": "text-lf",
+   "normalizedSha256": "c64359f62f2628817e1449b4a27316d76e4a58ee6e8a425e42f4eec635a51a35",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D14_base_boy_consequence.svg",
+   "bytes": 7698,
+   "sha256": "c349c4d6125ceca77a3b48b433a986ee4c3afaa31f6ec60025b7eaa3ca3fce58",
+   "normalized": "text-lf",
+   "normalizedSha256": "4ffd1a264f5f104819bcf676f759938d4348224dc55460b5930eec0cc7111af5",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D14_base_boy_decision.svg",
+   "bytes": 7542,
+   "sha256": "88b521d45acfa0f766b1b6f431ffc654880fdf69957afdad04fa0be728fd9aec",
+   "normalized": "text-lf",
+   "normalizedSha256": "6932fb681ad7e3fc87ecc96795473de5569910d0442d02b873d56d9ff5f61ec1",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D14_base_girl_consequence.svg",
+   "bytes": 7698,
+   "sha256": "f3bada2553c19376cde82085adb9fe5472f8ab2ac407af30c9faca9a28e0834a",
+   "normalized": "text-lf",
+   "normalizedSha256": "c032ff94b9e4d863848dcb089c573186207de0dbbdb99f08832dfdad6f7ecdfc",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D14_base_girl_decision.svg",
+   "bytes": 7541,
+   "sha256": "b2a1e41f9c2709cf11d486fc90818e34411c3e3e76352eb73e71f650e9c05065",
+   "normalized": "text-lf",
+   "normalizedSha256": "5a95895f317a0e0bded30ba3a01ea4ccc2bf91d2302fc6396be3c94054e974c4",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D14_changed_boy_consequence.svg",
+   "bytes": 7676,
+   "sha256": "015ff38585b1340f6ba78b2446ef7dfd2fbc030b3a0f3efe5e609f39417405db",
+   "normalized": "text-lf",
+   "normalizedSha256": "d29f3d554658a14e7c91eedbb20f3f1650bd45067845296a1c8fab121e487bb2",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D14_changed_boy_decision.svg",
+   "bytes": 7567,
+   "sha256": "62066563a6b3f1f025b260c8ead9ab30941049af2fac1dccea828bd1264c69fa",
+   "normalized": "text-lf",
+   "normalizedSha256": "6e6462a89cc4fc1b2b5757d72e97e50657b2c515ef579e514a975dd47f441367",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D14_changed_girl_consequence.svg",
+   "bytes": 7675,
+   "sha256": "3b85baa6f5bcedb6de9b9287e29eb406042830c4e380995f268ebe07d581bf09",
+   "normalized": "text-lf",
+   "normalizedSha256": "b6d88978bad9686fe2ae33e56d6ec806d0a2bb6ed85830f619b977f98733bae9",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D14_changed_girl_decision.svg",
+   "bytes": 7566,
+   "sha256": "3bde1a8b2a431ef5750429d41aeacddc66eef816f8eb2ce7f6e796f05d8a6185",
+   "normalized": "text-lf",
+   "normalizedSha256": "3264beca5498057bee87d6377704e38430f385bda8d06b9182453eb3d094529c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D15_base_boy_consequence.svg",
+   "bytes": 7713,
+   "sha256": "270a08387e03e1af6e7f1a00c5c3de290c74d3cf1e3ac91214232e6995109567",
+   "normalized": "text-lf",
+   "normalizedSha256": "71cd6f86c07b2455c94b12cfd4198e0b5cb8a976a29c96fbbc8229b0ad4f4f3b",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D15_base_boy_decision.svg",
+   "bytes": 7534,
+   "sha256": "aaa024c367e7d8a3d6d07f411384feecf9602b58eea481fdca46864cb91db721",
+   "normalized": "text-lf",
+   "normalizedSha256": "68d4939df68bcd7f29d03a7d0976b77480e2eccecfdc29d4a49c425d58d0a81b",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D15_base_girl_consequence.svg",
+   "bytes": 7714,
+   "sha256": "d1ce591e8842acb8d8644a8a7c0d7a2a7e092a7549d392a576318f07f7c796df",
+   "normalized": "text-lf",
+   "normalizedSha256": "03d490ecc6a71c2e15e4f3be71ebc7168df25783c6a5ced0f22117d1bda52f76",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D15_base_girl_decision.svg",
+   "bytes": 7535,
+   "sha256": "9edfa6c385ad0f3cedc18a02d0d09d72adfd5619170633b8984abf413c9d4a09",
+   "normalized": "text-lf",
+   "normalizedSha256": "2f7b4e7311bcabc513096227a5e003d288529316dde3198d589ef6bf3245de4e",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D15_changed_boy_consequence.svg",
+   "bytes": 7834,
+   "sha256": "7f69fa309089b0905dc24ac310ff8f6c08921f4903b8da82e76014e2c0e39290",
+   "normalized": "text-lf",
+   "normalizedSha256": "750549bc2e81e5e2f4783abf68e72149df874956364c88971ec1a01d7678ef86",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D15_changed_boy_decision.svg",
+   "bytes": 7668,
+   "sha256": "799d56fb767555e9b2dc45c0e4253e6157e12cfc1800a985b26ed63e8ef5fec2",
+   "normalized": "text-lf",
+   "normalizedSha256": "7dede9d774924444a51fe3b133e6498e8eaa237bc3fbf458225fe4f41fe1977d",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D15_changed_girl_consequence.svg",
+   "bytes": 7835,
+   "sha256": "fba089add7611bac92eb1bccf10ca5db3652cc74b926c20ea9fcd82118f416d3",
+   "normalized": "text-lf",
+   "normalizedSha256": "e95ee532fd43de80205cbe7d768f5e7c8b80214ea7f09bd242dfd69f13da62e7",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D15_changed_girl_decision.svg",
+   "bytes": 7670,
+   "sha256": "33e5e63e5e200613a1eafa9a8ba140a5a911097eb8731fe5b23a7dbacc5caf3e",
+   "normalized": "text-lf",
+   "normalizedSha256": "a9ec69be15a658366c2c18c2aa17ee748f580ff235075a3d028afc30f8a9b637",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D16_base_boy_consequence.svg",
+   "bytes": 7561,
+   "sha256": "0168855178765a222ee51fbcb307c1f61938b361a0addef07689f075728efb01",
+   "normalized": "text-lf",
+   "normalizedSha256": "2b8fd283c7c138aa46292afa234ad133e0b71295414696b6fcdbb2bedd74ec7c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D16_base_boy_decision.svg",
+   "bytes": 7547,
+   "sha256": "1247388d957637a0f6cb79b81f94a5e04358735ac23ef8fb157e2ed158f041de",
+   "normalized": "text-lf",
+   "normalizedSha256": "169f676851b52910499e4996c65878ae77aca4d860e1ca033f68d219ead87bc4",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D16_base_girl_consequence.svg",
+   "bytes": 7561,
+   "sha256": "28054fd1c662a850f7a40401e727984562ff9f18ed18598dfe2f4bf72dbb87b2",
+   "normalized": "text-lf",
+   "normalizedSha256": "3777484ed74dc62ee7adda96ce2da1c147631c7da73c5386038c2fd7e0b95306",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D16_base_girl_decision.svg",
+   "bytes": 7547,
+   "sha256": "c28323f53afcaf3cc09f37233c9ba3ffbb08f88ca945285c139d6fb7aa69359c",
+   "normalized": "text-lf",
+   "normalizedSha256": "20fbe17fda7cae74c76c1b3926b023fd9429c6a4367ebcf37f49e2b0875581b6",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D16_changed_boy_consequence.svg",
+   "bytes": 7705,
+   "sha256": "41c50ca2afb783e8f38141cf9ea434dd4bf973264daa5d76616fa5407a07c744",
+   "normalized": "text-lf",
+   "normalizedSha256": "6ec207c0ba5dd3dcccfa3ff9c69d93b18bc2ec1abd6169469eb3429f86ce36af",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D16_changed_boy_decision.svg",
+   "bytes": 7688,
+   "sha256": "b8e8d65c22b2a0a033aa89169ac4624e0e8c7ba04b0e8a85585b318d55325c5b",
+   "normalized": "text-lf",
+   "normalizedSha256": "de28075d930f9f585d758e5dd67263e46724621b0a4350763240d14e5bd28f48",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D16_changed_girl_consequence.svg",
+   "bytes": 7705,
+   "sha256": "0628d5ddf7b57a316f80444c7c43a8c9dd61e1a30f5271e7df964a64a61bceab",
+   "normalized": "text-lf",
+   "normalizedSha256": "b4fe029fbf7e5a0068a4c801e1a0b7dff4f9a29b08666d927ee55340a12a54ad",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D16_changed_girl_decision.svg",
+   "bytes": 7688,
+   "sha256": "069bc5a0bab040ecfbcc81b7c1e136904f4b7df4d9c8530e60c2f19566b6db08",
+   "normalized": "text-lf",
+   "normalizedSha256": "222c54f6cc84b8b46b94571c96809e0d83916d2f124b6c503d79fc9af7aa4be4",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D17_base_boy_consequence.svg",
+   "bytes": 7698,
+   "sha256": "62a6dd40cd06d6f69faf414978eb463be15f5832e051e05abe522300442d894b",
+   "normalized": "text-lf",
+   "normalizedSha256": "953c7f5a72608176eea543992e62f2f7f488ac60dc2bf72048b853f552087d43",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D17_base_boy_decision.svg",
+   "bytes": 7547,
+   "sha256": "dc48ba3e1f0ec7d854aa67935445044b8d59d452ba5a95a7e92f0e50d38a0d18",
+   "normalized": "text-lf",
+   "normalizedSha256": "bf23493087f5368a7c6691023dd2559266e4d6410b4f4d7a4ad4eb7239606477",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D17_base_girl_consequence.svg",
+   "bytes": 7700,
+   "sha256": "1bc28dd0762431f7fc31e9bcb3ae1e27403c0031848a17e8976dc25e92aaff8c",
+   "normalized": "text-lf",
+   "normalizedSha256": "3369c3c70df5c2d9a82c22f70cc4efa956b11efb376dda8bacad5d769bd2171b",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D17_base_girl_decision.svg",
+   "bytes": 7547,
+   "sha256": "56d36cfe8a490cfa4a750a3453ae9b6864ebf6b1847bff8ba5fb488778c76a11",
+   "normalized": "text-lf",
+   "normalizedSha256": "415df8a2e911ef7a43dc7a3575c97488733be8404ab331718d194ceefa73ebe8",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D17_changed_boy_consequence.svg",
+   "bytes": 7849,
+   "sha256": "f55a902c051d1e19669cb87b1760c97036ba47acf4ee27c8cb872c3097f3fb6a",
+   "normalized": "text-lf",
+   "normalizedSha256": "ae91a68f4d82ffa02f7415972abd2af054fd94568d58154516a6bd41ebb285c9",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D17_changed_boy_decision.svg",
+   "bytes": 7575,
+   "sha256": "602885000ac3bb2b8c93260177f03de5b3a3a475bf0788a20a7470471463b832",
+   "normalized": "text-lf",
+   "normalizedSha256": "4c06c69d1d62983a335ffa2a662454aa6beeea6caf33383d88a3d9b0258f6ac5",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D17_changed_girl_consequence.svg",
+   "bytes": 7849,
+   "sha256": "7e70da7ee34cff5e65f4e659ead0b17581497aa1b1b9a87234a3516a2428b8d9",
+   "normalized": "text-lf",
+   "normalizedSha256": "5cc2ff399a29593c5cb63c8379a2cee456d48bafbd27e1a89047364d55797aae",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D17_changed_girl_decision.svg",
+   "bytes": 7575,
+   "sha256": "ee4cf129f017d59438b9cc88f86560fa9d958ed638a09f2371c3dd8d2b2b1e0a",
+   "normalized": "text-lf",
+   "normalizedSha256": "5641886802376b2bf670793fbb8aa48e9e9fe8a5ee40d50e1acf8aefe2001482",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D18_base_boy_consequence.svg",
+   "bytes": 7697,
+   "sha256": "4cd0842ec5de7ad04a548cf5d6f9232b19e72a9d6d44213e294f097cc215f231",
+   "normalized": "text-lf",
+   "normalizedSha256": "029b8f2b076f6a6d41b5b2b5479cdd11f56e6bba4a5c3ccc38b4985514fd2984",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D18_base_boy_decision.svg",
+   "bytes": 7543,
+   "sha256": "60aef2a6840632171bc6434fc3fe1fee3f3f53781f0e6de99a5537ec71952ec7",
+   "normalized": "text-lf",
+   "normalizedSha256": "e4a14ddc8137fd3d786c19e3ea07586a84c2c0d842bf00a77e05637edb87e305",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D18_base_girl_consequence.svg",
+   "bytes": 7698,
+   "sha256": "d07561996c8b6ea51248fbbadade64ecc54bf47cfa1e909b9d14e91ff817085d",
+   "normalized": "text-lf",
+   "normalizedSha256": "56dbfb0d2af60f75ed64b7faf2a41017d42e3d1cc2ff914814f23ee271f09e1e",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D18_base_girl_decision.svg",
+   "bytes": 7543,
+   "sha256": "62afc1eb3809df3bcb5cbee872f146f1c272c48ab901f497ee8a1575c4a0a764",
+   "normalized": "text-lf",
+   "normalizedSha256": "2fe22901407db95c19eb06ccaf29a2d9cfe5d94c788e4bec15542f44128adf6b",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D18_changed_boy_consequence.svg",
+   "bytes": 7841,
+   "sha256": "fbf22cdc92888c511c5d0f2bf0be1c72790b8e02e6b3f4e559ff435c9036156f",
+   "normalized": "text-lf",
+   "normalizedSha256": "bd4ef0e5743b54c1ef721297893118807b1df85dca1561c66b5dcc6950af72ad",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D18_changed_boy_decision.svg",
+   "bytes": 7672,
+   "sha256": "4a8bf4127b45bbfe5507e83c4cbec76ac321c74a28ccb916341295b1f55ba28d",
+   "normalized": "text-lf",
+   "normalizedSha256": "52ed2ecd09e6ee420d3f13044ead5656268809634a958a2ed97098761c4128f1",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D18_changed_girl_consequence.svg",
+   "bytes": 7841,
+   "sha256": "8c25aebe375e4392125af8533a9bf20e738ba756ed936b8c43902fb6ecefbd74",
+   "normalized": "text-lf",
+   "normalizedSha256": "7c5fb2ed2f1c3bf9ab812b3945647bf4685851209a96c02a6c09894a75e55c2b",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D18_changed_girl_decision.svg",
+   "bytes": 7672,
+   "sha256": "64ae2daf62e4d2f94fb5a8277b9d2045ecd34e4358cc4962d22c1fe37880b5e0",
+   "normalized": "text-lf",
+   "normalizedSha256": "84af98baaec17a6400ab587583b02503480a3c0dc76afa74855253e3c2867036",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D19_base_boy_consequence.svg",
+   "bytes": 7828,
+   "sha256": "6a286f655904df757f155b9b4212b56b4bc4d3a9b705c8b2a43abd4aeddb6c29",
+   "normalized": "text-lf",
+   "normalizedSha256": "03aa66772e772ccb48a80136674648750ed6719bd4e91283eecf93d36565f0dd",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D19_base_boy_decision.svg",
+   "bytes": 7676,
+   "sha256": "1b7fd89e9d3569792c7003fbb944b7639f9ea58febabfcaa15bce16e68e8fe8e",
+   "normalized": "text-lf",
+   "normalizedSha256": "94276b64689a7d49b557acebfe3b189464f519be786df8ed1175448a0441ab04",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D19_base_girl_consequence.svg",
+   "bytes": 7826,
+   "sha256": "c31a87f35cbb686e33102df9ba47175d32310df2a9b0df0a5d829ce36cf7cfbd",
+   "normalized": "text-lf",
+   "normalizedSha256": "ae2d11a473edf0cb9f24a59539dcdc8e92652137a91871a3d6874fc0c667115f",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D19_base_girl_decision.svg",
+   "bytes": 7677,
+   "sha256": "6fd8af29807c79613580459263ac3e6184aecb624e5ef6b9005aac766d06c80e",
+   "normalized": "text-lf",
+   "normalizedSha256": "d6c6ac52d69032f76d4178b0c4ad6ecd3e19551c4a4cb11f4261d94388f71185",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D19_changed_boy_consequence.svg",
+   "bytes": 7986,
+   "sha256": "fbcc0fbda220b5cef336bd96afca39b1c02ddb5de75ff6f99f9067a2b76f65a6",
+   "normalized": "text-lf",
+   "normalizedSha256": "539145dd7d7c810e1e6946c432ac939e10a2152bcc233f008e8066951ff1f111",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D19_changed_boy_decision.svg",
+   "bytes": 7812,
+   "sha256": "b8bb18dc93e821fa032ebde4585a6d8f12426f26b219cf3c6d550acd2ac9dd23",
+   "normalized": "text-lf",
+   "normalizedSha256": "ed04e29ee5c864b4943a591afea336527b67d00997d6859bc04a2b3eed380308",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D19_changed_girl_consequence.svg",
+   "bytes": 7988,
+   "sha256": "7723f4ceb2b280c31c695aa1fd55c4b70aba7804f19c2c512202a37ab1435715",
+   "normalized": "text-lf",
+   "normalizedSha256": "a39535a04fda2081fd121aa4fafb5a49c3882724731705036e038e1eb2f1e29b",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D19_changed_girl_decision.svg",
+   "bytes": 7813,
+   "sha256": "e11379bb37fc319a9d91b75fe962edcf6e9dc41bdcb3916b9debeb782c49478e",
+   "normalized": "text-lf",
+   "normalizedSha256": "f924be732a0a6c729d4b8a629d1e8eff490c3aab90e6dc4a4ea855e2a4a3d64d",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D20_base_boy_consequence.svg",
+   "bytes": 7835,
+   "sha256": "6f44679415e9b9025573992f1f4f4e07c971377abe19f6ff4fb1fa24baedb53d",
+   "normalized": "text-lf",
+   "normalizedSha256": "caaecc5fc3043545dc6ff60a61361ff52804ec26e8434597dd2773c0d813902c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D20_base_boy_decision.svg",
+   "bytes": 7672,
+   "sha256": "582020c821ea1f0ed6835e645add2e08f01854c073fc33f281793d1788a92bb4",
+   "normalized": "text-lf",
+   "normalizedSha256": "80c6327c45a69129dfe03877ea32911e7ee6814ef05179ee670eaf83556ed970",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D20_base_girl_consequence.svg",
+   "bytes": 7837,
+   "sha256": "e7294b57e47e8e9201e1fb39317499f9f12f47ef4b022c3d9070d6e5d4c21c40",
+   "normalized": "text-lf",
+   "normalizedSha256": "49e014edf6e4a10bfaff6dffb41ee7b2fbcdd67e27cfefe456783379c14332cc",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D20_base_girl_decision.svg",
+   "bytes": 7673,
+   "sha256": "53034ba0e3864d4ae257b9d5d2ce2a547b39b0bc955fa2cdc94b1a4f883c2cb8",
+   "normalized": "text-lf",
+   "normalizedSha256": "7bba79aa2b77f0d3f44b27ecdb12da7038a5540261c84d095e5658cfc4f08f3c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D20_changed_boy_consequence.svg",
+   "bytes": 7972,
+   "sha256": "d709378f1b16a5dac5d480dcf12deebb0b075ab259693e8544523239eefb1d85",
+   "normalized": "text-lf",
+   "normalizedSha256": "8a9c38616d54b8ee768856e6f17e94e7f0405854711598ba0e978e83213f0477",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D20_changed_boy_decision.svg",
+   "bytes": 7809,
+   "sha256": "6f3d1164dab44a7ea90fe96dedfaf7c67ac257eb8fd5a474b18105ed2854759e",
+   "normalized": "text-lf",
+   "normalizedSha256": "fa7c3273668005dfec3d4e0a27105a850815ab9e147baa2f507c89c900c1021c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D20_changed_girl_consequence.svg",
+   "bytes": 7973,
+   "sha256": "5dff5d68362f276cdd83eba45dc98c6234555d6420b70a82622700bc289c84fa",
+   "normalized": "text-lf",
+   "normalizedSha256": "28d635e8f9def8580a17236bbd5196d8e46f450884c89b22a135941c6406d799",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D20_changed_girl_decision.svg",
+   "bytes": 7810,
+   "sha256": "3769e7f5ec9967295227c5d7ba2419d9d3b215d4a8393bd73df7b23cb100d644",
+   "normalized": "text-lf",
+   "normalizedSha256": "468878307c0544296c279ae6946cffe88c25241d280eeb49618c86ac0161a8ae",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D21_base_boy_consequence.svg",
+   "bytes": 7912,
+   "sha256": "3be8b24e13158a4b15bf27a3ab8af50a68edf9a83fbe84e91cb02f6974d358da",
+   "normalized": "text-lf",
+   "normalizedSha256": "efc66f38c7775219da251dba0e61aa4c5afc44084c2508cce48b24fecec0112c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D21_base_boy_decision.svg",
+   "bytes": 7755,
+   "sha256": "788eb8b22c0bc19424277f955844bcf487d5b2da5988e6b48171d067c5538893",
+   "normalized": "text-lf",
+   "normalizedSha256": "8c21f0ce5dd9d0a8f1482168f83d5567eb94e53112c78d40847f2e5890e00699",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D21_base_girl_consequence.svg",
+   "bytes": 7915,
+   "sha256": "91d892c2eb881901696ed43e8b535c11256a3178311aa6ad50875d6b775e0904",
+   "normalized": "text-lf",
+   "normalizedSha256": "d0ccd47f2586393dc3d01a12808681c1811d0e01e318270bb299405971166d28",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D21_base_girl_decision.svg",
+   "bytes": 7757,
+   "sha256": "3a243eafae3a1778d51168edc41fdea239193d1a5b4fe145931b96664b556270",
+   "normalized": "text-lf",
+   "normalizedSha256": "810161850e0b9a14cb552005cb2202a54b08251be6ec1d24471239be143dd3ae",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D21_changed_boy_consequence.svg",
+   "bytes": 8058,
+   "sha256": "825340a66e6ee2261340ae61471a73fec4ee695ef27cf68eeb72ad29a6d88e53",
+   "normalized": "text-lf",
+   "normalizedSha256": "511da8325f4e08e94ef84c6ccdf10e0f248526f848e973d5becd93b23e535d2a",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D21_changed_boy_decision.svg",
+   "bytes": 7790,
+   "sha256": "d73caec7d7f99056fa9cd73045e887b7b113988279df717f171a2823c6b719e8",
+   "normalized": "text-lf",
+   "normalizedSha256": "6db261abbb0e62ec2de8aaeed85876d352c71f0388945342aba15c2056941653",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D21_changed_girl_consequence.svg",
+   "bytes": 8060,
+   "sha256": "257189632d7eaa4ebf4f115a19c1a5ac422ac7577b642902c4ce6ab391c099c8",
+   "normalized": "text-lf",
+   "normalizedSha256": "de1fecab681ea56b84da00d92669100f76e2ff800df5c15c62673a30b2d79c9b",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D21_changed_girl_decision.svg",
+   "bytes": 7792,
+   "sha256": "3dd4b23dd0dd3087014dbe5e74dbec989c2f47d2bc89a34e2767343fe8256ee3",
+   "normalized": "text-lf",
+   "normalizedSha256": "011fb509cd0d56d0cc86fbdbc12e3ded8b7b47df09458f13b821f44ad18ba3e2",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D22_base_boy_consequence.svg",
+   "bytes": 7840,
+   "sha256": "511058fc18dc5446356c631a4eef8193645fcdbf43c2308390477fcdf1eecb62",
+   "normalized": "text-lf",
+   "normalizedSha256": "e6b514e5a5f173642d2773707b65bb4fe808929c2f751ab07816c80ea50ae9d9",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D22_base_boy_decision.svg",
+   "bytes": 7667,
+   "sha256": "237746dd55b8095f126d7656fa8a1d6794a9e0fb2f9a5e8aba762eb27c59725c",
+   "normalized": "text-lf",
+   "normalizedSha256": "bb0667e5e931f0e13c5cbd576fb05629a4a153814d963beef44d5a3eec4c6c35",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D22_base_girl_consequence.svg",
+   "bytes": 7839,
+   "sha256": "03bdbc4c2ed73f6269129cfc33f674be222c10925e7f47602588a9f596f6081f",
+   "normalized": "text-lf",
+   "normalizedSha256": "4276bf55dd2e02b99f0e7c3a643b82bd2191508f0f7f193359fdae3608eb0bc8",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D22_base_girl_decision.svg",
+   "bytes": 7670,
+   "sha256": "d487c03bdb75a52ce1727c44a704b1ee1852e4048f85b2ef1f0e4e3822b44166",
+   "normalized": "text-lf",
+   "normalizedSha256": "38e791b6308ed583edcc52771f0fc6e8e5ff89e7b19625e752b779fcad5ee2d3",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D22_changed_boy_consequence.svg",
+   "bytes": 7951,
+   "sha256": "0b46190af94cefd43cd2958e6311770e7d06e202ef6b7252ad5df685fb7b885a",
+   "normalized": "text-lf",
+   "normalizedSha256": "87ef70a31c9bbca7860b3979fe891c0bb50f8cb07fdda41a2b490529c515588c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D22_changed_boy_decision.svg",
+   "bytes": 7689,
+   "sha256": "e86e502c47d9a6eb072ed33924461492ceaa209a76a854192bae4b01f1619189",
+   "normalized": "text-lf",
+   "normalizedSha256": "643a1d502ecbee755c8ad92b86ceab9856ab9caf5a1418c3414f29f307a77b9e",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D22_changed_girl_consequence.svg",
+   "bytes": 7953,
+   "sha256": "fc59f657f522cb533cacf70828c249a6fbdc21fee53129a5b1cb9d8bad448fbd",
+   "normalized": "text-lf",
+   "normalizedSha256": "32efd026ffe253f4563cceec0fb58f160c3c4e047c2e43d95341975f30ff89e0",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D22_changed_girl_decision.svg",
+   "bytes": 7692,
+   "sha256": "e9980624c728db4465f19835847045f1f6243cce022f675f9bbb949f7095414e",
+   "normalized": "text-lf",
+   "normalizedSha256": "c539a83fdb8b36b5293fea6dc28180b174fd93e867df74b5d3413e1c764ed7d7",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D23_base_boy_consequence.svg",
+   "bytes": 7833,
+   "sha256": "bcf2a21e6088179de346762df137aa30c3f2cab93681b1f615498ce4a03fcd1c",
+   "normalized": "text-lf",
+   "normalizedSha256": "d3c9da85f370e3a93951cb92a9aefcbce775c8cfccb1247be84d1fc91aade881",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D23_base_boy_decision.svg",
+   "bytes": 7674,
+   "sha256": "1ce42d0e3caaee5a616f3df2b8f6a9142363733d9d19a24e160416311b4e05e5",
+   "normalized": "text-lf",
+   "normalizedSha256": "863dccf616c194bba4f624168b3ba09b264d8cbf31f2c1b4c8969b19d7d0605c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D23_base_girl_consequence.svg",
+   "bytes": 7835,
+   "sha256": "08f5328df9d117700f852c20b071094eda0e9757a90f4d904f417564e8bdacb8",
+   "normalized": "text-lf",
+   "normalizedSha256": "e48b4d1eb252d9124347924b484755fb50d134ddb179a9164ed74811c4903ce6",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D23_base_girl_decision.svg",
+   "bytes": 7674,
+   "sha256": "e84cf2a5ec2696dbc69479f9f608660058763b3c3e056b524e5f4ab491a22302",
+   "normalized": "text-lf",
+   "normalizedSha256": "3e333f99c1466283679c0acd4203ac5e2a5cddacc03c3364d5443124d2d569c0",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D23_changed_boy_consequence.svg",
+   "bytes": 7980,
+   "sha256": "88aa45ac78ce7e8d2c1ada094b5eeb294333f88569f0dbda44a81e8f8f35fb16",
+   "normalized": "text-lf",
+   "normalizedSha256": "e0d846592a8f4899f39c9297c5cda10f3b12f83e66623ffb3942c593d5df31b3",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D23_changed_boy_decision.svg",
+   "bytes": 7805,
+   "sha256": "53d655db33a3184a169fb84af75fff8521e0d5ccf686183dbece49700b2cf23a",
+   "normalized": "text-lf",
+   "normalizedSha256": "d6743a78866ce39d8b86fd03e2e84bc6afa535f95337476a54a3517ef568e99c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D23_changed_girl_consequence.svg",
+   "bytes": 7980,
+   "sha256": "834c5632a7ed438e8f11fcbf19ec1efa754ac83b479d2447dc6eb782b485ca84",
+   "normalized": "text-lf",
+   "normalizedSha256": "db181345afbadc698c30f9e86b7da47aedd3860cc93d4cca6a119aa7e2d1ec33",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D23_changed_girl_decision.svg",
+   "bytes": 7805,
+   "sha256": "8bafc4e176c67cf240ea6a19504f98f6ff2dc308b7312b3189a570f08e667fa5",
+   "normalized": "text-lf",
+   "normalizedSha256": "7cefc8fd96b3156436af254beed73afce51a5e17af92f9847400cc3754cf8cfc",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D24_base_boy_consequence.svg",
+   "bytes": 7824,
+   "sha256": "f125e7bc057af6c28a284ea906de898589dfe3cbc28e9452a3ca4b27359de4a5",
+   "normalized": "text-lf",
+   "normalizedSha256": "dbb1892f714a90c21b46845876fbb17f953a9edf122b2fb4f12f00eecdfd5045",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D24_base_boy_decision.svg",
+   "bytes": 7655,
+   "sha256": "56b5a73d5769dcbc28f3825eba06c7ae24a5840f0b8a4abfdc6aa546c33bc351",
+   "normalized": "text-lf",
+   "normalizedSha256": "2947cccefbe68a2e1b0f846deedcac4001570fe1489af28a00c7c2c5582c8072",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D24_base_girl_consequence.svg",
+   "bytes": 7823,
+   "sha256": "d8d48d938ad056dcd44603fce5b7c793829a2deb70bc0bca344016f3dbb12302",
+   "normalized": "text-lf",
+   "normalizedSha256": "cc0196dbc454880a7abb40319da10e87a54e60a95cdc9b26fa1cd72164c6a7c8",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D24_base_girl_decision.svg",
+   "bytes": 7658,
+   "sha256": "608dd055947024111ac94b2608049aafdc329481a4df6430600848008b303f2a",
+   "normalized": "text-lf",
+   "normalizedSha256": "6bb50ed90430a7bcc01e902ec9cce066666bf7bfd59229db86f4beb41936238e",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D24_changed_boy_consequence.svg",
+   "bytes": 7987,
+   "sha256": "0bb9d55eff9f08211424b3a281c3a41421f2bc90d7f49f31375907a34db9cec8",
+   "normalized": "text-lf",
+   "normalizedSha256": "e8d764168eae30ffe522af25d71f3c5e34902cf6214918f017f8c3990fda748a",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D24_changed_boy_decision.svg",
+   "bytes": 7811,
+   "sha256": "5440cbf4c8c77a4367100d28343ffeffaa1ab4701cc3e3c5b7147a0a6c71804a",
+   "normalized": "text-lf",
+   "normalizedSha256": "5b4f0f7d793b8911e010dbc50a292b07429472d32aca75badc554a9f2e7b47fc",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D24_changed_girl_consequence.svg",
+   "bytes": 7988,
+   "sha256": "2e69f9c90bb9ebe51dd9906f9e79ce0d95e6fc9a781f6dfb9c504c35f43f8661",
+   "normalized": "text-lf",
+   "normalizedSha256": "1522fd26aceb6e536aa8a3d16781e9ddfe1750a0de2d6196363dd8fd2e9fa0d4",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D24_changed_girl_decision.svg",
+   "bytes": 7814,
+   "sha256": "f27fa53da155d599433f89e9555c7c70459959a097381681ec21f34a26937463",
+   "normalized": "text-lf",
+   "normalizedSha256": "14e6cc6dfd7d30398ee772526e1add596857de1f02e993afbffd7ee1682e0c6a",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D25_base_boy_consequence.svg",
+   "bytes": 7762,
+   "sha256": "87d4a85fb5b7696a6a2cf5fde1f7c5ae6a4b986227251da5b746d8c753ce88a3",
+   "normalized": "text-lf",
+   "normalizedSha256": "4b5830c4b34a606d75fd8360554900f949ec308cd4138cb4a2f740c1b21a041f",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D25_base_boy_decision.svg",
+   "bytes": 7595,
+   "sha256": "69358a5ecfe827b0d96911ba22fdf2582f6b96bcf3f3290ae1adbe885f415cb6",
+   "normalized": "text-lf",
+   "normalizedSha256": "491ecb14eaad4b258d4549b6496fe7adfd5a3ee22696ca5b2587df4ef9d709bf",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D25_base_girl_consequence.svg",
+   "bytes": 7763,
+   "sha256": "afc88643b48b62f8a3d596899252752326118c1579cc138849a1f81badc74261",
+   "normalized": "text-lf",
+   "normalizedSha256": "05ccd553db723b98543ef22a84c8093042658d8b4ac0bcf45d688a72fca00f76",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D25_base_girl_decision.svg",
+   "bytes": 7596,
+   "sha256": "eac0d4844880982cc6d9f5fae4779375d4b4a22d75d06702de97ee2209f7f7c9",
+   "normalized": "text-lf",
+   "normalizedSha256": "7a26349027a01fd01364384e12591ba7ff1889f9577a780fdac4667bb34d78ab",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D25_changed_boy_consequence.svg",
+   "bytes": 7887,
+   "sha256": "9e83e5b3a226984cc8be494085d62a564a2692e49cf942e710e063af060f0e41",
+   "normalized": "text-lf",
+   "normalizedSha256": "0c28185e7a0abcd1245ccd07753cf3ca4a9afa1411511cb64f21597aef224b7d",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D25_changed_boy_decision.svg",
+   "bytes": 7630,
+   "sha256": "68331afe47495de41a659c0db1058f7f3ce786d1418256d83ce31f38fdb7d411",
+   "normalized": "text-lf",
+   "normalizedSha256": "6707b8c2ee9d5ea7d401bde3fc42b89c9e33d4f3155e0accb84f8add4ef7b8b6",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D25_changed_girl_consequence.svg",
+   "bytes": 7887,
+   "sha256": "93f14bbe08fba9845124c37791a046e4aa5634e471c9f8fedd0db2fcc8fdce17",
+   "normalized": "text-lf",
+   "normalizedSha256": "8ef65c3cfba0e47a21c6bd823f02571ab71a91540a5d51619b7fae50f937aba1",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D25_changed_girl_decision.svg",
+   "bytes": 7631,
+   "sha256": "43e3e14cbb6cef573c3fd9ddcc733f4863879ebb363e07c7dcc34ca1a64c3f4b",
+   "normalized": "text-lf",
+   "normalizedSha256": "878c10e9a422734731053b69bcfa278f32fb65c7cb629844b0032646499bee2b",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D26_base_boy_consequence.svg",
+   "bytes": 7865,
+   "sha256": "f4776d001caf33309ec9243d8304feebd0ee49525512d33213dbc94ec99eaf27",
+   "normalized": "text-lf",
+   "normalizedSha256": "1ed67069962a52661ea2ddd8f59e03abefd1abf60539475451ad2ccad137410e",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D26_base_boy_decision.svg",
+   "bytes": 7608,
+   "sha256": "6683b5cdd812248ac53d1e3db22964e889da52fd1d2e2a226ed630a0d6bde798",
+   "normalized": "text-lf",
+   "normalizedSha256": "2c4744a6e8d58c051fdcd34ec044974bae6e631f1324c547f91db11c83d69e4c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D26_base_girl_consequence.svg",
+   "bytes": 7867,
+   "sha256": "e5ad633eedce3f0b9f95b3cc364a4755a7a28e1fb1c0841a6e20e071bb294904",
+   "normalized": "text-lf",
+   "normalizedSha256": "00b472c4eb58dc491e128f6cea17cb9e04826fa13111b4db9b3726ab04c05edd",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D26_base_girl_decision.svg",
+   "bytes": 7610,
+   "sha256": "ff2791665b18f879e65e8195ee56898bba62bf37206fee5814d701d99db1742a",
+   "normalized": "text-lf",
+   "normalizedSha256": "9e93b674fe4ec09b262d32ee6e99cbe24f5bdc77a92a83fae03b6fd33cef7320",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D26_changed_boy_consequence.svg",
+   "bytes": 7904,
+   "sha256": "009f18b3c866ea354004a63933297d749466015ae74a14752103a4697befffd0",
+   "normalized": "text-lf",
+   "normalizedSha256": "6e5ac3aa0eff7bf371484cc9be47d462c4938abe39ce8f8c7a15d8963236c126",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D26_changed_boy_decision.svg",
+   "bytes": 7729,
+   "sha256": "6b35642281fad1fc79719977b1fca741498e312b2564a2794dcbf9dfed62171a",
+   "normalized": "text-lf",
+   "normalizedSha256": "1c4465c13cb4389a77e5aba98bad6ee6631716f3ee371cf6341bb1473f9a4028",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D26_changed_girl_consequence.svg",
+   "bytes": 7908,
+   "sha256": "9f0268f3bb62eac1eb7d93060dc094a09869643cd4f422f61451ee78f1f2383c",
+   "normalized": "text-lf",
+   "normalizedSha256": "fb6d01d828d7a51ed1d10c345809589da1d584233d2d736bd6313764ec6f6f37",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D26_changed_girl_decision.svg",
+   "bytes": 7731,
+   "sha256": "2204f3ab195f49cff157ff331b3bf71fecc0db85e9a0a89b849ac843e4fe481f",
+   "normalized": "text-lf",
+   "normalizedSha256": "7a4b066d33c88c4dcebef6915c81056cf909c0735ef4ba5501ef2a9e91e49b99",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D27_base_boy_consequence.svg",
+   "bytes": 7761,
+   "sha256": "6164530f4ec13ced27d14e27a6092fa730578073940da6dae5d8d44846529174",
+   "normalized": "text-lf",
+   "normalizedSha256": "21254720f845ddd663b72cef947e61b6a8d9d8223bc63efcb4b624ef5c215ff7",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D27_base_boy_decision.svg",
+   "bytes": 7590,
+   "sha256": "06f41b57a3a20710938d6289dbfeb4d8e97fde44db9b2b083b9b4dc43b542866",
+   "normalized": "text-lf",
+   "normalizedSha256": "3b1fe779a0d5c7e94eb300f26915a8147f4784ad5e2185b0158e22df4c31ac41",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D27_base_girl_consequence.svg",
+   "bytes": 7761,
+   "sha256": "d56f7045fa84a65790d9c60bc51b28d6c293012030d63b78bd29323e42bb0faf",
+   "normalized": "text-lf",
+   "normalizedSha256": "17564d25ad89b0e5b5ebee5d1a870c25235e7125d6e366f22a98a5067d2437bb",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D27_base_girl_decision.svg",
+   "bytes": 7592,
+   "sha256": "ad1ce8d262b11afca613f2a1614ed07a5d1e41f406eebaedfbcac7a0da0fa2aa",
+   "normalized": "text-lf",
+   "normalizedSha256": "c53396088364c86f022a9e6fdb7f6295e14fde502638cf8564f82398b0bc9a0c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D27_changed_boy_consequence.svg",
+   "bytes": 7889,
+   "sha256": "aee5f2c1daf576ef46aea374c8e2fbf514c53c4a73b652a77abb892188a84566",
+   "normalized": "text-lf",
+   "normalizedSha256": "5d9cf30f57b9992338055e92d03484f0f81df7560d35837ce4a7f73be445aeb3",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D27_changed_boy_decision.svg",
+   "bytes": 7729,
+   "sha256": "31058ca0d2812edbe6fc51e85cb8918d78ea96ed4af20625d4c24dbcddea8844",
+   "normalized": "text-lf",
+   "normalizedSha256": "2ca8570ff91483846942706b04d4516ecae98505e95691909f5dc350d67e1801",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D27_changed_girl_consequence.svg",
+   "bytes": 7889,
+   "sha256": "66669703ecad5efed8854120d954a73b8f10127aa64d5b8ff1505a0de7948e8d",
+   "normalized": "text-lf",
+   "normalizedSha256": "8a568e5dd734a4f8a680faa8c806a68939189da666b4250973ebff120b62f5b9",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D27_changed_girl_decision.svg",
+   "bytes": 7731,
+   "sha256": "db27702c084a46c373866f2ab224d44755cd620a04746ef8aa5581ebc40550cc",
+   "normalized": "text-lf",
+   "normalizedSha256": "99fcbfb55191fe403eed3d40bad08487213135a467dc810939c954222d8df6e6",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D28_base_boy_consequence.svg",
+   "bytes": 7366,
+   "sha256": "f5db11ecd24fecf6bf0159da0c8e2975e59594038012bcc50ee0482d1ad5cb2c",
+   "normalized": "text-lf",
+   "normalizedSha256": "e71871f6df80d022b45473ecee40d70e60d174f5de6154431e4d4ae9010c9c4a",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D28_base_boy_decision.svg",
+   "bytes": 7213,
+   "sha256": "4e5ac96e479abe37d00f702413298bbea44df7079adeab468c35c6091b7b5024",
+   "normalized": "text-lf",
+   "normalizedSha256": "a962e487e652ecd9c92bde3bbdeb8e74d57491cf452fe68b1fce957130a71834",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D28_base_girl_consequence.svg",
+   "bytes": 7369,
+   "sha256": "d1a23e8dd96820babb424a8b2bf1cd4b04c38e405fe47a6d3cb9f24dfa97411f",
+   "normalized": "text-lf",
+   "normalizedSha256": "8d9ee5e87bb3fd459c2bc84f6292b7325ac9da4a1376944ab865483a62ff07de",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D28_base_girl_decision.svg",
+   "bytes": 7216,
+   "sha256": "65179266d54419fe6364c46d42f87113cf0c30682e7025008e4b8798375dabea",
+   "normalized": "text-lf",
+   "normalizedSha256": "3d6268957a14bc3b4915b48c3376353457170d8e0fe6d7975332d27966631ff9",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D28_changed_boy_consequence.svg",
+   "bytes": 7493,
+   "sha256": "82121c202e24a1c133dc2b11f399e02e305d5caa807abe91cbf3515676dc1f25",
+   "normalized": "text-lf",
+   "normalizedSha256": "a322459db41df8aff4f72df002a6ef58669197394b881a8d440298c6b1401b1c",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D28_changed_boy_decision.svg",
+   "bytes": 7240,
+   "sha256": "81130d07e074e6ade54a948e398e0834ea802ee84f43997bbb53ebde7bfb55a7",
+   "normalized": "text-lf",
+   "normalizedSha256": "19944acc2ad6571bdce5e9b2f9e3e6d9be210272f834e8d495519f5302034ebf",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D28_changed_girl_consequence.svg",
+   "bytes": 7496,
+   "sha256": "8b3b31a59dee2d21b6a40714dc7afd6fa76b231c4b3f3985de836f82036e36fa",
+   "normalized": "text-lf",
+   "normalizedSha256": "fd93f379e81a9e86ec90e9714f9a8df4ce5d05859311ad9a7465954a1e0dc845",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D28_changed_girl_decision.svg",
+   "bytes": 7243,
+   "sha256": "8616ee18e650cffc4b02bf36ee2825ff75828b37790d3117c531afe1454ab83d",
+   "normalized": "text-lf",
+   "normalizedSha256": "0bcf2ff2e4fc807d9ba88607654ef9b8d87b23c96ce89eb9d55eb16fb485384b",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D29_base_boy_consequence.svg",
+   "bytes": 7746,
+   "sha256": "cec22b3ce6e162eb1ba20e3405e63e48bdbbde41aed1b79424026363d6ad6a33",
+   "normalized": "text-lf",
+   "normalizedSha256": "9abb12333f898bd319549c9d4d02c1395c757970b3fa5809eeab990e84ef2355",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D29_base_boy_decision.svg",
+   "bytes": 7589,
+   "sha256": "666307fa23ec4b43fbce339047818612acb9ad189394a6f4c81784c4dd76c751",
+   "normalized": "text-lf",
+   "normalizedSha256": "086433d906841c749f7632eb2ad9e457ed86d3b5f1a55caf3b45138d5d5f361d",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D29_base_girl_consequence.svg",
+   "bytes": 7746,
+   "sha256": "39af8765c16c8dbdb0225a66dd0f3c6c8cdaab34ed989074ba025225cba50d2f",
+   "normalized": "text-lf",
+   "normalizedSha256": "b74519ce1d5d4527a9c9fa5a5b090e1f53b1435eeabd013a0428e6c51533e1f7",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D29_base_girl_decision.svg",
+   "bytes": 7591,
+   "sha256": "ebc3c65682ab55345e6030970bd7c2ae330efb6e975b71ef655e0db9a96ca29b",
+   "normalized": "text-lf",
+   "normalizedSha256": "124a99f463012aca7620b68d82cb0a4bd857ece32a95a85248c76b97af37b204",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D29_changed_boy_consequence.svg",
+   "bytes": 8302,
+   "sha256": "c7f564a1907d74534ecb4f890fc942e15c8373c3519a16d845bde080ee70ce77",
+   "normalized": "text-lf",
+   "normalizedSha256": "858b10d418df20aeb868256b9443344be40a9d156b33d043afa2d5d82297a2e0",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D29_changed_boy_decision.svg",
+   "bytes": 7738,
+   "sha256": "f284fbaa8bb20180243b15071aa7e96ed39e4bb2600b7c355a17d8e22245e13d",
+   "normalized": "text-lf",
+   "normalizedSha256": "755e64e47fd4a37de80946831b5e614cc44f5b99e1c98bbc90e08ac5a48fc55f",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D29_changed_girl_consequence.svg",
+   "bytes": 8303,
+   "sha256": "f75d3c3e5c698584607658666ae92c264c024f4d04c3da5e62819bf91d37c307",
+   "normalized": "text-lf",
+   "normalizedSha256": "c48ac3f4fbb2725bf2906225ad8262eae7f0a3a71069b66a4646a8cfe74732e7",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D29_changed_girl_decision.svg",
+   "bytes": 7740,
+   "sha256": "bb6356450483c292a2f8e5e042d99e78befb9327e09b522ba19cec9ab6dcb71d",
+   "normalized": "text-lf",
+   "normalizedSha256": "27d43a501d655a3c34f7a4ef9a82d37c6b8e622b7fbcf6ab086726d2b9422364",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D30_base_boy_consequence.svg",
+   "bytes": 7833,
+   "sha256": "69ea4712fa968269aa49d5238d5c3cb3ee3fb07f437ae17b9f0acc354a9d1b1c",
+   "normalized": "text-lf",
+   "normalizedSha256": "137a88feefc5a9ca6383445002d6c075936e99dd3862bed005a9b2da50e69469",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D30_base_boy_decision.svg",
+   "bytes": 7668,
+   "sha256": "5a0fddb0986ce1c95ab64fd8fa372e1659031fd163e3bf7e66f4edcee0d1bc04",
+   "normalized": "text-lf",
+   "normalizedSha256": "e323dfe9f6c25cbe6d7893e6de285dc98d040d86610c632f1d20fa098b99a76f",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D30_base_girl_consequence.svg",
+   "bytes": 7835,
+   "sha256": "ec51467daef46a35e3055e8f76f9a9f008d1cefadc9dcd94350764610844e449",
+   "normalized": "text-lf",
+   "normalizedSha256": "fcc073405bf6a4f323bac7c167f9488fec2ce5053f376b0e8ba8a95106f0b7b9",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D30_base_girl_decision.svg",
+   "bytes": 7669,
+   "sha256": "5be1ee45f90e06f2d25260443e35f0ee591c2374f04fcdd451a8851ccf398b57",
+   "normalized": "text-lf",
+   "normalizedSha256": "0302697ab74ce4255b688e77b10afa1f839d6892076e4069bf2159e46b0c4488",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D30_changed_boy_consequence.svg",
+   "bytes": 7970,
+   "sha256": "51c6475c94adf8e8fc419d54ae3ff8574060768846ff5d0f212ea7c7ecda7173",
+   "normalized": "text-lf",
+   "normalizedSha256": "8203a30b59378d7086b9b29dec0d6c0b2b26d7f46db5e7548f655351d7bca5a6",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D30_changed_boy_decision.svg",
+   "bytes": 7795,
+   "sha256": "7cd374bb22b0a3c6915f14942813409b5711bcb05c557775dd56b8d0a2c70d31",
+   "normalized": "text-lf",
+   "normalizedSha256": "27ee001c82ebe92baf3d801d4c6662149e1e8e31e7fdd847b2b5cecc87694a50",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D30_changed_girl_consequence.svg",
+   "bytes": 7971,
+   "sha256": "d640cd218965cd5882abe3dd9787e719f35a5e6438ee44b00c0d6fae0012c4de",
+   "normalized": "text-lf",
+   "normalizedSha256": "bde3ff0635ffe5acf805a506ff09061d1b02395a598a967d1ac96355ef938a96",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D30_changed_girl_decision.svg",
+   "bytes": 7796,
+   "sha256": "0f79507ffdbeef529e5cc875cbf7e99a05d3e3576ddc73ebe5937d2084c4e218",
+   "normalized": "text-lf",
+   "normalizedSha256": "d8ed7ba7ed24183001fa707ba7bc89e5c4850aa81df63b3a6c8d93e984ccd27a",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D31_base_boy_consequence.svg",
+   "bytes": 6919,
+   "sha256": "aee70608beb956431b7cfe2251432f1f7548abb7fc07321c1602be491f0f94a0",
+   "normalized": "text-lf",
+   "normalizedSha256": "6dac61514c538949d3041419fa2cd5152605a859fccbb23432110ebf68996baf",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D31_base_boy_decision.svg",
+   "bytes": 6730,
+   "sha256": "6ee8be006f0b33a3acc93ac6bbd06133a181e9a0ad05a2054df0e08c3ca4573c",
+   "normalized": "text-lf",
+   "normalizedSha256": "4fcdde99eba3db1209fb9cbb89a763068406beedd39cda8fa8dbfa00d4703de3",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D31_base_girl_consequence.svg",
+   "bytes": 6919,
+   "sha256": "5de46f43801935c5da6120834d9466c384657268d371c32ca332d89ede0a11b7",
+   "normalized": "text-lf",
+   "normalizedSha256": "65af9011ac50092a70f1ae0966614c59e302bd90c8ba137027c87e1c3f6dc7b5",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D31_base_girl_decision.svg",
+   "bytes": 6731,
+   "sha256": "7e8b34170514f04628cf5b7a5ad36e625b9d0410c4128e5be4ca02ed745d7354",
+   "normalized": "text-lf",
+   "normalizedSha256": "71364da6631937fa2b4a6e461ac2d079fc1052e557ffaebc8e64986fdd9a32d5",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D31_changed_boy_consequence.svg",
+   "bytes": 7047,
+   "sha256": "99bf1f5a6518e0016568f5524377eaae4d6418b28740f9893cc87c8ea8fcc4ac",
+   "normalized": "text-lf",
+   "normalizedSha256": "ca41acd64d0f2d4b1c8d64d753defc81bcee535998706cb4b8c88777da0a3364",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D31_changed_boy_decision.svg",
+   "bytes": 6863,
+   "sha256": "3b0a419a7c6b86db36f0b902ab4218111f3b28cf82ae87d9f7fce9e22971197a",
+   "normalized": "text-lf",
+   "normalizedSha256": "1c6a1d4602160cd30d65ea9e76575af51f7f686d20c811df060b518d54e76760",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D31_changed_girl_consequence.svg",
+   "bytes": 7047,
+   "sha256": "326e9e21775100b979097288c7b9e19d6630150fcd678e82289ebbe0ba3e16ea",
+   "normalized": "text-lf",
+   "normalizedSha256": "6b21edfd00bff35b1343c636eb1b3488ea774d9f0f6dab74731bca005eb885d6",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D31_changed_girl_decision.svg",
+   "bytes": 6864,
+   "sha256": "f81c38e76bbf95141cafa81f02446a036625026ee4b5d7e7f2df8685a8379b9a",
+   "normalized": "text-lf",
+   "normalizedSha256": "7d42d39bb077426ec92e0bf81407096fa58b184582f5f066c1098a4261ba0d5e",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D32_base_boy_consequence.svg",
+   "bytes": 7757,
+   "sha256": "ec7402dfa9be0f09620c776457e185c2fdd7a981d26d8926e9c378f08519fc29",
+   "normalized": "text-lf",
+   "normalizedSha256": "97ffbfcf31172ec886eb36bf42358fe9d411d56d87709ab384b1b78aacbd9a94",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D32_base_boy_decision.svg",
+   "bytes": 7593,
+   "sha256": "adc968bceaf6113a6d01f87c9b4d33d24c769c5b38a875f2c9898e629f9c9254",
+   "normalized": "text-lf",
+   "normalizedSha256": "edbb4f9fdbdc644bc52a2885d93dcc6a8157bfd5528272fdf242bd0eb5cc1ca9",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D32_base_girl_consequence.svg",
+   "bytes": 7758,
+   "sha256": "3e563855c0d84e9368991aaba864b46b0748764374eead884b833a10b1801c51",
+   "normalized": "text-lf",
+   "normalizedSha256": "44436cb78e378a531998459409ed4c68a35584016a5e1f5dfdc7a203fb78a1c4",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D32_base_girl_decision.svg",
+   "bytes": 7594,
+   "sha256": "40452b4c155ce3dc982ef4c697f577a6fd14804c0f7660d64ecefd63f1714ddf",
+   "normalized": "text-lf",
+   "normalizedSha256": "0869a58ad865c7dea12e78172da76575f04a238d71f1c9e4f89529bd90dff388",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D32_changed_boy_consequence.svg",
+   "bytes": 7908,
+   "sha256": "9a227c80aaed6f7ba9b02a3fe9aa3a733c9a4ac546c40bc5658633e20b03d89d",
+   "normalized": "text-lf",
+   "normalizedSha256": "fed4d9b40b3114465a6fd7329c5b15dbac74e3523ac33d1b2938101657ba8ffd",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D32_changed_boy_decision.svg",
+   "bytes": 7736,
+   "sha256": "c2dcf10c8b44705897d864dee80dc3bdc172fcc1bccb81c5ac65bf5b7952760f",
+   "normalized": "text-lf",
+   "normalizedSha256": "f98cbdf33b4659fd0159d938af136ad8b4663a41f39ef52aa64405e220e5447e",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D32_changed_girl_consequence.svg",
+   "bytes": 7908,
+   "sha256": "e82158996703514440ad46ae251b3ea0070e02c5ed2f31ddfa06b5fc0a81d793",
+   "normalized": "text-lf",
+   "normalizedSha256": "49e77ab6c9bb698840bc24b7c64ac45807c7124d237e50e05f2c1bebaa84d6ad",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D32_changed_girl_decision.svg",
+   "bytes": 7737,
+   "sha256": "3163d9f32340355e74f40efb280677766b9b0e0704d70ee319c2b704f2404691",
+   "normalized": "text-lf",
+   "normalizedSha256": "a3f84ebab35727d00102b8c4c73402e643b598f0f6e3c41ed4e6ed3cec680cf1",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D33_base_boy_consequence.svg",
+   "bytes": 7758,
+   "sha256": "b2677406e857f0a2d8b3dd6218d868084fea38bd7def89182f1b7c55c907eff4",
+   "normalized": "text-lf",
+   "normalizedSha256": "e15404cf0ad16fc0914a206fde913cde1ab0ac76461ea92179674f23cd737425",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D33_base_boy_decision.svg",
+   "bytes": 7585,
+   "sha256": "364bdd414d9ff7a0163c346bbd35741c09e0c54ab1c195713fcd2c406c1bc3ae",
+   "normalized": "text-lf",
+   "normalizedSha256": "e746b0b77e1dbe51cd607493c5a92f44704c67382910bbe39079850c04a905ea",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D33_base_girl_consequence.svg",
+   "bytes": 7761,
+   "sha256": "6e2411c7ca176b5461d6f59eeec1f16effae5ee45c503d9c156e2fb85bc2d042",
+   "normalized": "text-lf",
+   "normalizedSha256": "07a23c67778c167486afe1f99b0d27565583a93ab0344907a70e0cff2e8d1462",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D33_base_girl_decision.svg",
+   "bytes": 7587,
+   "sha256": "5aee9ebd396589985759dc8440c8ce7267db6f8d8ffca90bbaab77edc549d1a4",
+   "normalized": "text-lf",
+   "normalizedSha256": "3943f75393f8e3c16a7e8636fb504d97e0f3941baa5501856c3d0bf67726e7c2",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D33_changed_boy_consequence.svg",
+   "bytes": 7771,
+   "sha256": "8b1269c515457b38a140177d869a8dfced525854f9caf3eed6373000662b8a0c",
+   "normalized": "text-lf",
+   "normalizedSha256": "8464df8f5f3f8ca0ed05f260aee71494bfb8fe35a37e506b6c29186704c4ab68",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D33_changed_boy_decision.svg",
+   "bytes": 7740,
+   "sha256": "00235be5df79a02b16b1d0abe020e699b60c61340c9f0515d78323a873941748",
+   "normalized": "text-lf",
+   "normalizedSha256": "bbe5e7532b6415b62eae9caaf25e9815bfa9cf8f7a2109f5646d651ea63ebe0d",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D33_changed_girl_consequence.svg",
+   "bytes": 7773,
+   "sha256": "dc1417ff709de991b3cd24fbee8ee50b0e2c0bc15475d3eff2355c2301967a45",
+   "normalized": "text-lf",
+   "normalizedSha256": "0a95abde9f4e986d9f420c2c02ec9cee742bbd4e6bbeaac55dbd646721a6b9a0",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D33_changed_girl_decision.svg",
+   "bytes": 7742,
+   "sha256": "aa13a21ae4dbf5bfd272479902c60c9f4fb2bf44816d4a90ed541e1e91e1a5f2",
+   "normalized": "text-lf",
+   "normalizedSha256": "5316a9a08c01a7b20fde6d31d810bf90c084356ed16820c6a858a6b8b568bdfb",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D34_base_boy_consequence.svg",
+   "bytes": 6998,
+   "sha256": "45c94b4754a61ff09b23824597cb63f7d4245eb76560f238304f01905bf0e4c4",
+   "normalized": "text-lf",
+   "normalizedSha256": "306a86513ded58367f1003c4896f12f337367d086ba104e2d381bdb6fd175a92",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D34_base_boy_decision.svg",
+   "bytes": 6722,
+   "sha256": "145ccc02a44b9d24bdd81022d375daaf9188274b3271a2f6e70f5ac9587aea80",
+   "normalized": "text-lf",
+   "normalizedSha256": "39312460acac8a31d7a9c7dd274f65245aa83d16a419150b30f56571acef78f7",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D34_base_girl_consequence.svg",
+   "bytes": 7000,
+   "sha256": "5d6279e98492fe6df417215252cea5d9231e2d45807608f411f31204348158be",
+   "normalized": "text-lf",
+   "normalizedSha256": "e26c157dfff99cdb6e6501ba4f0a7366ec0b7cdf6ec1ff419dec030308656276",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D34_base_girl_decision.svg",
+   "bytes": 6722,
+   "sha256": "f11bd903625463a76fd252db806677e6541ca8c2613acb3472e666a3c3285f82",
+   "normalized": "text-lf",
+   "normalizedSha256": "df5e3559bff1a7883b5eb71d74fc9af9950cc2c8bb45d2985c024badda681b84",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D34_changed_boy_consequence.svg",
+   "bytes": 7325,
+   "sha256": "e31244b9594c2dd7dae1dc1396992220e2ee3b9b5e4600782c07ced43cca32bb",
+   "normalized": "text-lf",
+   "normalizedSha256": "b7930bcea548c9aba01be5bcb7954b8ee739a7f7973e4724d4990e541075ecd1",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D34_changed_boy_decision.svg",
+   "bytes": 6892,
+   "sha256": "99f57917673c4535dc2835e1db6ed2e0546766a16db26f92ef8e97da9be5c282",
+   "normalized": "text-lf",
+   "normalizedSha256": "5ee34f1063a0c5880eaeeeca4cfa80c6aaccc63e14fdc328cb39f223cfa21f50",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D34_changed_girl_consequence.svg",
+   "bytes": 7326,
+   "sha256": "1fe6786d5350805389b988ecd3a2b926b9fa58354ffa79f2e987be386039cf3d",
+   "normalized": "text-lf",
+   "normalizedSha256": "1f657fcb36614554d0a2a2720b6ce29733c02a4b00d578116859b8d49c84ea22",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D34_changed_girl_decision.svg",
+   "bytes": 6892,
+   "sha256": "57c0f9dd8024d980cc6cdef5dd017d29010916f3078e966af911a37c1d5afc43",
+   "normalized": "text-lf",
+   "normalizedSha256": "a454ef914aaff230598d0197230e8ae9e219456a6ab16f4109c50324fa338ad3",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D35_base_boy_consequence.svg",
+   "bytes": 6878,
+   "sha256": "e7a46d478f9c827cfa868244769761f8951e92c185d243e1e750fabf0fefc28d",
+   "normalized": "text-lf",
+   "normalizedSha256": "61db28367f730eee8943405594762102696a88259f098ddb781ebba7bb9f934b",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D35_base_boy_decision.svg",
+   "bytes": 6717,
+   "sha256": "5498a982bb8bf3563bc8f7d86fa641c55c7cdc5db9a471f3116aac507ee1e511",
+   "normalized": "text-lf",
+   "normalizedSha256": "968e8e4aefc3294e3270a02ff374985f1d928f71a54e76ade55866a70f947956",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D35_base_girl_consequence.svg",
+   "bytes": 6879,
+   "sha256": "2bdf60ce3dee341b5434901fc56d347344d52411a6640f1bec6d0526474e99fb",
+   "normalized": "text-lf",
+   "normalizedSha256": "6fc12e186b46e41830e3502134dc1fcf982819148d2c6caff99f119b474dd632",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D35_base_girl_decision.svg",
+   "bytes": 6719,
+   "sha256": "cf6a41e3014a546fbf3eff606425e43cb3d8bf16d862ad4907130038271f2526",
+   "normalized": "text-lf",
+   "normalizedSha256": "165b36832437281adb1f28ee1fd6675b251a5a51794b969e2d13f4f59b435ec7",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D35_changed_boy_consequence.svg",
+   "bytes": 7127,
+   "sha256": "3fe33b351e04f70794a1ab88af70c44fd42af5ea26db172fa2bfee0b53262e1f",
+   "normalized": "text-lf",
+   "normalizedSha256": "8c89029c0eaca4f14ac2a40c1cebba33e31621fcd30f8ffe56b75b77a0b125e9",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D35_changed_boy_decision.svg",
+   "bytes": 6882,
+   "sha256": "51d47e73d4f2d0d76fdef018ee9584391770d31028518270a47c873dad526a08",
+   "normalized": "text-lf",
+   "normalizedSha256": "6febb57bda4a117b73d1091afd0053847cb5f596a0f05e4ba62cb2bc4013fd52",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D35_changed_girl_consequence.svg",
+   "bytes": 7128,
+   "sha256": "41c208ba654df7b040a3fc0d65304b6acc3fe62d0ae55c1b8831b637f6b91b66",
+   "normalized": "text-lf",
+   "normalizedSha256": "2bc20acab40d2085b6d66301a83a60d2c01db7d3f7654a3b8743d6a591745457",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D35_changed_girl_decision.svg",
+   "bytes": 6884,
+   "sha256": "8086a0b5d0e224d0d36b8e3750a79b6678dd9fc33a25f8dc8855335fbf777c75",
+   "normalized": "text-lf",
+   "normalizedSha256": "a4911540f1618a3948a421a26c913ee8e2940a01a5b1fa61d50df7adaa27869a",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D36_base_boy_consequence.svg",
+   "bytes": 6907,
+   "sha256": "bde9f25a3c2afc210ee8289a4554995786deb2b0deaa7096294f33e01eb77fee",
+   "normalized": "text-lf",
+   "normalizedSha256": "a8fb29d7afe2cf2ae970398a8fb961ae78a008a314e77a4a54b9c85f846efee0",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D36_base_boy_decision.svg",
+   "bytes": 6746,
+   "sha256": "fcd1238ef94042b6e21fa452a510626c1a1487e7a84c4164a3d7f5aaf96228d6",
+   "normalized": "text-lf",
+   "normalizedSha256": "d92fdad55ac9ef36a6b7886dfebe594c7ae47743dad32c76744fa7978d454a23",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D36_base_girl_consequence.svg",
+   "bytes": 6905,
+   "sha256": "fbff6c012702ad5661bc6df7b5a727795a520ff5e4f3b4e997cf8d63707bb694",
+   "normalized": "text-lf",
+   "normalizedSha256": "01d153a1517c64e4734c6f16a2cb680094197a83932f6fcfd76dece0916867f3",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D36_base_girl_decision.svg",
+   "bytes": 6747,
+   "sha256": "2e4334100599b9f824f7c77fc7df331e495fd1757076c5e1cd26b0f46898405e",
+   "normalized": "text-lf",
+   "normalizedSha256": "be8665701301a5ac0b78afd4330f163a2abea5037e6d4ae4044a165d63242769",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D36_changed_boy_consequence.svg",
+   "bytes": 6994,
+   "sha256": "80f56e61445101aebe42e457bfee6f45e835f4828f390299f4c512cb64928841",
+   "normalized": "text-lf",
+   "normalizedSha256": "b05f83c55fa028480da6f4031a27b845e5da2470e80d3b77e1b209c8826451c9",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D36_changed_boy_decision.svg",
+   "bytes": 6815,
+   "sha256": "0b3d9f5b5753e8b277d5f4231a1441216fc4582237e71a77f49e0794c6687228",
+   "normalized": "text-lf",
+   "normalizedSha256": "803caea9b3be8274c0be3b4960fee77093f6a5f89af2e9312e50a928215f231a",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D36_changed_girl_consequence.svg",
+   "bytes": 6995,
+   "sha256": "cc03854ca35db3fa7c9b59be13ddca828cedbddfae4591689f14d38fd3670de0",
+   "normalized": "text-lf",
+   "normalizedSha256": "08b745baeb760c24c43112d3571c33923ddf5d2210ef505f223b6e9fad764a23",
+   "packageManifest": "match"
+  },
+  {
+   "path": "previews/D36_changed_girl_decision.svg",
+   "bytes": 6815,
+   "sha256": "77db3f7372b0a42e46cb34c778c0199cc6430962ba928419d28f22594a3b0911",
+   "normalized": "text-lf",
+   "normalizedSha256": "635fb4902ba57b2ade9f95cc1a8b4a337c8849ca3fdb69f1d61746cd859b6a87",
+   "packageManifest": "match"
+  },
+  {
+   "path": "reference_grader.py",
+   "bytes": 1300,
+   "sha256": "8f5d784cc92d38e638c163e60dbea88d23bebf31f98293743dce454dca3f9820",
+   "normalized": "text-lf",
+   "normalizedSha256": "8f5d784cc92d38e638c163e60dbea88d23bebf31f98293743dce454dca3f9820",
+   "packageManifest": "match"
+  },
+  {
+   "path": "review_history/COACH_START_HERE.md",
+   "bytes": 3309,
+   "sha256": "8657102de68937e8d804eeb5a4d872be46249d7e86b2d72956aea297a4e5a3e2",
+   "normalized": "text-lf",
+   "normalizedSha256": "8657102de68937e8d804eeb5a4d872be46249d7e86b2d72956aea297a4e5a3e2",
+   "packageManifest": "match"
+  },
+  {
+   "path": "review_history/DEVIN_READ_FIRST.md",
+   "bytes": 2603,
+   "sha256": "c3b7ef0c748ed9866ea24eec817cae37f28db1d3659943a9b944987429dd0965",
+   "normalized": "text-lf",
+   "normalizedSha256": "c3b7ef0c748ed9866ea24eec817cae37f28db1d3659943a9b944987429dd0965",
+   "packageManifest": "match"
+  },
+  {
+   "path": "review_history/README.md",
+   "bytes": 4187,
+   "sha256": "7fde17fac5256bf964339835fa94b0ff2663b76626c593e9b10650eb8aad10d7",
+   "normalized": "text-lf",
+   "normalizedSha256": "7fde17fac5256bf964339835fa94b0ff2663b76626c593e9b10650eb8aad10d7",
+   "packageManifest": "match"
+  },
+  {
+   "path": "review_history/SHA256_MANIFEST.json",
+   "bytes": 44823,
+   "sha256": "342dcc32bdc714c200d21401c40b73d6df55192480497dc55a094b72a8c438cc",
+   "normalized": "json-canonical",
+   "normalizedSha256": "3899cdc703023eaab8ce9466d8dbd62f8063f9297e16724e4b65b25a5b683d32",
+   "packageManifest": "match"
+  },
+  {
+   "path": "review_history/SoccerMaster_Coach_Review.xlsx",
+   "bytes": 44563,
+   "sha256": "4bc3a8d4283a5a0349ec37000f94ca57ca104aa1200241a411d3df3da77494fb",
+   "normalized": "raw",
+   "normalizedSha256": "4bc3a8d4283a5a0349ec37000f94ca57ca104aa1200241a411d3df3da77494fb",
+   "packageManifest": "match"
+  },
+  {
+   "path": "review_history/coverage_before_approval.json",
+   "bytes": 6734,
+   "sha256": "9137ca8fe68a781e701a0b0ff8151e44f7923876dec81bcb958bc42082990aae",
+   "normalized": "json-canonical",
+   "normalizedSha256": "cdb215ec4b95d48dff720e762eb76e872697986da09b5c7a2aac4c0fc74c216f",
+   "packageManifest": "match"
+  },
+  {
+   "path": "review_history/episodes_before_approval.json",
+   "bytes": 270424,
+   "sha256": "c3979ab35aa3f5e2ee566bed88db2454ac7cda936539ada6902194a70bdff928",
+   "normalized": "json-canonical",
+   "normalizedSha256": "b45494ba4ecdbf958bd764b636d05e8a604a522933541d8986c61efbd18fc55a",
+   "packageManifest": "match"
+  },
+  {
+   "path": "sources.json",
+   "bytes": 13037,
+   "sha256": "0993b2ae4f10faaa5ffcf99c70ef7ee8e05d06dcf85768a168ab4cfae4a9c45e",
+   "normalized": "json-canonical",
+   "normalizedSha256": "b9dff1f1e8836c1c65bfeaaa75c10cff01e0f4a49ef5202399d632af9a69e454",
+   "packageManifest": "match"
+  },
+  {
+   "path": "validation_results.json",
+   "bytes": 266,
+   "sha256": "42a3d802fb525f248b6f5ead957e18bc8db7776e3f02ff78f3427877997bf5ed",
+   "normalized": "json-canonical",
+   "normalizedSha256": "b81832539cdd8069f4bc240832e717b527b2ecd9a06603ccabe291e99c0ffea3",
+   "packageManifest": "match"
+  }
+ ]
+}

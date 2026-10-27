@@ -345,3 +345,12 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - No resumable home-session draft is saved, so My Player never shows "Resume session"; adding one would need a new saved field and is left for a separate decision.
 - The screen scrolls with the camera (`scrollY`); diagnostics report hit rectangles after scroll, and e2e uses `revealElement` to wheel controls into view before pressing.
 
+## D59. All36 package data, fingerprints and schedule mapping (PR C step 1, 2026-10-27)
+- The owner's `SoccerMaster_Coach_Approved_All36.zip` (SHA-256 `1a57ffe3…fb87`) is the source of truth. Its 29 non-image files are kept unchanged in `docs/training/all36/package/`. Every one of its 420 files is fingerprinted, raw and normalized, in `docs/training/all36/MANIFEST.json` (`npm run all36:manifest`).
+- All 36 `reviewed_episode_sha256` approval hashes are reproduced from `review_history/episodes_before_approval.json`, and no situation's tactical content changed after review. The package-level review hashes cover archives that were not supplied.
+- Grade bands: preferred → Elite, acceptable → Playable, misread → Low-value; timeouts are `no-decision`. Roles: DM/CM/ST → 6/8/9; DEF → LB/RB/CB, MID → 6/8, FWD → LW/RW/9; no goalkeeper.
+- The curriculum is converted into 324 session × category routes (`ALL36_SCHEDULE`, `docs/training/all36/SCHEDULE.md`).
+  - Assignment: only listed situations whose role is in the category, in order. Season 1 A plays base, B changed, C base. Season 2 asks for variants the package lacks and is blocked by exact session.
+  - Result: Season 1 maps 28 DEF, 38 MID and 28 FWD routes.
+- Scoring is unchanged: `SESSION_CARDS` stays empty. Conflicts with the existing weekly credit are listed in `docs/training/all36/RUNTIME_SCHEMA.md` for step 2.
+

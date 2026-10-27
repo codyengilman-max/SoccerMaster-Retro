@@ -1,0 +1,362 @@
+[
+  {
+    "decision_id": "D01",
+    "role": "CB",
+    "source_ids": [
+      "MSA01"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D02",
+    "role": "LB",
+    "source_ids": [
+      "MSA01"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D03",
+    "role": "DM",
+    "source_ids": [
+      "MSA01"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D04",
+    "role": "LB",
+    "source_ids": [
+      "MSA02"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D05",
+    "role": "RB",
+    "source_ids": [
+      "MSA02"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D06",
+    "role": "DM",
+    "source_ids": [
+      "MSA02"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D07",
+    "role": "LW",
+    "source_ids": [
+      "MSA03"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D08",
+    "role": "CM",
+    "source_ids": [
+      "MSA03"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D09",
+    "role": "RW",
+    "source_ids": [
+      "MSA03"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D10",
+    "role": "CM",
+    "source_ids": [
+      "MSA04"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D11",
+    "role": "RW",
+    "source_ids": [
+      "MSA04"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D12",
+    "role": "LW",
+    "source_ids": [
+      "MSA04"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D13",
+    "role": "ST",
+    "source_ids": [
+      "MSA05"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D14",
+    "role": "CM",
+    "source_ids": [
+      "MSA05"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D15",
+    "role": "LW",
+    "source_ids": [
+      "MSA05"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D16",
+    "role": "RW",
+    "source_ids": [
+      "MSA06"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D17",
+    "role": "ST",
+    "source_ids": [
+      "MSA06"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D18",
+    "role": "CM",
+    "source_ids": [
+      "MSA06"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D19",
+    "role": "ST",
+    "source_ids": [
+      "MSA07"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D20",
+    "role": "CM",
+    "source_ids": [
+      "MSA07"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D21",
+    "role": "DM",
+    "source_ids": [
+      "MSA07"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D22",
+    "role": "LW",
+    "source_ids": [
+      "MSA08"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D23",
+    "role": "RW",
+    "source_ids": [
+      "MSA08"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D24",
+    "role": "ST",
+    "source_ids": [
+      "MSA08"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D25",
+    "role": "LB",
+    "source_ids": [
+      "MSA09"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D26",
+    "role": "CB",
+    "source_ids": [
+      "MSA09"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D27",
+    "role": "RB",
+    "source_ids": [
+      "MSA09"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D28",
+    "role": "DM",
+    "source_ids": [
+      "MSA10"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D29",
+    "role": "CB",
+    "source_ids": [
+      "MSA10"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D30",
+    "role": "CM",
+    "source_ids": [
+      "MSA10"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D31",
+    "role": "RB",
+    "source_ids": [
+      "MSA11"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D32",
+    "role": "LB",
+    "source_ids": [
+      "MSA11"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D33",
+    "role": "CB",
+    "source_ids": [
+      "MSA11"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D34",
+    "role": "CB",
+    "source_ids": [
+      "MSA12"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D35",
+    "role": "DM",
+    "source_ids": [
+      "MSA12"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  },
+  {
+    "decision_id": "D36",
+    "role": "RB",
+    "source_ids": [
+      "MSA12"
+    ],
+    "panels": 8,
+    "preview_status": "authored_static_review",
+    "coach_approved": false
+  }
+]

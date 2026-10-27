@@ -1,5 +1,10 @@
 # Status
 
+## PR C step 1: All36 data, fingerprints and schedule (not merged, not deployed)
+
+- Package data imported unchanged and fingerprinted; 36/36 per-situation approval hashes reproduced; 324 runtime routes mapped or blocked by exact ID (`docs/training/all36/`).
+- Nothing scores yet: step 2 adds facing, authored continuations, the scene, the save record and credit.
+
 ## Team Training: source review gate (Tactical Library v1, PR #49, not merged, not deployed)
 
 - Library v1 imported unchanged and hash-pinned; 7 cited sources fetched and hashed; review sheet covers all 27 briefs (20 ready to build a scene for review, 7 need tactical authoring/review, 0 approved).

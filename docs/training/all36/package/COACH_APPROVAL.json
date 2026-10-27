@@ -1,0 +1,310 @@
+{
+  "status": "coach_approved",
+  "reviewer_name": "Cody Engilman",
+  "approval_date": "2026-10-27",
+  "timezone": "America/Phoenix",
+  "basis": "Explicit user declaration in this conversation; recorded by assistant, not a fabricated signature.",
+  "user_statement": "I have reveeed them all and they are approved",
+  "credentials": "Not supplied or independently verified",
+  "scope": "All 36 situations, both base and changed-cue variants, proposed answers, Coach Code feedback and static previews in the reviewed package.",
+  "reviewed_package_sha256": "f0462a6727c4a1981e1a0513c8a033a22785fd6c0cba4ec7bbd4c6b6505f37e9",
+  "runtime_validation": "pending",
+  "exclusions": [
+    "Animation and physics testing",
+    "Dynamic offside/interception validation",
+    "Native-device QA",
+    "Reward/progression integration",
+    "Governing-body certification"
+  ],
+  "renewal_rule": "Material changes to tactics, answers, cues, feedback or preview art require renewed coach review.",
+  "situations": [
+    {
+      "id": "D01",
+      "reviewed_episode_sha256": "7605c64b0535ed50a844b2673627df16f18d58b1ab15dcad33d195066aed9932",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D02",
+      "reviewed_episode_sha256": "8e2082b74fb2444a09c0063fd89319182855b4eea4fb012d16ab1504cc44b506",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D03",
+      "reviewed_episode_sha256": "d9094a6fb292da8330e10dc90103d9b1013472dbae75804269e0e6f778dcbf74",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D04",
+      "reviewed_episode_sha256": "8b7d4bb7909416463192c60d9d6cfa0225e142afd3083a8c8b93626608b1d1f6",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D05",
+      "reviewed_episode_sha256": "49a0a68365c5cea828e7b7a5b8cc19d27434bcd406ad791be3e4820ed7edee6a",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D06",
+      "reviewed_episode_sha256": "a8f05dd43478a7a99715b83825382e07c44b2672abb3f4278452dda4c39c75f6",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D07",
+      "reviewed_episode_sha256": "63c3dd54cbbb3794db01b3880d596732006f6e13374e874e5d4add85508d3925",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D08",
+      "reviewed_episode_sha256": "db70669d5881c7942b7fbe740d9f209878082355ad095f9cf4759af4b6c14b8a",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D09",
+      "reviewed_episode_sha256": "5b1fa7a6d23f798da1b3fb2c2da7b6165c761e5820f0239a13f07e5c0f40c373",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D10",
+      "reviewed_episode_sha256": "2a8cc7ea2e35dacfcbba5ef319e63ca67dade9c654c1ff9107cdb00e18107bc2",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D11",
+      "reviewed_episode_sha256": "b12a469b00dfe30bf4c5fc44f735ca73540f1053983be323da23d596e746d35d",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D12",
+      "reviewed_episode_sha256": "ed557ec9d67c42bf4c848964d3738b8077c0c4fb6d2a76ae8b8cc210f31bda7e",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D13",
+      "reviewed_episode_sha256": "11573f3ee5805ed57e017cf8e0e07bb8b487181261a18608ec0715bf1e379e28",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D14",
+      "reviewed_episode_sha256": "7ffa4f53864b7e4601895277a0b8c24156d8749e668527f6d4dc5d75f2ab6576",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D15",
+      "reviewed_episode_sha256": "f42ee98eb96a41d024c5c0590fff82766dec24ca261bac7271ae4fdfe7fd4d97",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D16",
+      "reviewed_episode_sha256": "2f58f9a171b3265b0b4f500af3a3d8073c77744a03217c45dc262bd6824d7025",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D17",
+      "reviewed_episode_sha256": "9f801d072de4e3bf4e113a8659c4bb07abcc344091b6193d62d2387e3d346758",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D18",
+      "reviewed_episode_sha256": "510fc9df821610f08b8d1ba3bf0bb63c4aabcdf01a1398374529364958de2377",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D19",
+      "reviewed_episode_sha256": "8a1f119f92bc6bb5314f39eda82e9d626b95274f28bd300fc5451ab66708c598",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D20",
+      "reviewed_episode_sha256": "6011cc16c3fe4b6aab8009ebad58b4f68b248e3b0d6a554bdc22a4f64d8badff",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D21",
+      "reviewed_episode_sha256": "69ef63f83ba7d03cf51411b141728c1f449a463e8590a9a8a1dd6e4fd70f3eea",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D22",
+      "reviewed_episode_sha256": "9faddb80bc22eaa5a6dddc9ab3740642275194f7e5b4a8bc3a7520e2ffb98b82",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D23",
+      "reviewed_episode_sha256": "2491c76bf0e13f8376b366eed131defa847d70c5a87598ff82f9981a3ecd4b56",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D24",
+      "reviewed_episode_sha256": "ee240bf376bc220f1c5bae9bd1ad2d339ff8dd11d77ffb5f7d6768996a360e5c",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D25",
+      "reviewed_episode_sha256": "0b900084a31692c25ea1d269c3b6a5f4eac3eed22d2559112f1269552f65dfb8",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D26",
+      "reviewed_episode_sha256": "fda5c3bba10b72a8c70e5dddfe7e5bfcc69c8178bf106c8c18adeb5996aaeaef",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D27",
+      "reviewed_episode_sha256": "a2b5938816b2ee498b65768ff4d02148b70c4fbc24fea0d0f4130fb0b42ea54f",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D28",
+      "reviewed_episode_sha256": "08e9e2a1af4b5103d8d64f86324ae7636990b22773e0d938a9592d5ffb1e24b3",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D29",
+      "reviewed_episode_sha256": "75397bb7e1e3e20e1625fa336e4eaea7c6306cc30eeb35ae747a391a361219ee",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D30",
+      "reviewed_episode_sha256": "26175c2f57243ceeca36e2d90148922b569372dccf13a0d7cbc3427e4abf0163",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D31",
+      "reviewed_episode_sha256": "230ce51079cdcd571ff5e47878c2a13f31ba39193608e80f2b9ac83cec50bd5e",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D32",
+      "reviewed_episode_sha256": "0839d9c6e9a1c2c388793f9ecbc2513cfd309b4350f22b15d9b72517c2c5b54b",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D33",
+      "reviewed_episode_sha256": "a0a030cc3ce3812ef89c398a7413d7843b7ca792bd323c461ba067e7ab5b5210",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D34",
+      "reviewed_episode_sha256": "f4ea2ea2e5c57d41853f388f25fdc267f327e3c1eca74a68443065deb8dedeb6",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D35",
+      "reviewed_episode_sha256": "5fd2ece80533829d69606057d8ec181106d5103b13909e4b13453e7132193584",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    },
+    {
+      "id": "D36",
+      "reviewed_episode_sha256": "1c015b225e771f0a438c754f0f2aa9510840c40823da2ba59dc8d9d738c39ad9",
+      "variants": [
+        "base",
+        "changed"
+      ]
+    }
+  ]
+}
