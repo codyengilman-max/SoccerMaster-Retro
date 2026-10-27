@@ -327,3 +327,15 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - `fixtureMatchesScene` replaces `NO_FIXTURE_CHECK` as the gate's default. It requires an `exact` fixture, which plays exactly the scene's players because `squad.ts` adds no shape-holders when `Fixture.exact` is set. It also checks the same sides, roles, freeze positions, movement into the freeze and ball for both the cue and the changed cue, plus the fixture ID, the protagonist and a view inside one half.
 - `SESSION_PROPOSAL.md` / `session-proposal.json` propose 3 ready cards for each of the 864 outfield role routes, picked by route family against card phase. 1454 of the 2592 card slots are weak matches, which shows the 39 cards don't cover the curriculum's families. The proposal is not loaded: `SESSION_CARDS` stays empty.
 - Review follow-up: `fixtureMatchesScene` now runs the fixture's passage in the simulator (`playedFreeze`). It compares the frozen positions, velocities and ball with the scene, for the cue and the changed cue. The half-field player stops everyone at the freeze and does not model facing, so every signed scene is blocked until a player exists that can show signed movement and facing. `sceneProblems` also checks that the changed cue keeps the same players and has its protagonist, required actors and ball inside its own view.
+
+## Season One weeks 2–10 owner rewrite (2026-10-27)
+- The owner's text is authoritative for weeks 2–10; superseded scenes are deleted from the active story, not hidden. Old save positions map through `RETIRED_SCENES` to the next new scene of the same week; revision `v3` node IDs restart rewritten scenes in place.
+- Story handoffs only display or open existing systems (rankings, My Player, Home Training, saved tournament state). Where the game has no system (development target effects, workload, readiness, recovery, named rosters), the story records the choice and shows nothing invented.
+- Activity details may contain digits (`group_2`) so tournament finishes recorded by `bataviaFinish` pass the runtime check.
+
+## My Player: real components, required home training from Week 2 (2026-10-27)
+- My Player stops being drawn on the bedroom painting; the owner screenshot is a layout guide only. The selected boy/girl home art stays in the player card.
+- Required home training is read from Week 2 (`weekAssignments` already returns juggling + first touch for weeks 2–6). Career's story-week gate (`storyWeek`) now accepts Week 2+, and `task` opens a required task screen directly.
+- No resumable home-session draft is saved, so My Player never shows "Resume session"; adding one would need a new saved field and is left for a separate decision.
+- The screen scrolls with the camera (`scrollY`); diagnostics report hit rectangles after scroll, and e2e uses `revealElement` to wheel controls into view before pressing.
+

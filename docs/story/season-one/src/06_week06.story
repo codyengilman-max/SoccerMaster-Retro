@@ -1,102 +1,58 @@
-# Week 06: "HEAD UP" (League Game 4). Owner text: docs/story/season-one/owner/WEEK_06_OWNER.txt (no school story this week).
-=== S1_W06_S recess
-System: Week 6. Recess.
-Sam: Crossbar or Jungle?
-Player: Which one won't you complain about?
-Sam: Neither. Pick.
+# Week 06: "CARRY OR RELEASE?" (League Game 4). Owner rewrite 2026-10-27, authoritative.
+# Training-field rankings (Sam's phone, team position + next opponent), carry-or-release team training,
+# after-training Blake (dialogue only), weekly minigame (no school conversation), home, League Game 4,
+# development checkpoint and next target.
+=== S1_W06_T neutral_pitch v3
+System: Week 6. At training, Sam opens the team rankings on a phone.
+Sam: Here's where we are.
+Player: And where we want to be?
+Sam: Higher. Very advanced analysis.
+@activity team_profile
+System: Team Training.
+Coach Code: Space ahead. A teammate available. What do you do?
+Coach Code: A useful pass might be available now. Carrying might improve the picture. Look at the pressure, the space, and what your teammate can do next.
+@activity team_training
+Coach Code: Don't wait for a tackle to tell you it was time to pass.
+@if detail:S1_W06_T=strong
+Coach Code: You used what the defender gave you.
+@elif detail:S1_W06_T=execution
+Coach Code: Good choice. Now get the weight right.
+@elif detail:S1_W06_T=poor_decision
+Coach Code: Look again. What was available before the pressure arrived?
+@end
+=== S1_W06_A neutral_pitch v3
+System: Code finishes giving you feedback. Blake waits until Coach walks away.
+Blake: You getting a private lesson or what?
+Player: I asked a question. You can do that.
+Blake: Don't get comfortable. You're still new.
+Player: You keep reminding me.
+System: Sam approaches.
+Sam: Coming?
+Blake: Ask Coach's favorite.
+System: Blake grabs a bag and walks off.
+Sam: That's a yes. Just with issues.
+=== S1_W06_S recess v3
+System: Weekly minigame.
 ? activity
 * crossbar | Crossbar Challenge
 * jungle | Jungle Ball
 @activity crossbar chose:S1_W06_S.activity=crossbar
 @activity jungle chose:S1_W06_S.activity=jungle
-@if result:S1_W06_S=WIN
-Sam: Recruiting you was a mistake.
-@elif result:S1_W06_S=LOSS
-Player: We're blaming the sun.
-@elif result:S1_W06_S=DRAW
-Sam: Rematch next week.
-@end
-=== S1_W06_T neutral_pitch
-System: Team Training. Code holds up a ball.
-Coach Code: What's behind you?
-System: You turn.
-Coach Code: Now you know. Do that before this arrives.
-Sam: What if it's Blake?
-Coach Code: Then definitely know where Blake is.
-System: Blake steals the ball from Sam.
-Coach Code: Last week: use the space. This week: find it sooner.
-? question
-* looking | "What am I looking for?"
-  Player: What am I looking for?
-  Coach Code: Pressure. Teammates. Space. Enough information to give your first touch a job.
-* changes | "What if everything changes?"
-  Player: What if everything changes?
-  Coach Code: Then update the picture. One look isn't a lifetime subscription.
-* straight_back | "Can I just play it straight back?"
-  Player: Can I just play it straight back?
-  Coach Code: Sometimes. Know why you're doing it. Don't send someone else your problem.
-@activity team_training
-@if detail:S1_W06_T=strong
-Coach Code: THERE! You already knew your next option. See how much time that gave you?
-@elif detail:S1_W06_T=execution
-Coach Code: You saw the right option. Now tidy up the execution.
-@elif detail:S1_W06_T=poor_decision
-Coach Code: Stop. What changed while the ball was travelling?
-@end
-=== S1_W06_L neutral_pitch
-System: Leaving training.
-Player: You make it look easy.
-Coach Code: That's why I explain it standing still.
-Coach Code: Now we make it work while you're moving. Check your home assignment. Bring me one thing that gets easier—and one that doesn't.
-=== S1_W06_H home_v3
-System: Home. Your phone buzzes. A text from Sam.
-Sam: Park tomorrow. Riley's coming. Apparently we're doing something that isn't soccer.
-? park
-* training_first | "Training first. What time?"
-  Player: Training first. What time?
-* early | "I'll come early. Train afterward."
-  Player: I'll come early. Train afterward.
-* not_this_time | "Not this time. Have fun."
-  Player: Not this time. Have fun.
+=== S1_W06_H home_v3 v3
+System: Home.
 @activity home_hub
-@if detail:S1_W06_H=talk
-Player: Code wants me looking over my shoulder.
-Cloudy: Tried it. Tail's still following me.
-Player: Want me to watch it?
-Cloudy: Finally. Security.
-@activity home_hub
-@end
-=== S1_W06_G neutral_pitch
-System: Weekend. League Game 4.
-Blake: Big plans?
-? plans
-* play_well | "Play well. Yours?"
-  Player: Play well. Yours?
-* full_name | "Avoid Code using my full name."
-  Player: Avoid Code using my full name.
-System: Code calls the team in.
-Coach Code: Get your picture early. Help the player on the ball. And when something goes wrong—next decision.
+=== S1_W06_G neutral_pitch v3
+System: League Game 4.
+Coach Code: Carry with a purpose. Pass with a purpose. Then help again.
 @activity league_match
-@if result:S1_W06_G=WIN
-Sam: Good afternoon. Better if there are snacks.
-@elif result:S1_W06_G=DRAW
-Sam: Feels unfinished.
-@elif result:S1_W06_G=LOSS
-Sam: Talk later?
-Player: Yeah.
-@end
-@if done:S1_W06_G
-System: Code approaches.
-@if detail:S1_W06_G=learning_moment
-Coach Code: That moment we flagged—good reading of the game. We'll look at it next session.
-@else
-Coach Code: We'll find a useful moment to review. There's always something.
-@end
-@end
 @activity standings
-System: Sam adds you to a group chat.
-Riley: Finally. Someone who might answer.
-Sam: ⚽
-=== S1_W06_E neutral_home
+=== S1_W06_D neutral_pitch v3
+System: Development checkpoint.
+@activity dev_checkpoint
+Sam: Same target next week?
+? next_target
+* keep | Keep building this skill
+* weakness | Work on a recommended weakness
+=== S1_W06_E neutral_home v3
 System: End of week 6.
 @activity week_close

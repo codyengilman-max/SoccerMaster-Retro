@@ -70,7 +70,7 @@ describe('Mom Replacement v2', () => {
       }
     }
     expect(momPortrait('S1_W01_P', 'v2n43')).toBe('mom2-casual-laughing');
-    expect(momPortrait('S1_W04_P', 'v2n28')).toBe('mom2-casual-firm');
+    expect(momPortrait('S1_W04_H', 'v3n2')).toBe('mom2-casual-laughing');
     expect(momPortrait('S1_W01_P', 'not-a-node')).toBe('mom2-casual-neutral');
     expect(momSceneAssets('S1_W01_P').length).toBe(6);
   });

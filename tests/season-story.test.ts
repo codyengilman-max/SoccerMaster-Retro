@@ -76,47 +76,50 @@ function season(p: Policy = {}) {
   return { s, league, cups, said: text.join('\n') };
 }
 
-describe('Season One story: approved weeks 1–4 only (owner directive, 2026-10-20)', () => {
-  it('keeps 18 ordered weeks; only the prologue and weeks 1–7 have scenes, weeks 8–18 and the epilogue are empty', () => {
+describe('Season One story: released weeks 1–10 (owner rewrite of weeks 2–10, 2026-10-27)', () => {
+  it('keeps 18 ordered weeks; only the prologue and weeks 1–10 have scenes, weeks 11–18 and the epilogue are empty', () => {
     expect(SEASON_LENGTH).toBe(18);
-    expect(SEASON_RELEASED_WEEKS).toBe(7);
+    expect(SEASON_RELEASED_WEEKS).toBe(10);
     expect(SEASON_ONE.entry).toBe('S1_PRO_IDENTITY');
-    for (let w = 1; w <= 7; w++) expect(SEASON_ONE.order.some((id) => id.startsWith(`S1_W0${w}_`)), `week ${w}`).toBe(true);
-    for (const id of SEASON_ONE.order) expect(id.startsWith('S1_PRO') || /^S1_W0[1-7]_/.test(id), id).toBe(true);
+    for (let w = 1; w <= 10; w++) expect(SEASON_ONE.order.some((id) => id.startsWith(`S1_W${String(w).padStart(2, '0')}_`)), `week ${w}`).toBe(true);
+    for (const id of SEASON_ONE.order) expect(id.startsWith('S1_PRO') || /^S1_W(0[1-9]|10)_/.test(id), id).toBe(true);
     for (let w = 1; w <= 18; w++) expect(seasonWeek(w), `week ${w}`).toBeTruthy();
-    for (let w = 8; w <= 18; w++) expect(slotIds(w).filter((id) => SEASON_ONE.order.includes(id)), `week ${w}`).toEqual([]);
+    for (let w = 11; w <= 18; w++) expect(slotIds(w).filter((id) => SEASON_ONE.order.includes(id)), `week ${w}`).toEqual([]);
   });
 
-  it('releasing more weeks still stops after week 7: no empty week 8 and no legacy fallback is launched', () => {
+  it('releasing more weeks still stops after week 10: no empty week 11 and no legacy fallback is launched', () => {
     setReleasedWeeks(99);
     try {
       const { s } = season();
       expect(s.complete).toBe(true);
-      expect(s.completedScenes.at(-1)).toBe('S1_W07_E');
+      expect(s.completedScenes.at(-1)).toBe('S1_W10_E');
     } finally {
       setReleasedWeeks(SEASON_RELEASED_WEEKS);
     }
   });
 
   for (const [name, sc, rec] of [['all-win', { home: 3, away: 0 }, 'won'], ['all-draw', { home: 1, away: 1 }, 'drawn'], ['all-loss', { home: 0, away: 2 }, 'lost']] as const) {
-    it(`${name}: weeks 3–7 play League Games One to Five once each and record the real results`, () => {
+    it(`${name}: weeks 3–8 and 10 play League Games One to Seven once each; week 9 plays the AZ Showcase`, () => {
       const { s, league } = season({ score: () => sc });
       expect(s.complete).toBe(true);
-      expect(s.completedScenes.at(-1)).toBe('S1_W07_E');
+      expect(s.completedScenes.at(-1)).toBe('S1_W10_E');
       expect(new Set(s.completedScenes).size).toBe(s.completedScenes.length);
       const leagueRuns = Object.values(s.runs).filter((x) => x.adapter === 'league_match' && x.outcome === 'completed');
-      expect(leagueRuns.map((x) => x.sceneId)).toEqual(['S1_W03_G', 'S1_W04_G', 'S1_W05_G', 'S1_W06_G', 'S1_W07_G']);
+      expect(leagueRuns.map((x) => x.sceneId)).toEqual(['S1_W03_G', 'S1_W04_G', 'S1_W05_G', 'S1_W06_G', 'S1_W07_G', 'S1_W08_G', 'S1_W10_G']);
       expect(leagueRuns.every((x) => x.result === res(sc))).toBe(true);
-      expect(bataviaRecord(league)).toMatchObject({ [rec]: 5, played: 5 });
+      expect(bataviaRecord(league)).toMatchObject({ [rec]: 7, played: 7 });
       expect(outcomeOf(s, 'S1_W03_S')).toMatchObject({ outcome: 'completed', result: res(sc) });
-      expect(Object.values(s.runs).some((x) => x.adapter === 'tournament_match')).toBe(false);
+      const cup = Object.values(s.runs).filter((x) => x.adapter === 'tournament_match' && x.outcome === 'completed').map((x) => x.sceneId);
+      // Three group games always; the final only for a group winner (never guaranteed).
+      expect(cup.slice(0, 3)).toEqual(['S1_W09_G1', 'S1_W09_G2', 'S1_W09_G3']);
+      expect(cup.length === 4).toBe(outcomeOf(s, 'S1_W09_G3')!.detail === 'final');
     });
   }
 
-  it('skipping both league games leaves them unplayed (never losses) and the story still ends at week 7', () => {
+  it('skipping every league and tournament game leaves them unplayed (never losses) and the story still ends at week 10', () => {
     const { s, league } = season({ score: () => null });
     expect(s.complete).toBe(true);
-    expect(s.completedScenes.at(-1)).toBe('S1_W07_E');
+    expect(s.completedScenes.at(-1)).toBe('S1_W10_E');
     expect(bataviaRecord(league)).toMatchObject({ played: 0, lost: 0 });
   });
 
@@ -127,31 +130,8 @@ describe('Season One story: approved weeks 1–4 only (owner directive, 2026-10-
       // The unchosen activity is recorded as declined by its predicate and never gets a run id.
       expect(runs.filter((x) => x.runId !== '').map((x) => x.adapter)).toEqual([pick]);
       expect(runs.filter((x) => x.runId === '').every((x) => x.outcome === 'declined' && x.adapter !== pick)).toBe(true);
-      const reward = Object.values(s.runs).filter((x) => x.adapter === 'school_reward');
-      expect(reward).toHaveLength(1);
-      expect(reward[0]!.detail).toBe('unconfigured');
     });
   }
-
-  it("Mom's week 4 talk follows the real training log, and each log state reads differently", () => {
-    const said: string[] = [];
-    for (const d of ['above', 'below', 'within', 'unknown']) {
-      const r = season({ detail: (a) => (a === 'training_log' ? d : null) });
-      expect(Object.values(r.s.runs).find((x) => x.adapter === 'training_log')!.detail).toBe(d);
-      said.push(r.said);
-    }
-    expect(new Set(said).size).toBe(4);
-  });
-
-  it("Coach Code's home-learning follow-up follows the real record in weeks 3 and 4", () => {
-    const said: string[] = [];
-    for (const d of ['completed', 'partial', 'none', 'unknown']) {
-      const r = season({ detail: (a) => (a === 'home_learning' ? d : null) });
-      expect(Object.values(r.s.runs).filter((x) => x.adapter === 'home_learning').map((x) => x.detail)).toEqual([d, d]);
-      said.push(r.said);
-    }
-    expect(new Set(said).size).toBe(4);
-  });
 
   it('a completed run cannot be completed again or re-launched (no duplicate results or rewards)', () => {
     let s = newSeasonStory('d1');

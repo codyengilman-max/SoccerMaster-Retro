@@ -1,7 +1,7 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { idealPower } from '../src/game/story/crossbar';
 import { thresholdsFor } from '../src/input';
-import { Finger, diagnostics, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
+import { Finger, diagnostics, pressElement as pressAny, revealElement, trackConsoleErrors, waitForScene } from './helpers';
 
 // Season One on one isolated save: identity -> prologue -> week one (aquarium, recess, Coach Code with the
 // real Team Training handoff) -> week close -> week 2, then reload. Later weeks: tests/season-story.test.ts.
@@ -91,8 +91,8 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
   // Owner weeks 1–2 are long (~175 lines in week one alone, each revealed then advanced).
   for (let i = 0; i < 1500; i++) {
     const s = await story(page, () => true, 'story');
-    // Week one ends at the callback; the story now continues into the weeks 2–4 draft (covered by unit tests).
-    if (s.complete || s.scene === 'S1_W02_M') return s;
+    // Week one ends at the callback; the story then continues into the owner's weeks 2–10 (covered by unit tests).
+    if (s.complete || s.scene === 'S1_W02_T') return s;
     if (s.scene === 'W2_SCHOOL_CALLBACK') return story(page, (x) => `${x.text}\n${x.hint ?? ''}`.includes('Match:'), 'week one recap');
     if (s.mode === 'crossbar') {
       if (s.crossbar?.ready) {
@@ -206,7 +206,7 @@ test('Season One week one: identity, prologue, aquarium, recess, Team Training h
   expect(first).toMatchObject({ scene: 'S1_PRO_IDENTITY', complete: false });
 
   const end = await playWeek(page, mode, finger);
-  expect(end.scene).toBe('S1_W02_M');
+  expect(end.scene).toBe('S1_W02_T');
   expect(end.player).toEqual({ name: 'Zoë', gender: 'girl' });
   const by = (id: string) => end.outcomes.find((o) => o.scene === id);
   for (const id of ['S1_PRO_IDENTITY', 'S1_W01_S', 'S1_W01_E']) expect(by(id), id).toMatchObject({ state: 'resolved', outcome: 'completed' });
@@ -216,12 +216,32 @@ test('Season One week one: identity, prologue, aquarium, recess, Team Training h
 
   // Reload: cursor, outcomes and identity persist; the career is in week 2 and week 1's Team Training was not counted.
   const again = await openStory(page, mode);
-  expect(again).toMatchObject({ scene: 'S1_W02_M', complete: false, revision: end.revision, player: end.player });
+  expect(again).toMatchObject({ scene: 'S1_W02_T', complete: false, revision: end.revision, player: end.player });
   expect(again.outcomes).toEqual(end.outcomes);
   await pressAny(page, 'story-menu', mode);
   await waitForScene(page, 'start');
-  await pressAny(page, 'career-button', mode);
-  await scene(page, 'career', (g) => g.status !== 'loading', 'career');
+  // My Player in career week 2: required home training (juggling first, then first touch) and Start next session opens juggling directly.
+  await pressAny(page, 'my-player-button', mode);
+  await scene(page, 'myPlayer', (g) => g.status === 'ready', 'my player');
+  const mp = (await diagnostics(page)).gameplay as { storyWeek: number; tasks: { key: string; done: boolean }[]; next: string | null };
+  expect(mp).toMatchObject({ storyWeek: 2, tasks: [{ key: 'juggling', done: false }, { key: 'firstTouch', done: false }], next: 'juggling' });
+  if (process.env.CAPTURE_DIR) {
+    // Optional review captures: My Player top, then scrolled to the single back button.
+    const tag = `${page.viewportSize()?.width}x${page.viewportSize()?.height}`;
+    await page.screenshot({ path: `${process.env.CAPTURE_DIR}/my-player-week2-top-${tag}.png` });
+    await revealElement(page, 'my-player-back');
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: `${process.env.CAPTURE_DIR}/my-player-week2-bottom-${tag}.png` });
+  }
+  // Rankings from My Player reads the story career and returns to My Player.
+  await revealElement(page, 'my-player-rankings');
+  await pressAny(page, 'my-player-rankings', mode);
+  await scene(page, 'rankings', (g) => g.status === 'ready', 'rankings for the story career');
+  await pressAny(page, 'rank-back', mode);
+  await scene(page, 'myPlayer', (g) => g.status === 'ready', 'back from rankings');
+  await revealElement(page, 'my-player-start-next');
+  await pressAny(page, 'my-player-start-next', mode);
+  await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'library', 'career opened on the next task');
   const c = (await diagnostics(page)).gameplay as { week: number; player: string };
   expect(c).toMatchObject({ week: 2, player: 'Zoë' });
   expect(errors).toEqual([]);

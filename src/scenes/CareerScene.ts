@@ -111,18 +111,22 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   private returnTo: 'story' | null = null;
-  /** Story week when opened from the story home menu (week 5+ lists that week's required tasks). */
+  /** Story week when opened from the story home menu (week 2+ lists that week's required tasks). */
   private storyWeek: number | null = null;
 
-  create(data?: { open?: string; returnTo?: 'story'; week?: number }): void {
+  /** A required home task to open directly once the save has loaded (My Player's Start next session). */
+  private openTask: string | null = null;
+
+  create(data?: { open?: string; returnTo?: 'story'; week?: number; task?: string }): void {
+    this.openTask = typeof data?.task === 'string' ? data.task : null;
     this.returnTo = data?.returnTo === 'story' ? 'story' : null;
-    this.storyWeek = this.returnTo === 'story' && typeof data?.week === 'number' && data.week >= 5 ? data.week : null;
+    this.storyWeek = (this.returnTo === 'story' || typeof data?.task === 'string') && typeof data?.week === 'number' && data.week >= 2 ? data.week : null;
     this.navigating = false;
     this.reducedMotion = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.demoPaused = this.reducedMotion;
     this.demoSpeed = 1;
     this.demoMiss = false;
-    this.screen = data?.open === 'reviewHub' ? { kind: 'reviewHub' } : data?.open === 'team' ? { kind: 'team' } : { kind: 'home' };
+    this.screen = data?.open === 'reviewHub' ? { kind: 'reviewHub' } : data?.open === 'review' ? { kind: 'review' } : data?.open === 'team' ? { kind: 'team' } : { kind: 'home' };
     this.history = [];
     this.page = 0;
     this.textPage = 0;
@@ -159,6 +163,9 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       });
       this.toast = store.status.kind === 'ok' ? '' : store.status.reason;
       if (!this.save.player && this.screen.kind === 'home') this.screen = { kind: 'create' };
+      const task = this.openTask ? this.requiredTasks().find((t) => t.key === this.openTask && !t.done) : undefined;
+      if (this.save.player && task) this.screen = this.taskScreen(task);
+      this.openTask = null;
       this.render();
     });
   }
