@@ -431,7 +431,9 @@ export function reduce(save: CareerSave, action: Action): Outcome {
 /** This week's sources for the weekly settlement, read from the save only. */
 function settleSave(save: CareerSave, evidence: readonly AttributeOutcome[], recess: { readonly played: boolean } | null): WeekSettlement {
   const w = save.week;
-  const runs = save.tt12.filter((r) => r.week === w && r.credited);
+  // A week credited by the weekly All36 scenario settles from its own record, never from leftover A/B/C runs.
+  const weekly = save.all36.some((r) => r.week === w && r.credited);
+  const runs = weekly ? [] : save.tt12.filter((r) => r.week === w && r.credited);
   const tt = save.teamTraining.find((t) => t.week === w);
   const teamScore = runs.length ? runs.reduce((a, r) => a + r.score, 0) / runs.length : tt && tt.scores.length ? tt.scores.reduce((a, b) => a + b, 0) / tt.scores.length : null;
   // Points already given this week (evidence growth and graded Team Training) count against the weekly caps.

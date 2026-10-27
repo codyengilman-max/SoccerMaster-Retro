@@ -75,6 +75,9 @@ test('team training: one approved All36 scenario a week counts once (any answer)
   let wv = await weekly(page, (x) => x.screen === 'observe' && x.options.length === 4, 'observe');
   expect(wv.assignment).toMatchObject({ week: 1, category: 'FWD', variant: 'base' });
   for (const [name, rect] of Object.entries((await diagnostics(page)).layout!.elements)) if (name !== 'body') expectInside(name, rect, (await diagnostics(page)).layout!.viewport);
+  // The cues are fully readable above the answer buttons.
+  const ob = (await diagnostics(page)).gameplay as { bodyBottom: number; buttonsTop: number };
+  expect(ob.bodyBottom).toBeLessThanOrEqual(ob.buttonsTop);
   await page.screenshot({ path: info.outputPath(`team-weekly-observe-${info.project.name}.png`) });
   const wrong = wv.options.find((o) => o.grade === 'misread') ?? wv.options.find((o) => o.grade !== 'preferred')!;
   await pressAny(page, `opt-${wrong.id}`, mode);

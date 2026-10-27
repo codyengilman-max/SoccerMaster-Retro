@@ -148,6 +148,17 @@ describe('weekly All36 credit and saves', () => {
     expect(parseImport(exportSave(regraded)).ok).toBe(false);
   });
 
+  it('a week credited by the weekly scenario settles from its own score, not leftover A/B/C runs', () => {
+    const settle = (leftover: boolean) => {
+      let s = player('MID');
+      if (leftover) s = { ...s, tt12: [{ week: 1, slot: 'A', runId: 'old-a', score: 0, credited: true }] };
+      s = act(s, run(s, 'weekly-best', choiceWith(1, 'MID', 'preferred')));
+      return act(s, { type: 'endWeek' }).history.at(-1)!.settlement;
+    };
+    expect(settle(false)).toBeDefined();
+    expect(settle(true)).toEqual(settle(false));
+  });
+
   it('a week already counted by an older Team Training route stays practice only', () => {
     const s = player('MID');
     const legacy = { ...s, teamTraining: [{ week: 1, situations: [], scores: [1], delta: 0, changes: [], choiceMissed: 0 }] } as CareerSave;

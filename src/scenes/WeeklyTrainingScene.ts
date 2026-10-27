@@ -39,7 +39,8 @@ export function verdictLines(v: WeeklyVerdict): string[] {
 /**
  * Weekly Team Training (current release): one coach-approved All36 scenario. OBSERVE the approved scene and its
  * cues, DECIDE with A–D, then LEARN: answer, coach classification, display band, rationale and the better option.
- * Movement demonstrations wait for authored continuations; nothing is animated or invented here.
+ * Movement demonstrations wait for authored continuations; nothing is animated or invented here. Decisions are
+ * untimed in this release, so `no-decision` (choice null) is a stored state the reducer supports, not a screen path.
  */
 export class WeeklyTrainingScene extends Phaser.Scene implements InspectableScene, GameplayScene {
   private store: CareerStore | null = null;
@@ -291,21 +292,41 @@ export class WeeklyTrainingScene extends Phaser.Scene implements InspectableScen
             : [{ name: 'tt-replay', label: 'Play again (practice)', onClick: () => this.begin() }, { name: 'tt-done', label: 'Back to Team Training', onClick: () => this.leave() }];
         break;
     }
-    const btnH = 34;
-    const gap = 6;
-    const btnArea = acts.length * (btnH + gap);
-    this.g.fillStyle(0x14213d, 0.95).fillRoundedRect(P.x, P.y, P.width, P.height, 8);
+    // Fit the text above the buttons: shrink the font first, then put the answers in two columns.
+    const fits = (cols: number, btnH: number): boolean => {
+      const rows = Math.ceil(acts.length / cols);
+      const area = rows * (btnH + 6);
+      for (const size of [13, 12, 11]) {
+        this.body.setFontSize(size).setText(lines.join('\n'));
+        if (this.body.height <= P.height - area - 16) return true;
+      }
+      return false;
+    };
     this.body.setPosition(P.x + 8, P.y + 8).setWordWrapWidth(P.width - 16);
-    // Long rationale on a short screen: shrink the font until the text fits above the buttons.
-    for (const size of [13, 12, 11, 10]) {
-      this.body.setFontSize(size).setText(lines.join('\n'));
-      if (this.body.height <= P.height - btnArea - 16) break;
+    const plan = [[1, 34], [1, 30], [2, 34], [2, 30]].find(([c, h]) => fits(c!, h!)) ?? [2, 28];
+    if (plan[1] === 28) {
+      for (const size of [11, 10, 9]) {
+        this.body.setFontSize(size).setText(lines.join('\n'));
+        if (this.body.height <= P.height - Math.ceil(acts.length / 2) * 34 - 16) break;
+      }
     }
-    const key = `${this.screen}|${acts.map((a) => a.name).join(',')}|${P.x},${P.y},${P.width},${P.height}`;
+    const [cols, btnH] = plan as [number, number];
+    const gap = 6;
+    const rows = Math.ceil(acts.length / cols);
+    const btnArea = rows * (btnH + gap);
+    const bw = (P.width - 16 - gap * (cols - 1)) / cols;
+    this.g.fillStyle(0x14213d, 0.95).fillRoundedRect(P.x, P.y, P.width, P.height, 8);
+    const key = `${this.screen}|${acts.map((a) => a.name).join(',')}|${P.x},${P.y},${P.width},${P.height}|${cols},${btnH}`;
     if (key !== this.buttonKey) {
       for (const b of this.buttons) b.destroy();
       this.buttons = acts.map((a, i) => {
-        const b = new Button(this, P.x + P.width / 2, P.y + P.height - btnArea + i * (btnH + gap) + btnH / 2, { name: a.name, label: a.label, width: P.width - 16, height: btnH, fontSize: 12, onClick: a.onClick, fill: PALETTE.mustard, fillPressed: PALETTE.mustardDark });
+        // The last odd button (Leave / Back) spans the full width.
+        const full = cols > 1 && i === acts.length - 1 && acts.length % cols === 1;
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const w = full ? P.width - 16 : bw;
+        const x = full ? P.x + P.width / 2 : P.x + 8 + col * (bw + gap) + bw / 2;
+        const b = new Button(this, x, P.y + P.height - btnArea + row * (btnH + gap) + btnH / 2, { name: a.name, label: a.label, width: w, height: btnH, fontSize: 12, onClick: a.onClick, fill: PALETTE.mustard, fillPressed: PALETTE.mustardDark });
         this.add.existing(b);
         b.setDepth(20);
         return b;
