@@ -17,6 +17,9 @@ describe('home tasks: the story home menu and Home Training list the same requir
     expect(homeTasks(done).every((t) => t.done)).toBe(true);
     expect(done.complete).toBe(true);
   });
+  it('required home training starts in week 2: juggling and first touch, no home-sessions task yet', () => {
+    for (const wk of [2, 3, 4]) expect(homeTasks(weekAssignments(save([]), wk)).map((t) => t.key)).toEqual(['juggling', 'firstTouch']);
+  });
   it('week 6 adds home sessions; week 7 swaps first touch for passing', () => {
     expect(homeTasks(weekAssignments(save([]), 6)).map((t) => t.key)).toEqual(['juggling', 'firstTouch', 'learning']);
     expect(homeTasks(weekAssignments(save([]), 7)).map((t) => t.key)).toEqual(['juggling', 'passing', 'learning']);

@@ -1,7 +1,7 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { idealPower } from '../src/game/story/crossbar';
 import { thresholdsFor } from '../src/input';
-import { Finger, diagnostics, finishTeamTraining, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
+import { Finger, diagnostics, finishTeamTraining, pressElement as pressAny, revealElement, trackConsoleErrors, waitForScene } from './helpers';
 
 // Season One on one isolated save: identity -> prologue -> week one (aquarium, recess, Coach Code with the
 // real Team Training handoff) -> week close -> week 2, then reload. Later weeks: tests/season-story.test.ts.
@@ -228,8 +228,28 @@ test('Season One week one: identity, prologue, aquarium, recess, Team Training h
   expect(again.outcomes).toEqual(end.outcomes);
   await pressAny(page, 'story-menu', mode);
   await waitForScene(page, 'start');
-  await pressAny(page, 'career-button', mode);
-  await scene(page, 'career', (g) => g.status !== 'loading', 'career');
+  // My Player in career week 2: required home training (juggling first, then first touch) and Start next session opens juggling directly.
+  await pressAny(page, 'my-player-button', mode);
+  await scene(page, 'myPlayer', (g) => g.status === 'ready', 'my player');
+  const mp = (await diagnostics(page)).gameplay as { storyWeek: number; tasks: { key: string; done: boolean }[]; next: string | null };
+  expect(mp).toMatchObject({ storyWeek: 2, tasks: [{ key: 'juggling', done: false }, { key: 'firstTouch', done: false }], next: 'juggling' });
+  if (process.env.CAPTURE_DIR) {
+    // Optional review captures: My Player top, then scrolled to the single back button.
+    const tag = `${page.viewportSize()?.width}x${page.viewportSize()?.height}`;
+    await page.screenshot({ path: `${process.env.CAPTURE_DIR}/my-player-week2-top-${tag}.png` });
+    await revealElement(page, 'my-player-back');
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: `${process.env.CAPTURE_DIR}/my-player-week2-bottom-${tag}.png` });
+  }
+  // Rankings from My Player reads the story career and returns to My Player.
+  await revealElement(page, 'my-player-rankings');
+  await pressAny(page, 'my-player-rankings', mode);
+  await scene(page, 'rankings', (g) => g.status === 'ready', 'rankings for the story career');
+  await pressAny(page, 'rank-back', mode);
+  await scene(page, 'myPlayer', (g) => g.status === 'ready', 'back from rankings');
+  await revealElement(page, 'my-player-start-next');
+  await pressAny(page, 'my-player-start-next', mode);
+  await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'library', 'career opened on the next task');
   const c = (await diagnostics(page)).gameplay as { week: number; player: string };
   expect(c).toMatchObject({ week: 2, player: 'Zoë' });
   expect(errors).toEqual([]);

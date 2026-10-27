@@ -301,3 +301,10 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - The owner's text is authoritative for weeks 2–10; superseded scenes are deleted from the active story, not hidden. Old save positions map through `RETIRED_SCENES` to the next new scene of the same week; revision `v3` node IDs restart rewritten scenes in place.
 - Story handoffs only display or open existing systems (rankings, My Player, Home Training, saved tournament state). Where the game has no system (development target effects, workload, readiness, recovery, named rosters), the story records the choice and shows nothing invented.
 - Activity details may contain digits (`group_2`) so tournament finishes recorded by `bataviaFinish` pass the runtime check.
+
+## My Player: real components, required home training from Week 2 (2026-10-27)
+- My Player stops being drawn on the bedroom painting; the owner screenshot is a layout guide only. The selected boy/girl home art stays in the player card.
+- Required home training is read from Week 2 (`weekAssignments` already returns juggling + first touch for weeks 2–6). Career's story-week gate (`storyWeek`) now accepts Week 2+, and `task` opens a required task screen directly.
+- No resumable home-session draft is saved, so My Player never shows "Resume session"; adding one would need a new saved field and is left for a separate decision.
+- The screen scrolls with the camera (`scrollY`); diagnostics report hit rectangles after scroll, and e2e uses `revealElement` to wheel controls into view before pressing.
+

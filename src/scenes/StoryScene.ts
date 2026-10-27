@@ -20,7 +20,7 @@ import { type Background, type StoryNode } from '../game/story/content';
 import { attemptKey, commitLaunch, commitResolve, contestResult, CROSSBAR, describeShot, launchAttempt, newContest, nextSlot, opponentKick, points, resolveAttempt, restoreContest, simulateShot, type Contest, type KickInput, type Participant, type ShotOutcome } from '../game/story/crossbar';
 import { PRONOUNS, renderText, validateName, type Gender } from '../game/story/identity';
 import { SEASON_RELEASED_WEEKS, awaitingRelease, createSession, currentNode, evaluatePredicate, outcomeOf, type StoryCommand, type StoryOutcome, type StorySession, type StoryState } from '../game/story/runtime';
-import { StoryStore } from '../game/story/store';
+import { StoryStore, STORY_CAREER_ID } from '../game/story/store';
 import { pullFor, thresholdsFor, type Pull } from '../input';
 import { ballSprite, crossbarView, pointWord, goalGeometry, type CrossbarView } from '../render/crossbarView';
 import { orientationOf } from '../render/layout';
@@ -32,7 +32,7 @@ import { SPEAKER_ROLE } from '../render/art/catalog';
 import { StoryArt } from './storyArt';
 
 /** The career save has one slot ('main'); the story is keyed to it. */
-const CAREER_ID = 'main';
+const CAREER_ID = STORY_CAREER_ID;
 const POSITION_LABEL: Record<Position, string> = { DEF: 'Defender', MID: 'Midfielder', FWD: 'Forward' };
 const SPEAKER_COLOR: Record<string, number> = { System: PALETTE.ink, Jordan: PALETTE.blue, Blake: PALETTE.tomato, Caregiver: PALETTE.purple, Coach: PALETTE.mustardDark };
 const CAREER_ADAPTERS = ['training_arrangement', 'weekly_focus', 'practice', 'match', 'team_training', 'league_match', 'tournament_match'] as const;
@@ -464,7 +464,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private openMyPlayer(): void {
     if (!this.fresh()) return;
     this.navigating = true;
-    this.scene.start(SceneKeys.MyPlayer, { returnTo: 'story' });
+    this.scene.start(SceneKeys.MyPlayer, { returnTo: 'story', week: this.seasonWeekNo() ?? this.storyWeek() ?? undefined });
   }
 
   private openCloudy(): void {

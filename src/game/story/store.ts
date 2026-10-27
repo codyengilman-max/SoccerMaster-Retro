@@ -57,6 +57,9 @@ function touchesOldWeeks(raw: Record<string, unknown>): boolean {
 }
 
 /** Key of the archived pre-season story for a career (kept read-only, never deleted). */
+/** The single story career slot used by Story, My Player and Rankings. */
+export const STORY_CAREER_ID = 'main';
+
 export const legacyKey = (careerId: string): string => `legacy-story-${careerId}`;
 
 /**
