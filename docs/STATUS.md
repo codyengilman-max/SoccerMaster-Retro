@@ -1,5 +1,17 @@
 # Status
 
+## Season One weeks 2–10 owner rewrite (2026-10-27, branch `devin/1793077258-s1-weeks2-10`, from `main`, not merged, not deployed)
+- Weeks 2–10 replaced by the owner's authoritative scripts (`docs/story/season-one/src/02_week02.story` … `10_week10.story`, revision `v3`). Week 1 and the prologue are byte-identical (hashes pinned in `tests/story-weeks2-10.test.ts`). Weeks 11–18 keep their calendar positions and hold no scenes.
+- Released through week 10 (`SEASON_RELEASED_WEEKS = 10`). League Games 1–6 in weeks 3–8, the AZ Showcase (existing 8-team, two-group tournament) in week 9, League Game 7 in week 10. Tournament results never touch league points; the final plays only for a group winner.
+- New story handoffs on existing screens and saved data: `rankings`, `my_player`, `home_preview` (ticks nothing), `team_profile`, `dev_checkpoint`, `blake_transfer`, `tournament_group`, `tournament_report`. Choices record priorities only and award nothing.
+- Cloudy has no dialogue; the home menu is Training, Cloudy: Feed & Play (optional), Continue.
+- Blake has no line at week 8 training, plays League Game 6, then moves to Next Horizon once (`S1_W08_B`).
+- Saves in removed week 2–7 scenes continue at the next new scene of the same week (`RETIRED_SCENES`); rewritten scenes restart without paying training or home credit twice.
+- Fixed: a non-winning tournament finish (`group_2`…`group_4`) was rejected as an activity detail, which would have stopped week 9 for any team not winning its group.
+- Phone poses remapped to the scripted phone lines in weeks 2, 6, 7, 8 and 9; Mom beats remapped to the new week 2, 4 and 9 home scenes.
+- Gaps (no game system exists, nothing invented): development target is a recorded choice only; no workload/readiness/recovery; named rosters have no Blake, so his absence/transfer shows in the story only.
+- Phone emulation only, not tested on a real iPhone.
+
 ## Team Training learning loop (owner brief + mockup, branch `devin/1792950375-tt-learning-loop`, from `main` 56a6e0c, not merged, not deployed)
 - Mockup layout on the fixed half: TEAM TRAINING header (season, week, session, round, role, the route's real objective), Bell94/Scottsdale surround outside the lines, navy/gold Coach Code panel with his approved portrait, A–D choice buttons, Hint / Pause / Leave, and the OBSERVE › DECIDE › PLAY › LEARN footer. Portrait and landscape; the panel never covers the half.
 - No giveaway before choosing (no arrows, neutral labels, seeded order); hint recorded as assisted; LEARN overlay from the frozen moment; Replay never counts; next attempt varies. Details: `docs/training/v1.2/MAPPING.md`.
