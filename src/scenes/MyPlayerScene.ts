@@ -338,7 +338,10 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
       show.forEach((it, i) => {
         const [label, value] = this.rowText(it);
         const ry = cy + i * rh;
-        this.root.add(this.add.text(x + pad, ry + rh / 2, label, { fontFamily: FONT, fontSize: `${fs * 0.95}px`, color: INK }).setOrigin(0, 0.5));
+        const lt = this.add.text(x + pad, ry + rh / 2, label, { fontFamily: FONT, fontSize: `${fs * 0.95}px`, color: INK }).setOrigin(0, 0.5);
+        const room = inner * 0.34;
+        if (!this.expanded && lt.width > room) lt.setScale(room / lt.width);
+        this.root.add(lt);
         if (!('matchId' in it) && it.value !== null) this.bar(x + pad + inner * 0.36, ry + rh / 2 - fs * 0.5, inner * 0.46, fs, it.value / 100);
         this.root.add(this.add.text(x + w - pad, ry + rh / 2, value, { fontFamily: FONT, fontSize: `${fs * 0.95}px`, color: INK }).setOrigin(1, 0.5));
         if (this.expanded) this.hits.push({ name: `my-player-row-${i}`, rect: { x: x + pad, y: ry, width: inner, height: rh }, on: () => this.tapRow(i) });
