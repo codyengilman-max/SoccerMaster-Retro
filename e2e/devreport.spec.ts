@@ -4,7 +4,7 @@ import { diagnostics, expectInside, pressElement as pressAny, revealElement, tra
 test.describe.configure({ timeout: 240_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 type Ratio = { num: number; den: number; pct: number | null };
-type Report = { status: string; matchId: string; next: string; fullOpen: boolean; report: { matchId: string; week: number; score: { home: number; away: number }; stats: { passes: Ratio; shotsOnTarget: Ratio; groundPasses: Ratio; chips: Ratio } } | null };
+type Report = { status: string; matchId: string; next: string; fullOpen: boolean; report: { matchId: string; week: number; score: { home: number; away: number }; stats: { passes: Ratio; shotsOnTarget: Ratio; groundPasses: Ratio; chips: Ratio; unavailable: string[] }; contribution?: { version: number } } | null };
 type MyPlayer = { status: string; view: string; page: number; pages: number; rows: string[]; values: string[]; week: string[]; header: string; expanded?: boolean };
 
 async function pressElement(page: Page, name: string, mode: 'touch' | 'mouse'): Promise<void> {
@@ -91,6 +91,9 @@ test('full-time Match Report, My Player, Match History reopen without changing t
   const r = await gameplay<Report>(page, 'report', (g) => g.status !== 'loading', 'report load');
   expect(r.status).toBe('ready');
   expect(r.next).toBe('start');
+  // Newly recorded matches track assists and defensive points from the same finalized events.
+  expect(r.report!.contribution?.version).toBe(1);
+  expect(r.report!.stats.unavailable).not.toContain('Assists');
   const s = r.report!.stats;
   for (const x of [s.passes, s.shotsOnTarget, s.groundPasses]) {
     expect(x.num).toBeLessThanOrEqual(x.den);

@@ -2,8 +2,9 @@ import Phaser from 'phaser';
 import type { Rect } from '../game';
 import { ATTRIBUTE_EVIDENCE, CAREER_CONFIG } from '../game/career/config';
 import { CareerStore } from '../game/career/store';
+import { SPENDABLE, awardTitle, balance } from '../game/career/bonus';
 import type { CareerSave } from '../game/career/state';
-import { ATTRIBUTES, ATTRIBUTE_LABELS } from '../game/career/types';
+import { ATTRIBUTES, ATTRIBUTE_LABELS, type AttributeId } from '../game/career/types';
 import { NOT_TRACKED } from '../game/report/registry';
 import { homeTasks, weekAssignments, type HomeTask } from '../game/story/facts';
 import { StoryStore, STORY_CAREER_ID } from '../game/story/store';
@@ -206,6 +207,7 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
     const x2 = landscape ? x0 + colW + pad : x0;
     if (!landscape) col2 = col1;
     col2 = this.devCard(x2, col2, colW, fs, pad) + pad;
+    col2 = this.bonusCard(x2, col2, colW, fs, pad) + pad;
     col2 = this.secondary(x2, col2, colW, fs, pad) + pad;
     col2 = this.nav(x2, col2, colW, fs, pad);
     this.contentH = Math.max(col1, col2) + ins.bottom + pad;
@@ -354,6 +356,56 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
       }
       return this.button('my-player-attrs', x + pad, cy, inner, 44, this.expanded ? 'Hide details' : 'View all attributes  ›', fs * 0.95, CARD, () => ((this.expanded = !this.expanded), (this.detail = null), this.build()), '#2a56a8');
     });
+  }
+
+  private bonusNote: string | null = null;
+  private spending = false;
+
+  /** Bonus Attribute Points: earned from achievements, spent here on a permanent +1 (never past potential). */
+  private bonusCard(x: number, y: number, w: number, fs: number, pad: number): number {
+    const s = this.save;
+    if (!s?.player) return y - pad;
+    const pts = balance(s.bonus);
+    return this.card(x, y, w, pad, (cy) => {
+      const inner = w - pad * 2;
+      cy = this.text(x + pad, cy, `BONUS POINTS: ${pts}`, fs * 1.15, 0, true) + 4;
+      const recent = s.bonus.awards.slice(-3).reverse().map(awardTitle);
+      cy = this.text(x + pad, cy, recent.length ? `Earned: ${recent.join(', ')}${s.bonus.awards.length > 3 ? ` (+${s.bonus.awards.length - 3} more)` : ''}` : 'Earn points: Hat Trick, Playmaker, Ball Winner, Cloudy Champion, Training Perfection.', fs * 0.85, 0, false, INK, inner) + 6;
+      if (this.bonusNote) cy = this.text(x + pad, cy, this.bonusNote, fs * 0.85, 0, true, INK, inner) + 6;
+      if (pts < 1) return cy;
+      const bw = (inner - pad * 0.5) / 2;
+      const bh = Math.max(44, fs * 2.3);
+      SPENDABLE.forEach((a, i) => {
+        const p = s.player!;
+        const full = p.attributes[a] + 1 > p.potential[a];
+        const bx = x + pad + (i % 2) * (bw + pad * 0.5);
+        const by = cy + Math.floor(i / 2) * (bh + 6);
+        this.button(`my-player-spend-${a}`, bx, by, bw, bh, full ? `${ATTRIBUTE_LABELS[a]} (max)` : `+1 ${ATTRIBUTE_LABELS[a]}`, fs * 0.85, full ? CARD : BLUE, () => void this.spend(a), full ? INK : '#ffffff');
+      });
+      return cy + Math.ceil(SPENDABLE.length / 2) * (bh + 6);
+    });
+  }
+
+  private async spend(attribute: AttributeId): Promise<void> {
+    const p = this.save?.player;
+    if (this.spending || !p) return;
+    if (p.attributes[attribute] + 1 > p.potential[attribute]) {
+      this.bonusNote = `${ATTRIBUTE_LABELS[attribute]} is at its potential (${p.potential[attribute]}). Your point is still saved.`;
+      this.build();
+      return;
+    }
+    this.spending = true;
+    const store = await CareerStore.open();
+    try {
+      const r = await store.dispatch({ type: 'bonusSpend', id: `spend-${Date.now()}-${Math.floor(Math.random() * 1e6)}`, attribute });
+      if (!this.sys.isActive()) return;
+      if (r.ok) this.save = r.save;
+      this.bonusNote = r.ok ? `${r.message} ${ATTRIBUTE_LABELS[attribute]} is now ${r.save.player!.attributes[attribute]}.` : r.error;
+      this.build();
+    } finally {
+      this.spending = false;
+      store.close();
+    }
   }
 
   private secondary(x: number, y: number, w: number, fs: number, pad: number): number {
