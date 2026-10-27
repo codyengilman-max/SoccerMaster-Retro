@@ -30,7 +30,7 @@ Staged plan. One milestone at a time; each ends with verified checks and an upda
 - 4–6 contextual pauses per standard match triggered from simulation state.
 - Tactical choices change real play (positions, runs, pressing) rather than awarding automatic goals.
 - One weekly learning focus that shapes which situations trigger pauses.
-- **Status:** Coach Moments run in timed matches but only with the dev flag `?coach`; story matches do not show them. Owner decision H3 makes 4–6 live-state moments per story match, with grading bands and Decision Heat, the next match PR (PR C in `docs/REMEDIATION_PLAN.md`).
+- **Status:** Coach Moments run in timed matches but only with the dev flag `?coach`; story matches do not show them. **Owner decision H3 retires in-match Coach Moments from the product:** story matches stay uninterrupted, `?coach` is deprecated and dev-only, and tactical teaching moves to Team Training (PR C in `docs/REMEDIATION_PLAN.md`, coach-approved All36 package). The goals above are kept as history.
 
 ## M6 — Individual RPG growth ✅ (in review)
 Implemented as home training + game-evidence progression; see `docs/TRAINING.md`.
@@ -46,6 +46,6 @@ Out of scope unless decided later: accounts, payments, multiplayer, external tel
 
 ## Next (owner decisions H1–H8, 2026-10-27)
 Focused PRs in order; details, files and acceptance in [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md):
-A docs reconciliation · B classic vs v0.5 comparison · C story-match Coach Moments · D Team Training vertical slice · E standing tackle + quick shot · F rest defence + golden moments · G regression/stability · H real-iPhone verification · I Tournament Results Screen (from #37) · J Animated Rosters v2 (from #37).
+A docs reconciliation + All36 inventory · B classic vs v0.5 comparison (≥50 seeds) · C coach-approved All36 Team Training integration · D standing tackle + quick shot · E rest defence + golden-moment highlights · F regression/stability (Chromium, WebKit, desktop, local + deployed journey) · G real-iPhone verification by a person · H Tournament Results Screen (from #37) · I Animated Rosters v2 (from #37).
 
-Not planned: match-long position lock (H1). Deferred: chips, lofted shots, extra controls (H6).
+Not planned: match-long position lock (H1); story-match Coach Moments, in-match tactical questions, Decision Heat in matches (H3). Deferred: chips, lofted shots, extra controls (H6).

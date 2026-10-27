@@ -7,14 +7,14 @@ Sections below are a history log, newest first; each header records where that w
 | State | Features |
 |---|---|
 | **Shipped** (reachable from Story, live) | Season One story Weeks 1–10 (boy/girl, name, position); League Games 1–7; AZ Showcase (Week 9, strength only); timed 9v9 match with the canonical 18; referee: out of play, restarts, slide-tackle fouls, offside incl. saves/deflections; shared team shape; joystick + PASS/SHOOT/SLIDE TACKLE/BLOCK; FIFA-style automatic switching (intended, H1); home training + weekly juggling; My Player; Rankings, standings and team profiles; Match Report and history; Cloudy and Jungle Ball; Crossbar; IndexedDB saves with migration and exactly-once results |
-| **Dev-only** (URL flag) | Coach Moments `?coach`; tactics v0.5 `?tactics=v05` (candidate, H2); gesture controls and their double-tap quick shot `?controls=gesture`; Lab/Review `?dev`, `?lab`; Team Training proposals `?debug&ttProposals` |
-| **Blocked** (fail-closed by design) | Team Training scoring: Audited v1.2 library, 48 cards, 0 approved, `SESSION_CARDS` empty, 972 routes "not counted"; the story continues without credit |
-| **Proposed** (owner-approved, not built) | Story-match Coach Moments with grading bands and Decision Heat (H3, PR C); standing tackle replacing BLOCK and pad double-tap quick shot (H6, PR E); rest defence and golden moments (H7, PR F); Team Training vertical slice (PR D) |
+| **Dev-only** (URL flag) | Coach Moments `?coach` (deprecated, H3; never in story matches); tactics v0.5 `?tactics=v05` (candidate, H2); gesture controls and their double-tap quick shot `?controls=gesture`; Lab/Review `?dev`, `?lab`; Team Training proposals `?debug&ttProposals` |
+| **Blocked** (fail-closed by design) | Team Training scoring: `SESSION_CARDS` empty, all 972 routes "not counted"; the story continues without credit. Coach-approved All36 package (36 situations, outfield only) inventoried, not imported: `docs/training/all36/INVENTORY.md`, PR C. Audited v1.2 (48 cards, 0 approved) is superseded for scoring |
+| **Proposed** (owner-approved, not built) | All36 Team Training integration (PR C); standing tackle replacing BLOCK and pad double-tap quick shot (H6, PR D); rest defence and golden-moment highlights (H7, PR E) |
 | **Deferred** | Chips, lofted shots, extra passing/defensive controls (H6); Weeks 11–18 content; school rewards (`SCHOOL_REWARD_RULE = null`) |
-| **Not planned** | Match-long position lock (H1) |
-| **Unmerged reference** | PR #37 (Tournament Results Screen, Animated Rosters v2) kept for extraction (H4, PRs I/J) |
+| **Not planned** | Match-long position lock (H1); story-match Coach Moments, in-match tactical questions, Decision Heat in matches, tactical-choice Match Report scoring (H3) |
+| **Unmerged reference** | PR #37 (Tournament Results Screen, Animated Rosters v2) kept for extraction (H4, PRs H/I) |
 
-Verification: Chromium phone emulation and desktop only. Not yet verified on a real iPhone (PR H).
+Verification: Chromium phone emulation and desktop only. Not yet verified on a real iPhone (PR G).
 
 ## Team Training: source review gate (Tactical Library v1, PR #49, in `main` 04e947b (PR #49), live)
 

@@ -1,6 +1,6 @@
 # Vision
 
-> **Status:** this page describes the product direction. Much of it is now shipped (9v9 matches, formations, story weeks 1–10, RPG growth, league and tournament). The 4–6 tactical pauses exist only behind `?coach` and are planned for story matches under owner decision H3. See [STATUS.md](STATUS.md) for what is shipped, dev-only, blocked, deferred and proposed, and [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md) for the next PRs.
+> **Status:** this page describes the product direction. Much of it is now shipped (9v9 matches, formations, story weeks 1–10, RPG growth, league and tournament). The 4–6 in-match tactical pauses below are **superseded by owner decision H3**: story matches stay uninterrupted, the `?coach` prototype is deprecated and dev-only, and tactical questions, grading and explanations live in Team Training (coach-approved All36 package). See [STATUS.md](STATUS.md) for what is shipped, dev-only, blocked, deferred and proposed, and [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md) for the next PRs.
 
 ## Product
 

@@ -44,5 +44,5 @@ Rules:
 
 `validateCatalog()` runs at load time (`assertValidCatalog`), and `tests/coachTemplates.test.ts` checks every template in an eligible state, an ineligible state and a counterexample. No runtime AI or network calls are used.
 
-## Planned (owner decision H3)
-Story matches get 4–6 moments without `?coach`, grading bands Elite/Strong/Playable/Low-value/Forced, decision separate from execution and outcome, and Decision Heat 0–100. Spec: [specs/RETRO_DECISION_MODEL.md](specs/RETRO_DECISION_MODEL.md).
+## Deprecated (owner decision H3, 2026-10-27)
+Coach Moments are **not** part of the story-match product. Story matches stay uninterrupted: no pauses, answer menus, Decision Heat or tactical grades in Match Reports, and `?coach` is never enabled for ordinary players. This module stays as a dev-only prototype; removing the unused code is a later cleanup task and is not done in Phase One. Tactical questions, grading and explanations belong in Team Training: [specs/RETRO_DECISION_MODEL.md](specs/RETRO_DECISION_MODEL.md).

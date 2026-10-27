@@ -1,6 +1,6 @@
 # Rest defence and golden moments (specification, not implemented)
 
-Owner decision H7 (2026-10-27). Status: **required, specification only**. Implementation is PR F in [REMEDIATION_PLAN.md](../REMEDIATION_PLAN.md). Numbers marked *proposed* need owner approval; all distances are pitch yards on the 75 × 50 U11 pitch used by `MatchSim`.
+Owner decision H7 (2026-10-27). Status: **required, specification only**. Implementation is PR E in [REMEDIATION_PLAN.md](../REMEDIATION_PLAN.md). Numbers marked *proposed* need owner approval; all distances are pitch yards on the 75 × 50 U11 pitch used by `MatchSim`.
 
 ## Rest defence
 
@@ -24,8 +24,8 @@ Acceptance: seeded sweeps report the share of attacking ticks that meet each rul
 Every match should contain at least one authentic high-leverage moment: a goal chance, an assist chance, a breakaway, a major save, a last-player tackle, a critical recovery or a match-changing defensive stop.
 
 - The Match Director **detects** these from the live sim (e.g. shot xG above a threshold, attacker through on goal with no defender goal-side, last defender tackle, keeper save on a high-value shot).
-- It may mark or replay the moment and may offer it as a Coach Moment.
-- It must not force a goal or turnover, teleport, create an illegal state, predetermine success, or change the result.
-- If nothing qualifies by full time, it presents the strongest authentic high-leverage moment the sim produced (highest leverage score), labelled honestly.
+- Golden moments are **highlights, not tactical questions** (H3). The Director may only mark, list or replay a moment after it has happened.
+- It must not force a goal or turnover, move or teleport players, change possession, redirect a pass, delay or cancel a goal, manufacture a defensive mistake, override the referee, change the score, or change the canonical event ledger.
+- If nothing qualifies by full time, it highlights the strongest authentic high-leverage event the sim produced (highest leverage score), labelled honestly.
 
-Acceptance: a deterministic sweep over N seeds shows ≥1 golden moment per match; the same seed with and without the Director gives the same score and event ledger.
+Acceptance: a deterministic sweep over N seeds shows ≥1 golden moment per match; the same seed with highlighting enabled and disabled gives identical scores and canonical event ledgers (hash-compared).
