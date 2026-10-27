@@ -91,8 +91,8 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
   // Owner weeks 1–2 are long (~175 lines in week one alone, each revealed then advanced).
   for (let i = 0; i < 1500; i++) {
     const s = await story(page, () => true, 'story');
-    // Week one ends at the callback; the story now continues into the weeks 2–4 draft (covered by unit tests).
-    if (s.complete || s.scene === 'S1_W02_M') return s;
+    // Week one ends at the callback; the story then continues into the owner's weeks 2–10 (covered by unit tests).
+    if (s.complete || s.scene === 'S1_W02_T') return s;
     if (s.scene === 'W2_SCHOOL_CALLBACK') return story(page, (x) => `${x.text}\n${x.hint ?? ''}`.includes('Match:'), 'week one recap');
     if (s.mode === 'crossbar') {
       if (s.crossbar?.ready) {
@@ -216,7 +216,7 @@ test('Season One week one: identity, prologue, aquarium, recess, Team Training h
   expect(first).toMatchObject({ scene: 'S1_PRO_IDENTITY', complete: false });
 
   const end = await playWeek(page, mode, finger);
-  expect(end.scene).toBe('S1_W02_M');
+  expect(end.scene).toBe('S1_W02_T');
   expect(end.player).toEqual({ name: 'Zoë', gender: 'girl' });
   const by = (id: string) => end.outcomes.find((o) => o.scene === id);
   for (const id of ['S1_PRO_IDENTITY', 'S1_W01_S', 'S1_W01_C', 'S1_W01_E']) expect(by(id), id).toMatchObject({ state: 'resolved', outcome: 'completed' });
@@ -224,7 +224,7 @@ test('Season One week one: identity, prologue, aquarium, recess, Team Training h
 
   // Reload: cursor, outcomes and identity persist; the career is in week 2 with week 1's Team Training counted once.
   const again = await openStory(page, mode);
-  expect(again).toMatchObject({ scene: 'S1_W02_M', complete: false, revision: end.revision, player: end.player });
+  expect(again).toMatchObject({ scene: 'S1_W02_T', complete: false, revision: end.revision, player: end.player });
   expect(again.outcomes).toEqual(end.outcomes);
   await pressAny(page, 'story-menu', mode);
   await waitForScene(page, 'start');

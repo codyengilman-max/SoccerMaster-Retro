@@ -252,7 +252,7 @@ export function reduceStory(s: StoryState, c: StoryCommand): StoryOutcome {
       const result = needsResult ? (c.result ?? null) : null;
       if (needsResult && (result === null || !['WIN', 'DRAW', 'LOSS'].includes(result))) return fail(`${node.adapter} completion needs a result`);
       const detail = c.outcome === 'completed' && typeof c.detail === 'string' ? c.detail : null;
-      if (detail !== null && !/^[a-z_]{1,32}$/.test(detail)) return fail('bad activity detail');
+      if (detail !== null && !/^[a-z0-9_]{1,32}$/.test(detail)) return fail('bad activity detail');
       const resolved: ActivityRun = s.contentVersion === SEASON_ONE.version ? { ...run, state: 'resolved', outcome: c.outcome, result, detail } : { ...run, state: 'resolved', outcome: c.outcome, result };
       return done(goTo({ ...s, runs: { ...s.runs, [key]: resolved } }, target, s.lastSeq));
     }

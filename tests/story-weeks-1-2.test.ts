@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { StoryStore, parseStoryState } from '../src/game/story/store';
 import { SEASON_ONE, crossbarRules, sceneById, trainingDetail } from '../src/game/story/content';
 import { contestResult, idealPower, launchAttempt, newContest, nextSlot, resolveAttempt, type Contest, type Participant } from '../src/game/story/crossbar';
-import { SEASON_RELEASED_WEEKS, awaitingRelease, currentNode, migrateStory, setReleasedWeeks, newSeasonStory, outcomeOf, reduceStory, type StoryCommand, type StoryState } from '../src/game/story/runtime';
+import { SEASON_RELEASED_WEEKS, awaitingRelease, currentNode, migrateStory, setReleasedWeeks, newSeasonStory, reduceStory, type StoryCommand, type StoryState } from '../src/game/story/runtime';
 import { slotIds } from '../src/game/season/calendar';
 
 // Owner rewrite of Season One weeks 1-2 (2026-10-20): Sam's park Crossbar, Code's first session,
@@ -36,12 +36,12 @@ function play(plan: Plan, stop: string | null = null) {
       if (!r.ok && /declined/.test(r.error)) { s = step(s, { type: 'decline', seq: ++seq }); continue; }
       if (!r.ok) throw new Error(`${s.sceneId}: ${r.error}`);
       s = r.state;
-      const result = ['crossbar', 'jungle', 'league_match'].includes(n.adapter) ? plan.crossbar?.[s.sceneId] ?? 'WIN' : null;
+      const result = ['crossbar', 'jungle', 'league_match', 'tournament_match'].includes(n.adapter) ? plan.crossbar?.[s.sceneId] ?? 'WIN' : null;
       const detail = n.adapter === 'team_training' ? plan.training?.[s.sceneId] ?? null : n.adapter === 'home_learning' ? 'completed' : n.adapter === 'training_log' ? 'within' : n.adapter === 'school_reward' ? 'unconfigured' : null;
       s = step(s, { type: 'complete', runId, outcome: 'completed', result, detail });
     } else if (n.type === 'end') s = step(s, { type: 'advance', seq: ++seq });
   }
-  expect(stop === null ? [s.sceneId, s.complete] : s.sceneId).toEqual(stop === null ? ['S1_W07_E', true] : stop);
+  expect(stop === null ? [s.sceneId, s.complete] : s.sceneId).toEqual(stop === null ? ['S1_W10_E', true] : stop);
   return { s, text: text.join('\n') };
 }
 
@@ -62,8 +62,9 @@ describe('Season One weeks 1-2 rewrite', () => {
   it('week 1 carries the Mom talk and week 2 has none; every slot exists', () => {
     expect(slotIds(1)).toContain('S1_W01_P');
     expect(slotIds(2).some((x) => x.endsWith('_P'))).toBe(false);
-    for (const w of [1, 2]) for (const id of slotIds(w)) expect(sceneById(id), id).toBeDefined();
-    expect(SEASON_ONE.order.slice(0, 15)).toEqual(['S1_PRO_IDENTITY', 'S1_PRO_DEPART', 'S1_PRO_ARRIVE', 'S1_PRO_ROOM', 'S1_W01_M', 'S1_W01_S', 'S1_W01_C', 'S1_W01_F', 'S1_W01_P', 'S1_W01_E', 'S1_W02_M', 'S1_W02_S', 'S1_W02_S2', 'S1_W02_C', 'S1_W02_F']);
+    expect(SEASON_ONE.order.filter((id) => id.startsWith('S1_W02_'))).toEqual(['S1_W02_T', 'S1_W02_H', 'S1_W02_E']);
+    for (const id of slotIds(1)) expect(sceneById(id), id).toBeDefined();
+    expect(SEASON_ONE.order.slice(0, 10)).toEqual(['S1_PRO_IDENTITY', 'S1_PRO_DEPART', 'S1_PRO_ARRIVE', 'S1_PRO_ROOM', 'S1_W01_M', 'S1_W01_S', 'S1_W01_C', 'S1_W01_F', 'S1_W01_P', 'S1_W01_E']);
     expect(sceneById('S1_W02_P')).toBeUndefined();
   });
 
@@ -83,47 +84,27 @@ describe('Season One weeks 1-2 rewrite', () => {
     expect(contestResult(contest(false, [true, true, false], [false, false, false]))).toBe('WIN');
   });
 
-  it('the real crossbar result drives Sam, Cloudy, Blake and the board', () => {
-    const lost = play({ crossbar: { S1_W01_S: 'LOSS', S1_W02_S: 'DRAW' } }).text;
+  it('the real week 1 crossbar result drives Sam and Cloudy', () => {
+    const lost = play({ crossbar: { S1_W01_S: 'LOSS' } }).text;
     expect(lost).toContain('thank the crossbar for finally cooperating');
     expect(lost).toContain('Sam beat me at crossbar');
-    expect(lost).toContain('The tie stays a tie');
-    expect(lost).toContain('NEW KID: STILL UNDER REVIEW');
-    const won = play({ crossbar: { S1_W01_S: 'WIN', S1_W02_S: 'LOSS' } }).text;
+    const won = play({ crossbar: { S1_W01_S: 'WIN' } }).text;
     expect(won).toContain('third-best crossbar player in my house');
-    expect(won).toContain('{crossbar.score}. WELCOME TO ARIZONA.');
-    expect(won).toContain('He beat me at crossbar');
-  });
-
-  it('refusing Blake is remembered as a refusal, never as a loss', () => {
-    const { s, text } = play({ picks: { 'S1_W02_S.audience': 'refuse' }, crossbar: { S1_W02_S: 'WIN' } });
-    expect(s.decisions.S1_W02_S?.audience).toBe('refuse');
-    expect(s.decisions.S1_W02_S?.warmup).toBeUndefined();
-    expect(outcomeOf(s, 'S1_W02_S')).toMatchObject({ outcome: 'declined' });
-    expect(Object.values(s.runs).find((r) => r.sceneId === 'S1_W02_S')?.result ?? null).toBeNull();
-    expect(text).toContain('TRYOUT CANCELLED');
-    expect(text).toContain("I didn't even play his crossbar thing");
-    expect(text).not.toContain('Long way to move just to miss that');
   });
 
   it("Code's reply follows the real Team Training grade", () => {
     expect([2, 1, 0, -1].map(trainingDetail)).toEqual(['strong', 'steady', 'struggled', 'struggled']);
-    const good = play({ training: { S1_W01_C: 'strong', S1_W02_C: 'strong' } }).text;
+    const good = play({ training: { S1_W01_C: 'strong' } }).text;
     expect(good).toContain('notice when the easy option closes');
-    expect(good).toContain('That movement gave your teammate a choice');
-    expect(good).toContain('the defender came with me, and Alex had another pass');
-    const hard = play({ training: { S1_W01_C: 'struggled', S1_W02_C: 'struggled' } }).text;
+    const hard = play({ training: { S1_W01_C: 'struggled' } }).text;
     expect(hard).toContain('trying to fix three things at once');
-    expect(hard).toContain('find the defender first');
-    expect(hard).toContain('instead of looking at the defender');
   });
 
-  it('remembers the phone, invitation, Mom support and closing intentions', () => {
-    const { s } = play({ picks: { 'S1_PRO_DEPART.phone': 'photo', 'S1_W01_S.invite': 'ask_mom', 'S1_W01_P.support': 'minute', 'S1_W02_F.intention': 'make_place' } });
+  it('remembers the phone, invitation and Mom support', () => {
+    const { s } = play({ picks: { 'S1_PRO_DEPART.phone': 'photo', 'S1_W01_S.invite': 'ask_mom', 'S1_W01_P.support': 'minute' } });
     expect(s.decisions.S1_PRO_DEPART?.phone).toBe('photo');
     expect(s.decisions.S1_W01_S?.invite).toBe('ask_mom');
     expect(s.decisions.S1_W01_P?.support).toBe('minute');
-    expect(s.decisions.S1_W02_F?.intention).toBe('make_place');
   });
 
   it('a save resting on old text restarts only that scene; the retired week 2 parent scene continues to the weekend', () => {
@@ -148,8 +129,12 @@ describe('Season One weeks 1-2 rewrite', () => {
     expect(parent.ok && parent.value.sceneId).toBe('S1_W02_E');
     expect(parseStoryState({ ...s, sceneId: 'S1_NOPE', nodeId: 'n1' }).ok).toBe(false);
     // Unknown positions outside the rewrite are not silently restarted.
-    expect(parseStoryState({ ...s, sceneId: 'S1_W03_M', nodeId: 'unknown_node' }).ok).toBe(false);
-    expect(parseStoryState({ ...s, sceneId: 'S1_W03_M', nodeId: 'n999' }).ok).toBe(false);
+    expect(parseStoryState({ ...s, sceneId: 'S1_W03_S', nodeId: 'unknown_node' }).ok).toBe(false);
+    // A week 2–10 scene rewritten by the owner (revision v3) restarts; its retired siblings continue in the same week.
+    const w3 = parseStoryState({ ...s, sceneId: 'S1_W03_S', nodeId: 'v2n999' });
+    expect(w3.ok && [w3.value.sceneId, w3.value.nodeId]).toEqual(['S1_W03_S', sceneById('S1_W03_S')!.entry]);
+    const gone = parseStoryState({ ...s, sceneId: 'S1_W03_M', nodeId: 'v2n4' });
+    expect(gone.ok && gone.value.sceneId).toBe('S1_W03_S');
     expect(parseStoryState({ ...s, nodeId: 'unknown_node' }).ok).toBe(false);
     for (const raw of [oldNode, { ...s, sceneId: 'S1_W02_P', nodeId: 'n4' }]) {
       const f = new IDBFactory();
@@ -176,18 +161,18 @@ describe('Season One weeks 1-2 rewrite', () => {
   });
 });
 
-describe('Season One stops after the approved weeks 1–4 (owner directive, 2026-10-20)', () => {
-  it('the story ends at the week 7 close and never launches an empty week', () => {
+describe('Season One stops after the released weeks 1–10 (owner rewrite, 2026-10-27)', () => {
+  it('the story ends at the week 10 close and never launches an empty week', () => {
     const { s } = play({});
-    expect(s.complete && s.sceneId).toBe('S1_W07_E');
+    expect(s.complete && s.sceneId).toBe('S1_W10_E');
     expect(awaitingRelease(s)).toBe(true);
     expect(migrateStory(s)).toBe(s);
     setReleasedWeeks(99);
     try { expect(migrateStory(s)).toEqual(s); } finally { setReleasedWeeks(SEASON_RELEASED_WEEKS); }
   });
 
-  it('weeks 8–18 and the epilogue hold no scenes', () => {
-    for (let w = 8; w <= 18; w++) expect(SEASON_ONE.order.some((id) => id.startsWith(`S1_W${String(w).padStart(2, '0')}_`))).toBe(false);
+  it('weeks 11–18 and the epilogue hold no scenes', () => {
+    for (let w = 11; w <= 18; w++) expect(SEASON_ONE.order.some((id) => id.startsWith(`S1_W${String(w).padStart(2, '0')}_`))).toBe(false);
     expect(SEASON_ONE.order.some((id) => id.startsWith('S1_END'))).toBe(false);
   });
 });

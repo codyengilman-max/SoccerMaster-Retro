@@ -7,7 +7,7 @@ describe('phone poses (owner "five main characters on their phones")', () => {
   it('every moment matches exactly one scripted line, and only lines that show a phone', () => {
     expect(phoneMomentNodes().size).toBe(PHONE_MOMENTS.length);
     for (const m of PHONE_MOMENTS) expect(m.show.length, m.text).toBeLessThanOrEqual(3);
-    for (const m of PHONE_MOMENTS) expect(['S1_W06_H', 'S1_W06_G', 'S1_W07_M', 'S1_W07_G']).toContain(m.scene);
+    for (const m of PHONE_MOMENTS) expect(['S1_W02_T', 'S1_W06_T', 'S1_W07_M', 'S1_W08_T', 'S1_W09_M']).toContain(m.scene);
   });
 
   it('one matching pose per character; no sheet, no invented characters', () => {
@@ -27,7 +27,7 @@ describe('phone poses (owner "five main characters on their phones")', () => {
 
   for (const look of ['boy', 'girl'] as const) {
     it(`${look}: phone-only characters join the cast with their own pose, never duplicated, never on other lines`, () => {
-      for (const scene of ['S1_W06_H', 'S1_W06_G', 'S1_W07_M', 'S1_W07_G']) {
+      for (const scene of ['S1_W02_T', 'S1_W06_T', 'S1_W07_M', 'S1_W08_T', 'S1_W09_M']) {
         const v = sceneVisual(scene, look)!;
         const roles = v.cast.map((c) => c.role);
         expect(new Set(roles).size, scene).toBe(roles.length);
@@ -37,8 +37,8 @@ describe('phone poses (owner "five main characters on their phones")', () => {
         for (const e of v.embeddedCharacters ?? []) expect(roles).not.toContain(e);
       }
       // Lines that are not phone moments have no staging (normal cast rules apply).
-      const other = sceneById('S1_W06_H')!.nodes.find((n) => n.type === 'line' && (n as { speaker?: string }).speaker === 'Cloudy')!;
-      expect(phoneStage('S1_W06_H', other.id)).toBe(null);
+      const other = sceneById('S1_W06_T')!.nodes.find((n) => n.type === 'line' && (n as { speaker?: string }).speaker === 'Coach Code')!;
+      expect(phoneStage('S1_W06_T', other.id)).toBe(null);
       expect(phoneStage('S1_W05_H', other.id)).toBe(null);
     });
   }

@@ -24,7 +24,7 @@ function play(s: StoryState, opts: { pick?: (scene: string, node: string, ids: s
         if (!r.ok) throw new Error(r.error);
         s = r.state;
         const outcome = opts.outcome?.(s.sceneId, n.id) ?? 'completed';
-        s = step(s, { type: 'complete', runId: r.runId!, outcome, result: ['crossbar', 'jungle', 'league_match'].includes(n.adapter) && outcome === 'completed' ? 'DRAW' : null });
+        s = step(s, { type: 'complete', runId: r.runId!, outcome, result: ['crossbar', 'jungle', 'league_match', 'tournament_match'].includes(n.adapter) && outcome === 'completed' ? 'DRAW' : null });
       }
     }
   }
@@ -32,30 +32,37 @@ function play(s: StoryState, opts: { pick?: (scene: string, node: string, ids: s
 }
 
 describe('story runtime', () => {
-  it('plays the approved weeks 1–7 once in order and stops at the week 7 close', () => {
+  it('plays the released weeks 1–10 once in order and stops at the week 10 close', () => {
     const s = play(newStory('c1'));
     expect(s.complete).toBe(true);
-    expect(s.completedScenes.at(-1)).toBe('S1_W07_E');
+    expect(s.completedScenes.at(-1)).toBe('S1_W10_E');
     expect(new Set(s.completedScenes).size).toBe(s.completedScenes.length);
     expect(outcomeOf(s, 'S1_W01_S')).toMatchObject({ outcome: 'completed', result: 'DRAW' });
     expect(reduceStory(s, { type: 'advance', revision: s.revision, seq: ++seq }).ok).toBe(false);
   });
   it('declining Jungle Ball in week 3 records DECLINED once with no result', () => {
-    const s = play(newStory('c2'), { outcome: (sc) => (sc === 'S1_W03_S' ? 'declined' : 'completed'), stopAt: 'S1_W03_S2' });
+    const s = play(newStory('c2'), { outcome: (sc) => (sc === 'S1_W03_S' ? 'declined' : 'completed'), stopAt: 'S1_W03_T' });
     expect(outcomeOf(s, 'S1_W03_S')).toMatchObject({ outcome: 'declined', result: null });
   });
   it('rejects forged, stale, duplicate and same-gesture choices without writing', () => {
-    let s = play(newStory('c3'), { stopAt: 'S1_W03_M' });
-    while (currentNode(s)!.type !== 'choice') s = step(s, { type: 'advance', seq: ++seq });
+    let s = play(newStory('c3'), { stopAt: 'S1_W02_T' });
+    let rid = 500;
+    while (currentNode(s)!.type !== 'choice') {
+      const n = currentNode(s)!;
+      if (n.type !== 'activity_handoff') { s = step(s, { type: 'advance', seq: ++seq }); continue; }
+      const r = reduceStory(s, { type: 'launch', revision: s.revision, runId: uuid(++rid) });
+      if (!r.ok) throw new Error(r.error);
+      s = step(r.state, { type: 'complete', runId: r.runId!, outcome: 'completed', result: null });
+    }
     const before = s;
     expect(reduceStory(s, { type: 'choose', revision: s.revision, seq: ++seq, choiceId: 'win_everything' })).toEqual({ ok: false, error: 'invalid choice' });
-    expect(reduceStory(s, { type: 'choose', revision: s.revision - 1, seq: ++seq, choiceId: 'meet' })).toEqual({ ok: false, error: 'stale revision' });
-    expect(reduceStory(s, { type: 'choose', revision: s.revision, seq: s.openedBy, choiceId: 'meet' })).toEqual({ ok: false, error: 'stale input' });
+    expect(reduceStory(s, { type: 'choose', revision: s.revision - 1, seq: ++seq, choiceId: 'first_touch' })).toEqual({ ok: false, error: 'stale revision' });
+    expect(reduceStory(s, { type: 'choose', revision: s.revision, seq: s.openedBy, choiceId: 'first_touch' })).toEqual({ ok: false, error: 'stale input' });
     expect(s).toBe(before);
-    const a = step(s, { type: 'choose', seq: ++seq, choiceId: 'meet' });
-    expect(reduceStory(s, { type: 'choose', revision: s.revision, seq: ++seq, choiceId: 'boundary' }).ok).toBe(true);
-    expect(reduceStory(a, { type: 'choose', revision: s.revision, seq: ++seq, choiceId: 'boundary' })).toEqual({ ok: false, error: 'stale revision' });
-    expect(a.decisions.S1_W03_M).toEqual({ challenge: 'meet' });
+    const a = step(s, { type: 'choose', seq: ++seq, choiceId: 'first_touch' });
+    expect(reduceStory(s, { type: 'choose', revision: s.revision, seq: ++seq, choiceId: 'passing' }).ok).toBe(true);
+    expect(reduceStory(a, { type: 'choose', revision: s.revision, seq: ++seq, choiceId: 'passing' })).toEqual({ ok: false, error: 'stale revision' });
+    expect(a.decisions.S1_W02_T).toEqual({ priority: 'first_touch' });
   });
   it('launch is idempotent and completion must match the owned run', () => {
     let s = play(newStory('c4'), { stopAt: 'S1_W03_S' });
