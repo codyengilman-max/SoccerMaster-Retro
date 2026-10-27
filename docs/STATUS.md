@@ -2,6 +2,7 @@
 
 ## Season One weeks 2–10 owner rewrite (2026-10-27, branch `devin/1793077258-s1-weeks2-10`, from `main`, not merged, not deployed)
 - Weeks 2–10 replaced by the owner's authoritative scripts (`docs/story/season-one/src/02_week02.story` … `10_week10.story`, revision `v3`). Week 1 and the prologue are byte-identical (hashes pinned in `tests/story-weeks2-10.test.ts`). Weeks 11–18 keep their calendar positions and hold no scenes.
+- Week 5 support-angle lines ("You moved a defender…", "Find your next job…") stay silent by owner decision (2026-10-27): no evaluator records a defender following the support run or a pass, so `detail:S1_W05_T=moved_defender|passed` never matches. Weeks 3 and 6–8 Code reactions read `decisionDetail` (`strong` / `execution` / `poor_decision`; `steady` says nothing extra).
 - Released through week 10 (`SEASON_RELEASED_WEEKS = 10`). League Games 1–6 in weeks 3–8, the AZ Showcase (existing 8-team, two-group tournament) in week 9, League Game 7 in week 10. Tournament results never touch league points; the final plays only for a group winner.
 - New story handoffs on existing screens and saved data: `rankings`, `my_player`, `home_preview` (ticks nothing), `team_profile`, `dev_checkpoint`, `blake_transfer`, `tournament_group`, `tournament_report`. Choices record priorities only and award nothing.
 - Cloudy has no dialogue; the home menu is Training, Cloudy: Feed & Play (optional), Continue.
