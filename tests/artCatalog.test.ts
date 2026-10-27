@@ -73,8 +73,8 @@ describe('Graphics v1 catalog', () => {
     expect(variantAsset('alex', 'home')).toBeNull();
   });
 
-  it('Season One screen art: 43 masters byte-identical (V3 home menu, Mom v2, five phone poses added), 37 runtime images, Tank Cup and the old Mom portraits kept out of the game', () => {
-    expect(s1Manifest.assets).toHaveLength(43);
+  it('Season One screen art: 49 asset rows byte-identical (V3 home menu, Mom v2, five phone poses, 6 standing Mom cut-outs from 3 sheets added), 43 runtime images, Tank Cup and the old Mom portraits kept out of the game', () => {
+    expect(s1Manifest.assets).toHaveLength(49);
     for (const a of s1Manifest.assets) {
       const sha = createHash('sha256').update(readFileSync(`docs/art/season-one/${a.path}`)).digest('hex');
       expect(sha, a.assetId).toBe(a.sha256);
@@ -98,16 +98,16 @@ describe('Graphics v1 catalog', () => {
       expect(tank.backgroundAssetId).toBe(`s1-tank-${look}`);
       expect(tank.cast).toEqual([]);
       expect(tank.continuityFlags).toContain('cast_in_backdrop');
-      // Mom's v2 portrait is cast in every scene where she speaks, unless the backdrop already paints her.
+      // Mom's standing portrait is cast in every scene where she speaks, unless the backdrop already paints her.
       for (const id of SEASON_ONE.order) {
         const v = sceneVisual(id, look)!;
         const momSpeaks = sceneById(id)!.nodes.some((n) => n.type === 'line' && n.speaker === 'Mom') && !v.embeddedCharacters.includes('caregiver');
         const cast = v.cast;
-        expect(cast.some((c) => c.role === 'caregiver' && c.assetId === 'mom2-casual-neutral'), id).toBe(momSpeaks);
+        expect(cast.some((c) => c.role === 'caregiver' && c.assetId === 'mom3-casual-confident'), id).toBe(momSpeaks);
         // Phone-only characters (phonePoses.ts) show only on their phone lines, where at most three are staged.
         expect(cast.filter((c) => c.outfit !== 'phone').length, id).toBeLessThanOrEqual(3);
       }
-      expect(sceneVisual('S1_W02_H', look)!.cast.map((c) => c.assetId)).toEqual([`${look}-home`, 'mom2-casual-neutral']);
+      expect(sceneVisual('S1_W02_H', look)!.cast.map((c) => c.assetId)).toEqual([`${look}-home`, 'mom3-casual-confident']);
       for (const id of SEASON_ONE.order) {
         const v = sceneVisual(id, look)!;
         expect(v, id).not.toBeNull();

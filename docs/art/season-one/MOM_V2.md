@@ -43,3 +43,6 @@ choices and hand-offs clear them, and a scene change rebuilds the cast so nothin
 ## Car backdrop framing
 
 With no Mom portrait over the prologue car, `BACKDROP_FOCUS` now gives `departure-*` and `arrival-*` a focus box (`x 0.22–0.78`, `y 0.16–0.43`). It keeps Mom's painted face and the rear-seat player below the top bar and above the dialogue panel on every tested phone size, in both orientations. Before this change, the landscape crop cut off Mom's face; that problem was already in the old build. `tests/layout.test.ts` checks the box against each backdrop's real image size.
+
+## Superseded in cutscenes by the standing Mom (2026-10-26)
+The owner supplied three standing sheets (`assets/mom-v3/mom_sheet_{confident,worried,smiling}.png`, 1448×1086, byte-identical), each with the casual outfit on the left and the dressy one on the right. `scripts/art/build-mom-v3.py` cuts each figure out by alpha and writes `src/assets/art/v1/mom3-<outfit>-<face>.webp` (512×768). Every spoken Mom line now shows one of these (`momPortrait` in `src/render/art/momPortraits.ts`, beat → face via `MOM_FACE`); the 12 v2 busts above stay in the gallery only. See D54.

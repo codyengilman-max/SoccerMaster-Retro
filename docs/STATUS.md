@@ -439,3 +439,6 @@ Done: 40 authored prototype moments (cue + counter, reflected for the other side
 
 - v1.2 (48 outfield cards, 15 sources, GK01–GK03 retired) imported unchanged and hash-pinned; v1.0 kept as history. All 15 cited sources fetched (HTTP 200) and every cited section located.
 - Review sheet `docs/training/library-v1.2/REVIEW_SHEET.md`: 39 cards ready to build a scene for review, 9 need tactical authoring/review, 0 approved. No numeric scene exists and local rules are unverified, so no Team Training session is scored (0 of 972 routes).
+
+## Standing Mom portrait
+- Owner's standing Mom (3 faces × casual/dressy, `mom3-*`) replaces the shorter v2 busts on every spoken Mom line in cutscenes. Outfit follows the scene; the line's beat picks the closest face. v2 busts remain in the gallery only. See D54 and `docs/art/season-one/MOM_V2.md`.

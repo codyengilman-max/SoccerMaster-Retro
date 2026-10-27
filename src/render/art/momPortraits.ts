@@ -14,17 +14,38 @@ export const MOM_DRESSY_SCENES: ReadonlySet<string> = new Set<string>();
 
 export const momAssetId = (outfit: MomOutfit, expression: MomExpression): string => `mom2-${outfit}-${expression}`;
 
+/**
+ * Owner's standing Mom (docs/art/season-one/assets/mom-v3, 2026-10-26): three faces, each in both outfits, with her
+ * head near the top of the 2:3 slot like the rest of the cast. These are the only Mom cutscene portraits; the v2 busts
+ * stood a third shorter and are no longer selected (they stay loadable for the art gallery).
+ */
+export const MOM_FACES = ['confident', 'worried', 'smiling'] as const;
+export type MomFace = (typeof MOM_FACES)[number];
+/** Closest standing face for each scripted expression beat (no line text or beat changed). */
+export const MOM_FACE: Readonly<Record<MomExpression, MomFace>> = {
+  neutral: 'confident',
+  firm: 'confident',
+  worried: 'worried',
+  laughing: 'smiling',
+  reassuring: 'smiling',
+  proud: 'smiling',
+};
+export const momStandingId = (outfit: MomOutfit, face: MomFace): string => `mom3-${outfit}-${face}`;
+export const MOM_STANDING = momStandingId(MOM_DEFAULT_OUTFIT, MOM_FACE.neutral);
+/** The v2 bust portraits the standing Mom replaced in the story. */
+export const MOM_V2_SUPERSEDED: readonly string[] = MOM_OUTFITS.flatMap((o) => MOM_EXPRESSIONS.map((e) => momAssetId(o, e)));
+
 /** Every old standalone Mom portrait and the v2 portrait that replaces it (old art stays in Git history only). */
 export const MOM_REPLACED: Readonly<Record<string, string>> = {
-  'mom-neutral': 'mom2-casual-neutral',
-  'mom-laughing': 'mom2-casual-laughing',
-  'mom-worried': 'mom2-casual-worried',
-  'mom-firm': 'mom2-casual-firm',
-  'mom-proud': 'mom2-casual-proud',
-  // v2 has no "sad"; worried is the closest supplied expression.
-  'mom-sad': 'mom2-casual-worried',
+  'mom-neutral': 'mom3-casual-confident',
+  'mom-laughing': 'mom3-casual-smiling',
+  'mom-worried': 'mom3-casual-worried',
+  'mom-firm': 'mom3-casual-confident',
+  'mom-proud': 'mom3-casual-smiling',
+  // No "sad" face; worried is the closest supplied expression.
+  'mom-sad': 'mom3-casual-worried',
   // Graphics v1 caregiver portrait (draft weeks 2–4 scene map).
-  'caregiver-home': 'mom2-casual-neutral',
+  'caregiver-home': MOM_STANDING,
 };
 
 const beats = (s: string): Readonly<Record<string, MomExpression>> =>
@@ -52,13 +73,14 @@ export function momExpression(sceneId: string | null, nodeId: string | null): Mo
   return e && (MOM_EXPRESSIONS as readonly string[]).includes(e) ? e : 'neutral';
 }
 
+/** Mom's standing portrait for a line: the scene's outfit, the face closest to the line's beat. */
 export function momPortrait(sceneId: string | null, nodeId: string | null, dressy: ReadonlySet<string> = MOM_DRESSY_SCENES): string {
-  return momAssetId(momOutfit(sceneId, dressy), momExpression(sceneId, nodeId));
+  return momStandingId(momOutfit(sceneId, dressy), MOM_FACE[momExpression(sceneId, nodeId)]);
 }
 
 /** Every portrait a scene can show (prefetched together so expression changes never wait on the network). */
 export function momSceneAssets(sceneId: string | null, dressy: ReadonlySet<string> = MOM_DRESSY_SCENES): string[] {
   const o = momOutfit(sceneId, dressy);
-  const used = new Set<MomExpression>(['neutral', ...Object.values((sceneId && MOM_BEATS[sceneId]) || {})]);
-  return [...used].map((e) => momAssetId(o, e));
+  const used = new Set<MomFace>([MOM_FACE.neutral, ...Object.values((sceneId && MOM_BEATS[sceneId]) || {}).map((e) => MOM_FACE[e])]);
+  return [...used].map((f) => momStandingId(o, f));
 }
