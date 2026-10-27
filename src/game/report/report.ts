@@ -1,6 +1,7 @@
 import { LEDGER_VERSION, type LedgerEvent } from './ledger';
 import { rateMatch, type MatchRating } from './rating';
 import { REGISTRY_VERSION } from './registry';
+import { CONTRIBUTION_VERSION, type PlayerContribution } from './assists';
 import { matchStats, type MatchStats } from './stats';
 
 export const REPORTS_KEPT = 40;
@@ -22,7 +23,29 @@ export interface SavedReport {
   /** Up to three recorded events with match time, for HIGHLIGHTS. */
   readonly highlights: readonly { readonly at: number; readonly text: string }[];
   readonly versions: { readonly ledger: number; readonly registry: number; readonly rating: number };
+  /**
+   * Assists and defensive points from the finalized match event log (assists.ts). Reports saved before this existed
+   * have none and show these statistics as not tracked; achievements read only this field.
+   */
+  readonly contribution?: MatchContribution;
 }
+
+export interface MatchContribution {
+  readonly version: number;
+  /** The career player's own counts (defensive points in half-point units). */
+  readonly mine: Readonly<PlayerContribution>;
+  /** Assists for every player on both teams who recorded one, by sim player id (H1-H9 Batavia, A1-A9 opponents). */
+  readonly assistsBy: Readonly<Record<string, number>>;
+}
+
+export function matchContribution(mine: PlayerContribution, table: Readonly<Record<string, PlayerContribution>>): MatchContribution {
+  const assistsBy: Record<string, number> = {};
+  for (const [id, c] of Object.entries(table)) if (c.assists > 0) assistsBy[id] = c.assists;
+  return { version: CONTRIBUTION_VERSION, mine: { ...mine }, assistsBy };
+}
+
+/** Defensive points for display: 21 units -> "10.5". */
+export const defensePoints = (units: number): string => (units % 2 === 0 ? `${units / 2}` : `${(units / 2).toFixed(1)}`);
 
 export interface ReportInput {
   readonly matchId: string;
@@ -38,8 +61,9 @@ export interface ReportInput {
 
 const clock = (at: number) => `${Math.floor(at / 60)}'${String(Math.floor(at % 60)).padStart(2, '0')}`;
 
-export function buildReport(input: ReportInput, events: readonly LedgerEvent[]): SavedReport {
-  const stats = matchStats(events);
+export function buildReport(input: ReportInput, events: readonly LedgerEvent[], contribution?: MatchContribution): SavedReport {
+  const base = matchStats(events);
+  const stats = contribution ? { ...base, unavailable: base.unavailable.filter((u) => u !== 'Assists') } : base;
   const rating = rateMatch(events, stats);
   const notable = events
     .map((e) =>
@@ -55,7 +79,7 @@ export function buildReport(input: ReportInput, events: readonly LedgerEvent[]):
   const rank = (t: string) => ['Goal', 'Slide tackle won the ball', 'Interception', 'Shot on target, saved', 'Pass to an open teammate'].indexOf(t);
   const highlights = [...notable].sort((a, b) => rank(a.text) - rank(b.text) || a.at - b.at).slice(0, 3).sort((a, b) => a.at - b.at)
     .map((h) => ({ at: Math.round(h.at), text: `${clock(h.at)} ${h.text}` }));
-  return { ...input, minutes: Math.max(0, Math.round(input.minutes)), stats, rating, highlights, versions: { ledger: LEDGER_VERSION, registry: REGISTRY_VERSION, rating: rating.version } };
+  return { ...input, minutes: Math.max(0, Math.round(input.minutes)), stats, rating, highlights, versions: { ledger: LEDGER_VERSION, registry: REGISTRY_VERSION, rating: rating.version }, ...(contribution ? { contribution } : {}) };
 }
 
 /** Coach Code's two lines from the report only: one strength, one practical next step. */

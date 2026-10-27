@@ -4,7 +4,7 @@
  *
  * Assist: a completed pass (a teammate receives it under control) whose receiver scores within
  * ASSIST_RULES.windowSeconds of sim time from the reception. The sim clock stops while paused, so pauses never count.
- * The receiver may dribble and shoot; any other player's touch (team-mate or opponent), any stoppage or the window
+ * The receiver may dribble and shoot; any other player's touch (team-mate or opponent), any stoppage or the time limit
  * ending clears it. One assist per goal; never an own goal or a self-assist. The 9v9 engine plays ground passes only
  * (no chip or cross exists yet), and every pass event qualifies, set-piece passes included.
  *
@@ -16,7 +16,7 @@
  * - Standing tackle: only a sim 'tackle' event whose detail starts with "standing" (PR D). The current engine's
  *   contact tackle ("won the ball from ...") is an ordinary collision and scores nothing.
  * - Interception: cutting out an opponent's pass (never a shot) and controlled possession for the cutter's team,
- *   directly or after a deflection within the same recovery window. The team-mate who collects the loose ball gets
+ *   directly or after a deflection within the same recovery time. The team-mate who collects the loose ball gets
  *   nothing extra.
  */
 import type { MatchEvent, MatchPlayerId, TeamId } from '../match/types';

@@ -36,7 +36,8 @@ import type { EvidenceItem } from '../game/career/progression';
 import { matchAttrsFromCareer } from '../game/career/player';
 import { CareerStore } from '../game/career/store';
 import { MatchLedger } from '../game/report/ledger';
-import { buildReport, clubDisplayName, type SavedReport } from '../game/report/report';
+import { buildReport, clubDisplayName, matchContribution, type SavedReport } from '../game/report/report';
+import { ContributionTracker } from '../game/report/assists';
 import { TOURNAMENTS } from '../game/season/tournament';
 import { SituationObserver, selectSituations, type SituationResult, type TeamTrainingSituation } from '../game/career/teamTraining';
 import type { Position } from '../game/career/types';
@@ -208,6 +209,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private collector: EvidenceCollector | null = null;
   /** Career player's own actions for the Match Report; read-only, beside the evidence collector. */
   private ledger: MatchLedger | null = null;
+  /** Assists and defensive points for all 18 players, from the same event log as the ledger. */
+  private contrib: ContributionTracker | null = null;
   private reportMeta: { name: string; position: string; week: number } | null = null;
   private reportMatchId: string | null = null;
   private reportSaving: Promise<boolean> | null = null;
@@ -1117,10 +1120,21 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         minutes: MATCH_TUNING.match.displayHalfMinutes * 2,
       },
       ledger.finish(),
+      this.finalContribution(ledger.playerId),
     );
     this.reportMatchId = report.matchId;
     this.reportPending = report;
     this.commitReport();
+  }
+
+  /** Full-time contribution; left out (shown as not tracked) if any event left the log unread. */
+  private finalContribution(me: Id) {
+    const c = this.contrib;
+    if (!c) return undefined;
+    const s = this.sim.state;
+    c.observe(s, s.events);
+    if (c.missed > 0) return undefined;
+    return matchContribution(c.of(me), c.table(MATCH_PLAYER_IDS));
   }
 
   /** Saves the finished report; resolves false on a failed commit so Menu can retry instead of losing it. */
@@ -1304,6 +1318,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.careerCoachSent = false;
     this.careerStore = null;
     this.ledger = null;
+    this.contrib = null;
     this.reportMeta = null;
     this.reportMatchId = null;
     this.reportSaving = null;
@@ -1327,6 +1342,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       if (gender === 'boy' || gender === 'girl') this.setRosterLooks({ id: CAREER_SLOT[save.player.position], look: gender });
       this.collector = new EvidenceCollector(CAREER_SLOT[save.player.position], MATCH_TUNING.pitch);
       this.ledger = new MatchLedger(CAREER_SLOT[save.player.position]);
+      this.contrib = new ContributionTracker();
       this.reportMeta = { name: save.player.name, position: save.player.position, week: save.week };
       this.careerFlushAt = this.sim.state.simTime + CAREER_FLUSH_SECONDS;
     });
@@ -1337,6 +1353,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     if (!c) return;
     const s = this.sim.state;
     this.ledger?.observe(s, s.events);
+    this.contrib?.observe(s, s.events);
     this.careerItems.push(...c.observe(s, s.events));
     if (s.simTime >= this.careerFlushAt) {
       this.careerFlushAt = s.simTime + CAREER_FLUSH_SECONDS;

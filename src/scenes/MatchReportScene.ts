@@ -5,6 +5,7 @@ import type { CareerSave } from '../game/career/state';
 import { ATTRIBUTE_LABELS } from '../game/career/types';
 import { MAPPING } from '../game/report/registry';
 import { coachFeedback, type SavedReport } from '../game/report/report';
+import { contributionLines } from '../game/report/contributionText';
 import { ratioLabel } from '../game/report/stats';
 import { artTextureKey, artUrl } from '../render/art/urls';
 import { MATCH_REPORT as M, type NBox } from '../render/devreport';
@@ -160,6 +161,7 @@ export class MatchReportScene extends Phaser.Scene implements InspectableScene {
       `Recoveries: ${s.recoveries} (interceptions ${s.interceptions})`,
       `Slide challenges won: ${ratioLabel(s.slides)}`,
       `Fouls committed: ${s.fouls}`,
+      ...contributionLines(r),
       `Not tracked: ${s.unavailable.join(', ')}`,
       ...r.rating.categories.map((c) => `${c.label}: ${c.score ?? '-'} - ${c.why}`),
       `Rules: ledger v${r.versions.ledger}, registry v${r.versions.registry}, rating v${r.versions.rating}`,

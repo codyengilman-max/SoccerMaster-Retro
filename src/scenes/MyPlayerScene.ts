@@ -8,6 +8,7 @@ import { NOT_TRACKED } from '../game/report/registry';
 import { homeTasks, weekAssignments, type HomeTask } from '../game/story/facts';
 import { StoryStore, STORY_CAREER_ID } from '../game/story/store';
 import type { SavedReport } from '../game/report/report';
+import { seasonTotals } from '../game/report/contributionText';
 import { artTextureKey, artUrl } from '../render/art/urls';
 import { orientationOf } from '../render/layout';
 import type { InspectableScene, SceneLayoutReport } from './inspectable';
@@ -366,7 +367,8 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
   private historyCard(x: number, y: number, w: number, fs: number, pad: number): number {
     return this.card(x, y, w, pad, (cy) => {
       const inner = w - pad * 2;
-      cy = this.text(x + pad, cy, 'MATCH HISTORY', fs * 1.15, 0, true) + 6;
+      cy = this.text(x + pad, cy, 'MATCH HISTORY', fs * 1.15, 0, true) + 4;
+      if (this.save) cy = this.text(x + pad, cy, seasonTotals(this.save), fs * 0.85, 0, false, INK, inner) + 6;
       const items = this.pageItems();
       if (!items.length) cy = this.text(x + pad, cy, 'No matches yet', fs);
       const rh = Math.max(46, fs * 2.5);

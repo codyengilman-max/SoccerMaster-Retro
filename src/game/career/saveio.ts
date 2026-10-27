@@ -1,3 +1,4 @@
+import { DEFENSE_UNITS } from '../report/assists';
 import { REPORTS_KEPT, type SavedReport } from '../report/report';
 import { CARRY_MAX, zeroFractions, type Fractions, type WeekSettlement } from '../report/settlement';
 import { CAREER_CONFIG } from './config';
@@ -218,6 +219,20 @@ function savedReport(v: unknown): SavedReport {
   obj(o.rating, 'report rating');
   obj(o.versions, 'report versions');
   arr(o.highlights, 'report highlights', 3);
+  if (o.contribution !== undefined) {
+    const c = obj(o.contribution, 'report contribution');
+    int(c.version, 'contribution version', 1, 1000);
+    const m = obj(c.mine, 'contribution mine');
+    const n = (k: string) => int(m[k], `contribution ${k}`, 0, 999);
+    if (n('defenseUnits') !== n('slideWon') * DEFENSE_UNITS.slide + n('standingWon') * DEFENSE_UNITS.standing + n('interceptions') * DEFENSE_UNITS.interception) throw new Invalid('contribution: defensive points do not match the events');
+    n('assists');
+    const by = obj(c.assistsBy, 'contribution assists');
+    if (Object.keys(by).length > 18) throw new Invalid('contribution assists: too many players');
+    for (const [id, v] of Object.entries(by)) {
+      if (!/^[HA][1-9]$/.test(id)) throw new Invalid('contribution assists: unknown player');
+      int(v, 'contribution assists', 1, 99);
+    }
+  }
   return o as unknown as SavedReport;
 }
 
