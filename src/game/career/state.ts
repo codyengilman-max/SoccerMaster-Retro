@@ -7,6 +7,7 @@ import { DEFAULT_INPUT, normalizeInput, planWeek, substitute, workableFocuses, t
 import { cleanName, cleanText, createPlayer, type CareerPlayer } from './player';
 import { applyGrowth, computeGrowth, type AttributeOutcome, type EvidenceItem } from './progression';
 import { weeklyAssignment, gradeWeekly } from '../training12/all36/weekly';
+import { HOME_SKILLS, attemptsError, skillProgress, specFor, type Attempt, type HomeLog } from './homeMastery';
 import type { ChoiceId, DisplayBand, NoDecision, PackageGrade } from '../training12/all36/types';
 import { selectSituations, situationById, teamTrainingChanges, describeChanges, weekDelta, type AttributeChange, type SituationResult } from './teamTraining';
 import { SKILL_FAMILIES, type AttributeId, type Foot, type Level, type Position, type Rating, type SkillFamilyId } from './types';
@@ -87,6 +88,8 @@ export interface CareerSave {
   readonly tt12: readonly Tt12Run[];
   /** Weekly All36 Team Training runs, one per attempt (older saves: empty). The first completion of a week credits it. */
   readonly all36: readonly All36Run[];
+  /** Performance-based home training logs (older saves: empty, so every skill starts at Phase 1). */
+  readonly homeLogs: readonly HomeLog[];
   /** Cloudy's Feeding Frenzy best score and best stars per difficulty (no growth, no match statistics). */
   readonly cloudy: readonly CloudyBest[];
   /** Recently saved Cloudy round ids, so a replayed save never counts twice. */
@@ -104,6 +107,7 @@ export interface CloudyBest {
 }
 
 export type Tt12Slot = 'A' | 'B' | 'C';
+export const HOME_LOGS_KEPT = 400;
 export const CHOICE_IDS: readonly ChoiceId[] = ['A', 'B', 'C', 'D'];
 export const TT12_SLOTS: readonly Tt12Slot[] = ['A', 'B', 'C'];
 
@@ -149,6 +153,9 @@ export type Action =
   | { readonly type: 'evidence'; readonly batchId: string; readonly items: readonly EvidenceItem[]; readonly missed: number }
   | { readonly type: 'acceptLevel'; readonly family: SkillFamilyId }
   | { readonly type: 'teamTraining'; readonly week: number; readonly results: readonly SituationResult[] }
+  | { readonly type: 'homeLog'; readonly log: HomeLog }
+  | { readonly type: 'homeCorrect'; readonly id: string; readonly attempts: readonly Attempt[] }
+  | { readonly type: 'homeConfirm'; readonly id: string }
   | { readonly type: 'all36Weekly'; readonly week: number; readonly situationId: string; readonly runId: string; readonly at: number; readonly choice: ChoiceId | null }
   | { readonly type: 'tt12Run'; readonly week: number; readonly slot: Tt12Slot; readonly runId: string; readonly score: number; readonly creditEligible: boolean; readonly decisions?: { readonly independent: number; readonly assisted: number }; readonly model?: 'ts-1' }
   | { readonly type: 'cloudyResult'; readonly runId: string; readonly difficulty: Difficulty; readonly score: number; readonly stars: 1 | 2 | 3 }
@@ -179,6 +186,7 @@ export function emptySave(): CareerSave {
     teamTraining: [],
     tt12: [],
     all36: [],
+    homeLogs: [],
     cloudy: [],
     cloudyRuns: [],
     reports: [],
@@ -311,6 +319,42 @@ export function reduce(save: CareerSave, action: Action): Outcome {
       if (started > 0) return same(save, `This week counts through your Team Training v1.2 sessions (${started} of 3 done); this run was practice only.`);
       const counted = countTeamWeek(save, action.results);
       return 'error' in counted ? fail(counted.error) : ok(counted.save, counted.message);
+    }
+    case 'homeLog': {
+      if (!save.player) return fail('No career player.');
+      const l = action.log;
+      if (!l || typeof l.id !== 'string' || l.id.length < 1 || l.id.length > 64) return fail('Invalid practice entry.');
+      if (save.homeLogs.some((x) => x.id === l.id)) return same(save, 'This practice session is already saved.');
+      if (l.week !== save.week) return fail('That practice belongs to another week.');
+      if (!HOME_SKILLS.includes(l.skill)) return fail('Unknown home skill.');
+      // Logged at the player's current phase only: a higher phase cannot be logged early.
+      const prog = skillProgress(save.homeLogs, l.skill);
+      if (l.phase !== prog.phase) return fail(`Log this at Phase ${prog.phase}.`);
+      const spec = specFor(l.skill, l.phase)!;
+      if (!spec.activityIds.includes(l.activityId)) return fail('That activity is not this phase\'s assignment.');
+      if (l.source !== 'self-reported' && l.source !== 'minigame') return fail('Unknown score source.');
+      if (!['touch-and-catch', 'bounce-assisted', 'continuous', 'standard', 'weaker-foot', 'timed'].includes(l.variation)) return fail('Unknown variation.');
+      const err = attemptsError(spec, l.attempts);
+      if (err) return fail(err);
+      if (!Number.isSafeInteger(l.at) || l.at < 0) return fail('Invalid practice time.');
+      const entry: HomeLog = { id: l.id, week: save.week, skill: l.skill, phase: l.phase, activityId: l.activityId, variation: l.variation, foot: l.foot ?? null, source: l.source, attempts: l.attempts.map((a) => ({ ...a })), at: l.at, confirmed: false, revision: 0 };
+      return ok({ ...save, homeLogs: [...save.homeLogs, entry].slice(-HOME_LOGS_KEPT) }, 'Practice saved.');
+    }
+    case 'homeCorrect': {
+      const i = save.homeLogs.findIndex((x) => x.id === action.id);
+      if (i < 0) return fail('That practice entry is not saved.');
+      const l = save.homeLogs[i]!;
+      const err = attemptsError(specFor(l.skill, l.phase)!, action.attempts);
+      if (err) return fail(err);
+      // The same session, corrected: never a new session, a new completion or a new reward.
+      const fixed: HomeLog = { ...l, attempts: action.attempts.map((a) => ({ ...a })), confirmed: false, revision: l.revision + 1 };
+      return ok({ ...save, homeLogs: save.homeLogs.map((x, k) => (k === i ? fixed : x)) }, 'Score corrected.');
+    }
+    case 'homeConfirm': {
+      const i = save.homeLogs.findIndex((x) => x.id === action.id);
+      if (i < 0) return fail('That practice entry is not saved.');
+      if (save.homeLogs[i]!.confirmed) return same(save, 'Score already confirmed.');
+      return ok({ ...save, homeLogs: save.homeLogs.map((x, k) => (k === i ? { ...x, confirmed: true } : x)) }, 'Score confirmed as reported.');
     }
     case 'matchReport': {
       const r = action.report;

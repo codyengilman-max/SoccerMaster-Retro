@@ -5,8 +5,9 @@ import { FOCUSES, HOME_ACTIVITIES, activityById } from './catalog';
 import type { PlannedItem, PlannedSession, PlannerInput, WeekPlan } from './planner';
 import { cleanText, type CareerPlayer } from './player';
 import type { AttributeOutcome, EvidenceItem } from './progression';
-import { CLOUDY_RUNS_KEPT, SAVE_SCHEMA, emptySave, type CareerSave, type CloudyBest, type FamilyLevel, type JournalEntry, type TeamTrainingRecord, type Tt12Run, type WeekReview, TT12_SLOTS, CHOICE_IDS, type All36Run } from './state';
+import { CLOUDY_RUNS_KEPT, SAVE_SCHEMA, emptySave, type CareerSave, type CloudyBest, type FamilyLevel, type JournalEntry, type TeamTrainingRecord, type Tt12Run, type WeekReview, TT12_SLOTS, CHOICE_IDS, HOME_LOGS_KEPT, type All36Run } from './state';
 import { gradeWeekly, weeklyAssignment } from '../training12/all36/weekly';
+import { HOME_SKILLS, attemptsError, specFor, type HomeLog } from './homeMastery';
 import { DIFFICULTIES } from '../cloudy/sim';
 import { TEAM_TRAINING_IDS, weekDelta } from './teamTraining';
 import { ATTRIBUTES, LEVELS, POSITIONS, RATINGS, SKILL_FAMILIES, type AttributeId, type Level, type SkillFamilyId } from './types';
@@ -246,6 +247,18 @@ function all36Run(v: unknown, week: number): All36Run {
   return { week: w, category: a.category, situationId: a.situationId, runId: str(o.runId, 'all36 runId', 64), at: int(o.at, 'all36 at', 0, Number.MAX_SAFE_INTEGER), choice, grade: g.grade, band: g.band, score: g.score, rationale: g.rationale, credited: o.credited };
 }
 
+/** A stored practice entry must still be well formed for its phase (zero allowed, successes <= attempts). */
+function homeLog(v: unknown, week: number): HomeLog {
+  const o = obj(v, 'homeLog');
+  const skill = oneOf(o.skill, 'home skill', HOME_SKILLS);
+  const spec = specFor(skill, int(o.phase, 'home phase', 1, 5));
+  if (!spec || !spec.activityIds.includes(o.activityId as string)) throw new Invalid('homeLog: unknown assignment');
+  const attempts = Array.isArray(o.attempts) ? (o.attempts as Record<string, unknown>[]).map((a) => ({ value: a.value as number, ...(a.of === undefined ? {} : { of: a.of as number }), ...(a.seconds === undefined ? {} : { seconds: a.seconds as number }), ...(a.errors === undefined ? {} : { errors: a.errors as number }) })) : [];
+  if (attemptsError(spec, attempts)) throw new Invalid('homeLog: malformed attempts');
+  if (typeof o.confirmed !== 'boolean') throw new Invalid('homeLog confirmed: not a boolean');
+  return { id: str(o.id, 'home id', 64), week: int(o.week, 'home week', 1, week), skill, phase: spec.phase, activityId: o.activityId as string, variation: oneOf(o.variation, 'home variation', ['touch-and-catch', 'bounce-assisted', 'continuous', 'standard', 'weaker-foot', 'timed'] as const), foot: o.foot === null || o.foot === undefined ? null : oneOf(o.foot, 'home foot', ['left', 'right', 'both'] as const), source: oneOf(o.source, 'home source', ['self-reported', 'minigame'] as const), attempts, at: int(o.at, 'home at', 0, Number.MAX_SAFE_INTEGER), confirmed: o.confirmed, revision: int(o.revision, 'home revision', 0, 1e6) };
+}
+
 function tt12Decisions(v: unknown): { independent: number; assisted: number } {
   const o = obj(v, 'tt12 decisions');
   return { independent: int(o.independent, 'tt12 independent', 0, 500), assisted: int(o.assisted, 'tt12 assisted', 0, 500) };
@@ -298,6 +311,7 @@ export function parseSave(raw: unknown): R<CareerSave> {
       teamTraining: arr(o.teamTraining ?? [], 'teamTraining', L.historyMax).map((t) => teamTraining(t, week)),
       tt12: arr(o.tt12 ?? [], 'tt12', L.historyMax * 4).map((t) => tt12Run(t, week)),
       all36: arr(o.all36 ?? [], 'all36', L.historyMax * 4).map((t) => all36Run(t, week)),
+      homeLogs: arr(o.homeLogs ?? [], 'homeLogs', HOME_LOGS_KEPT).map((t) => homeLog(t, week)),
       cloudy: arr(o.cloudy ?? [], 'cloudy', DIFFICULTIES.length).map(cloudyBest),
       cloudyRuns: arr(o.cloudyRuns ?? [], 'cloudyRuns', CLOUDY_RUNS_KEPT).map((r) => str(r, 'cloudy run', 64)),
       reports: arr(o.reports ?? [], 'reports', REPORTS_KEPT).map(savedReport),
@@ -307,6 +321,7 @@ export function parseSave(raw: unknown): R<CareerSave> {
     if (new Set(save.teamTraining.map((t) => t.week)).size !== save.teamTraining.length) throw new Invalid('team training counted twice for a week');
     if (new Set(save.cloudy.map((c) => c.difficulty)).size !== save.cloudy.length) throw new Invalid('cloudy best saved twice');
     if (new Set(save.tt12.map((t) => t.runId)).size !== save.tt12.length) throw new Invalid('team training run saved twice');
+    if (new Set(save.homeLogs.map((t) => t.id)).size !== save.homeLogs.length) throw new Invalid('practice entry saved twice');
     if (new Set(save.all36.map((t) => t.runId)).size !== save.all36.length) throw new Invalid('team training run saved twice');
     const weeks36 = save.all36.filter((t) => t.credited).map((t) => t.week);
     if (new Set(weeks36).size !== weeks36.length) throw new Invalid('weekly team training counted twice');

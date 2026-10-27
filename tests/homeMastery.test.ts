@@ -65,3 +65,27 @@ describe('home training phases', () => {
     expect(feedbackFor([second, flat], flat)).toBe('needsWork');
   });
 });
+
+import { emptySave, reduce, type Action, type CareerSave } from '../src/game/career/state';
+import { exportSave, parseImport } from '../src/game/career/saveio';
+
+describe('home practice saves', () => {
+  const act = (s: CareerSave, a: Action): CareerSave => { const r = reduce(s, a); if (!r.ok) throw new Error(r.error); return r.save; };
+  const kid = () => act(emptySave(), { type: 'createPlayer', id: 'p1', name: 'Kid', position: 'MID' });
+  const entry = (id: string, values: number[], phase: 1 | 2 = 1): HomeLog => ({ id, week: 1, skill: 'juggling', phase, activityId: phase === 1 ? 'jg-1' : 'jg-3', variation: phase === 1 ? 'touch-and-catch' : 'bounce-assisted', foot: null, source: 'self-reported', attempts: values.map((value) => ({ value })), at: values[0]! + 1, confirmed: false, revision: 0 });
+
+  it('saves once, refuses an early phase, corrects the original and confirms once, and survives reload', () => {
+    let s = act(kid(), { type: 'homeLog', log: entry('a', [3, 3, 0]) });
+    expect(reduce(s, { type: 'homeLog', log: entry('a', [3, 3, 0]) })).toMatchObject({ ok: true });
+    expect(act(s, { type: 'homeLog', log: entry('a', [3, 3, 0]) }).homeLogs).toHaveLength(1);
+    expect(reduce(s, { type: 'homeLog', log: entry('b', [6, 6, 6], 2) }).ok).toBe(false);
+    expect(reduce(s, { type: 'homeLog', log: entry('c', [-1, 0, 0]) }).ok).toBe(false);
+    s = act(s, { type: 'homeCorrect', id: 'a', attempts: [{ value: 4 }, { value: 4 }, { value: 4 }] });
+    expect(s.homeLogs).toHaveLength(1);
+    expect(s.homeLogs[0]).toMatchObject({ revision: 1, confirmed: false });
+    s = act(s, { type: 'homeConfirm', id: 'a' });
+    expect(act(s, { type: 'homeConfirm', id: 'a' })).toEqual(s);
+    const back = parseImport(exportSave(s));
+    expect(back.ok && back.value).toEqual(s);
+  });
+});
