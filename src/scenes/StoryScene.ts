@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { fixtureForWeek, newLeague, parseLeague, recordPlayed, simulateThrough } from '../game/league/league';
-import { homeLearningDetail, homeTasks, rileyLine, weekAssignments, jungleResult, schoolRewardDetail, trainingLogDetail } from '../game/story/facts';
+import { homeLearningDetail, homeTasks, weekAssignments, jungleResult, schoolRewardDetail, trainingLogDetail } from '../game/story/facts';
 import type { CompetitorId } from '../game/jungle/sim';
 import { crossbarRules, decisionDetail, sceneById, trainingDetail } from '../game/story/content';
 import { seasonWeek, type TournamentId } from '../game/season/calendar';
@@ -100,6 +100,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private seasonSummary = '';
   private seasonPanel = '';
   private tournamentSummary = '';
+  /** Week 10: the saved AZ Showcase result, read from its own record (never from story text). */
+  private reportSummary = '';
   private bg!: Phaser.GameObjects.Graphics;
   private stage!: Phaser.GameObjects.Graphics;
   private speaker!: Phaser.GameObjects.Text;
@@ -612,6 +614,18 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     return w === null ? null : seasonWeek(w)?.tournament ?? null;
   }
 
+  private async showcaseReport(): Promise<string> {
+    if (!this.store || !this.state || (this.seasonWeekNo() ?? 0) <= TOURNAMENTS.az_showcase.week) return '';
+    const saved = parseTournament(await this.store.getRecord(`tourney-s1:${this.state.careerId}:az_showcase`), 'az_showcase');
+    if (!saved.ok) return 'No AZ Showcase result was recorded, so there is no tournament evidence yet.';
+    const t = saved.value;
+    const tname = (id: string): string => TOURNAMENTS.az_showcase.teams[id]?.name ?? id;
+    const games = allFixtures(t).filter((f) => (f.home === 'batavia' || f.away === 'batavia') && bataviaResult(t, f.id) !== null);
+    const lines = games.map((f) => `${f.stage === 'final' ? 'Final' : `Group game ${f.stage.slice(1)}`} vs ${tname(f.home === 'batavia' ? f.away : f.home)}: ${bataviaResult(t, f.id)}`);
+    const finish = bataviaFinish(t);
+    return [...(lines.length ? lines : ['No AZ Showcase game was played.']), finish ? `Finish: ${FINISH_LABEL[finish]}` : 'Finish: not decided'].join('\n');
+  }
+
   private async tournament(): Promise<TournamentState | null> {
     const tid = this.tournamentId();
     if (!tid || !this.store || !this.state) return null;
@@ -893,6 +907,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       lines.push('Tournament points never become league points.');
     }
     this.seasonSummary = lines.join('\n');
+    this.reportSummary = await this.showcaseReport();
   }
 
   /** Factual recap from committed evidence only (shown on result scenes). */
@@ -1152,20 +1167,60 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         const a = this.save ? weekAssignments(this.save, wk) : { juggling: false, skill: wk >= 7 ? ('passing' as const) : ('firstTouch' as const), skillDone: false, learning: wk >= 6 ? false : null, complete: false };
         const trained = a.complete;
         const tasks = homeTasks(a).map((t) => `- ${t.label}: ${t.done ? 'done' : 'not done yet'}\n`).join('');
-        const talked = Object.values(s.runs).some((r) => r.sceneId === s.sceneId && r.adapter === 'home_hub' && r.detail === 'talk');
         setBody(
           `${this.seasonPanel ? `${this.seasonPanel}\n\n` : ''}HOME MENU\nTraining (required) - tap Training, then each task, and log it:\n${tasks}` +
-            `${trained ? 'Weekly home training complete. Continue Week is unlocked.' : 'Continue Week unlocks after the required training.'}\nCloudy: Feed & Play and Cloudy: Talk are optional.` +
-            rileyLine(wk, s.decisions['S1_W07_M']?.['riley']),
+            `${trained ? 'Weekly home training complete. Continue Week is unlocked.' : 'Continue Week unlocks after the required training.'}\nCloudy: Feed & Play is optional and never blocks the week.`,
         );
         acts.push({ name: 'hub-training', label: trained ? 'Training (done)' : 'Training (required)', onClick: () => this.openHome() });
         acts.push({ name: 'hub-my-player', label: 'My Player', onClick: () => this.openMyPlayer() });
         acts.push({ name: 'hub-rankings', label: 'League & Rankings', onClick: () => this.openRankings() });
         acts.push({ name: 'hub-cloudy-play', label: 'Cloudy: Feed & Play', onClick: () => this.openCloudy() });
-        if (!talked) acts.push({ name: 'hub-cloudy-talk', label: 'Cloudy: Talk', onClick: () => void this.finishFact('talk') });
         if (trained) acts.push({ name: 'hub-continue', label: 'Continue Week', onClick: () => void this.finishFact('trained') });
         return;
       }
+      case 'rankings':
+        setBody(`TEAM RANKINGS\n${this.seasonPanel || 'Loading this season from saved results...'}\nLeague standings come from league games only. Strength rankings also include tournaments. Rankings stay provisional until enough games are recorded.`);
+        acts.push({ name: 'handoff-open-rankings', label: 'Open Team Rankings', onClick: () => this.openRankings() });
+        acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.finishFact('viewed') });
+        return;
+      case 'my_player':
+        setBody('MY PLAYER\nYour saved attributes and training progress. Home training and team training build attributes; your match performances drive your player ranking.');
+        acts.push({ name: 'handoff-open-my-player', label: 'Open My Player', onClick: () => this.openMyPlayer() });
+        acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.finishFact('viewed') });
+        return;
+      case 'home_preview': {
+        const wk = this.seasonWeekNo() ?? 1;
+        const tasks = this.save ? homeTasks(weekAssignments(this.save, wk)).map((t) => `- ${t.label}: ${t.done ? 'done' : 'not done yet'}`).join('\n') : '- Juggling (every week)';
+        setBody(`HOME > TRAINING (preview)\n${tasks}\nThis preview does not mark anything complete.`);
+        acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.finishFact('previewed') });
+        return;
+      }
+      case 'team_profile':
+        setBody(`WHERE WE ARE\n${this.seasonPanel || 'Loading this season from saved results...'}`);
+        acts.push({ name: 'handoff-open-rankings', label: 'Team position & next opponent', onClick: () => this.openRankings() });
+        acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.finishFact('viewed') });
+        return;
+      case 'dev_checkpoint': {
+        const wk = this.seasonWeekNo() ?? 1;
+        const tt = this.save ? this.save.teamTraining.filter((r) => r.week <= wk).length : 0;
+        setBody(`DEVELOPMENT CHECKPOINT\nFrom your saved record: ${tt} team training week${tt === 1 ? '' : 's'} counted. Open My Player to compare your attributes and see which have stayed flat.\n${this.seasonPanel}`);
+        acts.push({ name: 'handoff-open-my-player', label: 'Open My Player', onClick: () => this.openMyPlayer() });
+        acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.finishFact('viewed') });
+        return;
+      }
+      case 'blake_transfer':
+        setBody('Blake moves to Next Horizon. Past match records stay as they were. No attribute or ranking changes come from the move.');
+        acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.finishFact('next_horizon') });
+        return;
+      case 'tournament_group':
+        setBody(`AZ SHOWCASE\n${this.seasonSummary || 'Loading the tournament field...'}`);
+        acts.push({ name: 'handoff-open-rankings', label: 'Opponent profiles', onClick: () => this.openRankings() });
+        acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.finishFact('viewed') });
+        return;
+      case 'tournament_report':
+        setBody(`TOURNAMENT REPORT\n${this.reportSummary || 'Loading the saved AZ Showcase result...'}`);
+        acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.finishFact('viewed') });
+        return;
       case 'week_close':
         setBody((this.save?.week ?? 1) >= SEASON_RELEASED_WEEKS
           ? `Finish week ${this.save?.week ?? 1}: your week review is saved. More weeks are coming soon.`

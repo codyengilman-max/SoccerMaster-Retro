@@ -4,7 +4,7 @@
  */
 import rawSeason from '../../../docs/story/season-one/season_one_scenes.json';
 
-export const ADAPTERS = ['identity', 'crossbar', 'training_arrangement', 'weekly_focus', 'practice', 'assignment', 'match', 'week_close', 'jungle', 'team_training', 'league_match', 'tournament_match', 'standings', 'home_learning', 'school_reward', 'training_log', 'home_hub'] as const;
+export const ADAPTERS = ['identity', 'crossbar', 'training_arrangement', 'weekly_focus', 'practice', 'assignment', 'match', 'week_close', 'jungle', 'team_training', 'league_match', 'tournament_match', 'standings', 'home_learning', 'school_reward', 'training_log', 'home_hub', 'rankings', 'my_player', 'home_preview', 'team_profile', 'dev_checkpoint', 'blake_transfer', 'tournament_group', 'tournament_report'] as const;
 export type AdapterKind = (typeof ADAPTERS)[number];
 export const PREDICATES = ['always', 'crossbar_accepted', 'jungle_accepted', 'promise_made', 'promise_kept', 'promise_cancelled', 'promise_missed', 'promise_repaired'] as const;
 export type LegacyPredicateId = (typeof PREDICATES)[number];
@@ -245,6 +245,11 @@ const CROSSBAR_RULES: Readonly<Record<string, CrossbarRules>> = {
   // Weeks 6-7: Sam's recess again (his reactions; "Rematch next week" / lunch line on a tie).
   S1_W06_S: { opponent: 'Sam', warmup: 'always', sudden: false },
   S1_W07_S: { opponent: 'Sam', warmup: 'always', sudden: false },
+  // Owner rewrite weeks 4–10: the weekly minigame with no conversation around it; Sam plays it, a tie stands.
+  S1_W04_S: { opponent: 'Sam', warmup: 'always', sudden: false },
+  S1_W08_S: { opponent: 'Sam', warmup: 'always', sudden: false },
+  S1_W09_S: { opponent: 'Sam', warmup: 'always', sudden: false },
+  S1_W10_S: { opponent: 'Sam', warmup: 'always', sudden: false },
 };
 export const crossbarRules = (sceneId: string): CrossbarRules => CROSSBAR_RULES[sceneId] ?? { opponent: 'Blake', warmup: 'choice', sudden: true };
 
