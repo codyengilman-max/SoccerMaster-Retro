@@ -462,7 +462,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private openMyPlayer(): void {
     if (!this.fresh()) return;
     this.navigating = true;
-    this.scene.start(SceneKeys.MyPlayer, { returnTo: 'story' });
+    this.scene.start(SceneKeys.MyPlayer, { returnTo: 'story', week: this.seasonWeekNo() ?? this.storyWeek() ?? undefined });
   }
 
   private openCloudy(): void {

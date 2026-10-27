@@ -5,22 +5,29 @@ import { CareerStore } from '../game/career/store';
 import type { CareerSave } from '../game/career/state';
 import { ATTRIBUTES, ATTRIBUTE_LABELS } from '../game/career/types';
 import { NOT_TRACKED } from '../game/report/registry';
+import { homeTasks, weekAssignments, type HomeTask } from '../game/story/facts';
 import type { SavedReport } from '../game/report/report';
 import { artTextureKey, artUrl } from '../render/art/urls';
-import { MY_PLAYER as P, type NBox } from '../render/devreport';
 import { orientationOf } from '../render/layout';
 import type { InspectableScene, SceneLayoutReport } from './inspectable';
 import { SceneKeys } from './keys';
-import { devreportUrl } from './MatchReportScene';
-import { ArtCard } from './ui/artCard';
+import { safeInsets } from './ui/PadHud';
 
 export interface MyPlayerData {
   readonly view?: 'player' | 'history';
   readonly returnTo?: 'story' | 'start';
+  /** Story week, when the story opens My Player; otherwise the career week is used. */
+  readonly week?: number;
 }
 
-const INK = '#1b2a3a';
-const CREAM = '#f4ead2';
+const INK = '#2a1d14';
+const BG = 0xf3dfb4;
+const CARD = 0xfff6e2;
+const EDGE = 0x2a1d14;
+const ORANGE = 0xf2a03d;
+const BLUE = 0x3a6fc4;
+const TRACK = 0xd8cdb8;
+const FONT = 'Trebuchet MS, Verdana, sans-serif';
 const ROWS = 6;
 
 interface Row { readonly label: string; readonly value: number | null; readonly carry: number | null; readonly detail: string }
@@ -55,23 +62,24 @@ export function recentLines(save: CareerSave): string[] {
   return [`Week ${last.week} review:`, ups.length ? ups.join(', ') : 'No attribute changes', `Evidence counted: ${last.evidenceCount}`];
 }
 
+interface Hit { readonly name: string; readonly rect: Rect; readonly on: () => void }
+
 export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
-  private card!: ArtCard;
   private view: 'player' | 'history' = 'player';
   private returnTo: 'story' | 'start' = 'start';
+  private storyWeek: number | null = null;
   private save: CareerSave | null = null;
   private page = 0;
-  private recent = false;
+  private expanded = false;
   private detail: string | null = null;
-  private rows: Phaser.GameObjects.Text[] = [];
-  private values: Phaser.GameObjects.Text[] = [];
-  private weekTexts: Phaser.GameObjects.Text[] = [];
-  private header!: Phaser.GameObjects.Text;
-  private weekHeader!: Phaser.GameObjects.Text;
-  private bars!: Phaser.GameObjects.Graphics;
-  private portrait: Phaser.GameObjects.Image | null = null;
   private status = 'loading';
   private leaving = false;
+  private root!: Phaser.GameObjects.Container;
+  private hits: Hit[] = [];
+  private contentH = 0;
+  private drag: { y: number; scroll: number; moved: boolean } | null = null;
+  private portraitKey: string | null = null;
+  private taps: string[] = [];
 
   constructor() {
     super(SceneKeys.MyPlayer);
@@ -80,48 +88,34 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
   init(data: MyPlayerData): void {
     this.view = data?.view === 'history' ? 'history' : 'player';
     this.returnTo = data?.returnTo === 'story' ? 'story' : 'start';
+    this.storyWeek = typeof data?.week === 'number' ? data.week : null;
     this.save = null;
     this.page = 0;
-    this.recent = false;
+    this.expanded = false;
     this.detail = null;
-    this.rows = [];
-    this.values = [];
-    this.weekTexts = [];
-    this.portrait = null;
     this.status = 'loading';
     this.leaving = false;
+    this.hits = [];
+    this.taps = [];
+    this.drag = null;
+    this.portraitKey = null;
   }
 
   create(): void {
     if (this.view === 'history') this.registry.set('myPlayerReturn', this.registry.get('myPlayerReturn') ?? 'start');
     else this.registry.set('myPlayerReturn', this.returnTo);
     this.returnTo = this.registry.get('myPlayerReturn') === 'story' ? 'story' : 'start';
-    this.card = new ArtCard(this, 'devreport:my-player-bedroom', devreportUrl('my-player-bedroom'));
-    this.bars = this.add.graphics().setDepth(1);
-    const c = this.card;
-    c.label(P.banner, 'MY PLAYER', 0.5, INK);
-    c.label(P.back, '<', 0.6, INK);
-    c.label(P.help, '?', 0.6, INK);
-    c.hit('my-player-back', P.back, () => this.back());
-    c.hit('my-player-help', P.help, () => this.showDetail('Attributes rise only at the weekly review, from match, team-training and home evidence. Tap an attribute for what it does. Form and Energy are not tracked yet.'));
-    this.header = c.label(P.attrHeader, '', 0.5, CREAM, 'left');
-    c.hit('my-player-page', P.attrHeader, () => this.nextPage());
-    for (let i = 0; i < ROWS; i++) {
-      this.rows.push(c.label(this.labelBox(P.attrRows[i]!), '', 0.42, INK, 'left'));
-      this.values.push(c.label(this.valueBox(P.attrRows[i]!), '', 0.42, INK, 'right'));
-      c.hit(`my-player-row-${i}`, P.attrRows[i]!, () => this.tapRow(i));
-    }
-    this.weekHeader = c.label(P.weekHeader, '', 0.5, CREAM, 'left');
-    c.hit('my-player-week-toggle', P.weekHeader, () => ((this.recent = !this.recent), (this.detail = null), this.refresh()));
-    for (let i = 0; i < 3; i++) this.weekTexts.push(c.label(P.weekRows[i]!, '', 0.36, INK, 'left'));
-    c.label(P.training, 'HOME TRAINING', 0.42, INK);
-    c.label(P.history, 'MATCH HISTORY', 0.42, INK);
-    c.hit('my-player-training', P.training, () => this.go(() => this.scene.start(SceneKeys.Career, this.returnTo === 'story' ? { returnTo: 'story' as const } : {})));
-    c.hit('my-player-history', P.history, () => ((this.view = this.view === 'history' ? 'player' : 'history'), (this.page = 0), (this.detail = null), this.refresh()));
-    c.afterLayout(() => this.drawBars());
+    if (this.storyWeek !== null) this.registry.set('myPlayerWeek', this.storyWeek);
+    else if (this.returnTo === 'story' && typeof this.registry.get('myPlayerWeek') === 'number') this.storyWeek = this.registry.get('myPlayerWeek') as number;
+    this.cameras.main.setBackgroundColor(BG);
+    this.root = this.add.container(0, 0);
+    this.input.on('pointerdown', this.onDown, this);
+    this.input.on('pointermove', this.onMove, this);
+    this.input.on('pointerup', this.onUp, this);
+    this.input.on('wheel', this.onWheel, this);
     this.scale.on(Phaser.Scale.Events.RESIZE, this.onResize, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.onShutdown, this);
-    c.layout();
+    this.build();
     void CareerStore.open().then(async (store) => {
       try {
         if (!this.sys.isActive()) return;
@@ -129,24 +123,30 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
         if (!this.sys.isActive()) return;
         this.save = save;
         this.status = save.player ? 'ready' : 'no-player';
-        const p = save.player;
-        c.label(P.info, p ? `${p.name}\nFC Batavia - ${p.position}\nOverall ${overall(save)}/100` : 'No career player yet.', 0.2, INK, 'left');
-        c.label(P.form, 'Form\nnot tracked', 0.24, INK);
-        c.label(P.energy, 'Energy\nnot tracked', 0.24, INK);
-        this.loadPortrait(p?.gender);
-        this.refresh();
+        this.loadPortrait(save.player?.gender);
+        this.build();
       } finally {
         store.close();
       }
     });
   }
 
-  private labelBox(r: NBox): NBox {
-    return { x0: r.x0, y0: r.y0, x1: P.trackX[0] - 0.01, y1: r.y1 };
+  private week(): number {
+    return this.storyWeek ?? this.save?.week ?? 1;
   }
 
-  private valueBox(r: NBox): NBox {
-    return { x0: P.trackX[1] + 0.01, y0: r.y0, x1: r.x1, y1: r.y1 };
+  /** This week's required home tasks: from week 2 (owner rule), juggling first. */
+  tasks(): readonly HomeTask[] {
+    if (!this.save?.player || this.week() < 2) return [];
+    return homeTasks(weekAssignments(this.save, this.week()));
+  }
+
+  private teamStatus(): string {
+    const s = this.save;
+    if (!s) return '';
+    if (s.teamTraining.some((t) => t.week === s.week)) return 'Done';
+    const n = new Set(s.tt12.filter((t) => t.week === s.week && t.credited).map((t) => t.slot)).size;
+    return n >= 3 ? 'Done' : n > 0 ? `${n} of 3 sessions` : 'Not started';
   }
 
   private list(): (Row | SavedReport)[] {
@@ -158,95 +158,247 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
     return Math.max(1, Math.ceil(this.list().length / ROWS));
   }
 
-  private nextPage(): void {
-    this.page = (this.page + 1) % this.pages();
-    this.refresh();
+  private pageItems(): (Row | SavedReport)[] {
+    return this.list().slice(this.page * ROWS, this.page * ROWS + ROWS);
   }
 
-  private tapRow(i: number): void {
-    const item = this.list()[this.page * ROWS + i];
-    if (!item) return;
-    if ('matchId' in item) this.go(() => this.scene.start(SceneKeys.Report, { matchId: item.matchId, next: 'history' }));
-    else this.showDetail(item.detail);
+  private rowText(it: Row | SavedReport | undefined): [string, string] {
+    if (!it) return ['', ''];
+    if ('matchId' in it) return [`Wk ${it.week} v ${it.away}`, `${it.score.home}-${it.score.away} >`];
+    return [it.label, it.value === null ? '-' : it.carry ? `${it.value} +.${String(Math.round(it.carry * 100)).padStart(2, '0')}` : `${it.value}`];
   }
 
-  private showDetail(text: string): void {
-    this.detail = text;
-    this.refresh();
-  }
-
-  private refresh(): void {
-    if (!this.save) return;
-    const items = this.list().slice(this.page * ROWS, this.page * ROWS + ROWS);
-    const title = this.view === 'history' ? 'MATCH HISTORY' : 'ATTRIBUTES';
-    this.card.setText(this.header, `${title}   Page ${this.page + 1}/${this.pages()}  Next >`);
-    for (let i = 0; i < ROWS; i++) {
-      const it = items[i];
-      let label = '';
-      let value = '';
-      if (it && 'matchId' in it) {
-        label = `Wk ${it.week} v ${it.away}`;
-        value = `${it.score.home}-${it.score.away} >`;
-      } else if (it) {
-        label = it.label;
-        value = it.value === null ? '-' : it.carry ? `${it.value} +.${String(Math.round(it.carry * 100)).padStart(2, '0')}` : `${it.value}`;
-      }
-      if (i === 0 && !it && this.view === 'history') label = 'No matches yet';
-      this.card.setText(this.rows[i]!, label);
-      this.card.setText(this.values[i]!, value);
+  // ---------- drawing ----------
+  private build(): void {
+    this.root.removeAll(true);
+    this.hits = [];
+    const { width, height } = this.scale;
+    const ins = safeInsets();
+    const landscape = width > height;
+    const pad = Math.max(12, Math.round(Math.min(width, height) * 0.03));
+    const left = ins.left + pad;
+    const usable = width - ins.left - ins.right - pad * 2;
+    const fs = Phaser.Math.Clamp(Math.round(Math.min(width, height) / 26), 13, 20);
+    const colW = landscape ? Math.min(560, (usable - pad) / 2) : Math.min(620, usable);
+    const x0 = landscape ? left + (usable - colW * 2 - pad) / 2 : left + (usable - colW) / 2;
+    let y = ins.top + pad;
+    y = this.text(x0 + (landscape ? colW + pad / 2 : colW / 2), y, 'MY PLAYER', fs * 1.9, 0.5, true) + 2;
+    y = this.text(x0 + (landscape ? colW + pad / 2 : colW / 2), y, `Week ${this.week()}`, fs, 0.5, true) + pad;
+    const top = y;
+    let col1 = top;
+    let col2 = top;
+    if (this.view === 'history') {
+      col1 = this.historyCard(x0, col1, landscape ? colW * 2 + pad : colW, fs, pad);
+      col1 = this.nav(x0, col1 + pad, landscape ? colW * 2 + pad : colW, fs, pad);
+      this.contentH = col1 + ins.bottom + pad;
+      this.clampScroll();
+      return;
     }
-    const lines = this.detail ? this.wrap3(this.detail) : this.recent ? recentLines(this.save) : weekLines(this.save);
-    this.card.setText(this.weekHeader, this.detail ? 'DETAILS   (tap to close)' : this.recent ? 'RECENT DEVELOPMENT   This week >' : 'THIS WEEK   Recent >');
-    lines.forEach((l, i) => this.card.setText(this.weekTexts[i]!, l));
-    this.drawBars();
+    col1 = this.playerCard(x0, col1, colW, fs, pad) + pad;
+    col1 = this.homeCard(x0, col1, colW, fs, pad) + pad;
+    col1 = this.teamCard(x0, col1, colW, fs, pad) + pad;
+    const x2 = landscape ? x0 + colW + pad : x0;
+    if (!landscape) col2 = col1;
+    col2 = this.devCard(x2, col2, colW, fs, pad) + pad;
+    col2 = this.secondary(x2, col2, colW, fs, pad) + pad;
+    col2 = this.nav(x2, col2, colW, fs, pad);
+    this.contentH = Math.max(col1, col2) + ins.bottom + pad;
+    this.clampScroll();
   }
 
-  private wrap3(text: string): string[] {
-    const words = text.split(' ');
-    const per = Math.ceil(words.length / 3);
-    return [0, 1, 2].map((i) => words.slice(i * per, (i + 1) * per).join(' '));
+  private text(x: number, y: number, s: string, size: number, ox = 0, bold = false, color = INK, wrap = 0): number {
+    const t = this.add.text(x, y, s, { fontFamily: FONT, fontSize: `${Math.round(size)}px`, color, fontStyle: bold ? 'bold' : 'normal', ...(wrap ? { wordWrap: { width: wrap } } : {}) }).setOrigin(ox, 0);
+    this.root.add(t);
+    return y + t.height;
   }
 
-  private drawBars(): void {
-    this.bars.clear();
-    this.fitImage();
-    if (!this.save || this.view === 'history') return;
-    const items = attributeRows(this.save).slice(this.page * ROWS, this.page * ROWS + ROWS);
-    items.forEach((it, i) => {
-      if (it.value === null) return;
-      const r = this.card.rect(P.attrRows[i]!);
-      const x0 = this.card.rect({ ...P.attrRows[i]!, x0: P.trackX[0], x1: P.trackX[1] });
-      const h = r.height * 0.42;
-      this.bars.fillStyle(0xf2a531, 1).fillRect(x0.x + 2, r.y + (r.height - h) / 2, Math.max(0, (x0.width - 4) * Math.min(1, it.value / 100)), h);
+  private box(x: number, y: number, w: number, h: number, fill = CARD, r = 14): void {
+    const g = this.add.graphics();
+    g.fillStyle(fill, 1).fillRoundedRect(x, y, w, h, r).lineStyle(3, EDGE, 1).strokeRoundedRect(x, y, w, h, r);
+    this.root.add(g);
+  }
+
+  private card(x: number, y: number, w: number, pad: number, draw: (cy: number) => number): number {
+    const g = this.add.graphics();
+    this.root.add(g);
+    const end = draw(y + pad);
+    const h = end - y + pad * 0.8;
+    g.fillStyle(CARD, 1).fillRoundedRect(x, y, w, h, 16).lineStyle(3, EDGE, 1).strokeRoundedRect(x, y, w, h, 16);
+    return y + h;
+  }
+
+  private button(name: string, x: number, y: number, w: number, h: number, label: string, fs: number, fill: number, on: () => void, color = '#ffffff'): number {
+    this.box(x, y, w, h, fill, Math.min(18, h / 2));
+    const t = this.add.text(x + w / 2, y + h / 2, label, { fontFamily: FONT, fontSize: `${Math.round(fs)}px`, color, fontStyle: 'bold' }).setOrigin(0.5);
+    this.root.add(t);
+    this.hits.push({ name, rect: { x, y, width: w, height: h }, on });
+    return y + h;
+  }
+
+  private bar(x: number, y: number, w: number, h: number, frac: number): void {
+    const g = this.add.graphics();
+    g.fillStyle(TRACK, 1).fillRoundedRect(x, y, w, h, h / 2);
+    if (frac > 0) g.fillStyle(ORANGE, 1).fillRoundedRect(x, y, Math.max(h, w * Math.min(1, frac)), h, h / 2);
+    g.lineStyle(2, EDGE, 1).strokeRoundedRect(x, y, w, h, h / 2);
+    this.root.add(g);
+  }
+
+  private playerCard(x: number, y: number, w: number, fs: number, pad: number): number {
+    const p = this.save?.player;
+    return this.card(x, y, w, pad, (cy) => {
+      const ph = fs * 5.2;
+      const pw = ph * 0.8;
+      this.box(x + pad, cy, pw, ph, 0x3a6fc4, 12);
+      if (this.portraitKey && this.textures.exists(this.portraitKey)) {
+        const img = this.add.image(0, 0, this.portraitKey);
+        const k = Math.max(pw / img.width, ph / img.height);
+        const cw = pw / k;
+        img.setScale(k).setOrigin(0, 0).setCrop((img.width - cw) / 2, 0, cw, ph / k).setPosition(x + pad - ((img.width - cw) / 2) * k, cy);
+        this.root.add(img);
+      }
+      const tx = x + pad * 2 + pw;
+      let ty = this.text(tx, cy, p ? p.name : this.status === 'loading' ? 'Loading…' : 'No career player yet.', fs * 1.5, 0, true);
+      if (p) {
+        ty = this.text(tx, ty + 2, p.position, fs);
+        ty = this.text(tx, ty, 'FC Batavia', fs);
+        ty = this.text(tx, ty, `Overall ${overall(this.save!)}/100`, fs * 0.85);
+      }
+      return Math.max(cy + ph, ty);
     });
   }
 
-  private loadPortrait(gender: string | undefined): void {
-    const id = gender === 'boy' ? 'boy-home' : gender === 'girl' ? 'girl-home' : '';
-    const url = id ? artUrl(id) : null;
-    if (!url) return;
-    const key = artTextureKey(id);
-    const place = () => {
-      if (!this.sys.isActive() || !this.textures.exists(key)) return;
-      this.portrait = this.add.image(0, 0, key).setDepth(1);
-      this.drawBars();
-    };
-    if (this.textures.exists(key)) place();
-    else {
-      this.load.image(key, url);
-      this.load.once(`filecomplete-image-${key}`, place);
-      this.load.start();
-    }
+  private homeCard(x: number, y: number, w: number, fs: number, pad: number): number {
+    const tasks = this.tasks();
+    return this.card(x, y, w, pad, (cy) => {
+      const inner = w - pad * 2;
+      cy = this.text(x + pad, cy, "THIS WEEK'S HOME TRAINING", fs * 1.15, 0, true, INK, inner * 0.7);
+      if (tasks.length) {
+        this.box(x + w - pad - fs * 6.4, y + pad * 0.6, fs * 6.4, fs * 1.8, ORANGE, fs * 0.9);
+        this.root.add(this.add.text(x + w - pad - fs * 3.2, y + pad * 0.6 + fs * 0.9, 'REQUIRED', { fontFamily: FONT, fontSize: `${Math.round(fs * 0.8)}px`, color: INK, fontStyle: 'bold' }).setOrigin(0.5));
+      }
+      if (!this.save?.player) return this.text(x + pad, cy + 4, this.status === 'loading' ? 'Loading…' : 'Create your player in Home Training first.', fs, 0, false, INK, inner);
+      if (!tasks.length) {
+        cy = this.text(x + pad, cy + 4, 'No required home training this week.', fs, 0, false, INK, inner);
+      } else {
+        const done = tasks.filter((t) => t.done).length;
+        cy = this.text(x + pad, cy + 4, `Complete all ${tasks.length} to finish this week's required work.`, fs * 0.9, 0, false, INK, inner) + 6;
+        this.bar(x + pad, cy + 2, inner * 0.62, fs * 1.1, done / tasks.length);
+        this.text(x + pad + inner * 0.62 + 8, cy, `${done} of ${tasks.length} complete`, fs * 0.9);
+        cy += fs * 1.6;
+        const rowH = Math.max(46, fs * 2.6);
+        tasks.forEach((t, i) => {
+          const ry = cy + i * (rowH + 6);
+          const hl = t.key === 'juggling';
+          this.box(x + pad, ry, inner, rowH, hl ? 0xffe7bf : CARD, 10);
+          const g = this.add.graphics();
+          g.fillStyle(t.done ? ORANGE : TRACK, 1).fillCircle(x + pad + rowH / 2, ry + rowH / 2, rowH * 0.28).lineStyle(2, EDGE, 1).strokeCircle(x + pad + rowH / 2, ry + rowH / 2, rowH * 0.28);
+          this.root.add(g);
+          this.root.add(this.add.text(x + pad + rowH, ry + rowH / 2, `${t.done ? '✓ ' : ''}${t.short}${hl ? '  (every week)' : ''}`, { fontFamily: FONT, fontSize: `${fs}px`, color: INK, fontStyle: 'bold' }).setOrigin(0, 0.5));
+          this.root.add(this.add.text(x + pad + inner - 12, ry + rowH / 2, '›', { fontFamily: FONT, fontSize: `${fs * 1.4}px`, color: INK }).setOrigin(1, 0.5));
+          this.hits.push({ name: `my-player-task-${t.key}`, rect: { x: x + pad, y: ry, width: inner, height: rowH }, on: () => this.openTask(t) });
+        });
+        cy += tasks.length * (rowH + 6) + 4;
+        const next = tasks.find((t) => !t.done);
+        cy = this.button('my-player-start-next', x + pad, cy, inner, Math.max(52, fs * 2.8), next ? 'START NEXT SESSION' : 'ALL DONE THIS WEEK', fs * 1.15, next ? ORANGE : TRACK, () => next && this.openTask(next), INK);
+        cy = this.text(x + w / 2, cy + 4, next ? `Next: ${next.short}` : 'Every required task is logged for this week.', fs * 0.85, 0.5);
+      }
+      cy += 8;
+      cy = this.button('my-player-extra', x + pad, cy, inner, Math.max(44, fs * 2.4), 'Extra practice (optional)', fs * 0.95, CARD, () => this.openCareer({}), INK);
+      return cy;
+    });
   }
 
-  private fitImage(): void {
-    const img = this.portrait;
-    if (!img) return;
-    const r = this.card.rect(P.portrait);
-    const k = Math.max(r.width / img.width, r.height / img.height);
-    const cw = r.width / k;
-    const ch = r.height / k;
-    img.setScale(k).setOrigin(0, 0).setCrop((img.width - cw) / 2, 0, cw, ch).setPosition(r.x - ((img.width - cw) / 2) * k, r.y);
+  private teamCard(x: number, y: number, w: number, fs: number, pad: number): number {
+    return this.card(x, y, w, pad, (cy) => {
+      const inner = w - pad * 2;
+      const st = this.teamStatus();
+      const top = cy;
+      cy = this.text(x + pad, cy, 'TEAM TRAINING', fs * 1.15, 0, true);
+      if (st) this.text(x + w - pad, top, st, fs * 0.85, 1);
+      cy = this.text(x + pad, cy + 4, 'Sessions A, B and C with the club this week.', fs * 0.9, 0, false, INK, inner * 0.55);
+      const bw = Math.min(inner * 0.45, fs * 11);
+      this.button('my-player-team', x + w - pad - bw, top + fs * 1.6, bw, Math.max(48, fs * 2.6), 'Open session', fs, BLUE, () => this.openCareer({ open: 'team' }));
+      return Math.max(cy, top + fs * 1.6 + Math.max(48, fs * 2.6));
+    });
+  }
+
+  private devCard(x: number, y: number, w: number, fs: number, pad: number): number {
+    const rows = this.save ? attributeRows(this.save) : [];
+    return this.card(x, y, w, pad, (cy) => {
+      const inner = w - pad * 2;
+      cy = this.text(x + pad, cy, 'MY DEVELOPMENT', fs * 1.15, 0, true) + 6;
+      const show = this.expanded ? this.pageItems() : rows.filter((r) => r.value !== null);
+      const rh = Math.max(this.expanded ? 44 : 30, fs * (this.expanded ? 2.4 : 1.7));
+      show.forEach((it, i) => {
+        const [label, value] = this.rowText(it);
+        const ry = cy + i * rh;
+        this.root.add(this.add.text(x + pad, ry + rh / 2, label, { fontFamily: FONT, fontSize: `${fs * 0.95}px`, color: INK }).setOrigin(0, 0.5));
+        if (!('matchId' in it) && it.value !== null) this.bar(x + pad + inner * 0.36, ry + rh / 2 - fs * 0.5, inner * 0.46, fs, it.value / 100);
+        this.root.add(this.add.text(x + w - pad, ry + rh / 2, value, { fontFamily: FONT, fontSize: `${fs * 0.95}px`, color: INK }).setOrigin(1, 0.5));
+        if (this.expanded) this.hits.push({ name: `my-player-row-${i}`, rect: { x: x + pad, y: ry, width: inner, height: rh }, on: () => this.tapRow(i) });
+      });
+      cy += show.length * rh + 6;
+      if (this.expanded) {
+        cy = this.button('my-player-page', x + pad, cy, inner, 44, `Page ${this.page + 1} of ${this.pages()}  ›`, fs * 0.9, CARD, () => this.nextPage(), INK) + 6;
+        const d = this.detail ?? 'Tap an attribute for what it does. Attributes rise only at the weekly review, from match, team-training and home evidence.';
+        cy = this.text(x + pad, cy, d, fs * 0.85, 0, false, INK, inner) + 6;
+      }
+      return this.button('my-player-attrs', x + pad, cy, inner, 44, this.expanded ? 'Hide details' : 'View all attributes  ›', fs * 0.95, CARD, () => ((this.expanded = !this.expanded), (this.detail = null), this.build()), '#2a56a8');
+    });
+  }
+
+  private secondary(x: number, y: number, w: number, fs: number, pad: number): number {
+    const bw = (w - pad) / 2;
+    const h = Math.max(50, fs * 2.7);
+    this.button('my-player-rankings', x, y, bw, h, 'Rankings', fs, BLUE, () => this.go(() => this.scene.start(SceneKeys.Rankings)));
+    this.button('my-player-review', x + bw + pad, y, bw, h, 'Weekly review', fs, BLUE, () => this.openCareer({ open: 'reviewHub' }));
+    return this.button('my-player-history', x, y + h + pad * 0.6, w, Math.max(44, fs * 2.4), 'Match history', fs * 0.95, CARD, () => ((this.view = 'history'), (this.page = 0), this.build()), INK);
+  }
+
+  private historyCard(x: number, y: number, w: number, fs: number, pad: number): number {
+    return this.card(x, y, w, pad, (cy) => {
+      const inner = w - pad * 2;
+      cy = this.text(x + pad, cy, 'MATCH HISTORY', fs * 1.15, 0, true) + 6;
+      const items = this.pageItems();
+      if (!items.length) cy = this.text(x + pad, cy, 'No matches yet', fs);
+      const rh = Math.max(46, fs * 2.5);
+      items.forEach((it, i) => {
+        const [label, value] = this.rowText(it);
+        this.button(`my-player-row-${i}`, x + pad, cy + i * (rh + 6), inner, rh, '', fs, CARD, () => this.tapRow(i));
+        this.root.add(this.add.text(x + pad * 1.6, cy + i * (rh + 6) + rh / 2, label, { fontFamily: FONT, fontSize: `${fs}px`, color: INK }).setOrigin(0, 0.5));
+        this.root.add(this.add.text(x + w - pad * 1.6, cy + i * (rh + 6) + rh / 2, value, { fontFamily: FONT, fontSize: `${fs}px`, color: INK }).setOrigin(1, 0.5));
+      });
+      cy += items.length * (rh + 6);
+      return this.button('my-player-page', x + pad, cy, inner, 44, `Page ${this.page + 1} of ${this.pages()}  ›`, fs * 0.9, CARD, () => this.nextPage(), INK);
+    });
+  }
+
+  /** The one way out: back to the player view from history, otherwise back where My Player was opened from. */
+  private nav(x: number, y: number, w: number, fs: number, _pad: number): number {
+    const label = this.view === 'history' ? 'Back to My Player' : this.returnTo === 'story' ? 'Back to story' : 'Back to menu';
+    return this.button('my-player-back', x, y, w, Math.max(50, fs * 2.7), label, fs, CARD, () => this.back(), '#2a56a8');
+  }
+
+  // ---------- actions ----------
+  private openCareer(extra: { open?: string; task?: string }): void {
+    const data = { ...(this.returnTo === 'story' ? { returnTo: 'story' as const } : {}), week: this.week(), ...extra };
+    this.go(() => this.scene.start(SceneKeys.Career, data));
+  }
+
+  private openTask(t: HomeTask): void {
+    this.openCareer({ task: t.key });
+  }
+
+  private nextPage(): void {
+    this.page = (this.page + 1) % this.pages();
+    this.build();
+  }
+
+  private tapRow(i: number): void {
+    const item = this.pageItems()[i];
+    if (!item) return;
+    if ('matchId' in item) this.go(() => this.scene.start(SceneKeys.Report, { matchId: item.matchId, next: 'history' }));
+    else ((this.detail = item.detail), this.build());
   }
 
   private go(fn: () => void): void {
@@ -259,28 +411,88 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
     if (this.view === 'history') {
       this.view = 'player';
       this.page = 0;
-      this.refresh();
+      this.build();
       return;
     }
     this.go(() => (this.returnTo === 'story' ? this.scene.start(SceneKeys.Story, { resume: true }) : this.scene.start(SceneKeys.Start)));
   }
 
+  private loadPortrait(gender: string | undefined): void {
+    const id = gender === 'boy' ? 'boy-home' : gender === 'girl' ? 'girl-home' : '';
+    const url = id ? artUrl(id) : null;
+    if (!url) return;
+    const key = artTextureKey(id);
+    this.portraitKey = key;
+    if (this.textures.exists(key)) return;
+    this.load.image(key, url);
+    this.load.once(`filecomplete-image-${key}`, () => this.sys.isActive() && this.build());
+    this.load.start();
+  }
+
+  // ---------- scrolling and input ----------
+  private clampScroll(): void {
+    const cam = this.cameras.main;
+    cam.scrollY = Phaser.Math.Clamp(cam.scrollY, 0, Math.max(0, this.contentH - this.scale.height));
+  }
+
+  private onDown(p: Phaser.Input.Pointer): void {
+    this.drag = { y: p.y, scroll: this.cameras.main.scrollY, moved: false };
+  }
+
+  private onMove(p: Phaser.Input.Pointer): void {
+    if (!this.drag || !p.isDown) return;
+    if (Math.abs(p.y - this.drag.y) > 10) this.drag.moved = true;
+    if (this.drag.moved) {
+      this.cameras.main.scrollY = this.drag.scroll - (p.y - this.drag.y);
+      this.clampScroll();
+    }
+  }
+
+  private onUp(p: Phaser.Input.Pointer): void {
+    const d = this.drag;
+    this.drag = null;
+    if (!d || d.moved || this.leaving) return;
+    const wy = p.y + this.cameras.main.scrollY;
+    const h = this.hits.find((x) => p.x >= x.rect.x && p.x <= x.rect.x + x.rect.width && wy >= x.rect.y && wy <= x.rect.y + x.rect.height);
+    if (!h) return;
+    this.taps.push(h.name);
+    h.on();
+  }
+
+  private onWheel(_p: Phaser.Input.Pointer, _o: unknown, _dx: number, dy: number): void {
+    this.cameras.main.scrollY += dy;
+    this.clampScroll();
+  }
+
   private onResize(): void {
-    this.card.layout();
+    this.build();
   }
 
   private onShutdown(): void {
     this.scale.off(Phaser.Scale.Events.RESIZE, this.onResize, this);
+    this.input.off('pointerdown', this.onDown, this);
+    this.input.off('pointermove', this.onMove, this);
+    this.input.off('pointerup', this.onUp, this);
+    this.input.off('wheel', this.onWheel, this);
   }
 
+  /** Hit areas in screen coordinates (after scrolling). */
   describeLayout(): SceneLayoutReport {
     const { width, height } = this.scale;
-    const el: Record<string, Rect> = { painting: this.card.artRect() };
-    for (const h of this.card.hits) el[h.name] = this.card.rect(h.box);
+    const sy = this.cameras.main.scrollY;
+    const el: Record<string, Rect> = {};
+    for (const h of this.hits) el[h.name] = { ...h.rect, y: h.rect.y - sy };
     return { orientation: orientationOf({ width, height }), viewport: { width, height }, elements: el };
   }
 
   describeGameplay(): unknown {
-    return { taps: this.card?.trace ?? [], status: this.status, view: this.view, page: this.page, pages: this.pages(), rows: this.rows.map((t) => t.text), values: this.values.map((t) => t.text), week: this.weekTexts.map((t) => t.text), header: this.header?.text, gender: this.save?.player?.gender ?? null, portrait: this.portrait !== null };
+    const items = this.pageItems().map((it) => this.rowText(it));
+    const tasks = this.tasks();
+    return {
+      taps: this.taps, status: this.status, view: this.view, page: this.page, pages: this.pages(), expanded: this.expanded,
+      rows: items.map((r) => r[0]), values: items.map((r) => r[1]), week: this.save ? weekLines(this.save) : [], storyWeek: this.week(),
+      tasks: tasks.map((t) => ({ key: t.key, done: t.done })), next: tasks.find((t) => !t.done)?.key ?? null, team: this.teamStatus(),
+      contentHeight: this.contentH, scrollY: this.cameras.main.scrollY,
+    };
   }
 }

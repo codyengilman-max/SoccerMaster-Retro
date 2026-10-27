@@ -1,5 +1,14 @@
 # Status
 
+## My Player redesign (owner layout reference 2026-10-27, branch `devin/1793070071-my-player`, from `main` 50c8c59, not merged, not deployed)
+- My Player is built from real Phaser panels, text and buttons; the owner image is only a layout reference. Order: player card (saved boy/girl home art, name, position, club, week) → THIS WEEK'S HOME TRAINING (REQUIRED) → optional Extra practice → Team Training → My development → Rankings / Weekly review / Match history → one bottom back button.
+- Required home training starts in Week 2 (owner correction): juggling (highlighted, every week) plus first touch (Weeks 2–6) or passing (Week 7+), plus this week's planned home sessions from Week 6. Rows, ticks and "X of N complete" come from `homeTasks(weekAssignments(...))` and the saved journal, never a fixed count.
+- START NEXT SESSION opens Career directly on the first unfinished task (`CareerScene` `task` data). There is no saved part-way session state, so "Resume session" is not shown rather than faked.
+- Team Training shows its real status from the saved week (`Done`, `n of 3 sessions`, `Not started`). Extra practice opens normal Home Training and is labelled optional; it is not counted as required.
+- My development shows compact bars for the six tracked attributes; "View all attributes" expands the paged list and tapping a row shows its explanation. Untracked attributes still show "-".
+- One back route: "Back to story" when opened from the story, otherwise "Back to menu"; Match history returns to My Player. The corner `<` and `?` buttons are gone.
+- Portrait and landscape (two columns), drag/wheel scrolling, safe-area insets, touch targets at least 44 × 44. Phone emulation only, not tested on a real iPhone.
+
 ## Team Training learning loop (owner brief + mockup, branch `devin/1792950375-tt-learning-loop`, from `main` 56a6e0c, not merged, not deployed)
 - Mockup layout on the fixed half: TEAM TRAINING header (season, week, session, round, role, the route's real objective), Bell94/Scottsdale surround outside the lines, navy/gold Coach Code panel with his approved portrait, A–D choice buttons, Hint / Pause / Leave, and the OBSERVE › DECIDE › PLAY › LEARN footer. Portrait and landscape; the panel never covers the half.
 - No giveaway before choosing (no arrows, neutral labels, seeded order); hint recorded as assisted; LEARN overlay from the frozen moment; Replay never counts; next attempt varies. Details: `docs/training/v1.2/MAPPING.md`.

@@ -1,16 +1,20 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
-import { diagnostics, expectInside, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
+import { diagnostics, expectInside, pressElement as pressAny, revealElement, trackConsoleErrors, waitForScene } from './helpers';
 
 test.describe.configure({ timeout: 240_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 type Ratio = { num: number; den: number; pct: number | null };
 type Report = { status: string; matchId: string; next: string; fullOpen: boolean; report: { matchId: string; week: number; score: { home: number; away: number }; stats: { passes: Ratio; shotsOnTarget: Ratio; groundPasses: Ratio; chips: Ratio } } | null };
-type MyPlayer = { status: string; view: string; page: number; pages: number; rows: string[]; values: string[]; week: string[]; header: string };
+type MyPlayer = { status: string; view: string; page: number; pages: number; rows: string[]; values: string[]; week: string[]; header: string; expanded?: boolean };
 
 async function pressElement(page: Page, name: string, mode: 'touch' | 'mouse'): Promise<void> {
   for (let i = 0; i < 6; i++) {
     const d = await diagnostics(page);
     const els = d.layout?.elements ?? {};
+    if (els[name] && d.activeScenes.includes('myPlayer')) {
+      await revealElement(page, name);
+      return pressAny(page, name, mode);
+    }
     if (els[name] || !d.activeScenes.includes('career') || !els.more) return pressAny(page, name, mode);
     await pressAny(page, 'more', mode);
     await page.waitForTimeout(50);
@@ -34,6 +38,14 @@ async function sceneOrDump(page: Page, key: string, ms = 20_000): Promise<void> 
     if (d.activeScenes.length === 1 && d.activeScenes[0] === key && d.layout !== null) return;
     if (Date.now() - start > ms) throw new Error(`scene ${key} not reached: ${JSON.stringify({ scenes: d.activeScenes, gameplay: d.gameplay, hits: Object.keys(d.layout?.elements ?? {}) }).slice(0, 1500)}`);
     await page.waitForTimeout(100);
+  }
+}
+async function onScreen(page: Page, names: string[]): Promise<void> {
+  const d = await diagnostics(page);
+  for (const n of names) {
+    const r = d.layout!.elements[n];
+    expect(r, n).toBeTruthy();
+    expect(r!.width >= 44 && r!.height >= 44, `${n} is a readable touch target`).toBe(true);
   }
 }
 async function onArt(page: Page, names: string[]): Promise<void> {
@@ -94,20 +106,22 @@ test('full-time Match Report, My Player, Match History reopen without changing t
   await sceneOrDump(page, 'start');
 
   // My Player shows the saved player and the match in Match History.
-  await pressAny(page, 'my-player-button', mode);
+  await pressElement(page, 'my-player-button', mode);
   await sceneOrDump(page, 'myPlayer');
   let p = await gameplay<MyPlayer>(page, 'myPlayer', (g) => g.status === 'ready', 'my player');
   expect(p.rows).toContain('Passing');
   expect(p.pages).toBeGreaterThan(1);
-  await onArt(page, ['my-player-back', 'my-player-help', 'my-player-training', 'my-player-history', 'my-player-row-5']);
+  await onScreen(page, ['my-player-back', 'my-player-attrs', 'my-player-history', 'my-player-rankings', 'my-player-review', 'my-player-team']);
   const week = p.week;
-  await pressAny(page, 'my-player-page', mode);
+  await pressElement(page, 'my-player-attrs', mode);
+  p = await gameplay<MyPlayer>(page, 'myPlayer', (g) => g.expanded === true, 'attributes expanded');
+  await pressElement(page, 'my-player-page', mode);
   p = await gameplay<MyPlayer>(page, 'myPlayer', (g) => g.page === 1, 'page 2');
   expect(p.values).toContain('-');
-  await pressAny(page, 'my-player-history', mode);
+  await pressElement(page, 'my-player-history', mode);
   p = await gameplay<MyPlayer>(page, 'myPlayer', (g) => g.view === 'history', 'history');
   expect(p.rows[0]).toMatch(/^Wk \d+ v /);
-  await pressAny(page, 'my-player-row-0', mode);
+  await pressElement(page, 'my-player-row-0', mode);
   await sceneOrDump(page, 'report');
   const again = await gameplay<Report>(page, 'report', (g) => g.status === 'ready', 'reopened report');
   expect(again.next).toBe('history');
@@ -122,12 +136,12 @@ test('full-time Match Report, My Player, Match History reopen without changing t
   const vp = page.viewportSize()!;
   await page.setViewportSize({ width: vp.height, height: vp.width });
   await page.waitForTimeout(400);
-  await onArt(page, ['my-player-back', 'my-player-history', 'my-player-row-0']);
+  await onScreen(page, ['my-player-back', 'my-player-row-0']);
   await page.setViewportSize(vp);
   await page.waitForTimeout(400);
-  await pressAny(page, 'my-player-back', mode);
+  await pressElement(page, 'my-player-back', mode);
   await gameplay<MyPlayer>(page, 'myPlayer', (g) => g.view === 'player', 'player view');
-  await pressAny(page, 'my-player-back', mode);
+  await pressElement(page, 'my-player-back', mode);
   await sceneOrDump(page, 'start');
   expect(errors).toEqual([]);
 });
