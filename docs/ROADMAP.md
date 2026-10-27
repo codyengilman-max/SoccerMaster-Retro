@@ -23,22 +23,29 @@ Staged plan. One milestone at a time; each ends with verified checks and an upda
 ## M4 — 9v9 match flow (core done, in review)
 - Kick-off, restarts (throw-ins, goal kicks, corners), half-time, full-time, match clock; simple fouls/offside decisions.
 - **Done:** two-half match clock (default 2 × 165 sim s (5.5 min of play, owner cap 5–6 min) shown as 2 × 25 min), kick-off, half-time card, second half with the away team kicking off, full-time result (win/draw/loss and stats), Play again. The clock stops for pauses, backgrounding, Coach Moments, kick-off countdowns and stoppages. `?sandbox` keeps the open-ended M3 sandbox; `?debug&halfSeconds=N` shortens halves for tests.
-- **Still not built:** formal throw-ins, corners and goal kicks (restarts stay simplified), fouls, offside, added time, teams swapping ends at half-time.
+- **Since built:** referee with out of play, throw-ins, goal kicks, corners, slide-tackle fouls and offside (including saves and deflections), `src/game/match/referee.ts`.
+- **Still not built:** added time.
 
 ## M5 — Tactical learning pauses
 - 4–6 contextual pauses per standard match triggered from simulation state.
 - Tactical choices change real play (positions, runs, pressing) rather than awarding automatic goals.
 - One weekly learning focus that shapes which situations trigger pauses.
-- **Status:** Coach Moments are in review, hosted in the M3 sandbox behind `?coach` because M4 is not built (see `docs/COACH.md`). The weekly learning focus and full-match scheduling still need M4.
+- **Status:** Coach Moments run in timed matches but only with the dev flag `?coach`; story matches do not show them. Owner decision H3 makes 4–6 live-state moments per story match, with grading bands and Decision Heat, the next match PR (PR C in `docs/REMEDIATION_PLAN.md`).
 
 ## M6 — Individual RPG growth ✅ (in review)
 Implemented as home training + game-evidence progression; see `docs/TRAINING.md`.
 - Weekly individual training focus and achievement-based player growth between matches.
 
-## M7 — League and tournament play
+## M7 — League and tournament play ✅ (Season One weeks 1–10 shipped)
 - League, tournament and story progression; save/load.
 
 Out of scope unless decided later: accounts, payments, multiplayer, external telemetry.
 
 ## M8 — Art and audio pass
 - Original retro storybook art pack replacing placeholders; sound; accessibility pass.
+
+## Next (owner decisions H1–H8, 2026-10-27)
+Focused PRs in order; details, files and acceptance in [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md):
+A docs reconciliation · B classic vs v0.5 comparison · C story-match Coach Moments · D Team Training vertical slice · E standing tackle + quick shot · F rest defence + golden moments · G regression/stability · H real-iPhone verification · I Tournament Results Screen (from #37) · J Animated Rosters v2 (from #37).
+
+Not planned: match-long position lock (H1). Deferred: chips, lofted shots, extra controls (H6).

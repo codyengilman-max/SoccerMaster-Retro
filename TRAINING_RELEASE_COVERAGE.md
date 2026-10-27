@@ -1,5 +1,7 @@
 # Team Training release coverage (v1.2)
 
+> **Superseded runtime (2026-10-27, `main` 04e947b).** The table below describes the earlier `career/teamTraining.ts` drills played in `MatchScene`; that route is no longer reachable from the story. Live Team Training is Sessions A–C in `TacticalTrainingScene`, gated by `src/game/training12/library/gate.ts` on the Audited v1.2 Tactical Library: 48 cards (GK01–GK03 retired), 0 approved for scoring, `SESSION_CARDS` empty, so all 108 sessions × 9 positions (972 routes) are **blocked** and show "not counted". The story continues without credit. Next step: an owner-reviewed vertical slice (GK, outside back, centre back, holding mid, advanced mid, winger, centre forward), PR D in `docs/REMEDIATION_PLAN.md`. No route is approved automatically.
+
 Source: `docs/training/v1.2/06_DRILL_RELEASE_COVERAGE.md` and `training-coverage-plan.json`.
 Runtime: `src/game/career/teamTraining.ts` (`TEAM_TRAINING_SITUATIONS`, `selectSituations`, `SituationObserver`), played in `MatchScene` Team Training mode on the real 9v9 engine (no second engine).
 

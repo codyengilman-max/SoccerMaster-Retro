@@ -43,3 +43,9 @@ Arrows / WASD move · Space or J pass · K shoot · L slide tackle · I block ·
 - In code: change the `padMode` default in `MatchScene.create` (one line) or revert the controls
   commits on `devin/1792100194-joystick-controls`; the sim keeps `controls: 'gesture'` as its default,
   so the engine path used by tests, the Lab and the attack drill is unchanged.
+
+## Approved changes (owner decision H6, not built)
+- Replace BLOCK with a standing tackle: a deliberate on-feet attempt to win the ball, not a passive stance.
+- Add double-tap quick shot to the default pad: faster release, accuracy and execution consequences kept, no guaranteed goal, no conflict with normal SHOOT. Today double-tap quick shot exists only in `?controls=gesture`.
+- Deferred: chips, lofted shots, extra passing or defensive controls.
+Plan: PR E in [../REMEDIATION_PLAN.md](../REMEDIATION_PLAN.md).

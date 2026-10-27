@@ -1,12 +1,28 @@
 # Status
 
-## Team Training: source review gate (Tactical Library v1, PR #49, not merged, not deployed)
+## Release state at `main` 04e947b (2026-10-27 audit, live at https://soccermaster-retro.pages.dev)
+
+Sections below are a history log, newest first; each header records where that work stands now. This table is the current truth. Owner decisions: `docs/DECISIONS.md` H1–H8. Plan: `docs/REMEDIATION_PLAN.md`.
+
+| State | Features |
+|---|---|
+| **Shipped** (reachable from Story, live) | Season One story Weeks 1–10 (boy/girl, name, position); League Games 1–7; AZ Showcase (Week 9, strength only); timed 9v9 match with the canonical 18; referee: out of play, restarts, slide-tackle fouls, offside incl. saves/deflections; shared team shape; joystick + PASS/SHOOT/SLIDE TACKLE/BLOCK; FIFA-style automatic switching (intended, H1); home training + weekly juggling; My Player; Rankings, standings and team profiles; Match Report and history; Cloudy and Jungle Ball; Crossbar; IndexedDB saves with migration and exactly-once results |
+| **Dev-only** (URL flag) | Coach Moments `?coach`; tactics v0.5 `?tactics=v05` (candidate, H2); gesture controls and their double-tap quick shot `?controls=gesture`; Lab/Review `?dev`, `?lab`; Team Training proposals `?debug&ttProposals` |
+| **Blocked** (fail-closed by design) | Team Training scoring: Audited v1.2 library, 48 cards, 0 approved, `SESSION_CARDS` empty, 972 routes "not counted"; the story continues without credit |
+| **Proposed** (owner-approved, not built) | Story-match Coach Moments with grading bands and Decision Heat (H3, PR C); standing tackle replacing BLOCK and pad double-tap quick shot (H6, PR E); rest defence and golden moments (H7, PR F); Team Training vertical slice (PR D) |
+| **Deferred** | Chips, lofted shots, extra passing/defensive controls (H6); Weeks 11–18 content; school rewards (`SCHOOL_REWARD_RULE = null`) |
+| **Not planned** | Match-long position lock (H1) |
+| **Unmerged reference** | PR #37 (Tournament Results Screen, Animated Rosters v2) kept for extraction (H4, PRs I/J) |
+
+Verification: Chromium phone emulation and desktop only. Not yet verified on a real iPhone (PR H).
+
+## Team Training: source review gate (Tactical Library v1, PR #49, in `main` 04e947b (PR #49), live)
 
 - Library v1 imported unchanged and hash-pinned; 7 cited sources fetched and hashed; review sheet covers all 27 briefs (20 ready to build a scene for review, 7 need tactical authoring/review, 0 approved).
 - No Team Training session is scored until a brief and its scene are signed off. Sessions show "Waiting for tactical review · not counted"; the story can continue without counting the week.
 - Earlier 40 proposals: review only (`?debug&ttProposals`), never counted.
 
-## Team Training: Sessions A-C only, the full 18, package art (owner package SoccerMaster_Team_Training_Devin, branch `devin/1793043141-tt-18`, from `main` 50c8c59, not merged, not deployed)
+## Team Training: Sessions A-C only, the full 18, package art (owner package SoccerMaster_Team_Training_Devin, branch `devin/1793043141-tt-18`, from `main` 50c8c59, in `main` 04e947b (PR #49), live)
 - Weekly Team Training is Sessions A, B and C only. The Career "Play Team Training" match route is gone and `MatchScene` never starts its legacy Team Training mode; the week (and the story's team_training step) counts once all three sessions are credited, through the existing `tt12Run` reducer. Weeks already graded by the old match stay counted, never converted into tactical mastery.
 - Every tactical moment is exactly 18 (`completeSquad` in `src/game/training12/situations/squad.ts`): the authored players plus 1-3-2-3 shape-holders for every missing role, placed clear of players, the ball and the option lanes, shifting with the ball in DEMONSTRATE. Shape-holders never touch the ball or change an authored outcome; the far keeper stays in the other half and shows as an edge marker at halfway.
 - Art: the package's 17 outfield sheets and 2 keeper strips are copied unchanged to `docs/art/team-training-v1/source/`; `scripts/art/build-team-training.py` derives foot-aligned 6 x 4 WebP atlases (`src/assets/art/team-training-v1/`). Saved boy or girl once, 7 teammates (orange), 8 opponents (green pinnies), teal and pink keepers, one stable sheet per player per moment. The old gold foot ring is removed; the only highlight is the outline in the supplied protagonist sheet. Visible body 1.2075 x the original training body (1.3 x the 22-34 px placeholder), applied once; collision, speeds and reach unchanged. Frame flags and missing keeper cycles: `docs/art/team-training-v1/FRAME_REPORT.md`. Status kept: review build, not approved for shipping.
@@ -36,7 +52,7 @@
 - Secondary actions: Rankings reads the saved story career (`STORY_CAREER_ID`, its saved season week, or the story week My Player was opened with) and Back returns to My Player with the same back route (`resume`); with no story, Rankings shows its own no-career state. Weekly review opens Career's saved weekly review (`open: 'review'`, no Finish Week when opened from the story), not Review & Lab.
 - Portrait and landscape (two columns), drag/wheel scrolling, safe-area insets, touch targets at least 44 × 44. Phone emulation only, not tested on a real iPhone.
 
-## Team Training learning loop (owner brief + mockup, branch `devin/1792950375-tt-learning-loop`, from `main` 56a6e0c, not merged, not deployed)
+## Team Training learning loop (owner brief + mockup, branch `devin/1792950375-tt-learning-loop`, from `main` 56a6e0c, in `main` 04e947b (PR #43), live)
 - Mockup layout on the fixed half: TEAM TRAINING header (season, week, session, round, role, the route's real objective), Bell94/Scottsdale surround outside the lines, navy/gold Coach Code panel with his approved portrait, A–D choice buttons, Hint / Pause / Leave, and the OBSERVE › DECIDE › PLAY › LEARN footer. Portrait and landscape; the panel never covers the half.
 - No giveaway before choosing (no arrows, neutral labels, seeded order); hint recorded as assisted; LEARN overlay from the frozen moment; Replay never counts; next attempt varies. Details: `docs/training/v1.2/MAPPING.md`.
 
@@ -51,14 +67,14 @@
 - Saved runs carry optional `decisions: { independent, assisted }`; older runs load unchanged with no counts invented.
 - Phone emulation only, not tested on a real iPhone.
 
-## Juggling + offside referee (owner package SoccerMaster_Juggling_Referee_Devin, 2026-10-28, branch `devin/1792988972-juggling-referee`, from `main` 56a6e0c, not merged, not deployed)
+## Juggling + offside referee (owner package SoccerMaster_Juggling_Referee_Devin, 2026-10-28, branch `devin/1792988972-juggling-referee`, from `main` 56a6e0c, in `main` 04e947b (PR #46), live)
 - Package status kept: `art_review_build_not_shipping_approved` (`src/assets/art/juggling-v1/manifest.json`, copied unchanged). Sheets copied byte-for-byte (boy `614a0210…`, girl `11fb4734…`); the referee PNG (`37c0d849…`) is stored as lossless WebP with its alpha.
 - Home juggling demos Ladders 1–5 (`jg-1`…`jg-5`, laces/bounce/catch only) now play the prepared 6 × 4 sheet of the saved boy or girl (160 × 128 cells, origin (80, 120), nearest-neighbour). Each demo is a timeline (`src/render/art/juggleSheet.ts`): hold → release → prep/touch/recover → flight (or bounce wait) → catch prep/catch/finish; consecutive touches alternate the two foot cycles (6–8, 9–11). "Show a miss" plays miss → chase → reach → pickup → stand and loops back to the hold. The ball is the existing separate ball, ballistic between contacts and placed on the calibrated boot/hands point of the contact frame; the planted boot is held still (≤ 8 px shift per frame). "Slow" plays at 0.4×. Ladders 6–8 (thigh, settle, pass) keep the sprite-v2 poses: the pack has no thigh, settle or pass poses, and no dedicated JU03 air-to-ground cushioning art.
 - Deficient poses (not relabelled, `DEFICIENT_FRAMES`): boy 9 (no backswing, reads as a stride), boy 9–11 (near duplicate of 6–8, same side kicks, working foot not distinguishable; 10's support boot 17 px off either stance spot), girl 6/7 and 9/10 (support boot swaps sides), girl 8 and 11 (raised-knee recovery), girl 15 (catch-prep stance 8.5 px off centre). The manifest's `working_foot_verified: false` stands: the alternating cycles are "cycle A / cycle B", not proven right/left feet.
 - Offside referee popup (`src/render/offsidePopup.ts`, MatchScene): only for a stoppage whose `reason` is `offside` (the referee's confirmed call), once per stoppage object, never for an offside position alone. Above the pitch (depth 6001), below HUD/pads/Coach dialogue, clear of the minimap; runtime "OFFSIDE!" caption; slides in, fade only with reduced motion; clears on tap, restart, pause, the end of the 1.2 s dead-ball pause (2.6 s at most), scene change and reload. Referee state, restart and score unchanged.
 - Browser staging (`&deadBall=4` lengthens the dead ball in debug builds): `?debug&setup=offside` (H6 → H9 pass received offside) and `?debug&setup=offside-position` (H9 offside, H8 keeps the ball). Phone emulation only, not tested on a real iPhone.
 
-## Season One Weeks 6–7 (owner scripts 2026-10-26, branch `devin/1792728226-weeks6-7`, stacked on PR #38, not merged, not deployed)
+## Season One Weeks 6–7 (owner scripts 2026-10-26, branch `devin/1792728226-weeks6-7`, stacked on PR #38, in `main` 04e947b (PR #39), live)
 - Week 6 "Head Up" (no school scene, League Game 4) and Week 7 "Louder Doesn't Mean Open" (Blake's Next Horizon clips, Riley's showcase, Code's correction of Blake, League Game 5) compiled into the existing story format; `SEASON_RELEASED_WEEKS = 7`. Owner text kept in `docs/story/season-one/owner/`; every spoken line matches it word for word (straight quotes, as in Weeks 1–5). Blake stays on Batavia; no transfer before Week 8.
 - Recess and after-match lines follow the real Crossbar/Jungle Ball and league results; a skipped match shows no result line. Choices are saved (park plan, Riley's request as availability only, Mom's "Making Room" plan).
 - Crossbar follow-up (browser review of PR #41): a ball that clears the bar and lands past the back net is now drawn before the net (`ballSprite().behindNet`, from `NET_DEPTH`), so the mesh covers it. Warm-up shots say "Warm-up, no score." instead of "One point." (`pointWord`). Scoring unchanged.
@@ -68,31 +84,31 @@
 - Code's after-match "strong example" / "support movement" praise never shows: match records do not track scanning or off-ball support, so the "Otherwise" line plays.
 - Phone poses (owner image, five characters): Sam's texts, the group chat, Blake scrolling at school and after Week 7's match, the player replying by text. Only the listed characters show on those lines; Riley (no phone art) and Mom's phone pose (no Mom phone scene yet) are not shown.
 
-## Mom Replacement v2 (owner package 2026-10-25, branch `devin/1792724543-mom-portraits-v2`, from `main` 4808b23, not merged, not deployed)
+## Mom Replacement v2 (owner package 2026-10-25, branch `devin/1792724543-mom-portraits-v2`, from `main` 4808b23, in `main` 04e947b (PR #38), live)
 - All standalone Mom portraits now use the v2 art: casual teal by default, burgundy only for listed dressier scenes (none in Weeks 1–5), one outfit per scene, expression per line. Mapping and coverage: `docs/art/season-one/MOM_V2.md`.
 - Characters painted into a backdrop (car: Mom + player; aquarium: player + Cloudy) never get a second portrait. Portraits show only on spoken lines; narration and choices clear them.
 - Story text, speakers, choices, rewards and gameplay unchanged. Phone emulation only, not tested on a real iPhone.
 
 
-## Match Report + My Player (owner spec 2026-10-24, branch `devin/1792698553-player-dev-report`, stacked on PR #35, not merged, not deployed)
+## Match Report + My Player (owner spec 2026-10-24, branch `devin/1792698553-player-dev-report`, stacked on PR #35, in `main` 04e947b (PR #36), live)
 - Match Report on the sunset art after every career match and from Match History; My Player on the bedroom art from the Week 5 home hub (and `?dev` Start).
 - Event ledger, stats with numerator/denominator, rating, saved immutable reports, 35/30/30/5 weekly settlement with fractional carry (`docs/REPORTS.md`).
 - Gaps: no Energy/Form, no keeper or DNP reports, recess not yet passed to the settlement, not tested on a real iPhone.
 
-## V3 Week 5 "Put the Work In" (owner package SoccerMaster_V3_Week5, 2026-10-23, branch `devin/1792700000-v3-week5`, stacked on PR #34, not merged, not deployed)
+## V3 Week 5 "Put the Work In" (owner package SoccerMaster_V3_Week5, 2026-10-23, branch `devin/1792700000-v3-week5`, stacked on PR #34, in `main` 04e947b (PR #35), live)
 - Package copied unchanged to `docs/story/v3/` (its own validator passes there). Week 5 compiled into the existing Season One story format (`05_week05.story` → `season_one_scenes.json`); the story is released to week 5 (`SEASON_RELEASED_WEEKS = 5`), weeks 6–18 stay unwritten and unreachable. Weeks 1–4 and the prologue are byte-identical (hash-pinned in `tests/story-week5.test.ts`, with the week 5 source and the package's `WEEK_05_APPROVED.md`).
 - Route: science-sub talk → recess Crossbar or Jungle Ball (reaction from the real result) → required Team Training (no "Not this week" from week 5; feedback from the recorded grade: strong / struggled; the pass-weight line only on recorded pass evidence (`pass_weight`), which week 5's legacy situations do not produce yet) → ambition (saved as a decision, no reward) → home menu on the owner's background (`home-v3`): Training (required: a logged juggling task and control/first-touch work this career week, `homeAssignments`), Cloudy: Feed & Play (optional, opens Feeding Frenzy and returns), Cloudy: Talk (optional; the ambition is mentioned only if the player chooses to tell Cloudy), Continue Week (locked until the home sessions are done) → League Game 3 (aftermath from the real result; a completion without a result is rejected, never a loss) → park plan (practice / hang out / rest, saved only).
 - Saves: a completed week 4 save at `S1_W04_E` continues into week 5 through the existing release migration; choices, runs, matches and rewards are kept, nothing replays.
 - Opened from the story, Career hides Finish Week (the story closes the week). Recess `result:` reads the played run, not the declined placeholder.
 - Known gaps: the home menu's "required training" is enforced by the story host (StoryScene) from the career save, not inside the story reducer. Next Horizon stays outside the league (earlier owner rule) although V3's continuity notes put it in; this does not affect week 5. Not tested on a real iPhone.
 
-## Cloudy's Feeding Frenzy (owner brief 2026-10-23, branch `devin/1792691488-cloudy-feeding-frenzy`, PR #34 stacked on #33, not merged, not deployed)
+## Cloudy's Feeding Frenzy (owner brief 2026-10-23, branch `devin/1792691488-cloudy-feeding-frenzy`, PR #34 stacked on #33, in `main` 04e947b (PR #34), live)
 - Playable aquarium mini-game on the supplied painting and Cloudy sheet: Easy/Medium/Hard, 45 s round after a 3 s countdown, drag-to-swim (touch or mouse), DASH (0.35 s, 3 s cooldown), x1/x2/x3 combos, two ball chances (about 12 s and 28 s, 10 s each) scored once (+50) when the whole ball enters the painted goal from outside.
 - Pause (button, Escape/P, app hidden, focus lost) freezes timers, spawning, physics, currents and cooldowns. Results save the best score and stars per difficulty once per run through the career reducer (`cloudyResult`); a failed write keeps the round and offers Retry save. No soccer attributes or match statistics.
 - Reachable only through `?dev` Start for now; the V3 Week 5 home menu opens it in the next PR.
 - Tests: `tests/cloudy.test.ts` (sim, transform, save) and `e2e/cloudy.spec.ts` (portrait and landscape: art fit, goal alignment, drag, DASH, pause, results, reload, app switch, rotation, listener counts). Not tested on a real iPhone.
 
-## Team Training v1.2 (owner package 2026-10-22, branch `devin/1792646912-team-training-v12`, not merged, not deployed)
+## Team Training v1.2 (owner package 2026-10-22, branch `devin/1792646912-team-training-v12`, in `main` 04e947b (PR #32), live)
 - Package kept unchanged in `docs/training/v1.2/`; reference modules vendored with their 36 tests in `npm test`.
 - Playable: Career → Team Training → Session A/B/C (v1.2) for Season 1 weeks 1–4, every role offered to the career position. Fixed overhead half-field camera, coached Observe → Decide → Execute → Explain loop, 3 rounds (guided, unguided, timed), pause, two-tap leave, rotation-safe.
 - Weeks 5–18 and Season 2 are "not available yet". GK routes pass unit tests but have no career position.
@@ -105,25 +121,25 @@
 ## Jungle Ball: bigger, bouncier ball (owner, 2026-10-23, PR #33)
 - `JUNGLE.ballRadius` 0.2 → 0.3 yd (drawn to the same ratio, 1.5x), `bounce` 0.45 → 0.68 with `bounceMinSpeed` 0.6 yd/s, `wallRestitution` 0.7 → 0.85. Rules, controls, scoring and saves unchanged. Test: dropped from 2 yd it rebounds above 0.85 yd and bounces at least 5 times (fails on the old constants).
 
-## Jungle Ball v3 arcade upgrade (owner brief 2026-10-22, branch `devin/1792638887-jungle-arcade-v3`, stacked on PR #30, not merged, not deployed)
+## Jungle Ball v3 arcade upgrade (owner brief 2026-10-22, branch `devin/1792638887-jungle-arcade-v3`, stacked on PR #30, in `main` 04e947b (PR #31), live)
 
 - HIT / SLIDE / staged knockdowns / charged shots / ball height with posts, bar and net / keeper dives, catches, parries and throws / goal celebration / pause with Leave confirmation; see D43.
 - Owner action sheets (boy, girl, Blake, Sam) packed into the jungle atlases. Gaps: no Alex sheet, no slide-tackle pose, keeper keeps its existing sheet.
 - Tests: `tests/jungle-v3.test.ts` plus updated v2 suites. Not tested on a physical iPhone.
 
-## Mom portraits, Cloudy aquarium paintings, Jungle Ball sheets (owner art 2026-10-22, branch `devin/1792623784-jungle-mom-aquarium`, not merged, not deployed)
+## Mom portraits, Cloudy aquarium paintings, Jungle Ball sheets (owner art 2026-10-22, branch `devin/1792623784-jungle-mom-aquarium`, in `main` 04e947b (PR #30), live)
 - **Mom:** the owner's 6-expression sheet (`docs/art/season-one/assets/v2/mom_expressions_source.png`, unchanged) is cut by `scripts/art/crop-mom-portraits.py` into `mom-neutral`, `mom-proud`, `mom-worried`, `mom-laughing`, `mom-firm`, `mom-sad` (2:3, bottom-anchored). `SPEAKER_ROLE.Mom = 'caregiver'`; every Season One scene where Mom speaks casts her portrait (7 scenes: prologue departure/arrival, weeks 1 and 4 home talks, weeks 1 and 4 pitch lines, week 2 aquarium). The script has no per-line expression field, so every line uses `mom-neutral`; the other five are loaded into the catalog and Art Gallery, ready once the script names expressions.
 - **Cloudy:** the owner's two aquarium paintings (`s1-tank-girl`, `s1-tank-boy`) are the backdrop of all 5 Cloudy scenes (`S1_PRO_ROOM`, `S1_W01_F`–`S1_W04_F`), chosen from the saved Boy/Girl. They already show the player and Cloudy, so no portraits or code-drawn figure go on top (`cast_in_backdrop`). Before a look is chosen, or if a painting fails to load, the old tank backdrop / labelled fallback is used.
 - **Jungle Ball:** the package's 4 sheets become sprite atlases `jungle-boy`, `jungle-girl`, `jungle-blake`, `jungle-sam` (`scripts/art/build-jungle-sprites.py`; sheets kept unchanged in `docs/art/sprites-v2/source`). Bound by competitor id (`player` = saved look, `blake`, `sam`), never by display name. Run (6 frames, mirrored for leftward), idle (front/back/side), kick = pass contact pose, down/slide = stumble. Main-character frames 18–21 (hand actions) are never packed. Rules, controls, scoring, rewards and saves unchanged.
 - **Leak test:** the Jungle round-trip snapshot now waits until the courtyard and sheets have loaded (`gameplay.art`). On the live site the loader's one-shot `filecomplete` listener was sometimes still pending, giving ±1 listener / display-list differences.
 - **Gaps:** Alex has no sheet (reference roster look). No shoot clip for the main characters (pass pose reused). Celebrate, trap, header, chest and shoulder poses are packed or available but not shown: the minigame has no matching state to drive them. Package backgrounds are not used yet.
 
-## Saved protagonist in Team Training + New game (owner report 2026-10-22, not merged, not deployed)
+## Saved protagonist in Team Training + New game (owner report 2026-10-22, in `main` 04e947b (PR #29), live)
 - Team Training now gives the saved Boy/Girl look to the player each drill puts you in control of (`stageTeamSituation`), instead of the fixed formation slot (`CAREER_SLOT`). Before, a girl save controlled a Batavia boy while the girl stood elsewhere on the pitch.
 - Start has a "New game" button under "Play Story". It needs a second tap within 5 s. It archives the career save (`archive-<time>` in `smr-career`), the story, the league and the cup records (never deleted), then starts the story from the prologue at week 1 (`CareerStore.startOver`, `StoryStore.newGame`). Before, there was no way to start over, so an old save kept its training week (e.g. week 121).
 - Tests: `tests/new-game.test.ts`, `e2e/protagonist.spec.ts` (girl look on the controlled player in Team Training, New game two-tap and archive).
 
-## Season One structure from the storyboard + story mode only (owner outline "A Place on the Field", 2026-10-21; stacked on PR #26, not merged, not deployed)
+## Season One structure from the storyboard + story mode only (owner outline "A Place on the Field", 2026-10-21; stacked on PR #26, in `main` 04e947b (PR #26), live)
 - **Story mode only:** Start shows one "Play Story" button. Free 9v9 match, Home Training, Jungle Ball and Review & Lab (and the `T` shortcut, and Home Training's "Play a 9v9 match") need `?dev` in the link (`shouldExposeDevMenu`). Inside the story, matches, Crossbar, Jungle Ball and training still open as before. Browser specs that use the developer entries now load `/?debug=1&dev`; `navigation.spec` checks the player start screen has only Story and that `T` does nothing.
 - **Calendar** (`src/game/season/calendar.ts`): the 18 storyboard titles; league games 1–6 in weeks 3–8, 7–8 in weeks 10–11, 9–12 in weeks 13–16; AZ Showcase week 9, Holiday Classic week 12 (three weeks apart); week 14 keeps league game 10 and adds a non-league friendly against Next Horizon, Blake's new club (owner, 2026-10-21; `friendly` on the week, never league points); State Cup semifinals week 17, final week 18. Mom's deeper scenes in weeks 1, 4, 7, 9, 12, 16 plus the week 18 family decision (79 slots). Weeks 1–4 slots are unchanged.
 - **Tournaments** (`tournament.ts`, save version `s1-t2`): 8 teams, 2 groups of 4, three group games each, group winners meet in the final. Ten-point system (win 6, draw 3, +1 a goal up to three, +1 clean sheet). Tiebreakers: points, wins, head-to-head only for a two-team points tie, goal difference capped at ±3 a match, fewest conceded, then the drawing of lots recorded at creation; no restart after a partial split. Batavia's group: Batavia, one league club, two out-of-state clubs. Next Horizon (not a league club, owner: special exemption) is in the other group with one league club and two out-of-state clubs. Eight random fictional out-of-state clubs with colours (owner: "random out of state team names and colors"). Tournament points never touch the league.
@@ -137,7 +153,7 @@
   - School activity +1/−1/neutral rule: still unconfigured.
   - Week 4: the script has no Mom line acting on the support preference at League Game Two.
 
-## Season One weeks 3–4 (owner directive "REPLACE LEGACY STORY CONTENT", branch `devin/1792547837-story-weeks-3-4`, not merged, not deployed)
+## Season One weeks 3–4 (owner directive "REPLACE LEGACY STORY CONTENT", branch `devin/1792547837-story-weeks-3-4`, in `main` 04e947b (PR #26), live)
 - Only approved weeks 1–4 are authoritative. Weeks 1–2 (owner rewrite) unchanged; weeks 3 "When It Counts" and 4 "Everybody Wants Something" replaced from the owner scripts. Blake's gendered line uses the directive's replacement "Come on. Prove you can play some real soccer."
 - One content source and one runtime: `src/game/story/content.ts` exports only `SEASON_ONE` (`s1-v2.0`, compiled from `docs/story/season-one/src`). The v0.7 week-one package and the weeks 2–4 draft are no longer imported anywhere; `DRAFT_SCENES`, `WEEK_ONE`, `WEEKS_2_4` and `STORY` are gone.
 - Weeks 5–18 and the epilogue are ordered, comment-only placeholders; nothing is generated or loaded for them. `SEASON_RELEASED_WEEKS = 4`: the story ends after week 4 with "Weeks 1–4 complete. More weeks are coming soon."
@@ -172,7 +188,7 @@
 - Checks on this branch: typecheck clean; unit 49 files / 707 tests passed, 0 failed; e2e (phone portrait, landscape, desktop) 114 passed, 0 failed, 8 skipped by design. Not tested on a real iPhone.
 - Not tested on a physical iPhone.
 
-## Referee (branch `devin/1792274864-referee`, not merged, not deployed)
+## Referee (branch `devin/1792274864-referee`, in `main` 04e947b (PR #17), live)
 
 - **CI note (merge of `main` 4c3a81f):** a 60 min GitHub run timed out on phone-landscape `jungle.spec:11`, `pad.spec:88` A03, and `match.spec:72` (phone-landscape and desktop). Under 4-worker load locally, these passed 12/12 on this branch and 12/12 on `main`.
 - `src/game/match/referee.ts` (+ `src/modules/RefereeSystem.ts`): throw-ins, goal kicks vs corners from the last touch, offside at the kick instance, slide fouls with free kicks and penalties, indirect free kicks. See D28.
@@ -182,13 +198,13 @@
 - **CI note:** the `942461a` GitHub run timed out in three unchanged specs (phone-landscape `jungle.spec`, desktop `coach.spec` :82 with sim time only 2.4 s after 45 s, desktop `match.spec` :72). The same three files passed locally, 41 passed / 8 skipped / 0 failed with one worker, and CI was green on `31d2f99` and `5abadfa`, so these are runner-load timeouts.
 - Limits: no advantage, cards, handball, aerial corners or build-out line. Not tested on a real iPhone.
 
-## v0.5 tactical engine for computer attacks (branch `devin/1792339383-tactical-v05`, not merged, not deployed)
+## v0.5 tactical engine for computer attacks (branch `devin/1792339383-tactical-v05`, in `main` 04e947b (PR #18), live)
 
 - v0.5 research package added under `research/logic/v0.5`; engine ported to `src/game/match/tactical.ts` with its 17 tests.
 - `?tactics=v05` lets the engine run the computer team's attacking possessions (movement of outfielders, carrier carry/pass/shot through the existing kick path). Default stays the classic AI because the seeded comparison came out worse (see D28).
 - 60 Hz and 120 Hz give the identical v0.5 match; 18 players and match invariants hold; human players never get engine orders.
 
-## Jungle Ball v2: arcade football feel (branch `devin/1792453098-jungle-blitz`, PR only, not merged, not deployed)
+## Jungle Ball v2: arcade football feel (branch `devin/1792453098-jungle-blitz`, in `main` 04e947b (PR #22), live)
 
 - **Owner request:** "jungle ball to play like the NFL game attached" (NFL Blitz 2001). The attachment was only the game's N64 ROM; nothing was extracted from it or run, and no art, sound or code from it is used. The feel is copied from how that game is publicly known to play.
 - **TURBO** (new 4th button, in the empty PASS slot; Shift / I on a keyboard; it has its own finger slot (`JoystickControls.setModifier`), so it can be held while pressing SHOOT / SLIDE / PUSH): held, it makes the competitor 1.3× faster while a meter drains (≈2.2 s full); released, the meter refills (≈3.3 s). The three AI competitors follow the same meter rules.
@@ -198,14 +214,14 @@
 - **Seeded sweep, 60 rounds each, scripted player bot** (v1 `main` → v2): goals per round 9.98 → 11.25 with turbo (10.72 without); bot goals per round 6.50 → 6.85 with turbo (5.22 without, because the AI now has turbo); hits per round 47.9 → 32.6, 15.3 of them big; the bot is stunned 10.8% → 11.6% of the time. Idle player: 0 goals in both.
 - **Tests:** `tests/jungle-blitz.test.ts` (9 new) plus the existing Jungle Ball tests; `e2e/jungle.spec.ts` checks the TURBO button fits the screen and is held/released.
 
-## Season One weeks 1-2 rewrite (branch `devin/1792522894-story-weeks-1-2`, PR only, not merged, not deployed)
+## Season One weeks 1-2 rewrite (branch `devin/1792522894-story-weeks-1-2`, in `main` 04e947b (PR #23), live)
 
 - **Week 1:** Monday move (phone choice), new house, Cloudy settled; Tuesday park with Sam and a playable Crossbar against Sam (one warm-up each, three counted shots, no sudden death) with result-specific lines and Sam's invitation; Thursday first training with Coach Code (real Team Training; his reply follows the real grade) and the receiving assignment; Friday Cloudy; Friday night Mom ("I'm nervous too") with the support choice.
 - **Week 2:** Monday empty chair; Tuesday Crossbar against Blake with the audience choice and a refusal that is remembered as a refusal, real WIN/DRAW/LOSS, ties stand; Wednesday classroom board showing the real score, Riley; Wednesday training "find the passing angle"; Thursday Cloudy with the closing intention. No Mom talk (moved to week 1).
 - **Saves:** content version unchanged. A save in the middle of a rewritten scene restarts that scene; a save in the retired week 2 parent scene continues at the weekend. See D30.
 - **Not done:** no new park, car, kitchen, classroom or training-complex art (stand-ins); Sam has no in-match sprite in the Crossbar screen; Code's "right decision, poor touch" line has no separate grade.
 
-## Sprites v2 — 14 owner sprite sheets (branch `devin/1792525700-sprite-sheets`, PR only, not merged, not deployed)
+## Sprites v2 — 14 owner sprite sheets (branch `devin/1792525700-sprite-sheets`, in `main` 04e947b (PR #24), live)
 
 - **Art:** all 14 sheets kept unchanged (`docs/art/sprites-v2/source/`, SHA256SUMS) and built into 14 WebP atlases (2.6 MB) with frame metadata. Inventory, pose coverage, gaps and rollback: `docs/art/sprites-v2/README.md`.
 - **In game:** match players wear Batavia's match kit (training kit in Team Training), the created boy/girl their own sheet, and story league/cup opponents their club's sheet, including Next Horizon in cups. Next Horizon is still not in the league. Coach Code stands beside Team Training cards with a pose for each beat. Jungle Ball's created player uses their match sheet. The Art Gallery's gameplay page shows every sheet.
@@ -213,7 +229,7 @@
 - **Tests:** `tests/sprites-v2.test.ts` (source hashes, atlas bounds, foot anchors, a frame for every requested pose, club mapping, league membership).
 - **Not tested on a physical iPhone.**
 
-## Training / Schoolyard revision v1.2 (branch `devin/1792431040-training-schoolyard`, PR only, not merged, not deployed)
+## Training / Schoolyard revision v1.2 (branch `devin/1792431040-training-schoolyard`, in `main` 04e947b (PR #21), live)
 
 - **My Training hub:** Career home shows the week's focus card, Team Training (Not started / Complete), Home Practice (optional: sessions, library, journal) and Progress (weekly review, character development, 9v9 match). Nothing was removed; opening a card never changes attributes.
 - **Team Training:** the real 9v9 engine on one half (the half holding the staged ball), camera 1.3× closer, HUD "Team Training · drill · Attempt n/3 · time", Back/Pause, no score or SANDBOX tag, Bell94-style park drawn outside the pitch. Each attempt ends on its objective, turnover, goal, out of play or time, then Retry / Continue; the week is written in one transaction before "Complete". Coverage per drill family: `TRAINING_RELEASE_COVERAGE.md`.
@@ -224,7 +240,7 @@
 - **CI note:** desktop `coach.spec:83` and `match.spec:72` timed out on a 55 min runner. Under 4-worker load locally they passed 8/8 on this branch and 8/8 on `main` (`14094ce`).
 - **Not tested on a physical iPhone.**
 
-## Season One — 18 weeks + all supplied graphics (branch `devin/1792370575-season-one`, review preview only, not merged, not in production)
+## Season One — 18 weeks + all supplied graphics (branch `devin/1792370575-season-one`, in `main` 04e947b (PR #20), live)
 
 - **Story:** Start → Story runs the Season One package: prologue, 81 featured weekly scenes (Monday Cloudy, school, Coach Code, after-training Cloudy, parent every even week), match/tournament scenes and the epilogue, 127 scenes in `docs/story/season-one/season_one_scenes.json`, compiled from `docs/story/season-one/src/*.story` by `scripts/story/build-season-one.py`. Checklist: `docs/story/season-one/COVERAGE.md`.
 - **Competition:** 12 league games against the 5-club local league (triple round robin, `src/game/season/league.ts`) in weeks 3–8 and 13–18, and two 4-team cups in weeks 9 and 11 (`src/game/season/tournament.ts`: 3 group games, then championship or placement). Every game is the real 9v9 match; the result is recorded once and conflicting duplicates are rejected. Cups never touch the league table. Skipped or interrupted games stay unplayed, never losses. A drawn final is a shared result (no shoot-out).
@@ -234,7 +250,7 @@
 - **Tests:** unit 620 passed, 0 failed; Playwright 114 passed, 0 failed, 8 skipped by design (touch-only or desktop-only). Browser runs are Chrome phone emulation, not a physical iPhone.
 - **Open decisions:** departure region (story Northeast vs art Northwest: captions name no region), Mom portrait, Casey portrait, cup club working names.
 
-## FIFA brief in full (branch `devin/1792190415-fifa-full`, PR #16, not merged, not deployed)
+## FIFA brief in full (branch `devin/1792190415-fifa-full`, PR #16, in `main` 04e947b (PR #16), live)
 
 - **Team Training feedback:** stage banners show the previous situation's score with `n/3`, wrap inside the screen, and the week result stays visible until Menu (routine "You control …" notices no longer replace it). Runtime-checked in phone emulation, portrait and landscape.
 - **CI note:** two GitHub runs each timed out on a different unchanged spec (desktop `match.spec` :49/:72, then phone-landscape `pad.spec` A03). Locally, `pad.spec` A03 fails the same way on `main` and on this branch when 4 workers share 2 cores (4/6 each), and passes 8/8 on both with one worker, so these are runner-load timeouts rather than a regression.
@@ -252,7 +268,7 @@
 - **Debug:** `?debug&passlog` draws the cone and logs each target search to the console.
 - Details, measurements and limits (no strict zero-allocation engine): `docs/FIFA_MECHANICS.md`. Not playtested on a real iPhone.
 
-## Story weeks 2–4, Jungle Ball and the local league (branch `devin/1792161560-story-weeks-2-4`, not merged, not in production)
+## Story weeks 2–4, Jungle Ball and the local league (branch `devin/1792161560-story-weeks-2-4`, in `main` 04e947b (PR #13), live)
 
 - **Story:** Start → **Story** now continues after the week-one callback into weeks 2–4 (25 scenes, S07–S24 of the v0.7 outline). The dialogue is Devin's **draft**, owner decision A of 2026-10-16. Every draft scene says so on screen, and `DRAFT_SCENES` lists them. Blake is the rival and Sam is a new teammate (decision B).
 - **Alex's promise:** the offer in week 2 can be kept, cancelled with notice, missed, or missed then repaired in week 3. Week 4's touchline line comes from what actually happened (`promise_*` predicates over committed decisions and runs). Nothing can be applied twice: a choice is one decision and a run is one entitlement.
@@ -273,7 +289,7 @@
 - **Cups:** Pacific Wave Cup and Lone Star International Cup are shown as "U12, coming later", as package §08 requires.
 - **Not done:** the indoor school background is waiting on the owner's choice. Real team selection, transfers and the cups are not built.
 
-## Graphics v1.1 (branch `devin/1792120824-graphics-v1`, not merged, not in production)
+## Graphics v1.1 (branch `devin/1792120824-graphics-v1`, in `main` 04e947b (PR #11), live)
 
 Owner-approved styles from `SoccerMaster_Graphics_v1.zip`, built on the joystick/story preview commit `b00c71b`. See `docs/ART.md` (inventory, mapping, gaps) and `docs/DECISIONS.md`.
 
@@ -285,11 +301,11 @@ Owner-approved styles from `SoccerMaster_Graphics_v1.zip`, built on the joystick
 | Art Gallery (Start → Review & Lab) | Integrated, review only; new character/outfit art `NEW_ART_REVIEW_PENDING` |
 | Physical iPhone check | Pending (browser phone emulation only) |
 
-## Controls: joystick + four buttons (branch `devin/1792100194-joystick-controls`, not merged, not in production)
+## Controls: joystick + four buttons (branch `devin/1792100194-joystick-controls`, in `main` 04e947b (PR #10), live)
 
 Default 9v9 scheme is now a left joystick plus PASS, SHOOT, SLIDE TACKLE and BLOCK; `?controls=gesture` keeps the old swipes. See `docs/controls/CONTROLS_IMPLEMENTATION.md`, `ACCEPTANCE_RESULTS.md` (A01–A24: 21 pass automatically, A12/A21/A23 partial, none device-checked) and `CHANGELOG.md`. Physical-iPhone acceptance and frame-time measurement pending.
 
-## Combined preview integration (branch `devin/1792089834-all-updates-integration`, not merged, not in production)
+## Combined preview integration (branch `devin/1792089834-all-updates-integration`, historical; contents are in `main` 04e947b, live)
 
 One build containing the gameplay-feel revision (PR #8), the training library v1.1 drafts (PR #9) and the soccer-logic research catalog v0.2. Start → **Review & Lab** opens a hub with Gameplay Lab (preview/lab builds only), Training Review, Soccer Logic Review and Home Training. Opening the hub does not create a player or touch the save.
 
@@ -306,7 +322,7 @@ One build containing the gameplay-feel revision (PR #8), the training library v1
 - Open before release: qualified coach and QA review, resolution of the package's coaching findings (TR01, TR02, RC01 revise; JU01/JU02/PA02/FI01 contact mechanics; JU03 and FI02 demos held), 11 unresolved claims, real reviewed left/right demo assets, owner acceptance.
 
 
-## In review: gameplay feel revision (not merged, not deployed)
+## Gameplay feel revision (historical; this work is in `main` 04e947b, live)
 
 Dribbling, passing, receiving and shooting feel: off-ball control, shared kick prediction, receivers that meet passes, aim-assist modes, follow camera and minimap, and a Gameplay Lab. See `docs/GAMEPLAY_FEEL.md`.
 

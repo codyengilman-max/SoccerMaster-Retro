@@ -345,3 +345,19 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - No resumable home-session draft is saved, so My Player never shows "Resume session"; adding one would need a new saved field and is left for a separate decision.
 - The screen scrolls with the camera (`scrollY`); diagnostics report hit rectangles after scroll, and e2e uses `revealElement` to wheel controls into view before pressing.
 
+
+## Owner decisions 2026-10-27 (H1–H8)
+
+From the owner's response to the read-only audit of `main` `04e947b`. Plan: [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md).
+
+| # | Decision | Effect |
+|---|----------|--------|
+| H1 | **Keep FIFA-style automatic player switching.** No match-long position lock. The chosen DEF/MID/FWD sets the career slot (H3/H5/H8), look and attributes; moment-to-moment control is a separate system and switching to the presser/chaser is intended, not a defect. Tactical situations may still use the career position for position-specific learning and grading. | Position lock removed from the backlog. No control change. |
+| H2 | **Tactics v0.5 is a candidate, not the default.** Compare classic and v0.5 on identical seeds (shape, back line, pressing, cover, width/depth, transitions, offside, rest defence once specified, opponent intelligence, stability, performance, referee, regression tests) before recommending activation. | `classic` stays default; PR B. |
+| H3 | **Native Retro tactical-decision model** ([spec](specs/RETRO_DECISION_MODEL.md)): 4–6 live-state Coach Moments per story match without `?coach`, several credible choices, one answer, no drawing, bands Elite/Strong/Playable/Low-value/Forced, decision vs execution vs outcome separate, attributes affect execution only, cumulative Decision Heat 0–100. No dependency on the separate SoccerMaster repo. | PR C. |
+| H4 | **Do not merge PR #37 as one change.** Keep it as a reference; extract Tournament Results Screen and Animated Rosters v2 into two focused PRs from current `main`; close #37 only after both decisions. | PRs I and J. |
+| H5 | **Close PR #15 as superseded.** Its "owner approved" labels are not added; the Weeks 2–4 material it referenced was replaced and is not restored. | Closed. |
+| H6 | **Approved control changes (later PR):** replace BLOCK with a standing tackle (a deliberate on-feet attempt to win the ball, not a passive stance); add double-tap quick shot to the default pad (faster release, accuracy and execution consequences kept, no guaranteed goal, no conflict with normal shooting). Deferred: chips, lofted shots, extra passing/defensive controls. | PR E. |
+| H7 | **Rest defence and golden moments are required** ([spec](specs/REST_DEFENCE_GOLDEN_MOMENTS.md)), with measurable state rules; golden moments never force goals/turnovers, teleport, create illegal states or change results. | PR F. |
+| H8 | **Close superseded stacked PRs #6, #13, #39, #40.** Their work is in `main`; branches and history are kept. | Closed. |
+| TT | **Team Training gate stays fail-closed.** `SESSION_CARDS` is never filled with invented approvals; scoring starts with a small owner-reviewed vertical slice (GK, outside back, centre back, holding mid, advanced mid, winger, centre forward). | PR D. |
