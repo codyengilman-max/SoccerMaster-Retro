@@ -1,5 +1,12 @@
 # Status
 
+## Home mastery, assists, defensive points and Bonus Attribute Points (stacked on PR C, not merged, not deployed)
+
+- **Home mastery:** juggling, first touch and passing each have Phases 1-5 (`src/game/career/homeMastery.ts`, proposed targets in `docs/training/home/TARGETS.md`, not age standards). Everyone starts at Phase 1; two qualifying sessions advance a phase; nothing moves a phase back. Scores are typed on My Player > Home Training mastery (`src/game/career/homeEntry.ts`); a surprising manual score shows the score check with Correct / Confirm. Weekly required home training is separate and still counts as before.
+- **Assists and defensive points:** `src/game/report/assists.ts` reads the match event log for all 18 players. Assist: completed pass, teammate scores within 4 s of sim time (configurable), any other touch or stoppage ends it. Defensive units: slide 2, standing 1, interception 3, threshold 20; recovery within 2 s. No standing tackles exist yet (PR D); ordinary contact tackles never count as standing. The engine has ground passes only, so no chips or crosses are recorded.
+- **Reports:** new reports carry `contribution` (version 1) and show assists, slide tackles, standing tackles, interceptions and defensive points; saved reports without it stay "not tracked". If the event log was truncated before it was read, the match is saved as not tracked rather than guessed.
+- **Bonus points:** `src/game/career/bonus.ts`. Hat Trick, Playmaker, Ball Winner (once per official match, from the saved report), Cloudy Champion (3 stars, once per story week), Training Perfection (best answer on the first try in two weekly Team Training scenarios in a row, pairs never overlap). Friendlies pay nothing. Spending on My Player gives exactly +1, never past potential, idempotent by spend id. Older saves start with an empty bank; nothing is paid retroactively.
+
 ## PR C: All36 data, fingerprints, schedule and weekly Team Training (not merged, not deployed)
 
 - Package data imported unchanged and fingerprinted; 36/36 per-situation approval hashes reproduced; 324 runtime routes mapped or blocked by exact ID (`docs/training/all36/`).
