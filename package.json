@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "tactics:compare": "node scripts/tactics-compare.mjs",
     "test:e2e": "node scripts/e2e.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview"

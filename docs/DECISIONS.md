@@ -345,3 +345,9 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - No resumable home-session draft is saved, so My Player never shows "Resume session"; adding one would need a new saved field and is left for a separate decision.
 - The screen scrolls with the camera (`scrollY`); diagnostics report hit rectangles after scroll, and e2e uses `revealElement` to wheel controls into view before pressing.
 
+## D58. Classic vs v0.5 tactics comparison (PR B, measurement only, 2026-10-27)
+- `src/game/match/metrics.ts` measures a seeded timed match from `sim.state` and the event list only; `scripts/tactics-compare.mjs` (`npm run tactics:compare`) plays seeds 1–50 under both modes with full 165 s halves, every match twice, and writes `docs/tactics/results.json` and `docs/tactics/summary.md`. Report and reading: `docs/TACTICS_COMPARISON.md`.
+- The sim has no home autopilot, so the home controlled outfielder gets the same scripted input in both modes: an aggressive `HomeBot` ("chaser") and the passive `SweepBot` from `tests/tacticalMatch.test.ts` ("sweep").
+- Result: 200 of 200 matches deterministic, no tactics failures, invariant violations or failed restarts. v0.5 loses the ball to the chaser 36.6 times a match (classic 3.1) and concedes 10.3 goals (classic 3.3). Against the passive input it triples big chances (12.5 vs 4.1) but scores fewer (2.0 vs 3.2).
+- Decision: `classic` stays the default; v0.5 is marked **revise**, with the four targets in the report. No engine behaviour changed.
+

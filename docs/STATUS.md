@@ -1,5 +1,10 @@
 # Status
 
+## PR B: classic vs v0.5 tactics comparison (branch `devin/1793132337-tactics-compare`, not merged, not deployed)
+
+- Headless comparison over 50 shared seeds and two scripted home inputs (`npm run tactics:compare`); report in `docs/TACTICS_COMPARISON.md`, raw data in `docs/tactics/`.
+- Recommendation: revise v0.5, keep `classic` as the default (D58). No match engine behaviour changed.
+
 ## Team Training: source review gate (Tactical Library v1, PR #49, not merged, not deployed)
 
 - Library v1 imported unchanged and hash-pinned; 7 cited sources fetched and hashed; review sheet covers all 27 briefs (20 ready to build a scene for review, 7 need tactical authoring/review, 0 approved).
