@@ -1,5 +1,28 @@
 # Status
 
+## Season One weeks 2–10 owner rewrite (2026-10-27, branch `devin/1793077258-s1-weeks2-10`, from `main`, merged to `main` together with My Player)
+- Weeks 2–10 replaced by the owner's authoritative scripts (`docs/story/season-one/src/02_week02.story` … `10_week10.story`, revision `v3`). Week 1 and the prologue are byte-identical (hashes pinned in `tests/story-weeks2-10.test.ts`). Weeks 11–18 keep their calendar positions and hold no scenes.
+- Week 5 support-angle lines ("You moved a defender…", "Find your next job…") stay silent by owner decision (2026-10-27): no evaluator records a defender following the support run or a pass, so `detail:S1_W05_T=moved_defender|passed` never matches. Weeks 3 and 6–8 Code reactions read `decisionDetail` (`strong` / `execution` / `poor_decision`; `steady` says nothing extra).
+- Released through week 10 (`SEASON_RELEASED_WEEKS = 10`). League Games 1–6 in weeks 3–8, the AZ Showcase (existing 8-team, two-group tournament) in week 9, League Game 7 in week 10. Tournament results never touch league points; the final plays only for a group winner.
+- New story handoffs on existing screens and saved data: `rankings`, `my_player`, `home_preview` (ticks nothing), `team_profile`, `dev_checkpoint`, `blake_transfer`, `tournament_group`, `tournament_report`. Choices record priorities only and award nothing.
+- Cloudy has no dialogue; the home menu is Training, Cloudy: Feed & Play (optional), Continue.
+- Blake has no line at week 8 training, plays League Game 6, then moves to Next Horizon once (`S1_W08_B`).
+- Saves in removed week 2–7 scenes continue at the next new scene of the same week (`RETIRED_SCENES`); rewritten scenes restart without paying training or home credit twice.
+- Fixed: a non-winning tournament finish (`group_2`…`group_4`) was rejected as an activity detail, which would have stopped week 9 for any team not winning its group.
+- Phone poses remapped to the scripted phone lines in weeks 2, 6, 7, 8 and 9; Mom beats remapped to the new week 2, 4 and 9 home scenes.
+- Gaps (no game system exists, nothing invented): development target is a recorded choice only; no workload/readiness/recovery; named rosters have no Blake, so his absence/transfer shows in the story only.
+- Phone emulation only, not tested on a real iPhone.
+
+## My Player redesign (owner layout reference 2026-10-27, branch `devin/1793070071-my-player`, from `main` 50c8c59, merged to `main` together with the Weeks 2–10 rewrite)
+- My Player is built from real Phaser panels, text and buttons; the owner image is only a layout reference. Order: player card (saved boy/girl home art, name, position, club, week) → THIS WEEK'S HOME TRAINING (REQUIRED) → optional Extra practice → Team Training → My development → Rankings / Weekly review / Match history → one bottom back button.
+- Required home training starts in Week 2 (owner correction): juggling (highlighted, every week) plus first touch (Weeks 2–6) or passing (Week 7+), plus this week's planned home sessions from Week 6. Rows, ticks and "X of N complete" come from `homeTasks(weekAssignments(...))` and the saved journal, never a fixed count.
+- START NEXT SESSION opens Career directly on the first unfinished task (`CareerScene` `task` data). There is no saved part-way session state, so "Resume session" is not shown rather than faked.
+- Team Training shows its real status from the saved week (`Done`, `n of 3 sessions`, `Not started`). Extra practice opens normal Home Training and is labelled optional; it is not counted as required.
+- My development shows compact bars for the six tracked attributes; "View all attributes" expands the paged list and tapping a row shows its explanation. Untracked attributes still show "-".
+- One back route: "Back to story" when opened from the story, otherwise "Back to menu"; Match history returns to My Player. The corner `<` and `?` buttons are gone.
+- Secondary actions: Rankings reads the saved story career (`STORY_CAREER_ID`, its saved season week, or the story week My Player was opened with) and Back returns to My Player with the same back route (`resume`); with no story, Rankings shows its own no-career state. Weekly review opens Career's saved weekly review (`open: 'review'`, no Finish Week when opened from the story), not Review & Lab.
+- Portrait and landscape (two columns), drag/wheel scrolling, safe-area insets, touch targets at least 44 × 44. Phone emulation only, not tested on a real iPhone.
+
 ## Team Training learning loop (owner brief + mockup, branch `devin/1792950375-tt-learning-loop`, from `main` 56a6e0c, not merged, not deployed)
 - Mockup layout on the fixed half: TEAM TRAINING header (season, week, session, round, role, the route's real objective), Bell94/Scottsdale surround outside the lines, navy/gold Coach Code panel with his approved portrait, A–D choice buttons, Hint / Pause / Leave, and the OBSERVE › DECIDE › PLAY › LEARN footer. Portrait and landscape; the panel never covers the half.
 - No giveaway before choosing (no arrows, neutral labels, seeded order); hint recorded as assisted; LEARN overlay from the frozen moment; Replay never counts; next attempt varies. Details: `docs/training/v1.2/MAPPING.md`.

@@ -58,11 +58,9 @@ export const MOM_BEATS: Readonly<Record<string, Readonly<Record<string, MomExpre
     v2n33=laughing v2n32=reassuring v2n30=reassuring v2n29=worried v2n27=laughing v2n25=reassuring v2n24=worried v2n22=worried
     v2n21=firm v2n19=reassuring v2n17=reassuring v2n16=proud v2n14=laughing v2n12=neutral v2n10=reassuring v2n9=proud
     v2n7=laughing v2n6=reassuring v2n4=neutral`),
-  S1_W02_F: beats('v2n3=neutral'),
-  S1_W04_P: beats(`v2n38=neutral v2n36=laughing v2n32=proud v2n30=laughing v2n28=firm v2n27=firm v2n25=firm v2n24=reassuring
-    v2n23=neutral v2n22=reassuring v2n20=reassuring v2n19=worried v2n17=neutral v2n15=worried v2n13=firm v2n11=reassuring
-    v2n10=neutral v2n8=worried v2n6=laughing v2n4=firm v2n2=reassuring v2n1=proud`),
-  S1_W04_G: beats('v2n49=reassuring'),
+  S1_W02_H: beats('v3n4=neutral v3n2=laughing'),
+  S1_W04_H: beats('v3n4=neutral v3n2=laughing'),
+  S1_W09_H: beats('v3n5=neutral v3n3=reassuring'),
 };
 
 /** One outfit for the whole scene. */

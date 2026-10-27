@@ -6,8 +6,8 @@
 import { SEASON_ONE, catalogFor, nodeById, sceneById, type AdapterKind, type Outcome, type StoryNode } from './content';
 
 export const STORY_SCHEMA = 1;
-/** Season One weeks open to players (owner, 2026-10-20: weeks 3–18 hidden until the new text arrives). */
-export const SEASON_RELEASED_WEEKS = 7;
+/** Season One weeks open to players (owner rewrite 2026-10-27 covers weeks 2–10; weeks 11–18 stay hidden). */
+export const SEASON_RELEASED_WEEKS = 10;
 let releasedWeeks = SEASON_RELEASED_WEEKS;
 /** Tests of later-week content open the whole season; the game always uses SEASON_RELEASED_WEEKS. */
 export const setReleasedWeeks = (n: number): void => { releasedWeeks = n; };
@@ -82,7 +82,15 @@ export const RESULT_ADAPTERS: readonly AdapterKind[] = ['crossbar', 'jungle', 'l
  * Pure and deterministic; nothing already decided is touched.
  */
 /** Season One scenes removed by a rewrite, mapped to the scene a save resting there continues from. */
-const RETIRED_SCENES: Readonly<Record<string, string>> = { S1_W02_P: 'S1_W02_E' };
+const RETIRED_SCENES: Readonly<Record<string, string>> = {
+  S1_W02_P: 'S1_W02_E',
+  // Owner rewrite of weeks 2–10 (2026-10-27): removed scenes continue from the new scene of the same week that
+  // comes next in the old order. Training and home credit stay once per week, so nothing is paid twice.
+  S1_W02_M: 'S1_W02_T', S1_W02_S: 'S1_W02_T', S1_W02_S2: 'S1_W02_T', S1_W02_C: 'S1_W02_T', S1_W02_F: 'S1_W02_H',
+  S1_W03_M: 'S1_W03_S', S1_W03_S2: 'S1_W03_T', S1_W03_C: 'S1_W03_T', S1_W03_F: 'S1_W03_H',
+  S1_W04_M: 'S1_W04_T', S1_W04_R: 'S1_W04_T', S1_W04_S2: 'S1_W04_T', S1_W04_C: 'S1_W04_T', S1_W04_P: 'S1_W04_H', S1_W04_F: 'S1_W04_H',
+  S1_W05_A: 'S1_W05_H', S1_W06_L: 'S1_W06_H', S1_W07_A: 'S1_W07_H',
+};
 
 /**
  * A save resting in a rewritten Season One scene (its node no longer exists) restarts that scene: the
@@ -96,8 +104,13 @@ function migrateRewritten(s: StoryState): StoryState {
   const scene = sceneById(s.sceneId);
   // Only a scene revised by the compiler (`v2n1`-style ids) whose saved node has the pre-revision shape
   // (`n10`, `a3`) is restarted; any other unknown position stays unknown and is kept aside by the store.
-  // Only the unchanged owner weeks 1–2 restart in place; older week 3–4 text is never mapped onto the new script.
-  if (!scene || seasonWeek(scene.id) > 2 || nodeById(scene, s.nodeId) || !/^v\d+/.test(scene.entry) || !/^[a-z]\d+$/.test(s.nodeId)) return s;
+  // Weeks 1–2 restart in place on that shape. The owner rewrite of weeks 2–10 (revision v3) restarts any position
+  // the new text does not have, and a choice the save already answered (old saves reuse ids such as `activity`).
+  const node = scene ? nodeById(scene, s.nodeId) : undefined;
+  const wk = scene ? seasonWeek(scene.id) : 0;
+  const rewritten = !!scene && wk >= 2 && wk <= 10 && /^v3/.test(scene.entry) && (!node || (node.type === 'choice' && s.decisions[scene.id]?.[node.id] !== undefined));
+  if (!rewritten && (!scene || wk > 2 || node || !/^v\d+/.test(scene.entry) || !/^[a-z]\d+$/.test(s.nodeId))) return s;
+  if (!scene) return s;
   const { [scene.id]: _dropped, ...decisions } = s.decisions;
   const runs = Object.fromEntries(Object.entries(s.runs).filter(([, r]) => r.sceneId !== scene.id || nodeById(scene, r.nodeId)));
   return enter({ ...s, decisions, runs, complete: false }, scene.id, scene.entry, s.lastSeq);
@@ -244,7 +257,7 @@ export function reduceStory(s: StoryState, c: StoryCommand): StoryOutcome {
       const result = needsResult ? (c.result ?? null) : null;
       if (needsResult && (result === null || !['WIN', 'DRAW', 'LOSS'].includes(result))) return fail(`${node.adapter} completion needs a result`);
       const detail = c.outcome === 'completed' && typeof c.detail === 'string' ? c.detail : null;
-      if (detail !== null && !/^[a-z_]{1,32}$/.test(detail)) return fail('bad activity detail');
+      if (detail !== null && !/^[a-z0-9_]{1,32}$/.test(detail)) return fail('bad activity detail');
       const resolved: ActivityRun = s.contentVersion === SEASON_ONE.version ? { ...run, state: 'resolved', outcome: c.outcome, result, detail } : { ...run, state: 'resolved', outcome: c.outcome, result };
       return done(goTo({ ...s, runs: { ...s.runs, [key]: resolved } }, target, s.lastSeq));
     }

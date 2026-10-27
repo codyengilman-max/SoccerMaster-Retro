@@ -107,7 +107,7 @@ describe('Graphics v1 catalog', () => {
         // Phone-only characters (phonePoses.ts) show only on their phone lines, where at most three are staged.
         expect(cast.filter((c) => c.outfit !== 'phone').length, id).toBeLessThanOrEqual(3);
       }
-      expect(sceneVisual('S1_W02_F', look)!.cast.map((c) => c.assetId)).toEqual(['mom3-casual-confident']);
+      expect(sceneVisual('S1_W02_H', look)!.cast.map((c) => c.assetId)).toEqual([`${look}-home`, 'mom3-casual-confident']);
       for (const id of SEASON_ONE.order) {
         const v = sceneVisual(id, look)!;
         expect(v, id).not.toBeNull();

@@ -11,21 +11,28 @@ interface Moment { readonly scene: string; readonly speaker: string; readonly te
 
 const P = (role: CastRole): PhoneShow => ({ role, phone: true });
 const IN = (role: CastRole): PhoneShow => ({ role, phone: false });
+const seq = (scene: string, show: readonly PhoneShow[], lines: readonly (readonly [string, string])[]): Moment[] =>
+  lines.map(([speaker, text]) => ({ scene, speaker, text, show }));
 
 export const PHONE_MOMENTS: readonly Moment[] = [
-  // Week 6 home: Sam's text arrives, then your reply (by text).
-  { scene: 'S1_W06_H', speaker: 'Sam', text: 'Park tomorrow.', show: [P('sam')] },
-  { scene: 'S1_W06_H', speaker: 'Player', text: 'Training first. What time?', show: [P('player')] },
-  { scene: 'S1_W06_H', speaker: 'Player', text: "I'll come early. Train afterward.", show: [P('player')] },
-  { scene: 'S1_W06_H', speaker: 'Player', text: 'Not this time. Have fun.', show: [P('player')] },
-  // Week 6 group chat: Riley has no phone art, so you read her message; Sam replies.
-  { scene: 'S1_W06_G', speaker: 'Riley', text: 'Finally. Someone who might answer.', show: [P('player')] },
-  { scene: 'S1_W06_G', speaker: 'Sam', text: '⚽', show: [P('sam')] },
-  // Week 7 school: Blake is still scrolling Next Horizon clips while Sam talks (he locks it on the next line).
-  { scene: 'S1_W07_M', speaker: 'Sam', text: 'You scouting them or joining the fan club?', show: [IN('sam'), P('blake')] },
-  // Week 7 after the match: Blake opens another clip.
-  { scene: 'S1_W07_G', speaker: 'Sam', text: 'You coming?', show: [IN('player'), IN('sam'), P('blake')] },
-  { scene: 'S1_W07_G', speaker: 'Blake', text: 'In a minute.', show: [IN('player'), IN('sam'), P('blake')] },
+  // Owner rewrite weeks 2–10 (2026-10-27): only the scenes whose direction shows a phone in use.
+  ...seq('S1_W02_T', [IN('player'), P('sam')], [
+    ['Sam', 'Found our team.'], ['Player', 'Near the top?'], ['Sam', 'Depends which way you hold the phone.'],
+    ['Sam', 'League standings come from league games.'], ['Player', 'How do I move up?'], ['Sam', 'Home training builds'],
+    ['Player', "Scrolling doesn't count?"], ['Sam', 'Blake would be unstoppable.'],
+  ]),
+  // Week 6 training: Sam opens the team rankings on a phone.
+  ...seq('S1_W06_T', [IN('player'), P('sam')], [['Sam', "Here's where we are."], ['Player', 'And where we want to be?'], ['Sam', 'Higher.']]),
+  // Week 7 school: Blake checks the player rankings on a phone; Sam looks over.
+  ...seq('S1_W07_M', [IN('sam'), P('blake')], [['Sam', 'Checking your ranking?'], ['Blake', "Checking why everyone's"]]),
+  ...seq('S1_W07_M', [IN('player'), IN('sam'), P('blake')], [['Player', 'You could just follow me.'], ['Blake', "Let's see that other foot first."], ['Sam', 'Weird thing to ask at lunch.']]),
+  // Week 8 training: Sam checks the group chat until "Sam puts the phone away."
+  ...seq('S1_W08_T', [IN('player'), P('sam')], [['Sam', "Blake's late."], ['Player', 'Maybe stuck admiring the rankings.'], ['Sam', "Hasn't answered the group chat either."]]),
+  // Week 9 school: Sam opens the AZ Showcase field on a phone.
+  ...seq('S1_W09_M', [IN('player'), P('sam')], [
+    ['Sam', 'Two out-of-state teams in our group.'], ['Player', 'Any good?'], ['Sam', "Let's check before you promise a hat trick."],
+    ['Player', "Rankings don't play the game."], ['Sam', 'Good. Mine has terrible stamina.'],
+  ]),
 ];
 
 type Line = { readonly id: string; readonly type: string; readonly speaker?: string; readonly text?: string };

@@ -186,11 +186,10 @@ test('Mom: standing casual portrait, face per line, over an empty backdrop, clea
   const car = await stage(page, 'S1_PRO_DEPART', 'v2n20');
   expect(car.art!.cast).toEqual([]);
   expect(((await diagnostics(page)).textureKeys as readonly string[]).includes('art-v1:mom-neutral')).toBe(false);
-  // Over the aquarium painting (player and Cloudy painted in), only Mom appears, and only while she speaks.
-  const tank = await stage(page, 'S1_W02_F', 'v2n3');
-  await story(page, (x) => x.art!.backgroundShown && x.art!.cast.every((c) => c.state === 'shown'), 'aquarium loaded');
-  expect(tank.art!.embedded).toEqual(['player', 'fish']);
-  expect(shown(await story(page, (x) => x.art!.cast.some((c) => c.visible), 'mom shown'))).toEqual(['caregiver:mom3-casual-confident']);
+  // Week 2 home (owner rewrite): Mom appears only while she speaks, and only once.
+  await stage(page, 'S1_W02_H', 'v3n4');
+  await story(page, (x) => x.art!.backgroundShown && x.art!.cast.every((c) => c.state === 'shown'), 'home loaded');
+  expect(shown(await story(page, (x) => x.art!.cast.some((c) => c.visible), 'mom shown')).filter((r) => r.startsWith('caregiver:'))).toEqual(['caregiver:mom3-casual-confident']);
   expect(errors).toEqual([]);
 });
 
@@ -205,14 +204,13 @@ test('Phone poses: only the scripted phone lines show the matching character on 
     await page.screenshot({ path: info.outputPath(`${shot}.png`) });
     return shown(s);
   };
-  expect(await at('S1_W06_H', 'Sam', 'Park tomorrow.', 'w6-sam-text')).toEqual(['sam:phone-sam']);
-  expect(await at('S1_W06_H', 'Player', 'Training first.', 'w6-player-reply')).toEqual(['player:phone-girl']);
-  expect(await at('S1_W06_H', 'Cloudy', 'Tried it.', 'w6-cloudy')).not.toContain('sam:phone-sam');
-  expect(await at('S1_W06_G', 'Riley', 'Finally.', 'w6-group-riley')).toEqual(['player:phone-girl']);
-  expect(await at('S1_W06_G', 'Sam', '⚽', 'w6-group-sam')).toEqual(['sam:phone-sam']);
-  expect(await at('S1_W06_G', 'Blake', 'Big plans?', 'w6-blake-normal')).not.toContain('sam:phone-sam');
-  expect(await at('S1_W07_M', 'Sam', 'You scouting them', 'w7-blake-scrolling')).toEqual(['sam:sam-school', 'blake:phone-blake']);
-  expect(await at('S1_W07_M', 'Blake', 'They actually move the ball.', 'w7-blake-locked')).toContain('blake:blake');
-  expect(await at('S1_W07_G', 'Sam', 'You coming?', 'w7-after-match')).toEqual(['player:girl-match', 'sam:sam-match', 'blake:phone-blake']);
+  expect(await at('S1_W02_T', 'Sam', 'Found our team.', 'w2-sam-rankings')).toContain('sam:phone-sam');
+  expect(await at('S1_W02_T', 'Player', 'Near the top?', 'w2-player')).not.toContain('player:phone-girl');
+  expect(await at('S1_W02_T', 'Coach Code', 'Control it, find a pass', 'w2-coach')).not.toContain('sam:phone-sam');
+  expect(await at('S1_W06_T', 'Sam', "Here's where we are.", 'w6-sam-rankings')).toContain('sam:phone-sam');
+  expect(await at('S1_W07_M', 'Sam', 'Checking your ranking?', 'w7-blake-rankings')).toContain('blake:phone-blake');
+  expect(await at('S1_W08_T', 'Sam', "Blake's late.", 'w8-sam-chat')).toContain('sam:phone-sam');
+  expect(await at('S1_W08_T', 'Coach Code', 'Bring it in.', 'w8-phone-away')).not.toContain('sam:phone-sam');
+  expect(await at('S1_W09_M', 'Sam', 'Two out-of-state teams', 'w9-sam-showcase')).toContain('sam:phone-sam');
   expect(errors).toEqual([]);
 });

@@ -17,7 +17,7 @@ export interface RankingsData {
   /** Current story week; weeks before it are published. */
   readonly week?: number;
   readonly view?: View;
-  readonly returnTo?: 'story' | 'start';
+  readonly returnTo?: 'story' | 'start' | 'myPlayer';
   /** Review only: a made-up season held in memory; nothing is read from or written to the save. */
   readonly sample?: boolean;
 }
@@ -30,7 +30,7 @@ const move = (m: number | null): string => (m === null ? 'new' : m > 0 ? `up ${m
 export class RankingsScene extends Phaser.Scene implements InspectableScene {
   private careerId = '';
   private week = 1;
-  private returnTo: 'story' | 'start' = 'story';
+  private returnTo: 'story' | 'start' | 'myPlayer' = 'story';
   private view: View = 'rankings';
   private scope: 'national' | string = 'national';
   private stateFilter = 'AZ';
@@ -58,7 +58,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
   init(data: RankingsData): void {
     this.careerId = data?.careerId ?? '';
     this.week = Math.max(1, Math.floor(data?.week ?? 1));
-    this.returnTo = data?.returnTo === 'start' ? 'start' : 'story';
+    this.returnTo = data?.returnTo === 'start' || data?.returnTo === 'myPlayer' ? data.returnTo : 'story';
     this.view = data?.view ?? 'rankings';
     this.scope = 'national';
     this.query = '';
@@ -144,7 +144,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     }
     this.leaving = true;
     if (this.sample) return void this.scene.start(SceneKeys.Career, { open: 'reviewHub' });
-    this.scene.start(this.returnTo === 'story' ? SceneKeys.Story : SceneKeys.Start);
+    this.scene.start(this.returnTo === 'story' ? SceneKeys.Story : this.returnTo === 'myPlayer' ? SceneKeys.MyPlayer : SceneKeys.Start, this.returnTo === 'myPlayer' ? { resume: true } : undefined);
   }
 
   private openSearch(): void {
