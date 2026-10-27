@@ -7,6 +7,7 @@ import { DEFAULT_INPUT, normalizeInput, planWeek, substitute, workableFocuses, t
 import { cleanName, cleanText, createPlayer, type CareerPlayer } from './player';
 import { applyGrowth, computeGrowth, type AttributeOutcome, type EvidenceItem } from './progression';
 import { weeklyAssignment, gradeWeekly } from '../training12/all36/weekly';
+import { BONUS_RULES, SPENDABLE, balance, emptyBank, grant, matchAwardKeys, teamTrainingResult, type BonusBank } from './bonus';
 import { HOME_SKILLS, attemptsError, skillProgress, specFor, type Attempt, type HomeLog } from './homeMastery';
 import type { ChoiceId, DisplayBand, NoDecision, PackageGrade } from '../training12/all36/types';
 import { selectSituations, situationById, teamTrainingChanges, describeChanges, weekDelta, type AttributeChange, type SituationResult } from './teamTraining';
@@ -98,6 +99,8 @@ export interface CareerSave {
   readonly reports: readonly SavedReport[];
   /** Fractional development credits carried to next week (older saves: zero). */
   readonly devCarry: Fractions;
+  /** Bonus Attribute Points earned from achievements and spent on attributes (older saves: empty, nothing inferred). */
+  readonly bonus: BonusBank;
 }
 
 export interface CloudyBest {
@@ -156,6 +159,7 @@ export type Action =
   | { readonly type: 'homeLog'; readonly log: HomeLog }
   | { readonly type: 'homeCorrect'; readonly id: string; readonly attempts: readonly Attempt[] }
   | { readonly type: 'homeConfirm'; readonly id: string }
+  | { readonly type: 'bonusSpend'; readonly id: string; readonly attribute: AttributeId }
   | { readonly type: 'all36Weekly'; readonly week: number; readonly situationId: string; readonly runId: string; readonly at: number; readonly choice: ChoiceId | null }
   | { readonly type: 'tt12Run'; readonly week: number; readonly slot: Tt12Slot; readonly runId: string; readonly score: number; readonly creditEligible: boolean; readonly decisions?: { readonly independent: number; readonly assisted: number }; readonly model?: 'ts-1' }
   | { readonly type: 'cloudyResult'; readonly runId: string; readonly difficulty: Difficulty; readonly score: number; readonly stars: 1 | 2 | 3 }
@@ -191,6 +195,7 @@ export function emptySave(): CareerSave {
     cloudyRuns: [],
     reports: [],
     devCarry: zeroFractions(),
+    bonus: emptyBank(),
   };
 }
 
@@ -356,12 +361,28 @@ export function reduce(save: CareerSave, action: Action): Outcome {
       if (save.homeLogs[i]!.confirmed) return same(save, 'Score already confirmed.');
       return ok({ ...save, homeLogs: save.homeLogs.map((x, k) => (k === i ? { ...x, confirmed: true } : x)) }, 'Score confirmed as reported.');
     }
+    case 'bonusSpend': {
+      const pl = save.player;
+      if (!pl) return fail('No career player.');
+      if (typeof action.id !== 'string' || action.id.length < 1 || action.id.length > 64) return fail('Invalid bonus spend.');
+      if (save.bonus.spends.some((x) => x.id === action.id)) return same(save, 'That bonus point is already spent.');
+      if (!SPENDABLE.includes(action.attribute)) return fail('Bonus points can only raise a player attribute.');
+      if (balance(save.bonus) < 1) return fail('No bonus points to spend.');
+      const cur = pl.attributes[action.attribute];
+      const cap = pl.potential[action.attribute];
+      // The whole +1 or nothing: a point is never used on a partial increase past the cap.
+      if (cur + 1 > cap) return fail(`That would go past this attribute's potential (${cap}). Your point is still saved.`);
+      const player: CareerPlayer = { ...pl, attributes: { ...pl.attributes, [action.attribute]: cur + 1 } };
+      return ok({ ...save, player, bonus: { ...save.bonus, spends: [...save.bonus.spends, { id: action.id, attribute: action.attribute, week: save.week }] } }, `+1 applied. ${balance(save.bonus) - 1} bonus point${balance(save.bonus) - 1 === 1 ? '' : 's'} left.`);
+    }
     case 'matchReport': {
       const r = action.report;
       if (!r || typeof r.matchId !== 'string' || r.matchId.length < 1 || r.matchId.length > 64) return fail('Invalid match report.');
       // Saving the same match again (reload, replayed callback) keeps the first report and awards nothing.
       if (save.reports.some((x) => x.matchId === r.matchId)) return same(save, 'This match report is already saved.');
-      return ok({ ...save, reports: [...save.reports, r].slice(-REPORTS_KEPT) }, 'Match report saved.');
+      // Match achievements read the same finalized report that is saved, once per match id.
+      const g = grant(save.bonus, matchAwardKeys(r));
+      return ok({ ...save, reports: [...save.reports, r].slice(-REPORTS_KEPT), bonus: g.bank }, g.paid.length ? `Match report saved. Bonus point${g.paid.length > 1 ? 's' : ''} earned: ${g.paid.length}.` : 'Match report saved.');
     }
     case 'cloudyResult': {
       if (!DIFFICULTIES.includes(action.difficulty) || !Number.isSafeInteger(action.score) || action.score < 0 || action.score > 100_000 || ![1, 2, 3].includes(action.stars)) return fail('Cloudy result out of range.');
@@ -370,7 +391,7 @@ export function reduce(save: CareerSave, action: Action): Outcome {
       const best: CloudyBest = { difficulty: action.difficulty, bestScore: Math.max(prev?.bestScore ?? 0, action.score), bestStars: Math.max(prev?.bestStars ?? 1, action.stars) as 1 | 2 | 3 };
       const record = !prev || action.score > prev.bestScore;
       return ok(
-        { ...save, cloudy: [...save.cloudy.filter((b) => b.difficulty !== action.difficulty), best], cloudyRuns: [...save.cloudyRuns, action.runId].slice(-CLOUDY_RUNS_KEPT) },
+        { ...save, cloudy: [...save.cloudy.filter((b) => b.difficulty !== action.difficulty), best], cloudyRuns: [...save.cloudyRuns, action.runId].slice(-CLOUDY_RUNS_KEPT), bonus: action.stars >= BONUS_RULES.cloudyStars ? grant(save.bonus, [`cloudyChampion:w${save.week}`]).bank : save.bonus },
         record ? `New best on ${action.difficulty}: ${action.score}.` : `Best on ${action.difficulty}: ${best.bestScore}.`,
       );
     }
@@ -394,7 +415,9 @@ export function reduce(save: CareerSave, action: Action): Outcome {
       const results = selectSituations(save.player.position, save.week).map((x) => ({ id: x.id, score: v.score, notes: [] }));
       const counted = countTeamWeek(next, results);
       if ('error' in counted) return fail(counted.error);
-      return ok(counted.save, `Weekly Team Training complete. ${counted.message}`);
+      // Training Perfection: only the first graded answer of the week counts, and a timeout is never perfect.
+      const tp = teamTrainingResult(counted.save.bonus, save.week, v.choice !== null && v.score === 1);
+      return ok({ ...counted.save, bonus: tp.bank }, `Weekly Team Training complete. ${counted.message}${tp.paid.length ? ' Training Perfection: bonus point earned.' : ''}`);
     }
     case 'tt12Run': {
       if (!save.player) return fail('No career player.');

@@ -1,4 +1,5 @@
 import { DEFENSE_UNITS } from '../report/assists';
+import { BONUS_RULES, SPENDABLE, achievementOf, emptyBank, type BonusBank } from './bonus';
 import { REPORTS_KEPT, type SavedReport } from '../report/report';
 import { CARRY_MAX, zeroFractions, type Fractions, type WeekSettlement } from '../report/settlement';
 import { CAREER_CONFIG } from './config';
@@ -236,6 +237,24 @@ function savedReport(v: unknown): SavedReport {
   return o as unknown as SavedReport;
 }
 
+function bonusBank(v: unknown, week: number): BonusBank {
+  const o = obj(v, 'bonus');
+  const awards = arr(o.awards, 'bonus awards', BONUS_RULES.awardsKept).map((k) => {
+    const key = str(k, 'bonus award', 80);
+    if (!achievementOf(key) || !key.includes(':')) throw new Invalid('bonus award: unknown achievement');
+    return key;
+  });
+  if (new Set(awards).size !== awards.length) throw new Invalid('bonus award paid twice');
+  const spends = arr(o.spends, 'bonus spends', BONUS_RULES.awardsKept).map((x) => {
+    const s = obj(x, 'bonus spend');
+    return { id: str(s.id, 'bonus spend id', 64), attribute: oneOf(s.attribute, 'bonus attribute', SPENDABLE), week: int(s.week, 'bonus spend week', 1, week) };
+  });
+  if (new Set(spends.map((s) => s.id)).size !== spends.length) throw new Invalid('bonus point spent twice');
+  if (spends.length > awards.length) throw new Invalid('more bonus points spent than earned');
+  const perfectWeeks = arr(o.perfectWeeks, 'bonus perfect weeks', 60).map((w) => int(w, 'bonus perfect week', 1, week));
+  return { awards, spends, perfectWeeks, pairedThrough: int(o.pairedThrough, 'bonus paired', 0, week) };
+}
+
 function cloudyBest(v: unknown): CloudyBest {
   const o = obj(v, 'cloudy');
   const stars = int(o.bestStars, 'cloudy stars', 1, 3) as 1 | 2 | 3;
@@ -331,6 +350,7 @@ export function parseSave(raw: unknown): R<CareerSave> {
       cloudyRuns: arr(o.cloudyRuns ?? [], 'cloudyRuns', CLOUDY_RUNS_KEPT).map((r) => str(r, 'cloudy run', 64)),
       reports: arr(o.reports ?? [], 'reports', REPORTS_KEPT).map(savedReport),
       devCarry: fractions(o.devCarry),
+      bonus: o.bonus === undefined ? emptyBank() : bonusBank(o.bonus, week),
     };
     if (new Set(save.reports.map((r) => r.matchId)).size !== save.reports.length) throw new Invalid('match report saved twice');
     if (new Set(save.teamTraining.map((t) => t.week)).size !== save.teamTraining.length) throw new Invalid('team training counted twice for a week');
