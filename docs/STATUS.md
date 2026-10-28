@@ -12,7 +12,7 @@ Sections below are a history log, newest first; each header records where that w
 | **Proposed** (owner-approved, not built) | All36 Team Training integration (PR C); standing tackle replacing BLOCK and pad double-tap quick shot (H6, PR D); rest defence and golden-moment highlights (H7, PR E) |
 | **Deferred** | Chips, lofted shots, extra passing/defensive controls (H6); Weeks 11–18 content; school rewards (`SCHOOL_REWARD_RULE = null`) |
 | **Not planned** | Match-long position lock (H1); story-match Coach Moments, in-match tactical questions, Decision Heat in matches, tactical-choice Match Report scoring (H3) |
-| **Unmerged reference** | PR #37 (Tournament Results Screen, Animated Rosters v2) kept for extraction (H4, PRs H/I) |
+| **Merged whole** | PR #37 (Tournament Results Screen, Animated Rosters v2), merged as one change on the owner's instruction of 2026-10-28, superseding H4's extraction plan |
 
 PRs #52–#56 (owner decisions, tactics comparison, All36 weekly Team Training, Home mastery / assists / Bonus Attribute Points, standing tackle and quick shot) were merged into `main` together on 2026-10-28; the rows above predate them, and their sections below give their current state.
 

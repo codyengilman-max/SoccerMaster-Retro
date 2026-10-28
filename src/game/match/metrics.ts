@@ -141,7 +141,7 @@ export type InputProfile = 'chaser' | 'sweep';
 
 /**
  * The scripted user from tests/tacticalMatch.test.ts: stick sweeps every 50 ticks and a PASS (on the ball) or
- * BLOCK (off it) press every 2 s. Mostly passive, so the computer team's attack is measured with little pressure.
+ * TACKLE (off it; BLOCK before PR D) press every 2 s. Mostly passive, so the computer team's attack is measured with little pressure.
  */
 export class SweepBot {
   private id = 0;
@@ -153,7 +153,7 @@ export class SweepBot {
     if (k === this.lastK) return;
     this.lastK = k;
     if (k % 50 === 0) this.sim.command({ type: 'padMove', x: Math.cos(k * 0.37), y: Math.sin(k * 0.37) * 0.6 });
-    const action = this.sim.userHasBall() ? 'pass' : 'block';
+    const action = this.sim.userHasBall() ? 'pass' : 'tackle';
     if (k % 120 === 0) this.sim.command({ type: 'padPress', id: ++this.id, action });
     if (k % 120 === 20) this.sim.command({ type: 'padRelease', id: ++this.id, action });
   }

@@ -1,0 +1,162 @@
+[
+  {
+    "path": "SoccerMaster_Tournament_Art_v1/ART_INDEX.html",
+    "bytes": 2053,
+    "sha256": "3e3f04d3710c7a2dc942e4a27a2276ef8d45c8434a72755579b620b9e39e1fde"
+  },
+  {
+    "path": "SoccerMaster_Tournament_Art_v1/ASSET_MAP.json",
+    "bytes": 21346,
+    "sha256": "0983ae2236613b9d1fb63b19333225bc46291007d1ea2bc3c4ff1de5fe00ceaa"
+  },
+  {
+    "path": "SoccerMaster_Tournament_Art_v1/GENERATION_PROMPTS.json",
+    "bytes": 17276,
+    "sha256": "871af5ee2216979fb13c2d310ca0c5876f084a1465288ba9fa4c7099fd35ac99"
+  },
+  {
+    "path": "SoccerMaster_Tournament_Art_v1/README_DEVIN.md",
+    "bytes": 5827,
+    "sha256": "aa6336c8cada349df78109e3027825bc8f9bf9f76ca238e71243780e2f103966"
+  },
+  {
+    "path": "SoccerMaster_Tournament_Art_v1/VALIDATION.txt",
+    "bytes": 423,
+    "sha256": "281b6514e4e0579f3cb9f0bbe06bdd7fb87abf52812ca4c32419bc6250518f20"
+  },
+  {
+    "path": "SoccerMaster_Tournament_Art_v1/art/az_showcase_assets.png",
+    "bytes": 1846794,
+    "sha256": "503abf71e5aebfbeebe6c94648b674da4ea8e695f4d8f7b2ad45480f9a78153a"
+  },
+  {
+    "path": "SoccerMaster_Tournament_Art_v1/art/az_showcase_background.png",
+    "bytes": 2127282,
+    "sha256": "30cb229ead43f6e985e94672200e5560a3a497384dda46b0d1e56b254dc8eee8"
+  },
+  {
+    "path": "SoccerMaster_Tournament_Art_v1/art/blake_next_horizon_gameplay.png",
+    "bytes": 2339733,
+    "sha256": "fc7a4a73a67030978f908bbe49c909cd5d2b5be5cd6e8c45293c170a6d42d8d7"
+  },
+  {
+    "path": "SoccerMaster_Tournament_Art_v1/art/blake_next_horizon_portraits.png",
+    "bytes": 2370391,
+    "sha256": "8aee27712d018910839e5ac85dbfaf3817cc734a4c117800884c29bdc8a26b06"
+  },
+  {
+    "path": "SoccerMaster_Tournament_Art_v1/art/boy_reactions.png",
+    "bytes": 1999871,
+    "sha256": "501c8393473bd1a91c4218b428d4e690fbd28d35ee23e6bce1006752cafa7f06"
+  },
+  {
+    "path": "SoccerMaster_Tournament_Art_v1/art/coach_code_reactions.png",
+    "bytes": 2140071,
+    "sha256": "3d59a3c15270c2f119a2648f8f26d143997f0a972fc1b139cea659efbe02e407"
+  },
+  {
+    "path": "SoccerMaster_Tournament_Art_v1/art/girl_reactions.png",
+    "bytes": 2122590,
+    "sha256": "7f3214b4e891467b43b59035339b0ec5fcc0989230cb02166c83fc52b5d7c93c"
+  },
+  {
+    "path": "SoccerMaster_Tournament_Art_v1/art/holiday_classic_assets.png",
+    "bytes": 2095246,
+    "sha256": "94dc531914e1b3e84cdc35b1f79676a26cb52f70f636b1fdc34d4a11cd68727d"
+  },
+  {
+    "path": "SoccerMaster_Tournament_Art_v1/art/holiday_classic_background.png",
+    "bytes": 2619384,
+    "sha256": "fd0c119bd1e8cf992945abcd091693a12da35fad1e48fa1096b4489d8dc2b414"
+  },
+  {
+    "path": "SoccerMaster_Tournament_Art_v1/art/sam_reactions.png",
+    "bytes": 2026272,
+    "sha256": "61dde337ba826335bb443c54b3eda2607684cf8c796405d505183226e109deb4"
+  },
+  {
+    "path": "SoccerMaster_Tournament_Art_v1/art/state_cup_assets.png",
+    "bytes": 1862322,
+    "sha256": "1e26d13bda0d35241852c9e5b61a85a4476ccbcc4a2515d052a527800b0e5345"
+  },
+  {
+    "path": "SoccerMaster_Tournament_Art_v1/art/state_cup_background.png",
+    "bytes": 2024681,
+    "sha256": "3b53d33e5483bb8dff1edfb4a5740b3979d4467a7805efc55a9431cb6a3e6c8f"
+  },
+  {
+    "path": "SoccerMaster_Tournament_Art_v1/art/tournament_results_components.png",
+    "bytes": 1338871,
+    "sha256": "84aa7a482f6b4f9d54e0ba17c34258193549942a52332ac6fae0928d0ebfd9bc"
+  },
+  {
+    "path": "SoccerMaster_Tournament_Art_v1/art/visitor_kit_candidates.png",
+    "bytes": 1893581,
+    "sha256": "59b31989b0cbace32914e8c1f5cca7643064f8d413b69868209f471207a67fba"
+  },
+  {
+    "path": "SoccerMaster_Diverse_Rosters_v1/DEVIN_README.md",
+    "bytes": 3812,
+    "sha256": "e21c6a791059fbe5041b20468f6f541b7f18dc188f07a939c4a1f8e43854614e"
+  },
+  {
+    "path": "SoccerMaster_Diverse_Rosters_v1/art/desert_tuzon.png",
+    "bytes": 1682779,
+    "sha256": "1446db8f0c57c7bd6970820f091d69e593df37205550c288824fc72ddfb3b2b8"
+  },
+  {
+    "path": "SoccerMaster_Diverse_Rosters_v1/art/fc_batavia.png",
+    "bytes": 1193554,
+    "sha256": "60833924d5d1d1448ea4681509a6a1c2392be2590b666b8ee98284d6cb1c3dcf"
+  },
+  {
+    "path": "SoccerMaster_Diverse_Rosters_v1/art/next_horizon.png",
+    "bytes": 1944236,
+    "sha256": "8bd1a16089ecf4b3ca2ae261c9ea8b044fe136786947c6104ea90d5d20a454cf"
+  },
+  {
+    "path": "SoccerMaster_Diverse_Rosters_v1/art/royal_salt.png",
+    "bytes": 1151749,
+    "sha256": "e26b2bb16cbf12dd1762a42e68dee3b27e886515dfe2667d2d3cbf7023bec32a"
+  },
+  {
+    "path": "SoccerMaster_Diverse_Rosters_v1/art/sol_vista.png",
+    "bytes": 1672847,
+    "sha256": "a72bc0e4980b19e7ce9384d871dd033ff29dd8373f5042bb32fcf78d07002e89"
+  },
+  {
+    "path": "SoccerMaster_Diverse_Rosters_v1/art/valley_rising.png",
+    "bytes": 1050968,
+    "sha256": "194cd137cf19ac103761cd4d40b2dade0c292e3766ff0eb38b9298c0a2704fd6"
+  },
+  {
+    "path": "SoccerMaster_Diverse_Rosters_v1/art/visitor_1.png",
+    "bytes": 1101525,
+    "sha256": "a76884e1d11ae3ad387292ad4c623b8ed3512165079243fd23215fe27973e874"
+  },
+  {
+    "path": "SoccerMaster_Diverse_Rosters_v1/art/visitor_2.png",
+    "bytes": 990365,
+    "sha256": "ca795b2fd2f9a5c85df9cfe4331f84750be32bb767a78ee784a2277fbbfe92f6"
+  },
+  {
+    "path": "SoccerMaster_Diverse_Rosters_v1/art/visitor_3.png",
+    "bytes": 2086282,
+    "sha256": "da79cdaf9e9741397406aa46a0a08134384de76e43b83ef91003828e36ce5148"
+  },
+  {
+    "path": "SoccerMaster_Diverse_Rosters_v1/art/visitor_4.png",
+    "bytes": 1077542,
+    "sha256": "6b38aa7a088cc711a67249f6706d92a97bc14ec34715786e4c29c4c89dfa8181"
+  },
+  {
+    "path": "SoccerMaster_Diverse_Rosters_v1/roster_manifest.json",
+    "bytes": 19380,
+    "sha256": "99c716eac2b8290652807f642fa9af947174a7252a153f1bc1ffe06899c3d7d0"
+  },
+  {
+    "path": "START_HERE_DEVIN.md",
+    "bytes": 4931,
+    "sha256": "fcfe8f5099412f385ee321db331a7a46bd0bba02208eb9c90bf307f23e184fe1"
+  }
+]

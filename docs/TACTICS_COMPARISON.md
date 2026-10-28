@@ -8,7 +8,7 @@ Measurement only. The default stays `classic` (`MatchSimOptions.tactics`); nothi
 - `src/game/match/metrics.ts` (`measureMatch`) only reads `sim.state` and the event list. `tests/tacticsCompare.test.ts` checks this: an unmeasured run of the same seed, mode and input ends with the same final positions, ball and score.
 - The home controlled outfielder needs input (the sim has no home autopilot), so the same scripted input is used in both modes. Two profiles:
   - **chaser** (`HomeBot`): runs at the ball, carries toward goal, shoots inside 20 yd, otherwise taps PASS after 0.6 s. A crude, aggressive player.
-  - **sweep** (`SweepBot`): the scripted user from `tests/tacticalMatch.test.ts` (stick sweeps, a PASS or BLOCK press every 2 s). Mostly passive, so it shows the computer team's attack.
+  - **sweep** (`SweepBot`): the scripted user from `tests/tacticalMatch.test.ts` (stick sweeps, a PASS or BLOCK press every 2 s). These numbers were measured before PR D; since PR D the off-ball press is TACKLE (a committed standing tackle), so a rerun will differ for the sweep profile. Mostly passive, so it shows the computer team's attack.
 - Raw data: `docs/tactics/results.json` (every run, including trace hashes). Full tables with min–max and per-seed hashes: `docs/tactics/summary.md`.
 - Metric definitions are in the comments on `TeamMetrics` in `metrics.ts`. Distances in yards, times in sim seconds. Shape (width, depth, line gaps) is sampled 10 times per sim second while the team has the ball; pressing and goal-side counts while the opponent has a carrier. "Pressure" means an outfielder within 3 yd of the carrier; "parked" means a defence-line player under 0.3 yd/s for more than 3 s of live play.
 

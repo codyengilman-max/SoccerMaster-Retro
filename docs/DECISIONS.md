@@ -377,6 +377,9 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - **Quick shot by tap-wait:** Devin's proposed option A, owner choice still open. A SHOOT tap waits 0.25 s of sim time for a second press; without one the same tap shot goes ahead (0.25 s later than before); with one a fixed 55% charge shot leaves the foot after 0.03 s through the same aim, error and resolution path. The shoot button stays live through the quick shot's preparation so the pad never cancels the still-held second tap.
 - **Ball Winner:** standing tackles count only from explicit `standing` events (1 unit), never inferred from contact tackles, with the same 2 s controlled-possession rule.
 
+## D62. Release of PRs #37 and #52–#56 (owner, 2026-10-28)
+- The owner asked to merge all new PRs and then PR #37 as well. PR #37 is merged as one change, superseding H4 (extract Tournament Results and Animated Rosters v2 first). Merge conflicts were resolved by keeping both sides; Team Training keeps the newer package-art setup (`ensureTtArt`) over #37's `practice` kit change.
+
 ## Owner decisions 2026-10-27 (H1–H8)
 
 From the owner's consolidated decisions after the read-only audit of `main` `04e947b` (second revision, same day: H3 now removes Coach Moments from story matches, and the coach-approved All36 package becomes the Team Training source). Plan: [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md).

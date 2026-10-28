@@ -1,0 +1,492 @@
+{
+  "frames": {
+    "fc_batavia_07_00": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_01": {
+      "frame": {
+        "x": 160,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_02": {
+      "frame": {
+        "x": 320,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_03": {
+      "frame": {
+        "x": 480,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_04": {
+      "frame": {
+        "x": 640,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_05": {
+      "frame": {
+        "x": 800,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_06": {
+      "frame": {
+        "x": 0,
+        "y": 128,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_07": {
+      "frame": {
+        "x": 160,
+        "y": 128,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_08": {
+      "frame": {
+        "x": 320,
+        "y": 128,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_09": {
+      "frame": {
+        "x": 480,
+        "y": 128,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_10": {
+      "frame": {
+        "x": 640,
+        "y": 128,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_11": {
+      "frame": {
+        "x": 800,
+        "y": 128,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_12": {
+      "frame": {
+        "x": 0,
+        "y": 256,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_13": {
+      "frame": {
+        "x": 160,
+        "y": 256,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_14": {
+      "frame": {
+        "x": 320,
+        "y": 256,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_15": {
+      "frame": {
+        "x": 480,
+        "y": 256,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_16": {
+      "frame": {
+        "x": 640,
+        "y": 256,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_17": {
+      "frame": {
+        "x": 800,
+        "y": 256,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_18": {
+      "frame": {
+        "x": 0,
+        "y": 384,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_19": {
+      "frame": {
+        "x": 160,
+        "y": 384,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_20": {
+      "frame": {
+        "x": 320,
+        "y": 384,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_21": {
+      "frame": {
+        "x": 480,
+        "y": 384,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_22": {
+      "frame": {
+        "x": 640,
+        "y": 384,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    },
+    "fc_batavia_07_23": {
+      "frame": {
+        "x": 800,
+        "y": 384,
+        "w": 160,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 160,
+        "h": 128
+      }
+    }
+  },
+  "meta": {
+    "image": "fc_batavia_07.webp",
+    "size": {
+      "w": 960,
+      "h": 512
+    },
+    "scale": "1"
+  }
+}

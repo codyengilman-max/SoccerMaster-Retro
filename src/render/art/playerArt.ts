@@ -1,13 +1,18 @@
 import Phaser from 'phaser';
 import { SPRITE_FRAME, drawSprite, type PoseKind, type SpriteLook } from './spriteFactory';
 import { lookKey, type RosterLook } from './roster';
-import { SPRITE_CELL, frameName, layoutOf, type SpriteSetId } from './spriteSets';
+import { SPRITE_CELL, appearanceFrame, frameName, layoutOf, type AppearanceSetId, type SpriteSetId } from './spriteSets';
 
 const atlasImages = import.meta.glob('../../assets/art/sprites-v2/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 const atlasData = import.meta.glob('../../assets/art/sprites-v2/*.json', { eager: true, import: 'default' }) as Record<string, object>;
 const base = (path: string): string => path.slice(path.lastIndexOf('/') + 1, path.lastIndexOf('.'));
-const ATLAS_URL: ReadonlyMap<string, string> = new Map(Object.entries(atlasImages).map(([p, u]) => [base(p), u] as const));
-const ATLAS_JSON: ReadonlyMap<string, object> = new Map(Object.entries(atlasData).map(([p, j]) => [base(p), j] as const));
+const rosterImages = import.meta.glob('../../assets/art/rosters-v2/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const rosterData = import.meta.glob(['../../assets/art/rosters-v2/*.json', '!../../assets/art/rosters-v2/*.clips.json'], { eager: true, import: 'default' }) as Record<string, object>;
+const rosterClips = import.meta.glob('../../assets/art/rosters-v2/*.clips.json', { eager: true, import: 'default' }) as Record<string, { neutralBodyHeight?: number }>;
+const appr = (path: string): string => `appr-${base(path)}`;
+const ATLAS_URL: ReadonlyMap<string, string> = new Map([...Object.entries(atlasImages).map(([p, u]) => [base(p), u] as const), ...Object.entries(rosterImages).map(([p, u]) => [appr(p), u] as const)]);
+const ATLAS_JSON: ReadonlyMap<string, object> = new Map([...Object.entries(atlasData).map(([p, j]) => [base(p), j] as const), ...Object.entries(rosterData).map(([p, j]) => [appr(p), j] as const)]);
+const BODY_H: ReadonlyMap<string, number> = new Map(Object.entries(rosterClips).map(([p, c]) => [`appr-${base(p).replace(/\.clips$/, '')}`, c.neutralBodyHeight ?? SPRITE_CELL.bodyHeight] as const));
 export const atlasKey = (set: SpriteSetId): string => `spr2:${set}`;
 
 /** Gameplay art scale, independent of physics: visible body height as a multiple of the old placeholder height. */
@@ -74,7 +79,15 @@ export class PlayerArt {
   apply(img: Phaser.GameObjects.Image, look: RosterLook | SpriteLook, kind: PoseKind, dir: number, pose: number, placeholderH: number, k = 1): Phaser.GameObjects.Image {
     const set = (look as RosterLook).set;
     const key = set ? atlasKey(set) : '';
-    if (set && this.scene.textures.exists(key)) {
+    if (set?.startsWith('appr-') && this.scene.textures.exists(key)) {
+      const fr = appearanceFrame(set as AppearanceSetId, kind, dir, pose);
+      if (this.scene.textures.get(key).has(fr.name)) {
+        const s = (PLAYER_ART.bodyScale * placeholderH * k) / (BODY_H.get(set) ?? SPRITE_CELL.bodyHeight);
+        return img.setTexture(key, fr.name).setFlipX(fr.flipX).setOrigin(SPRITE_CELL.anchorX / SPRITE_CELL.width, SPRITE_CELL.anchorY / SPRITE_CELL.height).setScale(s, s);
+      }
+    }
+    img.setFlipX(false);
+    if (set && !set.startsWith('appr-') && this.scene.textures.exists(key)) {
       const name = frameName(layoutOf(set), kind, dir, pose, (look as RosterLook).keeper === true);
       const tex = this.scene.textures.get(key);
       if (tex.has(name)) {
@@ -90,7 +103,8 @@ export class PlayerArt {
   applyNamed(img: Phaser.GameObjects.Image, look: RosterLook | SpriteLook, name: string | null, kind: PoseKind, dir: number, pose: number, placeholderH: number): Phaser.GameObjects.Image {
     const set = (look as RosterLook).set;
     const key = set ? atlasKey(set) : '';
-    if (name && set && this.scene.textures.exists(key) && this.scene.textures.get(key).has(name)) {
+    if (name && set && !set.startsWith('appr-') && this.scene.textures.exists(key) && this.scene.textures.get(key).has(name)) {
+      img.setFlipX(false);
       const s = (PLAYER_ART.bodyScale * placeholderH) / SPRITE_CELL.bodyHeight;
       return img.setTexture(key, name).setOrigin(SPRITE_CELL.anchorX / SPRITE_CELL.width, SPRITE_CELL.anchorY / SPRITE_CELL.height).setScale(s, s);
     }

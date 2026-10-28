@@ -1,0 +1,150 @@
+{
+  "cell": [
+    160,
+    128
+  ],
+  "anchorPx": [
+    80,
+    120
+  ],
+  "origin": [
+    0.5,
+    0.9375
+  ],
+  "neutralBodyHeight": 91,
+  "clips": {
+    "run_right": {
+      "frames": [
+        "desert_tuzon_09_00",
+        "desert_tuzon_09_01",
+        "desert_tuzon_09_02",
+        "desert_tuzon_09_03",
+        "desert_tuzon_09_04",
+        "desert_tuzon_09_05"
+      ],
+      "frameRate": 10,
+      "repeat": -1,
+      "flipX": false
+    },
+    "run_front": {
+      "frames": [
+        "desert_tuzon_09_06",
+        "desert_tuzon_09_07",
+        "desert_tuzon_09_08",
+        "desert_tuzon_09_09",
+        "desert_tuzon_09_10",
+        "desert_tuzon_09_11"
+      ],
+      "frameRate": 10,
+      "repeat": -1,
+      "flipX": false
+    },
+    "run_back": {
+      "frames": [
+        "desert_tuzon_09_12",
+        "desert_tuzon_09_13",
+        "desert_tuzon_09_14",
+        "desert_tuzon_09_15",
+        "desert_tuzon_09_16",
+        "desert_tuzon_09_17"
+      ],
+      "frameRate": 10,
+      "repeat": -1,
+      "flipX": false
+    },
+    "ready": {
+      "frames": [
+        "desert_tuzon_09_18",
+        "desert_tuzon_09_19"
+      ],
+      "frameRate": 4,
+      "repeat": -1,
+      "flipX": false
+    },
+    "catch": {
+      "frames": [
+        "desert_tuzon_09_20",
+        "desert_tuzon_09_21"
+      ],
+      "frameRate": 7,
+      "repeat": 0,
+      "flipX": false
+    },
+    "dive_right": {
+      "frames": [
+        "desert_tuzon_09_22",
+        "desert_tuzon_09_23"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "flipX": false
+    },
+    "dive_left": {
+      "frames": [
+        "desert_tuzon_09_22",
+        "desert_tuzon_09_23"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "flipX": true,
+      "derivedFrom": "dive_right"
+    },
+    "throw_right": {
+      "frames": [
+        "desert_tuzon_09_26",
+        "desert_tuzon_09_27"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "flipX": false
+    },
+    "punt_right": {
+      "frames": [
+        "desert_tuzon_09_28",
+        "desert_tuzon_09_29"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "flipX": false
+    },
+    "run_left": {
+      "frames": [
+        "desert_tuzon_09_00",
+        "desert_tuzon_09_01",
+        "desert_tuzon_09_02",
+        "desert_tuzon_09_03",
+        "desert_tuzon_09_04",
+        "desert_tuzon_09_05"
+      ],
+      "frameRate": 10,
+      "repeat": -1,
+      "flipX": true,
+      "derivedFrom": "run_right"
+    },
+    "throw_left": {
+      "frames": [
+        "desert_tuzon_09_26",
+        "desert_tuzon_09_27"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "flipX": true,
+      "derivedFrom": "throw_right"
+    },
+    "punt_left": {
+      "frames": [
+        "desert_tuzon_09_28",
+        "desert_tuzon_09_29"
+      ],
+      "frameRate": 8,
+      "repeat": 0,
+      "flipX": true,
+      "derivedFrom": "punt_right"
+    }
+  },
+  "unusedFrames": [
+    24,
+    25
+  ],
+  "notes": "Left-facing side actions and keeper dive-left use horizontal mirroring; asymmetric kit trim also mirrors. These are compact pixel keyframe cycles; engine ball and player movement remain authoritative. Front/back kicking directions are not separately drawn. Canonical standing design supplies the outfield idle frame. Shoulder/slide are held poses, not full cycles."
+}

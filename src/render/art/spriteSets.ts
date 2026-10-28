@@ -16,11 +16,24 @@ export const SPRITE_SETS = [
   'coach-code',
   'jungle-boy', 'jungle-girl', 'jungle-blake', 'jungle-sam',
 ] as const;
-export type SpriteSetId = (typeof SPRITE_SETS)[number];
-export type SetLayout = 'protagonist' | 'goalkeeper' | 'club' | 'club-training' | 'coach' | 'jungle';
+/** Animated Rosters v2 (owner pack, partial): one atlas per appearance, `<team>_01`..`_08` outfield, `_09` keeper. */
+export type AppearanceSetId = `appr-${string}`;
+export type SpriteSetId = (typeof SPRITE_SETS)[number] | AppearanceSetId;
+export type SetLayout = 'protagonist' | 'goalkeeper' | 'club' | 'club-training' | 'coach' | 'jungle' | 'appearance' | 'appearance-keeper';
+/** Clubs whose nine match-kit appearances are all drawn; a partly drawn club keeps its v2 club sheet so one side never mixes styles. */
+export const APPEARANCE_CLUBS: Readonly<Partial<Record<SpriteClub, string>>> = Object.freeze({ batavia: 'fc_batavia', royal_salt: 'royal_salt' });
+/** Stable appearance for a lineup slot (0 = keeper): the slot is the player's identity, so it never rerolls per match or reload. */
+export function appearanceSet(club: SpriteClub, slot: number): AppearanceSetId | null {
+  const team = APPEARANCE_CLUBS[club];
+  if (!team || !Number.isInteger(slot) || slot < 0 || slot > 8) return null;
+  return `appr-${team}_${String(slot === 0 ? 9 : slot).padStart(2, '0')}`;
+}
+/** Slide frames the pack disables because the drawing drifted from the player's design. */
+export const APPEARANCE_UNUSED: Readonly<Record<string, readonly number[]>> = Object.freeze({ royal_salt_03: [23], desert_tuzon_02: [23], desert_tuzon_03: [23] });
 
 export const layoutOf = (id: SpriteSetId): SetLayout =>
-  id === 'coach-code' ? 'coach'
+  id.startsWith('appr-') ? (id.endsWith('_09') ? 'appearance-keeper' : 'appearance')
+  : id === 'coach-code' ? 'coach'
   : id.startsWith('jungle-') ? 'jungle'
   : id.endsWith('-goalkeeper') ? 'goalkeeper'
   : id === 'club-batavia-training' ? 'club-training'
@@ -56,6 +69,9 @@ const cycle = (pose: number, n: number): number => ((Math.floor(pose) % n) + n) 
 export function frameName(layout: SetLayout, kind: PoseKind, dir: number, pose: number, keeper = false): string {
   const d = Number.isInteger(dir) && dir >= 0 && dir <= 7 ? dir : 2;
   switch (layout) {
+    case 'appearance':
+    case 'appearance-keeper':
+      throw new Error('appearance sets use appearanceFrame');
     case 'protagonist':
       if (kind === 'idle') return IDLE8[d]!;
       if (kind === 'run') return side(`run-${cycle(pose, 8)}`, d);
@@ -121,4 +137,25 @@ export function juggleFrame(layout: SetLayout, pose: number): string | null {
   if (layout === 'protagonist') return `juggle-${cycle(pose, 8)}`;
   if (layout === 'club-training') return `juggle-${cycle(pose, 6)}`;
   return null;
+}
+
+/**
+ * Animated Rosters v2 frame for a pose: side poses are drawn facing right and the three left-facing
+ * directions mirror them (`flipX`), as the pack specifies. Straight down-screen runs use the front cycle,
+ * straight up-screen the back cycle. Kicks show the contact frame (the sim owns the ball and timing).
+ */
+export function appearanceFrame(set: AppearanceSetId, kind: PoseKind, dir: number, pose: number): { name: string; flipX: boolean } {
+  const id = set.slice(5);
+  const d = Number.isInteger(dir) && dir >= 0 && dir <= 7 ? dir : 2;
+  const f = (n: number, flip = west(d)): { name: string; flipX: boolean } => ({ name: `${id}_${String(n).padStart(2, '0')}`, flipX: flip });
+  if (set.endsWith('_09')) {
+    if (kind === 'run') return d === 2 ? f(6 + cycle(pose, 6), false) : d === 6 ? f(12 + cycle(pose, 6), false) : f(cycle(pose, 6));
+    if (kind === 'dive' || kind === 'slide') return f(23);
+    if (kind === 'kick') return f(27);
+    return f(18, false);
+  }
+  if (kind === 'run') return d === 2 ? f(4 + cycle(pose, 4), false) : d === 6 ? f(8 + cycle(pose, 4), false) : f(cycle(pose, 4));
+  if (kind === 'kick') return f(13);
+  if (kind === 'slide' || kind === 'dive') return f((APPEARANCE_UNUSED[id] ?? []).includes(23) ? 22 : 23);
+  return f(21, false);
 }

@@ -1405,7 +1405,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     // Team Training: Batavia's blue training kit against teammates in the orange match kit.
     const training = this.team !== null;
     const home = sideLooks('home', protagonist ? { slot, look: protagonist.look } : null, { club: 'batavia', kit: training ? 'training' : 'match' });
-    const away = sideLooks('away', null, { club: training ? 'batavia' : this.opponent, kit: 'match' });
+    const away = sideLooks('away', null, { club: training ? 'batavia' : this.opponent, kit: 'match', practice: training });
     this.looks = Object.fromEntries(MATCH_PLAYER_IDS.map((id) => {
       const p = this.sim.state.players[id];
       return [id, (p.team === 'home' ? home : away)[p.slot]!];

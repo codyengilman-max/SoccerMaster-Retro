@@ -13,6 +13,7 @@ export const SceneKeys = {
   MyPlayer: 'myPlayer',
   Rankings: 'rankings',
   Weekly: 'weekly',
+  Tournament: 'tournament',
 } as const;
 
 export type SceneKey = (typeof SceneKeys)[keyof typeof SceneKeys];
