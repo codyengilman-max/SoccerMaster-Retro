@@ -117,6 +117,10 @@ describe('defensive points', () => {
     const sl = run([ev('pass', 0, 'a1', 'a2'), ev('slide', 0.1, 'h4', 'start'), ev('slide', 0.3, 'h4', 'ball touched'), ev('received', 0.9, 'h4')]);
     expect(get(sl, 'h4')).toMatchObject({ slideWon: 1, interceptions: 0, defenseUnits: 2 });
   });
+  it("does not count an interception once the passer's own teammate has touched the pass", () => {
+    const t = run([ev('pass', 0, 'a1', 'a2'), ev('deflected', 0.4, 'a3', 'too fast to control'), ev('intercepted', 1, 'h3', 'cut out a1')]);
+    expect(get(t, 'h3')).toMatchObject({ interceptions: 0, defenseUnits: 0 });
+  });
   it('gives a deflected pass to the cutter once, not to the teammate who collects it', () => {
     const t = run([ev('pass', 0, 'a1', 'a2'), ev('deflected', 0.4, 'h3', 'deflected'), ev('intercepted', 1.1, 'h2', 'cut out a1')]);
     expect(get(t, 'h3')).toMatchObject({ interceptions: 1, defenseUnits: 3 });

@@ -132,6 +132,8 @@ export class ContributionTracker {
       this.kick = { by, team, pass: false };
     } else if (type === 'deflected') {
       if (this.pendingPass && this.pendingPass.passer !== by) this.pendingPass = null;
+      // A touch by the passer's own teammate ends that pass: an opponent collecting it next has not cut it out.
+      if (this.kick && this.kick.pass && this.kick.team === team && this.kick.by !== by) this.kick = { by, team, pass: false };
       if (this.kick && this.kick.pass && this.kick.team !== team && !this.cut && !this.slides.some((s) => s.team === team)) this.cut = { by, team, at: e.at };
     } else if (type === 'parried') {
       this.pendingPass = null;

@@ -21,6 +21,15 @@ describe('home training phases', () => {
     expect(skillProgress([one, two], 'firstTouch').phase).toBe(1);
   });
 
+  it('counts the two qualifying sessions at one setup: a different task or foot does not combine', () => {
+    const j1 = log('juggling', 1, [3, 3, 3], { activityId: 'jg-1' });
+    const j2 = log('juggling', 1, [3, 3, 3], { activityId: 'jg-2' });
+    expect(skillProgress([j1, j2], 'juggling')).toMatchObject({ phase: 1, qualifying: 1 });
+    const left = log('juggling', 1, [3, 3, 3], { activityId: 'jg-1', foot: 'left' as never });
+    expect(skillProgress([j1, j2, left], 'juggling').phase).toBe(1);
+    expect(skillProgress([j1, j2, left, log('juggling', 1, [3, 3, 3], { activityId: 'jg-2' })], 'juggling').phase).toBe(2);
+  });
+
   it('needs 2 of 3 attempts; a correction edits one session and never counts twice; poor sessions keep the phase', () => {
     const a = log('passing', 1, [6, 5, 5]);
     expect(skillProgress([a], 'passing').qualifying).toBe(0);
@@ -41,6 +50,7 @@ describe('home training phases', () => {
     const ok: Attempt[] = [{ value: 0 }, { value: 10 }, { value: 3 }];
     expect(attemptsError(reps, ok)).toBeNull();
     expect(attemptsError(reps, [{ value: -1 }, { value: 0 }, { value: 0 }])).not.toBeNull();
+    expect(attemptsError(reps, [{ value: 6, of: 1 }, { value: 6, of: 1 }, { value: 0, of: 1 }])).not.toBeNull();
     expect(attemptsError(reps, [{ value: 1.5 }, { value: 0 }, { value: 0 }])).not.toBeNull();
     expect(attemptsError(reps, [{ value: 11 }, { value: 0 }, { value: 0 }])).not.toBeNull();
     expect(attemptsError(reps, ok.slice(0, 2))).not.toBeNull();

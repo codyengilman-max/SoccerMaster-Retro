@@ -94,6 +94,7 @@ export function attemptsError(spec: PhaseSpec, attempts: readonly Attempt[]): st
     if (spec.kind === 'count') {
       if (!nonNegInt(a.value, 10_000)) return 'Counts must be whole numbers from 0.';
     } else {
+      if (spec.kind === 'reps' && a.of !== undefined && a.of !== spec.of) return `This task is scored out of ${spec.of}.`;
       const of = spec.kind === 'reps' ? spec.of! : a.of;
       if (!nonNegInt(of, 1000) || of < 1) return 'Attempts must be at least 1.';
       if (!nonNegInt(a.value, 1000)) return 'Successes must be whole numbers from 0.';
@@ -128,7 +129,8 @@ export interface SkillProgress {
 /** Replay the logs in order. Every skill starts at Phase 1; only qualifying sessions move it, nothing moves it back (corrections included). */
 export function skillProgress(logs: readonly HomeLog[], skill: HomeSkillId): SkillProgress {
   let phase: Phase = 1;
-  let qual = 0;
+  // Qualifying sessions per setup (task, variation, foot): two at the same setup advance the phase.
+  let quals = new Map<string, number>();
   let misses = 0;
   const mine = logs.filter((l) => l.skill === skill).slice().sort((a, b) => a.at - b.at || (a.id < b.id ? -1 : 1));
   for (const l of mine) {
@@ -136,22 +138,25 @@ export function skillProgress(logs: readonly HomeLog[], skill: HomeSkillId): Ski
     // even if an earlier score is corrected down.
     if (l.phase > phase) {
       phase = l.phase;
-      qual = 0;
+      quals = new Map();
       misses = 0;
     }
     const spec = specFor(skill, phase)!;
     if (l.phase !== phase) continue;
     if (qualifies(spec, l)) {
       misses = 0;
-      if (++qual >= 2 && phase < 5) {
+      const key = `${l.activityId}|${l.variation}|${l.foot}`;
+      const n = (quals.get(key) ?? 0) + 1;
+      quals.set(key, n);
+      if (n >= 2 && phase < 5) {
         phase = (phase + 1) as Phase;
-        qual = 0;
+        quals = new Map();
       }
     } else misses++;
   }
   const spec = specFor(skill, phase)!;
   const here = mine.filter((l) => l.phase === phase && l.variation === spec.variation);
-  return { skill, phase, spec, qualifying: qual, personalBest: here.length ? Math.max(...here.map(best)) : null, recentMedian: here.length ? median(here.at(-1)!.attempts.map((a) => a.value)) : null, struggling: misses >= 3 };
+  return { skill, phase, spec, qualifying: Math.max(0, ...quals.values()), personalBest: here.length ? Math.max(...here.map(best)) : null, recentMedian: here.length ? median(here.at(-1)!.attempts.map((a) => a.value)) : null, struggling: misses >= 3 };
 }
 
 export type FeedbackKind = 'check' | 'first' | 'progress' | 'personalBest' | 'persistence' | 'needsWork';
