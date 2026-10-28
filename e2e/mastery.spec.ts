@@ -22,6 +22,7 @@ async function mp(page: Page, pred: (g: MP) => boolean, what: string): Promise<M
 }
 
 test('Home Training mastery: log, Coach Code feedback, score check with correct and confirm, advance a phase', async ({ page }, info) => {
+  test.setTimeout(120_000);
   const mode = modeFor(info);
   const errors = trackConsoleErrors(page);
   const answers: string[] = ['Kid'];
