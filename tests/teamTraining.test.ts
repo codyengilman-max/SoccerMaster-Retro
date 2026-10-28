@@ -97,7 +97,7 @@ describe('weekly Team Training from the soccer-logic catalog', () => {
       let ids = 0;
       const idle = run(sit, seed);
       const played = run(sit, seed, (sim) => {
-        // Step goal-side of the ball and hold BLOCK when the carrier is close, as a player would.
+        // Step goal-side of the ball and hold TACKLE (a tackle, then a jockey) when the carrier is close, as a player would.
         const s = sim.state;
         const owner = s.ball.owner;
         const me = s.players[s.controlledId];
@@ -107,8 +107,8 @@ describe('weekly Team Training from the soccer-logic catalog', () => {
         const m = Math.hypot(dx, dy) || 1;
         sim.command({ type: 'padMove', x: dx / m, y: dy / m });
         const near = !!owner && s.players[owner].team === 'away' && Math.hypot(at.x - me.pos.x, at.y - me.pos.y) < 6;
-        if (near && s.pad.phase === 'ready') sim.command({ type: 'padPress', id: ++ids, action: 'block' });
-        if (!near && s.pad.phase === 'blocking') sim.command({ type: 'padRelease', id: ++ids, action: 'block' });
+        if (near && s.pad.phase === 'ready') sim.command({ type: 'padPress', id: ++ids, action: 'tackle' });
+        if (!near && s.pad.phase === 'jockey') sim.command({ type: 'padRelease', id: ++ids, action: 'tackle' });
       });
       idleSum += idle.score;
       playedSum += played.score;

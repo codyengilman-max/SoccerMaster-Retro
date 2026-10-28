@@ -73,7 +73,7 @@ const HUD_HEIGHT = 40;
 const SIDELINE_SQUASH = CAMERA_VIEW.landscapeTilt;
 /** Mouse presses this soon after a touch are browser compatibility events, not a second input. */
 const COMPAT_MOUSE_MS = 800;
-const HELP_PAD = 'Left stick: move  |  PASS / SHOOT: hold to charge, release to kick  |  SLIDE TACKLE: tap  |  BLOCK: hold';
+const HELP_PAD = 'Left stick: move  |  PASS / SHOOT: hold to charge, release to kick  |  SLIDE TACKLE: tap  |  TACKLE: tap (keep holding to jockey)  |  SHOOT: double-tap for a quick shot';
 
 export interface MatchSceneData {
   readonly formation?: FormationId;
@@ -746,6 +746,25 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       this.debugStage = setup;
       return;
     }
+    if (setup === 'tackle') {
+      // 'tackle': the user's H8 squared up to A7, who carries the ball toward the home goal, for TACKLE tests.
+      this.sim.arrange((s) => {
+        const c = s.players.A7;
+        c.pos = { x: 40, y: 25 };
+        c.vel = { x: 0, y: 0 };
+        s.ball.owner = 'A7';
+        s.ball.pos = { x: 39.4, y: 25 };
+        s.ball.vel = { x: 0, y: 0 };
+        s.ball.kick = null;
+        s.possession = 'away';
+        s.players.H8.pos = { x: 38.3, y: 25 };
+        s.players.H8.vel = { x: 0, y: 0 };
+        s.controlledId = 'H8';
+        s.controlSince = s.simTime;
+        s.controlEpoch += 1;
+      });
+      return;
+    }
     if (setup !== 'pass' && setup !== 'final-third' && setup !== 'space') return;
     // 'space': H8 in their own half with every away outfielder 45+ yd upfield, for control tests that need seconds on the ball.
     const carrierX = setup === 'pass' ? 30 : setup === 'space' ? 10 : 52;
@@ -910,12 +929,12 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.sim.command({ type: 'padMove', x: (v.x / l) * m, y: (v.y / l) * m });
   }
 
-  /** Desktop keys for the pad scheme: arrows/WASD move; Space or J pass, K shoot, L slide tackle, I block. */
+  /** Desktop keys for the pad scheme: arrows/WASD move; Space or J pass, K shoot, L slide tackle, I standing tackle. */
   private padKey(e: KeyboardEvent, down: boolean): boolean {
     const dirs: Record<string, readonly [number, number]> = {
       ArrowUp: [0, -1], KeyW: [0, -1], ArrowDown: [0, 1], KeyS: [0, 1], ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0],
     };
-    const actions: Record<string, ActionButton> = { Space: 'pass', KeyJ: 'pass', KeyK: 'shoot', KeyL: 'slide', KeyI: 'block' };
+    const actions: Record<string, ActionButton> = { Space: 'pass', KeyJ: 'pass', KeyK: 'shoot', KeyL: 'slide', KeyI: 'tackle' };
     if (e.code === 'KeyF') return true;
     const d = dirs[e.code];
     if (d) {
@@ -1404,13 +1423,17 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     if (pad.actor === id && (pad.phase === 'slideStart' || pad.phase === 'slideActive' || pad.phase === 'slideRecovery')) {
       kind = 'slide';
       heading = pad.slideDir ?? heading;
+    } else if (pad.actor === id && (pad.phase === 'tackleStart' || pad.phase === 'tackleActive')) {
+      // A standing tackle is a step-in poke on the feet: the kick pose, along the tackle.
+      kind = 'kick';
+      heading = pad.slideDir ?? heading;
     } else {
       for (let i = s.events.length - 1; i >= 0; i--) {
         const e = s.events[i]!;
         if (s.simTime - e.at > 0.5) break;
         if (e.by !== id) continue;
         if (p.isKeeper && (e.type === 'saved' || e.type === 'parried')) { kind = 'dive'; break; }
-        if (s.simTime - e.at <= 0.25 && (e.type === 'pass' || e.type === 'shot' || e.type === 'quickShot' || e.type === 'distributed' || e.type === 'slide')) {
+        if (s.simTime - e.at <= 0.25 && (e.type === 'pass' || e.type === 'shot' || e.type === 'distributed' || e.type === 'slide')) {
           kind = e.type === 'slide' ? 'slide' : 'kick';
           break;
         }
@@ -1575,10 +1598,12 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       this.lastSeq = e.seq;
       switch (e.type) {
         case 'pass':
-        case 'shot':
           break;
-        case 'quickShot':
-          this.toast('Quick shot!');
+        case 'shot':
+          if (e.detail.startsWith('quick')) this.toast('Quick shot!');
+          break;
+        case 'standing':
+          if (e.by === this.sim.state.controlledId && e.detail.startsWith('won')) this.toast('Tackle won — get on it!');
           break;
         case 'tackle':
           this.toast(e.by?.startsWith('A') ? 'Tackled — win it back!' : `${e.by} won the ball`);

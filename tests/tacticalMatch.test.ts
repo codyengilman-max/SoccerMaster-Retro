@@ -32,7 +32,7 @@ function play(seed: number, tactics: Mode, halfSeconds = 45, frame = F): { sim: 
     }
     lastK = k;
     if (k % 50 === 0) sim.command({ type: 'padMove', x: Math.cos(k * 0.37), y: Math.sin(k * 0.37) * 0.6 });
-    const action = sim.userHasBall() ? 'pass' : 'block';
+    const action = sim.userHasBall() ? 'pass' : 'tackle';
     if (k % 120 === 0) sim.command({ type: 'padPress', id: ++id, action });
     if (k % 120 === 20) sim.command({ type: 'padRelease', id: ++id, action });
     sim.step(frame);

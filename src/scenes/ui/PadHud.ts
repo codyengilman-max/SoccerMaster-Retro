@@ -47,8 +47,8 @@ export function safeInsets(): Insets {
   return insets;
 }
 
-const LABELS: Record<ActionButton, string> = { pass: 'PASS', shoot: 'SHOOT', slide: 'SLIDE\nTACKLE', block: 'BLOCK' };
-const COLORS: Record<ActionButton, number> = { pass: 0x2e6b8f, shoot: 0xd9643a, slide: 0xc9a227, block: 0x6b4fa0 };
+const LABELS: Record<ActionButton, string> = { pass: 'PASS', shoot: 'SHOOT', slide: 'SLIDE\nTACKLE', tackle: 'TACKLE' };
+const COLORS: Record<ActionButton, number> = { pass: 0x2e6b8f, shoot: 0xd9643a, slide: 0xc9a227, tackle: 0x6b4fa0 };
 
 /** Joystick + four permanent buttons. Pure input logic lives in JoystickControls; this only draws it. */
 export class PadHud {

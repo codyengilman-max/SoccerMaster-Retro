@@ -13,8 +13,10 @@
  * - Slide: a clean ball contact (poke, touch, or the slider winning the ball), no foul, then controlled possession
  *   for the slider's team within DEFENSE_RULES.recoverySeconds of the slide starting. Missed slides, fouls and pokes
  *   the opponents collect first score nothing. A slide that cuts out a pass is a slide only.
- * - Standing tackle: only a sim 'tackle' event whose detail starts with "standing" (PR D). The current engine's
- *   contact tackle ("won the ball from ...") is an ordinary collision and scores nothing.
+ * - Standing tackle: the sim's committed TACKLE ('standing' start, then "won ball from ..."), no foul, then
+ *   controlled possession for the tackler's team inside the same recovery span. Missed tackles, fouls and won balls the
+ *   opponents collect first score nothing. The engine's contact tackle ("won the ball from ...") is an ordinary
+ *   collision and scores nothing. A standing tackle that cuts out a pass is a standing tackle only.
  * - Interception: cutting out an opponent's pass (never a shot) and controlled possession for the cutter's team,
  *   directly or after a deflection within the same recovery time. The team-mate who collects the loose ball gets
  *   nothing extra.
@@ -51,7 +53,8 @@ const STOP: ReadonlySet<string> = new Set(['out', 'foul', 'offside', 'restart', 
 const TOUCH: ReadonlySet<string> = new Set(['pass', 'shot', 'received', 'intercepted', 'tackle', 'deflected', 'saved', 'parried']);
 const GAIN: ReadonlySet<string> = new Set(['received', 'intercepted', 'tackle', 'saved']);
 
-interface Slide { readonly by: MatchPlayerId; readonly team: TeamId; readonly at: number; contact: boolean; dirty: boolean }
+/** An open slide or standing tackle, waiting for its team's controlled possession. */
+interface Slide { readonly by: MatchPlayerId; readonly team: TeamId; readonly at: number; contact: boolean; dirty: boolean; readonly standing: boolean }
 interface Cut { readonly by: MatchPlayerId; readonly team: TeamId; readonly at: number }
 
 export const emptyContribution = (): PlayerContribution => ({ assists: 0, slideWon: 0, standingWon: 0, interceptions: 0, defenseUnits: 0 });
@@ -116,7 +119,7 @@ export class ContributionTracker {
     const by = e.by;
     const team = this.team(by);
     if (!by || !team) return;
-    if (type === 'slide') return this.slide(e, by, team);
+    if (type === 'slide' || type === 'standing') return this.slide(e, by, team);
     if (!TOUCH.has(type) && type !== 'dribble') return;
     // Any touch by someone other than the open chain's receiver ends that chain.
     for (const [t, o] of [...this.open]) if (o.receiver !== by) this.open.delete(t);
@@ -138,11 +141,11 @@ export class ContributionTracker {
   private slide(e: MatchEvent, by: MatchPlayerId, team: TeamId): void {
     if (e.detail === 'start') {
       this.slides = this.slides.filter((s) => s.by !== by);
-      this.slides.push({ by, team, at: e.at, contact: false, dirty: false });
+      this.slides.push({ by, team, at: e.at, contact: false, dirty: false, standing: e.type === 'standing' });
       return;
     }
     const s = this.slides.find((x) => x.by === by);
-    if (e.detail.startsWith('ball poked') || e.detail === 'ball touched') {
+    if (e.detail.startsWith('ball poked') || e.detail === 'ball touched' || (e.type === 'standing' && e.detail.startsWith('won ball'))) {
       if (s) s.contact = true;
       // The poke is the slider's touch: it ends any chain and any pass still travelling.
       for (const [t, o] of [...this.open]) if (o.receiver !== by) this.open.delete(t);
@@ -156,10 +159,11 @@ export class ContributionTracker {
     let credited = false;
     for (const s of this.slides) {
       const own = s.team === team;
-      if (own && !s.dirty && (s.contact || (s.by === by && e.type === 'tackle'))) {
+      if (own && !s.dirty && (s.contact || (!s.standing && s.by === by && e.type === 'tackle'))) {
         const c = this.of(s.by);
-        c.slideWon++;
-        c.defenseUnits += DEFENSE_UNITS.slide;
+        if (s.standing) c.standingWon++;
+        else c.slideWon++;
+        c.defenseUnits += s.standing ? DEFENSE_UNITS.standing : DEFENSE_UNITS.slide;
         credited = true;
       }
     }
@@ -177,11 +181,6 @@ export class ContributionTracker {
       const c = this.of(by);
       c.interceptions++;
       c.defenseUnits += DEFENSE_UNITS.interception;
-    }
-    if (!credited && e.type === 'tackle' && e.detail.startsWith('standing')) {
-      const c = this.of(by);
-      c.standingWon++;
-      c.defenseUnits += DEFENSE_UNITS.standing;
     }
     const p = this.pendingPass;
     if (e.type === 'received' && p && p.team === team && p.passer !== by) this.open.set(team, { passer: p.passer, receiver: by, at: e.at });

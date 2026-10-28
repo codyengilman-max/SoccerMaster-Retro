@@ -69,7 +69,7 @@ test('pad is the default: stick and four labelled buttons fit the viewport witho
   const d = await diagnostics(page);
   const viewport = page.viewportSize();
   if (!viewport) throw new Error('no viewport');
-  const names = ['pad-stick', 'pad-pass', 'pad-shoot', 'pad-slide', 'pad-block'];
+  const names = ['pad-stick', 'pad-pass', 'pad-shoot', 'pad-slide', 'pad-tackle'];
   for (const n of names) expectInside(n, d.layout?.elements[n], viewport);
   const rects = names.map((n) => d.layout!.elements[n]!);
   for (let i = 0; i < rects.length; i++)
@@ -156,7 +156,7 @@ test.describe('two-thumb touch', () => {
     await page.waitForTimeout(800);
     expect(kicksAfter(await report(page), seq)).toEqual([]);
     const d = await diagnostics(page);
-    for (const n of ['pad-stick', 'pad-pass', 'pad-shoot', 'pad-slide', 'pad-block']) expectInside(n, d.layout?.elements[n], { width: vp.height, height: vp.width });
+    for (const n of ['pad-stick', 'pad-pass', 'pad-shoot', 'pad-slide', 'pad-tackle']) expectInside(n, d.layout?.elements[n], { width: vp.height, height: vp.width });
     expect(errors).toEqual([]);
   });
 });
@@ -202,4 +202,67 @@ test('?debug&passlog logs the assisted-pass target search while PASS is held', a
   expect(kicksAfter(done, seq).length).toBe(1);
   expect(logs.length).toBeGreaterThan(0);
   expect(logs[0]).toMatch(/^\[passlog\] t=\d+\.\d\d aim=\(-?\d\.\d\d,-?\d\.\d\d\) chosen=(H\d|none)/);
+});
+
+test.describe('TACKLE and quick shot (PR D)', () => {
+  const mine = (r: MatchReport, seq: number, type: string) => r.events.filter((e) => e.seq > seq && e.type === type && String(e.by ?? '').startsWith('H'));
+
+  test('TACKLE commits one standing tackle on the feet, then recovers to ready', async ({ page }, info) => {
+    const errors = trackConsoleErrors(page);
+    await open(page, modeFor(info), '&setup=tackle');
+    const ready = await waitFor(page, (r) => r.pad.available?.tackle === true);
+    const seq = lastSeq(ready);
+    await pressElement(page, 'pad-tackle', modeFor(info));
+    const started = await waitFor(page, (r) => mine(r, seq, 'standing').some((e) => e.detail === 'start'));
+    expect(started.pad.actor).toBe('H8');
+    // It resolves exactly once: won, missed (whiff or close miss) or a foul.
+    const done = await waitFor(page, (r) => mine(r, seq, 'standing').some((e) => e.detail !== 'start') && r.pad.phase === 'ready');
+    expect(mine(done, seq, 'standing').filter((e) => e.detail !== 'start')).toHaveLength(1);
+    expect(mine(done, seq, 'standing').filter((e) => e.detail === 'start')).toHaveLength(1);
+    // A standing tackle never counts as a slide.
+    expect(mine(done, seq, 'slide')).toEqual([]);
+    expect(errors).toEqual([]);
+  });
+
+  test('a single SHOOT tap shoots the ordinary shot; a double tap shoots one quick shot', async ({ page }, info) => {
+    const errors = trackConsoleErrors(page);
+    await open(page, modeFor(info), '&setup=space');
+    let r = await waitFor(page, (x) => x.pad.available?.shoot === true);
+    let seq = lastSeq(r);
+    await pressElement(page, 'pad-shoot', modeFor(info));
+    await waitFor(page, (x) => mine(x, seq, 'shot').length > 0);
+    await page.waitForTimeout(400);
+    r = await report(page);
+    expect(mine(r, seq, 'shot').map((e) => e.detail.startsWith('quick'))).toEqual([false]);
+
+    await page.goto('about:blank');
+    await open(page, modeFor(info), '&setup=space');
+    r = await waitFor(page, (x) => x.pad.available?.shoot === true);
+    seq = lastSeq(r);
+    // Two taps back to back at the same spot. Headless frames are slow, so nothing waits between them;
+    // the sim's gap is 0.25 s and a real double tap is well inside it.
+    const at = await centre(page, 'pad-shoot');
+    const canvas = (await page.locator('canvas').boundingBox())!;
+    const x = canvas.x + at.x;
+    const y = canvas.y + at.y;
+    if (modeFor(info) === 'touch') {
+      const cdp = await page.context().newCDPSession(page);
+      for (let i = 0; i < 2; i++) {
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y, id: 7 }] });
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      }
+    } else {
+      await page.mouse.move(x, y);
+      for (let i = 0; i < 2; i++) {
+        await page.mouse.down();
+        await page.mouse.up();
+      }
+    }
+    await waitFor(page, (x) => mine(x, seq, 'shot').length > 0);
+    await page.waitForTimeout(400);
+    r = await report(page);
+    const log = `${r.inputLog.join(',')} ${JSON.stringify(r.events.filter((e) => e.seq > seq).map((e) => [e.type, e.detail, e.at.toFixed(3)]))}`;
+    expect(mine(r, seq, 'shot').map((e) => e.detail.startsWith('quick')), log).toEqual([true]);
+    expect(errors).toEqual([]);
+  });
 });

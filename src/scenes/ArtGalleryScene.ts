@@ -17,7 +17,7 @@ import { Button } from './ui/Button';
 
 /** Known Graphics v1 gaps, shown verbatim in the gallery (docs/art/graphics-v1/docs/ART_GAPS_AND_CAPABILITIES.md). */
 export const ART_GAPS: readonly string[] = [
-  'No BLOCK pose: the BLOCK button still works; the player shows the idle/run frame while blocking.',
+  'No TACKLE pose: a standing tackle uses the kick frame; a held jockey shows the idle/run frame.',
   'No named gameplay sheets for Alex, Sam, Blake or Riley: match players use roster-slot reference hair only.',
   'No squad numbers or club kits in the match engine: numbers are formation slot + 1, kits are home/away/keeper reference colours (match sides, not clubs).',
   'No corridor, moving-box arrival or night bedroom art: the bedroom map is used for all home scenes (time/props awaiting review).',

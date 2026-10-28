@@ -364,3 +364,9 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - **Story:** Team Training is optional; the story step always offers a way on, including the week 5+ step that used to have no skip.
 - **Not built yet:** movement demonstrations wait for authored continuations and owner review.
 
+
+## D61. Standing tackle replaces BLOCK; double-tap SHOOT quick shot (PR D, 2026-10-28)
+- **TACKLE (owner rule, H5):** the fourth pad button and key I are a committed standing tackle, not a held stance. Start / active / recovery / cooldown in `pad.standing`; one seeded resolution per attempt from reach, timing (ball tight vs pushed out), positioning (ball side vs through the back) and agility + control; win chance clamped 5-85%; a win pokes the ball loose; a missed close challenge can be a foul. The passive BLOCK wall that deflected shots is removed.
+- **Jockey kept on a held TACKLE:** Devin's proposed option A, owner choice still open. Holding after recovery jockeys; releasing returns to ready.
+- **Quick shot by tap-wait:** Devin's proposed option A, owner choice still open. A SHOOT tap waits 0.25 s of sim time for a second press; without one the same tap shot goes ahead (0.25 s later than before); with one a fixed 55% charge shot leaves the foot after 0.03 s through the same aim, error and resolution path. The shoot button stays live through the quick shot's preparation so the pad never cancels the still-held second tap.
+- **Ball Winner:** standing tackles count only from explicit `standing` events (1 unit), never inferred from contact tackles, with the same 2 s controlled-possession rule.

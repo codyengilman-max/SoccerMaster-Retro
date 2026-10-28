@@ -67,14 +67,18 @@ export interface PlayerAttrs {
   readonly finishing: number;
 }
 
-export type PadAction = 'pass' | 'shoot' | 'slide' | 'block';
+export type PadAction = 'pass' | 'shoot' | 'slide' | 'tackle';
 export type PadPhase =
   | 'ready'
   | 'chargingPass'
   | 'chargingShoot'
   | 'kickPrep'
   | 'kickRecovery'
-  | 'blocking'
+  | 'shotTapWait'
+  | 'tackleStart'
+  | 'tackleActive'
+  | 'tackleRecovery'
+  | 'jockey'
   | 'slideStart'
   | 'slideActive'
   | 'slideRecovery';
@@ -97,6 +101,8 @@ export interface PadLock {
   /** Raw requested aim before assistance. */
   readonly aim: Vec2;
   readonly fallback: boolean;
+  /** Double-tap SHOOT: same aim and execution error as any shot, fixed charge, shorter preparation. */
+  readonly quick: boolean;
 }
 
 export interface PadState {
@@ -107,7 +113,7 @@ export interface PadState {
   phase: PadPhase;
   /** Mid-reversal brake at running pace (FIFA-style momentum); cleared when slow enough or the turn eases. */
   braking: boolean;
-  /** BLOCK held near an opponent carrier: auto-tracking goal-side of them. */
+  /** TACKLE still held after a standing tackle, near an opponent carrier: auto-tracking goal-side of them. */
   jockeying: boolean;
   actor: MatchPlayerId | null;
   since: number;
@@ -123,6 +129,8 @@ export interface PadState {
   slideDir: MutableVec2 | null;
   ballTouchedAt: number | null;
   bodyResolved: boolean;
+  /** The TACKLE button is still down (a held tackle becomes a jockey once it recovers). */
+  held: boolean;
   lastCmdId: number;
   readyAt: number;
 }
@@ -236,7 +244,7 @@ export type MatchEventType =
   | 'padRelease'
   | 'padCancel'
   | 'slide'
-  | 'block'
+  | 'standing'
   | 'deflect'
   | 'foul'
   | 'offside'
@@ -256,7 +264,6 @@ export type MatchEventType =
   | 'out'
   | 'restart'
   | 'dribble'
-  | 'quickShot'
   | 'rejected'
   | 'swipeRejected'
   | 'paused'

@@ -222,7 +222,7 @@ describe('pad pass and shoot', () => {
   });
 });
 
-describe('pad slide and block', () => {
+describe('pad slide and standing tackle', () => {
   it('A13: slide spam cannot restart, extend or stack a slide, and is no faster than running', () => {
     const sim = padSim();
     give(sim, 'A6', { x: 50, y: 45 });
@@ -296,70 +296,56 @@ describe('pad slide and block', () => {
     expect(after.some((e) => e.type === 'restart' || e.type === 'live')).toBe(true);
   });
 
-  it('A15: block slows movement and releases cleanly', () => {
+  it('A15: TACKLE held on after the tackle becomes a slowed jockey stance, and lifting it returns to ready', () => {
     const sim = padSim();
     give(sim, 'A6', { x: 40, y: 25 });
     for (const id of TEAM_PLAYER_IDS.home) if (id !== 'H1') place(sim, id, { x: 3, y: 3 + Number(id.slice(1)) * 4 });
     place(sim, 'H7', { x: 20, y: 25 });
     sim.arrange((s) => ((s.controlledId = 'H7'), (s.controlSince = s.simTime)));
     stick(sim, 1, 0);
-    expect(press(sim, 'block')).toBe(true);
+    expect(press(sim, 'tackle')).toBe(true);
     run(sim, 1.5);
-    expect(speed(sim, 'H7')).toBeCloseTo(T.movement.chaseSpeed * T.pad.blockSpeedFactor, 1);
-    expect(release(sim, 'block')).toBe(true);
+    expect(sim.state.pad.phase).toBe('jockey');
+    expect(speed(sim, 'H7')).toBeCloseTo(T.movement.chaseSpeed * T.pad.jockeySpeedFactor, 1);
+    expect(release(sim, 'tackle')).toBe(true);
     expect(sim.state.pad.phase).toBe('ready');
     run(sim, 0.6);
     expect(sim.state.controlledId).toBe('H7');
     expect(speed(sim, 'H7')).toBeCloseTo(T.movement.chaseSpeed, 1);
   });
 
-  function shotAt(blockerAt: { x: number; y: number }, from: { x: number; y: number }, v: number) {
+  it('A16: TACKLE is not a passive wall: a hard shot at a held tackler is never reflected by a stance', () => {
     const sim = padSim();
     give(sim, 'A6', { x: 55, y: 45 });
     for (const id of [...TEAM_PLAYER_IDS.home, ...TEAM_PLAYER_IDS.away]) if (id !== 'A6') place(sim, id, { x: 70, y: id.startsWith('H') ? 3 : 47 });
-    place(sim, 'H7', blockerAt);
+    place(sim, 'H7', { x: 30, y: 25 });
     sim.arrange((s) => {
       s.controlledId = 'H7';
       s.controlSince = s.simTime;
       s.ball.owner = null;
-      s.ball.pos = { ...from };
+      s.ball.pos = { x: 36, y: 25 };
       s.ball.vel = { x: 0, y: 0 };
       s.pad.facing = { x: 1, y: 0 };
     });
-    press(sim, 'block');
+    expect(press(sim, 'tackle')).toBe(true);
     const seq = lastSeq(sim);
     sim.arrange((s) => {
-      s.ball.vel = { x: -v, y: 0 };
+      s.ball.vel = { x: -22, y: 0 };
       s.ball.kick = { by: 'A6', team: 'away', kind: 'shot', at: s.simTime, target: null, receiver: null };
     });
-    return { sim, seq };
-  }
-
-  it('A16: blocking a powerful shot deflects it and does not hand the blocker possession', () => {
-    const { sim, seq } = shotAt({ x: 30, y: 25 }, { x: 36, y: 25 }, 22);
-    let owned = false;
-    run(sim, 0.5, (s) => ((owned ||= s.state.ball.owner === 'H7'), false));
-    expect(since(sim, seq).some((e) => e.type === 'deflect')).toBe(true);
-    expect(owned).toBe(false);
+    run(sim, 0.5);
+    expect(since(sim, seq).some((e) => e.type === 'deflect' && e.by === 'H7')).toBe(false);
   });
 
-  it('A17: a fast shot blocked in front of goal resolves the block before any goal', () => {
-    const { sim, seq } = shotAt({ x: 1.6, y: T.pitch.goalCenterY }, { x: 9, y: T.pitch.goalCenterY }, 26);
-    run(sim, 0.4);
-    const ev = since(sim, seq);
-    expect(ev.some((e) => e.type === 'deflect')).toBe(true);
-    expect(ev.some((e) => e.type === 'goal')).toBe(false);
-  });
-
-  it('pass and shoot are unavailable off the ball; slide and block are unavailable with it', () => {
+  it('pass and shoot are unavailable off the ball; slide and tackle are unavailable with it', () => {
     const sim = padSim();
     give(sim, 'H7', { x: 25, y: 25 });
-    expect(sim.padAvailability()).toEqual({ pass: true, shoot: true, slide: false, block: false });
+    expect(sim.padAvailability()).toEqual({ pass: true, shoot: true, slide: false, tackle: false });
     expect(press(sim, 'slide')).toBe(false);
     give(sim, 'H8', { x: 25, y: 25 }, 'H7');
-    expect(sim.padAvailability()).toEqual({ pass: false, shoot: false, slide: false, block: false });
+    expect(sim.padAvailability()).toEqual({ pass: false, shoot: false, slide: false, tackle: false });
     give(sim, 'A6', { x: 25, y: 25 });
-    expect(sim.padAvailability()).toEqual({ pass: false, shoot: false, slide: true, block: true });
+    expect(sim.padAvailability()).toEqual({ pass: false, shoot: false, slide: true, tackle: true });
     expect(press(sim, 'pass')).toBe(false);
   });
 
@@ -468,15 +454,34 @@ describe('pad review fixes', () => {
   });
 });
 
-describe('BLOCK-hold jockeying (FIFA-style)', () => {
+describe('TACKLE-hold jockeying (FIFA-style)', () => {
   // A6 carries laterally (+y) at a fixed pace; H4 is the user's defender, goal-side (home defends x = 0).
   function jockey(hold: boolean, stickX = 0, stickY = 0, laneSpeed = 3) {
     const sim = padSim();
     for (const id of TEAM_PLAYER_IDS.home) if (id !== 'H1') place(sim, id, { x: 3, y: 3 + Number(id.slice(1)) * 4 });
     give(sim, 'A6', { x: 30, y: 18 }, 'H4');
     place(sim, 'H4', { x: 27, y: 18 });
+    if (hold) {
+      // The press is a committed tackle first (aimed away so it touches nothing); holding on then jockeys.
+      stick(sim, -1, 0);
+      expect(press(sim, 'tackle')).toBe(true);
+      const ST = T.pad.standing;
+      run(sim, ST.startSeconds + ST.activeSeconds + ST.recoverySeconds + 2 * F, (s) => {
+        s.arrange((st) => {
+          st.players.A6.pos = { x: 30, y: 18 };
+          st.players.A6.vel = { x: 0, y: 0 };
+          st.ball.pos = { x: 29.4, y: 18 };
+          st.ball.owner = 'A6';
+          st.protectUntil = st.simTime + 5;
+          st.nextDecisionAt = st.simTime + 5;
+        });
+        return false;
+      });
+      expect(sim.state.pad.phase).toBe('jockey');
+      // Same starting spot as without the modifier, so only the jockey behaviour is measured.
+      sim.arrange((s) => ((s.players.H4.pos = { x: 27, y: 18 }), (s.players.H4.vel = { x: 0, y: 0 })));
+    }
     stick(sim, stickX, stickY);
-    if (hold) expect(press(sim, 'block')).toBe(true);
     let maxSpeed = 0;
     let minGap = Infinity;
     for (let i = 0; i < 90; i++) {
@@ -530,7 +535,7 @@ describe('BLOCK-hold jockeying (FIFA-style)', () => {
     expect(d.y).toBeGreaterThan(c.y);
   });
 
-  it('entering jockey at a full sprint drops to the carrier speed at once and keeps the gap', () => {
+  it('a tackle made at a full sprint, held on, drops to the carrier speed and keeps the gap', () => {
     const sim = padSim();
     for (const id of TEAM_PLAYER_IDS.home) if (id !== 'H1') place(sim, id, { x: 3, y: 3 + Number(id.slice(1)) * 4 });
     give(sim, 'A6', { x: 30, y: 18 }, 'H4');
@@ -549,7 +554,7 @@ describe('BLOCK-hold jockeying (FIFA-style)', () => {
       });
       if (i === 0) {
         stick(sim, 1, 0);
-        expect(press(sim, 'block')).toBe(true);
+        expect(press(sim, 'tackle')).toBe(true);
       }
       sim.step(F);
       if (sim.state.pad.jockeying) maxSpeed = Math.max(maxSpeed, speed(sim, 'H4'));
@@ -561,9 +566,9 @@ describe('BLOCK-hold jockeying (FIFA-style)', () => {
     expect(minGap).toBeGreaterThan(T.pad.jockey.gap * 0.7);
   });
 
-  it('turns off when the carrier is out of range or BLOCK is released', () => {
+  it('turns off when the carrier is out of range or TACKLE is released', () => {
     const r = jockey(true);
-    expect(release(r.sim, 'block')).toBe(true);
+    expect(release(r.sim, 'tackle')).toBe(true);
     r.sim.step(F);
     expect(r.sim.state.pad.jockeying).toBe(false);
   });

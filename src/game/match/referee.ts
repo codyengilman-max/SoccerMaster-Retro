@@ -299,6 +299,11 @@ export class Referee {
     const rl = Math.hypot(rx, ry) || 1;
     const behind = (hx * rx + hy * ry) / rl > T.behindCos;
     if (!behind && ballFirst) return null;
+    return this.callFoul(slider, victim);
+  }
+
+  /** A foul already decided by the sim (e.g. a lost standing tackle): free kick, or a penalty in the offender's own area. */
+  callFoul(slider: MatchPlayer, victim: MatchPlayer): RefereeCall {
     const c = this.call;
     c.offender = slider.id;
     c.victim = victim.id;

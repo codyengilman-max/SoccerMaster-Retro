@@ -281,9 +281,10 @@ export const MATCH_TUNING = {
     leadSeconds: 0.45,
     shotErrorMax: 0.12,
     pressureRadius: 3.5,
-    blockSpeedFactor: 0.55,
-    blockTurnRate: 5,
-    /** BLOCK held near an opponent carrier: FIFA-style jockey (goal-side, lateral mirror, speed matched to the carrier). */
+    /** TACKLE held on after a standing tackle: slowed, facing the ball, jockeying near a carrier. */
+    jockeySpeedFactor: 0.55,
+    jockeyTurnRate: 5,
+    /** TACKLE held near an opponent carrier: FIFA-style jockey (goal-side, lateral mirror, speed matched to the carrier). */
     jockey: {
       radius: 7,
       /** Yards kept between defender and carrier, on the carrier-to-own-goal line. */
@@ -296,14 +297,55 @@ export const MATCH_TUNING = {
       /** Speed floor so a stationary carrier can still be closed down slowly. */
       minSpeed: 1.5,
     },
-    blockHalfWidth: 1.1,
-    blockDepth: 0.6,
-    blockRestitution: 0.45,
-    /** Ball radius allowance when sweeping the ball path against the stance line. */
-    blockBallRadius: 0.3,
-    /** Incoming ball faster than this rebounds off the block and cannot be taken by the blocker straight away. */
-    blockHardSpeed: 12,
-    blockIgnoreSeconds: 0.35,
+    /**
+     * TACKLE: a committed on-feet attempt (owner decision H6). One resolution per attempt from reach, the angle of
+     * approach, how loose the carrier's ball is, and attributes; then recovery and cooldown. Never hands possession.
+     */
+    standing: {
+      startSeconds: 0.1,
+      activeSeconds: 0.2,
+      recoverySeconds: 0.45,
+      cooldownSeconds: 0.35,
+      /** Step into the challenge (yd/s, capped at running speed); slowed to this fraction while recovering. */
+      lungeSpeed: 4.5,
+      recoverySpeedFactor: 0.35,
+      /** Ball within this of the tackler's lead foot (that far ahead of the body) is contested. */
+      footAhead: 0.35,
+      reach: 1.15,
+      /** Win chance: base + reach + approach angle + loose ball + attribute edge, clamped. */
+      baseWin: 0.35,
+      reachWeight: 0.25,
+      frontWeight: 0.15,
+      /** Ball this far (yd) beyond the carrier's touch distance scores fully for timing. */
+      /** The carrier's normal ball distance; anything beyond it is a loose touch to time the tackle on. */
+      touchYards: 0.6,
+      looseYards: 0.8,
+      looseWeight: 0.3,
+      attrWeight: 0.6,
+      minWin: 0.05,
+      maxWin: 0.85,
+      /** Coming through the carrier from behind: worse odds, much likelier foul. */
+      behindCos: 0.5,
+      behindPenalty: 0.3,
+      /** A lost challenge with the carrier this close can be a foul. */
+      bodyReach: 0.9,
+      foulBase: 0.1,
+      foulBehind: 0.45,
+      /** Extra foul chance per yd/s of the tackler's speed above `foulSafeSpeed`. */
+      foulPerSpeed: 0.05,
+      foulSafeSpeed: 3,
+      /** A won ball pops loose this fast, along the tackle and some of the carrier's run. */
+      pokeSpeed: 2.6,
+      carriedShare: 0.25,
+      tacklerIgnoreSeconds: 0.12,
+    },
+    /** Double-tap SHOOT: a tap waits `gapSeconds` for a second press; the second press shoots after `prepSeconds`. */
+    quickShot: {
+      tapSeconds: 0.18,
+      gapSeconds: 0.25,
+      prepSeconds: 0.03,
+      charge: 0.55,
+    },
     agilityTurnPenalty: 0.5,
     /** FIFA-style stick magnitude bands: light push = close control (tight turns), full push = running (momentum). */
     locomotion: {

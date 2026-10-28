@@ -484,7 +484,7 @@ describe('input and determinism (brief v1.1)', () => {
       let n = 0;
       for (let i = 0; i < 60 * 40; i++) {
         if (i % 45 === 0) sim.command({ type: 'padMove', x: Math.cos(i), y: Math.sin(i) });
-        const action = sim.userHasBall() ? (i % 360 < 180 ? 'pass' : 'shoot') : 'block';
+        const action = sim.userHasBall() ? (i % 360 < 180 ? 'pass' : 'shoot') : 'tackle';
         if (i % 90 === 0) sim.command({ type: 'padPress', id: ++n, action });
         if (i % 90 === 25) sim.command({ type: 'padRelease', id: ++n, action });
         sim.step(F);

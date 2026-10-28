@@ -13,8 +13,8 @@ import {
 
 const NO_INSETS = { top: 0, right: 0, bottom: 0, left: 0 };
 const L = padLayout(844, 390, NO_INSETS, DEFAULT_PREFS);
-const ALL: Availability = { pass: true, shoot: true, slide: true, block: true };
-const ATTACK: Availability = { pass: true, shoot: true, slide: false, block: false };
+const ALL: Availability = { pass: true, shoot: true, slide: true, tackle: true };
+const ATTACK: Availability = { pass: true, shoot: true, slide: false, tackle: false };
 const kinds = (e: PadEvent[]) => e.map((x) => (x.type === 'move' ? 'move' : `${x.type}:${x.action}`));
 const at = (b: keyof typeof L.buttons) => L.buttons[b];
 
@@ -126,7 +126,7 @@ describe('layout (A20)', () => {
               const b = circles[j]!;
               expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThan(a.r + b.r);
             }
-          expect(l.buttons.block.x).toBeLessThan(l.buttons.shoot.x);
+          expect(l.buttons.tackle.x).toBeLessThan(l.buttons.shoot.x);
           expect(l.buttons.slide.x).toBeLessThan(l.buttons.pass.x);
           expect(l.buttons.shoot.y).toBeLessThan(l.buttons.pass.y);
         });
@@ -143,16 +143,16 @@ describe('preferences (A22)', () => {
 });
 
 describe('hold modifier (Jungle Ball TURBO)', () => {
-  const ALL: Availability = { pass: true, shoot: true, slide: true, block: true };
-  const at = (b: 'pass' | 'block' | 'slide' | 'shoot'): [number, number] => [L.buttons[b].x, L.buttons[b].y];
+  const ALL: Availability = { pass: true, shoot: true, slide: true, tackle: true };
+  const at = (b: 'pass' | 'tackle' | 'slide' | 'shoot'): [number, number] => [L.buttons[b].x, L.buttons[b].y];
   it('a held modifier does not block a second action finger, and each lifts independently', () => {
     const c = new JoystickControls(L);
     c.setModifier('pass');
     c.setAvailable(ALL);
     expect(c.pointerDown(1, ...at('pass'))).toEqual([{ type: 'press', action: 'pass' }]);
-    expect(c.pointerDown(2, ...at('block'))).toEqual([{ type: 'press', action: 'block' }]);
+    expect(c.pointerDown(2, ...at('tackle'))).toEqual([{ type: 'press', action: 'tackle' }]);
     expect(c.modifierHeld).toBe(true);
-    expect(c.pointerUp(2)).toEqual([{ type: 'release', action: 'block' }]);
+    expect(c.pointerUp(2)).toEqual([{ type: 'release', action: 'tackle' }]);
     expect(c.pointerDown(3, ...at('slide'))).toEqual([{ type: 'press', action: 'slide' }]);
     expect(c.pointerUp(1)).toEqual([{ type: 'release', action: 'pass' }]);
     expect(c.pressed).toBe('slide');
@@ -175,6 +175,6 @@ describe('hold modifier (Jungle Ball TURBO)', () => {
     const c = new JoystickControls(L);
     c.setAvailable(ALL);
     c.pointerDown(1, ...at('pass'));
-    expect(c.pointerDown(2, ...at('block'))).toEqual([]);
+    expect(c.pointerDown(2, ...at('tackle'))).toEqual([]);
   });
 });

@@ -147,9 +147,9 @@ export class SituationObserver {
   step(s: MatchState): boolean {
     if (this.done) return true;
     const attack = this.situation.kind === 'attack';
-    // Defending credit needs the user's own input (stick, BLOCK or a slide), not the engine's assists.
+    // Defending credit needs the user's own input (stick, TACKLE or a slide), not the engine's assists.
     const pad = s.pad;
-    if (Math.hypot(pad.stick.x, pad.stick.y) > 0.2 || pad.jockeying || pad.phase === 'blocking' || pad.phase === 'slideStart' || pad.phase === 'slideActive') this.activeAt = s.simTime;
+    if (Math.hypot(pad.stick.x, pad.stick.y) > 0.2 || pad.jockeying || pad.phase === 'tackleStart' || pad.phase === 'tackleActive' || pad.phase === 'jockey' || pad.phase === 'slideStart' || pad.phase === 'slideActive') this.activeAt = s.simTime;
     const active = s.simTime - this.activeAt <= ACTIVE_SECONDS;
     // Progress only counts while the home team still has the ball.
     if (!this.turnover && s.possession === 'home') this.maxBallX = Math.max(this.maxBallX, s.ball.pos.x);
@@ -157,7 +157,7 @@ export class SituationObserver {
       if (e.seq <= this.lastSeq) continue;
       this.lastSeq = e.seq;
       const by = e.by ? s.players[e.by] : undefined;
-      if ((e.type === 'shot' || e.type === 'quickShot') && by) {
+      if (e.type === 'shot' && by) {
         if (by.team === 'home') {
           this.shots += 1;
           this.pendingPass = null;

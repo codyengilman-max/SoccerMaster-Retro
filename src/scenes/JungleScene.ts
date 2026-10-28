@@ -166,7 +166,7 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     this.continueButton.setVisible(false);
     this.backButton.setDepth(5003);
     this.continueButton.setDepth(5003);
-    this.pad = new PadHud(this, this.scale.width, this.scale.height, { labels: { pass: 'TURBO', slide: 'SLIDE', block: 'HIT' } });
+    this.pad = new PadHud(this, this.scale.width, this.scale.height, { labels: { pass: 'TURBO', slide: 'SLIDE', tackle: 'HIT' } });
     // TURBO is held with another finger on SHOOT / SLIDE / HIT, so it gets its own touch slot.
     this.pad.controls.setModifier('pass');
 
@@ -190,10 +190,10 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
       const s = this.sim;
       const me = s.competitors.player;
       const charge = shotCharge(s, 'player');
-      this.handlePad(this.pad.controls.setAvailable({ pass: true, shoot: s.ball.owner === 'player' || charge !== null, slide: canMove(s, me, 'slide'), block: canMove(s, me, 'hit') }));
+      this.handlePad(this.pad.controls.setAvailable({ pass: true, shoot: s.ball.owner === 'player' || charge !== null, slide: canMove(s, me, 'slide'), tackle: canMove(s, me, 'hit') }));
       // Rings: HIT / SLIDE cooldown left, SHOOT charge, TURBO meter (gold while ON FIRE).
       this.pad.setMeters({
-        block: { fill: cooldownLeft(s, 'player', 'hit') / JUNGLE.hitCooldown, color: 0xb39ddb },
+        tackle: { fill: cooldownLeft(s, 'player', 'hit') / JUNGLE.hitCooldown, color: 0xb39ddb },
         slide: { fill: cooldownLeft(s, 'player', 'slide') / JUNGLE.slideCooldown, color: 0xffe082 },
         shoot: { fill: charge ?? 0, color: charge === 1 ? 0xff5252 : 0xffd23f },
         pass: { fill: me.turbo, color: s.fire === 'player' ? 0xff7a1a : 0x4fc3f7 },
@@ -253,9 +253,9 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
         shoot: { x: L.buttons.shoot.x - L.buttons.shoot.r, y: L.buttons.shoot.y - L.buttons.shoot.r, width: L.buttons.shoot.r * 2, height: L.buttons.shoot.r * 2 },
         slide: { x: L.buttons.slide.x - L.buttons.slide.r, y: L.buttons.slide.y - L.buttons.slide.r, width: L.buttons.slide.r * 2, height: L.buttons.slide.r * 2 },
         turbo: { x: L.buttons.pass.x - L.buttons.pass.r, y: L.buttons.pass.y - L.buttons.pass.r, width: L.buttons.pass.r * 2, height: L.buttons.pass.r * 2 },
-        hit: { x: L.buttons.block.x - L.buttons.block.r, y: L.buttons.block.y - L.buttons.block.r, width: L.buttons.block.r * 2, height: L.buttons.block.r * 2 },
+        hit: { x: L.buttons.tackle.x - L.buttons.tackle.r, y: L.buttons.tackle.y - L.buttons.tackle.r, width: L.buttons.tackle.r * 2, height: L.buttons.tackle.r * 2 },
         // v2 name of the HIT button, kept for existing browser tests.
-        push: { x: L.buttons.block.x - L.buttons.block.r, y: L.buttons.block.y - L.buttons.block.r, width: L.buttons.block.r * 2, height: L.buttons.block.r * 2 },
+        push: { x: L.buttons.tackle.x - L.buttons.tackle.r, y: L.buttons.tackle.y - L.buttons.tackle.r, width: L.buttons.tackle.r * 2, height: L.buttons.tackle.r * 2 },
         ...(this.paused ? { 'resume-button': this.resumeButton.getButtonBounds(), 'leave-confirm-button': this.leaveConfirmButton.getButtonBounds() } : {}),
         title: bounds(this.title),
         ...(this.continueButton.visible ? { 'continue-button': this.continueButton.getButtonBounds() } : {}),
@@ -320,7 +320,7 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     const side = portrait ? 8 : Math.max(150, width * 0.2);
     // The net hangs behind the right goal line: keep it on screen and, in landscape, left of the action buttons.
     const b = this.pad.controls.currentLayout.buttons;
-    const limit = portrait ? width - 8 : Math.min(b.block.x - b.block.r, b.slide.x - b.slide.r) - 8;
+    const limit = portrait ? width - 8 : Math.min(b.tackle.x - b.tackle.r, b.slide.x - b.slide.r) - 8;
     const w = Math.max(160, Math.min(width - side * 2, (limit - width / 2) / (0.5 + JUNGLE.netDepth / JUNGLE.length)));
     const h = Math.max(120, height - top - bottom);
     this.pen = { x: (width - w) / 2, y: top, width: w, height: h };
@@ -539,7 +539,7 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     for (const e of events) {
       if (e.type === 'move') command(this.sim, { type: 'move', x: e.x, y: e.y });
       else if (e.type === 'press' && e.action === 'slide') command(this.sim, { type: 'slide' });
-      else if (e.type === 'press' && e.action === 'block') command(this.sim, { type: 'hit' });
+      else if (e.type === 'press' && e.action === 'tackle') command(this.sim, { type: 'hit' });
       else if (e.action === 'pass') command(this.sim, { type: 'turbo', on: e.type === 'press' });
       else if (e.action !== 'shoot') continue;
       else command(this.sim, { type: 'shoot', phase: e.type === 'press' ? 'press' : e.type === 'release' ? 'release' : 'cancel' });

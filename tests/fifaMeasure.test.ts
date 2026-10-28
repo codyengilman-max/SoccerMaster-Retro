@@ -207,7 +207,7 @@ describe('FIFA allocation-free core', () => {
     let id = 0;
     const drive = (i: number) => {
       if (i % 50 === 0) sim.command({ type: 'padMove', x: Math.cos(i), y: Math.sin(i) });
-      const action = sim.userHasBall() ? 'pass' : 'block';
+      const action = sim.userHasBall() ? 'pass' : 'tackle';
       if (i % 120 === 0) sim.command({ type: 'padPress', id: ++id, action });
       if (i % 120 === 20) sim.command({ type: 'padRelease', id: ++id, action });
     };

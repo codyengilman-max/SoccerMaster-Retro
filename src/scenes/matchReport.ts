@@ -76,8 +76,8 @@ export interface MatchReport {
     readonly actor: string | null;
     readonly receiver: string | null;
     readonly stick: { readonly x: number; readonly y: number };
-    readonly available: Readonly<Record<'pass' | 'shoot' | 'slide' | 'block', boolean>> | null;
-    readonly pressed: 'pass' | 'shoot' | 'slide' | 'block' | null;
+    readonly available: Readonly<Record<'pass' | 'shoot' | 'slide' | 'tackle', boolean>> | null;
+    readonly pressed: 'pass' | 'shoot' | 'slide' | 'tackle' | null;
   };
   readonly inputLog: readonly string[];
   readonly pass: { readonly minDistance: number; readonly maxDistance: number };

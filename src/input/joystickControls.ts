@@ -2,8 +2,8 @@
  * Joystick + four fixed action buttons (controls brief §3–5). Pure: no Phaser or DOM.
  * One pointer owns the stick, one pointer owns an action; a finger stays with the control it began on.
  */
-export type ActionButton = 'pass' | 'shoot' | 'slide' | 'block';
-export const ACTION_BUTTONS: readonly ActionButton[] = ['block', 'shoot', 'slide', 'pass'];
+export type ActionButton = 'pass' | 'shoot' | 'slide' | 'tackle';
+export const ACTION_BUTTONS: readonly ActionButton[] = ['tackle', 'shoot', 'slide', 'pass'];
 
 export interface ControlPrefs {
   /** Scale for stick and buttons. */
@@ -56,7 +56,7 @@ export interface PadLayout {
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
-/** Lower-left stick; lower-right 2x2 cluster: BLOCK SHOOT / SLIDE PASS. Clear of safe-area insets and edges. */
+/** Lower-left stick; lower-right 2x2 cluster: TACKLE SHOOT / SLIDE PASS. Clear of safe-area insets and edges. */
 export function padLayout(width: number, height: number, insets: Insets, prefs: ControlPrefs): PadLayout {
   // On narrow screens a large size preference shrinks until the stick and the cluster cannot touch.
   let l = layoutAt(width, height, insets, prefs.size);
@@ -67,7 +67,7 @@ export function padLayout(width: number, height: number, insets: Insets, prefs: 
 function separated(l: PadLayout): boolean {
   const s = l.stick;
   const b = l.buttons.slide;
-  const t = l.buttons.block;
+  const t = l.buttons.tackle;
   return s.x + s.r < b.x - b.r && s.x + s.r < t.x - t.r && s.x - s.r >= 0 && t.y - t.r >= 0;
 }
 
@@ -92,7 +92,7 @@ function layoutAt(width: number, height: number, insets: Insets, size: number): 
       pass: { x: px, y: py, r },
       slide: { x: sx, y: py, r },
       shoot: { x: px, y: ty, r },
-      block: { x: sx, y: ty, r },
+      tackle: { x: sx, y: ty, r },
     },
   };
 }
@@ -104,7 +104,7 @@ export type PadEvent =
   | { readonly type: 'cancel'; readonly action: ActionButton; readonly reason: string };
 
 export type Availability = Readonly<Record<ActionButton, boolean>>;
-export const NONE_AVAILABLE: Availability = { pass: false, shoot: false, slide: false, block: false };
+export const NONE_AVAILABLE: Availability = { pass: false, shoot: false, slide: false, tackle: false };
 
 /** Dead-zoned, magnitude-clamped stick vector: diagonals are never longer than straight lines. */
 export function stickVector(dx: number, dy: number, radius: number, deadZone: number): { x: number; y: number } {

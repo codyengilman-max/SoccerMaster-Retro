@@ -472,14 +472,14 @@ export class MatchSim {
     return {
       stick: vec(0, 0), facing: vec(1, 0), phase: 'ready', braking: false,
       jockeying: false, actor: null, since: 0, epoch: -1, ownedSince: -1, chargeStart: 0,
-      receiver: null, locked: null, aim: vec(1, 0), aimSet: false, slideDir: null, ballTouchedAt: null, bodyResolved: false, lastCmdId: 0, readyAt: 0,
+      receiver: null, locked: null, aim: vec(1, 0), aimSet: false, slideDir: null, ballTouchedAt: null, bodyResolved: false, held: false, lastCmdId: 0, readyAt: 0,
     };
   }
 
   /** Which of the four buttons the authoritative state allows right now (brief §10). */
   padAvailability(): Record<PadAction, boolean> {
     const s = this.s;
-    const none = { pass: false, shoot: false, slide: false, block: false };
+    const none = { pass: false, shoot: false, slide: false, tackle: false };
     if (s.paused || s.phase !== 'live') return none;
     const me = s.players[s.controlledId];
     if (!me || me.team !== 'home' || me.isKeeper) return none;
@@ -487,11 +487,13 @@ export class MatchSim {
     const cool = s.simTime >= s.pad.readyAt;
     const owner = s.ball.owner ? s.players[s.ball.owner] : null;
     if (owner?.id === me.id) {
-      return { pass: cool && (ph === 'ready' || ph === 'chargingPass'), shoot: cool && (ph === 'ready' || ph === 'chargingShoot'), slide: false, block: false };
+      return { pass: cool && (ph === 'ready' || ph === 'chargingPass'), shoot: cool && (ph === 'ready' || ph === 'chargingShoot' || ph === 'shotTapWait' || (ph === 'kickPrep' && !!s.pad.locked?.quick)), slide: false, tackle: false };
     }
     if (owner && owner.team === 'home') return none;
     const free = cool && ph === 'ready';
-    return { pass: false, shoot: false, slide: free, block: free || ph === 'blocking' };
+    // A committed tackle keeps the button live so holding on can turn into a jockey.
+    const tackling = ph === 'tackleStart' || ph === 'tackleActive' || ph === 'tackleRecovery' || ph === 'jockey';
+    return { pass: false, shoot: false, slide: free, tackle: free || tackling };
   }
 
   /** Neutral-aim target for shots: the goal this team attacks (ends never switch in this engine). */
@@ -518,7 +520,8 @@ export class MatchSim {
     if (!this.padCmdId(id, 'padPress')) return false;
     const s = this.s;
     const pad = s.pad;
-    if (!(['pass', 'shoot', 'slide', 'block'] as const).includes(action)) return this.reject('padPress', 'unknown action');
+    if (!(['pass', 'shoot', 'slide', 'tackle'] as const).includes(action)) return this.reject('padPress', 'unknown action');
+    if (action === 'shoot' && pad.phase === 'shotTapWait') return this.quickShot();
     if (pad.phase !== 'ready' || !this.padAvailability()[action]) return this.reject('padPress', `${action} unavailable`);
     const me = s.players[s.controlledId];
     pad.actor = me.id;
@@ -533,9 +536,13 @@ export class MatchSim {
       pad.phase = action === 'pass' ? 'chargingPass' : 'chargingShoot';
       pad.chargeStart = s.simTime;
       if (action === 'pass') pad.receiver = this.pickReceiver(me, null);
-    } else if (action === 'block') {
-      pad.phase = 'blocking';
-      this.emit('block', me.id, 'start');
+    } else if (action === 'tackle') {
+      pad.phase = 'tackleStart';
+      pad.held = true;
+      const toBall = sub(s.ball.pos, me.pos);
+      pad.slideDir = length(pad.stick) > 0.2 ? normalize(pad.stick) : length(toBall) > 0.05 && length(toBall) < 4 ? normalize(toBall) : copy(pad.facing);
+      pad.bodyResolved = false;
+      this.emit('standing', me.id, 'start');
     } else {
       pad.phase = 'slideStart';
       pad.slideDir = length(pad.stick) > 0.2 ? normalize(pad.stick) : copy(pad.facing);
@@ -552,13 +559,15 @@ export class MatchSim {
     const s = this.s;
     const pad = s.pad;
     const T = this.tuning.pad;
-    if (action === 'block') {
-      if (pad.phase !== 'blocking') return false;
-      this.emit('block', pad.actor, 'end');
-      this.padToReady(0);
+    if (action === 'tackle') {
+      if (!pad.held) return false;
+      pad.held = false;
+      if (pad.phase === 'jockey') this.padToReady(Math.max(0, pad.readyAt - s.simTime));
       return true;
     }
     if (action !== 'pass' && action !== 'shoot') return false;
+    // Lifting the second tap of a double tap: the quick shot is already committed.
+    if (action === 'shoot' && pad.phase === 'kickPrep' && pad.locked?.quick) return true;
     if (pad.phase !== (action === 'pass' ? 'chargingPass' : 'chargingShoot')) return this.reject('padRelease', 'not charging');
     if (!this.padKickValid()) {
       this.padReset('possession lost');
@@ -586,9 +595,10 @@ export class MatchSim {
       at: s.simTime,
       aim: dir,
       fallback: false,
+      quick: false,
     };
     pad.receiver = receiver;
-    pad.phase = 'kickPrep';
+    pad.phase = this.tapWaits(action) ? 'shotTapWait' : 'kickPrep';
     pad.since = s.simTime;
     this.emit('padRelease', me.id, `${action} ${power.toFixed(2)}`);
     return true;
@@ -598,7 +608,9 @@ export class MatchSim {
   private padCancel(id: number, reason: string): boolean {
     if (!this.padCmdId(id, 'padCancel')) return false;
     const ph = this.s.pad.phase;
-    if (ph !== 'chargingPass' && ph !== 'chargingShoot' && ph !== 'kickPrep' && ph !== 'blocking') return false;
+    // A committed tackle plays out; the lifted finger only stops it turning into a jockey.
+    if (ph === 'tackleStart' || ph === 'tackleActive' || ph === 'tackleRecovery') return (this.s.pad.held = false), true;
+    if (ph !== 'chargingPass' && ph !== 'chargingShoot' && ph !== 'kickPrep' && ph !== 'shotTapWait' && ph !== 'jockey') return false;
     this.padReset(String(reason).slice(0, 40));
     return true;
   }
@@ -616,6 +628,7 @@ export class MatchSim {
     pad.locked = null;
     pad.receiver = null;
     pad.slideDir = null;
+    pad.held = false;
     pad.readyAt = this.s.simTime + cooldown;
   }
 
@@ -632,13 +645,15 @@ export class MatchSim {
     const T = this.tuning.pad;
     const S = T.slide;
     const me = s.players[s.controlledId];
+    const ST = T.standing;
     const sliding = pad.phase === 'slideStart' || pad.phase === 'slideActive' || pad.phase === 'slideRecovery';
-    if (pad.phase === 'blocking') {
+    const committed = sliding || pad.phase === 'tackleStart' || pad.phase === 'tackleActive' || pad.phase === 'tackleRecovery';
+    if (pad.phase === 'jockey') {
       const tx = s.ball.pos.x - me.pos.x;
       const ty = s.ball.pos.y - me.pos.y;
       const tl = Math.sqrt(tx * tx + ty * ty);
-      if (tl > 0.05) turnTowardInto(pad.facing, tx / tl, ty / tl, T.blockTurnRate * h);
-    } else if (!sliding && length(me.vel) > 0.5) {
+      if (tl > 0.05) turnTowardInto(pad.facing, tx / tl, ty / tl, T.jockeyTurnRate * h);
+    } else if (!committed && length(me.vel) > 0.5) {
       const vl = length(me.vel);
       pad.facing.x = me.vel.x / vl;
       pad.facing.y = me.vel.y / vl;
@@ -658,12 +673,44 @@ export class MatchSim {
       case 'kickRecovery':
         if (t >= T.recoverySeconds - 1e-9) this.padToReady(0);
         return;
-      case 'blocking':
-        if (pad.actor !== s.controlledId || pad.epoch !== s.controlEpoch) return this.padReset('control changed');
-        if (s.ball.owner === pad.actor) {
-          this.emit('block', pad.actor, 'gained possession');
-          this.padToReady(0);
+      case 'shotTapWait':
+        // A single tap: no second press in time, so the ordinary shot locked at release goes ahead.
+        if (!this.padKickValid()) return this.padReset('possession lost');
+        if (t >= T.quickShot.gapSeconds - 1e-9) {
+          pad.phase = 'kickPrep';
+          pad.since = s.simTime;
         }
+        return;
+      case 'tackleStart':
+        if (pad.actor !== s.controlledId) return this.padToReady(ST.cooldownSeconds);
+        if (t >= ST.startSeconds - 1e-9) {
+          pad.phase = 'tackleActive';
+          pad.since = s.simTime;
+        }
+        return;
+      case 'tackleActive':
+        if (pad.actor !== s.controlledId) return this.padToReady(ST.cooldownSeconds);
+        if (t >= ST.activeSeconds - 1e-9) {
+          if (!pad.bodyResolved) {
+            pad.bodyResolved = true;
+            this.emit('standing', pad.actor, 'missed');
+          }
+          pad.phase = 'tackleRecovery';
+          pad.since = s.simTime;
+        }
+        return;
+      case 'tackleRecovery':
+        if (t >= ST.recoverySeconds - 1e-9) {
+          if (pad.held && pad.actor === s.controlledId && s.ball.owner !== pad.actor) {
+            pad.phase = 'jockey';
+            pad.since = s.simTime;
+            pad.readyAt = s.simTime + ST.cooldownSeconds;
+          } else this.padToReady(ST.cooldownSeconds);
+        }
+        return;
+      case 'jockey':
+        if (pad.actor !== s.controlledId || pad.epoch !== s.controlEpoch) return this.padReset('control changed');
+        if (s.ball.owner === pad.actor) this.padToReady(Math.max(0, pad.readyAt - s.simTime));
         return;
       case 'slideStart':
         if (pad.actor !== s.controlledId) return this.padToReady(S.cooldownSeconds);
@@ -730,7 +777,7 @@ export class MatchSim {
       dir = rotate(L.dir, (this.rng() * 2 - 1) * err);
       this.kickBall(me, scale(dir, speed), 'shot', null, null);
       s.stats.shots.home += 1;
-      this.emit('shot', me.id, speed.toFixed(1));
+      this.emit('shot', me.id, `${L.quick ? 'quick ' : ''}${speed.toFixed(1)}`);
     }
     pad.phase = 'kickRecovery';
     pad.since = s.simTime;
@@ -841,15 +888,15 @@ export class MatchSim {
     if (kind === 'pass') {
       const receiver = this.pickReceiver(me, pad.receiver);
       const plan = this.passPlan(me, receiver, q, aim, this.contactOrigin(me));
-      pad.locked = { kind, dir: plan.dir, power: q, receiver, charge: q, speed: plan.launchSpeed, target: plan.target, id: pad.lastCmdId, at: s.simTime, aim, fallback: plan.fallback };
+      pad.locked = { kind, dir: plan.dir, power: q, receiver, charge: q, speed: plan.launchSpeed, target: plan.target, id: pad.lastCmdId, at: s.simTime, aim, fallback: plan.fallback, quick: false };
       pad.receiver = receiver;
     } else {
       const pv = K11.computeShotAim(s.ball.pos, aim, this.goalPlane(me.team), T.kicking);
       const speed = lerp(T.shot.minSpeed, T.shot.maxSpeed, q);
-      pad.locked = { kind, dir: pv.dir, power: q, receiver: null, charge: q, speed, target: pv.hit, id: pad.lastCmdId, at: s.simTime, aim, fallback: false };
+      pad.locked = { kind, dir: pv.dir, power: q, receiver: null, charge: q, speed, target: pv.hit, id: pad.lastCmdId, at: s.simTime, aim, fallback: false, quick: false };
       pad.receiver = null;
     }
-    pad.phase = 'kickPrep';
+    pad.phase = this.tapWaits(action) ? 'shotTapWait' : 'kickPrep';
     pad.since = s.simTime;
     this.emit('padRelease', me.id, `${action} ${q.toFixed(2)}`);
     return true;
@@ -880,7 +927,7 @@ export class MatchSim {
       dir = rotate(L.dir, K11.shotError(spread, this.rng(), this.rng()));
       this.kickBall(me, scale(dir, L.speed), 'shot', null, null);
       s.stats.shots[me.team] += 1;
-      this.emit('shot', me.id, L.speed.toFixed(1));
+      this.emit('shot', me.id, `${L.quick ? 'quick ' : ''}${L.speed.toFixed(1)}`);
     }
     if (this.kickLog.length >= 64) this.kickLog.shift();
     this.kickLog.push({
@@ -1108,13 +1155,23 @@ export class MatchSim {
       return this.padResult(pad.slideDir.x * k, pad.slideDir.y * k, 30);
     }
     if (mine && pad.phase === 'slideRecovery') return this.padResult(0, 0, 25);
+    const ST = T.pad.standing;
+    if (mine && (pad.phase === 'tackleStart' || pad.phase === 'tackleActive') && pad.slideDir) {
+      // On the feet: a short committed step into the ball, keeping (never exceeding) running momentum.
+      const k = Math.min(T.movement.chaseSpeed * A.pace, Math.max(ST.lungeSpeed * A.pace, length(p.vel)));
+      return this.padResult(pad.slideDir.x * k, pad.slideDir.y * k, 40);
+    }
+    if (mine && pad.phase === 'tackleRecovery') {
+      const k = T.movement.chaseSpeed * ST.recoverySpeedFactor * A.pace;
+      return this.padResult(pad.stick.x * k, pad.stick.y * k, 20);
+    }
     const carrying = s.ball.owner === p.id;
     let top = (carrying ? T.carrier.speed * (0.85 + 0.15 * A.control) : T.movement.chaseSpeed) * A.pace;
-    if (p.id === s.controlledId && pad.phase !== 'blocking') pad.jockeying = false;
-    if (mine && pad.phase === 'blocking') {
+    if (p.id === s.controlledId && pad.phase !== 'jockey') pad.jockeying = false;
+    if (mine && pad.phase === 'jockey') {
       const j = this.jockeyVelocity(p);
       if (j) return j;
-      top *= T.pad.blockSpeedFactor;
+      top *= T.pad.jockeySpeedFactor;
     }
     const desired = this.padResult(pad.stick.x * top, pad.stick.y * top, 0).desired;
     if (carrying) {
@@ -1155,7 +1212,7 @@ export class MatchSim {
   }
 
   /**
-   * Slide and block contacts along this tick's swept paths, before goals and ordinary interceptions.
+   * Slide and standing-tackle contacts along this tick's swept paths, before goals and ordinary interceptions.
    * Returns the ball's new sweep origin after a deflection, 'stopped' after a foul, else null.
    */
   private resolvePadContacts(me: MatchPlayer, mePrev: Vec2, ballPrev: Vec2): Vec2 | 'stopped' | null {
@@ -1217,34 +1274,104 @@ export class MatchSim {
       }
       return null;
     }
-    if (pad.phase === 'blocking' && !ball.owner) {
-      const speed = length(ball.vel);
-      if (speed < 0.5 || ball.kick?.team === me.team) return null;
-      const n = pad.facing;
-      if (dot2(ball.vel, n) >= 0) return null;
-      const c = add(me.pos, scale(n, T.blockDepth));
-      const side = vec(-n.y, n.x);
-      const a = sub(c, scale(side, T.blockHalfWidth));
-      const b = add(c, scale(side, T.blockHalfWidth));
-      const near = Math.min(
-        distanceToSegment(ballPrev, a, b),
-        distanceToSegment(ball.pos, a, b),
-        distanceToSegment(a, ballPrev, ball.pos),
-        distanceToSegment(b, ballPrev, ball.pos),
-      );
-      const t = clamp(along(ballPrev, ball.pos, c), 0, 1);
-      const hit = segmentHit(ballPrev, ball.pos, a, b) ?? (near <= T.blockBallRadius ? vec(ballPrev.x + (ball.pos.x - ballPrev.x) * t, ballPrev.y + (ball.pos.y - ballPrev.y) * t) : null);
-      if (!hit) return null;
-      const vn = dot2(ball.vel, n);
-      setXY(ball.vel, (ball.vel.x - n.x * (2 * vn)) * T.blockRestitution, (ball.vel.y - n.y * (2 * vn)) * T.blockRestitution);
-      setXY(ball.pos, hit.x + n.x * 0.25, hit.y + n.y * 0.25);
-      ball.kick = { by: me.id, team: me.team, kind: 'touch', at: s.simTime, target: null, receiver: null };
-      this.touchBall(me, false);
-      if (speed > T.blockHardSpeed) ball.ignore.push({ id: me.id, until: s.simTime + T.blockIgnoreSeconds });
-      this.emit('deflect', me.id, speed.toFixed(1));
-      return copy(ball.pos);
-    }
+    if (pad.phase === 'tackleActive' && !pad.bodyResolved) return this.resolveStanding(me);
     return null;
+  }
+
+  /**
+   * One standing-tackle resolution per attempt, when the carrier's ball comes within reach of the lead foot.
+   * Won: the ball pops loose (never straight into possession). Lost: the carrier keeps it, and close body
+   * contact can be a foul, far likelier from behind or at speed.
+   */
+  private resolveStanding(me: MatchPlayer): 'stopped' | null {
+    const s = this.s;
+    const pad = s.pad;
+    const ST = this.tuning.pad.standing;
+    const ball = s.ball;
+    const owner = ball.owner ? s.players[ball.owner] : null;
+    const dir = pad.slideDir;
+    if (!owner || owner.team === me.team || !dir) return null;
+    const reach = Math.hypot(ball.pos.x - (me.pos.x + dir.x * ST.footAhead), ball.pos.y - (me.pos.y + dir.y * ST.footAhead));
+    if (reach > ST.reach) return null;
+    pad.bodyResolved = true;
+    const bx = ball.pos.x - owner.pos.x;
+    const by = ball.pos.y - owner.pos.y;
+    const bl = Math.hypot(bx, by) || 1;
+    const rx = owner.pos.x - me.pos.x;
+    const ry = owner.pos.y - me.pos.y;
+    const rl = Math.hypot(rx, ry) || 1;
+    // +1: the tackler meets the carrier on the ball side; -1: through the carrier from behind.
+    const front = -(bx * rx + by * ry) / (bl * rl);
+    const behind = -front > ST.behindCos;
+    const loose = clamp((bl - ST.touchYards) / ST.looseYards, 0, 1);
+    const edge = (me.attrs.agility + me.attrs.control) / 2 - (owner.attrs.control + owner.attrs.agility) / 2;
+    const banned = (s.tackleBan[me.id] ?? 0) > s.simTime;
+    const p = banned
+      ? 0
+      : clamp(ST.baseWin + ST.reachWeight * (1 - reach / ST.reach) + ST.frontWeight * front + ST.looseWeight * loose + ST.attrWeight * edge - (behind ? ST.behindPenalty : 0), ST.minWin, ST.maxWin);
+    if (this.rng() < p) {
+      s.tackleBan[owner.id] = s.simTime + this.tuning.tackle.loserBanSeconds;
+      s.beatenUntil[owner.id] = s.simTime + this.tuning.tackle.beatenSeconds;
+      const carried = copy(owner.vel);
+      ball.owner = null;
+      setXY(ball.vel, dir.x * ST.pokeSpeed + carried.x * ST.carriedShare, dir.y * ST.pokeSpeed + carried.y * ST.carriedShare);
+      ball.kick = { by: me.id, team: me.team, kind: 'touch', at: s.simTime, target: null, receiver: null };
+      this.touchBall(me);
+      ball.ignore.push({ id: me.id, until: s.simTime + ST.tacklerIgnoreSeconds });
+      this.emit('standing', me.id, `won ball from ${owner.id}`);
+      return null;
+    }
+    if (distance(me.pos, owner.pos) <= ST.bodyReach) {
+      const foul = clamp(ST.foulBase + (behind ? ST.foulBehind : 0) + ST.foulPerSpeed * Math.max(0, length(me.vel) - ST.foulSafeSpeed), 0, 1);
+      if (this.rng() < foul) {
+        const call = this.referee.callFoul(me, owner);
+        this.emit('foul', me.id, `standing tackle on ${owner.id}`);
+        this.stop('foul', null, `foul by ${me.id} on ${owner.id}${call.kind === 'penalty' ? ': penalty' : ': free kick'}`, call.team, call.spot, call.kind, call.victim);
+        return 'stopped';
+      }
+    }
+    this.emit('standing', me.id, `missed ${owner.id}`);
+    return null;
+  }
+
+  /** A SHOOT tap (released before `tapSeconds`) waits briefly for a second press; held shots never wait. */
+  private tapWaits(action: 'pass' | 'shoot'): boolean {
+    return action === 'shoot' && this.s.simTime - this.s.pad.chargeStart < this.tuning.pad.quickShot.tapSeconds - 1e-9;
+  }
+
+  /** Second SHOOT press inside the tap gap: a fixed-charge shot with the same aim assist and execution error, released sooner. */
+  private quickShot(): boolean {
+    const s = this.s;
+    const pad = s.pad;
+    const T = this.tuning;
+    const Q = T.pad.quickShot;
+    if (!this.padKickValid() || pad.locked?.kind !== 'shot') {
+      this.padReset('possession lost');
+      return this.reject('padPress', 'quick shot unavailable');
+    }
+    const me = s.players[pad.actor!];
+    this.sampleAim();
+    const aim = copy(this.aimOf('shot', me.team));
+    let dir: Vec2;
+    let speed: number;
+    let power: number;
+    let target: Vec2 | null = null;
+    if (this.kickingMode === 'v11') {
+      const pv = K11.computeShotAim(s.ball.pos, aim, this.goalPlane(me.team), T.kicking);
+      dir = pv.dir;
+      target = pv.hit;
+      power = Q.charge;
+      speed = lerp(T.shot.minSpeed, T.shot.maxSpeed, Q.charge);
+    } else {
+      power = lerp(T.pad.shotPower.min, T.pad.shotPower.max, Q.charge);
+      dir = length(pad.stick) > 0 ? normalize(pad.stick) : normalize(sub(this.attackingGoal('home'), s.ball.pos));
+      speed = kickSpeed(power, T);
+    }
+    pad.locked = { kind: 'shot', dir, power, receiver: null, charge: Q.charge, speed, target, id: pad.lastCmdId, at: s.simTime, aim, fallback: false, quick: true };
+    pad.phase = 'kickPrep';
+    pad.since = s.simTime - (T.pad.prepSeconds - Q.prepSeconds);
+    this.emit('padPress', me.id, 'shoot quick');
+    return true;
   }
 
   // ---- simulation -----------------------------------------------------------------------------
@@ -2197,20 +2324,4 @@ function along(a: Vec2, b: Vec2, p: Vec2): number {
   const dy = b.y - a.y;
   const l2 = dx * dx + dy * dy;
   return l2 < 1e-12 ? 0 : ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2;
-}
-
-/** Intersection point of segments p0-p1 and a-b, or null. */
-function segmentHit(p0: Vec2, p1: Vec2, a: Vec2, b: Vec2): MutableVec2 | null {
-  const rx = p1.x - p0.x;
-  const ry = p1.y - p0.y;
-  const qx = b.x - a.x;
-  const qy = b.y - a.y;
-  const den = rx * qy - ry * qx;
-  if (Math.abs(den) < 1e-12) return null;
-  const wx = a.x - p0.x;
-  const wy = a.y - p0.y;
-  const t = (wx * qy - wy * qx) / den;
-  const u = (wx * ry - wy * rx) / den;
-  if (t < 0 || t > 1 || u < 0 || u > 1) return null;
-  return vec(p0.x + rx * t, p0.y + ry * t);
 }

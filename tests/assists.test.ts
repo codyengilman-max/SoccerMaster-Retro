@@ -87,6 +87,30 @@ describe('defensive points', () => {
     expect(get(dirty, 'h4').slideWon).toBe(0);
     expect(get(run([ev('slide', 0, 'h4', 'start'), ev('tackle', 0.4, 'h4', 'won the ball from a1')]), 'h4').slideWon).toBe(1);
   });
+  it('counts a standing tackle (half a slide) only after a won ball, no foul, and team possession in the window', () => {
+    const won = run([ev('standing', 0, 'h4', 'start'), ev('standing', 0.2, 'h4', 'won ball from a1'), ev('received', 1.1, 'h3')]);
+    expect(get(won, 'h4')).toMatchObject({ standingWon: 1, slideWon: 0, interceptions: 0, defenseUnits: 1 });
+    expect(get(run([ev('standing', 0, 'h4', 'start'), ev('standing', 0.2, 'h4', 'won ball from a1'), ev('received', 2.5, 'h3')]), 'h4').standingWon).toBe(0);
+    expect(get(run([ev('standing', 0, 'h4', 'start'), ev('standing', 0.2, 'h4', 'won ball from a1'), ev('received', 0.6, 'a2')]), 'h4').standingWon).toBe(0);
+    expect(get(run([ev('standing', 0, 'h4', 'start'), ev('standing', 0.3, 'h4', 'missed a1'), ev('received', 0.8, 'h3')]), 'h4').standingWon).toBe(0);
+    expect(get(run([ev('standing', 0, 'h4', 'start'), ev('foul', 0.2, 'h4', 'standing tackle on a1'), ev('received', 0.8, 'h3')]), 'h4').standingWon).toBe(0);
+    // An ordinary collision tackle right after a missed standing tackle is still not a standing tackle.
+    expect(get(run([ev('standing', 0, 'h4', 'start'), ev('standing', 0.3, 'h4', 'missed'), ev('tackle', 0.5, 'h4', 'won the ball from a1')]), 'h4')).toMatchObject({ standingWon: 0, slideWon: 0, defenseUnits: 0 });
+    expect(get(run([ev('tackle', 0.5, 'h4', 'won the ball from a1')]), 'h4').standingWon).toBe(0);
+  });
+
+  it('a standing tackle that cuts out a pass is a standing tackle only, and a teammate pickup adds nothing', () => {
+    const cut = run([ev('pass', 0, 'a1', 'a2'), ev('standing', 0.1, 'h4', 'start'), ev('standing', 0.25, 'h4', 'won ball from a2'), ev('intercepted', 0.9, 'h3')]);
+    expect(get(cut, 'h4')).toMatchObject({ standingWon: 1, interceptions: 0, defenseUnits: 1 });
+    expect(get(cut, 'h3')).toMatchObject({ interceptions: 0, defenseUnits: 0 });
+  });
+
+  it('20 standing tackles reach the 20-unit threshold', () => {
+    const evs = [];
+    for (let i = 0; i < 20; i++) evs.push(ev('standing', i * 5, 'h4', 'start'), ev('standing', i * 5 + 0.2, 'h4', 'won ball from a1'), ev('received', i * 5 + 0.8, 'h4'));
+    expect(get(run(evs), 'h4')).toMatchObject({ standingWon: 20, defenseUnits: DEFENSE_UNITS.threshold });
+  });
+
   it('counts interceptions of passes only, never shots, and a slide that cuts out a pass is a slide only', () => {
     expect(get(run([ev('pass', 0, 'a1', 'a2'), ev('intercepted', 0.5, 'h3', 'cut out a1')]), 'h3')).toMatchObject({ interceptions: 1, defenseUnits: 3 });
     expect(get(run([ev('shot', 0, 'a1'), ev('intercepted', 0.5, 'h3', 'cut out a1')]), 'h3').interceptions).toBe(0);
@@ -102,7 +126,8 @@ describe('defensive points', () => {
   });
   it('never invents standing tackles from the ordinary contact tackle; a PR D standing event scores 1 unit', () => {
     expect(get(run([ev('tackle', 0, 'h4', 'won the ball from a1')]), 'h4').defenseUnits).toBe(0);
-    expect(get(run([ev('tackle', 0, 'h4', 'standing tackle on a1')]), 'h4')).toMatchObject({ standingWon: 1, defenseUnits: 1 });
+    // PR D's real event: the committed TACKLE ('standing' start, then a won ball) before team possession.
+    expect(get(run([ev('standing', 0, 'h4', 'start'), ev('standing', 0.2, 'h4', 'won ball from a1'), ev('received', 0.6, 'h4')]), 'h4')).toMatchObject({ standingWon: 1, defenseUnits: 1 });
   });
   it('mixes scores: 4 interceptions + 4 slides = 20 units; 7 interceptions = 21', () => {
     const evs: MatchEvent[] = [];
