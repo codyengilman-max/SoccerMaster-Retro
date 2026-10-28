@@ -180,6 +180,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private reducedMotion = false;
   /** Debug-only staging that needs live play (offside calls). */
   private debugStage: 'offside' | 'offside-position' | null = null;
+  /** Debug builds may slow the sim clock (`simRate`, 0–1) so browser tests can tap inside sub-second windows on slow runners. */
+  private simRate = 1;
   private devText!: Phaser.GameObjects.Text;
   private panel!: Phaser.GameObjects.Graphics;
   private panelTitle!: Phaser.GameObjects.Text;
@@ -274,6 +276,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const tuning = shouldExposeDebug(window.location) && Number.isFinite(deadBall) && deadBall > 0
       ? { ...MATCH_TUNING, stoppage: { ...MATCH_TUNING.stoppage, outSeconds: deadBall } }
       : undefined;
+    const rate = Number(params.get('simRate'));
+    this.simRate = shouldExposeDebug(window.location) && Number.isFinite(rate) && rate > 0 && rate <= 1 ? rate : 1;
     this.sim = new MatchSim({ seed, homeFormation: formation, halfSeconds, kicking, ...(tactics ? { tactics } : {}), ...(tuning ? { tuning } : {}) });
     this.stageLab();
     if (shouldExposeDebug(window.location)) this.applyDebugSetup(params.get('setup'));
@@ -423,7 +427,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     // Availability comes from the authoritative sim; a held button that loses it goes inert.
     if (this.pad) this.handlePad(this.pad.controls.setAvailable(this.sim.padAvailability()));
     if (this.debugStage && this.sim.state.phase === 'live') this.stageOffside(this.debugStage);
-    this.sim.step(dt);
+    this.sim.step(dt * this.simRate);
     this.consumeEvents();
     this.observeCareer();
     this.updateTeamTraining();
