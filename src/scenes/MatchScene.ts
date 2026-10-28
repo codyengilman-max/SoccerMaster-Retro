@@ -73,7 +73,7 @@ const HUD_HEIGHT = 40;
 const SIDELINE_SQUASH = CAMERA_VIEW.landscapeTilt;
 /** Mouse presses this soon after a touch are browser compatibility events, not a second input. */
 const COMPAT_MOUSE_MS = 800;
-const HELP_PAD = 'Left stick: move  |  PASS / SHOOT: hold to charge, release to kick  |  SLIDE TACKLE: tap  |  TACKLE: tap (keep holding to jockey)  |  SHOOT: double-tap for a quick shot';
+const HELP_PAD = 'Left stick: move  |  PASS / SHOOT: hold to charge, release to kick  |  SHOOT twice: quick shot  |  SLIDE / TACKLE: tap (hold TACKLE to jockey)';
 
 export interface MatchSceneData {
   readonly formation?: FormationId;

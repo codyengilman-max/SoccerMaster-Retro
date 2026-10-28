@@ -636,7 +636,8 @@ export class MatchSim {
     const pad = this.s.pad;
     if (pad.phase === 'ready') return;
     this.emit('padCancel', pad.actor, `${pad.phase}: ${reason}`);
-    this.padToReady(0);
+    // A cancelled jockey keeps whatever tackle cooldown is still running.
+    this.padToReady(Math.max(0, pad.readyAt - this.s.simTime));
   }
 
   private tickPad(h: number): void {
@@ -1290,7 +1291,8 @@ export class MatchSim {
     const ball = s.ball;
     const owner = ball.owner ? s.players[ball.owner] : null;
     const dir = pad.slideDir;
-    if (!owner || owner.team === me.team || !dir) return null;
+    // Same exclusions as contact tackles: a keeper's held catch and a new carrier's protected first touch.
+    if (!owner || owner.team === me.team || owner.isKeeper || s.simTime < s.protectUntil || !dir) return null;
     const reach = Math.hypot(ball.pos.x - (me.pos.x + dir.x * ST.footAhead), ball.pos.y - (me.pos.y + dir.y * ST.footAhead));
     if (reach > ST.reach) return null;
     pad.bodyResolved = true;

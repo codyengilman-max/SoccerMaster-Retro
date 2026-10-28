@@ -194,6 +194,46 @@ describe('standing tackle (TACKLE button)', () => {
     expect(sim.command({ type: 'padPress', id: sim.id(), action: 'tackle' })).toBe(true);
   });
 
+  it('a cancelled jockey (rotation, lost touch) keeps the tackle cooldown', () => {
+    const sim = duel(9, AT_GAP(6));
+    expect(sim.command({ type: 'padPress', id: sim.id(), action: 'tackle' })).toBe(true);
+    run(sim, ST.startSeconds + ST.activeSeconds + ST.recoverySeconds + 2 * F);
+    expect(sim.state.pad.phase).toBe('jockey');
+    expect(sim.state.pad.readyAt).toBeGreaterThan(sim.state.simTime);
+    expect(sim.command({ type: 'padCancel', id: sim.id(), reason: 'rotate' })).toBe(true);
+    expect(sim.state.pad.phase).toBe('ready');
+    expect(sim.command({ type: 'padPress', id: sim.id(), action: 'tackle' })).toBe(false);
+    run(sim, ST.cooldownSeconds + 2 * F);
+    expect(sim.command({ type: 'padPress', id: sim.id(), action: 'tackle' })).toBe(true);
+  });
+
+  it('like contact tackles, it cannot win a new carrier\'s protected first touch', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const sim = duel(seed, FRONT);
+      sim.arrange((s) => {
+        s.protectUntil = s.simTime + 5;
+      });
+      // Never contested: the attempt just runs out (a plain whiff), no win, no foul, carrier keeps it.
+      const r = attempt(sim);
+      expect(r.events.filter((e) => e.type === 'standing' && e.detail !== 'start').map((e) => e.detail)).toEqual(['missed']);
+      expect(r.events.some((e) => e.type === 'foul')).toBe(false);
+      expect(sim.state.ball.owner).toBe('A6');
+    }
+  });
+
+  it('like contact tackles, it cannot take a keeper\'s held ball', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const sim = duel(seed, FRONT);
+      sim.arrange((s) => {
+        (s.players.A6 as { isKeeper: boolean }).isKeeper = true;
+      });
+      const r = attempt(sim);
+      expect(r.events.filter((e) => e.type === 'standing' && e.detail !== 'start').map((e) => e.detail)).toEqual(['missed']);
+      expect(r.events.some((e) => e.type === 'foul')).toBe(false);
+      expect(sim.state.ball.owner).toBe('A6');
+    }
+  });
+
   it('is deterministic: the same seed and inputs give the same outcome', () => {
     for (let seed = 1; seed <= 10; seed++) expect(attempt(duel(seed, FRONT)).outcome).toBe(attempt(duel(seed, FRONT)).outcome);
   });
