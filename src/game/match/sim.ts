@@ -632,6 +632,18 @@ export class MatchSim {
     pad.readyAt = this.s.simTime + cooldown;
   }
 
+  /** A committed standing tackle bends (at a limited rate) after the ball the carrier shifts away from it. */
+  private homeStanding(me: MatchPlayer, h: number): void {
+    const s = this.s;
+    const pad = s.pad;
+    const owner = s.ball.owner ? s.players[s.ball.owner] : null;
+    if (!pad.slideDir || !owner || owner.team === me.team) return;
+    const to = sub(s.ball.pos, me.pos);
+    const d = length(to);
+    if (d < 0.05 || d > this.tuning.pad.standing.homingRange) return;
+    pad.slideDir = turnToward(pad.slideDir, scale(to, 1 / d), this.tuning.pad.standing.homingTurnRate * h);
+  }
+
   private padReset(reason: string): void {
     const pad = this.s.pad;
     if (pad.phase === 'ready') return;
@@ -684,6 +696,7 @@ export class MatchSim {
         return;
       case 'tackleStart':
         if (pad.actor !== s.controlledId) return this.padToReady(ST.cooldownSeconds);
+        this.homeStanding(me, h);
         if (t >= ST.startSeconds - 1e-9) {
           pad.phase = 'tackleActive';
           pad.since = s.simTime;
@@ -691,6 +704,7 @@ export class MatchSim {
         return;
       case 'tackleActive':
         if (pad.actor !== s.controlledId) return this.padToReady(ST.cooldownSeconds);
+        this.homeStanding(me, h);
         if (t >= ST.activeSeconds - 1e-9) {
           if (!pad.bodyResolved) {
             pad.bodyResolved = true;

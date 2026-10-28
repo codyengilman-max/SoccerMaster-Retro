@@ -338,6 +338,9 @@ export const MATCH_TUNING = {
       pokeSpeed: 2.6,
       carriedShare: 0.25,
       tacklerIgnoreSeconds: 0.12,
+      /** The lunge bends after a ball the carrier shifts aside, at most this fast (rad/s), within this range (yd). */
+      homingTurnRate: 4,
+      homingRange: 4,
     },
     /** Double-tap SHOOT: a tap waits `gapSeconds` for a second press; the second press shoots after `prepSeconds`. */
     quickShot: {

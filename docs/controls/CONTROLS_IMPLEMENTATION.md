@@ -32,7 +32,9 @@ keyboard actions are swallowed, so there is no competing handler, and the sim ke
   window, = foul and a stoppage.
 - **TACKLE (standing tackle, PR D):** available off the ball. A press commits a short on-feet step
   into the ball along the stick (or toward a nearby ball): start 0.1 s → active 0.2 s → recovery
-  0.45 s at 35% speed, then a 0.35 s cooldown. It resolves once, the first moment in the active window
+  0.45 s at 35% speed, then a 0.35 s cooldown. Through start and active the lunge bends after the
+  carrier's ball (at most 4 rad/s, within 4 yd), so a carrier shifting the ball aside isn't an automatic
+  whiff. It resolves once, the first moment in the active window
   the lead foot (0.35 yd ahead) is within 1.15 yd of the ball. Win chance (seeded, clamped 5–85%, so
   never certain) rises with a closer foot, meeting the carrier on the ball side, timing it while the
   carrier's touch has pushed the ball out, and agility + control over the carrier's; it drops sharply

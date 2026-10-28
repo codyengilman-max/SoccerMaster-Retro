@@ -234,6 +234,43 @@ describe('standing tackle (TACKLE button)', () => {
     }
   });
 
+  it('bends after a live carrier who shifts the ball aside, so neutral tackles in open play can win', () => {
+    // The ?setup=tackle browser stage: H8 just goal-side of a live, unpinned A7. The AI carrier shields the ball
+    // about 1.4 yd sideways during the lunge; a direction locked at the press whiffed on every seed.
+    const tally = { won: 0, missed: 0, other: 0 };
+    for (let seed = 1; seed <= 40; seed++) {
+      const sim = new MatchSim({ seed, halfSeconds: null }) as Sim;
+      let n = 0;
+      run(sim, T.kickoff.countdownSeconds + 0.1);
+      sim.arrange((s) => {
+        s.players.A7.pos = { x: 40, y: 25 };
+        s.players.A7.vel = { x: 0, y: 0 };
+        s.ball.owner = 'A7';
+        s.ball.pos = { x: 39.4, y: 25 };
+        s.ball.vel = { x: 0, y: 0 };
+        s.ball.kick = null;
+        s.possession = 'away';
+        s.protectUntil = s.simTime;
+        s.players.H8.pos = { x: 38.3, y: 25 };
+        s.players.H8.vel = { x: 0, y: 0 };
+        s.controlledId = 'H8';
+        s.controlSince = s.simTime;
+        s.controlEpoch += 1;
+      });
+      const from = sim.state.events.at(-1)?.seq ?? 0;
+      sim.command({ type: 'padPress', id: ++n, action: 'tackle' });
+      sim.command({ type: 'padRelease', id: ++n, action: 'tackle' });
+      run(sim, 1);
+      const r = sim.state.events.find((e) => e.seq > from && e.type === 'standing' && e.detail !== 'start');
+      if (r?.detail.startsWith('won')) tally.won++;
+      else if (r?.detail.startsWith('missed')) tally.missed++;
+      else tally.other++;
+    }
+    expect(tally.other).toBe(0);
+    expect(tally.won).toBeGreaterThanOrEqual(8);
+    expect(tally.missed).toBeGreaterThanOrEqual(8);
+  });
+
   it('is deterministic: the same seed and inputs give the same outcome', () => {
     for (let seed = 1; seed <= 10; seed++) expect(attempt(duel(seed, FRONT)).outcome).toBe(attempt(duel(seed, FRONT)).outcome);
   });

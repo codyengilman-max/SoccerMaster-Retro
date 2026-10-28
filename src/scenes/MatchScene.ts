@@ -759,6 +759,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         s.possession = 'away';
         s.players.H8.pos = { x: 38.3, y: 25 };
         s.players.H8.vel = { x: 0, y: 0 };
+        s.protectUntil = s.simTime;
         s.controlledId = 'H8';
         s.controlSince = s.simTime;
         s.controlEpoch += 1;
