@@ -14,6 +14,7 @@
     "test:watch": "vitest",
     "all36:manifest": "node scripts/all36-manifest.mjs",
     "all36:schedule": "node scripts/all36-schedule.mjs",
+    "tactics:compare": "node scripts/tactics-compare.mjs",
     "test:e2e": "node scripts/e2e.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview"

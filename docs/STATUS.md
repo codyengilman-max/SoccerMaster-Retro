@@ -41,6 +41,11 @@ Verification: Chromium phone emulation and desktop only. Not yet verified on a r
 - Current release (D60): one approved All36 scenario per week per category (54 assignments, `docs/training/all36/WEEKLY.md`), played on `WeeklyTrainingScene`; first completion pays the existing weekly credit once; replays raise best mastery only; Team Training is optional for the story.
 - Not yet: authored movement continuations and facing (static ball targets only), owner review of rendered previews, real-iPhone check.
 
+## PR B: classic vs v0.5 tactics comparison (branch `devin/1793132337-tactics-compare`, not merged, not deployed)
+
+- Headless comparison over 50 shared seeds and two scripted home inputs (`npm run tactics:compare`); report in `docs/TACTICS_COMPARISON.md`, raw data in `docs/tactics/`.
+- Recommendation: revise v0.5, keep `classic` as the default (D58). No match engine behaviour changed.
+
 ## Team Training: source review gate (Tactical Library v1, PR #49, in `main` 04e947b (PR #49), live)
 
 - Library v1 imported unchanged and hash-pinned; 7 cited sources fetched and hashed; review sheet covers all 27 briefs (20 ready to build a scene for review, 7 need tactical authoring/review, 0 approved).
