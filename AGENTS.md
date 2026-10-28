@@ -24,12 +24,14 @@ CI (`.github/workflows/ci.yml`) runs `npm ci`, typecheck, unit tests, build, and
 - `src/render/` — drawing helpers: `layout.ts` (pure pitch→screen math, unit tested), `textures.ts` (code-drawn placeholder art), `theme.ts` (palette, fonts).
 - `src/game/math.ts`, `src/game/rng.ts` — shared vector math and the seeded RNG.
 - `src/game/match/` — 9v9 engine (`MatchSim`, `formations.ts`, team AI in `ai.ts`, M4 match clock in `clock.ts`, every number in `tuning.ts`). Timed two-half match by default; `?sandbox` keeps the open-ended M3 sandbox and `?debug&halfSeconds=12` shortens halves for browser tests.
-- `src/game/coach/` — M5 Coach Moments (facts, templates, validation, `CoachDirector`), framework-free; turned on in the sandbox with `?coach`. See `docs/COACH.md`. `?debug&coach&coachSeconds=40` shortens the session for browser tests.
+- `src/game/coach/` — M5 Coach Moments (facts, templates, validation, `CoachDirector`), framework-free; dev-only and deprecated behind `?coach` (owner decision H3: story matches never pause for tactical questions; tactical questions belong in Team Training). Do not delete it without a cleanup task. See `docs/COACH.md`. `?debug&coach&coachSeconds=40` shortens the session for browser tests.
 - `src/game/career/` — M6 career player, activity catalog, planner, journal reducer, game evidence, growth and IndexedDB save (framework-free). UI in `src/scenes/CareerScene.ts`. See `docs/TRAINING.md`.
 - `src/input/` — joystick/button state (`joystickControls.ts`), menu key bindings and the story crossbar pull math (framework-free).
 - `src/scenes/` — Phaser scenes (`StartScene`, `FormationScene`, `MatchScene`, `CareerScene`) and UI (`ui/Button.ts`). Scenes read simulation state and draw it; they never own soccer rules.
 - `src/debug/diagnostics.ts` — `window.__SMR__` (dev, or `?debug` in the URL): canvas count, active scenes, listener totals, layout bounds, and the top scene's gameplay snapshot. `?debug&setup=pass` stages the 9v9 sandbox pass test and `?debug&setup=space` gives the carrier room for the joystick control tests; `?debug&passlog` logs each assisted-pass target search.
-- `docs/` — `VISION.md`, `DECISIONS.md`, `ROADMAP.md`, `STATUS.md`. Update `STATUS.md` at the end of every milestone.
+- `src/game/training12/` — Team Training sessions, library package and the fail-closed gate (`library/gate.ts`). Never fill `SESSION_CARDS` without owner-approved cards and scenes.
+- `src/game/story/` — Season One runtime, migration and IndexedDB story save.
+- `docs/` — `VISION.md`, `DECISIONS.md`, `ROADMAP.md`, `STATUS.md`, `REMEDIATION_PLAN.md`, `specs/`. Update `STATUS.md` at the end of every milestone.
 
 ## Rules
 
@@ -38,4 +40,5 @@ CI (`.github/workflows/ci.yml`) runs `npm ci`, typecheck, unit tests, build, and
 - Every screen must fit phone portrait and landscape; re-layout on `Phaser.Scale.Events.RESIZE`.
 - Original art only (code-drawn or original files); no copyrighted assets or fonts.
 - Use npm only; keep `package-lock.json` committed and versions pinned.
+- Owner decisions H1–H8 (`docs/DECISIONS.md`) are binding: keep automatic player switching (no position lock); `classic` tactics stays default until PR B's evidence; story matches stay uninterrupted (no Coach Moments, Decision Heat or tactical grades in matches or Match Reports); tactical teaching lives in Team Training, sourced only from the coach-approved All36 package (`docs/training/all36/INVENTORY.md`) and fail-closed for everything else; Retro's tactical-decision model is native to this repo; never report phone emulation as real-iPhone verification.
 - Do not weaken or skip tests to make them pass. Do not change hosting without a task for it.

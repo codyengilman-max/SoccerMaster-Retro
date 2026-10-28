@@ -28,7 +28,7 @@ In a timed match (the default) a **coached session** spans the whole match (both
 
 Facts come only from `MatchState` in the coached team's frame (attacking +x), so both attacking directions give identical facts. They include the carrier, nearest presser distance and arrival time, open/blocked passing lanes, support options, shot range/angle/clearance, cover and numbers around the ball, score, formation, stoppage, and space behind the defence. Missing or non-finite state returns `null`.
 
-Not available in the sandbox and therefore never used: **offside**, fouls, set-piece rules and a match clock. `timeLeft` is only set when a host passes one (the sandbox does not), so no template states time left.
+Not passed to the Coach facts today (the referee now rules on offside, fouls and restarts, and timed matches have a clock, but `CoachFacts` does not read them): **offside**, fouls, set-piece rules and the match clock. `timeLeft` is only set when a host passes one (the sandbox does not), so no template states time left.
 
 ## Authoring a template (`src/game/coach/templates.ts`)
 
@@ -43,3 +43,6 @@ Rules:
 - Text is plain and short for U11 players. Imported player names go through `safeName` (control and bidi characters removed, length capped) and are rendered as canvas text, never HTML; unnamed players are described by role ("your left winger").
 
 `validateCatalog()` runs at load time (`assertValidCatalog`), and `tests/coachTemplates.test.ts` checks every template in an eligible state, an ineligible state and a counterexample. No runtime AI or network calls are used.
+
+## Deprecated (owner decision H3, 2026-10-27)
+Coach Moments are **not** part of the story-match product. Story matches stay uninterrupted: no pauses, answer menus, Decision Heat or tactical grades in Match Reports, and `?coach` is never enabled for ordinary players. This module stays as a dev-only prototype; removing the unused code is a later cleanup task and is not done in Phase One. Tactical questions, grading and explanations belong in Team Training: [specs/RETRO_DECISION_MODEL.md](specs/RETRO_DECISION_MODEL.md).
