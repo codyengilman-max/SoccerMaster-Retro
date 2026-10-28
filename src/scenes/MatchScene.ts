@@ -180,7 +180,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private reducedMotion = false;
   /** Debug-only staging that needs live play (offside calls). */
   private debugStage: 'offside' | 'offside-position' | null = null;
-  /** Debug builds may slow the sim clock (`simRate`, 0–1) so browser tests can tap inside sub-second windows on slow runners. */
+  /** Sim clock multiplier; only `setDebugSimRate` changes it, in debug builds. */
   private simRate = 1;
   private devText!: Phaser.GameObjects.Text;
   private panel!: Phaser.GameObjects.Graphics;
@@ -276,8 +276,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const tuning = shouldExposeDebug(window.location) && Number.isFinite(deadBall) && deadBall > 0
       ? { ...MATCH_TUNING, stoppage: { ...MATCH_TUNING.stoppage, outSeconds: deadBall } }
       : undefined;
-    const rate = Number(params.get('simRate'));
-    this.simRate = shouldExposeDebug(window.location) && Number.isFinite(rate) && rate > 0 && rate <= 1 ? rate : 1;
+    this.simRate = 1;
     this.sim = new MatchSim({ seed, homeFormation: formation, halfSeconds, kicking, ...(tactics ? { tactics } : {}), ...(tuning ? { tuning } : {}) });
     this.stageLab();
     if (shouldExposeDebug(window.location)) this.applyDebugSetup(params.get('setup'));
@@ -619,6 +618,13 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       elements[this.breakMode === 'halftime' ? 'second-half-button' : 'play-again-button'] = (this.breakMode === 'halftime' ? this.secondHalfButton : this.playAgainButton).getButtonBounds();
     }
     return { orientation: this.pitchLayout.orientation, viewport: { width, height }, elements };
+  }
+
+  /** Debug builds only: slow the sim clock (0–1] so browser tests can tap inside sub-second windows on slow runners. */
+  setDebugSimRate(rate: number): boolean {
+    if (!shouldExposeDebug(window.location) || !Number.isFinite(rate) || rate <= 0 || rate > 1) return false;
+    this.simRate = rate;
+    return true;
   }
 
   describeGameplay(): MatchReport {

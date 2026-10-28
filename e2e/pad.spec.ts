@@ -24,6 +24,15 @@ async function waitFor(page: Page, predicate: (r: MatchReport) => boolean, timeo
   }
 }
 
+/** Debug-only: slow the match clock once the setup is staged, so slow runners' frames stay inside sub-second tap windows. */
+async function slowSim(page: Page, rate: number): Promise<void> {
+  const ok = await page.evaluate((r) => {
+    const scene = window.__SMR__?.game.scene.getScene('match') as unknown as { setDebugSimRate?: (x: number) => boolean } | undefined;
+    return scene?.setDebugSimRate?.(r) ?? false;
+  }, rate);
+  if (!ok) throw new Error('could not set the debug sim rate');
+}
+
 async function open(page: Page, mode: PointerMode, query = ''): Promise<MatchReport> {
   await page.goto(`/?debug=1&dev${query}`);
   await waitForScene(page, 'start');
@@ -209,7 +218,9 @@ test.describe('TACKLE and quick shot (PR D)', () => {
 
   test('TACKLE commits one standing tackle on the feet, then recovers to ready', async ({ page }, info) => {
     const errors = trackConsoleErrors(page);
-    await open(page, modeFor(info), '&setup=tackle&simRate=0.2');
+    await open(page, modeFor(info), '&setup=tackle');
+    await waitFor(page, (r) => r.pad.available?.tackle === true);
+    await slowSim(page, 0.2);
     const ready = await waitFor(page, (r) => r.pad.available?.tackle === true);
     const seq = lastSeq(ready);
     await pressElement(page, 'pad-tackle', modeFor(info));
@@ -226,7 +237,9 @@ test.describe('TACKLE and quick shot (PR D)', () => {
 
   test('a single SHOOT tap shoots the ordinary shot; a double tap shoots one quick shot', async ({ page }, info) => {
     const errors = trackConsoleErrors(page);
-    await open(page, modeFor(info), '&setup=space&simRate=0.2');
+    await open(page, modeFor(info), '&setup=space');
+    await waitFor(page, (x) => x.pad.available?.shoot === true);
+    await slowSim(page, 0.2);
     let r = await waitFor(page, (x) => x.pad.available?.shoot === true);
     let seq = lastSeq(r);
     await pressElement(page, 'pad-shoot', modeFor(info));
@@ -236,7 +249,9 @@ test.describe('TACKLE and quick shot (PR D)', () => {
     expect(mine(r, seq, 'shot').map((e) => e.detail.startsWith('quick'))).toEqual([false]);
 
     await page.goto('about:blank');
-    await open(page, modeFor(info), '&setup=space&simRate=0.2');
+    await open(page, modeFor(info), '&setup=space');
+    await waitFor(page, (x) => x.pad.available?.shoot === true);
+    await slowSim(page, 0.2);
     r = await waitFor(page, (x) => x.pad.available?.shoot === true);
     seq = lastSeq(r);
     // Two taps back to back at the same spot. Headless frames are slow (CI runners far more), so nothing waits
