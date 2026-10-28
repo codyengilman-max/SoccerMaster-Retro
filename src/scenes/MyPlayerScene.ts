@@ -673,6 +673,7 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
       tasks: tasks.map((t) => ({ key: t.key, done: t.done })), next: tasks.find((t) => !t.done)?.key ?? null, team: this.teamStatus(),
       contentHeight: this.contentH, scrollY: this.cameras.main.scrollY,
       bonus: this.save ? { points: balance(this.save.bonus), awards: [...this.save.bonus.awards] } : null,
+      attributes: this.save?.player ? { ...this.save.player.attributes } : null, bonusNote: this.bonusNote,
       homeNote: this.homeNote, homeLogs: this.save?.homeLogs.length ?? 0,
       mastery: this.save ? HOME_SKILLS.map((k) => masteryLines(this.save!.homeLogs, k).progress).map((g) => ({ skill: g.skill, phase: g.phase, qualifying: g.qualifying, best: g.personalBest })) : [],
     };
