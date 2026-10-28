@@ -70,6 +70,8 @@ test('formation picker -> 9v9 sandbox: 18 players, chosen formation, HUD fits, o
 });
 
 test('pause -> change formation keeps identities, ball and positions; resume reorganizes without teleporting', async ({ page }, info) => {
+  // Phone runs already take 45-57 s on the CI runner; give the slower desktop run headroom (no assertion changes).
+  test.setTimeout(120_000);
   const errors = trackConsoleErrors(page);
   const mode = modeFor(info);
   await openSandbox(page, mode);
