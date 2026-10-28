@@ -107,28 +107,30 @@ export class ContributionTracker {
   }
 
   private step(e: MatchEvent): void {
+    // A keeper's distribution is a pass; a block of a travelling ball is a deflection touch.
+    const type = e.type === 'distributed' ? 'pass' : e.type === 'deflect' ? 'deflected' : e.type;
     this.expire(e.at);
-    if (e.type === 'goal') this.goal(e);
-    if (e.type === 'foul' && e.by) for (const s of this.slides) if (s.by === e.by) s.dirty = true;
-    if (STOP.has(e.type)) return this.reset();
+    if (type === 'goal') this.goal(e);
+    if (type === 'foul' && e.by) for (const s of this.slides) if (s.by === e.by) s.dirty = true;
+    if (STOP.has(type)) return this.reset();
     const by = e.by;
     const team = this.team(by);
     if (!by || !team) return;
-    if (e.type === 'slide') return this.slide(e, by, team);
-    if (!TOUCH.has(e.type) && e.type !== 'dribble') return;
+    if (type === 'slide') return this.slide(e, by, team);
+    if (!TOUCH.has(type) && type !== 'dribble') return;
     // Any touch by someone other than the open chain's receiver ends that chain.
     for (const [t, o] of [...this.open]) if (o.receiver !== by) this.open.delete(t);
-    if (GAIN.has(e.type)) this.gain(e, by, team);
-    if (e.type === 'pass') {
+    if (GAIN.has(type)) this.gain(e, by, team);
+    if (type === 'pass') {
       this.pendingPass = { passer: by, team };
       this.kick = { by, team, pass: true };
-    } else if (e.type === 'shot') {
+    } else if (type === 'shot') {
       this.pendingPass = null;
       this.kick = { by, team, pass: false };
-    } else if (e.type === 'deflected') {
+    } else if (type === 'deflected') {
       if (this.pendingPass && this.pendingPass.passer !== by) this.pendingPass = null;
       if (this.kick && this.kick.pass && this.kick.team !== team && !this.cut && !this.slides.some((s) => s.team === team)) this.cut = { by, team, at: e.at };
-    } else if (e.type === 'parried') {
+    } else if (type === 'parried') {
       this.pendingPass = null;
     }
   }

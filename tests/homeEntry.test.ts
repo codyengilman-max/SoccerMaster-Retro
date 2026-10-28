@@ -30,4 +30,26 @@ describe('home score entry', () => {
     expect(feedbackLine(r.save.homeLogs, 'h1')).toEqual({ kind: 'first', text: expect.stringContaining('Recorded Juggling Phase 1: 3, 4, 2.') });
     expect(masteryLines(r.save.homeLogs, 'juggling').lines[3]).toBe('To advance: 1 more qualifying session at this phase.');
   });
+  it('a downward correction of an old entry never takes away a phase already practised at', () => {
+    const r0 = reduce(emptySave(), { type: 'createPlayer', id: 'p', name: 'Kid', position: 'DEF' });
+    if (!r0.ok) throw new Error(r0.error);
+    let s = r0.save;
+    const hit = (ph: 1 | 2) => {
+      const sp = specFor('juggling', ph)!;
+      const v = { value: sp.target, ...(sp.of !== undefined ? { of: sp.of } : {}) };
+      return [v, v, v];
+    };
+    let at = 0;
+    for (const ph of [1, 1, 2, 2] as const) {
+      const sp = specFor('juggling', ph)!;
+      const r = reduce(s, { type: 'homeLog', log: { id: `j${++at}`, week: 1, skill: 'juggling', phase: ph, activityId: sp.activityIds[0]!, variation: sp.variation, foot: null, source: 'self-reported', attempts: hit(ph), at, confirmed: false, revision: 0 } });
+      if (!r.ok) throw new Error(r.error);
+      s = r.save;
+    }
+    expect(masteryLines(s.homeLogs, 'juggling').progress.phase).toBe(3);
+    const c = reduce(s, { type: 'homeCorrect', id: 'j1', attempts: [{ value: 0 }, { value: 0 }, { value: 0 }] });
+    if (!c.ok) throw new Error(c.error);
+    expect(c.save.homeLogs).toHaveLength(4);
+    expect(masteryLines(c.save.homeLogs, 'juggling').progress.phase).toBe(3);
+  });
 });

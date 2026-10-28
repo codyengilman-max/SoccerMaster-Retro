@@ -23,6 +23,14 @@ describe('assists', () => {
   it('keeps the window configurable', () => {
     expect(get(run([...chain(), ev('goal', 6, 'h2', 'home scored')], { windowSeconds: 6, recoverySeconds: 2 }), 'h1').assists).toBe(1);
   });
+  it('ends the chain when an opponent blocks the ball, even if it returns to the receiver', () => {
+    const t = run([...chain(), ev('shot', 2, 'h2'), ev('deflect', 2.1, 'a2', '9.0'), ev('received', 2.5, 'h2'), ev('goal', 3, 'h2', 'home scored')]);
+    expect(get(t, 'h1').assists).toBe(0);
+  });
+  it("credits a keeper's distribution like any pass", () => {
+    const t = run([ev('distributed', 0, 'h1', 'h2 outlet'), ev('received', 1, 'h2'), ev('dribble', 2, 'h2'), ev('goal', 3, 'h2', 'home scored')]);
+    expect(get(t, 'h1').assists).toBe(1);
+  });
   it('lets the receiver take dribbling touches before scoring', () => {
     const t = run([...chain(), ev('dribble', 2, 'h2'), ev('dribble', 2.5, 'h2'), ev('shot', 3, 'h2'), ev('goal', 3.3, 'h2', 'home scored')]);
     expect(get(t, 'h1').assists).toBe(1);

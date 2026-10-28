@@ -125,13 +125,20 @@ export interface SkillProgress {
   readonly struggling: boolean;
 }
 
-/** Replay the logs in order. Every skill starts at Phase 1; only qualifying sessions move it, nothing moves it back. */
+/** Replay the logs in order. Every skill starts at Phase 1; only qualifying sessions move it, nothing moves it back (corrections included). */
 export function skillProgress(logs: readonly HomeLog[], skill: HomeSkillId): SkillProgress {
   let phase: Phase = 1;
   let qual = 0;
   let misses = 0;
   const mine = logs.filter((l) => l.skill === skill).slice().sort((a, b) => a.at - b.at || (a.id < b.id ? -1 : 1));
   for (const l of mine) {
+    // Entries can only be logged at the phase reached at the time, so a later entry keeps that phase earned
+    // even if an earlier score is corrected down.
+    if (l.phase > phase) {
+      phase = l.phase;
+      qual = 0;
+      misses = 0;
+    }
     const spec = specFor(skill, phase)!;
     if (l.phase !== phase) continue;
     if (qualifies(spec, l)) {
