@@ -18,6 +18,34 @@ export const CAMERA_VIEW = {
   perspective: 0.3,
 } as const;
 
+/**
+ * Regular-match elevated sideline broadcast view (owner spec 2026-10-29): pitch length horizontal, camera always on
+ * the same touchline, higher than the close ball camera so passing lanes and defensive spacing read, fixed zoom.
+ * Training, Jungle Ball and other modes keep CAMERA_VIEW.
+ */
+export const SIDELINE_VIEW = {
+  landscapeLength: 44,
+  /** Depth foreshortening (screen yards per world yard across); higher = more elevated. */
+  landscapeTilt: 0.62,
+  perspective: 0.16,
+  /** Yards past each goal line the view may reach, so the whole goal and its depth stay framed. */
+  goalRunoff: 4,
+} as const;
+
+/** Sideline camera tuning: a small central dead zone, modest slow look-ahead, gentle follow (no snapping). */
+export const SIDELINE_TUNING = {
+  lookAhead: 4,
+  lookRate: 0.9,
+  followRate: 3.2,
+  crossRate: 2.6,
+  ballLead: 0.3,
+  ballLeadMax: 4,
+  turnHold: 0.5,
+  maxDt: 0.1,
+  deadZoneX: 2,
+  deadZoneY: 1.5,
+} as const;
+
 /** Visible span in yards: pitch length in landscape, pitch width (across) in portrait. */
 export function viewSpan(orientation: 'landscape' | 'portrait'): number {
   return orientation === 'landscape' ? CAMERA_VIEW.landscapeLength : CAMERA_VIEW.portraitCross;
@@ -67,6 +95,8 @@ const finite = (p: CamPoint | null): p is CamPoint => p !== null && Number.isFin
 const clamp = (v: number, lo: number, hi: number): number => (lo > hi ? (lo + hi) / 2 : Math.min(hi, Math.max(lo, v)));
 
 /** Ball-focused dribbling camera for the 9v9 match: pure, frame-rate independent (exponential smoothing). */
+export type CameraTuning = { readonly [K in keyof typeof CAMERA_TUNING]: number } & { readonly deadZoneX?: number; readonly deadZoneY?: number };
+
 export class CameraController {
   x: number;
   y: number;
@@ -78,7 +108,7 @@ export class CameraController {
 
   constructor(
     start: CamPoint,
-    readonly tuning: typeof CAMERA_TUNING = CAMERA_TUNING,
+    readonly tuning: CameraTuning = CAMERA_TUNING,
   ) {
     this.x = start.x;
     this.y = start.y;
@@ -128,8 +158,10 @@ export class CameraController {
         x: clamp(t.x, bounds.minX, bounds.maxX),
         y: clamp(t.y, bounds.minY, bounds.maxY),
       };
-    this.x += (t.x - this.x) * (1 - Math.exp(-T.followRate * dt));
-    this.y += (t.y - this.y) * (1 - Math.exp(-T.crossRate * dt));
+    // Dead zone: small offsets inside it leave the camera still; beyond it only the excess is followed.
+    const dz = (d: number, z: number | undefined): number => (!z ? d : Math.abs(d) <= z ? 0 : d - Math.sign(d) * z);
+    this.x += dz(t.x - this.x, T.deadZoneX) * (1 - Math.exp(-T.followRate * dt));
+    this.y += dz(t.y - this.y, T.deadZoneY) * (1 - Math.exp(-T.crossRate * dt));
     if (bounds) this.clampTo(bounds);
     return { x: this.x, y: this.y };
   }

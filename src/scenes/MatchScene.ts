@@ -22,7 +22,10 @@ import { shouldExposeDebug } from '../debug/diagnostics';
 import {
   CameraController,
   clampFocus,
+  CAMERA_TUNING,
   CAMERA_VIEW,
+  SIDELINE_TUNING,
+  SIDELINE_VIEW,
   viewSpan,
   type CameraBounds,
   type CameraMode,
@@ -288,7 +291,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.lastSeq = 0;
     this.startCareer(data.career === true && !this.labId && !teamTraining);
     this.startTeamTraining(teamTraining, params);
-    this.camera = new CameraController(this.sim.state.ball.pos);
+    this.camera = new CameraController(this.sim.state.ball.pos, this.sideline() ? SIDELINE_TUNING : CAMERA_TUNING);
     this.snapCamera();
     this.pad = new PadHud(this, this.scale.width, this.scale.height);
     this.padIds = 0;
@@ -1701,6 +1704,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     return { ...f, bounds: { ...f.bounds, minX, maxX } };
   }
 
+  /** Regular league, tournament and exhibition play uses the elevated sideline broadcast view; Team Training and Lab scenarios keep theirs. */
+  private sideline(): boolean {
+    return !this.team && !this.labId;
+  }
+
   private frameFull(): {
     portrait: boolean;
     insets: Insets;
@@ -1715,9 +1723,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     if (!portrait) {
       // Landscape: an angled follow camera; the compact HUD floats over the pitch.
       const available = Math.max(1, width - insets.left - insets.right);
-      const len = viewSpan('landscape') / (this.team ? TEAM_TRAINING_ZOOM : 1);
+      const side = this.sideline();
+      const len = side ? SIDELINE_VIEW.landscapeLength : viewSpan('landscape') / (this.team ? TEAM_TRAINING_ZOOM : 1);
+      const runoff = side ? SIDELINE_VIEW.goalRunoff : 3;
       const availH = Math.max(1, height - insets.top - insets.bottom);
-      const hv = Math.min(P.width + 6, (len * availH) / (available * SIDELINE_SQUASH));
+      const hv = Math.min(P.width + 6, (len * availH) / (available * (side ? SIDELINE_VIEW.landscapeTilt : SIDELINE_SQUASH)));
       // Run-off margins keep a touchline player clear of the floating HUD (top) and the tip line (bottom).
       const yardsPerPx = hv / availH;
       const top = Math.max(3, (HUD_HEIGHT + EDGE + 12) * yardsPerPx);
@@ -1729,8 +1739,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         len,
         cross: hv,
         bounds: {
-          minX: len / 2 - 3,
-          maxX: P.length + 3 - len / 2,
+          minX: len / 2 - runoff,
+          maxX: P.length + runoff - len / 2,
           minY: fullY ? P.width / 2 : hv / 2 - top,
           maxY: fullY ? P.width / 2 : P.width + bottom - hv / 2,
         },
@@ -1772,11 +1782,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       },
       f.insets,
       0,
-      f.portrait ? 1 : SIDELINE_SQUASH,
+      f.portrait ? 1 : this.sideline() ? SIDELINE_VIEW.landscapeTilt : SIDELINE_SQUASH,
     );
     // Low camera: perspective anchored on the camera focus (the ball), scaled to the view height.
     const availH = Math.max(1, height - f.insets.top - f.insets.bottom);
-    this.pitchLayout = withPerspective(this.pitchLayout, toScreen(this.pitchLayout, c), CAMERA_VIEW.perspective / (availH / 2));
+    this.pitchLayout = withPerspective(this.pitchLayout, toScreen(this.pitchLayout, c), (!f.portrait && this.sideline() ? SIDELINE_VIEW.perspective : CAMERA_VIEW.perspective) / (availH / 2));
   }
 
   /** On-screen part of the pitch (the follow camera crops it). */
