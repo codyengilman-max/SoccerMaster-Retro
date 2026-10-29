@@ -143,11 +143,27 @@ export class VenueLayer {
   draw(L: PitchLayout, length: number, width: number, bodyH: number, view: { width: number; height: number }): void {
     this.ensureObjects();
     if (this.mesh) {
+      const m = this.mesh;
       const g = groundMesh(L, length, width);
-      const xy = g.xy.map((v, i) => (i % 2 === 0 ? v : -v));
-      this.mesh.clear();
-      this.mesh.addVertices(xy, g.uv, g.idx);
-      this.mesh.setOrtho(this.mesh.width, this.mesh.height);
+      if (m.faces.length !== g.idx.length / 3) {
+        m.clear();
+        m.addVertices(g.xy.map((v, i) => (i % 2 === 0 ? v : -v)), g.uv, g.idx);
+        m.setOrtho(m.width, m.height);
+      }
+      // The mesh projects its vertices in preUpdate, which has already run this frame, so place them in screen space
+      // here (ortho(width, height) at the origin maps (x, -y) to (x, y) one-to-one); the grass then never lags or
+      // collapses away from the markings drawn this frame.
+      m.faces.forEach((face, k) => {
+        [face.vertex1, face.vertex2, face.vertex3].forEach((v, n) => {
+          const i = g.idx[k * 3 + n] ?? 0;
+          const x = g.xy[i * 2] ?? 0;
+          const y = g.xy[i * 2 + 1] ?? 0;
+          v.x = x;
+          v.y = -y;
+          v.vx = x;
+          v.vy = y;
+        });
+      });
     }
     const onScreen = (x: number, y: number, m: number): boolean => x > -m && x < view.width + m && y > -m && y < view.height + m * 2;
     for (const v of this.props) {
@@ -188,10 +204,23 @@ export class VenueLayer {
   }
 
   /** Test and diagnostics view. */
-  snapshot(): { id: VenueId; grass: boolean; props: number; actors: number; missing: readonly string[]; anims: Record<string, string> } {
+  snapshot(): {
+    id: VenueId;
+    grass: boolean;
+    grassFaces: number;
+    props: number;
+    actors: number;
+    headTop: number | null;
+    missing: readonly string[];
+    anims: Record<string, string>;
+  } {
+    // Sideline cells put the feet at y 120 with a ~100 px body, so a head sits ~100 cell px above the feet.
+    const heads = this.actors.filter((a) => a.spr?.visible).map((a) => (a.spr?.y ?? 0) - 100 * (a.spr?.scaleY ?? 0));
     return {
       id: this.id,
       grass: !!this.mesh,
+      grassFaces: this.mesh?.totalRendered ?? 0,
+      headTop: heads.length ? Math.min(...heads) : null,
       props: this.props.filter((v) => v.img?.visible).length,
       actors: this.actors.filter((a) => a.spr?.visible).length,
       missing: this.missing,
