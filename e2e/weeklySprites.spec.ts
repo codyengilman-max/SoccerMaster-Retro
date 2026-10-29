@@ -9,7 +9,7 @@ type V2 = readonly [number, number];
 interface Ep { id: string; protagonist_id: string; camera_bounds_m: readonly [number, number, number, number]; actors: { id: string; team: 'H' | 'A'; role: string; position_m: V2 }[]; variants: { id: string; ball_owner: string | null; ball_position_m: V2; actor_overrides: Record<string, V2> }[] }
 const EPISODES = JSON.parse(readFileSync(new URL('../docs/training/all36/package/episodes.json', import.meta.url), 'utf8')) as Ep[];
 interface ArtActor { id: string; team: 'H' | 'A'; role: string; at: V2; sheet: string; frame: number; flip: boolean; action: string; drawn: string; feet: { x: number; y: number }; me: boolean }
-interface Art { set: string; look: string; field: { x: number; y: number; width: number; height: number }; camera: readonly [number, number, number, number]; scale: number; bodyPx: number; actors: ArtActor[]; ball: { at: V2; x: number; y: number; size: number } | null; you: { x: number; y: number; width: number; height: number } | null }
+interface Art { set: string; look: string; field: { x: number; y: number; width: number; height: number }; camera: readonly [number, number, number, number]; view: { s: number; ox: number; oy: number; head: number }; scale: number; bodyPx: number; actors: ArtActor[]; ball: { at: V2; x: number; y: number; size: number } | null; you: { x: number; y: number; width: number; height: number } | null }
 interface Weekly { screen: string; assignment: { week: number; category: string; situationId: string; variant: string } | null; options: { id: string; grade: string }[]; verdict: unknown; bodyText: string; saved: string; progress: { completed: boolean; credited: boolean; best: string | null; runs: number } | null; buttonsTop: number | null; art: Art | null }
 
 async function weekly(page: Page, pred: (w: Weekly) => boolean, what: string): Promise<Weekly> {
@@ -101,9 +101,13 @@ function checkArt(w: Weekly, gender: 'boy' | 'girl', buttons: Record<string, { x
   expect(art.look).toBe(gender);
   expect(art.actors.map((a) => a.id)).toEqual(e.actors.map((a) => a.id));
   const b = e.camera_bounds_m;
-  const s = Math.min(art.field.width / (b[2] - b[0]), art.field.height / (b[3] - b[1]));
-  const ox = art.field.x + (art.field.width - (b[2] - b[0]) * s) / 2;
-  const oy = art.field.y + (art.field.height - (b[3] - b[1]) * s) / 2;
+  // One uniform scale for the whole picture (tactical geometry unchanged), never larger than the plain fit; it only
+  // shrinks to leave headroom for a body standing on the far edge, and the picture stays centred across the box.
+  const { s, ox, oy } = art.view;
+  expect(s).toBeLessThanOrEqual(Math.min(art.field.width / (b[2] - b[0]), art.field.height / (b[3] - b[1])) + 1e-9);
+  expect(ox).toBeCloseTo(art.field.x + (art.field.width - (b[2] - b[0]) * s) / 2, 6);
+  expect(oy).toBeGreaterThanOrEqual(art.field.y - 1e-6);
+  expect(oy + (b[3] - b[1]) * s).toBeLessThanOrEqual(art.field.y + art.field.height + 1e-6);
   const screen = (p: V2) => ({ x: ox + (p[0] - b[0]) * s, y: oy + (b[3] - p[1]) * s });
   const sheets = new Set<string>();
   for (const a of art.actors) {
@@ -117,6 +121,8 @@ function checkArt(w: Weekly, gender: 'boy' | 'girl', buttons: Record<string, { x
     expect(a.feet.x).toBeLessThanOrEqual(art.field.x + art.field.width + 0.5);
     expect(a.feet.y).toBeGreaterThanOrEqual(art.field.y - 0.5);
     expect(a.feet.y).toBeLessThanOrEqual(art.field.y + art.field.height + 0.5);
+    // The whole standing body is inside the pitch display and its clip (a keeper on the far goal line keeps its head).
+    expect(a.feet.y - art.bodyPx, `${a.id} head`).toBeGreaterThanOrEqual(Math.max(art.field.y, oy - art.view.head) - 0.5);
     if (a.me) expect(a.sheet).toBe(gender);
     else if (pa.role === 'GK') expect(a.sheet).toBe(pa.team === 'H' ? 'keeper_home' : 'keeper_away');
     else expect(a.sheet).toMatch(pa.team === 'H' ? /^teammate_0[1-7]$/ : /^opponent_0[1-8]$/);

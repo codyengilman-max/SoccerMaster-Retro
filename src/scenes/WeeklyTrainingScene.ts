@@ -218,12 +218,30 @@ export class WeeklyTrainingScene extends Phaser.Scene implements InspectableScen
   }
 
   /** Metres to screen: the package camera bounds fitted into the field box, home attacking up the screen (+y). */
-  private view(): { s: number; ox: number; oy: number; b: readonly [number, number, number, number] } {
+  private view(): { s: number; ox: number; oy: number; b: readonly [number, number, number, number]; head: number } {
     const b = this.episode?.camera_bounds_m ?? [0, 0, 45.72, 68.58];
-    const s = Math.min(this.field.width / (b[2] - b[0]), this.field.height / (b[3] - b[1]));
-    const ox = this.field.x + (this.field.width - (b[2] - b[0]) * s) / 2;
-    const oy = this.field.y + (this.field.height - (b[3] - b[1]) * s) / 2;
-    return { s, ox, oy, b };
+    const bw = b[2] - b[0];
+    const bh = b[3] - b[1];
+    const { width: fw, height: fh } = this.field;
+    // Headroom above the far edge for a body whose feet stand near it (a keeper on the goal line), kept inside the
+    // field box: the picture shrinks uniformly only when the centred letterbox can't fit that head.
+    const e = this.episode;
+    const v = this.variant;
+    const ys = e ? e.actors.map((a) => (v?.actor_overrides[a.id] ?? a.position_m)[1]) : [];
+    const headAt = (k: number) => Math.max(0, ...ys.map((y) => targetBody(k) + 2 - (b[3] - y) * k));
+    let s = Math.min(fw / bw, fh / bh);
+    let head = headAt(s);
+    if (head > (fh - bh * s) / 2) {
+      // Each pass shrinks the scale, which shrinks the needed headroom; keep the headroom the final scale was fitted to.
+      for (let i = 0; i < 3; i++) {
+        s = Math.min(fw / bw, (fh - head) / bh);
+        if (i < 2) head = Math.max(headAt(s), 0);
+      }
+    }
+    const ox = this.field.x + (fw - bw * s) / 2;
+    const slack = (fh - bh * s) / 2;
+    const oy = this.field.y + (head > slack ? head + (fh - head - bh * s) / 2 : slack);
+    return { s, ox, oy, b, head };
   }
 
   private toScreen(p: readonly [number, number]): { x: number; y: number } {
@@ -259,7 +277,8 @@ export class WeeklyTrainingScene extends Phaser.Scene implements InspectableScen
     g.lineStyle(4, 0xffffff, 1);
     for (const y of [0, L]) if (y >= b[1] && y <= b[3]) seg([W / 2 - GOAL_WIDTH / 2, y], [W / 2 + GOAL_WIDTH / 2, y]);
     const at = (id: string): readonly [number, number] => v.actor_overrides[id] ?? e.actors.find((x) => x.id === id)!.position_m;
-    this.clip.clear().fillStyle(0xffffff, 1).fillRect(tl.x, tl.y, (b[2] - b[0]) * s, (b[3] - b[1]) * s);
+    const { head } = this.view();
+    this.clip.clear().fillStyle(0xffffff, 1).fillRect(tl.x, tl.y - head, (b[2] - b[0]) * s, (b[3] - b[1]) * s + head);
     // LEARN: the chosen and the best option's ball targets from the package branches (static, not a demonstration).
     // Drawn above the bodies so the lanes stay readable.
     const lanes = this.lanes.clear();
@@ -423,6 +442,7 @@ export class WeeklyTrainingScene extends Phaser.Scene implements InspectableScen
             look: this.look,
             field: { ...this.field },
             camera: this.episode.camera_bounds_m,
+            view: (({ s, ox, oy, head }) => ({ s, ox, oy, head }))(this.view()),
             scale: ttScale(this.view().s),
             bodyPx: targetBody(this.view().s),
             actors: this.poses.map((q) => ({ id: q.id, team: q.team, role: q.role, at: q.at, sheet: q.sheet, frame: q.frame, flip: q.flip, action: q.action, drawn: q.drawn, feet: q.feet, me: q.id === this.episode!.protagonist_id })),
