@@ -4,7 +4,7 @@ import { diagnostics, pressElement as pressAny, trackConsoleErrors, waitForScene
 test.describe.configure({ timeout: 300_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 type Rect = { x: number; y: number; width: number; height: number };
-type Teach = { pose: string; foot: 'right' | 'left'; phase: number; step: number; contact: string; boot: { x: number; y: number }; zoomBall: boolean; t: number };
+type Teach = { pose: string; foot: 'right' | 'left'; phase: number; step: number; contact: string; boot: { x: number; y: number }; zoomBall: boolean; t: number; ground: number };
 type Demo = { teach?: Teach; set: string; frame: string; contact: string; player: Rect; ball: { x: number; y: number }; rect: Rect; inset?: { foot: string; contact: string; label: string; rect: Rect; ball: Rect; text: Rect }; paused?: boolean; speed?: number };
 type Career = { screen: string; week: number; credit: number; journal: number; player: string | null; status: string; text: string; plan: string[]; attributes: Record<string, number> | null; demo: Demo | null };
 
@@ -109,9 +109,11 @@ for (const gender of ['boy', 'girl'] as const) {
         c = await until(page, (x) => x.demo!.teach!.phase !== ph, 'step to start');
       }
       c = await until(page, (x) => x.demo?.paused === true && x.demo.teach!.phase === 0, 'paused at start');
+      const ground = c.demo!.teach!.ground;
       for (let i = 0; i < 4; i++) {
         const d = c.demo!;
         const t = d.teach!;
+        expect(t.ground, `ground line fixed (${foot} beat ${i})`).toBeCloseTo(ground, 3);
         expect(t.phase, `${foot} phase`).toBe(i);
         expect(t.pose).toBe(POSES[foot][i]);
         expect(d.inset!.label.startsWith(foot === 'right' ? 'Right foot' : 'Left foot')).toBe(true);

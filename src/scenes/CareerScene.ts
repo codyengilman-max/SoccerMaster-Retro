@@ -105,7 +105,9 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private demoZoomBall!: Phaser.GameObjects.Graphics;
   private teachFoot: TeachFoot = 'right';
   private teachTips = false;
-  private demoInfo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number }; inset?: { foot: string | null; contact: string; label: string; rect: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number; width: number; height: number }; text: { x: number; y: number; width: number; height: number } }; teach?: { pose: string; foot: TeachFoot; phase: number; step: number; contact: string; boot: { x: number; y: number }; zoomBall: boolean; t: number }; paused?: boolean; speed?: number } | null = null;
+  /** Tallest step caption for the current stage width, so the ground line never moves when a caption wraps. */
+  private teachCap = { key: '', h: 0 };
+  private demoInfo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number }; inset?: { foot: string | null; contact: string; label: string; rect: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number; width: number; height: number }; text: { x: number; y: number; width: number; height: number } }; teach?: { pose: string; foot: TeachFoot; phase: number; step: number; contact: string; boot: { x: number; y: number }; zoomBall: boolean; t: number; ground: number }; paused?: boolean; speed?: number } | null = null;
   private demoInset: Phaser.GameObjects.Text | null = null;
   private title!: Phaser.GameObjects.Text;
   private body!: Phaser.GameObjects.Text;
@@ -1141,8 +1143,15 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     const fr = teachingFrame(lesson, this.demoT, this.teachFoot);
     const cell = sheet.frames[fr.pose];
     if (!this.demoCaption?.active) this.demoCaption = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: CSS.ink, fontStyle: 'bold' }).setOrigin(0.5, 1).setResolution(textResolution());
-    this.demoCaption.setFontSize(Math.round(Math.max(12, Math.min(unit * 0.45, 16)))).setWordWrapWidth(r.w - 16).setPosition(r.x + r.w / 2, r.y + r.h - 4).setText(fr.caption).setVisible(true);
-    const footY = r.y + r.h - this.demoCaption.displayHeight - 12;
+    const capFs = Math.round(Math.max(12, Math.min(unit * 0.45, 16)));
+    this.demoCaption.setFontSize(capFs).setWordWrapWidth(r.w - 16).setPosition(r.x + r.w / 2, r.y + r.h - 4);
+    const capKey = `${lesson.activityId}|${r.w}|${capFs}`;
+    if (this.teachCap.key !== capKey) {
+      const h = Math.max(...phaseStarts(lesson).map((t0) => this.demoCaption!.setText(teachingFrame(lesson, t0, this.teachFoot).caption).displayHeight));
+      this.teachCap = { key: capKey, h };
+    }
+    this.demoCaption.setText(fr.caption).setVisible(true);
+    const footY = r.y + r.h - this.teachCap.h - 12;
     // Same on-the-spot training scale as the other lesson demos, normalised by visible body height (not PNG size).
     const bodyH = Math.min((footY - r.y - 12) / (1 + DEMO_BALL_PEAK * 0.55 - 0.9), r.w * 0.32);
     const s = bodyH / sheet.visibleHeight;
@@ -1198,7 +1207,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       set: `bm1:${sex}`, frame: fr.pose, flip: false, contact: fr.contact, scale: { x: this.demoImg.scaleX, y: this.demoImg.scaleY },
       player: { x: ib.x, y: ib.y, width: ib.width, height: ib.height }, ball: { x: bx, y: by }, rect: { x: r.x, y: r.y, width: r.w, height: r.h },
       inset: { foot: fr.foot, contact: fr.contact, label, rect: { x, y, width: w, height: h }, ball: zoomBall ? { x: zbx - zbr, y: zby - zbr, width: zbr * 2, height: zbr * 2 } : { x: x + 4, y: y + 4, width: 0, height: 0 }, text: { x: lb.x, y: lb.y, width: lb.width, height: lb.height } },
-      teach: { pose: fr.pose, foot: fr.foot, phase: fr.phase, step: fr.step, contact: fr.contact, boot, zoomBall, t: this.demoT },
+      teach: { pose: fr.pose, foot: fr.foot, phase: fr.phase, step: fr.step, contact: fr.contact, boot, zoomBall, t: this.demoT, ground: footY },
       paused: this.demoPaused, speed: this.demoSpeed,
     };
     return true;
