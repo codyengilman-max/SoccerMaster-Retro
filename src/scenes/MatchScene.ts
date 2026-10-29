@@ -1763,9 +1763,14 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         // the camera only pans along the length; depth foreshortening follows from the screen shape.
         const top = SIDELINE_VIEW.farStrip;
         const bottom = SIDELINE_VIEW.nearStrip;
-        const hvS = P.width + top + bottom;
+        // Perspective (anchored mid-screen) stretches the near half and shrinks the far half, so the linear view is
+        // sized and centred so both strips land exactly on the screen edges after projection.
+        const e = SIDELINE_VIEW.perspective;
+        const up = 0.5 / (1 - e);
+        const down = 0.5 / (1 + e);
+        const hvS = (P.width + top + bottom) / (up + down);
         this.sideSquash = Math.min(1, (len * availH) / (available * hvS));
-        const cy = (P.width + bottom - top) / 2;
+        const cy = hvS * up - top;
         return { portrait, insets, len, cross: hvS, bounds: { minX: len / 2 - runoff, maxX: P.length + runoff - len / 2, minY: cy, maxY: cy } };
       }
       const hv = Math.min(P.width + 6, (len * availH) / (available * SIDELINE_SQUASH));

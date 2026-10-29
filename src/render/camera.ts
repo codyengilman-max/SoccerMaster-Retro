@@ -31,7 +31,7 @@ export const SIDELINE_VIEW = {
   /** Yards past each goal line the view may reach, so the whole goal and its depth stay framed. */
   goalRunoff: 4,
   /** Yards beyond the far touchline (sideline scenery) and the near touchline kept in view. */
-  farStrip: 9,
+  farStrip: 13,
   nearStrip: 7.5,
 } as const;
 
@@ -156,10 +156,13 @@ export class CameraController {
       this.look += (this.dir * T.lookAhead - this.look) * (1 - Math.exp(-T.lookRate * dt));
     }
     let t = this.target(input);
+    // Targets may sit a dead zone past the limits so the camera still settles on a limit (goal fully framed).
+    const zx = T.deadZoneX ?? 0;
+    const zy = T.deadZoneY ?? 0;
     if (bounds)
       t = {
-        x: clamp(t.x, bounds.minX, bounds.maxX),
-        y: clamp(t.y, bounds.minY, bounds.maxY),
+        x: clamp(t.x, bounds.minX - zx, bounds.maxX + zx),
+        y: clamp(t.y, bounds.minY - zy, bounds.maxY + zy),
       };
     // Dead zone: small offsets inside it leave the camera still; beyond it only the excess is followed.
     const dz = (d: number, z: number | undefined): number => (!z ? d : Math.abs(d) <= z ? 0 : d - Math.sign(d) * z);
