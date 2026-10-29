@@ -4,7 +4,7 @@ import { diagnostics, pressElement as pressAny, trackConsoleErrors, waitForScene
 test.describe.configure({ timeout: 300_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 type Rect = { x: number; y: number; width: number; height: number };
-type Demo = { set: string; frame: string; contact: string; player: Rect; ball: { x: number; y: number }; rect: Rect; inset?: { foot: string; contact: string; label: string; rect: Rect }; paused?: boolean; speed?: number };
+type Demo = { set: string; frame: string; contact: string; player: Rect; ball: { x: number; y: number }; rect: Rect; inset?: { foot: string; contact: string; label: string; rect: Rect; ball: Rect; text: Rect }; paused?: boolean; speed?: number };
 type Career = { screen: string; week: number; credit: number; journal: number; player: string | null; status: string; text: string; plan: string[]; attributes: Record<string, number> | null; demo: Demo | null };
 
 const career = async (page: Page) => (await diagnostics(page)).gameplay as Career;
@@ -128,6 +128,16 @@ for (const gender of ['boy', 'girl'] as const) {
       await page.waitForTimeout(300);
       const d = (await until(page, (x) => !!x.demo?.inset, 'viewer after resize')).demo!;
       expect(within(d.inset!.rect, d.rect), 'inset inside stage').toBe(true);
+      // Every pose: the inset ball stays inside the inset and never overlaps its label.
+      const contacts = new Set<string>();
+      for (let i = 0; i < 12; i++) {
+        const x = (await career(page)).demo!.inset!;
+        contacts.add(x.contact);
+        expect(within(x.ball, x.rect), `inset ball inside inset (${x.contact})`).toBe(true);
+        expect(x.ball.y + x.ball.height <= x.text.y + 0.5 || x.ball.x >= x.text.x + x.text.width || x.ball.x + x.ball.width <= x.text.x, `inset ball clear of label (${x.contact})`).toBe(true);
+        await page.waitForTimeout(250);
+      }
+      expect(contacts.size, 'saw several contacts').toBeGreaterThan(1);
       await page.screenshot({ path: `test-results/bm-viewer-${gender}-${size.width}x${size.height}.png` });
       const seen: Record<string, Rect> = {};
       for (let i = 0; i < 4; i++) {

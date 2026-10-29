@@ -97,7 +97,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private demoArt!: PlayerArt;
   private demoImg!: Phaser.GameObjects.Image;
   private demoBall!: Phaser.GameObjects.Graphics;
-  private demoInfo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number }; inset?: { foot: string; contact: string; label: string; rect: { x: number; y: number; width: number; height: number } }; paused?: boolean; speed?: number } | null = null;
+  private demoInfo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number }; inset?: { foot: string | null; contact: string; label: string; rect: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number; width: number; height: number }; text: { x: number; y: number; width: number; height: number } }; paused?: boolean; speed?: number } | null = null;
   private demoInset: Phaser.GameObjects.Text | null = null;
   private title!: Phaser.GameObjects.Text;
   private body!: Phaser.GameObjects.Text;
@@ -1017,7 +1017,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private demoCaption: Phaser.GameObjects.Text | null = null;
 
   /** Foot detail: a close view of the active foot and the ball, with the authored contact named. */
-  private drawFootInset(foot: 'left' | 'right', contact: string, fs: number): void {
+  private drawFootInset(foot: 'left' | 'right' | null, contact: string, fs: number): void {
     const r = this.demoRect!;
     const w = Math.max(84, Math.min(r.w * 0.3, 150));
     const h = Math.max(64, Math.min(r.h * 0.5, 104));
@@ -1026,22 +1026,30 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     const g = this.demoBall;
     g.fillStyle(PALETTE.cream, 0.95).fillRoundedRect(x, y, w, h, 8);
     g.lineStyle(2, PALETTE.ink, 1).strokeRoundedRect(x, y, w, h, 8);
+    // Name a foot only where the lesson authors one; otherwise show the contact surface alone.
+    const surface = contact === 'none' ? 'no contact' : contact === 'catch' ? 'hands' : `${contact} of the foot`;
+    const label = foot ? `${foot === 'left' ? 'Left' : 'Right'} foot · ${surface}` : surface.charAt(0).toUpperCase() + surface.slice(1);
+    if (!this.demoInset?.active) this.demoInset = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: CSS.ink, fontStyle: 'bold', align: 'center' }).setOrigin(0.5, 1).setResolution(textResolution());
     const cx = x + w / 2;
-    const cy = y + h * 0.42;
+    this.demoInset.setFontSize(Math.round(Math.min(fs, 13))).setWordWrapWidth(w - 8).setPosition(cx, y + h - 3).setText(`Foot detail\n${label}`).setVisible(true).setDepth(3);
+    const labelTop = y + h - 3 - this.demoInset.displayHeight;
+    // Foot and ball share the space above the label; the no-contact ball sits below the foot but never reaches the label.
+    const top = y + 4;
+    const room = Math.max(8, labelTop - 3 - top);
     const fw = w * 0.42;
-    const fh = h * 0.2;
+    const fh = Math.min(h * 0.2, room * 0.3);
+    const br = Math.min(h * 0.13, room * 0.2);
+    const cy = top + Math.max(br + fh * 0.6, room * 0.38);
     const side = foot === 'left' ? -1 : 1;
-    const br = h * 0.13;
-    const off: Record<string, [number, number]> = { inside: [-side * (fw * 0.5 + br), 0], outside: [side * (fw * 0.5 + br), 0], sole: [0, fh * 0.2], laces: [0, -fh - br * 0.6], none: [0, fh + br * 1.6] };
+    const below = Math.min(fh * 0.5 + br + 3, labelTop - 3 - br - cy);
+    const off: Record<string, [number, number]> = { inside: [-side * (fw * 0.5 + br), 0], outside: [side * (fw * 0.5 + br), 0], sole: [0, fh * 0.2], laces: [0, -fh * 0.5 - br * 0.6], none: [side * (fw * 0.5 + br * 0.4), below] };
     const [ox, oy] = off[contact] ?? off.none!;
     g.fillStyle(PALETTE.ink, 1).fillEllipse(cx, cy, fw, fh);
     if (contact === 'sole') g.fillStyle(PALETTE.ink, 0.35).fillEllipse(cx, cy + fh * 0.2, fw * 0.9, fh * 0.9);
     g.fillStyle(0xffffff, 1).fillCircle(cx + ox, cy + oy, br);
     g.lineStyle(2, contact === 'none' ? PALETTE.ink : PALETTE.sun, 1).strokeCircle(cx + ox, cy + oy, br);
-    const label = contact === 'none' ? `${foot === 'left' ? 'Left' : 'Right'} foot · no contact` : `${foot === 'left' ? 'Left' : 'Right'} ${contact}`;
-    if (!this.demoInset?.active) this.demoInset = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: CSS.ink, fontStyle: 'bold', align: 'center' }).setOrigin(0.5, 1).setResolution(textResolution());
-    this.demoInset.setFontSize(Math.round(Math.min(fs, 13))).setWordWrapWidth(w - 8).setPosition(cx, y + h - 3).setText(`Foot detail\n${label}`).setVisible(true).setDepth(3);
-    if (this.demoInfo) this.demoInfo = { ...this.demoInfo, inset: { foot, contact, label, rect: { x, y, width: w, height: h } }, paused: this.demoPaused, speed: this.demoSpeed };
+    const lb = this.demoInset.getBounds();
+    if (this.demoInfo) this.demoInfo = { ...this.demoInfo, inset: { foot, contact, label, rect: { x, y, width: w, height: h }, ball: { x: cx + ox - br, y: cy + oy - br, width: br * 2, height: br * 2 }, text: { x: lb.x, y: lb.y, width: lb.width, height: lb.height } }, paused: this.demoPaused, speed: this.demoSpeed };
   }
 
   /** The created player (saved boy/girl, training kit) demonstrates the exercise; the ball is drawn separately. */
@@ -1070,7 +1078,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     g.lineStyle(2, pose.contact === 'none' ? PALETTE.ink : PALETTE.sun, 1).strokeCircle(bx, by, br);
     const ib = this.demoImg.getBounds();
     this.demoInfo = { set, frame: pose.frame, flip: pose.flip, contact: pose.contact, scale: { x: this.demoImg.scaleX, y: this.demoImg.scaleY }, player: { x: ib.x, y: ib.y, width: ib.width, height: ib.height }, ball: { x: bx, y: by }, rect: { x: r.x, y: r.y, width: r.w, height: r.h } };
-    if (this.isViewer(a)) this.drawFootInset(pose.flip ? 'left' : 'right', pose.contact, Math.max(10, unit * 0.32));
+    if (this.isViewer(a)) this.drawFootInset(pose.foot ?? null, pose.contact, Math.max(10, unit * 0.32));
     else this.demoInset?.setVisible(false);
     if (pose.caption) {
       if (!this.demoCaption?.active) this.demoCaption = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: CSS.ink, fontStyle: 'bold' }).setOrigin(0.5, 1).setResolution(textResolution());

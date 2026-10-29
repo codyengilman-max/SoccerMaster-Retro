@@ -7,7 +7,7 @@ import { ALL_ACTIVITIES, HOME_ACTIVITIES, activityById } from '../src/game/caree
 import { CURRICULUM } from '../src/game/career/curriculum';
 import { SAVE_SCHEMA, emptySave, reduce } from '../src/game/career/state';
 import { SKILL_FAMILIES } from '../src/game/career/types';
-import { demoBeats, demoLength, nextBeat } from '../src/render/art/homeDemo';
+import { demoBeats, demoLength, demoPose, nextBeat } from '../src/render/art/homeDemo';
 
 const PKG = join(__dirname, '../research/training/ball-mastery-designs-v1.0');
 
@@ -78,6 +78,19 @@ describe('Ball Mastery designs v1.0 (review only)', () => {
       let t = 0;
       for (let i = 1; i < b.length; i++) expect((t = nextBeat(b, t, len))).toBe(b[i]);
       expect(nextBeat(b, t, len)).toBe(0);
+    }
+  });
+
+  it('names a working foot only where the lesson authors one, never from travel direction', () => {
+    for (const a of ALL_ACTIVITIES.filter((x) => sectionOf(x) === 'ballMastery')) {
+      for (let t = 0; t < demoLength(a); t += 0.1) {
+        const p = demoPose(a, t);
+        if (a.demo.kind === 'path') expect(p.foot, `${a.id} @${t}`).toBeUndefined();
+        else {
+          const fr = a.demo.frames[Math.floor(t / 1.4) % a.demo.frames.length]!;
+          expect(p.foot, `${a.id} @${t}`).toBe(fr.foot === 'either' ? undefined : fr.foot);
+        }
+      }
     }
   });
 });
