@@ -18,6 +18,14 @@ PRs #52–#56 (owner decisions, tactics comparison, All36 weekly Team Training, 
 
 Verification: Chromium phone emulation and desktop only. Not yet verified on a real iPhone (PR G).
 
+## Regular-match sideline camera and venues (Moving Camera Venues v2, branch `devin/1793305878-sideline-camera`, from `main` b357bb8, not merged, not deployed)
+
+- Landscape regular matches use an elevated sideline view: 44 yd of length, the full 50 yd width plus 13 yd of far scenery and 7.5 yd of near sideline, sized for perspective so both strips land on screen. Dead zone 2 x 1.5 yd, 4 yd look-ahead; the camera still settles on the goal-end limit (4 yd run-off).
+- Venue layer (`src/render/venueLayer.ts`): one projected grass material, world-anchored props, signs and sideline people, reactions from authoritative goal/save events (`src/render/venueReactions.ts`). Markings and goals are still drawn from `U11_9V9_PITCH`.
+- Only FC Batavia home league matches resolve a venue (Pinnacle Park); other games keep the plain field and report the missing assignment. Mapping: `docs/art/venues/MAPPING.md`.
+- Portrait keeps the existing close camera; Team Training, Lab and all other modes are unchanged.
+- Phone emulation only, not verified on a real iPhone.
+
 ## Weekly Team Training on package sprites (owner request 2026-10-29, branch `devin/1793242644-weekly-tt-sprites`, from `main` 3ea3284, not merged)
 
 - **Renderer:** `src/scenes/WeeklyTrainingScene.ts` (the one-scenario-per-week All36 screen) now draws every package actor with the imported `team-training-v1` sheets instead of coloured dots. Teams and keepers come from the package actor data (`team`, `role === 'GK'`): the saved boy or girl in the protagonist slot, distinct orange teammates, distinct green-pinnie opponents, `keeper_home`/`keeper_away` for keepers (`stillCast`, `stillPose` in `src/render/art/teamTrainingFrames.ts`, shared with `TacticalTrainingScene`'s `ttIdentities`).
