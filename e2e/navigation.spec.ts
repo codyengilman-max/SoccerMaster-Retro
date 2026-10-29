@@ -95,7 +95,7 @@ test('Start -> Jungle Ball -> Leave repeated keeps one canvas and stable listene
     const pitch = await waitForScene(page, 'jungle');
     expect(pitch.canvases).toBe(1);
     // Package sheets are bound by competitor id: the created player (boy by default here), Blake and Sam; Alex has none.
-    expect((pitch.gameplay as { art: { sets: unknown } }).art.sets).toEqual({ player: 'jungle-boy', alex: null, blake: 'jungle-blake', sam: 'jungle-sam' });
+    expect((pitch.gameplay as { art: { sets: unknown } }).art.sets).toEqual({ player: 'jungle4-boy', alex: 'jungle4-rival', blake: 'jungle4-blake', sam: 'jungle4-sam' });
     for (const name of ['pen', 'back-button']) {
       expectInside(name, pitch.layout?.elements[name], viewport);
     }

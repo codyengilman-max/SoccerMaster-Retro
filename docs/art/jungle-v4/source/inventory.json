@@ -1,0 +1,182 @@
+[
+  {
+    "file": "boy_actions.png",
+    "width": 1536,
+    "height": 1024,
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "layout": [
+      6,
+      4
+    ],
+    "sha256": "5d303cbdc138fce419c6b1164c578f7eb5211502dd2cb2d05de1d1be0033705b"
+  },
+  {
+    "file": "girl_actions.png",
+    "width": 1536,
+    "height": 1024,
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "layout": [
+      6,
+      4
+    ],
+    "sha256": "693a52386d88714739c135373f64f7c62ad0baf0694d41443ba4e9011c2cf5b1"
+  },
+  {
+    "file": "sam_actions.png",
+    "width": 1536,
+    "height": 1024,
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "layout": [
+      6,
+      4
+    ],
+    "sha256": "09c4edf26521cd4d10ccf2202b5aeb9130b04ad2f31b90122f5a44d40873ed2c"
+  },
+  {
+    "file": "blake_actions.png",
+    "width": 1536,
+    "height": 1024,
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "layout": [
+      6,
+      4
+    ],
+    "sha256": "30a81bc826af6a2efabc01739b4e571b6fa537f0011d016c93149fb6e5e2d744"
+  },
+  {
+    "file": "rival_actions.png",
+    "width": 1536,
+    "height": 1024,
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "layout": [
+      6,
+      4
+    ],
+    "sha256": "925611b7a81eaeabe60d83aab14bafe2dbd65d8e0764541e44232571fe5d97a3"
+  },
+  {
+    "file": "boy_slide.png",
+    "width": 1536,
+    "height": 1024,
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "layout": [
+      6,
+      2
+    ],
+    "sha256": "43351633dfeba98eee8df4262d0f9a5b265f2c104d459944f988665fbd6da49e"
+  },
+  {
+    "file": "girl_slide.png",
+    "width": 1536,
+    "height": 1024,
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "layout": [
+      6,
+      2
+    ],
+    "sha256": "10a715d9fe6605e539633ed36835567139d0d938ccfa27bb096926b674c3ff9e"
+  },
+  {
+    "file": "sam_slide.png",
+    "width": 2172,
+    "height": 724,
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "layout": [
+      6,
+      2
+    ],
+    "sha256": "f95d4abaebb91976e630ae901e7fa2dccf457d74deeb3f825249771abb4a3480"
+  },
+  {
+    "file": "blake_slide.png",
+    "width": 1774,
+    "height": 887,
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "layout": [
+      6,
+      2
+    ],
+    "sha256": "8b155c4a902a520f3a5cfc61d43ddc01cb836294c0026422e62b20e866717165"
+  },
+  {
+    "file": "rival_slide.png",
+    "width": 1536,
+    "height": 1024,
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "layout": [
+      6,
+      2
+    ],
+    "sha256": "f149395f578958f7bd081a3c0c1a322d71af8dca3265418b9e9503005a1b8a97"
+  },
+  {
+    "file": "goalkeeper_actions.png",
+    "width": 1536,
+    "height": 1024,
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      254
+    ],
+    "layout": [
+      6,
+      4
+    ],
+    "sha256": "40e1f1800ef92fd8564b421008189db96c67b98adc1de5b74e5939ad0b211bd0"
+  },
+  {
+    "file": "soccer_ball.png",
+    "width": 1448,
+    "height": 1086,
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "layout": [
+      4,
+      3
+    ],
+    "sha256": "f7d37b88e5d3c8fe5cf90673f096029c0a9e72be64edb81050acce35327b911c"
+  }
+]

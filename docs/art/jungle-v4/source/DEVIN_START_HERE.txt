@@ -1,0 +1,37 @@
+Replace the current JUNGLE BALL player and ball artwork using this package.
+Scope: Jungle Ball only. Do not replace league-match, team-training, home-training or cutscene assets.
+
+CONTENTS
+12 PNG source sheets: boy/girl/Sam/Blake/new rival action sheets, five corresponding slide-tackle supplements, one new schoolyard goalkeeper, one soccer-ball rotation sheet. Use the pixel-art burgundy-hoodie rival supplied here, not the earlier superseded rival. Keep canonical Sam and Blake identities. Instantiate the selected boy OR girl protagonist, not both by default. The rival has no approved name yet. Preserve existing roster size/game rules; map the new keeper to the existing keeper slot.
+
+IMPORTANT SOURCE STATUS
+These are generated source sheets, not tested engine atlases. Dimensions vary (see inventory.json). Layout values indicate visual row/column counts, not verified crop rectangles. Do not load all sheets using a fixed 160x128 source-grid assumption. Some art has translucent background haze; having an alpha channel does not establish clean transparency. Inspect on white, dark and field backgrounds, clean matte residue without deleting character pixels, and inspect neighboring poses for touching edges. Source illustrations and animation timing have not been validated in the game.
+
+IMPORT WORK
+1. Locate current Jungle Ball renderer, asset keys, clip definitions and character IDs. Record existing visible character height before replacing assets and keep rollback references.
+2. Extract each actual pose into a clean transparent frame. Use the current engine atlas pipeline. Keep a common scale for every pose of each character and consistent ground anchors; do not resize individual dive/slide poses to fit standing bounds. Allow wider cells or trimmed atlas frames with preserved source-size and pivot metadata. No clipped hands, shoes or diving limbs.
+3. Use neutral standing body height to normalize characters. Target visible height = previous Jungle Ball character height * 1.35, applied ONCE. Apply existing camera depth scaling normally. Do not stack training scale changes or enlarge again when changing actions. No protagonist glow, outline highlight or baked shadows. Preserve ordinary pixel-art outlines.
+4. Replace ball with the supplied black/white ball; normalize radius and center across frames. Keep its existing gameplay size initially and preserve collision radius/physics. Ball is separate from character art; anchor it to gloves only during actual possession, releasing at the correct throw/punt frame.
+5. Configure clips from inspected poses, never by pretending a still frame is a complete animation. Sideways flips are acceptable for opposite lateral direction when visually sound. Do not substitute side runs for missing front/back runs. Retain existing directional animations temporarily where a required view is absent and list those gaps explicitly.
+
+POSE GUIDE (row-major; verify every crop and action before wiring)
+Field action sheets, six columns/four rows:
+Row 1: six running poses.
+Row 2: front idle, back idle, side idle, receive/crouch, standing action, taunt. The standing-action pose may read as a kick; do not assume it is an adequate standing tackle.
+Row 3: six shot/power-shot poses.
+Row 4: push preparation, push extension, stumble, down, seated, recovery.
+Slide supplements, six columns/two rows:
+Row 1: approach/lower/slide entry/extension/deceleration/seated.
+Row 2: seated/tuck/support/kneel/rise/jog recovery.
+Treat down poses as brief cartoon knockdown; retain existing recovery/invulnerability logic. Action labels here describe intended artwork, not new damage or control rules.
+Keeper, six columns/four rows:
+Row 1: ready/crouch/lateral movement/rear/side stances.
+Rows 2-3: diving, landing, ground protection, recovery. Inspect facing: generated anticipation and full extension may point different ways; select/reorder/flip appropriate poses before playback.
+Row 4: scoop/chest catch/high catch/roll/throw/punt key poses. These are key poses, not full six-frame clips for each distribution action.
+Ball, four columns/three rows: 12 rotation poses. Inspect panel continuity and select smooth loops; do not assume all 12 are a perfectly seamless sequence.
+
+VALIDATION BEFORE REPLACING LIVE KEYS
+Preview every clip on the actual field at game size. Check identity, scale, feet drift, transparent edges, crop bleed, direction, ball contact and keeper possession. Test phone portrait/landscape rotation mid-play, slide recovery, repeated shots, keeper catches/releases, and ball spin while airborne. Preserve controls, scores, progression, collision geometry and rules. Replace existing asset references only after the corresponding imported clips pass visual checks; avoid a blanket global rename.
+
+DELIVERY
+Implement in a reviewable branch. Supply screenshots/video in both orientations, exact asset mappings, animation coverage, any retained old clips and remaining art gaps. Do not report all directions or all actions complete unless verified. This ZIP supplies artwork and instructions; it does not itself patch the app.

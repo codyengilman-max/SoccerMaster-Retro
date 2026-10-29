@@ -322,10 +322,10 @@
     {
       "assetId": "jungle-ball",
       "file": "jungle-ball.webp",
-      "width": 836,
-      "height": 470,
-      "masterSha256": "cb5236c1d1b94efeb8a8278d5ba22db6bfef0e50f3047ccbc01937eaf8accaad",
-      "bytes": 218634
+      "width": 1536,
+      "height": 1024,
+      "masterSha256": "c5c8c3331b0b2cac7e1643de5778f760d0a8dcdfe698340caf29baaf2e091973",
+      "bytes": 600174
     },
     {
       "assetId": "departure-boy",

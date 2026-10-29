@@ -1,0 +1,1874 @@
+{
+ "blake": {
+  "frames": {
+   "down": {
+    "box": [
+     798,
+     887,
+     1072,
+     995
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "idle-e": {
+    "box": [
+     555,
+     255,
+     685,
+     518
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "idle-n": {
+    "box": [
+     309,
+     257,
+     452,
+     518
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "idle-s": {
+    "box": [
+     40,
+     257,
+     195,
+     518
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "kick": {
+    "box": [
+     1028,
+     265,
+     1280,
+     518
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "push-0": {
+    "box": [
+     15,
+     771,
+     228,
+     1006
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "push-1": {
+    "box": [
+     242,
+     785,
+     502,
+     1004
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "receive": {
+    "box": [
+     755,
+     317,
+     974,
+     517
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "recovery": {
+    "box": [
+     1326,
+     834,
+     1524,
+     994
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "rise-0": {
+    "box": [
+     25,
+     605,
+     303,
+     822
+    ],
+    "sheet": "blake_slide.png"
+   },
+   "rise-1": {
+    "box": [
+     344,
+     613,
+     579,
+     824
+    ],
+    "sheet": "blake_slide.png"
+   },
+   "rise-2": {
+    "box": [
+     606,
+     602,
+     869,
+     821
+    ],
+    "sheet": "blake_slide.png"
+   },
+   "rise-3": {
+    "box": [
+     928,
+     544,
+     1138,
+     819
+    ],
+    "sheet": "blake_slide.png"
+   },
+   "rise-4": {
+    "box": [
+     1243,
+     503,
+     1433,
+     821
+    ],
+    "sheet": "blake_slide.png"
+   },
+   "rise-5": {
+    "box": [
+     1490,
+     517,
+     1744,
+     816
+    ],
+    "sheet": "blake_slide.png"
+   },
+   "run-0": {
+    "box": [
+     17,
+     15,
+     241,
+     243
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "run-1": {
+    "box": [
+     273,
+     17,
+     501,
+     234
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "run-2": {
+    "box": [
+     537,
+     18,
+     748,
+     254
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "run-3": {
+    "box": [
+     769,
+     19,
+     998,
+     254
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "run-4": {
+    "box": [
+     1035,
+     18,
+     1257,
+     251
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "run-5": {
+    "box": [
+     1292,
+     24,
+     1523,
+     252
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "seated": {
+    "box": [
+     1078,
+     796,
+     1304,
+     999
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "shot-0": {
+    "box": [
+     13,
+     540,
+     237,
+     764
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "shot-1": {
+    "box": [
+     275,
+     544,
+     516,
+     764
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "shot-2": {
+    "box": [
+     531,
+     538,
+     765,
+     767
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "shot-3": {
+    "box": [
+     792,
+     536,
+     1055,
+     768
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "shot-4": {
+    "box": [
+     1084,
+     537,
+     1304,
+     769
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "shot-5": {
+    "box": [
+     1318,
+     536,
+     1511,
+     771
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "slide-0": {
+    "box": [
+     14,
+     128,
+     270,
+     421
+    ],
+    "sheet": "blake_slide.png"
+   },
+   "slide-1": {
+    "box": [
+     301,
+     166,
+     525,
+     426
+    ],
+    "sheet": "blake_slide.png"
+   },
+   "slide-2": {
+    "box": [
+     538,
+     197,
+     826,
+     430
+    ],
+    "sheet": "blake_slide.png"
+   },
+   "slide-3": {
+    "box": [
+     819,
+     238,
+     1188,
+     431
+    ],
+    "sheet": "blake_slide.png"
+   },
+   "slide-4": {
+    "box": [
+     1192,
+     232,
+     1510,
+     437
+    ],
+    "sheet": "blake_slide.png"
+   },
+   "slide-5": {
+    "box": [
+     1519,
+     241,
+     1763,
+     436
+    ],
+    "sheet": "blake_slide.png"
+   },
+   "stumble": {
+    "box": [
+     523,
+     776,
+     780,
+     1005
+    ],
+    "sheet": "blake_actions.png"
+   },
+   "taunt": {
+    "box": [
+     1336,
+     258,
+     1486,
+     521
+    ],
+    "sheet": "blake_actions.png"
+   }
+  },
+  "scale": 0.57471,
+  "slideSheetFactor": 0.7709
+ },
+ "boy": {
+  "frames": {
+   "down": {
+    "box": [
+     772,
+     878,
+     1039,
+     994
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "idle-e": {
+    "box": [
+     567,
+     265,
+     694,
+     527
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "idle-n": {
+    "box": [
+     315,
+     264,
+     448,
+     525
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "idle-s": {
+    "box": [
+     57,
+     267,
+     216,
+     525
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "kick": {
+    "box": [
+     1074,
+     268,
+     1272,
+     529
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "push-0": {
+    "box": [
+     20,
+     776,
+     222,
+     1007
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "push-1": {
+    "box": [
+     238,
+     783,
+     495,
+     1006
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "receive": {
+    "box": [
+     775,
+     306,
+     991,
+     525
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "recovery": {
+    "box": [
+     1331,
+     809,
+     1523,
+     999
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "rise-0": {
+    "box": [
+     24,
+     643,
+     274,
+     884
+    ],
+    "sheet": "boy_slide.png"
+   },
+   "rise-1": {
+    "box": [
+     288,
+     666,
+     543,
+     882
+    ],
+    "sheet": "boy_slide.png"
+   },
+   "rise-2": {
+    "box": [
+     559,
+     618,
+     782,
+     878
+    ],
+    "sheet": "boy_slide.png"
+   },
+   "rise-3": {
+    "box": [
+     798,
+     591,
+     1029,
+     877
+    ],
+    "sheet": "boy_slide.png"
+   },
+   "rise-4": {
+    "box": [
+     1063,
+     534,
+     1251,
+     874
+    ],
+    "sheet": "boy_slide.png"
+   },
+   "rise-5": {
+    "box": [
+     1285,
+     566,
+     1520,
+     871
+    ],
+    "sheet": "boy_slide.png"
+   },
+   "run-0": {
+    "box": [
+     24,
+     16,
+     227,
+     262
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "run-1": {
+    "box": [
+     286,
+     17,
+     489,
+     261
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "run-2": {
+    "box": [
+     533,
+     15,
+     750,
+     262
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "run-3": {
+    "box": [
+     786,
+     17,
+     1001,
+     262
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "run-4": {
+    "box": [
+     1038,
+     18,
+     1255,
+     265
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "run-5": {
+    "box": [
+     1288,
+     16,
+     1506,
+     262
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "seated": {
+    "box": [
+     1065,
+     800,
+     1296,
+     1003
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "shot-0": {
+    "box": [
+     23,
+     531,
+     234,
+     776
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "shot-1": {
+    "box": [
+     292,
+     535,
+     519,
+     780
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "shot-2": {
+    "box": [
+     538,
+     536,
+     774,
+     779
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "shot-3": {
+    "box": [
+     795,
+     540,
+     1050,
+     781
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "shot-4": {
+    "box": [
+     1067,
+     538,
+     1309,
+     781
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "shot-5": {
+    "box": [
+     1325,
+     540,
+     1512,
+     782
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "slide-0": {
+    "box": [
+     12,
+     170,
+     241,
+     458
+    ],
+    "sheet": "boy_slide.png"
+   },
+   "slide-1": {
+    "box": [
+     266,
+     207,
+     463,
+     460
+    ],
+    "sheet": "boy_slide.png"
+   },
+   "slide-2": {
+    "box": [
+     463,
+     214,
+     760,
+     459
+    ],
+    "sheet": "boy_slide.png"
+   },
+   "slide-3": {
+    "box": [
+     706,
+     239,
+     1028,
+     456
+    ],
+    "sheet": "boy_slide.png"
+   },
+   "slide-4": {
+    "box": [
+     1023,
+     237,
+     1292,
+     460
+    ],
+    "sheet": "boy_slide.png"
+   },
+   "slide-5": {
+    "box": [
+     1296,
+     232,
+     1525,
+     458
+    ],
+    "sheet": "boy_slide.png"
+   },
+   "stumble": {
+    "box": [
+     520,
+     772,
+     767,
+     1007
+    ],
+    "sheet": "boy_actions.png"
+   },
+   "taunt": {
+    "box": [
+     1337,
+     268,
+     1497,
+     528
+    ],
+    "sheet": "boy_actions.png"
+   }
+  },
+  "scale": 0.5814,
+  "slideSheetFactor": 0.80656
+ },
+ "girl": {
+  "frames": {
+   "down": {
+    "box": [
+     800,
+     882,
+     1056,
+     992
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "idle-e": {
+    "box": [
+     553,
+     268,
+     731,
+     511
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "idle-n": {
+    "box": [
+     307,
+     263,
+     480,
+     511
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "idle-s": {
+    "box": [
+     32,
+     266,
+     215,
+     511
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "kick": {
+    "box": [
+     1065,
+     269,
+     1298,
+     510
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "push-0": {
+    "box": [
+     19,
+     782,
+     243,
+     1007
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "push-1": {
+    "box": [
+     276,
+     780,
+     502,
+     1007
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "receive": {
+    "box": [
+     805,
+     303,
+     1023,
+     509
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "recovery": {
+    "box": [
+     1344,
+     784,
+     1516,
+     1002
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "rise-0": {
+    "box": [
+     35,
+     692,
+     282,
+     896
+    ],
+    "sheet": "girl_slide.png"
+   },
+   "rise-1": {
+    "box": [
+     301,
+     698,
+     510,
+     898
+    ],
+    "sheet": "girl_slide.png"
+   },
+   "rise-2": {
+    "box": [
+     528,
+     681,
+     752,
+     900
+    ],
+    "sheet": "girl_slide.png"
+   },
+   "rise-3": {
+    "box": [
+     795,
+     649,
+     1000,
+     901
+    ],
+    "sheet": "girl_slide.png"
+   },
+   "rise-4": {
+    "box": [
+     1049,
+     635,
+     1262,
+     903
+    ],
+    "sheet": "girl_slide.png"
+   },
+   "rise-5": {
+    "box": [
+     1304,
+     621,
+     1519,
+     903
+    ],
+    "sheet": "girl_slide.png"
+   },
+   "run-0": {
+    "box": [
+     28,
+     15,
+     224,
+     255
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "run-1": {
+    "box": [
+     308,
+     12,
+     500,
+     255
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "run-2": {
+    "box": [
+     565,
+     12,
+     753,
+     253
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "run-3": {
+    "box": [
+     824,
+     8,
+     1025,
+     255
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "run-4": {
+    "box": [
+     1084,
+     12,
+     1296,
+     257
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "run-5": {
+    "box": [
+     1349,
+     12,
+     1532,
+     255
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "seated": {
+    "box": [
+     1087,
+     804,
+     1303,
+     1006
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "shot-0": {
+    "box": [
+     15,
+     524,
+     210,
+     758
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "shot-1": {
+    "box": [
+     291,
+     519,
+     503,
+     759
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "shot-2": {
+    "box": [
+     559,
+     518,
+     752,
+     761
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "shot-3": {
+    "box": [
+     801,
+     521,
+     1088,
+     757
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "shot-4": {
+    "box": [
+     1079,
+     521,
+     1300,
+     767
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "shot-5": {
+    "box": [
+     1355,
+     531,
+     1522,
+     759
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "slide-0": {
+    "box": [
+     19,
+     208,
+     233,
+     462
+    ],
+    "sheet": "girl_slide.png"
+   },
+   "slide-1": {
+    "box": [
+     264,
+     231,
+     438,
+     464
+    ],
+    "sheet": "girl_slide.png"
+   },
+   "slide-2": {
+    "box": [
+     479,
+     254,
+     735,
+     468
+    ],
+    "sheet": "girl_slide.png"
+   },
+   "slide-3": {
+    "box": [
+     737,
+     276,
+     1040,
+     458
+    ],
+    "sheet": "girl_slide.png"
+   },
+   "slide-4": {
+    "box": [
+     1019,
+     273,
+     1307,
+     459
+    ],
+    "sheet": "girl_slide.png"
+   },
+   "slide-5": {
+    "box": [
+     1309,
+     261,
+     1522,
+     465
+    ],
+    "sheet": "girl_slide.png"
+   },
+   "stumble": {
+    "box": [
+     540,
+     758,
+     789,
+     1002
+    ],
+    "sheet": "girl_actions.png"
+   },
+   "taunt": {
+    "box": [
+     1340,
+     268,
+     1527,
+     518
+    ],
+    "sheet": "girl_actions.png"
+   }
+  },
+  "scale": 0.61224,
+  "slideSheetFactor": 0.8617
+ },
+ "keeper": {
+  "frames": {
+   "catch-chest": {
+    "box": [
+     290,
+     766,
+     471,
+     994
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "catch-high": {
+    "box": [
+     506,
+     745,
+     680,
+     997
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "crouch": {
+    "box": [
+     290,
+     72,
+     497,
+     269
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "dive-a0": {
+    "box": [
+     5,
+     350,
+     241,
+     510
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "dive-a1": {
+    "box": [
+     246,
+     323,
+     487,
+     509
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "dive-a2": {
+    "box": [
+     504,
+     338,
+     791,
+     503
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "dive-b0": {
+    "box": [
+     9,
+     567,
+     271,
+     733
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "dive-b1": {
+    "box": [
+     291,
+     548,
+     529,
+     732
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "dive-b2": {
+    "box": [
+     542,
+     562,
+     833,
+     720
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "ground-a": {
+    "box": [
+     1093,
+     404,
+     1314,
+     507
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "ground-b": {
+    "box": [
+     1072,
+     621,
+     1297,
+     733
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "land-a": {
+    "box": [
+     814,
+     380,
+     1066,
+     511
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "land-b": {
+    "box": [
+     808,
+     613,
+     1059,
+     741
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "lateral-0": {
+    "box": [
+     546,
+     46,
+     753,
+     274
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "lateral-1": {
+    "box": [
+     812,
+     46,
+     1003,
+     274
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "punt": {
+    "box": [
+     1300,
+     763,
+     1522,
+     996
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "ready": {
+    "box": [
+     33,
+     43,
+     237,
+     269
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "rear": {
+    "box": [
+     1071,
+     44,
+     1264,
+     276
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "roll": {
+    "box": [
+     719,
+     800,
+     960,
+     984
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "scoop": {
+    "box": [
+     23,
+     796,
+     243,
+     974
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "side": {
+    "box": [
+     1330,
+     45,
+     1504,
+     276
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "throw": {
+    "box": [
+     1029,
+     769,
+     1263,
+     994
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "up-a": {
+    "box": [
+     1325,
+     327,
+     1522,
+     507
+    ],
+    "sheet": "goalkeeper_actions.png"
+   },
+   "up-b": {
+    "box": [
+     1314,
+     554,
+     1520,
+     735
+    ],
+    "sheet": "goalkeeper_actions.png"
+   }
+  },
+  "scale": 0.66372,
+  "slideSheetFactor": 1.0
+ },
+ "rival": {
+  "frames": {
+   "down": {
+    "box": [
+     768,
+     855,
+     1043,
+     993
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "idle-e": {
+    "box": [
+     565,
+     254,
+     696,
+     517
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "idle-n": {
+    "box": [
+     320,
+     254,
+     464,
+     517
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "idle-s": {
+    "box": [
+     46,
+     250,
+     224,
+     516
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "kick": {
+    "box": [
+     1043,
+     259,
+     1270,
+     517
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "push-0": {
+    "box": [
+     12,
+     771,
+     227,
+     996
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "push-1": {
+    "box": [
+     255,
+     777,
+     503,
+     996
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "receive": {
+    "box": [
+     783,
+     304,
+     1004,
+     517
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "recovery": {
+    "box": [
+     1319,
+     786,
+     1519,
+     996
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "rise-0": {
+    "box": [
+     15,
+     694,
+     272,
+     898
+    ],
+    "sheet": "rival_slide.png"
+   },
+   "rise-1": {
+    "box": [
+     295,
+     705,
+     528,
+     895
+    ],
+    "sheet": "rival_slide.png"
+   },
+   "rise-2": {
+    "box": [
+     526,
+     663,
+     760,
+     890
+    ],
+    "sheet": "rival_slide.png"
+   },
+   "rise-3": {
+    "box": [
+     776,
+     622,
+     1006,
+     891
+    ],
+    "sheet": "rival_slide.png"
+   },
+   "rise-4": {
+    "box": [
+     1028,
+     599,
+     1236,
+     893
+    ],
+    "sheet": "rival_slide.png"
+   },
+   "rise-5": {
+    "box": [
+     1263,
+     617,
+     1522,
+     890
+    ],
+    "sheet": "rival_slide.png"
+   },
+   "run-0": {
+    "box": [
+     20,
+     13,
+     233,
+     245
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "run-1": {
+    "box": [
+     287,
+     13,
+     487,
+     243
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "run-2": {
+    "box": [
+     528,
+     13,
+     765,
+     242
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "run-3": {
+    "box": [
+     811,
+     13,
+     1041,
+     248
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "run-4": {
+    "box": [
+     1081,
+     13,
+     1291,
+     251
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "run-5": {
+    "box": [
+     1323,
+     18,
+     1530,
+     247
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "seated": {
+    "box": [
+     1062,
+     784,
+     1295,
+     996
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "shot-0": {
+    "box": [
+     16,
+     527,
+     237,
+     759
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "shot-1": {
+    "box": [
+     291,
+     531,
+     511,
+     764
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "shot-2": {
+    "box": [
+     529,
+     523,
+     760,
+     764
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "shot-3": {
+    "box": [
+     777,
+     530,
+     1046,
+     764
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "shot-4": {
+    "box": [
+     1072,
+     527,
+     1306,
+     764
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "shot-5": {
+    "box": [
+     1317,
+     529,
+     1518,
+     768
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "slide-0": {
+    "box": [
+     7,
+     204,
+     247,
+     469
+    ],
+    "sheet": "rival_slide.png"
+   },
+   "slide-1": {
+    "box": [
+     261,
+     239,
+     473,
+     471
+    ],
+    "sheet": "rival_slide.png"
+   },
+   "slide-2": {
+    "box": [
+     462,
+     258,
+     728,
+     481
+    ],
+    "sheet": "rival_slide.png"
+   },
+   "slide-3": {
+    "box": [
+     726,
+     301,
+     1055,
+     474
+    ],
+    "sheet": "rival_slide.png"
+   },
+   "slide-4": {
+    "box": [
+     1059,
+     268,
+     1295,
+     475
+    ],
+    "sheet": "rival_slide.png"
+   },
+   "slide-5": {
+    "box": [
+     1297,
+     281,
+     1526,
+     483
+    ],
+    "sheet": "rival_slide.png"
+   },
+   "stumble": {
+    "box": [
+     528,
+     769,
+     783,
+     996
+    ],
+    "sheet": "rival_actions.png"
+   },
+   "taunt": {
+    "box": [
+     1317,
+     254,
+     1501,
+     518
+    ],
+    "sheet": "rival_actions.png"
+   }
+  },
+  "scale": 0.56391,
+  "slideSheetFactor": 0.84615
+ },
+ "sam": {
+  "frames": {
+   "down": {
+    "box": [
+     785,
+     873,
+     1067,
+     994
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "idle-e": {
+    "box": [
+     550,
+     268,
+     684,
+     531
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "idle-n": {
+    "box": [
+     296,
+     275,
+     445,
+     531
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "idle-s": {
+    "box": [
+     46,
+     270,
+     190,
+     531
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "kick": {
+    "box": [
+     1058,
+     268,
+     1271,
+     536
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "push-0": {
+    "box": [
+     12,
+     785,
+     251,
+     1006
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "push-1": {
+    "box": [
+     256,
+     787,
+     494,
+     1006
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "receive": {
+    "box": [
+     754,
+     314,
+     977,
+     530
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "recovery": {
+    "box": [
+     1317,
+     830,
+     1518,
+     1004
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "rise-0": {
+    "box": [
+     37,
+     431,
+     332,
+     693
+    ],
+    "sheet": "sam_slide.png"
+   },
+   "rise-1": {
+    "box": [
+     377,
+     437,
+     695,
+     687
+    ],
+    "sheet": "sam_slide.png"
+   },
+   "rise-2": {
+    "box": [
+     752,
+     426,
+     997,
+     701
+    ],
+    "sheet": "sam_slide.png"
+   },
+   "rise-3": {
+    "box": [
+     1105,
+     395,
+     1373,
+     702
+    ],
+    "sheet": "sam_slide.png"
+   },
+   "rise-4": {
+    "box": [
+     1510,
+     369,
+     1725,
+     706
+    ],
+    "sheet": "sam_slide.png"
+   },
+   "rise-5": {
+    "box": [
+     1851,
+     379,
+     2116,
+     703
+    ],
+    "sheet": "sam_slide.png"
+   },
+   "run-0": {
+    "box": [
+     29,
+     12,
+     241,
+     264
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "run-1": {
+    "box": [
+     282,
+     18,
+     492,
+     261
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "run-2": {
+    "box": [
+     533,
+     23,
+     749,
+     264
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "run-3": {
+    "box": [
+     794,
+     18,
+     1004,
+     266
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "run-4": {
+    "box": [
+     1048,
+     25,
+     1262,
+     267
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "run-5": {
+    "box": [
+     1299,
+     27,
+     1524,
+     267
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "seated": {
+    "box": [
+     1086,
+     802,
+     1283,
+     1004
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "shot-0": {
+    "box": [
+     16,
+     545,
+     236,
+     772
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "shot-1": {
+    "box": [
+     283,
+     546,
+     501,
+     773
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "shot-2": {
+    "box": [
+     518,
+     540,
+     753,
+     776
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "shot-3": {
+    "box": [
+     803,
+     544,
+     1049,
+     776
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "shot-4": {
+    "box": [
+     1072,
+     539,
+     1292,
+     784
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "shot-5": {
+    "box": [
+     1334,
+     539,
+     1520,
+     777
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "slide-0": {
+    "box": [
+     28,
+     24,
+     305,
+     362
+    ],
+    "sheet": "sam_slide.png"
+   },
+   "slide-1": {
+    "box": [
+     354,
+     77,
+     642,
+     362
+    ],
+    "sheet": "sam_slide.png"
+   },
+   "slide-2": {
+    "box": [
+     669,
+     92,
+     987,
+     363
+    ],
+    "sheet": "sam_slide.png"
+   },
+   "slide-3": {
+    "box": [
+     1023,
+     151,
+     1446,
+     363
+    ],
+    "sheet": "sam_slide.png"
+   },
+   "slide-4": {
+    "box": [
+     1475,
+     125,
+     1850,
+     363
+    ],
+    "sheet": "sam_slide.png"
+   },
+   "slide-5": {
+    "box": [
+     1864,
+     107,
+     2144,
+     366
+    ],
+    "sheet": "sam_slide.png"
+   },
+   "stumble": {
+    "box": [
+     503,
+     777,
+     765,
+     1008
+    ],
+    "sheet": "sam_actions.png"
+   },
+   "taunt": {
+    "box": [
+     1331,
+     273,
+     1489,
+     531
+    ],
+    "sheet": "sam_actions.png"
+   }
+  },
+  "scale": 0.57471,
+  "slideSheetFactor": 0.74846
+ }
+}
