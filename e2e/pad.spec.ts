@@ -228,7 +228,8 @@ test.describe('TACKLE and quick shot (PR D)', () => {
     // The setup hands H8 control, but A7 keeps dribbling until the press lands, so on a slow runner
     // automatic switching may already have moved control to a nearer teammate: the tackle is by whoever the user controls.
     expect(ready.controlledId).toMatch(/^H/);
-    expect(started.pad.actor).toBe(ready.controlledId);
+    // Control can also switch between reading `ready` and the tap landing, so accept whoever was controlled at either point.
+    expect([ready.controlledId, started.controlledId]).toContain(started.pad.actor);
     // It resolves exactly once: won, missed (whiff or close miss) or a foul.
     const done = await waitFor(page, (r) => mine(r, seq, 'standing').some((e) => e.detail !== 'start') && r.pad.phase === 'ready');
     expect(mine(done, seq, 'standing').filter((e) => e.detail !== 'start')).toHaveLength(1);

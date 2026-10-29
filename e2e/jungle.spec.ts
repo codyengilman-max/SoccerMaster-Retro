@@ -97,8 +97,9 @@ test('keyboard moves the Jungle Ball player and rotation keeps the pen on screen
   const before = (await snap(page)).player.y;
   await page.keyboard.down('ArrowDown');
   await page.waitForTimeout(400);
+  // Slow runners advance fewer sim frames in 400 ms; keep holding until the player has moved.
+  await expect.poll(async () => (await snap(page)).player.y, { timeout: 5000 }).toBeGreaterThan(before + 0.5);
   await page.keyboard.up('ArrowDown');
-  expect((await snap(page)).player.y).toBeGreaterThan(before + 0.5);
   const viewport = page.viewportSize()!;
   const rotated = { width: viewport.height, height: viewport.width };
   await page.setViewportSize(rotated);

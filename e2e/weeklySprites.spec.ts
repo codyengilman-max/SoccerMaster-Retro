@@ -185,7 +185,10 @@ test('Weekly Team Training: Week 1 FWD (D07 left winger) on package sprites; ans
   checkArt(w, 'boy', (await diagnostics(page)).layout!.elements);
   expect(w.progress).toMatchObject({ completed: true, credited: true, runs: 1 });
   await page.screenshot({ path: info.outputPath(`weekly-sprites-D07-result-rotated-${info.project.name}.png`) });
+  const rotatedWidth = w.art!.field.width;
   await page.setViewportSize(vp);
+  // Wait for the re-layout so the Replay tap hits the rebuilt button, not the rotated one.
+  await weekly(page, (x) => x.screen === 'result' && allDrawn(x) && Math.abs(x.art!.field.width - rotatedWidth) > 1, 'result back');
   // Replay: practice only, credit is not paid again.
   await pressAny(page, 'tt-replay', mode);
   w = await weekly(page, (x) => x.screen === 'observe' && allDrawn(x), 'replay');
