@@ -416,13 +416,14 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   /**
-   * Cover-fit the schoolyard into the stage, sliding it so the grass edge (below the crowd) meets the floor band where
-   * the cover-fit leaves room; the picture always fills the stage.
+   * Cover-fit the schoolyard into the stage with the grass edge (below the crowd) on the floor band; the picture always
+   * fills the stage.
    */
   private fitBackground(): void {
     if (!this.bg) return;
     const p = this.pen;
-    const k = Math.max(p.width / this.bg.width, p.height / this.bg.height);
+    // Tall enough that the grass below the edge reaches the bottom of the stage when the edge sits on the floor band.
+    const k = Math.max(p.width / this.bg.width, p.height / this.bg.height, (p.y + p.height - this.floorTop) / (1 - BG_GRASS_EDGE) / this.bg.height);
     const H = this.bg.height * k;
     const top = Math.min(p.y, Math.max(p.y + p.height - H, this.floorTop - BG_GRASS_EDGE * H));
     this.bg.setScale(k).setPosition(p.x + p.width / 2, top + H / 2);

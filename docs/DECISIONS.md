@@ -380,6 +380,12 @@ Approved technical choices. Add a new entry rather than silently changing an old
 ## D62. Release of PRs #37 and #52–#56 (owner, 2026-10-28)
 - The owner asked to merge all new PRs and then PR #37 as well. PR #37 is merged as one change, superseding H4 (extract Tournament Results and Animated Rosters v2 first). Merge conflicts were resolved by keeping both sides; Team Training keeps the newer package-art setup (`ensureTtArt`) over #37's `practice` kit change.
 
+## D63. Jungle Ball replacement package art (2026-10-29)
+- Package sheets differ in size and overlap, so frames are cut by connected components, trimmed with per-frame ground pivots, and scaled once per character from the front idle (`scripts/art/build-jungle-v4.py`). Loaded by a separate `jungle4Art` loader so the old fixed-cell `sprites-v2` pipeline is untouched.
+- Visible height = old Jungle Ball height x 1.35 (`JUNGLE4_ART.heightFactor`), applied once on top of the existing depth scaling. Sim, physics and collision radii unchanged.
+- The unnamed rival fills the existing `alex` slot and the label stays "Alex" until the owner names it.
+- The owner's schoolyard picture replaces the `jungle-ball` background; the old master stays for rollback.
+
 ## Owner decisions 2026-10-27 (H1–H8)
 
 From the owner's consolidated decisions after the read-only audit of `main` `04e947b` (second revision, same day: H3 now removes Coach Moments from story matches, and the coach-approved All36 package becomes the Team Training source). Plan: [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md).

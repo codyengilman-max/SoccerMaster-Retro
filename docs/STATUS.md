@@ -18,6 +18,11 @@ PRs #52–#56 (owner decisions, tactics comparison, All36 weekly Team Training, 
 
 Verification: Chromium phone emulation and desktop only. Not yet verified on a real iPhone (PR G).
 
+## Jungle Ball replacement art and schoolyard background (branch `devin/1793245951-jungle-replacement`, not merged, not deployed)
+- New package sprites for the saved boy or girl, Sam, Blake, the burgundy-hoodie rival (in Alex's slot), the keeper and a spinning ball; 1.35x the old height, once. Ball held in the keeper's gloves until the sim releases it.
+- New owner schoolyard background with the crowd. Mapping, size rule and gaps: [art/jungle-v4/MAPPING.md](art/jungle-v4/MAPPING.md).
+- Phone emulation only; not tested on a real iPhone.
+
 ## PR D: standing tackle and double-tap quick shot (stacked on #55, not merged, not deployed)
 
 - **TACKLE replaces BLOCK** on the default pad (`pad-tackle`, key I): a committed standing tackle with start, active and recovery phases, a cooldown, seeded win chance from reach, timing, positioning and agility/control (5-85%, never certain), a loose-ball poke on a win and foul risk on a missed challenge with contact. Holding TACKLE after recovery becomes the jockey; the passive shot-blocking wall is removed. Rules and numbers in `docs/controls/CONTROLS_IMPLEMENTATION.md` and `tuning.ts` (`pad.standing`).
