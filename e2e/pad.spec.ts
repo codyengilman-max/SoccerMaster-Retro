@@ -97,6 +97,8 @@ test.describe('two-thumb touch', () => {
   test('A03: run with the stick while charging PASS; release gives exactly one kick', async ({ page }, info) => {
     const errors = trackConsoleErrors(page);
     await open(page, modeFor(info), '&setup=space');
+    // A slow runner's frames cover more sim time: at full rate the carrier can run off the ball before the release lands.
+    await slowSim(page, 0.3);
     const cdp = await page.context().newCDPSession(page);
     const stick = await centre(page, 'pad-stick');
     const pass = await centre(page, 'pad-pass');
