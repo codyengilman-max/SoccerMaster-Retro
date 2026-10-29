@@ -180,7 +180,8 @@ test('close ball camera: fixed span, ball-centred, never compounds over resets a
     const errors = trackConsoleErrors(page);
     const mode = modeFor(info);
     const expectSpan = (r: MatchReport) => {
-      if (r.layout.orientation === 'landscape') expect(r.camera.viewLength).toBeCloseTo(32, 6);
+      // Regular matches use the elevated sideline view (SIDELINE_VIEW): 44 yd of pitch length in landscape.
+      if (r.layout.orientation === 'landscape') expect(r.camera.viewLength).toBeCloseTo(44, 6);
       else expect(r.camera.viewCross).toBeCloseTo(22, 6);
     };
     {
