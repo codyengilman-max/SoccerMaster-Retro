@@ -66,7 +66,7 @@ async function logExtra(page: Page, mode: 'touch' | 'mouse'): Promise<void> {
   await press(page, 'log-complete', mode);
   await until(page, (x) => x.screen !== 'log', 'logged');
 }
-const POSES = { right: ['P4', 'P9', 'P1'], left: ['P3', 'P10', 'P2'] } as const;
+const POSES = { right: ['P4', 'P9', 'P9', 'P1'], left: ['P3', 'P10', 'P10', 'P2'] } as const;
 
 for (const gender of ['boy', 'girl'] as const) {
   test(`teaching page (${gender}): Inside-Cut Escape opens straight to the demo; one timeline drives body, foot detail, ball and caption`, async ({ page }, info) => {
@@ -101,7 +101,7 @@ for (const gender of ['boy', 'girl'] as const) {
       if (!(await career(page)).demo!.paused) await press(page, 'demo-pause', mode);
       await press(page, 'demo-replay', mode);
       c = await until(page, (x) => x.demo?.paused === true && x.demo.teach!.t === 0, 'paused at start');
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 4; i++) {
         const d = c.demo!;
         const t = d.teach!;
         expect(t.phase, `${foot} phase`).toBe(i);
@@ -109,6 +109,7 @@ for (const gender of ['boy', 'girl'] as const) {
         expect(d.inset!.label.startsWith(foot === 'right' ? 'Right foot' : 'Left foot')).toBe(true);
         expect(d.inset!.contact).toBe(t.contact);
         expect(t.contact).toBe(i === 1 ? 'inside' : 'none');
+        if (i === 1) expect(t.zoomBall, 'foot detail shows the ball while in contact').toBe(true);
         expect(within(d.player, d.rect), 'player inside stage').toBe(true);
         expect(within(d.inset!.rect, d.rect), 'inset inside stage').toBe(true);
         if (t.zoomBall) expect(d.inset!.ball.y + d.inset!.ball.height <= d.inset!.text.y + 0.5, 'inset ball clear of label').toBe(true);
@@ -120,7 +121,7 @@ for (const gender of ['boy', 'girl'] as const) {
           await page.screenshot({ path: `test-results/teach-${gender}-${foot}-contact-${info.project.name}.png` });
         }
         await press(page, 'demo-step', mode);
-        c = await until(page, (x) => x.demo!.teach!.phase === (i + 1) % 3, `step ${i + 1}`);
+        c = await until(page, (x) => x.demo!.teach!.phase === (i + 1) % 4, `step ${i + 1}`);
       }
     }
     // 0.5x halves the rate of time; pose order is unchanged.
@@ -132,8 +133,7 @@ for (const gender of ['boy', 'girl'] as const) {
     await page.waitForTimeout(1200);
     const t1 = (await career(page)).demo!.teach!.t;
     const wall = (Date.now() - w0) / 1000;
-    const len = 3.6;
-    const dt = (((t1 - t0) % len) + len) % len;
+    const dt = t1 - t0;
     // Demo time runs at about half the wall clock (frame pacing on a busy runner only slows it).
     expect(dt / wall).toBeGreaterThan(0.2);
     expect(dt / wall).toBeLessThan(0.62);

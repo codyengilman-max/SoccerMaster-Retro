@@ -11,13 +11,16 @@ describe('Ball Mastery teaching pages (art v1 slice)', () => {
     expect(TEACHING.map((l) => l.activityId)).toEqual(['dr-inside-cut']);
     const a = activityById('dr-inside-cut')!;
     expect(a.title).toBe('Inside-Cut Escape');
-    expect(lesson.phases.map((p) => p.step)).toEqual([0, 1, 2]);
+    expect(lesson.phases.map((p) => p.step)).toEqual([0, 1, 1, 2]);
     expect(ASSIGNABLE_DESIGNS).toEqual([]);
   });
 
   it('captions are the catalog steps, so mechanics come from the reviewed library', () => {
     const a = activityById('dr-inside-cut')!;
-    for (const [i, t0] of phaseStarts(lesson).entries()) expect(teachingFrame(lesson, t0 + 0.01, 'right').caption).toBe(`${i + 1}. ${a.steps[i]}`);
+    for (const [i, t0] of phaseStarts(lesson).entries()) {
+      const k = lesson.phases[i]!.step;
+      expect(teachingFrame(lesson, t0 + 0.01, 'right').caption).toBe(`${k + 1}. ${a.steps[k]}`);
+    }
   });
 
   it('the ball only moves while the inside of the foot is on it or after it, never before contact', () => {
@@ -41,9 +44,18 @@ describe('Ball Mastery teaching pages (art v1 slice)', () => {
         const bootX = boot[0] / BM_SHEET[sex].visibleHeight;
         expect((f0.ballX - bootX) * side, `${sex} ${foot}`).toBeGreaterThan(0);
         expect((f0.ballX - bootX) * side).toBeLessThan(0.15);
-        const f1 = teachingFrame(lesson, cStart! + 0.7, foot);
+        const f1 = teachingFrame(lesson, cStart! + lesson.phases[1]!.seconds - 0.01, foot);
         expect((f1.ballX - f0.ballX) * side).toBeGreaterThan(0);
       }
+  });
+
+  it('inside contact lasts only while the ball is at the boot; the push-away is a no-contact follow-through', () => {
+    const [, c, f] = phaseStarts(lesson);
+    expect(lesson.phases[1]!.contact).toBe('inside');
+    expect(lesson.phases[2]!.contact).toBe('none');
+    expect(lesson.phases[2]!.pose).toEqual(lesson.phases[1]!.pose);
+    const moved = teachingFrame(lesson, f! - 0.001, 'right').ballX - teachingFrame(lesson, c!, 'right').ballX;
+    expect(moved).toBeLessThan(0.1);
   });
 
   it('left foot is the drawn mirror pose set with the ball path mirrored, never a flipped image', () => {
@@ -62,7 +74,10 @@ describe('Ball Mastery teaching pages (art v1 slice)', () => {
   it('slow motion changes time only: the same t gives the same frame', () => {
     const a = teachingFrame(lesson, 1.7, 'right');
     expect(teachingFrame(lesson, 1.7, 'right')).toEqual(a);
-    expect(teachingFrame(lesson, 1.7 + lessonLength(lesson), 'right')).toEqual(a);
+    // Plays once and holds the last frame; no jump back to the start position.
+    const end = teachingFrame(lesson, lessonLength(lesson), 'right');
+    expect(teachingFrame(lesson, lessonLength(lesson) + 1.7, 'right')).toEqual(end);
+    expect(end.phase).toBe(lesson.phases.length - 1);
   });
 
   it('every pose a lesson uses exists on both runtime sheets with both boots measured', () => {

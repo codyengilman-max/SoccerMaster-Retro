@@ -194,6 +194,12 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     const a = s.kind === 'activity' ? activityById(s.id) : undefined;
     if (a && this.isViewer(a)) {
       if (!this.demoPaused) this.demoT += (delta / 1000) * this.demoSpeed;
+      // Teaching demos play once and stop on the last frame; Play or Replay starts again.
+      const lesson = teachingFor(a.id);
+      if (lesson && this.demoT >= lessonLength(lesson)) {
+        this.demoT = lessonLength(lesson);
+        if (!this.demoPaused) ((this.demoPaused = true), this.render());
+      }
     } else if (s.kind !== 'draftLevel') this.demoT += delta / 1000;
     else if (!this.demoPaused) this.demoT += (delta / 1000) * this.demoSpeed;
     this.drawDemo();
@@ -619,7 +625,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           ].filter(Boolean);
           const tbody = [`COACH CODE: ${a.cue}`, `1. ${a.steps[0]}\n2. ${a.steps[1]}\n3. ${a.steps[2]}`, `Common mistake: ${a.mistake.mistake}\nFix: ${a.mistake.correction}`, ...(this.teachTips ? tips : [])].join('\n');
           const tactions: Action[] = [
-            { name: 'demo-pause', label: this.demoPaused ? 'Play' : 'Pause', onClick: () => ((this.demoPaused = !this.demoPaused), this.render()) },
+            { name: 'demo-pause', label: this.demoPaused ? 'Play' : 'Pause', onClick: () => (this.demoPaused && this.demoT >= lessonLength(lesson) && (this.demoT = 0), (this.demoPaused = !this.demoPaused), this.render()) },
             { name: 'demo-step', label: 'Step', onClick: () => ((this.demoPaused = true), (this.demoT = nextBeat(phaseStarts(lesson), this.demoT, lessonLength(lesson))), this.render()) },
             { name: 'demo-half', label: this.demoSpeed < 1 ? '0.5× (on)' : '0.5×', on: this.demoSpeed < 1, onClick: () => ((this.demoSpeed = this.demoSpeed < 1 ? 1 : 0.5), this.render()) },
             { name: 'demo-replay', label: 'Replay', onClick: () => ((this.demoT = 0), this.render()) },
@@ -913,6 +919,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.demoG.clear();
     this.demoBall.clear();
     this.demoImg.setVisible(false);
+    this.demoZoom.setVisible(false);
+    this.demoZoomBall.clear();
     if (!demoOn) this.demoCaption?.setVisible(false);
     this.demoInset?.setVisible(false);
     if (!portrait) {

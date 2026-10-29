@@ -17,7 +17,7 @@ export type PoseId = 'P1' | 'P2' | 'P3' | 'P4' | 'P9' | 'P10';
 export const WORKING_BOOT: Readonly<Record<PoseId, 0 | 1>> = { P4: 0, P9: 1, P1: 0, P3: 1, P10: 0, P2: 1 };
 
 export interface TeachingPhase {
-  /** Index into the activity's three reviewed steps. */
+  /** Index into the activity's three reviewed steps (a step may span a contact beat and its follow-through). */
   readonly step: 0 | 1 | 2;
   readonly seconds: number;
   readonly pose: Readonly<Record<Foot, PoseId>>;
@@ -46,7 +46,8 @@ export const TEACHING: readonly TeachingLesson[] = [
     activityId: 'dr-inside-cut',
     phases: [
       { step: 0, seconds: 1.4, pose: { right: 'P4', left: 'P3' }, contact: 'none', ball: [0.2, 0.2], body: [0, 0] },
-      { step: 1, seconds: 0.8, pose: { right: 'P9', left: 'P10' }, contact: 'inside', ball: [0.2, 0.5], body: [0, 0] },
+      { step: 1, seconds: 0.4, pose: { right: 'P9', left: 'P10' }, contact: 'inside', ball: [0.2, 0.26], body: [0, 0] },
+      { step: 1, seconds: 0.5, pose: { right: 'P9', left: 'P10' }, contact: 'none', ball: [0.26, 0.5], body: [0, 0] },
       { step: 2, seconds: 1.4, pose: { right: 'P1', left: 'P2' }, contact: 'none', ball: [0.5, 0.9], body: [0, 0.4] },
     ],
   },
@@ -69,10 +70,11 @@ export interface TeachingFrame {
   readonly caption: string;
 }
 
-/** The single source of truth for a moment of the demo. Slow motion and pause only change `t`. */
+/** The single source of truth for a moment of the demo. Slow motion and pause only change `t`. The demo plays once
+ * and holds its last frame (the trajectory does not loop back), so `t` is clamped to the lesson. */
 export function teachingFrame(l: TeachingLesson, t: number, foot: Foot): TeachingFrame {
   const len = lessonLength(l);
-  let at = ((t % len) + len) % len;
+  let at = Math.min(len, Math.max(0, t));
   let i = 0;
   while (i < l.phases.length - 1 && at >= l.phases[i]!.seconds) at -= l.phases[i++]!.seconds;
   const p = l.phases[i]!;
