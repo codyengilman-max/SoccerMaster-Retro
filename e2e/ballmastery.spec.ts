@@ -89,7 +89,9 @@ for (const gender of ['boy', 'girl'] as const) {
     await until(page, (x) => x.screen === 'setup', 'setup');
     await press(page, 'career-home', mode);
     c = await until(page, (x) => x.player === 'Robin' && x.screen === 'home', 'new player home');
-    for (const n of ['nav-juggling', 'nav-ballmastery', 'nav-team', 'nav-focus', 'nav-practice', 'nav-progress']) expect((await els(page))[n], n).toBeDefined();
+    // Weekly board: Juggling and Ball Mastery only (Progress stays as a secondary link); Team Training and the weekly focus moved off it.
+    for (const n of ['nav-juggling', 'nav-ballmastery', 'nav-progress']) expect((await els(page))[n], n).toBeDefined();
+    for (const n of ['nav-team', 'nav-focus', 'nav-practice']) expect((await els(page))[n], n).toBeUndefined();
     await page.screenshot({ path: `test-results/bm-home-${gender}-${info.project.name}.png` });
     // Build some history the old way (Training Library > Juggling > jg-1 > Log extra practice), then reload it as an existing save.
     await press(page, 'nav-library', mode);
@@ -118,7 +120,8 @@ for (const gender of ['boy', 'girl'] as const) {
     for (const f of ['firstTouch', 'passing', 'dribbling', 'finishing', 'defending', 'awareness']) expect((await els(page))[`lib-${f}`], f).toBeDefined();
     await page.screenshot({ path: `test-results/bm-section-${gender}-${info.project.name}.png` });
     await press(page, 'lib-dribbling', mode);
-    await press(page, 'act-dr-inside-cut', mode);
+    // dr-inside-cut now opens the teaching page (e2e/teaching.spec.ts); the shared viewer is checked on its partner move.
+    await press(page, 'act-dr-outside-cut', mode);
     c = await until(page, (x) => x.screen === 'activity' && !!x.demo?.inset, 'viewer');
     expect(c.text).toContain('COACH CODE');
     expect(c.demo!.set).toBe(`${gender}-training`);

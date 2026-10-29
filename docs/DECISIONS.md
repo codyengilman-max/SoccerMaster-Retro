@@ -408,3 +408,10 @@ From the owner's consolidated decisions after the read-only audit of `main` `04e
 | H7 | **Rest defence and golden moments are required** ([spec](specs/REST_DEFENCE_GOLDEN_MOMENTS.md)), with measurable state rules; golden moments are highlights, not tactical questions; the Director only observes and never forces goals/turnovers, moves players, changes possession, redirects passes, delays goals, manufactures mistakes, overrides the referee, or changes the score or canonical event ledger. | PR E. |
 | H8 | **Close superseded stacked PRs #6, #13, #39, #40.** Their work is in `main`; branches and history are kept. | Closed. |
 | TT | **Coach-approved All36 package is the Team Training source** (`SoccerMaster_Coach_Approved_All36.zip`, D01–D36, approved by Cody Engilman 2026-10-27; inventory `training/all36/INVENTORY.md`). It supersedes older unapproved metrics, placeholder scenarios and empty mappings; authority order: explicit owner decisions > All36 package > current repo decisions > existing implementation > older drafts. Written metrics control objective, conditions, players, choices, grading, movement, progression and credit; screenshots guide orientation, placement, facing, framing and UI only and are never shipped as gameplay. Each scenario must still pass technical/content validation; unmatched or incomplete ones are blocked and reported. Routes outside the package stay fail-closed; the 972 routes are never approved automatically; `SESSION_CARDS` is never filled with invented approvals. | PR C. |
+
+## 2026-10-29: Ball Mastery art v1 slice
+
+- Owner option A: the painted all-orange drafts are used only on the Ball Mastery teaching page; sprites-v2 stays everywhere else.
+- Owner option A: the weekly board drops Weekly Focus and Team Training (both moved under Progress); the story's Home learning task stays so Week 6+ progression is unchanged.
+- The foot inset is a crop of the same body frame, so body and foot cannot disagree; the left foot uses the separately drawn mirror poses, never a flipped image.
+- Only `dr-inside-cut` gets a teaching page until the owner reviews the slice.

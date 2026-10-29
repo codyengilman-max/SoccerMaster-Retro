@@ -18,6 +18,13 @@ PRs #52–#56 (owner decisions, tactics comparison, All36 weekly Team Training, 
 
 Verification: Chromium phone emulation and desktop only. Not yet verified on a real iPhone (PR G).
 
+## Ball Mastery art v1: Inside-Cut Escape teaching page (vertical slice, same branch, not merged, not deployed)
+
+- **Art:** owner drafts kept unchanged in `docs/art/ball-mastery-v1/source/`; `scripts/art/build-ball-mastery.py` writes cleaned derivatives, measured bounds and foot anchors (`derived/frames.json`) and the runtime sheets (`src/assets/art/ball-mastery-v1/`, `src/render/art/bmSheet.ts`). Used only on the teaching page; gameplay sprites are unchanged. Defects: `docs/art/ball-mastery-v1/INTAKE.md`.
+- **Teaching page:** `dr-inside-cut` opens directly to the demo: Coach Code, three catalog steps, one mistake + fix, More tips in place, Pause/Play, Step, 0.5x, Replay, Right/Left foot (separately drawn poses), Log practice (existing flow). One timeline (`src/game/career/teaching.ts`) drives body, foot-detail crop, ball and caption. Every other lesson keeps the PR #60 viewer until the slice is reviewed.
+- **Weekly board:** Juggling + Ball Mastery, plus the story's required-task buttons and Progress. "Choose a focus", Team Training and Home Practice moved under Progress; Team Training also stays reachable from Story, My Player and after matches. No data deleted, no credit granted, Home learning still gates Continue Week from Week 6 (owner option A).
+- **Tests:** `tests/teaching.test.ts`, `e2e/teaching.spec.ts`. Phone emulation only.
+
 ## Home Training: Juggling and Ball Mastery sections + lesson viewer (branch `devin/1793290016-ball-mastery`, from `main` b357bb8, not merged, not deployed)
 
 - **Sections:** Home and the Training Library root present exactly two Home Training sections, Juggling (`nav-juggling`, `lib-juggling`: the existing juggling ladder) and Ball Mastery (`nav-ballmastery`, `lib-ballmastery`: first touch, passing, dribbling, finishing, defending, awareness). All 92 activities, IDs, sessions, journal, logging, credit, required tasks, mastery and rewards are unchanged; Team Training stays its own entry. No save schema change (`SAVE_SCHEMA` 2).

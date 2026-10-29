@@ -48,3 +48,29 @@ must assign the surface from its own reviewed steps.
   `learning` (planned home sessions, reached through Weekly Focus). Removing Focus must keep a route or the owner
   must retire the requirement. Asked 2026-10-29.
 - Team Training leaves the weekly board but stays reachable from Story, My Player, MatchScene and its own scenes.
+
+## Vertical slice: Inside-Cut Escape (`dr-inside-cut`)
+
+Owner decisions 2026-10-29 (option A on both): the drafts are used only on the teaching page (the rest of the game
+keeps sprites-v2); the weekly board drops "choose a focus" and Team Training but keeps the story's Home learning task.
+
+- Timeline: `src/game/career/teaching.ts` (framework-free). Mechanics = the catalog's three reviewed steps, cue and
+  mistake. Right foot P4 (load right foot) > P9 (right leg crosses, inside of the right foot carries the ball across) >
+  P1 (push away the new way). Left foot uses the drawn mirrors P3 > P10 > P2; nothing is flipped.
+- Runtime sheets: `src/assets/art/ball-mastery-v1/{boy,girl}_ball_mastery.png` + generated `src/render/art/bmSheet.ts`
+  (one scale per character from P1 visible height; anchor = ground point between the boots).
+- Foot detail is a crop of the same frame around the working boot, so body and foot never disagree.
+
+## Unresolved artwork defects (need replacement art before expanding)
+
+1. No ball is drawn on any pose, so the contact surface is not visible in the art; the page names it from the lesson.
+2. Contact studies only: three held key poses per foot, no in-betweens, so motion is stepped, not animated.
+3. Figures face the viewer; "Dribble forward" cannot be shown as forward travel (the slice shows the cut on the spot
+   with a short exit).
+4. Boy P11/P12 (wide stance) and girl P11/P12 (knee lifted) are different poses under the same position: the sheets
+   are not matched pose-for-pose between boy and girl.
+5. Girl P6 and P10 touch on the sheet; separated on the grid line, may clip a few pixels.
+6. Boots/ball sheet: repeated directions with mirrored variants and inconsistent perspective; not used.
+7. Style mismatch: painted, higher resolution and all-orange kit vs the pixel-art sprites-v2 protagonist.
+8. Character pixels are alpha 250–254 with a haze of alpha 1–15 around every figure (fixed in the derivatives).
+9. Hook turn and Cruyff turn: no pose in either sheet shows a drag behind the standing leg; not attempted.
