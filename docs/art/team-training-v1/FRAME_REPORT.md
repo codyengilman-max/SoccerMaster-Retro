@@ -39,3 +39,7 @@ The game never invents them: a keeper save, catch or distribution shows as the n
 ## Facing
 
 Every supplied outfield pose faces right or three-quarters right. Players moving up or down the screen use the side-on run, flipped toward their screen direction. No front or back views exist.
+
+## Weekly Team Training (D63)
+
+The Weekly Team Training screen shows a frozen All36 picture, so it uses only static key poses: frame 6 (stand) for outfield players, frame 18 (first defensive-shuffle cell) for defenders within 8 m of the ball, keeper strip `stand`/`ready`. Not available in the package and therefore not shown: front/back (up/down) facing views, a shooting row, keeper save/dive/catch/recovery/throw/punt, and any authored movement for the LEARN outcome.

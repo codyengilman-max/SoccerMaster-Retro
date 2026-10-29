@@ -79,3 +79,48 @@ export function ttIdentities(look: 'boy' | 'girl', homeSlots: readonly string[],
   if (awayKeeper) m.set(awayKeeper, 'keeper_away');
   return m;
 }
+
+/** One actor of a static Weekly Team Training picture (All36 package data, metres, home attacking +y). */
+export interface StillActor {
+  readonly id: string;
+  readonly team: 'H' | 'A';
+  readonly role: string;
+  readonly at: readonly [number, number];
+}
+export interface StillPose {
+  readonly sheet: TtSheet;
+  readonly action: TtAction;
+  readonly frame: number;
+  readonly flip: boolean;
+  readonly keeper: boolean;
+}
+
+/**
+ * Supplied sheets for a Weekly Team Training picture: the saved boy or girl in the protagonist's slot, distinct
+ * orange teammates for the other home actors, distinct green-pinnie opponents for the away actors and the training
+ * keeper sheets for each side's GK. Teams and keepers come from the package actor data only.
+ */
+export function stillCast(look: 'boy' | 'girl', actors: readonly StillActor[], protagonist: string): ReadonlyMap<string, TtSheet> {
+  const home = actors.filter((a) => a.team === 'H').map((a) => a.id);
+  const away = actors.filter((a) => a.team === 'A').map((a) => a.id);
+  const gk = (t: 'H' | 'A') => actors.find((a) => a.team === t && a.role === 'GK')?.id ?? null;
+  return ttIdentities(look, home, away, protagonist, gk('H'), gk('A'));
+}
+
+/** Defenders within this many metres of the ball hold the defensive stance instead of standing. */
+export const STILL_PRESS_M = 8;
+
+/**
+ * The frozen observation pose: nobody moves (positions are the approved state). Sheets face right, so each player
+ * is mirrored to face the ball; the carrier faces the goal they attack. Defenders near the ball and a defending
+ * keeper hold their ready stances; everyone else stands.
+ */
+export function stillPose(a: StillActor, sheet: TtSheet, ball: readonly [number, number], owner: StillActor | null, fieldWidth: number): StillPose {
+  const keeper = a.role === 'GK';
+  const defending = owner ? owner.team !== a.team : false;
+  const near = Math.hypot(a.at[0] - ball[0], a.at[1] - ball[1]) < STILL_PRESS_M;
+  const action: TtAction = keeper ? (defending || !owner ? 'keeper-ready' : 'stand') : defending && near ? 'shuffle' : 'stand';
+  const frame = action === 'shuffle' ? ROW.shuffle : ttFrame(keeper, action, 0);
+  const lookX = owner?.id === a.id ? fieldWidth / 2 : ball[0];
+  return { sheet, action, frame, flip: lookX < a.at[0] - 0.25, keeper };
+}

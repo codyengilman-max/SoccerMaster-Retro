@@ -380,6 +380,9 @@ Approved technical choices. Add a new entry rather than silently changing an old
 ## D62. Release of PRs #37 and #52–#56 (owner, 2026-10-28)
 - The owner asked to merge all new PRs and then PR #37 as well. PR #37 is merged as one change, superseding H4 (extract Tournament Results and Animated Rosters v2 first). Merge conflicts were resolved by keeping both sides; Team Training keeps the newer package-art setup (`ensureTtArt`) over #37's `practice` kit change.
 
+## D63. Weekly Team Training draws package sprites, frozen poses (owner, 2026-10-29)
+- The owner asked for the Weekly Team Training dots to become the approved Team Training sprites. `WeeklyTrainingScene` uses the `team-training-v1` sheets through the same identity, anchor and scale helpers as `TacticalTrainingScene`; teams come from package actor data, never colours. Because the All36 picture is static (no authored continuations), players hold key poses rather than animating, and the missing views and keeper cycles are reported instead of invented. The package is still labelled an art review build (`art_review_build_not_shipping_approved`).
+
 ## Owner decisions 2026-10-27 (H1–H8)
 
 From the owner's consolidated decisions after the read-only audit of `main` `04e947b` (second revision, same day: H3 now removes Coach Moments from story matches, and the coach-approved All36 package becomes the Team Training source). Plan: [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md).

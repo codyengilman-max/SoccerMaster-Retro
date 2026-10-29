@@ -7,7 +7,10 @@ import { weeklyProgress } from '../game/career/weeklyTraining';
 import { episodeById } from '../game/training12/all36/package';
 import type { ChoiceId, PackageEpisode, PackageVariant } from '../game/training12/all36/types';
 import { gradeWeekly, weeklyAssignment, type WeeklyAssignment, type WeeklyVerdict } from '../game/training12/all36/weekly';
+import { ensureTtArt, ttKey } from '../render/art/teamTrainingArt';
+import { stillCast, stillPose, targetBody, TT_ART, ttScale, type StillActor, type StillPose, type TtSheet } from '../render/art/teamTrainingFrames';
 import { orientationOf } from '../render/layout';
+import { BALL_TEXTURE_SIZE, TEXTURES, ensurePlaceholderTextures } from '../render/textures';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspectable';
 import { SceneKeys } from './keys';
@@ -21,8 +24,6 @@ type Screen = 'loading' | 'unavailable' | 'observe' | 'saving' | 'result' | 'sav
 
 export const ROLE_NAME: Readonly<Record<string, string>> = { LB: 'Left back (3)', RB: 'Right back (2)', CB: 'Centre back (4/5)', '6': 'Holding midfielder (6)', '8': 'Central midfielder (8)', LW: 'Left winger (11)', RW: 'Right winger (7)', '9': 'Striker (9)' };
 const GRADE_TEXT: Readonly<Record<string, string>> = { preferred: 'best', acceptable: 'acceptable', misread: 'wrong read' };
-const HOME = 0x3a6fc4;
-const AWAY = 0xc8423a;
 const GOLD = 0xf2c14e;
 const GOAL_WIDTH = 6.4;
 
@@ -61,6 +62,15 @@ export class WeeklyTrainingScene extends Phaser.Scene implements InspectableScen
   private sub!: Phaser.GameObjects.Text;
   private body!: Phaser.GameObjects.Text;
   private tags: Phaser.GameObjects.Text[] = [];
+  /** Field sprites (package art), the separate ball, and the LEARN lanes above the bodies; all clipped to the pitch. */
+  private sprites = new Map<string, Phaser.GameObjects.Image>();
+  private ballImg!: Phaser.GameObjects.Image;
+  private lanes!: Phaser.GameObjects.Graphics;
+  private clip!: Phaser.GameObjects.Graphics;
+  private look: 'boy' | 'girl' = 'boy';
+  private cast: ReadonlyMap<string, TtSheet> | null = null;
+  private poses: (StillPose & { id: string; team: 'H' | 'A'; role: string; at: readonly [number, number]; feet: { x: number; y: number }; drawn: 'sprite' | 'loading' })[] = [];
+  private ballAt: { x: number; y: number; size: number } | null = null;
   private buttons: Button[] = [];
   private buttonKey = '';
   private field: Rect = { x: 0, y: 0, width: 1, height: 1 };
@@ -84,10 +94,20 @@ export class WeeklyTrainingScene extends Phaser.Scene implements InspectableScen
     this.message = 'Loading Team Training…';
     this.buttons = [];
     this.tags = [];
+    this.sprites = new Map();
+    this.cast = null;
+    this.poses = [];
+    this.ballAt = null;
+    this.look = 'boy';
     this.buttonKey = '';
     this.cameras.main.setBackgroundColor('#0d1630');
     const res = textResolution();
     this.g = this.add.graphics();
+    ensurePlaceholderTextures(this);
+    this.clip = this.make.graphics({}, false);
+    const mask = this.clip.createGeometryMask();
+    this.lanes = this.add.graphics().setDepth(4.6).setMask(mask);
+    this.ballImg = this.add.image(-100, -100, TEXTURES.ball).setDepth(4.5).setVisible(false).setMask(mask);
     this.title = this.add.text(0, 0, 'WEEKLY TEAM TRAINING', { fontFamily: FONT_FAMILY, color: '#f2c14e', fontStyle: 'bold', fontSize: '15px' }).setResolution(res).setDepth(10);
     this.sub = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: CSS.cream, fontSize: '12px', wordWrap: { width: 300, useAdvancedWrap: true } }).setResolution(res).setDepth(10);
     this.body = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: CSS.cream, fontSize: '13px', lineSpacing: 2, wordWrap: { width: 300, useAdvancedWrap: true } }).setResolution(res).setDepth(10);
@@ -111,6 +131,8 @@ export class WeeklyTrainingScene extends Phaser.Scene implements InspectableScen
         this.assignment = a;
         this.episode = e;
         this.variant = v;
+        this.look = save.player.gender === 'girl' ? 'girl' : 'boy';
+        if (!ensureTtArt(this)) this.load.once(Phaser.Loader.Events.COMPLETE, () => this.sys.isActive() && this.layout());
         this.begin();
       })
       .catch(() => this.setScreen('unavailable', 'Your career save could not be opened.'));
@@ -237,31 +259,68 @@ export class WeeklyTrainingScene extends Phaser.Scene implements InspectableScen
     g.lineStyle(4, 0xffffff, 1);
     for (const y of [0, L]) if (y >= b[1] && y <= b[3]) seg([W / 2 - GOAL_WIDTH / 2, y], [W / 2 + GOAL_WIDTH / 2, y]);
     const at = (id: string): readonly [number, number] => v.actor_overrides[id] ?? e.actors.find((x) => x.id === id)!.position_m;
+    this.clip.clear().fillStyle(0xffffff, 1).fillRect(tl.x, tl.y, (b[2] - b[0]) * s, (b[3] - b[1]) * s);
     // LEARN: the chosen and the best option's ball targets from the package branches (static, not a demonstration).
+    // Drawn above the bodies so the lanes stay readable.
+    const lanes = this.lanes.clear();
     if (this.verdict && this.choice) {
       const ball = this.toScreen(v.ball_position_m);
       const best = (Object.keys(v.grades) as ChoiceId[]).find((k) => v.grades[k] === 'preferred')!;
       for (const [k, col] of [[this.choice, 0xffffff], ...(best !== this.choice ? [[best, GOLD]] : [])] as [ChoiceId, number][]) {
         const t = this.toScreen(v.branches[k].ball_target);
-        g.lineStyle(3, col, 0.9).lineBetween(ball.x, ball.y, t.x, t.y);
-        g.fillStyle(col, 1).fillCircle(t.x, t.y, 4);
+        lanes.lineStyle(3, col, 0.9).lineBetween(ball.x, ball.y, t.x, t.y);
+        lanes.fillStyle(col, 1).fillCircle(t.x, t.y, 4);
         this.tag(k, t.x + 6, t.y - 8, col === GOLD ? '#f2c14e' : '#ffffff');
       }
     }
-    const r = Math.max(5, Math.min(11, s * 0.9));
-    for (const a of e.actors) {
-      const p = this.toScreen(at(a.id));
-      g.fillStyle(a.team === 'H' ? HOME : AWAY, 1).fillCircle(p.x, p.y, r);
-      g.lineStyle(a.id === e.protagonist_id ? 3 : 1, a.id === e.protagonist_id ? GOLD : 0x111111, 1).strokeCircle(p.x, p.y, a.id === e.protagonist_id ? r + 2 : r);
-      if (a.id === e.protagonist_id) this.tag('YOU', p.x - 10, p.y - r - 16, '#f2c14e');
+    // Players: the package sheets anchored at the feet on each actor's approved coordinate, the approved
+    // 1.2075x visible-body scale applied once, frozen poses (the scenario never moves before or after the answer).
+    const actors: StillActor[] = e.actors.map((a) => ({ id: a.id, team: a.team, role: a.role, at: at(a.id) }));
+    this.cast ??= stillCast(this.look, actors, e.protagonist_id);
+    const owner = actors.find((a) => a.id === v.ball_owner) ?? null;
+    const sc = ttScale(s);
+    const body = targetBody(s);
+    const r = body * 0.24;
+    this.poses = [];
+    for (const a of actors) {
+      const p = this.toScreen(a.at);
+      const sheet = this.cast.get(a.id)!;
+      const pose = stillPose(a, sheet, v.ball_position_m, owner, W);
+      const me = a.id === e.protagonist_id;
+      g.fillStyle(0x000000, 0.28).fillEllipse(p.x, p.y, r * 2, r * 0.7);
+      // The protagonist's marker is a subtle ground ring; their only body highlight is the outline drawn into the sheet.
+      if (me) g.lineStyle(2, GOLD, 0.9).strokeEllipse(p.x, p.y, r * 2.8, r * 1.05);
+      let im = this.sprites.get(a.id);
+      const ready = this.textures.exists(ttKey(sheet));
+      if (ready) {
+        im ??= this.add.image(p.x, p.y, ttKey(sheet)).setMask(this.lanes.mask!);
+        this.sprites.set(a.id, im);
+        im.setTexture(ttKey(sheet), pose.frame)
+          .setOrigin(TT_ART.anchor.x / TT_ART.cell.w, TT_ART.anchor.y / TT_ART.cell.h)
+          .setScale(sc)
+          .setFlipX(pose.flip)
+          .setPosition(p.x, p.y)
+          .setDepth(3 + p.y / 10000 + (me ? 0.00001 : 0))
+          .setVisible(true);
+      } else {
+        im?.setVisible(false);
+        // Package sheets still loading: a neutral marker at the feet until they arrive (never other art).
+        g.fillStyle(a.team === 'H' ? 0xf07a1a : 0x3fae49, 1).fillCircle(p.x, p.y - r, r);
+      }
+      this.poses.push({ ...pose, id: a.id, team: a.team, role: a.role, at: a.at, feet: p, drawn: ready ? 'sprite' : 'loading' });
+      if (me) this.tag('YOU', p.x, Math.max(tl.y + 13, p.y - body - 3), '#f2c14e', true);
     }
+    // The ball is its own object on the package ball coordinate, above every body so it is never hidden.
     const ball = this.toScreen(v.ball_position_m);
-    g.fillStyle(0xffffff, 1).fillCircle(ball.x, ball.y, Math.max(3, r * 0.45));
-    g.lineStyle(1, 0x111111, 1).strokeCircle(ball.x, ball.y, Math.max(3, r * 0.45));
+    const size = Math.max(7, s * 0.75);
+    this.ballImg.setScale(size / BALL_TEXTURE_SIZE.width).setPosition(ball.x, ball.y - size * 0.45).setVisible(true);
+    this.ballAt = { x: ball.x, y: ball.y, size };
   }
 
-  private tag(text: string, x: number, y: number, color: string): void {
-    this.tags.push(this.add.text(x, y, text, { fontFamily: FONT_FAMILY, color, fontStyle: 'bold', fontSize: '11px' }).setResolution(textResolution()).setDepth(5));
+  private tag(text: string, x: number, y: number, color: string, above = false): void {
+    const t = this.add.text(x, y, text, { fontFamily: FONT_FAMILY, color, fontStyle: 'bold', fontSize: '11px' }).setResolution(textResolution()).setDepth(5);
+    if (above) t.setOrigin(0.5, 1).setStroke('#0d1630', 3);
+    this.tags.push(t);
   }
 
   private drawPanel(): void {
@@ -358,6 +417,19 @@ export class WeeklyTrainingScene extends Phaser.Scene implements InspectableScen
       message: this.message,
       bodyText: this.body.text,
       bodyBottom: this.body.y + this.body.height,
+      art: this.episode
+        ? {
+            set: 'team-training-v1',
+            look: this.look,
+            field: { ...this.field },
+            camera: this.episode.camera_bounds_m,
+            scale: ttScale(this.view().s),
+            bodyPx: targetBody(this.view().s),
+            actors: this.poses.map((q) => ({ id: q.id, team: q.team, role: q.role, at: q.at, sheet: q.sheet, frame: q.frame, flip: q.flip, action: q.action, drawn: q.drawn, feet: q.feet, me: q.id === this.episode!.protagonist_id })),
+            ball: this.ballAt ? { at: this.variant!.ball_position_m, ...this.ballAt } : null,
+            you: this.tags.find((t) => t.text === 'YOU')?.getBounds() ?? null,
+          }
+        : null,
       buttonsTop: this.buttons.length ? Math.min(...this.buttons.map((b) => b.getButtonBounds().y)) : null,
     };
   }
