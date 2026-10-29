@@ -2,7 +2,7 @@
 /** Ball Mastery art v1 runtime cells: one scale per character (from P1 visible height), anchor = ground point between the boots. */
 export const BM_SHEET = Object.freeze({
   boy: {
-    cell: { w: 191, h: 224 }, anchor: { x: 95, y: 212 }, visibleHeight: 200,
+    cell: { w: 230, h: 225 }, anchor: { x: 115, y: 213 }, visibleHeight: 200,
     frames: {
     P1: { index: 0, boots: [[-40, 0], [40, -12]] as const },
     P2: { index: 1, boots: [[-45, -10], [45, 0]] as const },
@@ -13,7 +13,7 @@ export const BM_SHEET = Object.freeze({
     },
   },
   girl: {
-    cell: { w: 190, h: 224 }, anchor: { x: 95, y: 212 }, visibleHeight: 200,
+    cell: { w: 234, h: 225 }, anchor: { x: 117, y: 213 }, visibleHeight: 200,
     frames: {
     P1: { index: 0, boots: [[-37, 0], [37, -22]] as const },
     P2: { index: 1, boots: [[-36, -22], [36, 0]] as const },

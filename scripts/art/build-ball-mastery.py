@@ -97,8 +97,11 @@ def runtime():
         im = Image.open(OUT / f'{sex}_contact_poses_clean.png')
         fr = {f['id']: f for f in meta['sheets'][sex]}
         k = TARGET_H / fr['P1']['visible_height']
-        cw = max(int(fr[p]['rect'][2] * k) for p in RUNTIME_POSES) + 24
-        ch = TARGET_H + 24
+        # The anchor sits between the boots, not at the figure's centre: size the cell to the widest reach on either
+        # side of it (and the tallest pose) so no hand, hair or boot is cut off.
+        reach = max(max(fr[p]['anchor']['x'] - fr[p]['rect'][0], fr[p]['rect'][0] + fr[p]['rect'][2] - fr[p]['anchor']['x']) for p in RUNTIME_POSES)
+        cw = 2 * (int(reach * k) + 1) + 16
+        ch = max(int((fr[p]['anchor']['y'] - fr[p]['rect'][1]) * k) + 1 for p in RUNTIME_POSES) + 24
         sheet = Image.new('RGBA', (cw * len(RUNTIME_POSES), ch), (0, 0, 0, 0))
         frames = []
         for i, pid in enumerate(RUNTIME_POSES):
@@ -107,6 +110,7 @@ def runtime():
             ax, ay = f['anchor']['x'], f['anchor']['y']
             ox = cw // 2 - round((ax - x) * k)
             oy = ch - 12 - round((ay - y) * k)
+            assert ox >= 1 and oy >= 1 and ox + crop.width <= cw - 1 and oy + crop.height <= ch - 1, f'{sex} {pid} would be clipped'
             sheet.alpha_composite(crop, (i * cw + ox, oy))
             boots = [[round((b['x'] - ax) * k), round((b['bottom'] - ay) * k)] for b in f['boots_image_left_to_right']]
             frames.append(f"    {pid}: {{ index: {i}, boots: {json.dumps(boots)} as const }},")

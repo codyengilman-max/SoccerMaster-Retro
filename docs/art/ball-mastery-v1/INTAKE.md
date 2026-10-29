@@ -74,3 +74,9 @@ keeps sprites-v2); the weekly board drops "choose a focus" and Team Training but
 7. Style mismatch: painted, higher resolution and all-orange kit vs the pixel-art sprites-v2 protagonist.
 8. Character pixels are alpha 250–254 with a haze of alpha 1–15 around every figure (fixed in the derivatives).
 9. Hook turn and Cruyff turn: no pose in either sheet shows a drag behind the standing leg; not attempted.
+10. Contact surface legibility: in the front-facing P9/P10 drawings the ball meets what reads as the toe/front edge of
+    the boot, not a clearly visible inside surface. The page names "inside of the foot" from the lesson; the art does
+    not prove it. Needs a 3/4 or side-on contact drawing.
+11. Fixed in the runtime build: cells were sized to figure width but centred on the boot anchor, cutting off a hand
+    (boy P4 and contact poses). The build now sizes cells to the widest reach either side of the anchor and fails if
+    any pose would touch its cell edge.
