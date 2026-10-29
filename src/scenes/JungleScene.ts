@@ -3,6 +3,7 @@ import type { Rect } from '../game';
 import { COMPETITORS, JUNGLE, abandon, actState, canMove, command, cooldownLeft, drainEvents, newJungle, shotCharge, standings, step, type CompetitorId, type JungleState } from '../game/jungle/sim';
 import { JungleSfx } from './ui/jungleSfx';
 import { jungleActionFrame, type JungleAct } from '../render/art/spriteSets';
+import { JUNGLE4_ART, KEEPER_GLOVES, applyJungle4, ballFrame, ensureJungle4, jungle4BodyHeight, jungle4Frame, jungle4Key, keeperFrame, removeJungle4, type Jungle4Act, type Jungle4Set } from '../render/art/jungle4Art';
 import type { PadEvent } from '../input/joystickControls';
 import { orientationOf } from '../render/layout';
 import { CSS, FONT_FAMILY, textResolution } from '../render/theme';
@@ -10,7 +11,7 @@ import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspe
 import { SceneKeys } from './keys';
 import { Button } from './ui/Button';
 import { PadHud } from './ui/PadHud';
-import { PLAYER_ART, PlayerArt, atlasKey } from '../render/art/playerArt';
+import { PLAYER_ART, PlayerArt } from '../render/art/playerArt';
 import { sideLooks, type RosterLook } from '../render/art/roster';
 import { REFERENCE_KITS, dirFromScreen, type PoseKind } from '../render/art/spriteFactory';
 import { artTextureKey, artUrl } from '../render/art/urls';
@@ -42,6 +43,10 @@ const KITS = {
   sam: { shirt: '#7768ae', shade: '#52487d', light: '#9d90cc' },
 } as const;
 const BG_ASSET = 'jungle-ball';
+/** Height fraction of the schoolyard picture where the grass starts (under the crowd's feet and the chalked path). */
+const BG_GRASS_EDGE = 0.455;
+/** Atlas ball frame diameter scaled so the new ball draws as wide as the old placeholder's visible disc (r = width / 2 - 2 plus its outline). */
+const BALL_IMG_D = (64 * BALL_TEXTURE_SIZE.width) / (BALL_TEXTURE_SIZE.width - 2);
 const HITSTOP_MS = 70;
 const BIG_HITSTOP_MS = 140;
 
@@ -89,6 +94,11 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
   private artDist: Record<CompetitorId, number> = { player: 0, alex: 0, blake: 0, sam: 0 };
   private lastT = 0;
   private ballImg!: Phaser.GameObjects.Image;
+  /** Replacement-package atlas per competitor slot (the rival fills the fourth slot, id `alex`). */
+  private cast!: Record<CompetitorId, Jungle4Set>;
+  private ballSpin = 0;
+  private keeperPrevY = 0;
+  private artShown: { keeper: string | null; ball: string | null; held: boolean } = { keeper: null, ball: null, held: false };
   private bg: Phaser.GameObjects.Image | null = null;
   private ownBg = false;
   private kickedAt: Partial<Record<CompetitorId, number>> = {};
@@ -129,6 +139,13 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
       sam: { ...away[5]!, kit: KITS.sam, number: '4', set: 'jungle-sam' },
       keeper: home[0]!,
     };
+    // Replacement package: the saved boy OR girl, the new rival in the fourth slot, canonical Sam and Blake, the
+    // schoolyard keeper and the black/white ball. The old sheets stay as the fallback until these load.
+    this.cast = { player: look === 'girl' ? 'jungle4-girl' : 'jungle4-boy', alex: 'jungle4-rival', blake: 'jungle4-blake', sam: 'jungle4-sam' };
+    ensureJungle4(this, [...Object.values(this.cast), 'jungle4-keeper', 'jungle4-ball']);
+    this.ballSpin = 0;
+    this.keeperPrevY = this.sim.keeper.y;
+    this.artShown = { keeper: null, ball: null, held: false };
     this.art.ensure([this.looks.player.set, this.looks.blake.set, this.looks.sam.set]);
     this.sprites = {};
     for (const id of [...COMPETITORS, 'keeper'] as const) this.sprites[id] = this.add.image(0, 0, TEXTURES.ball).setOrigin(48 / 96, 68 / 96);
@@ -287,8 +304,15 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
       runId: this.runId,
       art: {
         background: this.bg !== null,
-        sets: Object.fromEntries(COMPETITORS.map((id) => [id, this.looks[id].set ?? null])),
-        loaded: COMPETITORS.every((id) => !this.looks[id].set || this.textures.exists(atlasKey(this.looks[id].set!))),
+        sets: { ...this.cast },
+        loaded: [...COMPETITORS.map((id) => this.cast[id]), 'jungle4-keeper' as const, 'jungle4-ball' as const].every((k) => this.textures.exists(jungle4Key(k))),
+        heightFactor: JUNGLE4_ART.heightFactor,
+        frames: Object.fromEntries(COMPETITORS.map((id) => [id, this.sprites[id]?.frame.name ?? null])),
+        textures: Object.fromEntries([...COMPETITORS, 'keeper' as const].map((id) => [id, this.sprites[id]?.texture.key ?? null])),
+        keeper: this.artShown.keeper,
+        ball: this.artShown.ball,
+        ballHeld: this.artShown.held,
+        ballTexture: this.ballImg?.texture.key ?? null,
       },
     };
   }
@@ -391,13 +415,19 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     if (!this.load.isLoading()) this.load.start();
   }
 
-  /** Cover-fit the courtyard into the stage: the paved ground sits under the floor band. */
+  /**
+   * Cover-fit the schoolyard into the stage with the grass edge (below the crowd) on the floor band; the picture always
+   * fills the stage.
+   */
   private fitBackground(): void {
     if (!this.bg) return;
     const p = this.pen;
-    const k = Math.max(p.width / this.bg.width, p.height / this.bg.height);
-    this.bg.setScale(k).setPosition(p.x + p.width / 2, p.y + p.height - (this.bg.height * k) / 2);
-    this.bg.setCrop((this.bg.width - p.width / k) / 2, (this.bg.height - p.height / k), p.width / k, p.height / k);
+    // Tall enough that the grass below the edge reaches the bottom of the stage when the edge sits on the floor band.
+    const k = Math.max(p.width / this.bg.width, p.height / this.bg.height, (p.y + p.height - this.floorTop) / (1 - BG_GRASS_EDGE) / this.bg.height);
+    const H = this.bg.height * k;
+    const top = Math.min(p.y, Math.max(p.y + p.height - H, this.floorTop - BG_GRASS_EDGE * H));
+    this.bg.setScale(k).setPosition(p.x + p.width / 2, top + H / 2);
+    this.bg.setCrop((this.bg.width - p.width / k) / 2, (p.y - top) / k, p.width / k, p.height / k);
   }
 
   /** Camera shake, skipped when the device asks for reduced motion. */
@@ -409,7 +439,7 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
    * Frame from what the sim says each competitor is doing (read-only): an owner action-sheet frame when the
    * look has one (`named`), otherwise the closest factory pose (Alex has no sheet).
    */
-  private frameFor(id: CompetitorId, dt: number): { kind: PoseKind; dir: number; pose: number; named: string | null } {
+  private frameFor(id: CompetitorId, dt: number): { kind: PoseKind; dir: number; pose: number; named: string | null; act: Jungle4Act | null; k: number } {
     const s = this.sim;
     const c = s.competitors[id];
     const speed = Math.hypot(c.vel.x, c.vel.y);
@@ -435,7 +465,7 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     else if (a === 'charge') (act = 'charge'), (k = shotCharge(s, id) ?? 0);
     else if (a === 'strike') (act = 'strike'), (k = span(c.strikeAt, JUNGLE.strikeSeconds));
     else if (c.turboOn && speed > JUNGLE.runSpeed * 0.9) (act = 'sprint'), (k = pose);
-    return { kind, dir: this.artDir[id], pose, named: act ? jungleActionFrame(act, this.artDir[id], k) : null };
+    return { kind, dir: this.artDir[id], pose, named: act ? jungleActionFrame(act, this.artDir[id], k) : null, act, k };
   }
 
   private draw(): void {
@@ -490,8 +520,11 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
       const fr = this.frameFor(id, dt);
       if (actState(s, id) === 'celebrate') fr.kind = 'idle';
       const img = this.sprites[id]!;
-      (actState(s, id) === 'celebrate' && this.looks[id].set ? this.art.applyNamed(img, this.looks[id], 'celebrate', 'idle', fr.dir, fr.pose, ph) : this.art.applyNamed(img, this.looks[id], fr.named, fr.kind, fr.dir, fr.pose, ph)).setPosition(f.x, f.y).setDepth(100 + f.y).setAlpha(s.t < c.stunUntil ? 0.75 : 1);
-      const top = f.y - ph * PLAYER_ART.bodyScale - 4;
+      const celebrating = actState(s, id) === 'celebrate';
+      const fresh = applyJungle4(img, this.cast[id], jungle4Frame(celebrating ? 'celebrate' : fr.act, fr.kind === 'run' || fr.kind === 'kick' ? fr.kind : 'idle', fr.dir, fr.pose, fr.k), jungle4BodyHeight(ph));
+      if (!fresh) celebrating && this.looks[id].set ? this.art.applyNamed(img, this.looks[id], 'celebrate', 'idle', fr.dir, fr.pose, ph) : this.art.applyNamed(img, this.looks[id], fr.named, fr.kind, fr.dir, fr.pose, ph);
+      img.setPosition(f.x, f.y).setDepth(100 + f.y).setAlpha(s.t < c.stunUntil ? 0.75 : 1);
+      const top = f.y - (fresh ? jungle4BodyHeight(ph) : ph * PLAYER_ART.bodyScale) - 4;
       if (s.t < c.stunUntil) for (let i = 0; i < 3; i++) {
         const a = s.t * 9 + (i * Math.PI * 2) / 3;
         h.fillStyle(0xffd23f, 1).fillRect(f.x + Math.cos(a) * ph * 0.35 - 3, top + Math.sin(a) * ph * 0.08, 6, 6);
@@ -502,7 +535,15 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     const kp = this.toScreen(s.keeper.x, s.keeper.y);
     const kh = bodyH(s.keeper.y);
     const ksc = PlayerArt.scaleFor(kh);
-    this.sprites.keeper!.setTexture(this.art.frame(this.looks.keeper, s.keeper.mode === 'dive' || s.keeper.mode === 'down' || (this.savedAt !== null && s.t - this.savedAt < 0.3) ? 'dive' : s.keeper.mode === 'hold' ? 'kick' : 'idle', 4, 0)).setScale(ksc.x, ksc.y).setPosition(kp.x, kp.y).setDepth(100 + kp.y);
+    const km = s.keeper.mode;
+    const kk = km === 'dive' ? 1 - (s.keeper.modeUntil - s.t) / JUNGLE.keeperDiveSeconds : km === 'down' ? 1 - (s.keeper.modeUntil - s.t) / JUNGLE.keeperRecoverSeconds : 0;
+    const kName = keeperFrame(km, Math.min(1, Math.max(0, kk)), s.keeper.modeUntil - s.t, dt > 0 && Math.abs(s.keeper.y - this.keeperPrevY) > 0.4 * dt);
+    this.keeperPrevY = s.keeper.y;
+    const kImg = this.sprites.keeper!;
+    const kFresh = applyJungle4(kImg, 'jungle4-keeper', kName, jungle4BodyHeight(kh));
+    this.artShown.keeper = kFresh ? kName : null;
+    if (kFresh) kImg.setPosition(kp.x, kp.y).setDepth(100 + kp.y);
+    else this.sprites.keeper!.setTexture(this.art.frame(this.looks.keeper, s.keeper.mode === 'dive' || s.keeper.mode === 'down' || (this.savedAt !== null && s.t - this.savedAt < 0.3) ? 'dive' : s.keeper.mode === 'hold' ? 'kick' : 'idle', 4, 0)).setScale(ksc.x, ksc.y).setPosition(kp.x, kp.y).setDepth(100 + kp.y);
     const b = this.toScreen(s.ball.pos.x, s.ball.pos.y);
     // Drawn size follows the sim's ball radius (0.2 yd drew at 0.55 yd wide).
     const br = Math.max(13, this.scale1 * JUNGLE.ballRadius * 2.75);
@@ -510,7 +551,18 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     // ON FIRE: the ball trails flame while the burning competitor has it or just shot it.
     if (s.fire && s.ball.lastTouch === s.fire) for (let i = 1; i <= 4; i++) g.fillStyle(i % 2 ? 0xff7a1a : 0xffd23f, 0.6 - i * 0.12).fillCircle(b.x - s.ball.vel.x * this.kx * 0.02 * i, b.y - br * 0.45 - s.ball.vel.y * this.ky * 0.02 * i, br * (1 - i * 0.15));
     // The ball rises off its ground shadow by its height; depth sorts by ground position.
-    this.ballImg.setScale(br / BALL_TEXTURE_SIZE.width).setPosition(b.x, b.y - br * 0.45 - s.ball.z * this.zk).setDepth(100 + b.y + 0.5);
+    // Spin: one turn per ball circumference travelled, rolling the way it moves (12 drawn rotations per turn).
+    const bv = s.ball.vel;
+    if (!s.ball.held && !this.reducedMotion) this.ballSpin += (Math.sign(bv.x || 1) * Math.hypot(bv.x, bv.y) * dt * JUNGLE4_ART.ballFrames) / (2 * Math.PI * JUNGLE.ballRadius);
+    const glove = kFresh && s.ball.held ? KEEPER_GLOVES[kName] : undefined;
+    const bName = ballFrame(this.ballSpin);
+    if (this.textures.exists(jungle4Key('jungle4-ball'))) this.ballImg.setTexture(jungle4Key('jungle4-ball'), bName).setScale(br / BALL_IMG_D);
+    else this.ballImg.setScale(br / BALL_TEXTURE_SIZE.width);
+    this.artShown.ball = this.textures.exists(jungle4Key('jungle4-ball')) ? bName : null;
+    this.artShown.held = glove !== undefined;
+    // While the keeper holds it the ball sits in the gloves of the shown pose; the sim releases it on the throw.
+    if (glove) this.ballImg.setPosition(kImg.x + (glove.x - kImg.originX) * kImg.displayWidth, kImg.y + (glove.y - kImg.originY) * kImg.displayHeight).setDepth(100 + kp.y + 0.5);
+    else this.ballImg.setPosition(b.x, b.y - br * 0.45 - s.ball.z * this.zk).setDepth(100 + b.y + 0.5);
     const charge = shotCharge(s, 'player');
     if (charge !== null) {
       const k = charge;
@@ -669,6 +721,7 @@ export class JungleScene extends Phaser.Scene implements InspectableScene, Gamep
     this.input.keyboard?.off('keyup', this.onKeyUp, this);
     this.pad.destroy();
     this.art.destroy();
+    removeJungle4(this, [...Object.values(this.cast), 'jungle4-keeper', 'jungle4-ball']);
     this.load.off(`filecomplete-image-${artTextureKey(BG_ASSET)}`);
     // The courtyard texture is released only if this scene loaded it (the story may own it otherwise).
     if (this.ownBg && this.textures.exists(artTextureKey(BG_ASSET))) this.textures.remove(artTextureKey(BG_ASSET));

@@ -383,6 +383,12 @@ Approved technical choices. Add a new entry rather than silently changing an old
 ## D63. Weekly Team Training draws package sprites, frozen poses (owner, 2026-10-29)
 - The owner asked for the Weekly Team Training dots to become the approved Team Training sprites. `WeeklyTrainingScene` uses the `team-training-v1` sheets through the same identity, anchor and scale helpers as `TacticalTrainingScene`; teams come from package actor data, never colours. Because the All36 picture is static (no authored continuations), players hold key poses rather than animating, and the missing views and keeper cycles are reported instead of invented. The package is still labelled an art review build (`art_review_build_not_shipping_approved`).
 
+## D64. Jungle Ball replacement package art (2026-10-29)
+- Package sheets differ in size and overlap, so frames are cut by connected components, trimmed with per-frame ground pivots, and scaled once per character from the front idle (`scripts/art/build-jungle-v4.py`). Loaded by a separate `jungle4Art` loader so the old fixed-cell `sprites-v2` pipeline is untouched.
+- Visible height = old Jungle Ball height x 1.35 (`JUNGLE4_ART.heightFactor`), applied once on top of the existing depth scaling. Sim, physics and collision radii unchanged.
+- The unnamed rival fills the existing `alex` slot and the label stays "Alex" until the owner names it.
+- The owner's schoolyard picture replaces the `jungle-ball` background; the old master stays for rollback.
+
 ## Owner decisions 2026-10-27 (H1–H8)
 
 From the owner's consolidated decisions after the read-only audit of `main` `04e947b` (second revision, same day: H3 now removes Coach Moments from story matches, and the coach-approved All36 package becomes the Team Training source). Plan: [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md).
