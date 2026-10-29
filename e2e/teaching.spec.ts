@@ -98,9 +98,17 @@ for (const gender of ['boy', 'girl'] as const) {
     for (const foot of ['right', 'left'] as const) {
       await press(page, `foot-${foot}`, mode);
       await until(page, (x) => x.demo?.teach?.foot === foot, `${foot} foot`);
-      if (!(await career(page)).demo!.paused) await press(page, 'demo-pause', mode);
+      // Replay restarts playback from the first frame; then pause to step through.
       await press(page, 'demo-replay', mode);
-      c = await until(page, (x) => x.demo?.paused === true && x.demo.teach!.t === 0, 'paused at start');
+      await until(page, (x) => x.demo?.paused === false && x.demo.teach!.phase === 0, 'replaying');
+      await press(page, 'demo-pause', mode);
+      c = await until(page, (x) => x.demo?.paused === true, 'paused');
+      for (let k = 0; k < 4 && c.demo!.teach!.phase !== 0; k++) {
+        const ph = c.demo!.teach!.phase;
+        await press(page, 'demo-step', mode);
+        c = await until(page, (x) => x.demo!.teach!.phase !== ph, 'step to start');
+      }
+      c = await until(page, (x) => x.demo?.paused === true && x.demo.teach!.phase === 0, 'paused at start');
       for (let i = 0; i < 4; i++) {
         const d = c.demo!;
         const t = d.teach!;

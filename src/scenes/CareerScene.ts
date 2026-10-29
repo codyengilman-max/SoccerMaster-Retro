@@ -628,7 +628,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             { name: 'demo-pause', label: this.demoPaused ? 'Play' : 'Pause', onClick: () => (this.demoPaused && this.demoT >= lessonLength(lesson) && (this.demoT = 0), (this.demoPaused = !this.demoPaused), this.render()) },
             { name: 'demo-step', label: 'Step', onClick: () => ((this.demoPaused = true), (this.demoT = nextBeat(phaseStarts(lesson), this.demoT, lessonLength(lesson))), this.render()) },
             { name: 'demo-half', label: this.demoSpeed < 1 ? '0.5× (on)' : '0.5×', on: this.demoSpeed < 1, onClick: () => ((this.demoSpeed = this.demoSpeed < 1 ? 1 : 0.5), this.render()) },
-            { name: 'demo-replay', label: 'Replay', onClick: () => ((this.demoT = 0), this.render()) },
+            { name: 'demo-replay', label: 'Replay', onClick: () => ((this.demoT = 0), (this.demoPaused = false), this.render()) },
             { name: 'foot-right', label: 'Right foot', on: this.teachFoot === 'right', onClick: () => ((this.teachFoot = 'right'), (this.demoT = 0), this.render()) },
             { name: 'foot-left', label: 'Left foot', on: this.teachFoot === 'left', onClick: () => ((this.teachFoot = 'left'), (this.demoT = 0), this.render()) },
             { name: 'log-open', label: sc.sessionId ? 'Log this session' : 'Log practice', onClick: () => this.openLog(a.id, sc.sessionId) },
