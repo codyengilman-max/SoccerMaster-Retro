@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { diagnostics, expectInside, linger, pressElement, trackConsoleErrors, trackDomListeners, waitForScene } from './helpers';
+import { diagnostics, expectInside, linger, pressElement, trackConsoleErrors, trackDomListeners, waitForLoaderIdle, waitForScene } from './helpers';
 
 type JungleSnap = { phase: string; t: number; player: { x: number; y: number }; scores: Record<string, number> };
 const snap = async (page: import('@playwright/test').Page): Promise<JungleSnap> => (await diagnostics(page)).gameplay as JungleSnap;
@@ -43,6 +43,8 @@ test('Jungle Ball opens from Start, fits the screen, runs, and Leave returns wit
   test.setTimeout(120_000);
   const errors = trackConsoleErrors(page);
   await page.goto('/?debug=1&dev');
+  await waitForScene(page, 'start');
+  await waitForLoaderIdle(page, 'start');
   const initial = await waitForScene(page, 'start');
   const viewport = page.viewportSize();
   if (!viewport) throw new Error('no viewport');
@@ -74,6 +76,8 @@ test('Jungle Ball opens from Start, fits the screen, runs, and Leave returns wit
     // Pause, then confirm Leave.
     await pressElement(page, 'back-button', 'touch');
     await pressElement(page, 'leave-confirm-button', 'touch');
+    await waitForScene(page, 'start');
+    await waitForLoaderIdle(page, 'start');
     const start = await waitForScene(page, 'start');
     expect(start.canvases).toBe(1);
     expect(start.listeners).toEqual(initial.listeners);

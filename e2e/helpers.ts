@@ -61,6 +61,14 @@ export async function diagnostics(page: Page): Promise<Diagnostics> {
   });
 }
 
+/** Waits until `key`'s loader is idle: while files are in flight Phaser's loader holds an extra scene `update` listener. */
+export async function waitForLoaderIdle(page: Page, key: string): Promise<void> {
+  await page.waitForFunction((k) => {
+    const scene = window.__SMR__?.game.scene.getScene(k) as unknown as { load?: { isLoading(): boolean } } | undefined;
+    return scene?.load !== undefined && !scene.load.isLoading();
+  }, key, { timeout: 20_000 });
+}
+
 export async function waitForScene(page: Page, key: string): Promise<Diagnostics> {
   await page.waitForFunction((k) => {
     const d = window.__SMR__?.diagnostics();

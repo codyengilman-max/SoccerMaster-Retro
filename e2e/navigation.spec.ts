@@ -7,6 +7,7 @@ import {
   pressElement,
   trackConsoleErrors,
   trackDomListeners,
+  waitForLoaderIdle,
   waitForScene,
   type DomListenerSummary,
 } from './helpers';
@@ -72,6 +73,8 @@ test('Start -> Jungle Ball -> Leave repeated keeps one canvas and stable listene
   test.setTimeout(120_000);
   const errors = trackConsoleErrors(page);
   await page.goto('/?debug=1&dev');
+  await waitForScene(page, 'start');
+  await waitForLoaderIdle(page, 'start');
   const initial = await waitForScene(page, 'start');
   const viewport = page.viewportSize();
   if (!viewport) throw new Error('no viewport');
@@ -108,6 +111,8 @@ test('Start -> Jungle Ball -> Leave repeated keeps one canvas and stable listene
     // Jungle Ball: Pause, then confirm Leave.
     await pressElement(page, 'back-button', via);
     await pressElement(page, 'leave-confirm-button', via);
+    await waitForScene(page, 'start');
+    await waitForLoaderIdle(page, 'start');
     const start = await waitForScene(page, 'start');
     expect(start.canvases).toBe(1);
     const startSnap = stableSnapshot(start, await page.evaluate(() => window.__domListeners?.() ?? {}));
@@ -127,6 +132,9 @@ test('Jungle Ball re-lays out on orientation change and Leave still works', asyn
   await page.goto('/?debug=1&dev');
   await waitForScene(page, 'start');
   await pressElement(page, 'jungle-button', 'touch');
+  await waitForScene(page, 'jungle');
+  // Snapshot after the package sheets arrive, so the loader's one-shot listener isn't counted.
+  await waitForLoaderIdle(page, 'jungle');
   const before = await waitForScene(page, 'jungle');
   const viewport = page.viewportSize();
   if (!viewport) throw new Error('no viewport');
