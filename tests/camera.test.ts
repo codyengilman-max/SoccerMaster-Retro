@@ -297,3 +297,30 @@ describe('low-camera perspective projection', () => {
     }
   });
 });
+
+describe('regular-match sideline camera tuning', () => {
+  it('a small ball offset inside the dead zone leaves the camera still; beyond it the camera follows smoothly', async () => {
+    const { CameraController, SIDELINE_TUNING } = await import('../src/render/camera');
+    const c = new CameraController({ x: 30, y: 25 }, { ...SIDELINE_TUNING, lookAhead: 0 });
+    const still = { mode: 'loose' as const, ball: { x: 31, y: 25.5 }, ballVel: { x: 0, y: 0 }, carrier: null, attackDir: 1 as const };
+    for (let i = 0; i < 30; i++) c.update(still, 1 / 60);
+    expect(c.x).toBeCloseTo(30, 6);
+    expect(c.y).toBeCloseTo(25, 6);
+    const far = { ...still, ball: { x: 40, y: 25 } };
+    let prev = c.x;
+    for (let i = 0; i < 60; i++) {
+      c.update(far, 1 / 60);
+      expect(c.x - prev).toBeLessThan(0.5);
+      prev = c.x;
+    }
+    expect(c.x).toBeGreaterThan(33);
+    expect(c.x).toBeLessThan(40 - SIDELINE_TUNING.deadZoneX + 1e-6);
+  });
+
+  it('keeps the same sideline: tuning never changes zoom or rotation, only the focus', async () => {
+    const { SIDELINE_VIEW, CAMERA_VIEW } = await import('../src/render/camera');
+    expect(SIDELINE_VIEW.landscapeLength).toBeGreaterThan(CAMERA_VIEW.landscapeLength);
+    expect(SIDELINE_VIEW.landscapeTilt).toBeGreaterThan(CAMERA_VIEW.landscapeTilt);
+    expect(SIDELINE_VIEW.perspective).toBeLessThan(CAMERA_VIEW.perspective);
+  });
+});
