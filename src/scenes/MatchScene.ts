@@ -22,9 +22,8 @@ import { shouldExposeDebug } from '../debug/diagnostics';
 import {
   CameraController,
   clampFocus,
-  CAMERA_TUNING,
   CAMERA_VIEW,
-  SIDELINE_TUNING,
+  cameraTuningFor,
   SIDELINE_VIEW,
   viewSpan,
   type CameraBounds,
@@ -298,7 +297,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.startCareer(data.career === true && !this.labId && !teamTraining);
     this.startTeamTraining(teamTraining, params);
     this.startVenue(params);
-    this.camera = new CameraController(this.sim.state.ball.pos, this.sideline() ? SIDELINE_TUNING : CAMERA_TUNING);
+    this.camera = new CameraController(this.sim.state.ball.pos, cameraTuningFor(this.sideline(), orientationOf(this.scale) === 'portrait'));
     this.snapCamera();
     this.pad = new PadHud(this, this.scale.width, this.scale.height);
     this.padIds = 0;
@@ -2098,6 +2097,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
               ? 'travel'
               : 'loose';
     const attackDir = (owner ? s.players[owner].team : s.possession) === 'home' ? 1 : -1;
+    this.camera.tuning = cameraTuningFor(this.sideline(), orientationOf(this.scale) === 'portrait');
     const focus = this.camera.update(
       {
         mode,

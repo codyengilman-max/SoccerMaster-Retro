@@ -97,6 +97,11 @@ export const CAMERA_TUNING = {
 const finite = (p: CamPoint | null): p is CamPoint => p !== null && Number.isFinite(p.x) && Number.isFinite(p.y);
 const clamp = (v: number, lo: number, hi: number): number => (lo > hi ? (lo + hi) / 2 : Math.min(hi, Math.max(lo, v)));
 
+/** Regular-match sideline tuning applies only to the landscape sideline view; portrait keeps the close camera. */
+export function cameraTuningFor(sideline: boolean, portrait: boolean): CameraTuning {
+  return sideline && !portrait ? SIDELINE_TUNING : CAMERA_TUNING;
+}
+
 /** Ball-focused dribbling camera for the 9v9 match: pure, frame-rate independent (exponential smoothing). */
 export type CameraTuning = { readonly [K in keyof typeof CAMERA_TUNING]: number } & { readonly deadZoneX?: number; readonly deadZoneY?: number };
 
@@ -111,7 +116,7 @@ export class CameraController {
 
   constructor(
     start: CamPoint,
-    readonly tuning: CameraTuning = CAMERA_TUNING,
+    public tuning: CameraTuning = CAMERA_TUNING,
   ) {
     this.x = start.x;
     this.y = start.y;

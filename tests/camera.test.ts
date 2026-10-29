@@ -328,6 +328,14 @@ describe('regular-match sideline camera tuning', () => {
     expect(c.x).toBeCloseTo(18, 3);
   });
 
+  it('portrait regular matches keep the close camera tuning; only the landscape sideline view uses the dead zone', async () => {
+    const { cameraTuningFor, CAMERA_TUNING, SIDELINE_TUNING } = await import('../src/render/camera');
+    expect(cameraTuningFor(true, false)).toBe(SIDELINE_TUNING);
+    expect(cameraTuningFor(true, true)).toBe(CAMERA_TUNING);
+    expect(cameraTuningFor(false, false)).toBe(CAMERA_TUNING);
+    expect(cameraTuningFor(false, true)).toBe(CAMERA_TUNING);
+  });
+
   it('keeps the same sideline: tuning never changes zoom or rotation, only the focus', async () => {
     const { SIDELINE_VIEW, CAMERA_VIEW } = await import('../src/render/camera');
     expect(SIDELINE_VIEW.landscapeLength).toBeGreaterThan(CAMERA_VIEW.landscapeLength);
