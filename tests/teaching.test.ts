@@ -71,6 +71,10 @@ describe('Ball Mastery teaching pages (art v1 slice)', () => {
     }
   });
 
+  it('a Step that lands exactly on a phase start shows that phase', () => {
+    phaseStarts(lesson).forEach((t0, i) => expect(teachingFrame(lesson, t0, 'right').phase).toBe(i));
+  });
+
   it('slow motion changes time only: the same t gives the same frame', () => {
     const a = teachingFrame(lesson, 1.7, 'right');
     expect(teachingFrame(lesson, 1.7, 'right')).toEqual(a);

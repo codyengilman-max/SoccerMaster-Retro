@@ -76,7 +76,8 @@ export function teachingFrame(l: TeachingLesson, t: number, foot: Foot): Teachin
   const len = lessonLength(l);
   let at = Math.min(len, Math.max(0, t));
   let i = 0;
-  while (i < l.phases.length - 1 && at >= l.phases[i]!.seconds) at -= l.phases[i++]!.seconds;
+  // Phase starts are sums of decimals; the epsilon keeps a Step that lands exactly on a start in the new phase.
+  while (i < l.phases.length - 1 && at >= l.phases[i]!.seconds - 1e-9) at -= l.phases[i++]!.seconds;
   const p = l.phases[i]!;
   const f = Math.min(1, Math.max(0, at / p.seconds));
   const ease = f * f * (3 - 2 * f);
