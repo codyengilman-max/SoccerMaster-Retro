@@ -200,7 +200,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       const lesson = teachingFor(a.id);
       if (lesson && this.demoT >= lessonLength(lesson)) {
         this.demoT = lessonLength(lesson);
-        if (!this.demoPaused) ((this.demoPaused = true), this.render());
+        // Relabel in place: a full re-render here would rebuild every button under a finger mid-tap.
+        if (!this.demoPaused) ((this.demoPaused = true), this.buttons.find((b) => b.name === 'demo-pause')?.setLabel('Play'));
       }
     } else if (s.kind !== 'draftLevel') this.demoT += delta / 1000;
     else if (!this.demoPaused) this.demoT += (delta / 1000) * this.demoSpeed;
