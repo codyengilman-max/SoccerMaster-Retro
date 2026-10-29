@@ -1705,6 +1705,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   }
 
   /** Regular league, tournament and exhibition play uses the elevated sideline broadcast view; Team Training and Lab scenarios keep theirs. */
+  /** Depth squash of the current sideline frame (set by frameFull). */
+  private sideSquash: number = SIDELINE_VIEW.landscapeTilt;
+
   private sideline(): boolean {
     return !this.team && !this.labId;
   }
@@ -1727,7 +1730,17 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       const len = side ? SIDELINE_VIEW.landscapeLength : viewSpan('landscape') / (this.team ? TEAM_TRAINING_ZOOM : 1);
       const runoff = side ? SIDELINE_VIEW.goalRunoff : 3;
       const availH = Math.max(1, height - insets.top - insets.bottom);
-      const hv = Math.min(P.width + 6, (len * availH) / (available * (side ? SIDELINE_VIEW.landscapeTilt : SIDELINE_SQUASH)));
+      if (side) {
+        // Sideline broadcast: the whole width plus the far sideline strip and a near run-off are always in view, so
+        // the camera only pans along the length; depth foreshortening follows from the screen shape.
+        const top = SIDELINE_VIEW.farStrip;
+        const bottom = SIDELINE_VIEW.nearStrip;
+        const hvS = P.width + top + bottom;
+        this.sideSquash = Math.min(1, (len * availH) / (available * hvS));
+        const cy = (P.width + bottom - top) / 2;
+        return { portrait, insets, len, cross: hvS, bounds: { minX: len / 2 - runoff, maxX: P.length + runoff - len / 2, minY: cy, maxY: cy } };
+      }
+      const hv = Math.min(P.width + 6, (len * availH) / (available * SIDELINE_SQUASH));
       // Run-off margins keep a touchline player clear of the floating HUD (top) and the tip line (bottom).
       const yardsPerPx = hv / availH;
       const top = Math.max(3, (HUD_HEIGHT + EDGE + 12) * yardsPerPx);
@@ -1782,7 +1795,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       },
       f.insets,
       0,
-      f.portrait ? 1 : this.sideline() ? SIDELINE_VIEW.landscapeTilt : SIDELINE_SQUASH,
+      f.portrait ? 1 : this.sideline() ? this.sideSquash : SIDELINE_SQUASH,
     );
     // Low camera: perspective anchored on the camera focus (the ball), scaled to the view height.
     const availH = Math.max(1, height - f.insets.top - f.insets.bottom);
