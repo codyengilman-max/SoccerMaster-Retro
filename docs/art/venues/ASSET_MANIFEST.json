@@ -1,0 +1,927 @@
+[
+  {
+    "path": "assets/bell94/bag.json",
+    "sha256": "0285f5654b7b3ee8f9df92a798640eb5d362e4c7053f562be192f9e170ee61aa",
+    "bytes": 131
+  },
+  {
+    "path": "assets/bell94/bag.png",
+    "sha256": "5474a67ad865e6c4b0f252f529594430dee849aeccd6542a2ef71da96614efc6",
+    "bytes": 13551,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/bell94/bench.json",
+    "sha256": "bd4c694b75651f0123a4119560e976b2cba4bb06a57bc7f18d204a5fd6e3a7e3",
+    "bytes": 134
+  },
+  {
+    "path": "assets/bell94/bench.png",
+    "sha256": "605a34887e45d396eecfd78fad4536094aedadc26b5cebc6192c4cf4be8f5c1e",
+    "bytes": 23889,
+    "size": [
+      256,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/bell94/cactus.json",
+    "sha256": "bf1b70969484d348810ca6f92869ae9e9e850b64ef9ceee66d4ee3064048a0ef",
+    "bytes": 133
+  },
+  {
+    "path": "assets/bell94/cactus.png",
+    "sha256": "ea59fe732e87fcfe51a52ae7d8ebd1691cddb3fe32a019a246dc3bedce8c49a3",
+    "bytes": 14276,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/bell94/chair.json",
+    "sha256": "648333f83c4d34c07983cf4e315ce365bf231fbeb05df681bcdc36185706cfde",
+    "bytes": 129
+  },
+  {
+    "path": "assets/bell94/chair.png",
+    "sha256": "636ac3385e3409e2ad7dddce76f42820d25ffd843e31c871393f2d94932a4094",
+    "bytes": 22185,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/bell94/cooler.json",
+    "sha256": "718f23e20c3281445a481baec3c54d139236b41cda6ba3a74f36178631dfff2b",
+    "bytes": 131
+  },
+  {
+    "path": "assets/bell94/cooler.png",
+    "sha256": "b38ea1e6154051b58af57ab6e13227f2eb0c0c00ff28a290e42c78212945f370",
+    "bytes": 17470,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/bell94/fence.json",
+    "sha256": "de6591bc67cd58a4d3cd2f53c055fed133f6946d8b9c25cdc9165fffd911983c",
+    "bytes": 134
+  },
+  {
+    "path": "assets/bell94/fence.png",
+    "sha256": "767651a4f895c2501181966c23af45de488dec694fe896b3e30a0f1d51971670",
+    "bytes": 54567,
+    "size": [
+      256,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/bell94/field_marker.json",
+    "sha256": "9a1c018ab6091676afebcacf88d9de7c1cf5bb39b4c5a0222f16dd1cbffa5b50",
+    "bytes": 131
+  },
+  {
+    "path": "assets/bell94/field_marker.png",
+    "sha256": "e233a479abe6a36a8cd3bf4c3486927173fd2f2996b330dba9bae39fee0d6b2e",
+    "bytes": 19864,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/bell94/grass.webp",
+    "sha256": "500d51c0ae0220a5c801ce3eca7ff67c29721b440d784fad2cb5f8e035782921",
+    "bytes": 2733928,
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGB"
+  },
+  {
+    "path": "assets/bell94/shrub.json",
+    "sha256": "39d8193db41fe726e44abf4de815125d5744be3afd0dc543af124f2c3ad439ab",
+    "bytes": 132
+  },
+  {
+    "path": "assets/bell94/shrub.png",
+    "sha256": "4439e12d349b6914457c205c501bfa10d5159d2be80e7013e871b1a58c4fa0c7",
+    "bytes": 14037,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/bell94/sign.json",
+    "sha256": "6bf619ca069f1d7a62a78fffe84ae6bc96b5e693c94502ddcb2f7012074cd63b",
+    "bytes": 157
+  },
+  {
+    "path": "assets/bell94/sign.png",
+    "sha256": "2d1ff6a29875fd3210bc259dc8cb1d118edfce8815d0d82f3470eee4ed73a018",
+    "bytes": 37176,
+    "size": [
+      256,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/bell94/tent_away.json",
+    "sha256": "388a0cc7d7527659c904b42998700bff83ad9259f1ce9385f7039af9607f7a59",
+    "bytes": 130
+  },
+  {
+    "path": "assets/bell94/tent_away.png",
+    "sha256": "2dccb9daab6742b61d489dc62c056f6719c48756a1643c444f78f16217eee964",
+    "bytes": 59443,
+    "size": [
+      320,
+      320
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/bell94/tent_home.json",
+    "sha256": "13cda63375e1a64117176722f1bfb669a18e5b6cce51387f562aac995927d896",
+    "bytes": 128
+  },
+  {
+    "path": "assets/bell94/tent_home.png",
+    "sha256": "07d75e4296a393bcce638ba606f7f8432ba67f0413dc8a2ceac2831cec8fb05d",
+    "bytes": 57407,
+    "size": [
+      320,
+      320
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/bell94/tree.json",
+    "sha256": "c896fccd5baac3e29433206811a41304a16397444b1ddbde56988208b5c31d17",
+    "bytes": 134
+  },
+  {
+    "path": "assets/bell94/tree.png",
+    "sha256": "e5e5412b53fc3b4858e2321973925846dd37fd4db375fe149323ef2f596106cd",
+    "bytes": 78202,
+    "size": [
+      256,
+      256
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/characters/coach_code.clips.json",
+    "sha256": "a9c61bf889eeb5ecf6fb6b5e9c2c6f9c5b593917ff1270da350530624611c60c",
+    "bytes": 2555
+  },
+  {
+    "path": "assets/characters/coach_code.json",
+    "sha256": "c416422184aa07e15fa75f679fea5811b0babc0d7576c7fafcd71efbe480a5a7",
+    "bytes": 8438
+  },
+  {
+    "path": "assets/characters/coach_code.png",
+    "sha256": "609430164dc937758690b9c123bf22f8b656c7a8b4ca0d8bf28e056fea05b9f0",
+    "bytes": 250592,
+    "size": [
+      960,
+      512
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/characters/coach_code.webp",
+    "sha256": "6a18be965e4f44458de1efc905d3d96a4ebfacf14884716ecd7ad1e20cc949d8",
+    "bytes": 194624,
+    "size": [
+      960,
+      512
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/characters/mom.clips.json",
+    "sha256": "f4bb98eaa63dcf312bc111ddd6642b895eb1cfd0a475190cca4ff648ba06de33",
+    "bytes": 2281
+  },
+  {
+    "path": "assets/characters/mom.json",
+    "sha256": "4f7be4fa69358312dc971e7b70ecc71307a09ec149d6d58fe2e4234410501802",
+    "bytes": 8263
+  },
+  {
+    "path": "assets/characters/mom.png",
+    "sha256": "371a1ddca68c6c12e5aea49750667043fe767a4fb457edaa3cda2aee85b97fd6",
+    "bytes": 222730,
+    "size": [
+      960,
+      512
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/characters/mom.webp",
+    "sha256": "f4a221d66ebf0dd64ed3f1b73a60437e208786ed3a32d5fdd88c48577d541248",
+    "bytes": 162098,
+    "size": [
+      960,
+      512
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/characters/opposing_coach.clips.json",
+    "sha256": "149519fa4b7982825df2b32a025536fb7ff001e889b8c0b0187ade604f7de74b",
+    "bytes": 2661
+  },
+  {
+    "path": "assets/characters/opposing_coach.json",
+    "sha256": "33db8ebba8864e0e9780449c712c98913ee62d926683272bb387d9c7978f5382",
+    "bytes": 8538
+  },
+  {
+    "path": "assets/characters/opposing_coach.png",
+    "sha256": "9e35a96816b0c11a4d404530d9c3f0b83d2eb27e830847ba4c4812b551813b3d",
+    "bytes": 189879,
+    "size": [
+      960,
+      512
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/characters/opposing_coach.webp",
+    "sha256": "bb8786f5e7bd411f43f711f7665203cc40189106cc5cd85e6ce95edd023f834e",
+    "bytes": 124088,
+    "size": [
+      960,
+      512
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/characters/parent_cheering.clips.json",
+    "sha256": "498d410f62725854421100ad8f995e4119429193f66e029070ceff3098a0b0ad",
+    "bytes": 2569
+  },
+  {
+    "path": "assets/characters/parent_cheering.json",
+    "sha256": "05e769216abe0f26e68421e48a5ef9aa13bcb6a1e22b7aa1816d2a57bd4271e1",
+    "bytes": 8563
+  },
+  {
+    "path": "assets/characters/parent_cheering.png",
+    "sha256": "631b5a65b629c0cc3e1c568302e806fc24c53ac2e9be112b779799599e3e2d1f",
+    "bytes": 185031,
+    "size": [
+      960,
+      512
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/characters/parent_cheering.webp",
+    "sha256": "cd44db4e2c2ccd3733cde4ffb2af01553b13289ef204771390ee648706bce8e0",
+    "bytes": 130922,
+    "size": [
+      960,
+      512
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/characters/parent_filming.clips.json",
+    "sha256": "29bd179069baed9867e63185c27a385e88056eadec0cf2ffd9914fafea25b6c8",
+    "bytes": 2537
+  },
+  {
+    "path": "assets/characters/parent_filming.json",
+    "sha256": "fb3bce63d32ec121e4127a6dcb1581b655f9bd6baa73f5c29ef1dbec019b1a3c",
+    "bytes": 8538
+  },
+  {
+    "path": "assets/characters/parent_filming.png",
+    "sha256": "f17d6709a373cac72128e987a146ddc2cff8cc58a6c3155fb2efedc8c15ae3c6",
+    "bytes": 203144,
+    "size": [
+      960,
+      512
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/characters/parent_filming.webp",
+    "sha256": "b5978afec01c35452a5dc1573976a81fb6a2f82826df64cb183b79f7250d7a0d",
+    "bytes": 144398,
+    "size": [
+      960,
+      512
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/characters/parent_seated.clips.json",
+    "sha256": "d4a322e3567591e25297d94d5a844035b6f6988fa34ad985d59b7c3553964ccc",
+    "bytes": 2651
+  },
+  {
+    "path": "assets/characters/parent_seated.json",
+    "sha256": "97725753fe006261b5c42f9924fba8952d7e77f7941618e02fb3ac9723438ff5",
+    "bytes": 8513
+  },
+  {
+    "path": "assets/characters/parent_seated.png",
+    "sha256": "652f04e137f920423a7cbfb8f0cd33263bdf147df6d9039ff73b12aae3e364fe",
+    "bytes": 241924,
+    "size": [
+      960,
+      512
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/characters/parent_seated.webp",
+    "sha256": "39ef886d47cd96e8961288a7be47424a1106f4b453ff74727e7e4508dec3f334",
+    "bytes": 176582,
+    "size": [
+      960,
+      512
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/pinnacle/bag.json",
+    "sha256": "818cea56dda6a9b4cbe0d6e74b00f711548eef08fac3358ba4e4dbf0297602b3",
+    "bytes": 131
+  },
+  {
+    "path": "assets/pinnacle/bag.png",
+    "sha256": "a09f79bc1fd27f1e97cf4732ccf0304fb4cf8db209314285d42657d825b88f77",
+    "bytes": 15663,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/pinnacle/bench.json",
+    "sha256": "4a7725d9e7d2a959a86edcd27fd641a0ae00a06cd28df5ec9a0dfee5753b12e8",
+    "bytes": 134
+  },
+  {
+    "path": "assets/pinnacle/bench.png",
+    "sha256": "990c92ce0c23f8848ec030d1e1872bc902a6c178cc5c03686da07b75fcf828de",
+    "bytes": 19221,
+    "size": [
+      256,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/pinnacle/cactus.json",
+    "sha256": "19b6acc252f356f0d95a44b94c4a137dc415839c493a4e22177f715ba9859e22",
+    "bytes": 133
+  },
+  {
+    "path": "assets/pinnacle/cactus.png",
+    "sha256": "183410ff1449ced98e710efee1e72c95ce51f8a2e71dc55f1f44a9cb318c8ced",
+    "bytes": 16261,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/pinnacle/chair.json",
+    "sha256": "367e260748db6c66c69fd8c3334a2c6981640907cec243d2041e7c777d70990e",
+    "bytes": 129
+  },
+  {
+    "path": "assets/pinnacle/chair.png",
+    "sha256": "20a3e7a372d5d4b95c21cfeecebd78b5b8f8a5150aae4de20c835f7f66d852e1",
+    "bytes": 19941,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/pinnacle/cooler.json",
+    "sha256": "02ed55a03b4505d54ee08030a110a8b2a8e42e9ebaf7097dd72c3700ee689cac",
+    "bytes": 131
+  },
+  {
+    "path": "assets/pinnacle/cooler.png",
+    "sha256": "f771aa16d8a336d8375858e1b1aeda3ee711e11e4c5ef5fd016f87b70535eb66",
+    "bytes": 16148,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/pinnacle/fence.json",
+    "sha256": "3996054c6cf776d74c1d4f8f37116be1112bcfe67d44fa2b28259ad480d616f4",
+    "bytes": 134
+  },
+  {
+    "path": "assets/pinnacle/fence.png",
+    "sha256": "65fe52cd6d0cd25ad7c15bd3141b3a4e3dc6c49a6831899819868f26ce3a3abd",
+    "bytes": 41936,
+    "size": [
+      256,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/pinnacle/field_marker.json",
+    "sha256": "094a35d54c04dd87a77a3e1a5db28626db5f9f2892a6757fb75fcb138fcdaa2c",
+    "bytes": 131
+  },
+  {
+    "path": "assets/pinnacle/field_marker.png",
+    "sha256": "49eb68d39587de3df7bf93d39d9410a007103bf43945706c2bdd84f6a37e260c",
+    "bytes": 17404,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/pinnacle/grass.webp",
+    "sha256": "faf04210413c80892136fcf9db1e4862e932177c177b27fe1d4036eb6dd035e4",
+    "bytes": 2748860,
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGB"
+  },
+  {
+    "path": "assets/pinnacle/shrub.json",
+    "sha256": "a17be5c84bbb2370f5131108a666ac549d61085eae8f078512886eeae2bfccda",
+    "bytes": 132
+  },
+  {
+    "path": "assets/pinnacle/shrub.png",
+    "sha256": "f0a66197d0c6ddb49ab049342d4ec2d1095a1c58cf22300ee601d7c705af5b33",
+    "bytes": 16278,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/pinnacle/sign.json",
+    "sha256": "5e61c95ccbb10c2f94d37034b7d49c770aa432b5dbdb88a9dfb107e37d4dc56f",
+    "bytes": 134
+  },
+  {
+    "path": "assets/pinnacle/sign.png",
+    "sha256": "0d2f8bd6c3ed31880fc9e234e96cfbc144024f2d2ede3e573a5ed3677882e6ca",
+    "bytes": 40845,
+    "size": [
+      256,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/pinnacle/tent_away.json",
+    "sha256": "aeae2d182e2f6e38611997a981b0bd13bc3e8d9e1ade3df2b3dde327cefab230",
+    "bytes": 131
+  },
+  {
+    "path": "assets/pinnacle/tent_away.png",
+    "sha256": "cc0393982cc03fa9eac7bd7eaa03b8fbe18cf5d5885729152f266350e1596162",
+    "bytes": 38607,
+    "size": [
+      320,
+      320
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/pinnacle/tent_home.json",
+    "sha256": "4fc2b0b3c3c257fc622da5f79b5b96f7404c5f334c0409d26d77d1cffba7a50a",
+    "bytes": 128
+  },
+  {
+    "path": "assets/pinnacle/tent_home.png",
+    "sha256": "d87d8fd99d8409be8dd94b869addb7fb84df3f03f27a8479ef498ba756939855",
+    "bytes": 43226,
+    "size": [
+      320,
+      320
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/pinnacle/tree.json",
+    "sha256": "46de40b2f82e55e6c4222937a6642edb13bced57b49b35d06232a241cc295e9e",
+    "bytes": 134
+  },
+  {
+    "path": "assets/pinnacle/tree.png",
+    "sha256": "00c7162b1ac48334d52bcf2207508234aceef78429c80cefdfab478cf6483837",
+    "bytes": 53360,
+    "size": [
+      256,
+      256
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/scottsdale/bag.json",
+    "sha256": "c4c1c6d0dd43afeaa9f1608cb4a741c3ab57d3f8d9ead4cd2a5db66406403d53",
+    "bytes": 131
+  },
+  {
+    "path": "assets/scottsdale/bag.png",
+    "sha256": "c00608ed806bfa7d236214c8e4e7de9fc00102ce893ad4ce5f4b322ebc57d25b",
+    "bytes": 17292,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/scottsdale/bench.json",
+    "sha256": "188cc9b547476526f6f5af85ec5c491aeb9fbc44af967e93f2a82649e976c6dd",
+    "bytes": 134
+  },
+  {
+    "path": "assets/scottsdale/bench.png",
+    "sha256": "37a64df75f34dc0283e53aff5d6b54084f8911732e6e88cc083edfed3595c7e8",
+    "bytes": 35004,
+    "size": [
+      256,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/scottsdale/cactus.json",
+    "sha256": "7684628f2e9089e197fc063e8ee6e582cdc523c494e31011c12ea2df41c26aa3",
+    "bytes": 133
+  },
+  {
+    "path": "assets/scottsdale/cactus.png",
+    "sha256": "3096fe66ab0c58086462a82f239415f06b490b24e8e7226c3fef492202156fdc",
+    "bytes": 13623,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/scottsdale/chair.json",
+    "sha256": "88ca82a7b76bc1ae26a8daf77fca86ff0ec249ffa680479e5dbfb0fd001dd1f4",
+    "bytes": 129
+  },
+  {
+    "path": "assets/scottsdale/chair.png",
+    "sha256": "53ac50bd36dc5ee246cb7c551de9dfe30904fe105f0f5e96411be5d680282b98",
+    "bytes": 21180,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/scottsdale/cooler.json",
+    "sha256": "3d28c6ba6067260adb658b57f1b9c41d68109eff933d443c2c2c98dcb1bb4dbf",
+    "bytes": 131
+  },
+  {
+    "path": "assets/scottsdale/cooler.png",
+    "sha256": "5213d23d1564f97011d86de3622b87ca0f4f2876fc74df55540c89b25de4aecb",
+    "bytes": 15704,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/scottsdale/field_marker.json",
+    "sha256": "5026b6dd5e7ae9dd6b7a12933e8b48358c766d2bf2bea2e045537aaa4df3d531",
+    "bytes": 131
+  },
+  {
+    "path": "assets/scottsdale/field_marker.png",
+    "sha256": "7cbb75d95e745d7a35bf8afd1cac6a96ce530393e20cbbe33f6332bbc4d81976",
+    "bytes": 18376,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/scottsdale/grass.webp",
+    "sha256": "9877a9f3e35ae5a474f0a996eb09ff38e1c8ff731d4cb38259f095abb02cc2a4",
+    "bytes": 2623238,
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGB"
+  },
+  {
+    "path": "assets/scottsdale/shrub.json",
+    "sha256": "1aaf1049ed3a6b04eb6dcc664f394eafa14ab6297960559b35c0d4ae4f01fc95",
+    "bytes": 131
+  },
+  {
+    "path": "assets/scottsdale/shrub.png",
+    "sha256": "477d26e6ac8eb5371ca4dd815baa0eb00ae7cedba087eee83f2c73c40b4b2fb4",
+    "bytes": 17342,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/scottsdale/sign.json",
+    "sha256": "6bf619ca069f1d7a62a78fffe84ae6bc96b5e693c94502ddcb2f7012074cd63b",
+    "bytes": 157
+  },
+  {
+    "path": "assets/scottsdale/sign.png",
+    "sha256": "ed0c47c647cbae6507717357561546ec2cdb2ab0c168e03d626798a2f4650078",
+    "bytes": 45426,
+    "size": [
+      256,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/scottsdale/tent_away.json",
+    "sha256": "e91935339df102dac889cbfd0a4bd6881ea0583e2ba895f1c01e7aa6a3def240",
+    "bytes": 130
+  },
+  {
+    "path": "assets/scottsdale/tent_away.png",
+    "sha256": "608d27453a53e5deefee6095ba121169b7ecbc07f8c8d80f90c98fcb11e063fe",
+    "bytes": 48219,
+    "size": [
+      320,
+      320
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/scottsdale/tent_home.json",
+    "sha256": "34271b4207e579ab8a190c606c6223db2b3c41eed82617fc83879d64a077a590",
+    "bytes": 128
+  },
+  {
+    "path": "assets/scottsdale/tent_home.png",
+    "sha256": "515cad51140046776d794fbdae2187d266c85cffcd655d3b8488640ef7d658e8",
+    "bytes": 51113,
+    "size": [
+      320,
+      320
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/scottsdale/tree.json",
+    "sha256": "1bc7619dbd61ec8b4761339447d2ca8c885e255b1011d1639033f09157b6a2fe",
+    "bytes": 133
+  },
+  {
+    "path": "assets/scottsdale/tree.png",
+    "sha256": "9d8d7c390103a49ce03afc3699880dbd920a638dbd55428c02363e92bc46212a",
+    "bytes": 108774,
+    "size": [
+      256,
+      256
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/westside/bag.json",
+    "sha256": "60191b59e56f6165566c73cb907bc0eaacf121cd8e79cc286b8dee0e2687f34f",
+    "bytes": 131
+  },
+  {
+    "path": "assets/westside/bag.png",
+    "sha256": "6f73f4052a70bb8aee7479d0c941a8ef829cd967607d345e4b4bdc133f0f7bf6",
+    "bytes": 15708,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/westside/bench.json",
+    "sha256": "099d60efa542ae116fbf230246fdef3193b8a310beb4fc42db3a307178816130",
+    "bytes": 134
+  },
+  {
+    "path": "assets/westside/bench.png",
+    "sha256": "0a9c5e6ac31ff852d4069e52c4bd19410fbc0b8e2e9e71702813b49ac55b8f6a",
+    "bytes": 17272,
+    "size": [
+      256,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/westside/cactus.json",
+    "sha256": "d1b0dedb3fb9103a9d38ed0595f00a158710b53b357ff3935ed823549d5f7325",
+    "bytes": 133
+  },
+  {
+    "path": "assets/westside/cactus.png",
+    "sha256": "83aec3248e4c6decdd51f548129f6e5beca9e563c5ddde11233d7330b14234a7",
+    "bytes": 13980,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/westside/chair.json",
+    "sha256": "3dfc44a278c12f3410fe4eb1575ea661d2826d3a33584d7980377b041bb01e24",
+    "bytes": 129
+  },
+  {
+    "path": "assets/westside/chair.png",
+    "sha256": "3954a9763ecad608908dc02bef33068bc2a465103a0f4452a47cdbd122497142",
+    "bytes": 19357,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/westside/cooler.json",
+    "sha256": "764fc56ae9ece1862d5e6f2c2fb4f0877bb4c8e7d3c810979285d6e9f4d96195",
+    "bytes": 131
+  },
+  {
+    "path": "assets/westside/cooler.png",
+    "sha256": "9f86f6d80041499ee76f791ce86b957ff034fa3cc956298112488902cb03b6df",
+    "bytes": 19108,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/westside/fence.json",
+    "sha256": "6d389dba18e021601e0a7540b08a9be2573956c8b0e69c78de0594a0e86c2eb6",
+    "bytes": 134
+  },
+  {
+    "path": "assets/westside/fence.png",
+    "sha256": "f345c70a3d76eadc95548a3e348b98268a9d4382794608692f92b21b16d4b972",
+    "bytes": 49949,
+    "size": [
+      256,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/westside/field_marker.json",
+    "sha256": "b767e67dbf32cf99232588eba7fc9822fa37a4d474d3d005cbe2b818ea339994",
+    "bytes": 131
+  },
+  {
+    "path": "assets/westside/field_marker.png",
+    "sha256": "0924397483a76b241789c92de1c48026c28d68f394c976a32fe373e23864a63f",
+    "bytes": 20170,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/westside/grass.webp",
+    "sha256": "08dd144ca009d89de4400d9a48e75a99d1a73d5751bea7f66279d1bd9d722665",
+    "bytes": 2784008,
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGB"
+  },
+  {
+    "path": "assets/westside/shrub.json",
+    "sha256": "c92adf77159070fe443d4ded487c421ab61db96cd5c628d435d27ccf3121903f",
+    "bytes": 131
+  },
+  {
+    "path": "assets/westside/shrub.png",
+    "sha256": "ab1ec0c674a9ed5b018a2bb3f655301e37e81667ddf48d9ab9e9c055f556ba8b",
+    "bytes": 21527,
+    "size": [
+      128,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/westside/sign.json",
+    "sha256": "e66dbd4529f0ae72f883a985cbb1ad00be3d4a6ab63399ba224362d2194f1a8e",
+    "bytes": 133
+  },
+  {
+    "path": "assets/westside/sign.png",
+    "sha256": "504b747be6e9cb39a912cea9d28bbba1159379e638b34461ac1b3c0a86b62bea",
+    "bytes": 31063,
+    "size": [
+      256,
+      128
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/westside/tent_away.json",
+    "sha256": "f5a197e474e7285e71d91395fb67ab68039de1f5492d7cb457cbfbd2e0d7e776",
+    "bytes": 131
+  },
+  {
+    "path": "assets/westside/tent_away.png",
+    "sha256": "0fba11b21b1e683b584acaa46ec8ce8681474d83de490b99cb2d91f08a56ef28",
+    "bytes": 50067,
+    "size": [
+      320,
+      320
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/westside/tent_home.json",
+    "sha256": "76a4566347fd09dcf9835199d9731762343e38b3ce6b5e3245c83252c31d2710",
+    "bytes": 128
+  },
+  {
+    "path": "assets/westside/tent_home.png",
+    "sha256": "92d328dc3b89b34841fd09d1f154a3e9e5e855cfc025b70c37e905dafe0e100c",
+    "bytes": 52406,
+    "size": [
+      320,
+      320
+    ],
+    "mode": "RGBA"
+  },
+  {
+    "path": "assets/westside/tree.json",
+    "sha256": "20a71779c9396545b1cd16dfe4573c4695f39824454857f98ef64d693a8fda66",
+    "bytes": 133
+  },
+  {
+    "path": "assets/westside/tree.png",
+    "sha256": "511fe0ada0289f423db0477dfce1767a5fee963435157b74c80694707ec9cb8a",
+    "bytes": 80902,
+    "size": [
+      256,
+      256
+    ],
+    "mode": "RGBA"
+  }
+]

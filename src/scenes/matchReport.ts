@@ -70,6 +70,8 @@ export interface MatchReport {
     readonly look: number;
     readonly guideOffscreen: boolean;
   };
+  /** Regular matches: resolved venue (or the missing assignment) and what its layer currently draws. */
+  readonly venue: unknown;
   readonly controlScheme: 'pad';
   readonly pad: {
     readonly phase: string;

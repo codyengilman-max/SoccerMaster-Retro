@@ -31,8 +31,8 @@ export const SIDELINE_VIEW = {
   /** Yards past each goal line the view may reach, so the whole goal and its depth stay framed. */
   goalRunoff: 4,
   /** Yards beyond the far touchline (sideline scenery) and the near touchline kept in view. */
-  farStrip: 7,
-  nearStrip: 3,
+  farStrip: 9,
+  nearStrip: 7.5,
 } as const;
 
 /** Sideline camera tuning: a small central dead zone, modest slow look-ahead, gentle follow (no snapping). */
