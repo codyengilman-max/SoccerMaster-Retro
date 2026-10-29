@@ -78,7 +78,7 @@ export async function waitForScene(page: Page, key: string): Promise<Diagnostics
 }
 
 /** My Training groups these under Home Practice and Progress; a test asking for one from the hub opens its group first. */
-const HUB_GROUP: Readonly<Record<string, string>> = { 'nav-sessions': 'nav-practice', 'nav-library': 'nav-practice', 'nav-journal': 'nav-practice', 'nav-review': 'nav-progress', 'nav-player': 'nav-progress', 'nav-play': 'nav-progress' };
+const HUB_GROUP: Readonly<Record<string, string>> = { 'nav-practice': 'nav-progress', 'nav-focus': 'nav-progress', 'nav-team': 'nav-progress', 'nav-sessions': 'nav-practice', 'nav-library': 'nav-practice', 'nav-journal': 'nav-practice', 'nav-review': 'nav-progress', 'nav-player': 'nav-progress', 'nav-play': 'nav-progress', ...Object.fromEntries(['firstTouch', 'passing', 'dribbling', 'finishing', 'defending', 'awareness'].map((f) => [`lib-${f}`, 'lib-ballmastery'])) };
 
 /** Wheel a scrolling screen (My Player) until the named element is fully inside the viewport. */
 export async function revealElement(page: Page, name: string): Promise<void> {
@@ -95,9 +95,17 @@ export async function revealElement(page: Page, name: string): Promise<void> {
 export async function pressElement(page: Page, name: string, via: 'mouse' | 'touch'): Promise<void> {
   let d = await diagnostics(page);
   const group = HUB_GROUP[name];
-  if (group && !d.layout?.elements[name] && d.layout?.elements[group]) {
+  // Groups nest (nav-library > nav-practice > nav-progress): open the nearest visible ancestor first.
+  if (group && !d.layout?.elements[name] && (d.layout?.elements[group] || HUB_GROUP[group])) {
     await pressElement(page, group, via);
-    await expect.poll(async () => !!(await diagnostics(page)).layout?.elements[name], { timeout: 5000 }).toBe(true);
+    // The grouped button may sit on a later page of the group screen's actions.
+    await expect
+      .poll(async () => {
+        const els = (await diagnostics(page)).layout?.elements ?? {};
+        if (!els[name] && els.more) await pressElement(page, 'more', via);
+        return !!els[name];
+      }, { timeout: 8000 })
+      .toBe(true);
     d = await diagnostics(page);
   }
   const rect = d.layout?.elements[name];

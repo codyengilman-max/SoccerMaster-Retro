@@ -1,0 +1,899 @@
+{
+ "haze_alpha": 24,
+ "sheets": {
+  "boy": [
+   {
+    "id": "P1",
+    "rect": [
+     63,
+     13,
+     273,
+     328
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 166,
+      "bottom": 338,
+      "left": 146,
+      "right": 188
+     },
+     {
+      "x": 297,
+      "bottom": 318,
+      "left": 265,
+      "right": 331
+     }
+    ],
+    "ground_y": 338,
+    "anchor": {
+     "x": 231,
+     "y": 338
+    },
+    "visible_height": 326
+   },
+   {
+    "id": "P2",
+    "rect": [
+     445,
+     13,
+     272,
+     328
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 480,
+      "bottom": 321,
+      "left": 449,
+      "right": 512
+     },
+     {
+      "x": 628,
+      "bottom": 338,
+      "left": 604,
+      "right": 653
+     }
+    ],
+    "ground_y": 338,
+    "anchor": {
+     "x": 554,
+     "y": 338
+    },
+    "visible_height": 326
+   },
+   {
+    "id": "P3",
+    "rect": [
+     832,
+     13,
+     244,
+     328
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 933,
+      "bottom": 338,
+      "left": 905,
+      "right": 965
+     },
+     {
+      "x": 1048,
+      "bottom": 334,
+      "left": 1027,
+      "right": 1071
+     }
+    ],
+    "ground_y": 338,
+    "anchor": {
+     "x": 990,
+     "y": 338
+    },
+    "visible_height": 326
+   },
+   {
+    "id": "P4",
+    "rect": [
+     1218,
+     12,
+     256,
+     329
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 1256,
+      "bottom": 337,
+      "left": 1237,
+      "right": 1276
+     },
+     {
+      "x": 1373,
+      "bottom": 338,
+      "left": 1344,
+      "right": 1401
+     }
+    ],
+    "ground_y": 338,
+    "anchor": {
+     "x": 1314,
+     "y": 338
+    },
+    "visible_height": 327
+   },
+   {
+    "id": "P5",
+    "rect": [
+     62,
+     351,
+     248,
+     331
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 158,
+      "bottom": 681,
+      "left": 135,
+      "right": 182
+     },
+     {
+      "x": 268,
+      "bottom": 645,
+      "left": 235,
+      "right": 305
+     }
+    ],
+    "ground_y": 681,
+    "anchor": {
+     "x": 213,
+     "y": 681
+    },
+    "visible_height": 331
+   },
+   {
+    "id": "P6",
+    "rect": [
+     461,
+     351,
+     249,
+     331
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 501,
+      "bottom": 649,
+      "left": 464,
+      "right": 535
+     },
+     {
+      "x": 616,
+      "bottom": 681,
+      "left": 594,
+      "right": 640
+     }
+    ],
+    "ground_y": 681,
+    "anchor": {
+     "x": 558,
+     "y": 681
+    },
+    "visible_height": 331
+   },
+   {
+    "id": "P7",
+    "rect": [
+     821,
+     356,
+     242,
+     326
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 879,
+      "bottom": 668,
+      "left": 861,
+      "right": 899
+     },
+     {
+      "x": 985,
+      "bottom": 680,
+      "left": 955,
+      "right": 1017
+     }
+    ],
+    "ground_y": 680,
+    "anchor": {
+     "x": 932,
+     "y": 680
+    },
+    "visible_height": 325
+   },
+   {
+    "id": "P8",
+    "rect": [
+     1200,
+     357,
+     263,
+     325
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 1290,
+      "bottom": 667,
+      "left": 1265,
+      "right": 1314
+     },
+     {
+      "x": 1389,
+      "bottom": 681,
+      "left": 1364,
+      "right": 1416
+     }
+    ],
+    "ground_y": 681,
+    "anchor": {
+     "x": 1339,
+     "y": 681
+    },
+    "visible_height": 325
+   },
+   {
+    "id": "P9",
+    "rect": [
+     81,
+     691,
+     242,
+     319
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 220,
+      "bottom": 1006,
+      "left": 194,
+      "right": 249
+     },
+     {
+      "x": 285,
+      "bottom": 1002,
+      "left": 257,
+      "right": 318
+     }
+    ],
+    "ground_y": 1006,
+    "anchor": {
+     "x": 252,
+     "y": 1006
+    },
+    "visible_height": 316
+   },
+   {
+    "id": "P10",
+    "rect": [
+     460,
+     693,
+     238,
+     318
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 489,
+      "bottom": 997,
+      "left": 464,
+      "right": 520
+     },
+     {
+      "x": 561,
+      "bottom": 1006,
+      "left": 534,
+      "right": 588
+     }
+    ],
+    "ground_y": 1006,
+    "anchor": {
+     "x": 525,
+     "y": 1006
+    },
+    "visible_height": 314
+   },
+   {
+    "id": "P11",
+    "rect": [
+     808,
+     692,
+     281,
+     318
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 891,
+      "bottom": 1005,
+      "left": 868,
+      "right": 912
+     },
+     {
+      "x": 1049,
+      "bottom": 988,
+      "left": 1017,
+      "right": 1084
+     }
+    ],
+    "ground_y": 1005,
+    "anchor": {
+     "x": 970,
+     "y": 1005
+    },
+    "visible_height": 314
+   },
+   {
+    "id": "P12",
+    "rect": [
+     1200,
+     694,
+     255,
+     308
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 1236,
+      "bottom": 997,
+      "left": 1215,
+      "right": 1257
+     },
+     {
+      "x": 1408,
+      "bottom": 997,
+      "left": 1382,
+      "right": 1437
+     }
+    ],
+    "ground_y": 997,
+    "anchor": {
+     "x": 1322,
+     "y": 997
+    },
+    "visible_height": 304
+   }
+  ],
+  "girl": [
+   {
+    "id": "P1",
+    "rect": [
+     83,
+     8,
+     269,
+     327
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 199,
+      "bottom": 330,
+      "left": 174,
+      "right": 226
+     },
+     {
+      "x": 317,
+      "bottom": 295,
+      "left": 287,
+      "right": 347
+     }
+    ],
+    "ground_y": 330,
+    "anchor": {
+     "x": 258,
+     "y": 330
+    },
+    "visible_height": 323
+   },
+   {
+    "id": "P2",
+    "rect": [
+     455,
+     7,
+     257,
+     328
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 486,
+      "bottom": 295,
+      "left": 458,
+      "right": 516
+     },
+     {
+      "x": 602,
+      "bottom": 330,
+      "left": 580,
+      "right": 624
+     }
+    ],
+    "ground_y": 330,
+    "anchor": {
+     "x": 544,
+     "y": 330
+    },
+    "visible_height": 324
+   },
+   {
+    "id": "P3",
+    "rect": [
+     830,
+     8,
+     233,
+     327
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 919,
+      "bottom": 330,
+      "left": 894,
+      "right": 945
+     },
+     {
+      "x": 1028,
+      "bottom": 314,
+      "left": 1008,
+      "right": 1045
+     }
+    ],
+    "ground_y": 330,
+    "anchor": {
+     "x": 973,
+     "y": 330
+    },
+    "visible_height": 323
+   },
+   {
+    "id": "P4",
+    "rect": [
+     1216,
+     7,
+     233,
+     328
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 1254,
+      "bottom": 317,
+      "left": 1237,
+      "right": 1274
+     },
+     {
+      "x": 1354,
+      "bottom": 330,
+      "left": 1333,
+      "right": 1375
+     }
+    ],
+    "ground_y": 330,
+    "anchor": {
+     "x": 1304,
+     "y": 330
+    },
+    "visible_height": 324
+   },
+   {
+    "id": "P5",
+    "rect": [
+     84,
+     341,
+     243,
+     329
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 193,
+      "bottom": 665,
+      "left": 172,
+      "right": 215
+     },
+     {
+      "x": 270,
+      "bottom": 630,
+      "left": 237,
+      "right": 303
+     }
+    ],
+    "ground_y": 665,
+    "anchor": {
+     "x": 231,
+     "y": 665
+    },
+    "visible_height": 325
+   },
+   {
+    "id": "P6",
+    "rect": [
+     465,
+     343,
+     245,
+     327
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 524,
+      "bottom": 628,
+      "left": 490,
+      "right": 556
+     },
+     {
+      "x": 601,
+      "bottom": 665,
+      "left": 580,
+      "right": 623
+     }
+    ],
+    "ground_y": 665,
+    "anchor": {
+     "x": 562,
+     "y": 665
+    },
+    "visible_height": 323
+   },
+   {
+    "id": "P7",
+    "rect": [
+     832,
+     342,
+     236,
+     328
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 912,
+      "bottom": 631,
+      "left": 897,
+      "right": 932
+     },
+     {
+      "x": 1035,
+      "bottom": 665,
+      "left": 1008,
+      "right": 1063
+     }
+    ],
+    "ground_y": 665,
+    "anchor": {
+     "x": 973,
+     "y": 665
+    },
+    "visible_height": 324
+   },
+   {
+    "id": "P8",
+    "rect": [
+     1210,
+     341,
+     252,
+     329
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 1237,
+      "bottom": 665,
+      "left": 1213,
+      "right": 1262
+     },
+     {
+      "x": 1369,
+      "bottom": 631,
+      "left": 1350,
+      "right": 1385
+     }
+    ],
+    "ground_y": 665,
+    "anchor": {
+     "x": 1303,
+     "y": 665
+    },
+    "visible_height": 325
+   },
+   {
+    "id": "P9",
+    "rect": [
+     95,
+     682,
+     253,
+     320
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 219,
+      "bottom": 997,
+      "left": 195,
+      "right": 244
+     },
+     {
+      "x": 313,
+      "bottom": 994,
+      "left": 283,
+      "right": 343
+     }
+    ],
+    "ground_y": 997,
+    "anchor": {
+     "x": 266,
+     "y": 997
+    },
+    "visible_height": 316
+   },
+   {
+    "id": "P10",
+    "rect": [
+     451,
+     682,
+     258,
+     320
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 483,
+      "bottom": 994,
+      "left": 455,
+      "right": 514
+     },
+     {
+      "x": 585,
+      "bottom": 997,
+      "left": 560,
+      "right": 611
+     }
+    ],
+    "ground_y": 997,
+    "anchor": {
+     "x": 534,
+     "y": 997
+    },
+    "visible_height": 316
+   },
+   {
+    "id": "P11",
+    "rect": [
+     812,
+     682,
+     246,
+     328
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 925,
+      "bottom": 1006,
+      "left": 900,
+      "right": 953
+     },
+     {
+      "x": 1016,
+      "bottom": 950,
+      "left": 990,
+      "right": 1037
+     }
+    ],
+    "ground_y": 1006,
+    "anchor": {
+     "x": 970,
+     "y": 1006
+    },
+    "visible_height": 325
+   },
+   {
+    "id": "P12",
+    "rect": [
+     1214,
+     682,
+     249,
+     328
+    ],
+    "boots_image_left_to_right": [
+     {
+      "x": 1262,
+      "bottom": 948,
+      "left": 1243,
+      "right": 1289
+     },
+     {
+      "x": 1347,
+      "bottom": 1006,
+      "left": 1324,
+      "right": 1370
+     }
+    ],
+    "ground_y": 1006,
+    "anchor": {
+     "x": 1304,
+     "y": 1006
+    },
+    "visible_height": 325
+   }
+  ],
+  "boots_and_ball": [
+   [
+    76,
+    35,
+    96,
+    186
+   ],
+   [
+    246,
+    53,
+    168,
+    168
+   ],
+   [
+    453,
+    106,
+    222,
+    109
+   ],
+   [
+    694,
+    61,
+    183,
+    160
+   ],
+   [
+    949,
+    35,
+    95,
+    186
+   ],
+   [
+    1122,
+    60,
+    182,
+    161
+   ],
+   [
+    1330,
+    106,
+    218,
+    109
+   ],
+   [
+    1589,
+    53,
+    162,
+    168
+   ],
+   [
+    76,
+    271,
+    97,
+    172
+   ],
+   [
+    249,
+    287,
+    161,
+    156
+   ],
+   [
+    450,
+    339,
+    221,
+    104
+   ],
+   [
+    694,
+    296,
+    179,
+    147
+   ],
+   [
+    951,
+    271,
+    93,
+    172
+   ],
+   [
+    1125,
+    296,
+    179,
+    147
+   ],
+   [
+    1330,
+    339,
+    219,
+    104
+   ],
+   [
+    1583,
+    287,
+    161,
+    156
+   ],
+   [
+    49,
+    516,
+    146,
+    146
+   ],
+   [
+    267,
+    516,
+    145,
+    146
+   ],
+   [
+    484,
+    516,
+    145,
+    146
+   ],
+   [
+    702,
+    516,
+    145,
+    146
+   ],
+   [
+    920,
+    516,
+    145,
+    146
+   ],
+   [
+    1138,
+    516,
+    145,
+    146
+   ],
+   [
+    1355,
+    516,
+    148,
+    146
+   ],
+   [
+    1575,
+    516,
+    145,
+    146
+   ],
+   [
+    49,
+    695,
+    145,
+    147
+   ],
+   [
+    267,
+    695,
+    144,
+    147
+   ],
+   [
+    483,
+    695,
+    145,
+    147
+   ],
+   [
+    702,
+    695,
+    145,
+    147
+   ],
+   [
+    920,
+    695,
+    145,
+    147
+   ],
+   [
+    1138,
+    695,
+    145,
+    147
+   ],
+   [
+    1355,
+    695,
+    148,
+    147
+   ],
+   [
+    1575,
+    695,
+    145,
+    147
+   ]
+  ]
+ }
+}

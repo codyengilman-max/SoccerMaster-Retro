@@ -1,0 +1,1199 @@
+{
+  "design_version": "1.0",
+  "date": "2026-10-29",
+  "lessons": [
+    {
+      "lesson_id": "BM-055",
+      "title": "Sole taps",
+      "status": "design_draft",
+      "evidence_status": "text-based design",
+      "source_ids": [
+        "D1"
+      ],
+      "source_media_frame_reviewed": false,
+      "coach_approval": null,
+      "runtime_publication_enabled": false,
+      "cue": "Keep the ball still; alternate light contacts.",
+      "review_question": "Review foot lift, balance and sole clearance; a top view cannot show contact height.",
+      "coordinate_system": "player-relative original schematic; x right, y back; start facing diagram top",
+      "phases": [
+        {
+          "order": 1,
+          "title": "Settle",
+          "contact": "none",
+          "ball_start": [
+            50,
+            50
+          ],
+          "ball_end": [
+            50,
+            50
+          ],
+          "note": "Balanced start",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 2,
+          "title": "Tap",
+          "contact": "R sole",
+          "ball_start": [
+            50,
+            50
+          ],
+          "ball_end": [
+            50,
+            50
+          ],
+          "note": "Light top contact",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 3,
+          "title": "Recover",
+          "contact": "none",
+          "ball_start": [
+            50,
+            50
+          ],
+          "ball_end": [
+            50,
+            50
+          ],
+          "note": "Right foot returns",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 4,
+          "title": "Alternate",
+          "contact": "L sole",
+          "ball_start": [
+            50,
+            50
+          ],
+          "ball_end": [
+            50,
+            50
+          ],
+          "note": "Switch the contact foot",
+          "hold_ms_proposal": 900
+        }
+      ],
+      "mirror_rule": "Reflect x to 100-x; swap L/R contacts and directional captions. Do not mirror text glyphs or protagonist identity. Coach must check mirrored biomechanics.",
+      "presentation": {
+        "normal_speed": "coach-demonstrated timing, not supplied",
+        "step_mode": "one phase at a time",
+        "slow_mode": "0.5x after approved normal animation exists",
+        "ball_layer": "separate; contacts drive changes of ball motion",
+        "camera": "three-quarter front full body plus overhead contact inset; storyboards here show ball routes only"
+      }
+    },
+    {
+      "lesson_id": "BM-056",
+      "title": "Inside-foot shuffles",
+      "status": "design_draft",
+      "evidence_status": "text-based design",
+      "source_ids": [
+        "D3"
+      ],
+      "source_media_frame_reviewed": false,
+      "coach_approval": null,
+      "runtime_publication_enabled": false,
+      "cue": "Keep transfers small and playable.",
+      "review_question": "Do not animate sole taps; verify inside-edge contacts and support timing.",
+      "coordinate_system": "player-relative original schematic; x right, y back; start facing diagram top",
+      "phases": [
+        {
+          "order": 1,
+          "title": "Start right",
+          "contact": "none",
+          "ball_start": [
+            64,
+            50
+          ],
+          "ball_end": [
+            64,
+            50
+          ],
+          "note": "Ball beside inside edge",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 2,
+          "title": "Transfer",
+          "contact": "R inside",
+          "ball_start": [
+            64,
+            50
+          ],
+          "ball_end": [
+            36,
+            50
+          ],
+          "note": "Send left",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 3,
+          "title": "Return",
+          "contact": "L inside",
+          "ball_start": [
+            36,
+            50
+          ],
+          "ball_end": [
+            64,
+            50
+          ],
+          "note": "Send right",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 4,
+          "title": "Reset",
+          "contact": "none",
+          "ball_start": [
+            64,
+            50
+          ],
+          "ball_end": [
+            64,
+            50
+          ],
+          "note": "Restart with control",
+          "hold_ms_proposal": 900
+        }
+      ],
+      "mirror_rule": "Reflect x to 100-x; swap L/R contacts and directional captions. Do not mirror text glyphs or protagonist identity. Coach must check mirrored biomechanics.",
+      "presentation": {
+        "normal_speed": "coach-demonstrated timing, not supplied",
+        "step_mode": "one phase at a time",
+        "slow_mode": "0.5x after approved normal animation exists",
+        "ball_layer": "separate; contacts drive changes of ball motion",
+        "camera": "three-quarter front full body plus overhead contact inset; storyboards here show ball routes only"
+      }
+    },
+    {
+      "lesson_id": "BM-071",
+      "title": "Lateral sole roll",
+      "status": "design_draft",
+      "evidence_status": "mapping review required",
+      "source_ids": [
+        "D7",
+        "D3"
+      ],
+      "source_media_frame_reviewed": false,
+      "coach_approval": null,
+      "runtime_publication_enabled": false,
+      "cue": "Guide the ball across; do not stamp.",
+      "review_question": "Original basic-roll proposal for Rollovers. Distinguish it from the published Roll Over feint before linking BM-071.",
+      "coordinate_system": "player-relative original schematic; x right, y back; start facing diagram top",
+      "phases": [
+        {
+          "order": 1,
+          "title": "Prepare",
+          "contact": "none",
+          "ball_start": [
+            66,
+            48
+          ],
+          "ball_end": [
+            66,
+            48
+          ],
+          "note": "Start to right",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 2,
+          "title": "Cover",
+          "contact": "R sole",
+          "ball_start": [
+            66,
+            48
+          ],
+          "ball_end": [
+            66,
+            48
+          ],
+          "note": "Sole above ball",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 3,
+          "title": "Roll across",
+          "contact": "R sole",
+          "ball_start": [
+            66,
+            48
+          ],
+          "ball_end": [
+            34,
+            48
+          ],
+          "note": "Move across body",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 4,
+          "title": "Settle",
+          "contact": "none",
+          "ball_start": [
+            34,
+            48
+          ],
+          "ball_end": [
+            34,
+            48
+          ],
+          "note": "Rebalance before repeat",
+          "hold_ms_proposal": 900
+        }
+      ],
+      "mirror_rule": "Reflect x to 100-x; swap L/R contacts and directional captions. Do not mirror text glyphs or protagonist identity. Coach must check mirrored biomechanics.",
+      "presentation": {
+        "normal_speed": "coach-demonstrated timing, not supplied",
+        "step_mode": "one phase at a time",
+        "slow_mode": "0.5x after approved normal animation exists",
+        "ball_layer": "separate; contacts drive changes of ball motion",
+        "camera": "three-quarter front full body plus overhead contact inset; storyboards here show ball routes only"
+      }
+    },
+    {
+      "lesson_id": "BM-081",
+      "title": "Inside pulls",
+      "status": "design_draft",
+      "evidence_status": "text-based design",
+      "source_ids": [
+        "D1"
+      ],
+      "source_media_frame_reviewed": false,
+      "coach_approval": null,
+      "runtime_publication_enabled": false,
+      "cue": "Use a smooth curve, not a kick.",
+      "review_question": "Curve decomposition is original. Coach must verify support-foot clearance and whether to regrip between repetitions.",
+      "coordinate_system": "player-relative original schematic; x right, y back; start facing diagram top",
+      "phases": [
+        {
+          "order": 1,
+          "title": "Prepare",
+          "contact": "none",
+          "ball_start": [
+            68,
+            40
+          ],
+          "ball_end": [
+            68,
+            40
+          ],
+          "note": "Ball to right front",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 2,
+          "title": "Draw in",
+          "contact": "R sole",
+          "ball_start": [
+            68,
+            40
+          ],
+          "ball_end": [
+            58,
+            62
+          ],
+          "note": "Begin a curved pull",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 3,
+          "title": "Across",
+          "contact": "R sole",
+          "ball_start": [
+            58,
+            62
+          ],
+          "ball_end": [
+            32,
+            40
+          ],
+          "note": "Complete curved route",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 4,
+          "title": "Reset",
+          "contact": "none",
+          "ball_start": [
+            32,
+            40
+          ],
+          "ball_end": [
+            32,
+            40
+          ],
+          "note": "Recover balance",
+          "hold_ms_proposal": 900
+        }
+      ],
+      "mirror_rule": "Reflect x to 100-x; swap L/R contacts and directional captions. Do not mirror text glyphs or protagonist identity. Coach must check mirrored biomechanics.",
+      "presentation": {
+        "normal_speed": "coach-demonstrated timing, not supplied",
+        "step_mode": "one phase at a time",
+        "slow_mode": "0.5x after approved normal animation exists",
+        "ball_layer": "separate; contacts drive changes of ball motion",
+        "camera": "three-quarter front full body plus overhead contact inset; storyboards here show ball routes only"
+      }
+    },
+    {
+      "lesson_id": "BM-082",
+      "title": "Tap \u2022 tap \u2022 roll",
+      "status": "design_draft",
+      "evidence_status": "text-based design",
+      "source_ids": [
+        "D1",
+        "D3"
+      ],
+      "source_media_frame_reviewed": false,
+      "coach_approval": null,
+      "runtime_publication_enabled": false,
+      "cue": "Two inside contacts, then a sole roll.",
+      "review_question": "Review right sole transitioning after the second tap, the collecting foot and the reverse sequence.",
+      "coordinate_system": "player-relative original schematic; x right, y back; start facing diagram top",
+      "phases": [
+        {
+          "order": 1,
+          "title": "First tap",
+          "contact": "R inside",
+          "ball_start": [
+            64,
+            48
+          ],
+          "ball_end": [
+            36,
+            48
+          ],
+          "note": "Transfer left",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 2,
+          "title": "Second tap",
+          "contact": "L inside",
+          "ball_start": [
+            36,
+            48
+          ],
+          "ball_end": [
+            64,
+            48
+          ],
+          "note": "Transfer right",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 3,
+          "title": "Roll",
+          "contact": "R sole",
+          "ball_start": [
+            64,
+            48
+          ],
+          "ball_end": [
+            36,
+            48
+          ],
+          "note": "Roll back across",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 4,
+          "title": "Collect",
+          "contact": "L inside",
+          "ball_start": [
+            36,
+            48
+          ],
+          "ball_end": [
+            36,
+            48
+          ],
+          "note": "Opposite inside edge",
+          "hold_ms_proposal": 900
+        }
+      ],
+      "mirror_rule": "Reflect x to 100-x; swap L/R contacts and directional captions. Do not mirror text glyphs or protagonist identity. Coach must check mirrored biomechanics.",
+      "presentation": {
+        "normal_speed": "coach-demonstrated timing, not supplied",
+        "step_mode": "one phase at a time",
+        "slow_mode": "0.5x after approved normal animation exists",
+        "ball_layer": "separate; contacts drive changes of ball motion",
+        "camera": "three-quarter front full body plus overhead contact inset; storyboards here show ball routes only"
+      }
+    },
+    {
+      "lesson_id": "BM-083",
+      "title": "Inside squish",
+      "status": "design_draft",
+      "evidence_status": "text-based design",
+      "source_ids": [
+        "D1"
+      ],
+      "source_media_frame_reviewed": false,
+      "coach_approval": null,
+      "runtime_publication_enabled": false,
+      "cue": "Roll outward; return with the same foot.",
+      "review_question": "Verify outward range and support placement; do not force an overstretched return.",
+      "coordinate_system": "player-relative original schematic; x right, y back; start facing diagram top",
+      "phases": [
+        {
+          "order": 1,
+          "title": "Prepare",
+          "contact": "none",
+          "ball_start": [
+            58,
+            48
+          ],
+          "ball_end": [
+            58,
+            48
+          ],
+          "note": "Start near right foot",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 2,
+          "title": "Outward roll",
+          "contact": "R sole",
+          "ball_start": [
+            58,
+            48
+          ],
+          "ball_end": [
+            76,
+            48
+          ],
+          "note": "Make room to return",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 3,
+          "title": "Return",
+          "contact": "R inside",
+          "ball_start": [
+            76,
+            48
+          ],
+          "ball_end": [
+            46,
+            48
+          ],
+          "note": "Use the inside edge",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 4,
+          "title": "Settle",
+          "contact": "none",
+          "ball_start": [
+            46,
+            48
+          ],
+          "ball_end": [
+            46,
+            48
+          ],
+          "note": "Pause before repeating",
+          "hold_ms_proposal": 900
+        }
+      ],
+      "mirror_rule": "Reflect x to 100-x; swap L/R contacts and directional captions. Do not mirror text glyphs or protagonist identity. Coach must check mirrored biomechanics.",
+      "presentation": {
+        "normal_speed": "coach-demonstrated timing, not supplied",
+        "step_mode": "one phase at a time",
+        "slow_mode": "0.5x after approved normal animation exists",
+        "ball_layer": "separate; contacts drive changes of ball motion",
+        "camera": "three-quarter front full body plus overhead contact inset; storyboards here show ball routes only"
+      }
+    },
+    {
+      "lesson_id": "BM-009",
+      "title": "One-foot dribble cut",
+      "status": "design_draft",
+      "evidence_status": "mechanics review required",
+      "source_ids": [
+        "D7"
+      ],
+      "source_media_frame_reviewed": false,
+      "coach_approval": null,
+      "runtime_publication_enabled": false,
+      "cue": "Inside then outside: same foot.",
+      "review_question": "Club label supports inside/outside one-foot pattern only. Travelling geometry is original; do not substitute for two-foot variant.",
+      "coordinate_system": "player-relative original schematic; x right, y back; start facing diagram top",
+      "phases": [
+        {
+          "order": 1,
+          "title": "Prepare",
+          "contact": "none",
+          "ball_start": [
+            64,
+            48
+          ],
+          "ball_end": [
+            64,
+            48
+          ],
+          "note": "Right-foot pattern",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 2,
+          "title": "Inside",
+          "contact": "R inside",
+          "ball_start": [
+            64,
+            48
+          ],
+          "ball_end": [
+            44,
+            40
+          ],
+          "note": "Small inward touch",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 3,
+          "title": "Outside",
+          "contact": "R outside",
+          "ball_start": [
+            44,
+            40
+          ],
+          "ball_end": [
+            64,
+            32
+          ],
+          "note": "Small outward touch",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 4,
+          "title": "Follow",
+          "contact": "none",
+          "ball_start": [
+            64,
+            32
+          ],
+          "ball_end": [
+            64,
+            32
+          ],
+          "note": "Move with the ball",
+          "hold_ms_proposal": 900
+        }
+      ],
+      "mirror_rule": "Reflect x to 100-x; swap L/R contacts and directional captions. Do not mirror text glyphs or protagonist identity. Coach must check mirrored biomechanics.",
+      "presentation": {
+        "normal_speed": "coach-demonstrated timing, not supplied",
+        "step_mode": "one phase at a time",
+        "slow_mode": "0.5x after approved normal animation exists",
+        "ball_layer": "separate; contacts drive changes of ball motion",
+        "camera": "three-quarter front full body plus overhead contact inset; storyboards here show ball routes only"
+      }
+    },
+    {
+      "lesson_id": "BM-002",
+      "title": "Inside cut",
+      "status": "design_draft",
+      "evidence_status": "text-based design",
+      "source_ids": [
+        "D4",
+        "D8"
+      ],
+      "source_media_frame_reviewed": false,
+      "coach_approval": null,
+      "runtime_publication_enabled": false,
+      "cue": "Redirect and turn into available space.",
+      "review_question": "Exit angle is illustrative, not a prescribed angle. Verify support-foot rotation and body orientation with the coach.",
+      "coordinate_system": "player-relative original schematic; x right, y back; start facing diagram top",
+      "phases": [
+        {
+          "order": 1,
+          "title": "Approach",
+          "contact": "none",
+          "ball_start": [
+            60,
+            72
+          ],
+          "ball_end": [
+            60,
+            45
+          ],
+          "note": "Controlled approach",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 2,
+          "title": "Prepare turn",
+          "contact": "R inside",
+          "ball_start": [
+            60,
+            45
+          ],
+          "ball_end": [
+            60,
+            45
+          ],
+          "note": "Inside edge ready",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 3,
+          "title": "Redirect",
+          "contact": "R inside",
+          "ball_start": [
+            60,
+            45
+          ],
+          "ball_end": [
+            28,
+            62
+          ],
+          "note": "New route shown",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 4,
+          "title": "Follow",
+          "contact": "none",
+          "ball_start": [
+            28,
+            62
+          ],
+          "ball_end": [
+            28,
+            62
+          ],
+          "note": "Turn the body to follow",
+          "hold_ms_proposal": 900
+        }
+      ],
+      "mirror_rule": "Reflect x to 100-x; swap L/R contacts and directional captions. Do not mirror text glyphs or protagonist identity. Coach must check mirrored biomechanics.",
+      "presentation": {
+        "normal_speed": "coach-demonstrated timing, not supplied",
+        "step_mode": "one phase at a time",
+        "slow_mode": "0.5x after approved normal animation exists",
+        "ball_layer": "separate; contacts drive changes of ball motion",
+        "camera": "three-quarter front full body plus overhead contact inset; storyboards here show ball routes only"
+      }
+    },
+    {
+      "lesson_id": "BM-003",
+      "title": "Outside cut",
+      "status": "design_draft",
+      "evidence_status": "mechanics review required",
+      "source_ids": [
+        "D8"
+      ],
+      "source_media_frame_reviewed": false,
+      "coach_approval": null,
+      "runtime_publication_enabled": false,
+      "cue": "Use the outside edge into a clear route.",
+      "review_question": "Named in official plan but exact motion not verified. Coach must specify contact, turn angle and body rotation before animation.",
+      "coordinate_system": "player-relative original schematic; x right, y back; start facing diagram top",
+      "phases": [
+        {
+          "order": 1,
+          "title": "Approach",
+          "contact": "none",
+          "ball_start": [
+            56,
+            72
+          ],
+          "ball_end": [
+            56,
+            45
+          ],
+          "note": "Controlled approach",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 2,
+          "title": "Prepare cut",
+          "contact": "R outside",
+          "ball_start": [
+            56,
+            45
+          ],
+          "ball_end": [
+            56,
+            45
+          ],
+          "note": "Outside edge ready",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 3,
+          "title": "Redirect",
+          "contact": "R outside",
+          "ball_start": [
+            56,
+            45
+          ],
+          "ball_end": [
+            80,
+            64
+          ],
+          "note": "New route shown",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 4,
+          "title": "Follow",
+          "contact": "none",
+          "ball_start": [
+            80,
+            64
+          ],
+          "ball_end": [
+            80,
+            64
+          ],
+          "note": "Turn to follow",
+          "hold_ms_proposal": 900
+        }
+      ],
+      "mirror_rule": "Reflect x to 100-x; swap L/R contacts and directional captions. Do not mirror text glyphs or protagonist identity. Coach must check mirrored biomechanics.",
+      "presentation": {
+        "normal_speed": "coach-demonstrated timing, not supplied",
+        "step_mode": "one phase at a time",
+        "slow_mode": "0.5x after approved normal animation exists",
+        "ball_layer": "separate; contacts drive changes of ball motion",
+        "camera": "three-quarter front full body plus overhead contact inset; storyboards here show ball routes only"
+      }
+    },
+    {
+      "lesson_id": "BM-012",
+      "title": "Hook / Cruyff turn",
+      "status": "design_draft",
+      "evidence_status": "text-based design",
+      "source_ids": [
+        "D6"
+      ],
+      "source_media_frame_reviewed": false,
+      "coach_approval": null,
+      "runtime_publication_enabled": false,
+      "cue": "Clear the supporting heel, then turn.",
+      "review_question": "Check support-foot placement, ball clearance and pivot. Diagram is path planning, not a skeletal pose. Confirm Hook Turn naming against Coerver footage.",
+      "coordinate_system": "player-relative original schematic; x right, y back; start facing diagram top",
+      "phases": [
+        {
+          "order": 1,
+          "title": "Prepare",
+          "contact": "none",
+          "ball_start": [
+            66,
+            58
+          ],
+          "ball_end": [
+            66,
+            58
+          ],
+          "note": "Shape for forward play",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 2,
+          "title": "Hook",
+          "contact": "R inside",
+          "ball_start": [
+            66,
+            58
+          ],
+          "ball_end": [
+            48,
+            78
+          ],
+          "note": "Guide behind support",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 3,
+          "title": "Clear heel",
+          "contact": "R inside",
+          "ball_start": [
+            48,
+            78
+          ],
+          "ball_end": [
+            24,
+            78
+          ],
+          "note": "Ball passes behind heel",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 4,
+          "title": "Follow",
+          "contact": "L inside",
+          "ball_start": [
+            24,
+            78
+          ],
+          "ball_end": [
+            18,
+            56
+          ],
+          "note": "Turn and take away",
+          "hold_ms_proposal": 900
+        }
+      ],
+      "mirror_rule": "Reflect x to 100-x; swap L/R contacts and directional captions. Do not mirror text glyphs or protagonist identity. Coach must check mirrored biomechanics.",
+      "presentation": {
+        "normal_speed": "coach-demonstrated timing, not supplied",
+        "step_mode": "one phase at a time",
+        "slow_mode": "0.5x after approved normal animation exists",
+        "ball_layer": "separate; contacts drive changes of ball motion",
+        "camera": "three-quarter front full body plus overhead contact inset; storyboards here show ball routes only"
+      }
+    },
+    {
+      "lesson_id": "BM-029",
+      "title": "Side step",
+      "status": "design_draft",
+      "evidence_status": "text-based design",
+      "source_ids": [
+        "D2"
+      ],
+      "source_media_frame_reviewed": false,
+      "coach_approval": null,
+      "runtime_publication_enabled": false,
+      "cue": "Sell the step; take the other route.",
+      "review_question": "Coerver text specifies opposite foot but not contact surface. Outside-foot exit here is an original proposal requiring review.",
+      "coordinate_system": "player-relative original schematic; x right, y back; start facing diagram top",
+      "phases": [
+        {
+          "order": 1,
+          "title": "Approach",
+          "contact": "none",
+          "ball_start": [
+            50,
+            70
+          ],
+          "ball_end": [
+            50,
+            48
+          ],
+          "note": "Keep close control",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 2,
+          "title": "Fake right",
+          "contact": "none",
+          "ball_start": [
+            50,
+            48
+          ],
+          "ball_end": [
+            50,
+            48
+          ],
+          "note": "Right body step; no touch",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 3,
+          "title": "Exit left",
+          "contact": "L outside",
+          "ball_start": [
+            50,
+            48
+          ],
+          "ball_end": [
+            22,
+            30
+          ],
+          "note": "Opposite-foot exit",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 4,
+          "title": "Follow",
+          "contact": "none",
+          "ball_start": [
+            22,
+            30
+          ],
+          "ball_end": [
+            22,
+            30
+          ],
+          "note": "Move into clear space",
+          "hold_ms_proposal": 900
+        }
+      ],
+      "mirror_rule": "Reflect x to 100-x; swap L/R contacts and directional captions. Do not mirror text glyphs or protagonist identity. Coach must check mirrored biomechanics.",
+      "presentation": {
+        "normal_speed": "coach-demonstrated timing, not supplied",
+        "step_mode": "one phase at a time",
+        "slow_mode": "0.5x after approved normal animation exists",
+        "ball_layer": "separate; contacts drive changes of ball motion",
+        "camera": "three-quarter front full body plus overhead contact inset; storyboards here show ball routes only"
+      }
+    },
+    {
+      "lesson_id": "BM-017",
+      "title": "Sole stop / start",
+      "status": "design_draft",
+      "evidence_status": "mapping review required",
+      "source_ids": [
+        "D6"
+      ],
+      "source_media_frame_reviewed": false,
+      "coach_approval": null,
+      "runtime_publication_enabled": false,
+      "cue": "Pause the ball, release, then exit.",
+      "review_question": "Source stop/go example includes a body fake. Resolve equivalence with Sole Stop Start; keep stop, release and outside contact distinct.",
+      "coordinate_system": "player-relative original schematic; x right, y back; start facing diagram top",
+      "phases": [
+        {
+          "order": 1,
+          "title": "Approach",
+          "contact": "none",
+          "ball_start": [
+            50,
+            75
+          ],
+          "ball_end": [
+            50,
+            48
+          ],
+          "note": "Ball under control",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 2,
+          "title": "Stop",
+          "contact": "R sole",
+          "ball_start": [
+            50,
+            48
+          ],
+          "ball_end": [
+            50,
+            48
+          ],
+          "note": "Brief sole contact",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 3,
+          "title": "Release",
+          "contact": "none",
+          "ball_start": [
+            50,
+            48
+          ],
+          "ball_end": [
+            50,
+            48
+          ],
+          "note": "Sole off; body sells pause",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 4,
+          "title": "Restart",
+          "contact": "R outside",
+          "ball_start": [
+            50,
+            48
+          ],
+          "ball_end": [
+            80,
+            28
+          ],
+          "note": "Outside exit proposal",
+          "hold_ms_proposal": 900
+        }
+      ],
+      "mirror_rule": "Reflect x to 100-x; swap L/R contacts and directional captions. Do not mirror text glyphs or protagonist identity. Coach must check mirrored biomechanics.",
+      "presentation": {
+        "normal_speed": "coach-demonstrated timing, not supplied",
+        "step_mode": "one phase at a time",
+        "slow_mode": "0.5x after approved normal animation exists",
+        "ball_layer": "separate; contacts drive changes of ball motion",
+        "camera": "three-quarter front full body plus overhead contact inset; storyboards here show ball routes only"
+      }
+    },
+    {
+      "lesson_id": "BM-018",
+      "title": "Inside-foot pull / push",
+      "status": "design_draft",
+      "evidence_status": "mechanics review required",
+      "source_ids": [
+        "D7"
+      ],
+      "source_media_frame_reviewed": false,
+      "coach_approval": null,
+      "runtime_publication_enabled": false,
+      "cue": "Draw back, then send away under control.",
+      "review_question": "The club source names this pattern but does not establish exact angle. Distinguish from V exit before approving a separate animation.",
+      "coordinate_system": "player-relative original schematic; x right, y back; start facing diagram top",
+      "phases": [
+        {
+          "order": 1,
+          "title": "Cover",
+          "contact": "R sole",
+          "ball_start": [
+            64,
+            30
+          ],
+          "ball_end": [
+            64,
+            30
+          ],
+          "note": "Prepare sole contact",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 2,
+          "title": "Pull",
+          "contact": "R sole",
+          "ball_start": [
+            64,
+            30
+          ],
+          "ball_end": [
+            60,
+            60
+          ],
+          "note": "Draw toward body",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 3,
+          "title": "Push",
+          "contact": "R inside",
+          "ball_start": [
+            60,
+            60
+          ],
+          "ball_end": [
+            45,
+            30
+          ],
+          "note": "Inside-edge return",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 4,
+          "title": "Reset",
+          "contact": "none",
+          "ball_start": [
+            45,
+            30
+          ],
+          "ball_end": [
+            45,
+            30
+          ],
+          "note": "Stop before next attempt",
+          "hold_ms_proposal": 900
+        }
+      ],
+      "mirror_rule": "Reflect x to 100-x; swap L/R contacts and directional captions. Do not mirror text glyphs or protagonist identity. Coach must check mirrored biomechanics.",
+      "presentation": {
+        "normal_speed": "coach-demonstrated timing, not supplied",
+        "step_mode": "one phase at a time",
+        "slow_mode": "0.5x after approved normal animation exists",
+        "ball_layer": "separate; contacts drive changes of ball motion",
+        "camera": "three-quarter front full body plus overhead contact inset; storyboards here show ball routes only"
+      }
+    },
+    {
+      "lesson_id": "BM-053",
+      "title": "V pull and exit",
+      "status": "design_draft",
+      "evidence_status": "mapping review required",
+      "source_ids": [
+        "D5"
+      ],
+      "source_media_frame_reviewed": false,
+      "coach_approval": null,
+      "runtime_publication_enabled": false,
+      "cue": "Sole pull, same-foot inside exit.",
+      "review_question": "Transcript calls this drag-back. Use descriptive V pull-and-exit title; do not claim exact Coerver V equivalence.",
+      "coordinate_system": "player-relative original schematic; x right, y back; start facing diagram top",
+      "phases": [
+        {
+          "order": 1,
+          "title": "Prepare",
+          "contact": "R sole",
+          "ball_start": [
+            68,
+            28
+          ],
+          "ball_end": [
+            68,
+            28
+          ],
+          "note": "Set contact above ball",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 2,
+          "title": "Pull",
+          "contact": "R sole",
+          "ball_start": [
+            68,
+            28
+          ],
+          "ball_end": [
+            58,
+            65
+          ],
+          "note": "Draw ball toward you",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 3,
+          "title": "Diagonal exit",
+          "contact": "R inside",
+          "ball_start": [
+            58,
+            65
+          ],
+          "ball_end": [
+            25,
+            28
+          ],
+          "note": "Change direction",
+          "hold_ms_proposal": 900
+        },
+        {
+          "order": 4,
+          "title": "Follow",
+          "contact": "none",
+          "ball_start": [
+            25,
+            28
+          ],
+          "ball_end": [
+            25,
+            28
+          ],
+          "note": "Follow the new route",
+          "hold_ms_proposal": 900
+        }
+      ],
+      "mirror_rule": "Reflect x to 100-x; swap L/R contacts and directional captions. Do not mirror text glyphs or protagonist identity. Coach must check mirrored biomechanics.",
+      "presentation": {
+        "normal_speed": "coach-demonstrated timing, not supplied",
+        "step_mode": "one phase at a time",
+        "slow_mode": "0.5x after approved normal animation exists",
+        "ball_layer": "separate; contacts drive changes of ball motion",
+        "camera": "three-quarter front full body plus overhead contact inset; storyboards here show ball routes only"
+      }
+    }
+  ]
+}

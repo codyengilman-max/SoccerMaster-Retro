@@ -389,6 +389,10 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - The unnamed rival fills the existing `alex` slot and the label stays "Alex" until the owner names it.
 - The owner's schoolyard picture replaces the `jungle-ball` background; the old master stays for rollback.
 
+## D65. Home Training as Juggling + Ball Mastery; v1.0 designs review-only (owner, 2026-10-29)
+- Presentation only: Ball Mastery groups every non-juggling home family; IDs, logging and progression are reused unchanged. The viewer extends the existing `activity` demo instead of a parallel lesson system.
+- The 14 Ball Mastery designs are loaded review-only; only exact equivalents (BM-002 = Inside-Cut Escape) are merged as links, ambiguous ones are flagged, nothing replaces an existing lesson. Right/Left is not offered until reviewed per-foot demonstrations exist (the package forbids mirrors as proof).
+
 ## Owner decisions 2026-10-27 (H1–H8)
 
 From the owner's consolidated decisions after the read-only audit of `main` `04e947b` (second revision, same day: H3 now removes Coach Moments from story matches, and the coach-approved All36 package becomes the Team Training source). Plan: [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md).
@@ -404,3 +408,10 @@ From the owner's consolidated decisions after the read-only audit of `main` `04e
 | H7 | **Rest defence and golden moments are required** ([spec](specs/REST_DEFENCE_GOLDEN_MOMENTS.md)), with measurable state rules; golden moments are highlights, not tactical questions; the Director only observes and never forces goals/turnovers, moves players, changes possession, redirects passes, delays goals, manufactures mistakes, overrides the referee, or changes the score or canonical event ledger. | PR E. |
 | H8 | **Close superseded stacked PRs #6, #13, #39, #40.** Their work is in `main`; branches and history are kept. | Closed. |
 | TT | **Coach-approved All36 package is the Team Training source** (`SoccerMaster_Coach_Approved_All36.zip`, D01–D36, approved by Cody Engilman 2026-10-27; inventory `training/all36/INVENTORY.md`). It supersedes older unapproved metrics, placeholder scenarios and empty mappings; authority order: explicit owner decisions > All36 package > current repo decisions > existing implementation > older drafts. Written metrics control objective, conditions, players, choices, grading, movement, progression and credit; screenshots guide orientation, placement, facing, framing and UI only and are never shipped as gameplay. Each scenario must still pass technical/content validation; unmatched or incomplete ones are blocked and reported. Routes outside the package stay fail-closed; the 972 routes are never approved automatically; `SESSION_CARDS` is never filled with invented approvals. | PR C. |
+
+## 2026-10-29: Ball Mastery art v1 slice
+
+- Owner option A: the painted all-orange drafts are used only on the Ball Mastery teaching page; sprites-v2 stays everywhere else.
+- Owner option A: the weekly board drops Weekly Focus and Team Training (both moved under Progress); the story's Home learning task stays so Week 6+ progression is unchanged.
+- The foot inset is a crop of the same body frame, so body and foot cannot disagree; the left foot uses the separately drawn mirror poses, never a flipped image.
+- Only `dr-inside-cut` gets a teaching page until the owner reviews the slice.

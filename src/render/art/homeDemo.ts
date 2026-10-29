@@ -18,6 +18,8 @@ export interface DemoPose {
   readonly ball: { readonly x: number; readonly y: number; readonly h: number };
   readonly contact: Contact;
   readonly caption: string | null;
+  /** Working foot, only where the catalog authors one (step frames). Absent for path demos: `flip` there is travel direction. */
+  readonly foot?: 'left' | 'right';
   /** Juggling-pack frame (sheet cell px): body frame, planted-boot shift and the separately drawn ball. */
   readonly art?: { readonly sheet: 'juggle'; readonly sex: JuggleSex; readonly index: number; readonly dx: number; readonly ball: { readonly x: number; readonly y: number; readonly r: number } };
 }
@@ -234,5 +236,24 @@ function stepsPose(d: Extract<DemoSpec, { kind: 'steps' }>, defending: boolean, 
   const flip = fr.foot === 'left';
   const frame = defending && fr.ball === 'away' ? `jockey-${k % 2}` : p.frame;
   const dx = defending && fr.ball === 'away' ? 1.6 : p.dx;
-  return { frame, flip, px: 5, py: 3.2, ball: { x: 5 + (flip ? -dx : dx), y: 3.2, h: p.h }, contact: p.contact, caption: `${k + 1}. ${fr.caption}` };
+  return { frame, flip, px: 5, py: 3.2, ball: { x: 5 + (flip ? -dx : dx), y: 3.2, h: p.h }, contact: p.contact, caption: `${k + 1}. ${fr.caption}`, ...(fr.foot === 'either' ? {} : { foot: fr.foot }) };
+}
+
+/** Times (s) where a sprite-v2 demo changes pose or contact; Step jumps between them. Always starts at 0. */
+export function demoBeats(a: Activity): number[] {
+  const len = demoLength(a);
+  const out = [0];
+  let prev = demoPose(a, 0);
+  for (let t = 0.05; t < len; t += 0.05) {
+    const p = demoPose(a, t);
+    if (p.frame !== prev.frame || p.contact !== prev.contact || p.flip !== prev.flip) out.push(Math.round(t * 100) / 100);
+    prev = p;
+  }
+  return out;
+}
+
+/** Next Step target after `t`, wrapping to the start. */
+export function nextBeat(beats: readonly number[], t: number, len: number): number {
+  const at = ((t % len) + len) % len;
+  return beats.find((b) => b > at + 0.001) ?? 0;
 }
