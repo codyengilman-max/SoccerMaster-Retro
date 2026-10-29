@@ -389,6 +389,10 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - The unnamed rival fills the existing `alex` slot and the label stays "Alex" until the owner names it.
 - The owner's schoolyard picture replaces the `jungle-ball` background; the old master stays for rollback.
 
+## D65. Home Training as Juggling + Ball Mastery; v1.0 designs review-only (owner, 2026-10-29)
+- Presentation only: Ball Mastery groups every non-juggling home family; IDs, logging and progression are reused unchanged. The viewer extends the existing `activity` demo instead of a parallel lesson system.
+- The 14 Ball Mastery designs are loaded review-only; only exact equivalents (BM-002 = Inside-Cut Escape) are merged as links, ambiguous ones are flagged, nothing replaces an existing lesson. Right/Left is not offered until reviewed per-foot demonstrations exist (the package forbids mirrors as proof).
+
 ## Owner decisions 2026-10-27 (H1–H8)
 
 From the owner's consolidated decisions after the read-only audit of `main` `04e947b` (second revision, same day: H3 now removes Coach Moments from story matches, and the coach-approved All36 package becomes the Team Training source). Plan: [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md).

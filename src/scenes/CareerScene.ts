@@ -23,7 +23,8 @@ import { weeklyProgress } from '../game/career/weeklyTraining';
 import { orientationOf } from '../render/layout';
 import { PlayerArt, atlasKey } from '../render/art/playerArt';
 import { SPRITE_CELL } from '../render/art/spriteSets';
-import { DEMO_BALL_PEAK, JUGGLE_PATTERNS, demoPose, demoSet, isKeeperExercise, sheetBeats } from '../render/art/homeDemo';
+import { DEMO_BALL_PEAK, JUGGLE_PATTERNS, demoBeats, demoLength, demoPose, demoSet, isKeeperExercise, nextBeat, sheetBeats } from '../render/art/homeDemo';
+import { BALL_MASTERY_DESIGNS, DESIGN_MATCHES, DESIGN_SOURCES, HOME_SECTIONS, designById, designsFor, sectionOf } from '../game/career/ballMastery';
 import { ensureJuggleSheet, juggleKey } from '../render/art/juggleArt';
 import { JUGGLE_SHEET } from '../render/art/juggleSheet';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
@@ -50,6 +51,9 @@ type Screen =
   | { kind: 'draftFamily'; id: string }
   | { kind: 'draftLevel'; id: string }
   | { kind: 'reviewHub' }
+  | { kind: 'ballMastery' }
+  | { kind: 'bmDesigns' }
+  | { kind: 'bmDesign'; id: string }
   | { kind: 'logic'; group: LogicGroup | null }
   | { kind: 'logicItem'; id: string };
 
@@ -93,7 +97,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private demoArt!: PlayerArt;
   private demoImg!: Phaser.GameObjects.Image;
   private demoBall!: Phaser.GameObjects.Graphics;
-  private demoInfo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number } } | null = null;
+  private demoInfo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number }; inset?: { foot: string; contact: string; label: string; rect: { x: number; y: number; width: number; height: number } }; paused?: boolean; speed?: number } | null = null;
+  private demoInset: Phaser.GameObjects.Text | null = null;
   private title!: Phaser.GameObjects.Text;
   private body!: Phaser.GameObjects.Text;
   private note!: Phaser.GameObjects.Text;
@@ -175,7 +180,11 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   override update(_t: number, delta: number): void {
     if (!this.demoRect) return;
     // Pause and speed belong to the draft prototype player only; activity demos keep their own timing.
-    if (this.screen.kind !== 'draftLevel') this.demoT += delta / 1000;
+    const s = this.screen;
+    const a = s.kind === 'activity' ? activityById(s.id) : undefined;
+    if (a && this.isViewer(a)) {
+      if (!this.demoPaused) this.demoT += (delta / 1000) * this.demoSpeed;
+    } else if (s.kind !== 'draftLevel') this.demoT += delta / 1000;
     else if (!this.demoPaused) this.demoT += (delta / 1000) * this.demoSpeed;
     this.drawDemo();
   }
@@ -225,7 +234,17 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.demoArt.destroy();
   }
 
+  /** Ball Mastery lesson viewer: an existing non-juggling activity with a sprite demo (controls work; nothing decorative). */
+  private isViewer(a: Activity): boolean {
+    return sectionOf(a) === 'ballMastery' && !a.id.startsWith(DRAFT_PREFIX) && !JUGGLE_PATTERNS[a.id] && !isKeeperExercise(a);
+  }
+
   private go(s: Screen): void {
+    if (s.kind === 'activity') {
+      this.demoT = 0;
+      this.demoPaused = this.reducedMotion;
+      this.demoSpeed = 1;
+    }
     this.history.push(this.screen);
     this.screen = s;
     this.page = 0;
@@ -309,11 +328,13 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         return {
           title: p ? `${p.name} · Week ${s.week}` : 'Home Training',
           body: p
-            ? `${reqBody}Team Training is your weekly session with the club.${req.length ? '' : ' Home Practice is optional.'} Game attributes only change from what you do in 9v9 play.`
+            ? `${reqBody}HOME TRAINING: Juggling and Ball Mastery.\nTeam Training is your weekly session with the club.${req.length ? '' : ' Home Practice is optional.'} Game attributes only change from what you do in 9v9 play.`
             : 'Create your player to start.',
           actions: p
             ? [
                 ...req.map((t) => ({ name: `req-${t.key}`, label: `${t.short}: ${t.done ? 'done' : 'to do'}`, on: t.done, onClick: () => this.go(this.taskScreen(t)) })),
+                { name: 'nav-juggling', label: 'Juggling · Start juggling', onClick: () => this.go({ kind: 'library', family: 'juggling' }) },
+                { name: 'nav-ballmastery', label: 'Ball Mastery · Watch & practise', onClick: () => this.go({ kind: 'ballMastery' }) },
                 { name: 'nav-focus', label: `This week: ${f ? f.label : 'choose a focus'}`, onClick: () => this.go({ kind: 'focus' }) },
                 { name: 'nav-team', label: `Team Training · ${s.teamTraining.some((r) => r.week === s.week) ? 'Complete' : 'Not started'}`, onClick: () => this.go({ kind: 'team' }) },
                 { name: 'nav-practice', label: `Home Practice (optional) · ${s.completedSessions.length} of 3`, onClick: () => this.go({ kind: 'practice' }) },
@@ -405,16 +426,53 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         if (!sc.family)
           return {
             title: 'Training Library',
-            body: `${ALL_ACTIVITIES.length} activities. All are original home adaptations awaiting coaching review.`,
+            body: `${ALL_ACTIVITIES.length} activities in two sections: Juggling and Ball Mastery. All are original home adaptations awaiting coaching review.`,
             actions: [
-              ...fams.map((fam) => ({ name: `lib-${fam}`, label: `${SKILL_FAMILY_LABELS[fam]} (${ALL_ACTIVITIES.filter((a) => a.skillFamilyId === fam).length})`, onClick: () => this.go({ kind: 'library', family: fam }) })),
+              { name: 'lib-juggling', label: `Juggling (${ALL_ACTIVITIES.filter((a) => sectionOf(a) === 'juggling').length})`, onClick: () => this.go({ kind: 'library', family: 'juggling' }) },
+              { name: 'lib-ballmastery', label: `Ball Mastery (${ALL_ACTIVITIES.filter((a) => sectionOf(a) === 'ballMastery').length})`, onClick: () => this.go({ kind: 'ballMastery' }) },
               { name: 'lib-drafts', label: 'Draft library v1.1 (owner-enabled)', onClick: () => this.go({ kind: 'drafts' }) },
             ],
           };
         return {
-          title: SKILL_FAMILY_LABELS[sc.family as (typeof fams)[number]],
-          body: 'Tap an activity for steps and a demonstration.',
+          title: sc.family === 'juggling' ? 'Juggling' : `Ball Mastery · ${SKILL_FAMILY_LABELS[sc.family as (typeof fams)[number]]}`,
+          body: sc.family === 'juggling' ? 'Your juggling ladder. Tap a step for the demonstration, then log your practice. Juggling grows no game attribute.' : 'Tap an activity to watch the demonstration and practise.',
           actions: ALL_ACTIVITIES.filter((a) => a.skillFamilyId === sc.family).map((a) => ({ name: `act-${a.id}`, label: `${a.title} · ${LEVEL_NAMES[a.entryLevel]}`, onClick: () => this.go({ kind: 'activity', id: a.id, sessionId: null, index: 0 }) })),
+        };
+      }
+      case 'ballMastery': {
+        const fams = HOME_SECTIONS.ballMastery;
+        return {
+          title: 'Ball Mastery',
+          body: 'Watch & practise: pick a skill, watch your player demonstrate it, then log your practice. Logging is your own report, not proof of mastery.',
+          actions: [
+            ...fams.map((fam) => ({ name: `lib-${fam}`, label: `${SKILL_FAMILY_LABELS[fam]} (${ALL_ACTIVITIES.filter((a) => a.skillFamilyId === fam).length})`, onClick: () => this.go({ kind: 'library', family: fam }) })),
+            { name: 'bm-designs', label: `New designs (review only, ${BALL_MASTERY_DESIGNS.length})`, onClick: () => this.go({ kind: 'bmDesigns' }) },
+          ],
+        };
+      }
+      case 'bmDesigns':
+        return {
+          title: 'Ball Mastery designs v1.0',
+          body: `REVIEW ONLY. ${BALL_MASTERY_DESIGNS.length} storyboard designs. None is assigned to players: no coach approval, no reviewed demonstration media. Existing lessons are unchanged.`,
+          actions: BALL_MASTERY_DESIGNS.map((d) => ({ name: `bm-design-${d.id}`, label: `${d.id} ${d.title} · ${DESIGN_MATCHES[d.id]?.verdict ?? 'unmatched'}`, onClick: () => this.go({ kind: 'bmDesign', id: d.id }) })),
+        };
+      case 'bmDesign': {
+        const d = designById(sc.id);
+        if (!d) return { title: 'Ball Mastery designs', body: 'Unknown design.', actions: [] };
+        const m = DESIGN_MATCHES[d.id];
+        const linked = (m?.activities ?? []).map((id) => activityById(id)).filter((a): a is Activity => !!a);
+        return {
+          title: `DRAFT · ${d.id} ${d.title}`,
+          body: [
+            `REVIEW ONLY · ${d.status.replace(/_/g, ' ')} · ${d.evidence}. Not assigned to players.`,
+            `Coach Code: ${d.cue}`,
+            ...d.phases.map((p, i) => `${i + 1}. ${p.title} (${p.contact})${p.ballAction ? `: ${p.ballAction}` : ''}`),
+            `Review question: ${d.reviewQuestion}`,
+            `Match: ${m ? `${m.verdict}${linked.length ? ` to ${linked.map((a) => a.title).join(', ')}` : ''}${m.draftFamilies.length ? `; overlaps draft ${m.draftFamilies.join(', ')}` : ''}. ${m.note}` : 'not matched'}`,
+            `Sources: ${d.sourceIds.map((id) => `${id} ${DESIGN_SOURCES[id]?.title ?? '(missing)'}`).join('; ')}. Source video frames reviewed: ${d.frameReviewed ? 'yes' : 'no'}.`,
+            `Coach approval: ${d.coachApproval ? 'yes' : 'none'}. Mirror rule: ${d.mirrorRule}`,
+          ].join('\n'),
+          actions: linked.map((a) => ({ name: `bm-open-${a.id}`, label: `Open ${a.title}`, onClick: () => this.go({ kind: 'activity', id: a.id, sessionId: null, index: 0 }) })),
         };
       }
       case 'reviewHub': {
@@ -432,6 +490,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           actions: [
             ...(__LAB__ ? [{ name: 'hub-lab', label: 'Gameplay Lab', onClick: () => this.openLab() }] : []),
             { name: 'hub-training', label: 'Training Review (drafts)', onClick: () => this.go({ kind: 'drafts' }) },
+            { name: 'hub-ballmastery', label: 'Ball Mastery designs (review)', onClick: () => this.go({ kind: 'bmDesigns' }) },
             { name: 'hub-logic', label: 'Soccer Logic Review', onClick: () => this.go({ kind: 'logic', group: null }) },
             { name: 'hub-art', label: 'Art Gallery (Graphics v1)', onClick: () => this.openGallery() },
             { name: 'hub-rankings', label: 'Rankings (sample season)', onClick: () => this.openRankingsSample() },
@@ -536,7 +595,10 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         const it = sc.sessionId ? s.plan?.sessions.find((x) => x.id === sc.sessionId)?.items[sc.index] : undefined;
         const variant = it?.variantId ? a.variants.find((v) => v.id === it.variantId) : undefined;
         const useBallOnly = it?.ballOnly && a.ballOnly;
+        const viewer = this.isViewer(a);
+        const links = designsFor(a.id);
         const body = [
+          viewer ? `COACH CODE: ${a.cue}` : '',
           a.objective,
           useBallOnly ? `Ball-only version: ${a.ballOnly!.objective} ${a.ballOnly!.steps}` : `1. ${a.steps[0]}\n2. ${a.steps[1]}\n3. ${a.steps[2]}`,
           variant ? `This week's change: ${variant.change}` : '',
@@ -548,10 +610,18 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           `Limits: ${a.limitations.join(' ')}`,
           `Source: ${a.sources.map((r) => SOURCES[r.id].title).join('; ') || a.sourceNote}. ${a.sourceNote}`,
           `Review: coaching ${a.review.coaching}.`,
+          ...links.map(({ design: d, match: m }) => `Ball Mastery design ${d.id} ${d.title}: review only, ${m.verdict === 'equivalent' ? 'same move' : 'possible match, needs review'}. Sources: ${d.sourceIds.map((id) => DESIGN_SOURCES[id]?.title ?? id).join('; ')}.`),
         ]
           .filter(Boolean)
           .join('\n');
-        const actions: Action[] = [{ name: 'log-open', label: sc.sessionId ? 'Log this session' : 'Log extra practice', onClick: () => this.openLog(a.id, sc.sessionId) }];
+        const actions: Action[] = [];
+        if (viewer)
+          actions.push(
+            { name: 'demo-pause', label: this.demoPaused ? 'Play' : 'Pause', onClick: () => ((this.demoPaused = !this.demoPaused), this.render()) },
+            { name: 'demo-step', label: 'Step', onClick: () => ((this.demoPaused = true), (this.demoT = nextBeat(demoBeats(a), this.demoT, demoLength(a))), this.render()) },
+            { name: 'demo-half', label: this.demoSpeed < 1 ? '0.5× (on)' : '0.5×', on: this.demoSpeed < 1, onClick: () => ((this.demoSpeed = this.demoSpeed < 1 ? 1 : 0.5), this.render()) },
+          );
+        actions.push({ name: 'log-open', label: sc.sessionId ? 'Log this session' : 'Log extra practice', onClick: () => this.openLog(a.id, sc.sessionId) });
         if (sc.sessionId && s.plan && !s.completedSessions.includes(sc.sessionId))
           for (const alt of substitutes(s.plan, sc.sessionId, sc.index).slice(0, 3))
             actions.push({ name: `swap-${alt.id}`, label: `Swap for ${alt.title}`, onClick: () => void this.act({ type: 'substitute', sessionId: sc.sessionId!, index: sc.index, activityId: alt.id }, { kind: 'activity', id: alt.id, sessionId: sc.sessionId, index: sc.index }) });
@@ -811,6 +881,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.demoBall.clear();
     this.demoImg.setVisible(false);
     if (!demoOn) this.demoCaption?.setVisible(false);
+    this.demoInset?.setVisible(false);
     if (!portrait) {
       colX = 28 + contentW;
       colY = top;
@@ -945,6 +1016,34 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
 
   private demoCaption: Phaser.GameObjects.Text | null = null;
 
+  /** Foot detail: a close view of the active foot and the ball, with the authored contact named. */
+  private drawFootInset(foot: 'left' | 'right', contact: string, fs: number): void {
+    const r = this.demoRect!;
+    const w = Math.max(84, Math.min(r.w * 0.3, 150));
+    const h = Math.max(64, Math.min(r.h * 0.5, 104));
+    const x = r.x + r.w - w - 6;
+    const y = r.y + 6;
+    const g = this.demoBall;
+    g.fillStyle(PALETTE.cream, 0.95).fillRoundedRect(x, y, w, h, 8);
+    g.lineStyle(2, PALETTE.ink, 1).strokeRoundedRect(x, y, w, h, 8);
+    const cx = x + w / 2;
+    const cy = y + h * 0.42;
+    const fw = w * 0.42;
+    const fh = h * 0.2;
+    const side = foot === 'left' ? -1 : 1;
+    const br = h * 0.13;
+    const off: Record<string, [number, number]> = { inside: [-side * (fw * 0.5 + br), 0], outside: [side * (fw * 0.5 + br), 0], sole: [0, fh * 0.2], laces: [0, -fh - br * 0.6], none: [0, fh + br * 1.6] };
+    const [ox, oy] = off[contact] ?? off.none!;
+    g.fillStyle(PALETTE.ink, 1).fillEllipse(cx, cy, fw, fh);
+    if (contact === 'sole') g.fillStyle(PALETTE.ink, 0.35).fillEllipse(cx, cy + fh * 0.2, fw * 0.9, fh * 0.9);
+    g.fillStyle(0xffffff, 1).fillCircle(cx + ox, cy + oy, br);
+    g.lineStyle(2, contact === 'none' ? PALETTE.ink : PALETTE.sun, 1).strokeCircle(cx + ox, cy + oy, br);
+    const label = contact === 'none' ? `${foot === 'left' ? 'Left' : 'Right'} foot · no contact` : `${foot === 'left' ? 'Left' : 'Right'} ${contact}`;
+    if (!this.demoInset?.active) this.demoInset = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: CSS.ink, fontStyle: 'bold', align: 'center' }).setOrigin(0.5, 1).setResolution(textResolution());
+    this.demoInset.setFontSize(Math.round(Math.min(fs, 13))).setWordWrapWidth(w - 8).setPosition(cx, y + h - 3).setText(`Foot detail\n${label}`).setVisible(true).setDepth(3);
+    if (this.demoInfo) this.demoInfo = { ...this.demoInfo, inset: { foot, contact, label, rect: { x, y, width: w, height: h } }, paused: this.demoPaused, speed: this.demoSpeed };
+  }
+
   /** The created player (saved boy/girl, training kit) demonstrates the exercise; the ball is drawn separately. */
   private drawSpriteDemo(a: Activity, sx: (x: number) => number, sy: (y: number) => number, unit: number): boolean {
     // Juggling ladders 1–5 use the juggling pack; the sprite-v2 poses stay as the fallback while the sheet loads.
@@ -971,6 +1070,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     g.lineStyle(2, pose.contact === 'none' ? PALETTE.ink : PALETTE.sun, 1).strokeCircle(bx, by, br);
     const ib = this.demoImg.getBounds();
     this.demoInfo = { set, frame: pose.frame, flip: pose.flip, contact: pose.contact, scale: { x: this.demoImg.scaleX, y: this.demoImg.scaleY }, player: { x: ib.x, y: ib.y, width: ib.width, height: ib.height }, ball: { x: bx, y: by }, rect: { x: r.x, y: r.y, width: r.w, height: r.h } };
+    if (this.isViewer(a)) this.drawFootInset(pose.flip ? 'left' : 'right', pose.contact, Math.max(10, unit * 0.32));
+    else this.demoInset?.setVisible(false);
     if (pose.caption) {
       if (!this.demoCaption?.active) this.demoCaption = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: CSS.ink, fontStyle: 'bold' }).setOrigin(0.5, 1).setResolution(textResolution());
       this.demoCaption.setFontSize(Math.round(Math.max(12, Math.min(unit * 0.45, 16)))).setPosition(r.x + r.w / 2, r.y + r.h - 4).setWordWrapWidth(r.w - 16).setText(pose.caption).setVisible(true);

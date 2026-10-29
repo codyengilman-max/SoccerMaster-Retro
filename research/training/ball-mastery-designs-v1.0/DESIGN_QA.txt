@@ -1,0 +1,16 @@
+BM-055 PASS: four phases; source IDs; two parseable SVGs; PNG dimensions; release blocked
+BM-056 PASS: four phases; source IDs; two parseable SVGs; PNG dimensions; release blocked
+BM-071 PASS: four phases; source IDs; two parseable SVGs; PNG dimensions; release blocked
+BM-081 PASS: four phases; source IDs; two parseable SVGs; PNG dimensions; release blocked
+BM-082 PASS: four phases; source IDs; two parseable SVGs; PNG dimensions; release blocked
+BM-083 PASS: four phases; source IDs; two parseable SVGs; PNG dimensions; release blocked
+BM-009 PASS: four phases; source IDs; two parseable SVGs; PNG dimensions; release blocked
+BM-002 PASS: four phases; source IDs; two parseable SVGs; PNG dimensions; release blocked
+BM-003 PASS: four phases; source IDs; two parseable SVGs; PNG dimensions; release blocked
+BM-012 PASS: four phases; source IDs; two parseable SVGs; PNG dimensions; release blocked
+BM-029 PASS: four phases; source IDs; two parseable SVGs; PNG dimensions; release blocked
+BM-017 PASS: four phases; source IDs; two parseable SVGs; PNG dimensions; release blocked
+BM-018 PASS: four phases; source IDs; two parseable SVGs; PNG dimensions; release blocked
+BM-053 PASS: four phases; source IDs; two parseable SVGs; PNG dimensions; release blocked
+
+Visual spot checks: BM-082 and BM-012 PNGs inspected for clipping, labels and layout. Other designs share the template and passed structural checks. Not an all-frame biomechanical or mobile-runtime audit.
