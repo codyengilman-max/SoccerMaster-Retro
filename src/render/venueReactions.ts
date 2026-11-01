@@ -30,8 +30,9 @@ export class SidelineReactions {
       else action = a.team === event.team ? 'disappointed' : null;
       if (!action || !a.clips[action]) return;
       if (a.seated) {
-        action = a.clips.seated_clap ? 'seated_clap' : null;
-        if (!action) return;
+        // Seated supporters only have an applause clip, so they react to their own side's good moments only.
+        if ((action !== 'cheer' && action !== 'clap') || !a.clips.seated_clap) return;
+        action = 'seated_clap';
       }
       this.queue.push({ at: now + 120 + ((i * 97) % 650), actor: a, action });
       this.cooldowns.set(a.id, now + REACTION_COOLDOWN_MS);
