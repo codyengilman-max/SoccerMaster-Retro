@@ -23,6 +23,8 @@ import {
   CameraController,
   clampFocus,
   CAMERA_VIEW,
+  cameraTuningFor,
+  SIDELINE_VIEW,
   viewSpan,
   type CameraBounds,
   type CameraMode,
@@ -41,6 +43,8 @@ import { ContributionTracker } from '../game/report/assists';
 import { TOURNAMENTS } from '../game/season/tournament';
 import { SituationObserver, selectSituations, type SituationResult, type TeamTrainingSituation } from '../game/career/teamTraining';
 import type { Position } from '../game/career/types';
+import { isVenueId, resolveVenue, type MatchKind, type VenueResolution } from '../game/venue';
+import { VenueLayer } from '../render/venueLayer';
 import { MATCH_TUNING } from '../game/match/tuning';
 import { roleDef } from '../game/match/formations';
 
@@ -140,6 +144,10 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private guideOffscreen = false;
   /** Field graphics are rebuilt only when the camera/layout changes. */
   private fieldKey = '';
+  /** Stripes, markings and goals over a venue's grass material (the base field stays underneath). */
+  private fieldTop!: Phaser.GameObjects.Graphics;
+  private venueLayer: VenueLayer | null = null;
+  private venueResolution: VenueResolution | null = null;
   private fps = 0;
   private toastMessage = '';
   /** Team Training feedback is not replaced by routine notices ("You control …") until it expires. */
@@ -288,7 +296,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.lastSeq = 0;
     this.startCareer(data.career === true && !this.labId && !teamTraining);
     this.startTeamTraining(teamTraining, params);
-    this.camera = new CameraController(this.sim.state.ball.pos);
+    this.startVenue(params);
+    this.camera = new CameraController(this.sim.state.ball.pos, cameraTuningFor(this.sideline(), orientationOf(this.scale) === 'portrait'));
     this.snapCamera();
     this.pad = new PadHud(this, this.scale.width, this.scale.height);
     this.padIds = 0;
@@ -305,6 +314,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         .setResolution(resolution);
 
     this.field = this.add.graphics().setDepth(0);
+    this.fieldTop = this.add.graphics().setDepth(0.6);
     this.under = this.add.graphics().setDepth(1);
     this.art = new PlayerArt(this);
     // Team Training is set up before the art exists; queue Coach Code now.
@@ -685,6 +695,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         look: this.camera.look,
         guideOffscreen: this.guideOffscreen,
       },
+      venue: this.venueResolution && { ...this.venueResolution, ...(this.venueLayer ? { layer: this.venueLayer.snapshot() } : {}) },
       controlScheme: 'pad',
       pad: {
         phase: s.pad.phase,
@@ -1458,7 +1469,22 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     return [kind, this.artDir[id], Math.floor(this.artDist[id] / 0.55)];
   }
 
+  /** Regular matches: this location and game type's venue, or a reported gap (never guessed). `?debug&venue=<id>` previews one. */
+  private startVenue(params: URLSearchParams): void {
+    this.venueLayer?.destroy();
+    this.venueLayer = null;
+    this.venueResolution = null;
+    this.fieldKey = '';
+    if (!this.sideline()) return;
+    const forced = shouldExposeDebug(window.location) ? params.get('venue') : null;
+    const kind: MatchKind = this.returnTo === 'story' ? (this.competition === 'Tournament' ? 'tournament' : 'league') : 'exhibition';
+    this.venueResolution = isVenueId(forced) ? { id: forced, source: 'debug ?venue' } : resolveVenue({ kind, side: this.venue, opponent: this.opponent });
+    if (this.venueResolution.id) this.venueLayer = new VenueLayer(this, this.venueResolution.id);
+  }
+
   private handleShutdown(): void {
+    this.venueLayer?.destroy();
+    this.venueLayer = null;
     for (const id of ['goal-banner', 'referee-foul']) if (this.textures.exists(artTextureKey(id))) this.textures.remove(artTextureKey(id));
     this.eventArt = null;
     if (this.textures.exists(REFEREE_KEY)) this.textures.remove(REFEREE_KEY);
@@ -1607,6 +1633,10 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     for (const e of this.sim.state.events) {
       if (e.seq <= this.lastSeq) continue;
       this.lastSeq = e.seq;
+      if (this.venueLayer) {
+        if (e.type === 'goal') this.venueLayer.react({ id: `goal:${e.seq}`, type: 'goal', team: e.detail.startsWith('away') ? 'away' : 'home' });
+        else if (e.type === 'saved' || e.type === 'parried') this.venueLayer.react({ id: `save:${e.seq}`, type: 'save', team: e.by?.startsWith('A') ? 'away' : 'home' });
+      }
       switch (e.type) {
         case 'pass':
           break;
@@ -1701,6 +1731,14 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     return { ...f, bounds: { ...f.bounds, minX, maxX } };
   }
 
+  /** Regular league, tournament and exhibition play uses the elevated sideline broadcast view; Team Training and Lab scenarios keep theirs. */
+  /** Depth squash of the current sideline frame (set by frameFull). */
+  private sideSquash: number = SIDELINE_VIEW.landscapeTilt;
+
+  private sideline(): boolean {
+    return !this.team && !this.labId;
+  }
+
   private frameFull(): {
     portrait: boolean;
     insets: Insets;
@@ -1715,8 +1753,25 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     if (!portrait) {
       // Landscape: an angled follow camera; the compact HUD floats over the pitch.
       const available = Math.max(1, width - insets.left - insets.right);
-      const len = viewSpan('landscape') / (this.team ? TEAM_TRAINING_ZOOM : 1);
+      const side = this.sideline();
+      const len = side ? SIDELINE_VIEW.landscapeLength : viewSpan('landscape') / (this.team ? TEAM_TRAINING_ZOOM : 1);
+      const runoff = side ? SIDELINE_VIEW.goalRunoff : 3;
       const availH = Math.max(1, height - insets.top - insets.bottom);
+      if (side) {
+        // Sideline broadcast: the whole width plus the far sideline strip and a near run-off are always in view, so
+        // the camera only pans along the length; depth foreshortening follows from the screen shape.
+        const top = SIDELINE_VIEW.farStrip;
+        const bottom = SIDELINE_VIEW.nearStrip;
+        // Perspective (anchored mid-screen) stretches the near half and shrinks the far half, so the linear view is
+        // sized and centred so both strips land exactly on the screen edges after projection.
+        const e = SIDELINE_VIEW.perspective;
+        const up = 0.5 / (1 - e);
+        const down = 0.5 / (1 + e);
+        const hvS = (P.width + top + bottom) / (up + down);
+        this.sideSquash = Math.min(1, (len * availH) / (available * hvS));
+        const cy = hvS * up - top;
+        return { portrait, insets, len, cross: hvS, bounds: { minX: len / 2 - runoff, maxX: P.length + runoff - len / 2, minY: cy, maxY: cy } };
+      }
       const hv = Math.min(P.width + 6, (len * availH) / (available * SIDELINE_SQUASH));
       // Run-off margins keep a touchline player clear of the floating HUD (top) and the tip line (bottom).
       const yardsPerPx = hv / availH;
@@ -1729,8 +1784,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         len,
         cross: hv,
         bounds: {
-          minX: len / 2 - 3,
-          maxX: P.length + 3 - len / 2,
+          minX: len / 2 - runoff,
+          maxX: P.length + runoff - len / 2,
           minY: fullY ? P.width / 2 : hv / 2 - top,
           maxY: fullY ? P.width / 2 : P.width + bottom - hv / 2,
         },
@@ -1772,11 +1827,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       },
       f.insets,
       0,
-      f.portrait ? 1 : SIDELINE_SQUASH,
+      f.portrait ? 1 : this.sideline() ? this.sideSquash : SIDELINE_SQUASH,
     );
     // Low camera: perspective anchored on the camera focus (the ball), scaled to the view height.
     const availH = Math.max(1, height - f.insets.top - f.insets.bottom);
-    this.pitchLayout = withPerspective(this.pitchLayout, toScreen(this.pitchLayout, c), CAMERA_VIEW.perspective / (availH / 2));
+    this.pitchLayout = withPerspective(this.pitchLayout, toScreen(this.pitchLayout, c), (!f.portrait && this.sideline() ? SIDELINE_VIEW.perspective : CAMERA_VIEW.perspective) / (availH / 2));
   }
 
   /** On-screen part of the pitch (the follow camera crops it). */
@@ -1944,23 +1999,28 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const L = this.pitchLayout;
     const m = this.markings;
     const P = U11_9V9_PITCH;
-    const key = `${this.team ? 'tt:' : ''}${width}x${height}:${L.orientation}:${L.originX.toFixed(2)},${L.originY.toFixed(2)},${L.scale.toFixed(4)},${L.crossScale.toFixed(4)},${L.pitchLength.toFixed(3)},${(L.persp ?? 0).toFixed(6)},${(L.anchorX ?? 0).toFixed(2)},${(L.anchorY ?? 0).toFixed(2)},${L.pitchWidth.toFixed(3)}`;
+    const venue = this.venueLayer?.grassReady ? this.venueLayer.id : null;
+    const key = `${venue ? `v:${venue}:` : ''}${this.team ? 'tt:' : ''}${width}x${height}:${L.orientation}:${L.originX.toFixed(2)},${L.originY.toFixed(2)},${L.scale.toFixed(4)},${L.crossScale.toFixed(4)},${L.pitchLength.toFixed(3)},${(L.persp ?? 0).toFixed(6)},${(L.anchorX ?? 0).toFixed(2)},${(L.anchorY ?? 0).toFixed(2)},${L.pitchWidth.toFixed(3)}`;
     if (key === this.fieldKey) return;
     this.fieldKey = key;
     g.clear();
-    g.fillStyle(PALETTE.track, 1);
+    this.fieldTop.clear();
+    const pal = this.venueLayer?.palette;
+    g.fillStyle(pal ? pal.desert : PALETTE.track, 1);
     g.fillRect(0, 0, width, height);
     if (this.team) this.drawTrainingVenue(g, L, P);
-    g.fillStyle(PALETTE.surround, 1);
-    g.fillPoints(quadToScreen(L, { x: -3, y: -2, width: P.length + 6, height: P.width + 4 }), true);
+    g.fillStyle(pal ? pal.runoff : PALETTE.surround, 1);
+    g.fillPoints(quadToScreen(L, pal ? { x: -3, y: -3, width: P.length + 6, height: P.width + 6 } : { x: -3, y: -2, width: P.length + 6, height: P.width + 4 }), true);
     const stripes = 15;
+    // Over a venue's grass material the stripes only tint it; the plain field paints them solid.
+    const top = venue ? this.fieldTop : g;
     for (let i = 0; i < stripes; i++) {
-      g.fillStyle(i % 2 === 0 ? PALETTE.grassLight : PALETTE.grassDark, 1);
-      g.fillPoints(quadToScreen(L, { x: (i * P.length) / stripes, y: 0, width: P.length / stripes, height: P.width }), true);
+      top.fillStyle(i % 2 === 0 ? PALETTE.grassLight : PALETTE.grassDark, venue ? 0.14 : 1);
+      top.fillPoints(quadToScreen(L, { x: (i * P.length) / stripes, y: 0, width: P.length / stripes, height: P.width }), true);
     }
     const lw = Math.max(2, L.scale * 0.2);
     const line = (points: readonly Vec2[]): void => {
-      g.strokePoints(points.map((p) => toScreen(L, p)), false);
+      top.strokePoints(points.map((p) => toScreen(L, p)), false);
     };
     const box = (r: Rect): void =>
       line([
@@ -1974,26 +2034,26 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       [PALETTE.ink, lw + 2],
       [PALETTE.line, lw],
     ] as const) {
-      g.lineStyle(w2, color, 1);
+      top.lineStyle(w2, color, 1);
       box({ x: 0, y: 0, width: P.length, height: P.width });
       line([{ x: m.halfwayX, y: 0 }, { x: m.halfwayX, y: P.width }]);
       line(arcPoints(m.centerSpot, m.centerCircleRadius, 0, Math.PI * 2, 32));
       for (const r of m.penaltyAreas) box(r);
       for (const r of m.goalAreas) box(r);
     }
-    g.fillStyle(PALETTE.line, 1);
+    top.fillStyle(PALETTE.line, 1);
     for (const p of [...m.penaltyMarks, m.centerSpot]) {
       const sp = toScreen(L, p);
-      g.fillCircle(sp.x, sp.y, Math.max(2, L.scale * 0.22 * depthScaleAt(L, sp.y)));
+      top.fillCircle(sp.x, sp.y, Math.max(2, L.scale * 0.22 * depthScaleAt(L, sp.y)));
     }
     for (const goal of m.goals) {
       const q = quadToScreen(L, goal);
-      g.fillStyle(PALETTE.net, 0.45);
-      g.fillPoints(q, true);
-      g.lineStyle(lw + 3, PALETTE.ink, 1);
-      g.strokePoints(q, true);
-      g.lineStyle(lw + 1, PALETTE.cream, 1);
-      g.strokePoints(q, true);
+      top.fillStyle(PALETTE.net, 0.45);
+      top.fillPoints(q, true);
+      top.lineStyle(lw + 3, PALETTE.ink, 1);
+      top.strokePoints(q, true);
+      top.lineStyle(lw + 1, PALETTE.cream, 1);
+      top.strokePoints(q, true);
     }
   }
 
@@ -2037,6 +2097,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
               ? 'travel'
               : 'loose';
     const attackDir = (owner ? s.players[owner].team : s.possession) === 'home' ? 1 : -1;
+    this.camera.tuning = cameraTuningFor(this.sideline(), orientationOf(this.scale) === 'portrait');
     const focus = this.camera.update(
       {
         mode,
@@ -2060,6 +2121,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     o.clear();
     // Ball camera: players smaller relative to the pitch than the old close framing (FIFA Dynamic reference).
     const playerH = Phaser.Math.Clamp(L.scale * 2.1, 22, 100);
+    if (this.venueLayer) {
+      this.venueLayer.draw(L, U11_9V9_PITCH.length, U11_9V9_PITCH.width, playerH, this.scale);
+      this.venueLayer.tick(dt * 1000, s.paused);
+      if (this.venueLayer.grassReady && !this.fieldKey.startsWith('v:')) this.fieldKey = '';
+    }
     const ballSize = Phaser.Math.Clamp(L.scale * 0.85, 9, 32);
     const ellipse = (center: Vec2, r: number): { x: number; y: number; w: number; h: number } => {
       const sp = toScreen(L, center);

@@ -297,3 +297,49 @@ describe('low-camera perspective projection', () => {
     }
   });
 });
+
+describe('regular-match sideline camera tuning', () => {
+  it('a small ball offset inside the dead zone leaves the camera still; beyond it the camera follows smoothly', async () => {
+    const { CameraController, SIDELINE_TUNING } = await import('../src/render/camera');
+    const c = new CameraController({ x: 30, y: 25 }, { ...SIDELINE_TUNING, lookAhead: 0 });
+    const still = { mode: 'loose' as const, ball: { x: 31, y: 25.5 }, ballVel: { x: 0, y: 0 }, carrier: null, attackDir: 1 as const };
+    for (let i = 0; i < 30; i++) c.update(still, 1 / 60);
+    expect(c.x).toBeCloseTo(30, 6);
+    expect(c.y).toBeCloseTo(25, 6);
+    const far = { ...still, ball: { x: 40, y: 25 } };
+    let prev = c.x;
+    for (let i = 0; i < 60; i++) {
+      c.update(far, 1 / 60);
+      expect(c.x - prev).toBeLessThan(0.5);
+      prev = c.x;
+    }
+    expect(c.x).toBeGreaterThan(33);
+    expect(c.x).toBeLessThan(40 - SIDELINE_TUNING.deadZoneX + 1e-6);
+  });
+
+  it('still settles exactly on a length limit, so a goal at the end is fully framed despite the dead zone', async () => {
+    const { CameraController, SIDELINE_TUNING } = await import('../src/render/camera');
+    const bounds = { minX: 18, maxX: 57, minY: 25, maxY: 25 };
+    const c = new CameraController({ x: 40, y: 25 }, { ...SIDELINE_TUNING, lookAhead: 0 });
+    const goal = { mode: 'loose' as const, ball: { x: 74, y: 25 }, ballVel: { x: 0, y: 0 }, carrier: null, attackDir: 1 as const };
+    for (let i = 0; i < 600; i++) c.update(goal, 1 / 60, bounds);
+    expect(c.x).toBeCloseTo(57, 3);
+    for (let i = 0; i < 600; i++) c.update({ ...goal, ball: { x: 1, y: 25 } }, 1 / 60, bounds);
+    expect(c.x).toBeCloseTo(18, 3);
+  });
+
+  it('portrait regular matches keep the close camera tuning; only the landscape sideline view uses the dead zone', async () => {
+    const { cameraTuningFor, CAMERA_TUNING, SIDELINE_TUNING } = await import('../src/render/camera');
+    expect(cameraTuningFor(true, false)).toBe(SIDELINE_TUNING);
+    expect(cameraTuningFor(true, true)).toBe(CAMERA_TUNING);
+    expect(cameraTuningFor(false, false)).toBe(CAMERA_TUNING);
+    expect(cameraTuningFor(false, true)).toBe(CAMERA_TUNING);
+  });
+
+  it('keeps the same sideline: tuning never changes zoom or rotation, only the focus', async () => {
+    const { SIDELINE_VIEW, CAMERA_VIEW } = await import('../src/render/camera');
+    expect(SIDELINE_VIEW.landscapeLength).toBeGreaterThan(CAMERA_VIEW.landscapeLength);
+    expect(SIDELINE_VIEW.landscapeTilt).toBeGreaterThan(CAMERA_VIEW.landscapeTilt);
+    expect(SIDELINE_VIEW.perspective).toBeLessThan(CAMERA_VIEW.perspective);
+  });
+});

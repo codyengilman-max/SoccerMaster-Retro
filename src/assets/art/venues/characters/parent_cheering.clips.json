@@ -1,0 +1,207 @@
+{
+  "anchorPx": [
+    80,
+    120
+  ],
+  "cell": [
+    160,
+    128
+  ],
+  "neutralBodyHeight": 100,
+  "clips": {
+    "idle": {
+      "frames": [
+        "parent_cheering_00",
+        "parent_cheering_01",
+        "parent_cheering_02",
+        "parent_cheering_03",
+        "parent_cheering_04",
+        "parent_cheering_05"
+      ],
+      "frameRate": 3,
+      "repeat": -1
+    },
+    "clap": {
+      "frames": [
+        "parent_cheering_06",
+        "parent_cheering_07",
+        "parent_cheering_08",
+        "parent_cheering_09",
+        "parent_cheering_10",
+        "parent_cheering_11"
+      ],
+      "frameRate": 6,
+      "repeat": 0
+    },
+    "cheer": {
+      "frames": [
+        "parent_cheering_12",
+        "parent_cheering_13",
+        "parent_cheering_14",
+        "parent_cheering_15",
+        "parent_cheering_16",
+        "parent_cheering_17"
+      ],
+      "frameRate": 6,
+      "repeat": 0
+    },
+    "disappointed": {
+      "frames": [
+        "parent_cheering_18",
+        "parent_cheering_19",
+        "parent_cheering_20",
+        "parent_cheering_21",
+        "parent_cheering_22",
+        "parent_cheering_23"
+      ],
+      "frameRate": 6,
+      "repeat": 0
+    }
+  },
+  "sourceRects": [
+    [
+      0,
+      0,
+      256,
+      256
+    ],
+    [
+      256,
+      0,
+      512,
+      256
+    ],
+    [
+      512,
+      0,
+      768,
+      256
+    ],
+    [
+      768,
+      0,
+      1024,
+      256
+    ],
+    [
+      1024,
+      0,
+      1280,
+      256
+    ],
+    [
+      1280,
+      0,
+      1536,
+      256
+    ],
+    [
+      0,
+      256,
+      256,
+      512
+    ],
+    [
+      256,
+      256,
+      512,
+      512
+    ],
+    [
+      512,
+      256,
+      768,
+      512
+    ],
+    [
+      768,
+      256,
+      1024,
+      512
+    ],
+    [
+      1024,
+      256,
+      1280,
+      512
+    ],
+    [
+      1280,
+      256,
+      1536,
+      512
+    ],
+    [
+      0,
+      512,
+      256,
+      768
+    ],
+    [
+      256,
+      512,
+      512,
+      768
+    ],
+    [
+      512,
+      512,
+      768,
+      768
+    ],
+    [
+      768,
+      512,
+      1024,
+      768
+    ],
+    [
+      1024,
+      512,
+      1280,
+      768
+    ],
+    [
+      1280,
+      512,
+      1536,
+      768
+    ],
+    [
+      0,
+      768,
+      256,
+      1024
+    ],
+    [
+      256,
+      768,
+      512,
+      1024
+    ],
+    [
+      512,
+      768,
+      768,
+      1024
+    ],
+    [
+      768,
+      768,
+      1024,
+      1024
+    ],
+    [
+      1024,
+      768,
+      1280,
+      1024
+    ],
+    [
+      1280,
+      768,
+      1536,
+      1024
+    ]
+  ]
+}

@@ -1,0 +1,726 @@
+[
+  {
+    "id": "pinnacle",
+    "name": "Pinnacle Park",
+    "homeFor": "FC Batavia",
+    "pitchYards": [
+      75,
+      50
+    ],
+    "grass": "assets/pinnacle/grass.webp",
+    "palette": {
+      "runoff": "#5e883e",
+      "path": "#a96d45",
+      "desert": "#c6a678"
+    },
+    "sceneryEnvelope": {
+      "x": [
+        -3,
+        78
+      ],
+      "y": [
+        -7,
+        57
+      ]
+    },
+    "props": [
+      {
+        "id": "tent_home",
+        "x": 27,
+        "y": -6,
+        "widthYd": 3.3
+      },
+      {
+        "id": "tent_away",
+        "x": 48,
+        "y": -6,
+        "widthYd": 3.3
+      },
+      {
+        "id": "bench",
+        "x": 27,
+        "y": -4,
+        "widthYd": 3.2
+      },
+      {
+        "id": "bench",
+        "x": 48,
+        "y": -4,
+        "widthYd": 3.2
+      },
+      {
+        "id": "sign",
+        "x": 9,
+        "y": -6.5,
+        "widthYd": 3.5
+      },
+      {
+        "id": "cooler",
+        "x": 30,
+        "y": -4.5,
+        "widthYd": 0.6
+      },
+      {
+        "id": "bag",
+        "x": 23,
+        "y": -4,
+        "widthYd": 0.8
+      },
+      {
+        "id": "field_marker",
+        "x": 5,
+        "y": -3,
+        "widthYd": 0.6
+      },
+      {
+        "id": "chair",
+        "x": 14,
+        "y": 54.0,
+        "widthYd": 0.8
+      },
+      {
+        "id": "chair",
+        "x": 19,
+        "y": 54.5,
+        "widthYd": 0.8
+      },
+      {
+        "id": "chair",
+        "x": 36,
+        "y": 54.0,
+        "widthYd": 0.8
+      },
+      {
+        "id": "chair",
+        "x": 42,
+        "y": 54.5,
+        "widthYd": 0.8
+      },
+      {
+        "id": "chair",
+        "x": 59,
+        "y": 54.0,
+        "widthYd": 0.8
+      },
+      {
+        "id": "chair",
+        "x": 64,
+        "y": 54.5,
+        "widthYd": 0.8
+      },
+      {
+        "id": "tree",
+        "x": 8,
+        "y": -8,
+        "widthYd": 4
+      },
+      {
+        "id": "tree",
+        "x": 67,
+        "y": -8,
+        "widthYd": 4
+      },
+      {
+        "id": "tree",
+        "x": 10,
+        "y": 58,
+        "widthYd": 4
+      },
+      {
+        "id": "tree",
+        "x": 65,
+        "y": 58,
+        "widthYd": 4
+      }
+    ],
+    "actors": [
+      {
+        "id": "code",
+        "character": "coach_code",
+        "x": 32,
+        "y": -2.5,
+        "team": "home"
+      },
+      {
+        "id": "opponent",
+        "character": "opposing_coach",
+        "x": 43,
+        "y": -2.5,
+        "team": "away"
+      },
+      {
+        "id": "mom",
+        "character": "mom",
+        "x": 23,
+        "y": 53,
+        "team": "home"
+      },
+      {
+        "id": "filming",
+        "character": "parent_filming",
+        "x": 29,
+        "y": 54,
+        "team": "home"
+      },
+      {
+        "id": "cheering",
+        "character": "parent_cheering",
+        "x": 48,
+        "y": 53,
+        "team": "away"
+      },
+      {
+        "id": "seated",
+        "character": "parent_seated",
+        "x": 52,
+        "y": 54,
+        "team": "away",
+        "seated": true
+      }
+    ],
+    "notes": "Proposed placement. Fit complete footprints and verify visibility in real camera. Team fields are relative match roles, not fixed club assignments. Trees outside envelope are optional establishing-view scenery."
+  },
+  {
+    "id": "bell94",
+    "name": "Dell 94",
+    "homeFor": null,
+    "pitchYards": [
+      75,
+      50
+    ],
+    "grass": "assets/bell94/grass.webp",
+    "palette": {
+      "runoff": "#70944d",
+      "path": "#aaa99c",
+      "desert": "#d0c6ae"
+    },
+    "sceneryEnvelope": {
+      "x": [
+        -3,
+        78
+      ],
+      "y": [
+        -7,
+        57
+      ]
+    },
+    "props": [
+      {
+        "id": "tent_home",
+        "x": 27,
+        "y": -6,
+        "widthYd": 3.3
+      },
+      {
+        "id": "tent_away",
+        "x": 48,
+        "y": -6,
+        "widthYd": 3.3
+      },
+      {
+        "id": "bench",
+        "x": 27,
+        "y": -4,
+        "widthYd": 3.2
+      },
+      {
+        "id": "bench",
+        "x": 48,
+        "y": -4,
+        "widthYd": 3.2
+      },
+      {
+        "id": "sign",
+        "x": 9,
+        "y": -6.5,
+        "widthYd": 3.5
+      },
+      {
+        "id": "cooler",
+        "x": 30,
+        "y": -4.5,
+        "widthYd": 0.6
+      },
+      {
+        "id": "bag",
+        "x": 23,
+        "y": -4,
+        "widthYd": 0.8
+      },
+      {
+        "id": "field_marker",
+        "x": 5,
+        "y": -3,
+        "widthYd": 0.6
+      },
+      {
+        "id": "chair",
+        "x": 14,
+        "y": 54.0,
+        "widthYd": 0.8
+      },
+      {
+        "id": "chair",
+        "x": 19,
+        "y": 54.5,
+        "widthYd": 0.8
+      },
+      {
+        "id": "chair",
+        "x": 36,
+        "y": 54.0,
+        "widthYd": 0.8
+      },
+      {
+        "id": "chair",
+        "x": 42,
+        "y": 54.5,
+        "widthYd": 0.8
+      },
+      {
+        "id": "chair",
+        "x": 59,
+        "y": 54.0,
+        "widthYd": 0.8
+      },
+      {
+        "id": "chair",
+        "x": 64,
+        "y": 54.5,
+        "widthYd": 0.8
+      },
+      {
+        "id": "tree",
+        "x": 8,
+        "y": -8,
+        "widthYd": 4
+      },
+      {
+        "id": "tree",
+        "x": 67,
+        "y": -8,
+        "widthYd": 4
+      },
+      {
+        "id": "tree",
+        "x": 10,
+        "y": 58,
+        "widthYd": 4
+      },
+      {
+        "id": "tree",
+        "x": 65,
+        "y": 58,
+        "widthYd": 4
+      }
+    ],
+    "actors": [
+      {
+        "id": "code",
+        "character": "coach_code",
+        "x": 32,
+        "y": -2.5,
+        "team": "home"
+      },
+      {
+        "id": "opponent",
+        "character": "opposing_coach",
+        "x": 43,
+        "y": -2.5,
+        "team": "away"
+      },
+      {
+        "id": "mom",
+        "character": "mom",
+        "x": 23,
+        "y": 53,
+        "team": "home"
+      },
+      {
+        "id": "filming",
+        "character": "parent_filming",
+        "x": 29,
+        "y": 54,
+        "team": "home"
+      },
+      {
+        "id": "cheering",
+        "character": "parent_cheering",
+        "x": 48,
+        "y": 53,
+        "team": "away"
+      },
+      {
+        "id": "seated",
+        "character": "parent_seated",
+        "x": 52,
+        "y": 54,
+        "team": "away",
+        "seated": true
+      }
+    ],
+    "notes": "Proposed placement. Fit complete footprints and verify visibility in real camera. Team fields are relative match roles, not fixed club assignments. Trees outside envelope are optional establishing-view scenery."
+  },
+  {
+    "id": "scottsdale",
+    "name": "Scott’s Complex",
+    "homeFor": null,
+    "pitchYards": [
+      75,
+      50
+    ],
+    "grass": "assets/scottsdale/grass.webp",
+    "palette": {
+      "runoff": "#4e7e43",
+      "path": "#c3b592",
+      "desert": "#a9a481"
+    },
+    "sceneryEnvelope": {
+      "x": [
+        -3,
+        78
+      ],
+      "y": [
+        -7,
+        57
+      ]
+    },
+    "props": [
+      {
+        "id": "tent_home",
+        "x": 27,
+        "y": -6,
+        "widthYd": 3.3
+      },
+      {
+        "id": "tent_away",
+        "x": 48,
+        "y": -6,
+        "widthYd": 3.3
+      },
+      {
+        "id": "bench",
+        "x": 27,
+        "y": -4,
+        "widthYd": 3.2
+      },
+      {
+        "id": "bench",
+        "x": 48,
+        "y": -4,
+        "widthYd": 3.2
+      },
+      {
+        "id": "sign",
+        "x": 9,
+        "y": -6.5,
+        "widthYd": 3.5
+      },
+      {
+        "id": "cooler",
+        "x": 30,
+        "y": -4.5,
+        "widthYd": 0.6
+      },
+      {
+        "id": "bag",
+        "x": 23,
+        "y": -4,
+        "widthYd": 0.8
+      },
+      {
+        "id": "field_marker",
+        "x": 5,
+        "y": -3,
+        "widthYd": 0.6
+      },
+      {
+        "id": "chair",
+        "x": 14,
+        "y": 54.0,
+        "widthYd": 0.8
+      },
+      {
+        "id": "chair",
+        "x": 19,
+        "y": 54.5,
+        "widthYd": 0.8
+      },
+      {
+        "id": "chair",
+        "x": 36,
+        "y": 54.0,
+        "widthYd": 0.8
+      },
+      {
+        "id": "chair",
+        "x": 42,
+        "y": 54.5,
+        "widthYd": 0.8
+      },
+      {
+        "id": "chair",
+        "x": 59,
+        "y": 54.0,
+        "widthYd": 0.8
+      },
+      {
+        "id": "chair",
+        "x": 64,
+        "y": 54.5,
+        "widthYd": 0.8
+      },
+      {
+        "id": "tree",
+        "x": 8,
+        "y": -8,
+        "widthYd": 4
+      },
+      {
+        "id": "tree",
+        "x": 67,
+        "y": -8,
+        "widthYd": 4
+      },
+      {
+        "id": "tree",
+        "x": 10,
+        "y": 58,
+        "widthYd": 4
+      },
+      {
+        "id": "tree",
+        "x": 65,
+        "y": 58,
+        "widthYd": 4
+      }
+    ],
+    "actors": [
+      {
+        "id": "code",
+        "character": "coach_code",
+        "x": 32,
+        "y": -2.5,
+        "team": "home"
+      },
+      {
+        "id": "opponent",
+        "character": "opposing_coach",
+        "x": 43,
+        "y": -2.5,
+        "team": "away"
+      },
+      {
+        "id": "mom",
+        "character": "mom",
+        "x": 23,
+        "y": 53,
+        "team": "home"
+      },
+      {
+        "id": "filming",
+        "character": "parent_filming",
+        "x": 29,
+        "y": 54,
+        "team": "home"
+      },
+      {
+        "id": "cheering",
+        "character": "parent_cheering",
+        "x": 48,
+        "y": 53,
+        "team": "away"
+      },
+      {
+        "id": "seated",
+        "character": "parent_seated",
+        "x": 52,
+        "y": 54,
+        "team": "away",
+        "seated": true
+      }
+    ],
+    "notes": "Proposed placement. Fit complete footprints and verify visibility in real camera. Team fields are relative match roles, not fixed club assignments. Trees outside envelope are optional establishing-view scenery."
+  },
+  {
+    "id": "westside",
+    "name": "Westside Grounds",
+    "homeFor": null,
+    "pitchYards": [
+      75,
+      50
+    ],
+    "grass": "assets/westside/grass.webp",
+    "palette": {
+      "runoff": "#73814b",
+      "path": "#b59a6b",
+      "desert": "#b2976d"
+    },
+    "sceneryEnvelope": {
+      "x": [
+        -3,
+        78
+      ],
+      "y": [
+        -7,
+        57
+      ]
+    },
+    "props": [
+      {
+        "id": "tent_home",
+        "x": 27,
+        "y": -6,
+        "widthYd": 3.3
+      },
+      {
+        "id": "tent_away",
+        "x": 48,
+        "y": -6,
+        "widthYd": 3.3
+      },
+      {
+        "id": "bench",
+        "x": 27,
+        "y": -4,
+        "widthYd": 3.2
+      },
+      {
+        "id": "bench",
+        "x": 48,
+        "y": -4,
+        "widthYd": 3.2
+      },
+      {
+        "id": "sign",
+        "x": 9,
+        "y": -6.5,
+        "widthYd": 3.5
+      },
+      {
+        "id": "cooler",
+        "x": 30,
+        "y": -4.5,
+        "widthYd": 0.6
+      },
+      {
+        "id": "bag",
+        "x": 23,
+        "y": -4,
+        "widthYd": 0.8
+      },
+      {
+        "id": "field_marker",
+        "x": 5,
+        "y": -3,
+        "widthYd": 0.6
+      },
+      {
+        "id": "chair",
+        "x": 14,
+        "y": 54.0,
+        "widthYd": 0.8
+      },
+      {
+        "id": "chair",
+        "x": 19,
+        "y": 54.5,
+        "widthYd": 0.8
+      },
+      {
+        "id": "chair",
+        "x": 36,
+        "y": 54.0,
+        "widthYd": 0.8
+      },
+      {
+        "id": "chair",
+        "x": 42,
+        "y": 54.5,
+        "widthYd": 0.8
+      },
+      {
+        "id": "chair",
+        "x": 59,
+        "y": 54.0,
+        "widthYd": 0.8
+      },
+      {
+        "id": "chair",
+        "x": 64,
+        "y": 54.5,
+        "widthYd": 0.8
+      },
+      {
+        "id": "tree",
+        "x": 8,
+        "y": -8,
+        "widthYd": 4
+      },
+      {
+        "id": "tree",
+        "x": 67,
+        "y": -8,
+        "widthYd": 4
+      },
+      {
+        "id": "tree",
+        "x": 10,
+        "y": 58,
+        "widthYd": 4
+      },
+      {
+        "id": "tree",
+        "x": 65,
+        "y": 58,
+        "widthYd": 4
+      }
+    ],
+    "actors": [
+      {
+        "id": "code",
+        "character": "coach_code",
+        "x": 32,
+        "y": -2.5,
+        "team": "home"
+      },
+      {
+        "id": "opponent",
+        "character": "opposing_coach",
+        "x": 43,
+        "y": -2.5,
+        "team": "away"
+      },
+      {
+        "id": "mom",
+        "character": "mom",
+        "x": 23,
+        "y": 53,
+        "team": "home"
+      },
+      {
+        "id": "filming",
+        "character": "parent_filming",
+        "x": 29,
+        "y": 54,
+        "team": "home"
+      },
+      {
+        "id": "cheering",
+        "character": "parent_cheering",
+        "x": 48,
+        "y": 53,
+        "team": "away"
+      },
+      {
+        "id": "seated",
+        "character": "parent_seated",
+        "x": 52,
+        "y": 54,
+        "team": "away",
+        "seated": true
+      }
+    ],
+    "notes": "Proposed placement. Fit complete footprints and verify visibility in real camera. Team fields are relative match roles, not fixed club assignments. Trees outside envelope are optional establishing-view scenery."
+  }
+]

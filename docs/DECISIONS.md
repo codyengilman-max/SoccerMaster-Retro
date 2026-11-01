@@ -393,6 +393,10 @@ Approved technical choices. Add a new entry rather than silently changing an old
 - Presentation only: Ball Mastery groups every non-juggling home family; IDs, logging and progression are reused unchanged. The viewer extends the existing `activity` demo instead of a parallel lesson system.
 - The 14 Ball Mastery designs are loaded review-only; only exact equivalents (BM-002 = Inside-Cut Escape) are merged as links, ambiguous ones are flagged, nothing replaces an existing lesson. Right/Left is not offered until reviewed per-foot demonstrations exist (the package forbids mirrors as proof).
 
+## D66. Regular-match venues are projected layers, not pictures (owner, 2026-10-29)
+
+Moving Camera Venues v2: grass, props, signs and sideline people are separate assets anchored in pitch yards and drawn through the match projection; flattened venue pictures are never gameplay backgrounds. Internal ids stay `pinnacle`, `bell94`, `scottsdale`, `westside`; names are Pinnacle Park, Dell 94, Scott’s Complex, Westside Grounds. Only explicit assignments resolve (FC Batavia home league -> Pinnacle Park); unassigned games report the gap. Regular matches only.
+
 ## Owner decisions 2026-10-27 (H1–H8)
 
 From the owner's consolidated decisions after the read-only audit of `main` `04e947b` (second revision, same day: H3 now removes Coach Moments from story matches, and the coach-approved All36 package becomes the Team Training source). Plan: [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md).

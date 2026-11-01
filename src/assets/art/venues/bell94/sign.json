@@ -1,0 +1,12 @@
+{
+  "anchorPx": [
+    128,
+    120
+  ],
+  "size": [
+    256,
+    128
+  ],
+  "revision": 2,
+  "note": "Renamed sign; original sourceRect no longer applies."
+}

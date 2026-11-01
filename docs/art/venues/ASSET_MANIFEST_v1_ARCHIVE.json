@@ -1,0 +1,683 @@
+[
+  {
+    "path": "assets/bell94/bag.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "5474a67ad865e6c4b0f252f529594430dee849aeccd6542a2ef71da96614efc6"
+  },
+  {
+    "path": "assets/bell94/bench.png",
+    "width": 256,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "605a34887e45d396eecfd78fad4536094aedadc26b5cebc6192c4cf4be8f5c1e"
+  },
+  {
+    "path": "assets/bell94/cactus.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "ea59fe732e87fcfe51a52ae7d8ebd1691cddb3fe32a019a246dc3bedce8c49a3"
+  },
+  {
+    "path": "assets/bell94/chair.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "636ac3385e3409e2ad7dddce76f42820d25ffd843e31c871393f2d94932a4094"
+  },
+  {
+    "path": "assets/bell94/cooler.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "b38ea1e6154051b58af57ab6e13227f2eb0c0c00ff28a290e42c78212945f370"
+  },
+  {
+    "path": "assets/bell94/fence.png",
+    "width": 256,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "767651a4f895c2501181966c23af45de488dec694fe896b3e30a0f1d51971670"
+  },
+  {
+    "path": "assets/bell94/field_marker.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "e233a479abe6a36a8cd3bf4c3486927173fd2f2996b330dba9bae39fee0d6b2e"
+  },
+  {
+    "path": "assets/bell94/grass.webp",
+    "width": 1536,
+    "height": 1024,
+    "mode": "RGB",
+    "alphaRange": null,
+    "sha256": "500d51c0ae0220a5c801ce3eca7ff67c29721b440d784fad2cb5f8e035782921"
+  },
+  {
+    "path": "assets/bell94/shrub.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "4439e12d349b6914457c205c501bfa10d5159d2be80e7013e871b1a58c4fa0c7"
+  },
+  {
+    "path": "assets/bell94/sign.png",
+    "width": 256,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "a51d30ea10ba886934d1aa22b9cb83610cc4a8924063e40eca45cc21756da329"
+  },
+  {
+    "path": "assets/bell94/tent_away.png",
+    "width": 320,
+    "height": 320,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "2dccb9daab6742b61d489dc62c056f6719c48756a1643c444f78f16217eee964"
+  },
+  {
+    "path": "assets/bell94/tent_home.png",
+    "width": 320,
+    "height": 320,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "07d75e4296a393bcce638ba606f7f8432ba67f0413dc8a2ceac2831cec8fb05d"
+  },
+  {
+    "path": "assets/bell94/tree.png",
+    "width": 256,
+    "height": 256,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "e5e5412b53fc3b4858e2321973925846dd37fd4db375fe149323ef2f596106cd"
+  },
+  {
+    "path": "assets/characters/coach_code.png",
+    "width": 960,
+    "height": 512,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "609430164dc937758690b9c123bf22f8b656c7a8b4ca0d8bf28e056fea05b9f0"
+  },
+  {
+    "path": "assets/characters/coach_code.webp",
+    "width": 960,
+    "height": 512,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "6a18be965e4f44458de1efc905d3d96a4ebfacf14884716ecd7ad1e20cc949d8"
+  },
+  {
+    "path": "assets/characters/mom.png",
+    "width": 960,
+    "height": 512,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "371a1ddca68c6c12e5aea49750667043fe767a4fb457edaa3cda2aee85b97fd6"
+  },
+  {
+    "path": "assets/characters/mom.webp",
+    "width": 960,
+    "height": 512,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "f4a221d66ebf0dd64ed3f1b73a60437e208786ed3a32d5fdd88c48577d541248"
+  },
+  {
+    "path": "assets/characters/opposing_coach.png",
+    "width": 960,
+    "height": 512,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "9e35a96816b0c11a4d404530d9c3f0b83d2eb27e830847ba4c4812b551813b3d"
+  },
+  {
+    "path": "assets/characters/opposing_coach.webp",
+    "width": 960,
+    "height": 512,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "bb8786f5e7bd411f43f711f7665203cc40189106cc5cd85e6ce95edd023f834e"
+  },
+  {
+    "path": "assets/characters/parent_cheering.png",
+    "width": 960,
+    "height": 512,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "631b5a65b629c0cc3e1c568302e806fc24c53ac2e9be112b779799599e3e2d1f"
+  },
+  {
+    "path": "assets/characters/parent_cheering.webp",
+    "width": 960,
+    "height": 512,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "cd44db4e2c2ccd3733cde4ffb2af01553b13289ef204771390ee648706bce8e0"
+  },
+  {
+    "path": "assets/characters/parent_filming.png",
+    "width": 960,
+    "height": 512,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "f17d6709a373cac72128e987a146ddc2cff8cc58a6c3155fb2efedc8c15ae3c6"
+  },
+  {
+    "path": "assets/characters/parent_filming.webp",
+    "width": 960,
+    "height": 512,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "b5978afec01c35452a5dc1573976a81fb6a2f82826df64cb183b79f7250d7a0d"
+  },
+  {
+    "path": "assets/characters/parent_seated.png",
+    "width": 960,
+    "height": 512,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "652f04e137f920423a7cbfb8f0cd33263bdf147df6d9039ff73b12aae3e364fe"
+  },
+  {
+    "path": "assets/characters/parent_seated.webp",
+    "width": 960,
+    "height": 512,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "39ef886d47cd96e8961288a7be47424a1106f4b453ff74727e7e4508dec3f334"
+  },
+  {
+    "path": "assets/pinnacle/bag.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "a09f79bc1fd27f1e97cf4732ccf0304fb4cf8db209314285d42657d825b88f77"
+  },
+  {
+    "path": "assets/pinnacle/bench.png",
+    "width": 256,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "990c92ce0c23f8848ec030d1e1872bc902a6c178cc5c03686da07b75fcf828de"
+  },
+  {
+    "path": "assets/pinnacle/cactus.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "183410ff1449ced98e710efee1e72c95ce51f8a2e71dc55f1f44a9cb318c8ced"
+  },
+  {
+    "path": "assets/pinnacle/chair.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "20a3e7a372d5d4b95c21cfeecebd78b5b8f8a5150aae4de20c835f7f66d852e1"
+  },
+  {
+    "path": "assets/pinnacle/cooler.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "f771aa16d8a336d8375858e1b1aeda3ee711e11e4c5ef5fd016f87b70535eb66"
+  },
+  {
+    "path": "assets/pinnacle/fence.png",
+    "width": 256,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "65fe52cd6d0cd25ad7c15bd3141b3a4e3dc6c49a6831899819868f26ce3a3abd"
+  },
+  {
+    "path": "assets/pinnacle/field_marker.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "49eb68d39587de3df7bf93d39d9410a007103bf43945706c2bdd84f6a37e260c"
+  },
+  {
+    "path": "assets/pinnacle/grass.webp",
+    "width": 1536,
+    "height": 1024,
+    "mode": "RGB",
+    "alphaRange": null,
+    "sha256": "faf04210413c80892136fcf9db1e4862e932177c177b27fe1d4036eb6dd035e4"
+  },
+  {
+    "path": "assets/pinnacle/shrub.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "f0a66197d0c6ddb49ab049342d4ec2d1095a1c58cf22300ee601d7c705af5b33"
+  },
+  {
+    "path": "assets/pinnacle/sign.png",
+    "width": 256,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "0d2f8bd6c3ed31880fc9e234e96cfbc144024f2d2ede3e573a5ed3677882e6ca"
+  },
+  {
+    "path": "assets/pinnacle/tent_away.png",
+    "width": 320,
+    "height": 320,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "cc0393982cc03fa9eac7bd7eaa03b8fbe18cf5d5885729152f266350e1596162"
+  },
+  {
+    "path": "assets/pinnacle/tent_home.png",
+    "width": 320,
+    "height": 320,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "d87d8fd99d8409be8dd94b869addb7fb84df3f03f27a8479ef498ba756939855"
+  },
+  {
+    "path": "assets/pinnacle/tree.png",
+    "width": 256,
+    "height": 256,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "00c7162b1ac48334d52bcf2207508234aceef78429c80cefdfab478cf6483837"
+  },
+  {
+    "path": "assets/scottsdale/bag.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "c00608ed806bfa7d236214c8e4e7de9fc00102ce893ad4ce5f4b322ebc57d25b"
+  },
+  {
+    "path": "assets/scottsdale/bench.png",
+    "width": 256,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "37a64df75f34dc0283e53aff5d6b54084f8911732e6e88cc083edfed3595c7e8"
+  },
+  {
+    "path": "assets/scottsdale/cactus.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "3096fe66ab0c58086462a82f239415f06b490b24e8e7226c3fef492202156fdc"
+  },
+  {
+    "path": "assets/scottsdale/chair.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "53ac50bd36dc5ee246cb7c551de9dfe30904fe105f0f5e96411be5d680282b98"
+  },
+  {
+    "path": "assets/scottsdale/cooler.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "5213d23d1564f97011d86de3622b87ca0f4f2876fc74df55540c89b25de4aecb"
+  },
+  {
+    "path": "assets/scottsdale/field_marker.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "7cbb75d95e745d7a35bf8afd1cac6a96ce530393e20cbbe33f6332bbc4d81976"
+  },
+  {
+    "path": "assets/scottsdale/grass.webp",
+    "width": 1536,
+    "height": 1024,
+    "mode": "RGB",
+    "alphaRange": null,
+    "sha256": "9877a9f3e35ae5a474f0a996eb09ff38e1c8ff731d4cb38259f095abb02cc2a4"
+  },
+  {
+    "path": "assets/scottsdale/shrub.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "477d26e6ac8eb5371ca4dd815baa0eb00ae7cedba087eee83f2c73c40b4b2fb4"
+  },
+  {
+    "path": "assets/scottsdale/sign.png",
+    "width": 256,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "ec02c61ad6c7c47febd71e027aeeab5b8d3846c194b566526af7b8941703316d"
+  },
+  {
+    "path": "assets/scottsdale/tent_away.png",
+    "width": 320,
+    "height": 320,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "608d27453a53e5deefee6095ba121169b7ecbc07f8c8d80f90c98fcb11e063fe"
+  },
+  {
+    "path": "assets/scottsdale/tent_home.png",
+    "width": 320,
+    "height": 320,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "515cad51140046776d794fbdae2187d266c85cffcd655d3b8488640ef7d658e8"
+  },
+  {
+    "path": "assets/scottsdale/tree.png",
+    "width": 256,
+    "height": 256,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "9d8d7c390103a49ce03afc3699880dbd920a638dbd55428c02363e92bc46212a"
+  },
+  {
+    "path": "assets/westside/bag.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "6f73f4052a70bb8aee7479d0c941a8ef829cd967607d345e4b4bdc133f0f7bf6"
+  },
+  {
+    "path": "assets/westside/bench.png",
+    "width": 256,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "0a9c5e6ac31ff852d4069e52c4bd19410fbc0b8e2e9e71702813b49ac55b8f6a"
+  },
+  {
+    "path": "assets/westside/cactus.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "83aec3248e4c6decdd51f548129f6e5beca9e563c5ddde11233d7330b14234a7"
+  },
+  {
+    "path": "assets/westside/chair.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "3954a9763ecad608908dc02bef33068bc2a465103a0f4452a47cdbd122497142"
+  },
+  {
+    "path": "assets/westside/cooler.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "9f86f6d80041499ee76f791ce86b957ff034fa3cc956298112488902cb03b6df"
+  },
+  {
+    "path": "assets/westside/fence.png",
+    "width": 256,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "f345c70a3d76eadc95548a3e348b98268a9d4382794608692f92b21b16d4b972"
+  },
+  {
+    "path": "assets/westside/field_marker.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "0924397483a76b241789c92de1c48026c28d68f394c976a32fe373e23864a63f"
+  },
+  {
+    "path": "assets/westside/grass.webp",
+    "width": 1536,
+    "height": 1024,
+    "mode": "RGB",
+    "alphaRange": null,
+    "sha256": "08dd144ca009d89de4400d9a48e75a99d1a73d5751bea7f66279d1bd9d722665"
+  },
+  {
+    "path": "assets/westside/shrub.png",
+    "width": 128,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "ab1ec0c674a9ed5b018a2bb3f655301e37e81667ddf48d9ab9e9c055f556ba8b"
+  },
+  {
+    "path": "assets/westside/sign.png",
+    "width": 256,
+    "height": 128,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "504b747be6e9cb39a912cea9d28bbba1159379e638b34461ac1b3c0a86b62bea"
+  },
+  {
+    "path": "assets/westside/tent_away.png",
+    "width": 320,
+    "height": 320,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "0fba11b21b1e683b584acaa46ec8ce8681474d83de490b99cb2d91f08a56ef28"
+  },
+  {
+    "path": "assets/westside/tent_home.png",
+    "width": 320,
+    "height": 320,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "92d328dc3b89b34841fd09d1f154a3e9e5e855cfc025b70c37e905dafe0e100c"
+  },
+  {
+    "path": "assets/westside/tree.png",
+    "width": 256,
+    "height": 256,
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "511fe0ada0289f423db0477dfce1767a5fee963435157b74c80694707ec9cb8a"
+  }
+]
