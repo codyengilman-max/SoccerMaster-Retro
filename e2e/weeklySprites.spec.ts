@@ -216,7 +216,8 @@ for (const [pos, gender, id] of [['DEF', 'girl', 'D02'], ['MID', 'boy', 'D08'], 
 // All 18 weeks per category (54 assignments, all 36 scenarios between them) through the same renderer.
 for (const [pos, gender] of [['DEF', 'girl'], ['MID', 'boy'], ['FWD', 'girl']] as const) {
   test(`Weekly Team Training: all 18 ${pos} weeks render on package sprites at their approved coordinates (${gender})`, async ({ page }, info) => {
-    test.setTimeout(360_000);
+    // 18 full reloads, each reaching Team Training through Progress; on main this used up to 5.5 of 6 min on CI.
+    test.setTimeout(600_000);
     const mode = modeFor(info);
     const errors = trackConsoleErrors(page);
     page.on('dialog', (d) => void d.accept('Robin'));
