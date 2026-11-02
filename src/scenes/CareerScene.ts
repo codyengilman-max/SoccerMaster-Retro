@@ -235,7 +235,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   /** Debug snapshot for browser tests. */
-  describeGameplay(): { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; text: string; cards: string[]; textPage: string; overflow: string[]; evidence: number; coachEvidence: number; demo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number } } | null } {
+  describeGameplay(): { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; text: string; cards: string[]; textPage: string; overflow: string[]; evidence: number; coachEvidence: number; demo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number }; fallback?: boolean } | null } {
     return {
       screen: this.screen.kind,
       week: this.save.week,
@@ -250,7 +250,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       cards: this.cardLabels,
       textPage: `${this.textPage + 1}/${this.textPages}`,
       overflow: this.buttons.filter((b) => b.active && !b.labelFits()).map((b) => b.name),
-      demo: (this.demoImg?.visible || this.sideImgs[2]?.visible) && this.demoRect ? this.demoInfo : null,
+      demo: (this.demoImg?.visible || this.sideImgs[2]?.visible) && this.demoRect && this.demoInfo ? { ...this.demoInfo, fallback: !!this.demoImg?.visible } : null,
       evidence: this.save.evidence.length,
       coachEvidence: this.save.evidence.filter((e) => e.source === 'coach').length,
     };
@@ -1221,6 +1221,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     ensureJungle4(this, ['jungle4-ball']);
     const ballKey = jungle4Key('jungle4-ball');
     if (!ensureSideArt(this, sex) || !this.textures.exists(ballKey)) return false;
+    this.demoImg?.setVisible(false);
     const art = SIDE_CONTACT[sex];
     const r = this.demoRect!;
     const fr = sideFrame(lesson, this.demoT, this.teachFoot);

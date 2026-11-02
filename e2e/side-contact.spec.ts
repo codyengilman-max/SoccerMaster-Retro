@@ -6,7 +6,7 @@ const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mous
 type Rect = { x: number; y: number; width: number; height: number };
 type Teach = { pose: string; foot: 'right' | 'left'; phase: number; step: number; contact: string; boot: { x: number; y: number }; zoomBall: boolean; t: number; ground: number };
 type Side = { working: string | null; support: string | null; phase: string; ballTexture: string; ballRadius: number; poseWorking: string | null; poseSurface: string; contact: { x: number; y: number } | null };
-type Demo = { side?: Side; teach?: Teach; set: string; flip?: boolean; frame: string; contact: string; player: Rect; ball: { x: number; y: number }; rect: Rect; inset?: { foot: string; contact: string; label: string; rect: Rect; ball: Rect; text: Rect }; paused?: boolean; speed?: number };
+type Demo = { side?: Side; teach?: Teach; set: string; flip?: boolean; fallback?: boolean; frame: string; contact: string; player: Rect; ball: { x: number; y: number }; rect: Rect; inset?: { foot: string; contact: string; label: string; rect: Rect; ball: Rect; text: Rect }; paused?: boolean; speed?: number };
 type Career = { screen: string; week: number; credit: number; journal: number; player: string | null; status: string; text: string; plan: string[]; attributes: Record<string, number> | null; demo: Demo | null };
 
 const career = async (page: Page) => (await diagnostics(page)).gameplay as Career;
@@ -68,6 +68,11 @@ const other = (f: 'right' | 'left') => (f === 'right' ? 'left' : 'right');
 
 for (const gender of ['boy', 'girl'] as const) {
   test(`side-view contact (${gender}): Sole taps uses derived poses, the approved ball and one state for body, ball, inset and caption`, async ({ page }, info) => {
+    // Hold the side-view atlas back so the ordinary training sprite draws first, as on a cold first visit.
+    await page.route('**/*-side*.webp', async (r) => {
+      await new Promise((res) => setTimeout(res, 2000));
+      await r.continue();
+    });
     const mode = modeFor(info);
     const errors = trackConsoleErrors(page);
     page.on('dialog', (d) => void d.accept('Robin'));
@@ -87,6 +92,7 @@ for (const gender of ['boy', 'girl'] as const) {
     let c = await until(page, (x) => x.screen === 'activity' && !!x.demo?.side, 'side-view page');
     expect(c.demo!.set).toBe(`bmside:${gender}`);
     expect(c.demo!.flip, 'never mirrored').toBe(false);
+    expect(c.demo!.fallback, 'fallback training sprite hidden once the side art is drawn (no button or resize yet)').toBe(false);
     expect(c.demo!.side!.ballTexture, 'approved Jungle Ball strip').toMatch(/jungle4-ball:ball-0$/);
     expect(c.text).toContain('COACH CODE: Keep the ball still; alternate light contacts.');
     const e0 = await els(page);
@@ -146,10 +152,17 @@ for (const gender of ['boy', 'girl'] as const) {
     // 0.5x halves the clock; Play resumes from a paused hold.
     await press(page, 'demo-replay', mode);
     await press(page, 'demo-half', mode);
-    const a = await until(page, (x) => x.demo?.speed === 0.5 && x.demo.paused === false, '0.5x');
+    await until(page, (x) => x.demo?.speed === 0.5 && x.demo.paused === false, '0.5x');
+    // Time each read at its midpoint so snapshot round trips don't count as demo time.
+    const read = async () => {
+      const t0 = Date.now();
+      const x = await career(page);
+      return { x, at: (t0 + Date.now()) / 2000 };
+    };
+    const a = await read();
     await page.waitForTimeout(800);
-    const b = await career(page);
-    const rate = (b.demo!.teach!.t - a.demo!.teach!.t) / 0.8;
+    const b = await read();
+    const rate = (b.x.demo!.teach!.t - a.x.demo!.teach!.t) / (b.at - a.at);
     expect(rate).toBeGreaterThan(0.3);
     expect(rate).toBeLessThan(0.7);
     // Watching changes nothing; logging adds one entry.
