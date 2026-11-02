@@ -4,7 +4,7 @@ import { SIDE_CONTACT } from '../src/render/art/sideContactFrames';
 import { sideFrame, sideLength, sideLessonFor, sideStarts } from '../src/game/career/sideContact';
 import { activityById } from '../src/game/career/catalog';
 
-type Pose = { working: string | null; support: string | null; surface: string; pixelCheck: { nearestBootPixel: number; bootPixelsInsideBall: number } | null; rotation: Record<string, number> };
+type Pose = { working: string | null; support: string | null; surface: string; pixelCheck: { nearestBootPixel: number; bootPixelsInsideBall: number } | null; rotation: Record<string, number>; plantedBootNearestPixel: Record<string, number> };
 const R = 7;
 
 describe('Sole taps side-view contact (D69)', () => {
@@ -22,6 +22,13 @@ describe('Sole taps side-view contact (D69)', () => {
           expect(p.pixelCheck.nearestBootPixel, id).toBeGreaterThanOrEqual(R);
           expect(p.pixelCheck.nearestBootPixel, id).toBeLessThanOrEqual(R + 1);
         } else expect(p.pixelCheck.nearestBootPixel, id).toBeGreaterThanOrEqual(R + 2);
+      }
+    });
+    it(`${sex}: a planted boot never touches or overlaps the ball`, () => {
+      for (const [id, p] of Object.entries(poses)) {
+        const feet = Object.entries(p.plantedBootNearestPixel);
+        expect(feet.length, id).toBe(p.working ? 1 : 2);
+        for (const [foot, d] of feet) expect(d, `${id} ${foot}`).toBeGreaterThanOrEqual(R + 2);
       }
     });
     it(`${sex}: each foot has its own pose (left is the far leg, not a mirror)`, () => {

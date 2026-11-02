@@ -14,29 +14,29 @@
     "boots": {
      "right": {
       "heel": [
-       68.0,
+       62.5,
        120.0
       ],
       "toe": [
-       89.0,
+       83.5,
        120.0
       ],
       "bof": [
-       81.02,
+       75.52,
        120.0
       ]
      },
      "left": {
       "heel": [
-       67.0,
+       61.5,
        120.0
       ],
       "toe": [
-       88.0,
+       82.5,
        120.0
       ],
       "bof": [
-       80.02,
+       74.52,
        120.0
       ]
      }
@@ -46,7 +46,11 @@
      "left": 0.0
     },
     "thighError": 0,
-    "pixelCheck": null
+    "pixelCheck": null,
+    "plantedBootNearestPixel": {
+     "right": 9.35,
+     "left": 10.34
+    }
    },
    "right-lift": {
     "working": "right",
@@ -70,15 +74,15 @@
      },
      "left": {
       "heel": [
-       67.0,
+       61.5,
        120.0
       ],
       "toe": [
-       88.0,
+       82.5,
        120.0
       ],
       "bof": [
-       80.02,
+       74.52,
        120.0
       ]
      }
@@ -91,6 +95,9 @@
     "pixelCheck": {
      "nearestBootPixel": 10.63,
      "bootPixelsInsideBall": 0
+    },
+    "plantedBootNearestPixel": {
+     "left": 10.34
     }
    },
    "right-tap": {
@@ -118,15 +125,15 @@
      },
      "left": {
       "heel": [
-       67.0,
+       61.5,
        120.0
       ],
       "toe": [
-       88.0,
+       82.5,
        120.0
       ],
       "bof": [
-       80.02,
+       74.52,
        120.0
       ]
      }
@@ -139,6 +146,9 @@
     "pixelCheck": {
      "nearestBootPixel": 7.51,
      "bootPixelsInsideBall": 0
+    },
+    "plantedBootNearestPixel": {
+     "left": 10.34
     }
    },
    "left-lift": {
@@ -149,15 +159,15 @@
     "boots": {
      "right": {
       "heel": [
-       68.0,
+       62.5,
        120.0
       ],
       "toe": [
-       89.0,
+       83.5,
        120.0
       ],
       "bof": [
-       81.02,
+       75.52,
        120.0
       ]
      },
@@ -184,6 +194,9 @@
     "pixelCheck": {
      "nearestBootPixel": 10.63,
      "bootPixelsInsideBall": 0
+    },
+    "plantedBootNearestPixel": {
+     "right": 9.35
     }
    },
    "left-tap": {
@@ -197,15 +210,15 @@
     "boots": {
      "right": {
       "heel": [
-       68.0,
+       62.5,
        120.0
       ],
       "toe": [
-       89.0,
+       83.5,
        120.0
       ],
       "bof": [
-       81.02,
+       75.52,
        120.0
       ]
      },
@@ -232,6 +245,9 @@
     "pixelCheck": {
      "nearestBootPixel": 7.07,
      "bootPixelsInsideBall": 0
+    },
+    "plantedBootNearestPixel": {
+     "right": 9.35
     }
    }
   }
@@ -251,29 +267,29 @@
     "boots": {
      "right": {
       "heel": [
-       70.76,
+       63.26,
        120.0
       ],
       "toe": [
-       89.76,
+       82.26,
        120.0
       ],
       "bof": [
-       82.54,
+       75.04,
        120.0
       ]
      },
      "left": {
       "heel": [
-       69.76,
+       62.26,
        120.0
       ],
       "toe": [
-       88.76,
+       81.26,
        120.0
       ],
       "bof": [
-       81.54,
+       74.04,
        120.0
       ]
      }
@@ -283,7 +299,11 @@
      "left": 0.0
     },
     "thighError": 0,
-    "pixelCheck": null
+    "pixelCheck": null,
+    "plantedBootNearestPixel": {
+     "right": 9.23,
+     "left": 10.2
+    }
    },
    "right-lift": {
     "working": "right",
@@ -307,15 +327,15 @@
      },
      "left": {
       "heel": [
-       69.76,
+       62.26,
        120.0
       ],
       "toe": [
-       88.76,
+       81.26,
        120.0
       ],
       "bof": [
-       81.54,
+       74.04,
        120.0
       ]
      }
@@ -328,6 +348,9 @@
     "pixelCheck": {
      "nearestBootPixel": 10.35,
      "bootPixelsInsideBall": 0
+    },
+    "plantedBootNearestPixel": {
+     "left": 10.2
     }
    },
    "right-tap": {
@@ -355,15 +378,15 @@
      },
      "left": {
       "heel": [
-       69.76,
+       62.26,
        120.0
       ],
       "toe": [
-       88.76,
+       81.26,
        120.0
       ],
       "bof": [
-       81.54,
+       74.04,
        120.0
       ]
      }
@@ -376,6 +399,9 @@
     "pixelCheck": {
      "nearestBootPixel": 7.69,
      "bootPixelsInsideBall": 0
+    },
+    "plantedBootNearestPixel": {
+     "left": 10.2
     }
    },
    "left-lift": {
@@ -386,15 +412,15 @@
     "boots": {
      "right": {
       "heel": [
-       70.76,
+       63.26,
        120.0
       ],
       "toe": [
-       89.76,
+       82.26,
        120.0
       ],
       "bof": [
-       82.54,
+       75.04,
        120.0
       ]
      },
@@ -421,6 +447,9 @@
     "pixelCheck": {
      "nearestBootPixel": 11.28,
      "bootPixelsInsideBall": 0
+    },
+    "plantedBootNearestPixel": {
+     "right": 9.23
     }
    },
    "left-tap": {
@@ -434,15 +463,15 @@
     "boots": {
      "right": {
       "heel": [
-       70.76,
+       63.26,
        120.0
       ],
       "toe": [
-       89.76,
+       82.26,
        120.0
       ],
       "bof": [
-       82.54,
+       75.04,
        120.0
       ]
      },
@@ -469,6 +498,9 @@
     "pixelCheck": {
      "nearestBootPixel": 7.69,
      "bootPixelsInsideBall": 0
+    },
+    "plantedBootNearestPixel": {
+     "right": 9.23
     }
    }
   }

@@ -204,6 +204,10 @@ def build(sex):
     # Support foot: planted beside and just behind the ball (its toe may pass behind/in front of the ball's back edge,
     # which the two layers draw at the right depth), knee 6 px behind the hip so the thigh stays under the shorts.
     sup_knee_x = near_hip[0] - 6.0
+    # A planted boot never touches the ball: step the support knee back until its boot clears the ball edge by 2 px
+    # (the same clearance the non-contact working foot keeps), so "no contact" is true for the standing foot too.
+    while nearest(place(part, lm, 0.0, planted(lm, sup_knee_x))[0], ball) < BALL_R + 2.0:
+        sup_knee_x -= 0.5
 
     def leg(hip, mode):
         if mode in ('stand', 'support'):
@@ -275,6 +279,18 @@ def check(meta, layers, ball):
     return res
 
 
+def support_check(meta, layers, ball):
+    """Pixel check for every planted (non-working) boot: distance from the ball centre to its nearest opaque pixel."""
+    res = {}
+    for pid, m in meta.items():
+        res[pid] = {}
+        for foot, i in (('right', 2), ('left', 3)):
+            if foot == m['working']:
+                continue
+            res[pid][foot] = round(nearest(layers[pid][i], ball), 2)
+    return res
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     os.makedirs(DOC, exist_ok=True)
@@ -295,7 +311,8 @@ def main():
         sheet.save(os.path.join(OUT, f'{sex}-side.webp'), lossless=True, quality=100, method=6)
         json.dump({'frames': frames, 'meta': {'image': f'{sex}-side.webp', 'size': {'w': sheet.width, 'h': H}, 'scale': '1', 'source': f'sprites-v2/{sex}-training (idle-e torso, {SEX[sex]["leg"][0]} lower leg)'}}, open(os.path.join(OUT, f'{sex}-side.json'), 'w'), indent=1)
         chk = check(meta, layers, ball)
-        report[sex] = {'ball': [round(v, 2) for v in ball], 'ballRadius': BALL_R, 'poses': {p: {**meta[p], 'pixelCheck': chk[p]} for p in meta}}
+        sup = support_check(meta, layers, ball)
+        report[sex] = {'ball': [round(v, 2) for v in ball], 'ballRadius': BALL_R, 'poses': {p: {**meta[p], 'pixelCheck': chk[p], 'plantedBootNearestPixel': sup[p]} for p in meta}}
         # Proof sheet: each pose composed with the approved ball, x4.
         proof = Image.new('RGBA', (W * 4 * len(layers), H * 4), (196, 226, 196, 255))
         for i, (pid, (back, front, _, _)) in enumerate(layers.items()):
