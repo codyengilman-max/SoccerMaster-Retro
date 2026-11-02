@@ -200,7 +200,7 @@ test('Phone poses: only the scripted phone lines show the matching character on 
   const node = (sid: string, speaker: string, text: string) => scenes.find((s) => s.id === sid)!.nodes.find((n) => n.type === 'line' && n.speaker === speaker && n.text!.startsWith(text))!.id;
   const at = async (sid: string, speaker: string, text: string, shot: string) => {
     await stage(page, sid, node(sid, speaker, text));
-    const s = await story(page, (x) => x.art!.backgroundShown && x.art!.cast.filter((c) => c.visible).every((c) => c.state === 'shown'), `${sid} ${shot} loaded`);
+    const s = await story(page, (x) => x.art!.backgroundShown && x.art!.cast.every((c) => c.state !== 'loading') && x.art!.cast.filter((c) => c.visible).every((c) => c.state === 'shown'), `${sid} ${shot} loaded`);
     await page.screenshot({ path: info.outputPath(`${shot}.png`) });
     return shown(s);
   };
