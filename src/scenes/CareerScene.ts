@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { shouldExposeDevMenu } from '../debug/diagnostics';
 import { ATTRIBUTE_EVIDENCE } from '../game/career/config';
-import { ALL_ACTIVITIES, FOCUSES, HOME_ACTIVITIES, SOURCES, activityById, focusById } from '../game/career/catalog';
+import { FOCUSES, HOME_ACTIVITIES, SOURCES, activityById, focusById } from '../game/career/catalog';
 import { substitutes, workableFocuses } from '../game/career/planner';
 import { emptySave, levelSuggestion, TT12_SLOTS, type CareerSave, type Completion, type Tt12Slot } from '../game/career/state';
 import { CareerStore } from '../game/career/store';
@@ -198,7 +198,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     // Pause and speed belong to the draft prototype player only; activity demos keep their own timing.
     const s = this.screen;
     const a = s.kind === 'activity' ? activityById(s.id) : undefined;
-    if (a && this.isViewer(a)) {
+    if (a && this.hasPlayback(a)) {
       if (!this.demoPaused) this.demoT += (delta / 1000) * this.demoSpeed;
       // Teaching demos play once and stop on the last frame; Play or Replay starts again.
       const lesson = teachingFor(a.id);
@@ -259,6 +259,11 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   /** Ball Mastery lesson viewer: an existing non-juggling activity with a sprite demo (controls work; nothing decorative). */
+  /** Activities whose demo honours Pause/Step/0.5x/Replay (and reduced motion): viewer lessons and the promoted v1.1/design step demos (D68). */
+  private hasPlayback(a: Activity): boolean {
+    return this.isViewer(a) || ((a.id.startsWith(DRAFT_PREFIX) || a.id.startsWith(DESIGN_PREFIX)) && a.demo.kind === 'steps' && !sheetBeats(a));
+  }
+
   private isViewer(a: Activity): boolean {
     return sectionOf(a) === 'ballMastery' && !a.id.startsWith(DRAFT_PREFIX) && !a.id.startsWith(DESIGN_PREFIX) && !JUGGLE_PATTERNS[a.id] && !isKeeperExercise(a);
   }
@@ -457,10 +462,10 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         if (!sc.family)
           return {
             title: 'Training Library',
-            body: `${ALL_ACTIVITIES.length} activities in two sections: Juggling and Ball Mastery. All are original home adaptations awaiting coaching review.`,
+            body: `${HOME_ACTIVITIES.length} activities in two sections: Juggling and Ball Mastery. All are original home adaptations awaiting coaching review.`,
             actions: [
-              { name: 'lib-juggling', label: `Juggling (${ALL_ACTIVITIES.filter((a) => sectionOf(a) === 'juggling').length})`, onClick: () => this.go({ kind: 'library', family: 'juggling' }) },
-              { name: 'lib-ballmastery', label: `Ball Mastery (${ALL_ACTIVITIES.filter((a) => sectionOf(a) === 'ballMastery').length})`, onClick: () => this.go({ kind: 'ballMastery' }) },
+              { name: 'lib-juggling', label: `Juggling (${HOME_ACTIVITIES.filter((a) => sectionOf(a) === 'juggling').length})`, onClick: () => this.go({ kind: 'library', family: 'juggling' }) },
+              { name: 'lib-ballmastery', label: `Ball Mastery (${HOME_ACTIVITIES.filter((a) => sectionOf(a) === 'ballMastery').length})`, onClick: () => this.go({ kind: 'ballMastery' }) },
               { name: 'lib-drafts', label: 'Training library v1.1', onClick: () => this.go({ kind: 'drafts' }) },
             ],
           };
@@ -700,7 +705,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           .filter(Boolean)
           .join('\n');
         const actions: Action[] = [];
-        if (viewer)
+        if (this.hasPlayback(a))
           actions.push(
             { name: 'demo-pause', label: this.demoPaused ? 'Play' : 'Pause', onClick: () => ((this.demoPaused = !this.demoPaused), this.render()) },
             { name: 'demo-step', label: 'Step', onClick: () => ((this.demoPaused = true), (this.demoT = nextBeat(demoBeats(a), this.demoT, demoLength(a))), this.render()) },

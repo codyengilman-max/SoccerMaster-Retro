@@ -56,7 +56,7 @@ test('approved v1.1 options and Ball Mastery designs open as regular lessons, ne
   c = await until(page, (x) => x.screen === 'activity', 'design lesson');
   expect(c.text).toContain('COACH CODE: Keep the ball still; alternate light contacts.');
   expect(c.text).not.toMatch(/draft|review only/i);
-  expect(Object.keys(await els(page))).toEqual(expect.arrayContaining(['log-open']));
+  expect(Object.keys(await els(page))).toEqual(expect.arrayContaining(['log-open', 'demo-pause', 'demo-step', 'demo-half', 'demo-replay']));
   await shot(page, info, 'design-lesson');
   await press(page, 'career-back', mode);
   await until(page, (x) => x.screen === 'library', 'dribbling again');
@@ -65,6 +65,7 @@ test('approved v1.1 options and Ball Mastery designs open as regular lessons, ne
   await press(page, 'act-v11-BM02-L1', mode);
   c = await until(page, (x) => x.screen === 'activity', 'v1.1 lesson');
   expect(c.text).not.toMatch(/draft/i);
+  expect(Object.keys(await els(page))).toEqual(expect.arrayContaining(['demo-pause', 'demo-step', 'demo-half', 'demo-replay']));
   await shot(page, info, 'v11-lesson');
   await press(page, 'career-back', mode);
   await until(page, (x) => x.screen === 'library', 'dribbling again');
@@ -92,4 +93,34 @@ test('approved v1.1 options and Ball Mastery designs open as regular lessons, ne
   expect(c.journal).toBe(home.journal);
   expect(c.attributes).toEqual(home.attributes);
   expect(errors).toEqual([]);
+});
+
+test('reduced motion: promoted step demos start paused and stay still', async ({ page }, info) => {
+  const mode = modeFor(info);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  page.on('dialog', (d) => void d.accept('Sam'));
+  await page.goto('/?debug=1&dev');
+  await waitForScene(page, 'start');
+  await pressAny(page, 'career-button', mode);
+  await waitForScene(page, 'career');
+  await until(page, (c) => c.status === 'ok' && c.screen === 'create', 'create');
+  await press(page, 'pos-MID', mode);
+  await until(page, (c) => c.screen === 'setup', 'setup');
+  await press(page, 'career-home', mode);
+  await until(page, (c) => c.screen === 'home', 'home');
+  await press(page, 'nav-ballmastery', mode);
+  await until(page, (x) => x.screen === 'ballMastery', 'ball mastery');
+  await press(page, 'lib-dribbling', mode);
+  await until(page, (x) => x.screen === 'library', 'dribbling');
+  await press(page, 'act-bmd-055', mode);
+  await until(page, (x) => x.screen === 'activity', 'design lesson');
+  await page.waitForTimeout(300);
+  const canvas = page.locator('canvas');
+  const a = await canvas.screenshot();
+  await page.waitForTimeout(1500);
+  expect((await canvas.screenshot()).equals(a)).toBe(true);
+  // Play starts it; the picture then changes.
+  await press(page, 'demo-pause', mode);
+  await page.waitForTimeout(1500);
+  expect((await canvas.screenshot()).equals(a)).toBe(false);
 });
