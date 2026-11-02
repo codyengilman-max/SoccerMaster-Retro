@@ -423,3 +423,11 @@ From the owner's consolidated decisions after the read-only audit of `main` `04e
 - Owner option A: the weekly board drops Weekly Focus and Team Training (both moved under Progress); the story's Home learning task stays so Week 6+ progression is unchanged.
 - The foot inset is a crop of the same body frame, so body and foot cannot disagree; the left foot uses the separately drawn mirror poses, never a flipped image.
 - Only `dr-inside-cut` gets a teaching page until the owner reviews the slice.
+
+## D68: Training library v1.1 and Ball Mastery designs become regular lessons (owner, 2026-11)
+
+Owner instruction: "Make them not drafts add to game".
+- The 100 v1.1 options (20 families) are listed as ordinary lessons in the Juggling / Ball Mastery category they count toward, with no draft labels. IDs keep `v11-<level>` so existing journals, plans and swaps still resolve. Options with a demo prototype open on that player; the rest open the regular lesson page with the step demo.
+- The 14 Ball Mastery designs v1.0: BM-002 stays merged into Inside-Cut Escape (confirmed equivalent). The other 13 become Ball Mastery > Dribbling lessons `bmd-<nnn>` built from the package's cue and phases; the ambiguous matches are separate lessons, never replacements. The package files are unchanged (they still say `design_draft`).
+- Normal journal rules apply: logging gives no attributes; credit only through scheduled sessions, once each. Coaching review fields stay `pending` (honest: not coach-certified), with notes "Approved by owner".
+- Viewer lessons gain Replay next to Pause / Step / 0.5×.

@@ -12,7 +12,7 @@ describe('Ball Mastery teaching pages (art v1 slice)', () => {
     const a = activityById('dr-inside-cut')!;
     expect(a.title).toBe('Inside-Cut Escape');
     expect(lesson.phases.map((p) => p.step)).toEqual([0, 1, 1, 2]);
-    expect(ASSIGNABLE_DESIGNS).toEqual([]);
+    expect(ASSIGNABLE_DESIGNS).not.toContain('BM-002');
   });
 
   it('captions are the catalog steps, so mechanics come from the reviewed library', () => {

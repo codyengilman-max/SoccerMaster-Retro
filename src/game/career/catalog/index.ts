@@ -7,6 +7,7 @@ import { FIRST_TOUCH } from './firstTouch';
 import { JUGGLING } from './juggling';
 import { PASSING } from './passing';
 import { DRAFT_ACTIVITIES } from '../curriculum/drafts';
+import { DESIGN_ACTIVITIES } from '../ballMastery';
 
 /** Official pages checked (HTTP 200, relevant content) before attribution. Activities are original adaptations. */
 export const SOURCES: Readonly<Record<SourceId, { readonly title: string; readonly url: string }>> = {
@@ -21,8 +22,8 @@ export const CORE_ACTIVITIES: readonly Activity[] = [...FIRST_TOUCH, ...PASSING,
 export const JUGGLING_LADDER: readonly Activity[] = JUGGLING;
 export const ALL_ACTIVITIES: readonly Activity[] = [...CORE_ACTIVITIES, ...JUGGLING];
 
-/** Everything a plan, swap or journal entry may reference: the 92 originals plus the owner-enabled v1.1 drafts. */
-export const HOME_ACTIVITIES: readonly Activity[] = [...ALL_ACTIVITIES, ...DRAFT_ACTIVITIES];
+/** Everything a plan, swap or journal entry may reference: the 92 originals, the v1.1 library and the Ball Mastery designs (owner-approved). */
+export const HOME_ACTIVITIES: readonly Activity[] = [...ALL_ACTIVITIES, ...DRAFT_ACTIVITIES, ...DESIGN_ACTIVITIES];
 
 const byId = new Map(HOME_ACTIVITIES.map((a) => [a.id, a]));
 export function activityById(id: string): Activity | undefined {

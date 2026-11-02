@@ -69,7 +69,7 @@ test('draft library is review-only: cards and demo prototypes, never in the plan
   await until(page, (c) => c.screen === 'library', 'library');
   await press(page, 'lib-drafts', mode);
   let c = await until(page, (x) => x.screen === 'drafts', 'drafts');
-  expect(c.text).toContain('ENABLED BY OWNER, NOT COACH-CERTIFIED');
+  expect(c.text).toContain('APPROVED BY OWNER');
   expect(c.text).toContain('published: 0');
   expect(c.text).toContain('No eligible reviewed activity');
   await fits(page);
@@ -80,7 +80,8 @@ test('draft library is review-only: cards and demo prototypes, never in the plan
   await fits(page);
   await press(page, 'draft-level-JU01-L1', mode);
   c = await until(page, (x) => x.screen === 'draftLevel', 'level');
-  expect(c.text).toContain('DRAFT');
+  expect(c.text).toContain('Counts toward');
+  expect(c.text).not.toContain('DRAFT');
   await fits(page);
   await expect.poll(() => caption(page)).toContain('PROTOTYPE');
   await press(page, 'demo-pause', mode);

@@ -1,7 +1,6 @@
 /**
  * Ball Mastery demonstration designs v1.0, loaded from the unchanged package in research/.
- * Review only: no design here is a player lesson. Assignments, credit and growth still come only from the
- * existing catalog (catalog/index.ts) and the fail-closed release gate (curriculum/release.ts).
+ * Owner-approved as Ball Mastery lessons (D68): see `DESIGN_ACTIVITIES`. Credit and growth follow the normal journal rules.
  * Matches to existing lessons link designs and their sources to those lessons; they never replace them.
  */
 import designsRaw from '../../../research/training/ball-mastery-designs-v1.0/designs.json?raw';
@@ -64,15 +63,12 @@ export const DESIGN_SOURCES: Readonly<Record<string, DesignSource>> = Object.fro
 );
 
 /**
- * A design may only reach players once it has coach approval, frame-reviewed source media and publication
- * switched on in the package, AND an owner release record exists. None of the 14 has any of these, and this
- * build adds no release path for them, so nothing is assignable.
+ * Owner decision (Cody, 2026-11, D68): the designs are regular Ball Mastery lessons. The one confirmed equivalent
+ * (BM-002 = Inside-Cut Escape) is already that lesson, so it is not added twice.
  */
 export function designAssignable(d: BallMasteryDesign): boolean {
-  void d;
-  return false;
+  return DESIGN_MATCHES[d.id]?.verdict !== 'equivalent';
 }
-export const ASSIGNABLE_DESIGNS: readonly string[] = BALL_MASTERY_DESIGNS.filter(designAssignable).map((d) => d.id);
 
 export type MatchVerdict = 'equivalent' | 'ambiguous' | 'new';
 export interface DesignMatch {
@@ -124,3 +120,51 @@ export function sectionOf(a: Pick<Activity, 'skillFamilyId'>): HomeSection | nul
   for (const s of Object.keys(HOME_SECTIONS) as HomeSection[]) if ((HOME_SECTIONS[s] as readonly string[]).includes(a.skillFamilyId)) return s;
   return null;
 }
+
+export const DESIGN_PREFIX = 'bmd-';
+export const designActivityId = (designId: string): string => `${DESIGN_PREFIX}${designId.replace(/^BM-/, '')}`;
+const TURNS = new Set(['BM-003', 'BM-009', 'BM-012', 'BM-017', 'BM-029', 'BM-053']);
+const footOf = (c: string): 'left' | 'right' | 'either' => (c.startsWith('L ') ? 'left' : c.startsWith('R ') ? 'right' : 'either');
+const ballOf = (c: string): 'inside' | 'outside' | 'sole' | 'front' => (c.endsWith('inside') ? 'inside' : c.endsWith('outside') ? 'outside' : c.endsWith('sole') ? 'sole' : 'front');
+
+function designActivity(d: BallMasteryDesign): Activity {
+  const ph = d.phases.map((p) => `${p.title}: ${p.ballAction || p.title}.`);
+  const steps: [string, string, string] = [ph[0] ?? d.cue, ph[1] ?? d.cue, ph.slice(2).join(' ') || d.cue];
+  return {
+    id: designActivityId(d.id),
+    version: 1,
+    skillFamilyId: 'dribbling',
+    variantGroupId: designActivityId(d.id),
+    focusId: TURNS.has(d.id) ? 'dr-change-direction' : 'dr-close-control',
+    title: d.title,
+    objective: d.cue,
+    relatedAttribute: 'dribbling',
+    entryLevel: 1,
+    variants: [],
+    equipment: { required: ['ball'], optional: [] },
+    space: 'small',
+    indoor: true,
+    outdoor: true,
+    strikingArea: false,
+    steps,
+    cue: d.cue,
+    success: `You can repeat it with the ball under control: ${d.cue}`,
+    mistake: { mistake: 'Rushing the contacts and losing the ball.', correction: 'Slow down; make each step clean, then build speed.' },
+    easier: 'Go slower and pause between steps.',
+    harder: 'Repeat at a steady pace with the other foot.',
+    ballOnly: null,
+    application: false,
+    selfReport: ['completion', 'rating', 'foot', 'reflection'],
+    personalBestLabel: null,
+    limitations: [d.reviewQuestion],
+    sources: [],
+    sourceNote: `Ball Mastery design ${d.id} v1.0 (approved by owner). Sources: ${d.sourceIds.map((id) => DESIGN_SOURCES[id]?.title ?? id).join('; ')}.`,
+    review: { schema: 'auto', editorial: 'pending', coaching: 'pending', notes: 'Approved by owner' },
+    demo: { kind: 'steps', frames: d.phases.map((p) => ({ caption: p.title, foot: footOf(p.contact), ball: ballOf(p.contact) })) },
+  };
+}
+
+/** The approved designs as Ball Mastery > Dribbling lessons. */
+export const DESIGN_ACTIVITIES: readonly Activity[] = BALL_MASTERY_DESIGNS.filter(designAssignable).map(designActivity);
+
+export const ASSIGNABLE_DESIGNS: readonly string[] = BALL_MASTERY_DESIGNS.filter(designAssignable).map((d) => d.id);

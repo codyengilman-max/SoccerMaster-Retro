@@ -3,6 +3,7 @@ import { ALL_ACTIVITIES, CORE_ACTIVITIES, JUGGLING_LADDER } from '../src/game/ca
 import { HOME_SECTIONS, sectionOf } from '../src/game/career/ballMastery';
 import { CAREER_CONFIG } from '../src/game/career/config';
 import { DRAFT_ACTIVITIES } from '../src/game/career/curriculum/drafts';
+import { DESIGN_ACTIVITIES } from '../src/game/career/ballMastery';
 import { emptySave, reduce, type CareerSave, type JournalEntry } from '../src/game/career/state';
 import { homeTasks, weekAssignments } from '../src/game/story/facts';
 
@@ -41,7 +42,7 @@ describe('Home Training consolidation: two sections, migration and home learning
   const learning = (s: CareerSave) => homeTasks(weekAssignments(s, 6)).find((t) => t.key === 'learning')!;
 
   it('every existing home activity sits in exactly one of the two sections, ids unchanged', () => {
-    const all = [...ALL_ACTIVITIES, ...DRAFT_ACTIVITIES];
+    const all = [...ALL_ACTIVITIES, ...DRAFT_ACTIVITIES, ...DESIGN_ACTIVITIES];
     expect(new Set(all.map((a) => a.id)).size).toBe(all.length);
     for (const a of all) expect(['juggling', 'ballMastery'], a.id).toContain(sectionOf(a));
     expect(ALL_ACTIVITIES.filter((a) => sectionOf(a) === 'juggling').map((a) => a.id)).toEqual(JUGGLING_LADDER.map((a) => a.id));

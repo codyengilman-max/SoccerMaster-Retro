@@ -10,7 +10,7 @@ Owner request 2026-11: Home Training has exactly two sections, Juggling and Ball
 | Ball Mastery button | **Ball Mastery** card (progress, First touch/Passing and Home learning tasks inside it) |
 | Required task buttons (Juggling task, Control and first-touch / passing work, Home learning) | Shown as to do/done inside the card they belong to; tapping the card opens the section |
 | Progress (Weekly Review, Home practice log, Home sessions plan / Choose a focus, Team Training, Character Development) | Removed from Home Training. Team Training stays reachable from Story, My Player and after matches; Character Development from My Player; the saved focus plan and history are kept, not deleted |
-| Training Library (Juggling / Ball Mastery / Draft library) | Removed from Home Training; the same lessons are inside the two cards. The draft library and Ball Mastery designs stay in Review & Lab |
+| Training Library (Juggling / Ball Mastery / Draft library) | Removed from Home Training; the same lessons are inside the two cards. The v1.1 options and Ball Mastery designs are regular lessons in their category (D68) |
 | Log this session / Log extra practice | **Log practice** inside each lesson (scheduled sessions still say Log this session) |
 
 ## Approved catalog activities
@@ -110,33 +110,52 @@ Owner request 2026-11: Home Training has exactly two sections, Juggling and Ball
 | `jg-7` | Ladder 7: Juggle, settle, dribble | Juggling | Juggling | pending (unchanged) |
 | `jg-8` | Ladder 8: Juggle, settle, pass | Juggling | Juggling | pending (unchanged) |
 
-## v1.1 draft families (owner-enabled, not coach-certified)
+## v1.1 library families (owner-approved lessons, D68; 5 options each, listed directly in the category)
 
 Listed inside the matching category with a DRAFT label; never put in plans, required tasks or credit. Unchanged IDs `v11-<level>`.
 
 | Family | Name | After |
 |---|---|---|
-| `BM01` | Inside-touch rhythm | Ball Mastery > Dribbling, turns and feints (draft) |
-| `BM02` | Lateral sole roll | Ball Mastery > Dribbling, turns and feints (draft) |
-| `BM03` | Forward-back sole control | Ball Mastery > Dribbling, turns and feints (draft) |
-| `DR01` | Inside-outside lane | Ball Mastery > Dribbling, turns and feints (draft) |
-| `DR02` | Gentle slalom | Ball Mastery > Dribbling, turns and feints (draft) |
-| `DR03` | Stop, look, restart | Ball Mastery > Dribbling, turns and feints (draft) |
-| `TR01` | Pull-back turn | Ball Mastery > Dribbling, turns and feints (draft) |
-| `TR02` | Outside cut | Ball Mastery > Dribbling, turns and feints (draft) |
-| `TR03` | Cruyff foundation | Ball Mastery > Dribbling, turns and feints (draft) |
-| `PA01` | Ground target pass | Ball Mastery > Passing and control (draft) |
-| `PA02` | Two-touch wall rhythm | Ball Mastery > Passing and control (draft) |
-| `PA03` | One-touch wall return | Ball Mastery > Passing and control (draft) |
-| `RC01` | Receive into an exit lane | Ball Mastery > First touch (draft) |
-| `RC02` | Receive, roll, pass | Ball Mastery > First touch (draft) |
-| `JU01` | Drop, touch, catch | Juggling (draft) |
-| `JU02` | Bounce juggling | Juggling (draft) |
-| `JU03` | Air touch to ground control | Juggling (draft) |
-| `FI01` | Placed finish foundation | Ball Mastery > Finishing (draft) |
-| `FI02` | Controlled laces contact | Ball Mastery > Finishing (draft) |
-| `CO01` | Choose your combination | Ball Mastery > Dribbling, turns and feints (draft) |
+| `BM01` | Inside-touch rhythm | Ball Mastery > Dribbling, turns and feints |
+| `BM02` | Lateral sole roll | Ball Mastery > Dribbling, turns and feints |
+| `BM03` | Forward-back sole control | Ball Mastery > Dribbling, turns and feints |
+| `DR01` | Inside-outside lane | Ball Mastery > Dribbling, turns and feints |
+| `DR02` | Gentle slalom | Ball Mastery > Dribbling, turns and feints |
+| `DR03` | Stop, look, restart | Ball Mastery > Dribbling, turns and feints |
+| `TR01` | Pull-back turn | Ball Mastery > Dribbling, turns and feints |
+| `TR02` | Outside cut | Ball Mastery > Dribbling, turns and feints |
+| `TR03` | Cruyff foundation | Ball Mastery > Dribbling, turns and feints |
+| `PA01` | Ground target pass | Ball Mastery > Passing and control |
+| `PA02` | Two-touch wall rhythm | Ball Mastery > Passing and control |
+| `PA03` | One-touch wall return | Ball Mastery > Passing and control |
+| `RC01` | Receive into an exit lane | Ball Mastery > First touch |
+| `RC02` | Receive, roll, pass | Ball Mastery > First touch |
+| `JU01` | Drop, touch, catch | Juggling |
+| `JU02` | Bounce juggling | Juggling |
+| `JU03` | Air touch to ground control | Juggling |
+| `FI01` | Placed finish foundation | Ball Mastery > Finishing |
+| `FI02` | Controlled laces contact | Ball Mastery > Finishing |
+| `CO01` | Choose your combination | Ball Mastery > Dribbling, turns and feints |
 
 ## Ball Mastery designs v1.0 (14)
 
-Review-only, unchanged: listed only in Review & Lab > Ball Mastery designs, never inside Home Training or in assignments.
+Owner-approved (D68): 13 are Ball Mastery > Dribbling lessons; BM-002 is Inside-Cut Escape (table at the end).
+
+## Ball Mastery designs v1.0 (owner-approved lessons, D68)
+
+| Design | Title | Lesson |
+|---|---|---|
+| `BM-055` | Sole taps | `bmd-055` Ball Mastery > Dribbling |
+| `BM-056` | Inside-foot shuffles | `bmd-056` Ball Mastery > Dribbling |
+| `BM-071` | Lateral sole roll | `bmd-071` Ball Mastery > Dribbling |
+| `BM-081` | Inside pulls | `bmd-081` Ball Mastery > Dribbling |
+| `BM-082` | Tap • tap • roll | `bmd-082` Ball Mastery > Dribbling |
+| `BM-083` | Inside squish | `bmd-083` Ball Mastery > Dribbling |
+| `BM-009` | One-foot dribble cut | `bmd-009` Ball Mastery > Dribbling |
+| `BM-002` | Inside cut | merged into `dr-inside-cut` Inside-Cut Escape |
+| `BM-003` | Outside cut | `bmd-003` Ball Mastery > Dribbling |
+| `BM-012` | Hook / Cruyff turn | `bmd-012` Ball Mastery > Dribbling |
+| `BM-029` | Side step | `bmd-029` Ball Mastery > Dribbling |
+| `BM-017` | Sole stop / start | `bmd-017` Ball Mastery > Dribbling |
+| `BM-018` | Inside-foot pull / push | `bmd-018` Ball Mastery > Dribbling |
+| `BM-053` | V pull and exit | `bmd-053` Ball Mastery > Dribbling |

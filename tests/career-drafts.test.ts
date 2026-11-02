@@ -32,6 +32,7 @@ describe('training library v1.1 drafts in Home Training', () => {
       expect(activityById(a.id)).toBe(a);
       expect(a.review.coaching).toBe('pending');
       expect(a.review.notes).toBe(DRAFT_STATUS);
+      expect(`${a.title} ${a.objective} ${a.limitations.join(' ')}`).not.toMatch(/draft/i);
     }
   });
 

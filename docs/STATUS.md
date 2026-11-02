@@ -18,6 +18,10 @@ PRs #52–#56 (owner decisions, tactics comparison, All36 weekly Team Training, 
 
 Verification: Chromium phone emulation and desktop only. Not yet verified on a real iPhone (PR G).
 
+## Home Training: v1.1 library and Ball Mastery designs added as regular lessons (D68, stacked on the two-card branch, not merged, not deployed)
+
+- 100 v1.1 options and 13 designs (BM-002 is Inside-Cut Escape) are listed in their category with no draft labels. IDs, saves and journal rules unchanged. Viewer lessons have Replay.
+
 ## Home Training: exactly two sections (owner request, branch `devin/*-home-two-cards`, from `main` 8241d68, not merged, not deployed)
 
 - **Screen:** Home Training shows two cards, Juggling and Ball Mastery, plus Back/Home/Menu. Each card carries its mastery phase, practices logged this week and its required story tasks (to do/done). Progress, Team Training, Choose a focus, Home Practice and the Training Library index are no longer on it; their screens and saved data stay (Team Training from Story, My Player and after matches).

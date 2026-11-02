@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { shouldExposeDevMenu } from '../debug/diagnostics';
 import { ATTRIBUTE_EVIDENCE } from '../game/career/config';
-import { ALL_ACTIVITIES, FOCUSES, SOURCES, activityById, focusById } from '../game/career/catalog';
+import { ALL_ACTIVITIES, FOCUSES, HOME_ACTIVITIES, SOURCES, activityById, focusById } from '../game/career/catalog';
 import { substitutes, workableFocuses } from '../game/career/planner';
 import { emptySave, levelSuggestion, TT12_SLOTS, type CareerSave, type Completion, type Tt12Slot } from '../game/career/state';
 import { CareerStore } from '../game/career/store';
@@ -24,7 +24,7 @@ import { orientationOf } from '../render/layout';
 import { PlayerArt, atlasKey } from '../render/art/playerArt';
 import { SPRITE_CELL } from '../render/art/spriteSets';
 import { DEMO_BALL_PEAK, JUGGLE_PATTERNS, demoBeats, demoLength, demoPose, demoSet, isKeeperExercise, nextBeat, sheetBeats } from '../render/art/homeDemo';
-import { BALL_MASTERY_DESIGNS, DESIGN_MATCHES, DESIGN_SOURCES, HOME_SECTIONS, designById, designsFor, sectionOf } from '../game/career/ballMastery';
+import { BALL_MASTERY_DESIGNS, DESIGN_PREFIX, DESIGN_MATCHES, DESIGN_SOURCES, HOME_SECTIONS, designById, designsFor, sectionOf } from '../game/career/ballMastery';
 import { ensureJuggleSheet, juggleKey } from '../render/art/juggleArt';
 import { JUGGLE_SHEET } from '../render/art/juggleSheet';
 import { BM_SHEET } from '../render/art/bmSheet';
@@ -260,7 +260,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
 
   /** Ball Mastery lesson viewer: an existing non-juggling activity with a sprite demo (controls work; nothing decorative). */
   private isViewer(a: Activity): boolean {
-    return sectionOf(a) === 'ballMastery' && !a.id.startsWith(DRAFT_PREFIX) && !JUGGLE_PATTERNS[a.id] && !isKeeperExercise(a);
+    return sectionOf(a) === 'ballMastery' && !a.id.startsWith(DRAFT_PREFIX) && !a.id.startsWith(DESIGN_PREFIX) && !JUGGLE_PATTERNS[a.id] && !isKeeperExercise(a);
   }
 
   private go(s: Screen): void {
@@ -461,7 +461,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             actions: [
               { name: 'lib-juggling', label: `Juggling (${ALL_ACTIVITIES.filter((a) => sectionOf(a) === 'juggling').length})`, onClick: () => this.go({ kind: 'library', family: 'juggling' }) },
               { name: 'lib-ballmastery', label: `Ball Mastery (${ALL_ACTIVITIES.filter((a) => sectionOf(a) === 'ballMastery').length})`, onClick: () => this.go({ kind: 'ballMastery' }) },
-              { name: 'lib-drafts', label: 'Draft library v1.1 (owner-enabled)', onClick: () => this.go({ kind: 'drafts' }) },
+              { name: 'lib-drafts', label: 'Training library v1.1', onClick: () => this.go({ kind: 'drafts' }) },
             ],
           };
         return {
@@ -472,9 +472,19 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             ...this.requiredTasks().filter((t) => t.key === sc.family).map((t) => `This week: ${t.label}: ${t.done ? 'done' : 'not done yet'}`),
           ].join('\n'),
           actions: [
-            ...ALL_ACTIVITIES.filter((a) => a.skillFamilyId === sc.family).map((a) => ({ name: `act-${a.id}`, label: `${a.title} · ${LEVEL_NAMES[a.entryLevel]}`, onClick: () => this.go({ kind: 'activity', id: a.id, sessionId: null, index: 0 }) })),
-            // The owner-enabled v1.1 drafts sit in the skill they count toward, labelled as drafts.
-            ...(CURRICULUM.ok ? CURRICULUM.manifest.families.filter((f) => CATEGORY_SKILL_AREA[f.category] === sc.family) : []).map((f) => ({ name: `draft-${f.id}`, label: `${f.title} · draft (${f.levels.length})`, onClick: () => this.go({ kind: 'draftFamily', id: f.id }) })),
+            // Every lesson in this skill: the 92 originals, then the owner-approved v1.1 library and Ball Mastery designs (D68).
+            // v1.1 options with a demo prototype open on its player; the rest open the regular lesson page.
+            ...HOME_ACTIVITIES.filter((a) => a.skillFamilyId === sc.family).map((a) => {
+              const level = a.id.startsWith(DRAFT_PREFIX) ? a.id.slice(DRAFT_PREFIX.length) : null;
+              return {
+                name: `act-${a.id}`,
+                label: `${a.title} · ${LEVEL_NAMES[a.entryLevel]}`,
+                onClick: () =>
+                  level && prototypeFor(level)
+                    ? ((this.demoT = 0), (this.demoPaused = this.reducedMotion), this.go({ kind: 'draftLevel', id: level }))
+                    : this.go({ kind: 'activity', id: a.id, sessionId: null, index: 0 }),
+              };
+            }),
           ],
         };
       }
@@ -482,7 +492,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         const fams = HOME_SECTIONS.ballMastery;
         const req = this.requiredTasks().filter((t) => t.key !== 'juggling');
         const due = new Set(req.filter((t) => !t.done).map((t) => t.key as string));
-        const count = (fam: string) => ALL_ACTIVITIES.filter((a) => a.skillFamilyId === fam).length + (CURRICULUM.ok ? CURRICULUM.manifest.families.filter((f) => CATEGORY_SKILL_AREA[f.category] === fam).length : 0);
+        const count = (fam: string) => HOME_ACTIVITIES.filter((a) => a.skillFamilyId === fam).length;
         return {
           title: 'Ball Mastery',
           body: [
@@ -496,7 +506,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       case 'bmDesigns':
         return {
           title: 'Ball Mastery designs v1.0',
-          body: `REVIEW ONLY. ${BALL_MASTERY_DESIGNS.length} storyboard designs. None is assigned to players: no coach approval, no reviewed demonstration media. Existing lessons are unchanged.`,
+          body: `${BALL_MASTERY_DESIGNS.length} designs, approved by the owner. They are Ball Mastery > Dribbling lessons; BM-002 is Inside-Cut Escape. Existing lessons are unchanged.`,
           actions: BALL_MASTERY_DESIGNS.map((d) => ({ name: `bm-design-${d.id}`, label: `${d.id} ${d.title} · ${DESIGN_MATCHES[d.id]?.verdict ?? 'unmatched'}`, onClick: () => this.go({ kind: 'bmDesign', id: d.id }) })),
         };
       case 'bmDesign': {
@@ -505,9 +515,9 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         const m = DESIGN_MATCHES[d.id];
         const linked = (m?.activities ?? []).map((id) => activityById(id)).filter((a): a is Activity => !!a);
         return {
-          title: `DRAFT · ${d.id} ${d.title}`,
+          title: `${d.id} ${d.title}`,
           body: [
-            `REVIEW ONLY · ${d.status.replace(/_/g, ' ')} · ${d.evidence}. Not assigned to players.`,
+            `Approved by owner · ${d.evidence}. Ball Mastery > Dribbling lesson.`,
             `Coach Code: ${d.cue}`,
             ...d.phases.map((p, i) => `${i + 1}. ${p.title} (${p.contact})${p.ballAction ? `: ${p.ballAction}` : ''}`),
             `Review question: ${d.reviewQuestion}`,
@@ -524,7 +534,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           title: 'Review & Lab',
           body: [
             'Review areas for the combined preview. Nothing here changes your saved player, plan, journal or credit.',
-            `Training Review: draft library v1.1, review only, not in player plans.`,
+            `Training library v1.1 and Ball Mastery designs: approved by the owner, played from Home Training.`,
             `Soccer Logic Review: ${n} research outlines, catalog only, none drives the game (goal ${SCENARIO_GOAL}+).`,
             `Coach Moments: play a 9v9 match from a link ending in ?coach.`,
             'Art Gallery: Graphics v1.1 cutscene and player art with review status; most new character/outfit art is awaiting your individual review.',
@@ -532,8 +542,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           ].join('\n'),
           actions: [
             ...(__LAB__ ? [{ name: 'hub-lab', label: 'Gameplay Lab', onClick: () => this.openLab() }] : []),
-            { name: 'hub-training', label: 'Training Review (drafts)', onClick: () => this.go({ kind: 'drafts' }) },
-            { name: 'hub-ballmastery', label: 'Ball Mastery designs (review)', onClick: () => this.go({ kind: 'bmDesigns' }) },
+            { name: 'hub-training', label: 'Training library v1.1', onClick: () => this.go({ kind: 'drafts' }) },
+            { name: 'hub-ballmastery', label: 'Ball Mastery designs', onClick: () => this.go({ kind: 'bmDesigns' }) },
             { name: 'hub-logic', label: 'Soccer Logic Review', onClick: () => this.go({ kind: 'logic', group: null }) },
             { name: 'hub-art', label: 'Art Gallery (Graphics v1)', onClick: () => this.openGallery() },
             { name: 'hub-rankings', label: 'Rankings (sample season)', onClick: () => this.openRankingsSample() },
@@ -581,7 +591,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         if (!CURRICULUM.ok) return { title: 'Draft library', body: `Could not load the draft library (${CURRICULUM.error}). Existing activities are unaffected.`, actions: [] };
         const m = CURRICULUM.manifest;
         return {
-          title: 'Draft library v1.1',
+          title: 'Training library v1.1',
           body: `${DRAFT_STATUS.toUpperCase()}. ${m.families.length} exercise families, ${m.families.length * 5} practice options, version ${m.contentVersion}. Swap an option into a scheduled Home Training session with the same focus, or log it as extra practice. Credit rules are unchanged: one per scheduled session, at most three a week, never game attributes. Coach-certified options (published: ${publishedLevels().length}).\nFamilies organize practice inside the seven skill areas; your levels do not change.\nAutomatic recommendations: ${EMPTY_STATE}`,
           actions: m.families.map((f) => ({ name: `draft-${f.id}`, label: `${f.id} ${f.title} · ${SKILL_FAMILY_LABELS[CATEGORY_SKILL_AREA[f.category]]}`, onClick: () => this.go({ kind: 'draftFamily', id: f.id }) })),
         };
@@ -592,7 +602,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         const rv = COACHING_REVIEW[f.id]!;
         const mp = FAMILY_MAPPING[f.id]!;
         return {
-          title: `DRAFT · ${f.id} ${f.title}`,
+          title: `${f.id} ${f.title}`,
           body: [
             `Skill area: ${SKILL_FAMILY_LABELS[CATEGORY_SKILL_AREA[f.category]]}. Needs: ${f.requiredCapabilities.join(', ').replace(/_/g, ' ')}.`,
             `Coaching review (AI-assisted, open): ${rv.disposition.replace('_', ' ')}. ${rv.note}`,
@@ -613,7 +623,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         const claims = m.claims.filter((c) => l.claimIds.includes(c.id));
         // Lesson first; the evidence and prototype notes open with More tips.
         const body = [
-          `DRAFT (${DRAFT_STATUS.toLowerCase()}). Counts toward ${SKILL_FAMILY_LABELS[CATEGORY_SKILL_AREA[f.category]]}.`,
+          `Counts toward ${SKILL_FAMILY_LABELS[CATEGORY_SKILL_AREA[f.category]]}.`,
           `Setup: ${l.setup}`,
           ...l.steps.map((x, i) => `${i + 1}. ${x}`),
           `Foot: ${l.footMode}`,
@@ -637,7 +647,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           : [];
         actions.unshift({ name: 'draft-log', label: 'Log practice', onClick: () => this.openLog(draftActivityId(l.id), null) });
         actions.push({ name: 'teach-tips', label: this.teachTips ? 'Hide tips' : 'More tips', on: this.teachTips, onClick: () => ((this.teachTips = !this.teachTips), this.render()) });
-        return { title: `DRAFT · ${l.id} ${f.title}`, body, actions };
+        return { title: activityById(draftActivityId(l.id))?.title ?? f.title, body, actions };
       }
       case 'activity': {
         const a = activityById(sc.id)!;
@@ -677,7 +687,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           `Limits: ${a.limitations.join(' ')}`,
           `Source: ${a.sources.map((r) => SOURCES[r.id].title).join('; ') || a.sourceNote}. ${a.sourceNote}`,
           `Review: coaching ${a.review.coaching}.`,
-          ...links.map(({ design: d, match: m }) => `Ball Mastery design ${d.id} ${d.title}: review only, ${m.verdict === 'equivalent' ? 'same move' : 'possible match, needs review'}. Sources: ${d.sourceIds.map((id) => DESIGN_SOURCES[id]?.title ?? id).join('; ')}.`),
+          ...links.map(({ design: d, match: m }) => `Ball Mastery design ${d.id} ${d.title}: ${m.verdict === 'equivalent' ? 'same move as this lesson' : 'similar move, its own lesson in Dribbling'}. Sources: ${d.sourceIds.map((id) => DESIGN_SOURCES[id]?.title ?? id).join('; ')}.`),
         ];
         const body = [
           `COACH CODE: ${a.cue}`,
@@ -695,6 +705,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             { name: 'demo-pause', label: this.demoPaused ? 'Play' : 'Pause', onClick: () => ((this.demoPaused = !this.demoPaused), this.render()) },
             { name: 'demo-step', label: 'Step', onClick: () => ((this.demoPaused = true), (this.demoT = nextBeat(demoBeats(a), this.demoT, demoLength(a))), this.render()) },
             { name: 'demo-half', label: this.demoSpeed < 1 ? '0.5× (on)' : '0.5×', on: this.demoSpeed < 1, onClick: () => ((this.demoSpeed = this.demoSpeed < 1 ? 1 : 0.5), this.render()) },
+            { name: 'demo-replay', label: 'Replay', onClick: () => ((this.demoT = 0), (this.demoPaused = false), this.render()) },
           );
         actions.push({ name: 'log-open', label: sc.sessionId ? 'Log this session' : 'Log practice', onClick: () => this.openLog(a.id, sc.sessionId) });
         actions.push({ name: 'teach-tips', label: this.teachTips ? 'Hide tips' : 'More tips', on: this.teachTips, onClick: () => ((this.teachTips = !this.teachTips), this.render()) });
@@ -707,7 +718,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             { name: 'demo-miss', label: this.demoMiss ? 'Show the catch' : 'Show a miss', on: this.demoMiss, onClick: () => ((this.demoMiss = !this.demoMiss), (this.demoT = 0), this.render()) },
             { name: 'demo-replay', label: 'Replay', onClick: () => ((this.demoT = 0), this.render()) },
           );
-        return { title: a.title, body, actions, ...(a.id.startsWith(DRAFT_PREFIX) ? {} : { demo: a }) };
+        return { title: a.title, body, actions, demo: a };
       }
       case 'log': {
         const a = activityById(sc.id)!;

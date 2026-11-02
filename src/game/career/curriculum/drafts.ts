@@ -1,14 +1,15 @@
 /**
- * Training library v1.1 options as Home Training activities. Owner decision (Cody, 2026-10-16): the drafts are
- * enabled in the game. They stay drafts: not coach-certified, no demo assets. They go through the normal
- * journal rules (one credit per scheduled session, at most three a week, never game attributes).
+ * Training library v1.1 options as Home Training activities. Owner decisions (Cody): enabled 2026-10-16, then made
+ * regular lessons 2026-11 (D68): listed in Juggling / Ball Mastery like any other lesson, no draft labels. IDs keep
+ * the v11- prefix so saved journals still resolve. Normal journal rules (one credit per scheduled session, at most
+ * three a week, never game attributes).
  */
 import type { Activity } from '../types';
 import { CURRICULUM, type CurriculumState } from './index';
 import type { Category, Family, Level } from './manifest';
 import { CATEGORY_SKILL_AREA } from './mapping';
 
-export const DRAFT_STATUS = 'Enabled by owner, not coach-certified';
+export const DRAFT_STATUS = 'Approved by owner';
 export const DRAFT_PREFIX = 'v11-';
 
 const CATEGORY_FOCUS: Readonly<Record<Category, string>> = {
@@ -33,8 +34,8 @@ function toActivity(f: Family, l: Level): Activity {
     skillFamilyId: area,
     variantGroupId: `${DRAFT_PREFIX}${f.id}`,
     focusId: CATEGORY_FOCUS[f.category],
-    title: `${f.title} (${l.id})`,
-    objective: `${DRAFT_STATUS}. ${l.startingState}`,
+    title: `${f.title} ${l.id.slice(l.id.lastIndexOf('-') + 1)}`,
+    objective: l.startingState,
     relatedAttribute: area === 'juggling' ? null : area,
     entryLevel: Math.min(5, Math.max(1, l.ordinal)) as Activity['entryLevel'],
     variants: [],
@@ -53,9 +54,9 @@ function toActivity(f: Family, l: Level): Activity {
     application: false,
     selfReport: ['completion', 'rating', 'foot', 'reflection'],
     personalBestLabel: null,
-    limitations: [f.limitation, 'Draft from training library v1.1: no coach certification, no demo video.'],
+    limitations: [f.limitation],
     sources: [],
-    sourceNote: `Training library v1.1 draft ${l.id} (AI-assisted, ${DRAFT_STATUS.toLowerCase()}).`,
+    sourceNote: `Training library v1.1 option ${l.id} (AI-assisted, ${DRAFT_STATUS.toLowerCase()}).`,
     review: { schema: 'auto', editorial: 'pending', coaching: 'pending', notes: DRAFT_STATUS },
     demo: { kind: 'steps', frames: three.map((caption) => ({ caption, foot: 'either' as const, ball: 'front' as const })) },
   };

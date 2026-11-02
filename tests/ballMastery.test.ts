@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { ASSIGNABLE_DESIGNS, BALL_MASTERY_DESIGNS, DESIGN_MATCHES, DESIGN_SOURCES, HOME_SECTIONS, designsFor, sectionOf } from '../src/game/career/ballMastery';
+import { ASSIGNABLE_DESIGNS, BALL_MASTERY_DESIGNS, DESIGN_ACTIVITIES, designActivityId, DESIGN_MATCHES, DESIGN_SOURCES, HOME_SECTIONS, designsFor, sectionOf } from '../src/game/career/ballMastery';
 import { ALL_ACTIVITIES, HOME_ACTIVITIES, activityById } from '../src/game/career/catalog';
 import { CURRICULUM } from '../src/game/career/curriculum';
 import { SAVE_SCHEMA, emptySave, reduce } from '../src/game/career/state';
@@ -11,7 +11,7 @@ import { demoBeats, demoLength, demoPose, nextBeat } from '../src/render/art/hom
 
 const PKG = join(__dirname, '../research/training/ball-mastery-designs-v1.0');
 
-describe('Ball Mastery designs v1.0 (review only)', () => {
+describe('Ball Mastery designs v1.0 (owner-approved lessons, D68)', () => {
   it('ships the package unchanged: every file matches SHA256.json', () => {
     const sums = JSON.parse(readFileSync(join(PKG, 'SHA256.json'), 'utf8')) as Record<string, string>;
     expect(Object.keys(sums).length).toBe(52);
@@ -30,10 +30,18 @@ describe('Ball Mastery designs v1.0 (review only)', () => {
     }
   });
 
-  it('keeps every design out of player assignments, the catalog and the planner', () => {
-    expect(ASSIGNABLE_DESIGNS).toEqual([]);
-    const ids = new Set(BALL_MASTERY_DESIGNS.map((d) => d.id));
-    expect(HOME_ACTIVITIES.filter((a) => ids.has(a.id) || /BM-\d/.test(a.id))).toEqual([]);
+  it('adds every design except the merged equivalent BM-002 as one Dribbling lesson; plans stay valid', () => {
+    const ids = BALL_MASTERY_DESIGNS.map((d) => d.id).filter((id) => id !== 'BM-002');
+    expect(ASSIGNABLE_DESIGNS).toEqual(ids);
+    expect(DESIGN_ACTIVITIES.map((a) => a.id)).toEqual(ids.map(designActivityId));
+    for (const a of DESIGN_ACTIVITIES) {
+      expect(activityById(a.id)).toBe(a);
+      expect(sectionOf(a)).toBe('ballMastery');
+      expect(a.skillFamilyId).toBe('dribbling');
+      expect(a.demo.kind === 'steps' && a.demo.frames.length).toBe(4);
+      expect(a.title).not.toMatch(/draft/i);
+    }
+    expect(HOME_ACTIVITIES.filter((a) => /BM-\d/.test(a.id))).toEqual([]);
     const s = reduce(emptySave(), { type: 'createPlayer', id: 'p', name: 'Sam', position: 'MID' });
     let planned = 0;
     for (const f of ['dr-close-control', 'dr-change-direction', 'dr-moves', 'dr-change-pace', 'ft-cushion', 'jg-ladder'] as const) {
