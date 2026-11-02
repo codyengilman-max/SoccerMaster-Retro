@@ -5,7 +5,7 @@ test.describe.configure({ timeout: 300_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 type Rect = { x: number; y: number; width: number; height: number };
 type Teach = { pose: string; foot: 'right' | 'left'; phase: number; step: number; contact: string; boot: { x: number; y: number }; zoomBall: boolean; t: number; ground: number };
-type Side = { working: string | null; support: string | null; phase: string; action: string; ballDx: number; poseDx: number; ballTexture: string; ballRadius: number; poseWorking: string | null; poseSurface: string; contact: { x: number; y: number } | null };
+type Side = { working: string | null; support: string | null; phase: string; action: string; ballDx: number; poseDx: number; ballTexture: string; ballRadius: number; poseWorking: string | null; poseSurface: string; contact: { x: number; y: number } | null; top?: { gap: Record<'right' | 'left', number>; ballY: number; boots: Record<'right' | 'left', Rect> } };
 type Demo = { side?: Side; teach?: Teach; set: string; flip?: boolean; fallback?: boolean; frame: string; contact: string; player: Rect; ball: { x: number; y: number }; rect: Rect; inset?: { foot: string; contact: string; label: string; rect: Rect; ball: Rect; text: Rect }; paused?: boolean; speed?: number };
 type Career = { screen: string; week: number; credit: number; journal: number; player: string | null; status: string; text: string; plan: string[]; attributes: Record<string, number> | null; demo: Demo | null };
 
@@ -198,8 +198,10 @@ for (const gender of ['boy', 'girl'] as const) {
       await until(page, (x) => x.screen === 'activity' && !!x.demo?.side && x.demo.fallback === false, `${id} side view`);
       for (const lead of ['right', 'left'] as const) {
         await press(page, `foot-${lead}`, mode);
+        // Sample at 0.5x so the short contact beats and the end of each roll are not missed between reads on a busy runner.
+        if ((await career(page)).demo?.speed !== 0.5) await press(page, 'demo-half', mode);
         await press(page, 'demo-replay', mode);
-        await until(page, (x) => x.demo?.teach?.foot === lead && x.demo.paused === false, `${id} ${lead} playing`);
+        await until(page, (x) => x.demo?.teach?.foot === lead && x.demo.paused === false && x.demo.speed === 0.5, `${id} ${lead} playing`);
         const seen: Demo[] = [];
         for (;;) {
           const c = await career(page);
