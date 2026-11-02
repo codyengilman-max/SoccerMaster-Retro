@@ -175,7 +175,10 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
       await pressStory(page, 'handoff-match', mode);
       await waitForScene(page, 'formation');
       await pressAny(page, 'kickoff-button', mode);
-      await scene(page, 'match', (g) => g.phase === 'live', 'match live', 60_000);
+      const first = await scene(page, 'match', (g) => g.phase === 'live', 'match live', 60_000);
+      const venueOf = (g: unknown) => ((g as { venue?: { id?: string | null } | null }).venue?.id ?? null);
+      // Story matches resolve a venue from the fixture's saved assignment in the sideline (landscape) view.
+      if (page.viewportSize()!.width > page.viewportSize()!.height) expect(venueOf(first)).toMatch(/^(pinnacle|bell94|scottsdale|westside)$/);
       await pressAny(page, 'menu-button', mode);
       // Leaving before full time finishes nothing: the same story match stays open to play again.
       const early = await story(page, (x) => x.message.includes('No full-time result'), 'early exit not counted');
@@ -183,6 +186,8 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
       await pressStory(page, 'handoff-match', mode);
       await waitForScene(page, 'formation');
       await pressAny(page, 'kickoff-button', mode);
+      const replay = await scene(page, 'match', (g) => g.phase === 'live', 'replay live', 60_000);
+      expect(venueOf(replay), 'replaying the same fixture never rerolls its venue').toBe(venueOf(first));
       await scene(page, 'match', (g) => g.breakPanel === 'halftime', 'half-time', 120_000);
       await pressAny(page, 'second-half-button', mode);
       await scene(page, 'match', (g) => g.breakPanel === 'fulltime', 'full-time', 120_000);

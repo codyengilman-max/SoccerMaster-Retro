@@ -16,6 +16,7 @@
 import { createRng } from '../rng';
 import { simulatedScore } from '../league/league';
 import type { TournamentId } from './calendar';
+import { TOURNAMENT_VENUE, isVenueId, type VenueId } from '../venue';
 
 export const TOURNAMENT_VERSION = 's1-t2';
 export const HOME = 'batavia';
@@ -95,6 +96,8 @@ export interface TournamentState {
   /** Drawing of lots, recorded once at creation: earlier = higher. */
   readonly lots: readonly string[];
   readonly results: Readonly<Record<string, TResult>>;
+  /** Venue for every game of this tournament, saved at creation (owner rule: Scott's Complex for every round). */
+  readonly venue?: VenueId;
 }
 
 /** Per group: three rounds of two games (circle method); the first team plays in every round. */
@@ -117,7 +120,7 @@ export function newTournament(id: TournamentId, careerId: string, seed: number):
   const rnd = createRng(hash(seed, `${id}:lots`));
   const all = TOURNAMENTS[id].groups.flat();
   const keyed = all.map((t) => [t, rnd()] as const).sort((x, y) => x[1] - y[1]);
-  return { version: TOURNAMENT_VERSION, id, careerId, seed: seed >>> 0, lots: keyed.map(([t]) => t), results: {} };
+  return { version: TOURNAMENT_VERSION, id, careerId, seed: seed >>> 0, lots: keyed.map(([t]) => t), results: {}, venue: TOURNAMENT_VENUE };
 }
 
 /** Ten-point system for one side of one match. */
@@ -288,5 +291,7 @@ export function parseTournament(raw: unknown, id: TournamentId): { ok: true; val
     if (!fin || k !== fin.id) return { ok: false, error: `unreachable fixture ${k}` };
     if (r.homeGoals === r.awayGoals ? r.shootoutWinner !== fin.home && r.shootoutWinner !== fin.away : r.shootoutWinner !== undefined) return { ok: false, error: 'bad shoot-out winner on the final' };
   }
-  return { ok: true, value };
+  if (o.venue !== undefined && !isVenueId(o.venue)) return { ok: false, error: 'bad venue' };
+  // Saves from before venues were stored get the tournament venue once; it is the same for every round.
+  return { ok: true, value: value.venue ? value : { ...value, venue: TOURNAMENT_VENUE } };
 }

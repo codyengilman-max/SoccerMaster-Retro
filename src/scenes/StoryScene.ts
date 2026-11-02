@@ -4,8 +4,9 @@ import { homeLearningDetail, homeTasks, weekAssignments, jungleResult, schoolRew
 import type { CompetitorId } from '../game/jungle/sim';
 import { crossbarRules, decisionDetail, sceneById, trainingDetail } from '../game/story/content';
 import { seasonWeek, type TournamentId } from '../game/season/calendar';
-import { bataviaRecord, fixtureForSeasonWeek, newSeasonLeague, opponentOf, parseSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough } from '../game/season/league';
+import { bataviaRecord, fixtureForSeasonWeek, leagueVenue, newSeasonLeague, opponentOf, withLeagueVenues, parseSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough } from '../game/season/league';
 import { TOURNAMENTS, allFixtures, bataviaFinish, groupTable, nextBataviaFixture, newTournament, parseTournament, finalFixture, recordTournamentPlayed, bataviaResult, type TournamentState } from '../game/season/tournament';
+import { TOURNAMENT_VENUE, type VenueId } from '../game/venue';
 import { CLUB_WORLD } from '../game/story/clubs';
 import { latest, movement, nationalTable, rankIn } from '../game/rankings/ratings';
 import { kickoffFor, stateCount, stateLabel, scopeTable, nextOpponent, leagueStandings } from '../game/rankings/views';
@@ -555,19 +556,35 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   }
 
   /** Club the away side wears in this story match (art only; competitions are unchanged). */
-  private async matchOpponent(kind: string, run: string): Promise<{ opponent?: string; venue?: 'home' | 'away'; competition?: 'League' | 'Tournament' }> {
+  private async matchOpponent(kind: string, run: string): Promise<{ opponent?: string; venue?: 'home' | 'away'; venueId?: VenueId; competition?: 'League' | 'Tournament' }> {
     if (kind === 'league_match') {
       const week = this.seasonWeekNo();
       const f = week === null ? null : fixtureForSeasonWeek(week);
-      return f ? { opponent: opponentOf(f), venue: f.home === 'batavia' ? 'home' : 'away', competition: 'League' } : {};
+      if (!f) return {};
+      const venueId = await this.leagueVenueFor(f.id);
+      return { opponent: opponentOf(f), venue: f.home === 'batavia' ? 'home' : 'away', ...(venueId ? { venueId } : {}), competition: 'League' };
     }
     if (kind === 'tournament_match') {
       const id = await this.store?.getRecord(`tfix:${run}`);
       const t = await this.tournament();
       const f = t && typeof id === 'string' ? allFixtures(t).find((x) => x.id === id) : undefined;
-      if (f) return { opponent: f.home === 'batavia' ? f.away : f.home, venue: f.home === 'batavia' ? 'home' : 'away', competition: 'Tournament' };
+      if (f) return { opponent: f.home === 'batavia' ? f.away : f.home, venue: f.home === 'batavia' ? 'home' : 'away', venueId: t!.venue ?? TOURNAMENT_VENUE, competition: 'Tournament' };
     }
     return {};
+  }
+
+  /** The fixture's saved venue. Older saves get their unplayed fixtures' venues once (persisted), never rerolled. */
+  private async leagueVenueFor(fixtureId: string): Promise<VenueId | null> {
+    if (!this.store || !this.state) return null;
+    const id = this.state.careerId;
+    const seed = this.seasonSeed();
+    const s = await this.store.updateRecord(`league-s1:${id}`, (cur) => {
+      const saved = parseSeasonLeague(cur);
+      if (!saved.ok && cur !== undefined) return null;
+      const m = withLeagueVenues(saved.ok ? saved.value : newSeasonLeague(id, seed));
+      return m.changed || !saved.ok ? { value: m.state, out: m.state } : { value: cur, out: m.state };
+    });
+    return s ? leagueVenue(s, fixtureId) : null;
   }
 
   /** This week's Batavia league fixture counts once; other clubs are simulated through its round. */

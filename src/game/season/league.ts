@@ -6,6 +6,7 @@
  */
 import { HOME_CLUB, LEAGUE_CLUBS, POINTS, simulatedScore, type LeagueClubId } from '../league/league';
 import { weekOfLeagueGame } from './calendar';
+import { assignLeagueVenues, isVenueId, type VenueId } from '../venue';
 
 export const SEASON_LEAGUE_VERSION = 's1-1';
 export const CYCLES = 3;
@@ -32,6 +33,8 @@ export interface SeasonLeagueState {
   readonly seed: number;
   readonly results: Readonly<Record<string, SeasonResult>>;
   readonly simulatedThrough: number;
+  /** Batavia fixture id -> venue, set when the season's fixtures are created (older saves get it once, unplayed only). */
+  readonly venues?: Readonly<Record<string, VenueId>>;
 }
 
 function buildFixtures(): readonly SeasonFixture[] {
@@ -71,9 +74,24 @@ export function fixtureForSeasonWeek(week: number): SeasonFixture | null {
 }
 export const opponentOf = (f: SeasonFixture): LeagueClubId => (f.home === HOME_CLUB ? f.away : f.home);
 
+/** Venue for every Batavia league fixture under the owner rules (home Pinnacle Park, away rotation). */
+export const LEAGUE_VENUES: Readonly<Record<string, VenueId>> = Object.freeze(assignLeagueVenues(BATAVIA_FIXTURES.map((f) => ({ id: f.id, bataviaHome: f.home === HOME_CLUB }))));
+
 export function newSeasonLeague(careerId: string, seed: number): SeasonLeagueState {
-  return { version: SEASON_LEAGUE_VERSION, careerId, seed: seed >>> 0, results: {}, simulatedThrough: 0 };
+  return { version: SEASON_LEAGUE_VERSION, careerId, seed: seed >>> 0, results: {}, simulatedThrough: 0, venues: { ...LEAGUE_VENUES } };
 }
+
+/**
+ * One-time venue migration for saves made before venues were stored: every Batavia fixture without a result gets its
+ * rule venue; played fixtures stay exactly as recorded. A save that already has venues is returned unchanged.
+ */
+export function withLeagueVenues(s: SeasonLeagueState): { state: SeasonLeagueState; changed: boolean } {
+  if (s.venues) return { state: s, changed: false };
+  const venues: Record<string, VenueId> = {};
+  for (const [id, v] of Object.entries(LEAGUE_VENUES)) if (!s.results[id]) venues[id] = v;
+  return { state: { ...s, venues }, changed: true };
+}
+export const leagueVenue = (s: SeasonLeagueState, fixtureId: string): VenueId | null => s.venues?.[fixtureId] ?? null;
 const goalsOk = (n: unknown): n is number => Number.isInteger(n) && (n as number) >= 0 && (n as number) <= 40;
 
 /** Records Batavia's finished match once. Same score again is a no-op; a different score is refused. */
@@ -161,6 +179,13 @@ export function parseSeasonLeague(raw: unknown): { ok: true; value: SeasonLeague
     const f = BY_ID.get(k);
     if (!f || r?.fixtureId !== k || !goalsOk(r.homeGoals) || !goalsOk(r.awayGoals) || (r.source !== 'played' && r.source !== 'simulated')) return { ok: false, error: `bad result ${k}` };
     if ((r.source === 'simulated') === isBatavia(f)) return { ok: false, error: `bad source ${k}` };
+  }
+  if (o.venues !== undefined) {
+    if (typeof o.venues !== 'object' || o.venues === null || Array.isArray(o.venues)) return { ok: false, error: 'bad venues' };
+    for (const [k, v] of Object.entries(o.venues as Record<string, unknown>)) {
+      const f = BY_ID.get(k);
+      if (!f || !isBatavia(f) || !isVenueId(v)) return { ok: false, error: `bad venue ${k}` };
+    }
   }
   return { ok: true, value: raw as SeasonLeagueState };
 }
