@@ -114,7 +114,7 @@ for (const gender of ['boy', 'girl'] as const) {
     c = await until(page, (x) => x.screen === 'library', 'juggling section');
     expect(Object.keys(await els(page)).filter((k) => k.startsWith('act-jg-')).length).toBeGreaterThan(0);
     await press(page, 'career-back', mode);
-    // Ball Mastery section: six existing families + the review-only designs.
+    // Ball Mastery section: six existing families + the owner-approved designs.
     await press(page, 'nav-ballmastery', mode);
     await until(page, (x) => x.screen === 'ballMastery', 'ball mastery');
     for (const f of ['firstTouch', 'passing', 'dribbling', 'finishing', 'defending', 'awareness']) expect((await els(page))[`lib-${f}`], f).toBeDefined();
@@ -186,10 +186,10 @@ for (const gender of ['boy', 'girl'] as const) {
     await waitForScene(page, 'start');
     await press(page, 'review-button', mode);
     await press(page, 'hub-ballmastery', mode);
-    await until(page, (x) => x.screen === 'bmDesigns' && x.text.includes('REVIEW ONLY'), 'designs');
+    await until(page, (x) => x.screen === 'bmDesigns' && x.text.includes('approved by the owner'), 'designs');
     await press(page, 'bm-design-BM-055', mode);
     c = await until(page, (x) => x.screen === 'bmDesign', 'design');
-    expect(c.text).toContain('Not assigned to players');
+    expect(c.text).toContain('Approved by owner');
     expect(c.text).toContain('de Vera');
     await page.screenshot({ path: `test-results/bm-design-${gender}-${info.project.name}.png` });
     // Team Training is still its own, untouched entry.
