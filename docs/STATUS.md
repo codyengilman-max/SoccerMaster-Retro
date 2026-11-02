@@ -18,6 +18,11 @@ PRs #52–#56 (owner decisions, tactics comparison, All36 weekly Team Training, 
 
 Verification: Chromium phone emulation and desktop only. Not yet verified on a real iPhone (PR G).
 
+## Ball Mastery side-view contact: Sole taps (D69, branch `devin/1793650000-side-contact-poses`, stacked on the D68 branch, not merged, not deployed)
+
+- `bmd-055` Sole taps teaches from derived side-view poses (boy and girl, right and left foot, never mirrored) with the approved patterned Jungle Ball in the demo and the foot inset; pre-contact, contact and post-contact beats are each reachable with Step.
+- Not done: the other Ball Mastery lessons still use their earlier demos (procedural ball, mirrored left foot) and have not been contact-audited; juggling contacts are uncalibrated. Phone emulation only, not a real iPhone.
+
 ## Home Training: v1.1 library and Ball Mastery designs added as regular lessons (D68, stacked on the two-card branch, not merged, not deployed)
 
 - 100 v1.1 options and 13 designs (BM-002 is Inside-Cut Escape) are listed in their category with no draft labels. IDs, saves and journal rules unchanged. Viewer lessons have Replay.

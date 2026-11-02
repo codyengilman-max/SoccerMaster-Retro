@@ -250,7 +250,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       cards: this.cardLabels,
       textPage: `${this.textPage + 1}/${this.textPages}`,
       overflow: this.buttons.filter((b) => b.active && !b.labelFits()).map((b) => b.name),
-      demo: this.demoImg?.visible && this.demoRect ? this.demoInfo : null,
+      demo: (this.demoImg?.visible || this.sideImgs[2]?.visible) && this.demoRect ? this.demoInfo : null,
       evidence: this.save.evidence.length,
       coachEvidence: this.save.evidence.filter((e) => e.source === 'coach').length,
     };
@@ -1235,8 +1235,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     }
     this.demoCaption.setText(fr.caption).setVisible(true);
     const footY = r.y + r.h - this.teachCap.h - 10;
-    const s = Math.min((footY - r.y - 10) / 104, (r.w * 0.6) / art.cell.w);
-    const cx = r.x + r.w * 0.3;
+    const s = Math.min((footY - r.y - 8) / (art.anchor.y - art.visible.y), (r.w * 0.55) / art.visible.w);
+    const cx = r.x + 8 + (art.anchor.x - art.visible.x) * s;
     const key = sideKey(sex);
     const ox = art.anchor.x / art.cell.w, oy = art.anchor.y / art.cell.h;
     const [back, ball, front, zBack, zBall, zFront] = this.sideImgs as [Phaser.GameObjects.Image, Phaser.GameObjects.Image, Phaser.GameObjects.Image, Phaser.GameObjects.Image, Phaser.GameObjects.Image, Phaser.GameObjects.Image];
@@ -1272,7 +1272,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     for (const i of [zBack, zFront]) i.setCrop(win.x, win.y, win.w, win.h);
     const bf = this.textures.getFrame(ballKey, 'ball-0');
     zBall.setCrop(0, 0, bf.width, bf.height);
-    const ib = front.getBounds();
+    const v0 = toScreen(art.visible, at, s);
+    const ib = { x: v0.x, y: v0.y, width: art.visible.w * s, height: art.visible.h * s };
     const lb = this.demoInset.getBounds();
     const contact = pose.contact ? toScreen({ x: pose.contact[0]!, y: pose.contact[1]! }, at, s) : null;
     this.demoInfo = {

@@ -171,6 +171,14 @@ def nearest(img, ball):
     return min(math.hypot(x + 0.5 - ball[0], y + 0.5 - ball[1]) for y in range(H) for x in range(W) if p[x, y][3] >= 128)
 
 
+def edge_contact(img, ball):
+    """Where the drawn sole meets the ball: the ball-edge point towards the nearest opaque boot pixel."""
+    p = img.load()
+    _, x, y = min((math.hypot(x + 0.5 - ball[0], y + 0.5 - ball[1]), x + 0.5, y + 0.5) for y in range(H) for x in range(W) if p[x, y][3] >= 128)
+    d = math.hypot(x - ball[0], y - ball[1])
+    return (ball[0] + BALL_R * (x - ball[0]) / d, ball[1] + BALL_R * (y - ball[1]) / d)
+
+
 def planted(lm, knee_x):
     return (knee_x + (lm['bof'][0] - lm['knee'][0]), float(GROUND))
 
@@ -233,6 +241,10 @@ def build(sex):
         front = Image.new('RGBA', (W, H), (0, 0, 0, 0))
         front.alpha_composite(thigh(near_hip, rg['knee'], lm['skin'], lm['width'] - 1))
         front.alpha_composite(torso)
+        if lmode in ('lift', 'tap'):
+            # A lifted far leg's knee and shin swing in front of the standing shorts; draw them over the torso
+            # (still under the near leg) so the working foot is never a boot floating under the hem.
+            front.alpha_composite(tint(ll, FAR_TINT))
         front.alpha_composite(rl)
         out[pid] = (back, front, rl, ll)
         work = 'right' if rmode in ('lift', 'tap') else 'left' if lmode in ('lift', 'tap') else None
@@ -240,7 +252,7 @@ def build(sex):
         meta[pid] = {
             'working': work, 'support': None if work is None else ('left' if work == 'right' else 'right'),
             'surface': 'sole' if (rmode == 'tap' or lmode == 'tap') else 'none',
-            'contact': [round(v, 2) for v in g['bof']] if g and (rmode == 'tap' or lmode == 'tap') else None,
+            'contact': [round(v, 2) for v in edge_contact(rl if work == 'right' else ll, ball)] if g and (rmode == 'tap' or lmode == 'tap') else None,
             'boots': {'right': {k: [round(v, 2) for v in rg[k]] for k in ('heel', 'toe', 'bof')}, 'left': {k: [round(v, 2) for v in lg[k]] for k in ('heel', 'toe', 'bof')}},
             'rotation': {'right': round(math.degrees(rth), 2), 'left': round(math.degrees(lth), 2)},
             'thighError': round(max(rg.get('thighError', 0), lg.get('thighError', 0)), 2),
@@ -301,7 +313,9 @@ def main():
             c.alpha_composite(front)
             zoom.alpha_composite(c.crop((62, 70, 122, 124)).resize((480, 432), Image.NEAREST), (i * 480, 0))
         zoom.save(os.path.join(DOC, f'zoom-{sex}.png'))
-        ts.append(f'  {sex}: {{ cell: {{ w: {W}, h: {H} }}, anchor: {{ x: 80, y: {GROUND} }}, bodyHeight: 100, ball: {{ x: {ball[0]:.2f}, y: {ball[1]:.2f}, r: {BALL_R} }}, poses: {{')
+        boxes = [im.getbbox() for b, f, _, _ in layers.values() for im in (b, f)]
+        vis = (min(b[0] for b in boxes), min(b[1] for b in boxes), max(b[2] for b in boxes), max(b[3] for b in boxes))
+        ts.append(f'  {sex}: {{ cell: {{ w: {W}, h: {H} }}, anchor: {{ x: 80, y: {GROUND} }}, bodyHeight: 100, visible: {{ x: {vis[0]}, y: {vis[1]}, w: {vis[2] - vis[0]}, h: {vis[3] - vis[1]} }}, ball: {{ x: {ball[0]:.2f}, y: {ball[1]:.2f}, r: {BALL_R} }}, poses: {{')
         for p, m in meta.items():
             ts.append(f"    '{p}': {json.dumps({k: m[k] for k in ('working', 'support', 'surface', 'contact', 'boots')}, separators=(', ', ': '))},")
         ts.append('  } },')

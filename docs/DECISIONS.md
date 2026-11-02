@@ -431,3 +431,12 @@ Owner instruction: "Make them not drafts add to game".
 - The 14 Ball Mastery designs v1.0: BM-002 stays merged into Inside-Cut Escape (confirmed equivalent). The other 13 become Ball Mastery > Dribbling lessons `bmd-<nnn>` built from the package's cue and phases; the ambiguous matches are separate lessons, never replacements. The package files are unchanged (they still say `design_draft`).
 - Normal journal rules apply: logging gives no attributes; credit only through scheduled sessions, once each. Coaching review fields stay `pending` (honest: not coach-certified), with notes "Approved by owner".
 - Viewer lessons gain Replay next to Pause / Step / 0.5×.
+
+## D69: Ball Mastery side-view contact poses (owner: "make your own side view for sprites based on approved art work")
+
+- New frames are derived, never drawn from scratch: torso = `sprites-v2/<sex>-training` `idle-e` above the shorts hem; lower leg + boot = one rigid part cut from an approved frame (boy `dribble-0`, girl `idle-e`); thigh = a skin capsule under the shorts. `scripts/art/build-side-contact.py` writes `src/assets/art/ball-mastery-side/<sex>-side.{webp,json}`, `src/render/art/sideContactFrames.ts` and `docs/art/ball-mastery-side/` (proof sheets, contact report). The approved sheets are not modified.
+- Anatomical feet: the figure faces east, so the right leg is the near leg and the left leg is the far (darker, behind the body) leg. A left-foot contact is the left leg's own pose; nothing is mirrored (`flipX` is always false).
+- Each pose has two layers (back = far leg, front = thigh + torso + near leg); the approved Jungle Ball (`src/assets/art/jungle-v4/jungle4-ball.webp`, frame `ball-0`) is drawn between them, in the main view and the foot inset, which crops the same three layers. Character, ball, inset and caption come from one `sideFrame()` state (`src/game/career/sideContact.ts`).
+- Contact is checked on drawn pixels: at a sole contact the nearest opaque boot pixel is within one pixel of the ball edge and no boot pixel is inside the ball; pre/post-contact poses clear the ball by at least two pixels (`tests/side-contact.test.ts`).
+- First lesson: `bmd-055` Sole taps (Settle, Tap, Recover, Alternate; the ball stays still). Right foot first / Left foot first choose which foot taps first. Other lessons keep their current demos until each gets its own reviewed sequence.
+
