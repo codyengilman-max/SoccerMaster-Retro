@@ -29,6 +29,9 @@ import { ensureJuggleSheet, juggleKey } from '../render/art/juggleArt';
 import { JUGGLE_SHEET } from '../render/art/juggleSheet';
 import { BM_SHEET } from '../render/art/bmSheet';
 import { bmKey, ensureBmSheet } from '../render/art/bmArt';
+import { SIDE_CONTACT, ensureSideArt, sideKey } from '../render/art/sideArt';
+import { ensureJungle4, jungle4Key } from '../render/art/jungle4Art';
+import { sideFrame, sideLength, sideLessonFor, sideStarts, type SideLesson } from '../game/career/sideContact';
 import { WORKING_BOOT, lessonLength, phaseStarts, teachingFor, teachingFrame, type Foot as TeachFoot, type TeachingLesson } from '../game/career/teaching';
 import { masteryLines } from '../game/career/homeEntry';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
@@ -104,12 +107,14 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   /** Teaching pages: the foot inset is a close crop of the same frame, so body and foot can never disagree. */
   private demoZoom!: Phaser.GameObjects.Image;
   private demoZoomBall!: Phaser.GameObjects.Graphics;
+  /** Side-view lessons: main back leg, ball, front layer; inset back, ball, front (one state, D69). */
+  private sideImgs: Phaser.GameObjects.Image[] = [];
   private teachFoot: TeachFoot = 'right';
   private teachTips = false;
   private cardLabels: string[] = [];
   /** Tallest step caption for the current stage width, so the ground line never moves when a caption wraps. */
   private teachCap = { key: '', h: 0 };
-  private demoInfo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number }; inset?: { foot: string | null; contact: string; label: string; rect: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number; width: number; height: number }; text: { x: number; y: number; width: number; height: number } }; teach?: { pose: string; foot: TeachFoot; phase: number; step: number; contact: string; boot: { x: number; y: number }; zoomBall: boolean; t: number; ground: number }; paused?: boolean; speed?: number } | null = null;
+  private demoInfo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number }; inset?: { foot: string | null; contact: string; label: string; rect: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number; width: number; height: number }; text: { x: number; y: number; width: number; height: number } }; teach?: { pose: string; foot: TeachFoot; phase: number; step: number; contact: string; boot: { x: number; y: number }; zoomBall: boolean; t: number; ground: number }; side?: { working: string | null; support: string | null; phase: string; ballTexture: string; ballRadius: number; poseWorking: string | null; poseSurface: string; contact: { x: number; y: number } | null }; paused?: boolean; speed?: number } | null = null;
   private demoInset: Phaser.GameObjects.Text | null = null;
   private title!: Phaser.GameObjects.Text;
   private body!: Phaser.GameObjects.Text;
@@ -160,6 +165,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.demoBall = this.add.graphics();
     this.demoZoom = this.add.image(0, 0, '__DEFAULT').setVisible(false).setDepth(2);
     this.demoZoomBall = this.add.graphics().setDepth(2.5);
+    this.sideImgs = [0, 0.01, 0.02, 2.1, 2.2, 2.3].map((d) => this.add.image(0, 0, '__DEFAULT').setVisible(false).setDepth(d));
     const style = { fontFamily: FONT_FAMILY, color: CSS.ink } as const;
     this.title = this.add.text(0, 0, '', { ...style, fontStyle: 'bold' }).setOrigin(0.5, 0).setResolution(res);
     this.body = this.add.text(0, 0, '', { ...style }).setOrigin(0, 0).setResolution(res);
@@ -202,8 +208,10 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       if (!this.demoPaused) this.demoT += (delta / 1000) * this.demoSpeed;
       // Teaching demos play once and stop on the last frame; Play or Replay starts again.
       const lesson = teachingFor(a.id);
-      if (lesson && this.demoT >= lessonLength(lesson)) {
-        this.demoT = lessonLength(lesson);
+      const side = sideLessonFor(a.id);
+      const end = lesson ? lessonLength(lesson) : side ? sideLength(side) : 0;
+      if ((lesson || side) && this.demoT >= end) {
+        this.demoT = end;
         // Relabel in place: a full re-render here would rebuild every button under a finger mid-tap.
         if (!this.demoPaused) ((this.demoPaused = true), this.buttons.find((b) => b.name === 'demo-pause')?.setLabel('Play'));
       }
@@ -261,7 +269,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   /** Ball Mastery lesson viewer: an existing non-juggling activity with a sprite demo (controls work; nothing decorative). */
   /** Activities whose demo honours Pause/Step/0.5x/Replay (and reduced motion): viewer lessons and the promoted v1.1/design step demos (D68). */
   private hasPlayback(a: Activity): boolean {
-    return this.isViewer(a) || ((a.id.startsWith(DRAFT_PREFIX) || a.id.startsWith(DESIGN_PREFIX)) && a.demo.kind === 'steps' && !sheetBeats(a));
+    return this.isViewer(a) || !!sideLessonFor(a.id) || ((a.id.startsWith(DRAFT_PREFIX) || a.id.startsWith(DESIGN_PREFIX)) && a.demo.kind === 'steps' && !sheetBeats(a));
   }
 
   private isViewer(a: Activity): boolean {
@@ -662,6 +670,22 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         const viewer = this.isViewer(a);
         const links = designsFor(a.id);
         const lesson = viewer && !useBallOnly ? teachingFor(a.id) : undefined;
+        const side = sideLessonFor(a.id);
+        if (side) {
+          const tips = [`Looks right when: ${a.success}`, `Easier: ${a.easier}  Harder: ${a.harder}`, `Needs: ball, ${a.space} space.`, `Source: ${a.sourceNote}`, 'Demo art: side-view poses derived from the approved training sprites (review build).'];
+          const body = [`COACH CODE: ${a.cue}`, side.titles.map((t, i) => `${i + 1}. ${t}`).join('\n'), `Common mistake: ${a.mistake.mistake}\nFix: ${a.mistake.correction}`, ...(this.teachTips ? tips : [])].join('\n');
+          const actions: Action[] = [
+            { name: 'demo-pause', label: this.demoPaused ? 'Play' : 'Pause', onClick: () => (this.demoPaused && this.demoT >= sideLength(side) && (this.demoT = 0), (this.demoPaused = !this.demoPaused), this.render()) },
+            { name: 'demo-step', label: 'Step', onClick: () => ((this.demoPaused = true), (this.demoT = nextBeat(sideStarts(side), this.demoT, sideLength(side))), this.render()) },
+            { name: 'demo-half', label: this.demoSpeed < 1 ? '0.5× (on)' : '0.5×', on: this.demoSpeed < 1, onClick: () => ((this.demoSpeed = this.demoSpeed < 1 ? 1 : 0.5), this.render()) },
+            { name: 'demo-replay', label: 'Replay', onClick: () => ((this.demoT = 0), (this.demoPaused = false), this.render()) },
+            { name: 'foot-right', label: 'Right foot first', on: this.teachFoot === 'right', onClick: () => ((this.teachFoot = 'right'), (this.demoT = 0), this.render()) },
+            { name: 'foot-left', label: 'Left foot first', on: this.teachFoot === 'left', onClick: () => ((this.teachFoot = 'left'), (this.demoT = 0), this.render()) },
+            { name: 'log-open', label: sc.sessionId ? 'Log this session' : 'Log practice', onClick: () => this.openLog(a.id, sc.sessionId) },
+            { name: 'teach-tips', label: this.teachTips ? 'Hide tips' : 'More tips', on: this.teachTips, onClick: () => ((this.teachTips = !this.teachTips), this.render()) },
+          ];
+          return { title: a.title, body, actions, demo: a, twoCol: true };
+        }
         if (lesson) {
           const tips = [
             `Looks right when: ${a.success}`,
@@ -974,6 +998,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.demoImg.setVisible(false);
     this.demoZoom.setVisible(false);
     this.demoZoomBall.clear();
+    for (const i of this.sideImgs) i.setVisible(false);
     if (!demoOn) this.demoCaption?.setVisible(false);
     this.demoInset?.setVisible(false);
     if (!portrait) {
@@ -1052,6 +1077,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     if (!a) return;
     this.demoZoom.setVisible(false);
     this.demoZoomBall.clear();
+    for (const i of this.sideImgs) i.setVisible(false);
     const g = this.demoG;
     g.clear();
     g.fillStyle(PALETTE.grassLight, 1).fillRoundedRect(r.x, r.y, r.w, r.h, 12);
@@ -1153,6 +1179,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private drawSpriteDemo(a: Activity, sx: (x: number) => number, sy: (y: number) => number, unit: number): boolean {
     // Juggling ladders 1–5 use the juggling pack; the sprite-v2 poses stay as the fallback while the sheet loads.
     if (sheetBeats(a) && this.drawSheetJuggle(a, unit)) return true;
+    const side = sideLessonFor(a.id);
+    if (side && this.drawSide(side, unit)) return true;
     const lesson = teachingFor(a.id);
     if (lesson && this.drawTeaching(lesson, unit)) return true;
     const set = demoSet(this.save.player?.gender, isKeeperExercise(a));
@@ -1187,6 +1215,77 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   /** Teaching page: one timeline frame drives the body pose, the foot crop, the ball and the caption. */
+  /** Side-view contact lesson: derived poses (back leg, approved ball, front layer) and an inset cropped from the same three layers, all from one sideFrame state. No mirroring. */
+  private drawSide(lesson: SideLesson, unit: number): boolean {
+    const sex = this.save.player?.gender === 'girl' ? 'girl' : 'boy';
+    ensureJungle4(this, ['jungle4-ball']);
+    const ballKey = jungle4Key('jungle4-ball');
+    if (!ensureSideArt(this, sex) || !this.textures.exists(ballKey)) return false;
+    const art = SIDE_CONTACT[sex];
+    const r = this.demoRect!;
+    const fr = sideFrame(lesson, this.demoT, this.teachFoot);
+    const pose = art.poses[fr.pose];
+    if (!this.demoCaption?.active) this.demoCaption = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: CSS.ink, fontStyle: 'bold' }).setOrigin(0.5, 1).setResolution(textResolution());
+    const capFs = Math.round(Math.max(12, Math.min(unit * 0.45, 16)));
+    this.demoCaption.setFontSize(capFs).setWordWrapWidth(r.w - 16).setPosition(r.x + r.w / 2, r.y + r.h - 4);
+    const capKey = `side|${lesson.activityId}|${r.w}|${capFs}|${this.teachFoot}`;
+    if (this.teachCap.key !== capKey) {
+      const h = Math.max(...sideStarts(lesson).map((t0) => this.demoCaption!.setText(sideFrame(lesson, t0, this.teachFoot).caption).displayHeight));
+      this.teachCap = { key: capKey, h };
+    }
+    this.demoCaption.setText(fr.caption).setVisible(true);
+    const footY = r.y + r.h - this.teachCap.h - 10;
+    const s = Math.min((footY - r.y - 10) / 104, (r.w * 0.6) / art.cell.w);
+    const cx = r.x + r.w * 0.3;
+    const key = sideKey(sex);
+    const ox = art.anchor.x / art.cell.w, oy = art.anchor.y / art.cell.h;
+    const [back, ball, front, zBack, zBall, zFront] = this.sideImgs as [Phaser.GameObjects.Image, Phaser.GameObjects.Image, Phaser.GameObjects.Image, Phaser.GameObjects.Image, Phaser.GameObjects.Image, Phaser.GameObjects.Image];
+    const ballD = art.ball.r * 2;
+    const toScreen = (p: { x: number; y: number }, at: { x: number; y: number }, k: number) => ({ x: at.x + (p.x - art.anchor.x) * k, y: at.y + (p.y - art.anchor.y) * k });
+    const place = (b: Phaser.GameObjects.Image, ba: Phaser.GameObjects.Image, f: Phaser.GameObjects.Image, at: { x: number; y: number }, k: number) => {
+      b.setTexture(key, `${fr.pose}-back`).setOrigin(ox, oy).setScale(k).setFlipX(false).setPosition(at.x, at.y).setVisible(true);
+      f.setTexture(key, `${fr.pose}-front`).setOrigin(ox, oy).setScale(k).setFlipX(false).setPosition(at.x, at.y).setVisible(true);
+      const bc = toScreen(art.ball, at, k);
+      ba.setTexture(ballKey, 'ball-0').setOrigin(0.5).setDisplaySize(ballD * k, ballD * k).setPosition(bc.x, bc.y).setVisible(true);
+      return bc;
+    };
+    const at = { x: cx, y: footY };
+    const bc = place(back, ball, front, at, s);
+    for (const i of [back, ball, front]) i.setCrop();
+    // Foot detail: the same three layers, enlarged around the ball and working foot, with the supporting leg in view.
+    const g = this.demoBall;
+    g.clear();
+    const w = Math.max(110, Math.min(r.w * 0.36, 180));
+    const y = r.y + 6;
+    const h = Math.max(84, footY - 4 - y);
+    const x = r.x + r.w - w - 6;
+    g.fillStyle(PALETTE.cream, 0.97).fillRoundedRect(x, y, w, h, 8);
+    g.lineStyle(2, PALETTE.ink, 1).strokeRoundedRect(x, y, w, h, 8);
+    if (!this.demoInset?.active) this.demoInset = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: CSS.ink, fontStyle: 'bold', align: 'center' }).setOrigin(0.5, 1).setResolution(textResolution());
+    this.demoInset.setFontSize(Math.round(Math.min(Math.max(10, unit * 0.32), 13))).setWordWrapWidth(w - 8).setPosition(x + w / 2, y + h - 3).setText(fr.inset).setVisible(true).setDepth(3);
+    const labelTop = y + h - 3 - this.demoInset.displayHeight;
+    // Crop window in cell px: heel of the support foot to the toe of the working foot, knee height to the ground.
+    const win = { x: 62, y: 84, w: 46, h: 40 };
+    const z = Math.min((w - 8) / win.w, (labelTop - y - 6) / win.h);
+    const zat = { x: x + w / 2 + (art.anchor.x - (win.x + win.w / 2)) * z, y: y + 3 + (art.anchor.y - win.y) * z };
+    const zbc = place(zBack, zBall, zFront, zat, z);
+    for (const i of [zBack, zFront]) i.setCrop(win.x, win.y, win.w, win.h);
+    const bf = this.textures.getFrame(ballKey, 'ball-0');
+    zBall.setCrop(0, 0, bf.width, bf.height);
+    const ib = front.getBounds();
+    const lb = this.demoInset.getBounds();
+    const contact = pose.contact ? toScreen({ x: pose.contact[0]!, y: pose.contact[1]! }, at, s) : null;
+    this.demoInfo = {
+      set: `bmside:${sex}`, frame: fr.pose, flip: false, contact: fr.surface, scale: { x: s, y: s },
+      player: { x: ib.x, y: ib.y, width: ib.width, height: ib.height }, ball: { x: bc.x, y: bc.y }, rect: { x: r.x, y: r.y, width: r.w, height: r.h },
+      inset: { foot: fr.working, contact: fr.surface, label: fr.inset, rect: { x, y, width: w, height: h }, ball: { x: zbc.x - art.ball.r * z, y: zbc.y - art.ball.r * z, width: ballD * z, height: ballD * z }, text: { x: lb.x, y: lb.y, width: lb.width, height: lb.height } },
+      teach: { pose: fr.pose, foot: this.teachFoot, phase: fr.beat, step: fr.step, contact: fr.surface, boot: contact ?? { x: bc.x, y: bc.y }, zoomBall: true, t: this.demoT, ground: footY },
+      side: { working: fr.working, support: fr.support, phase: fr.phase, ballTexture: `${ballKey}:ball-0`, ballRadius: art.ball.r * s, poseWorking: pose.working, poseSurface: pose.surface, contact },
+      paused: this.demoPaused, speed: this.demoSpeed,
+    };
+    return true;
+  }
+
   private drawTeaching(lesson: TeachingLesson, unit: number): boolean {
     const sex = this.save.player?.gender === 'girl' ? 'girl' : 'boy';
     if (!ensureBmSheet(this, sex)) return false;
