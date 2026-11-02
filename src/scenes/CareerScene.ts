@@ -33,7 +33,7 @@ import { SIDE_CONTACT, ensureSideArt, sideKey } from '../render/art/sideArt';
 const GATED_NOTE = 'Demonstration: still being checked for correct foot and ball contact, so it is not shown yet. Follow the steps below.';
 type SidePoseArt = { readonly frame: string; readonly dx: number; readonly ball: readonly number[]; readonly working: string | null; readonly surface: string; readonly contact: readonly number[] | null; readonly boots: Readonly<Record<'right' | 'left', Readonly<Record<'heel' | 'toe' | 'bof', readonly number[]>>>> };
 import { ensureJungle4, jungle4Key } from '../render/art/jungle4Art';
-import { sideFrame, sideLength, sideLessonFor, sidePoses, sideStarts, type SideLesson } from '../game/career/sideContact';
+import { SIDE_BALL_R, TOP, sideFrame, sideLength, sideLessonFor, sidePoses, sideStarts, type SideLesson } from '../game/career/sideContact';
 import { WORKING_BOOT, lessonLength, phaseStarts, teachingFor, teachingFrame, type Foot as TeachFoot, type TeachingLesson } from '../game/career/teaching';
 import { masteryLines } from '../game/career/homeEntry';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
@@ -110,13 +110,15 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private demoZoom!: Phaser.GameObjects.Image;
   private demoZoomBall!: Phaser.GameObjects.Graphics;
   /** Side-view lessons: main back leg, ball, front layer; inset back, ball, front (one state, D69). */
+  private lastTick: number | null = null;
+  private topLabels: Phaser.GameObjects.Text[] = [];
   private sideImgs: Phaser.GameObjects.Image[] = [];
   private teachFoot: TeachFoot = 'right';
   private teachTips = false;
   private cardLabels: string[] = [];
   /** Tallest step caption for the current stage width, so the ground line never moves when a caption wraps. */
   private teachCap = { key: '', h: 0 };
-  private demoInfo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number }; inset?: { foot: string | null; contact: string; label: string; rect: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number; width: number; height: number }; text: { x: number; y: number; width: number; height: number } }; teach?: { pose: string; foot: TeachFoot; phase: number; step: number; contact: string; boot: { x: number; y: number }; zoomBall: boolean; t: number; ground: number }; side?: { working: string | null; support: string | null; phase: string; action: string; ballDx: number; poseDx: number; ballTexture: string; ballRadius: number; poseWorking: string | null; poseSurface: string; contact: { x: number; y: number } | null }; paused?: boolean; speed?: number } | null = null;
+  private demoInfo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number }; inset?: { foot: string | null; contact: string; label: string; rect: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number; width: number; height: number }; text: { x: number; y: number; width: number; height: number } }; teach?: { pose: string; foot: TeachFoot; phase: number; step: number; contact: string; boot: { x: number; y: number }; zoomBall: boolean; t: number; ground: number }; side?: { working: string | null; support: string | null; phase: string; action: string; ballDx: number; poseDx: number; ballTexture: string; ballRadius: number; poseWorking: string | null; poseSurface: string; contact: { x: number; y: number } | null; top?: { gap: Record<'right' | 'left', number>; ballY: number; boots: Record<'right' | 'left', { x: number; y: number; width: number; height: number }> } }; paused?: boolean; speed?: number } | null = null;
   private demoInset: Phaser.GameObjects.Text | null = null;
   private title!: Phaser.GameObjects.Text;
   private body!: Phaser.GameObjects.Text;
@@ -168,6 +170,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.demoZoom = this.add.image(0, 0, '__DEFAULT').setVisible(false).setDepth(2);
     this.demoZoomBall = this.add.graphics().setDepth(2.5);
     this.sideImgs = [0, 0.01, 0.02, 2.1, 2.2, 2.3].map((d) => this.add.image(0, 0, '__DEFAULT').setVisible(false).setDepth(d));
+    // Foot detail from above: anatomical labels drawn on the right and left boots.
+    this.topLabels = ['R', 'L'].map((t) => this.add.text(0, 0, t, { fontFamily: FONT_FAMILY, color: '#132340', fontStyle: 'bold' }).setOrigin(0.5).setResolution(textResolution()).setVisible(false).setDepth(3));
     const style = { fontFamily: FONT_FAMILY, color: CSS.ink } as const;
     this.title = this.add.text(0, 0, '', { ...style, fontStyle: 'bold' }).setOrigin(0.5, 0).setResolution(res);
     this.body = this.add.text(0, 0, '', { ...style }).setOrigin(0, 0).setResolution(res);
@@ -201,13 +205,17 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     });
   }
 
-  override update(_t: number, delta: number): void {
+  override update(time: number, delta: number): void {
+    // Lesson playback follows the wall clock (frame timestamps), not Phaser's smoothed delta, which falls behind real
+    // time when frames are slow; a long gap (tab hidden) counts as at most a quarter second.
+    const wall = this.lastTick === null ? delta / 1000 : Math.min(0.25, Math.max(0, (time - this.lastTick) / 1000));
+    this.lastTick = time;
     if (!this.demoRect) return;
     // Pause and speed belong to the draft prototype player only; activity demos keep their own timing.
     const s = this.screen;
     const a = s.kind === 'activity' ? activityById(s.id) : undefined;
     if (a && this.hasPlayback(a)) {
-      if (!this.demoPaused) this.demoT += (delta / 1000) * this.demoSpeed;
+      if (!this.demoPaused) this.demoT += wall * this.demoSpeed;
       // Teaching demos play once and stop on the last frame; Play or Replay starts again.
       const lesson = teachingFor(a.id);
       const side = sideLessonFor(a.id);
@@ -699,7 +707,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         const lesson = viewer && !useBallOnly && !gated ? teachingFor(a.id) : undefined;
         const side = sideLessonFor(a.id);
         if (side) {
-          const tips = [`Looks right when: ${a.success}`, `Easier: ${a.easier}  Harder: ${a.harder}`, `Needs: ball, ${a.space} space.`, `Source: ${a.sourceNote}`, 'Demo art: side-view poses derived from the approved training sprites (review build).'];
+          const tips = [`Looks right when: ${a.success}`, `Easier: ${a.easier}  Harder: ${a.harder}`, `Needs: ball, ${a.space} space.`, `Source: ${a.sourceNote}`, 'Demo art: side-view poses derived from the approved training sprites (review build).', ...(side.kind === 'inside' ? ['Foot detail: both boots and the ball seen from above, from the same moment.'] : [])];
           const body = [`COACH CODE: ${a.cue}`, side.titles.map((t, i) => `${i + 1}. ${t}`).join('\n'), `Common mistake: ${a.mistake.mistake}\nFix: ${a.mistake.correction}`, ...(this.teachTips ? tips : [])].join('\n');
           const actions: Action[] = [
             { name: 'demo-pause', label: this.demoPaused ? 'Play' : 'Pause', onClick: () => (this.demoPaused && this.demoT >= sideLength(side) && (this.demoT = 0), (this.demoPaused = !this.demoPaused), this.render()) },
@@ -1026,7 +1034,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.demoImg.setVisible(false);
     this.demoZoom.setVisible(false);
     this.demoZoomBall.clear();
-    for (const i of this.sideImgs) i.setVisible(false);
+    for (const i of [...this.sideImgs, ...this.topLabels]) i.setVisible(false);
     if (!demoOn) this.demoCaption?.setVisible(false);
     this.demoInset?.setVisible(false);
     if (!portrait) {
@@ -1105,7 +1113,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     if (!a) return;
     this.demoZoom.setVisible(false);
     this.demoZoomBall.clear();
-    for (const i of this.sideImgs) i.setVisible(false);
+    for (const i of [...this.sideImgs, ...this.topLabels]) i.setVisible(false);
     const g = this.demoG;
     g.clear();
     g.fillStyle(PALETTE.grassLight, 1).fillRoundedRect(r.x, r.y, r.w, r.h, 12);
@@ -1256,7 +1264,9 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     const fr = sideFrame(lesson, this.demoT, this.teachFoot);
     const pose = poses[fr.pose]!;
     const ballFrame = `ball-${fr.ballTurn}`;
-    const ballAt = { x: pose.ball[0]!, y: pose.ball[1]! };
+    const top = fr.top;
+    // Inside-foot lessons: the ball sits between the planted feet (drawn between the far and near leg layers).
+    const ballAt = top ? { x: (pose.boots.right.bof[0]! + pose.boots.left.bof[0]!) / 2, y: art.ball.y } : { x: pose.ball[0]!, y: pose.ball[1]! };
     if (!this.demoCaption?.active) this.demoCaption = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: CSS.ink, fontStyle: 'bold' }).setOrigin(0.5, 1).setResolution(textResolution());
     const capFs = Math.round(Math.max(12, Math.min(unit * 0.45, 16)));
     this.demoCaption.setFontSize(capFs).setWordWrapWidth(r.w - 16).setPosition(r.x + r.w / 2, r.y + r.h - 4);
@@ -1307,10 +1317,35 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     const win = { x: winX, y: 84, w: winR - winX, h: 40 };
     const z = Math.min((w - 8) / win.w, (labelTop - y - 6) / win.h);
     const zat = { x: x + w / 2 + (art.anchor.x - (win.x + win.w / 2)) * z, y: y + 3 + (art.anchor.y - win.y) * z };
-    const zbc = place(zBack, zBall, zFront, zat, z);
+    let zbc = place(zBack, zBall, zFront, zat, z);
     for (const i of [zBack, zFront]) i.setCrop(win.x, win.y, win.w, win.h);
     const bf = this.textures.getFrame(ballKey, ballFrame);
     zBall.setCrop(0, 0, bf.width, bf.height);
+    let zr = art.ball.r * z;
+    let topInfo: { gap: Record<'right' | 'left', number>; ballY: number; boots: Record<'right' | 'left', { x: number; y: number; width: number; height: number }> } | undefined;
+    if (top) {
+      // Foot detail from above: both boots (right = +y, screen down, the near side) and the ball, same state.
+      zBack.setVisible(false);
+      zFront.setVisible(false);
+      const span = { x: TOP.bootL + 8, y: 2 * (TOP.feetY + TOP.bootW / 2 + 3) };
+      const tz = Math.min((w - 8) / span.x, (labelTop - y - 6) / span.y);
+      const o = { x: x + w / 2, y: y + 3 + (span.y / 2) * tz };
+      const boots = {} as Record<'right' | 'left', { x: number; y: number; width: number; height: number }>;
+      for (const f of ['right', 'left'] as const) {
+        const b = top.boots[f];
+        const rect = { x: o.x + (b.x - TOP.bootL / 2) * tz, y: o.y + (b.y - TOP.bootW / 2) * tz, width: TOP.bootL * tz, height: TOP.bootW * tz };
+        boots[f] = rect;
+        const on = fr.surface === 'inside' && fr.working === f;
+        g.fillStyle(0xf2f9ff, 1).fillRoundedRect(rect.x, rect.y, rect.width, rect.height, Math.min(rect.height / 2, 4 * tz));
+        g.fillStyle(0x132340, 1).fillRect(rect.x + rect.width * 0.78, rect.y + rect.height * 0.2, rect.width * 0.14, rect.height * 0.6);
+        g.lineStyle(on ? 3 : 2, on ? PALETTE.sun : 0x132340, 1).strokeRoundedRect(rect.x, rect.y, rect.width, rect.height, Math.min(rect.height / 2, 4 * tz));
+        this.topLabels[f === 'right' ? 0 : 1]!.setFontSize(Math.round(Math.max(9, Math.min(14, rect.height * 0.75)))).setPosition(rect.x + rect.width * 0.4, rect.y + rect.height / 2).setVisible(true);
+      }
+      zbc = { x: o.x + top.ball.x * tz, y: o.y + top.ball.y * tz };
+      zr = SIDE_BALL_R * tz;
+      zBall.setTexture(ballKey, ballFrame).setOrigin(0.5).setCrop(0, 0, bf.width, bf.height).setDisplaySize(zr * 2, zr * 2).setPosition(zbc.x, zbc.y).setVisible(true);
+      topInfo = { gap: { ...top.gap }, ballY: top.ball.y, boots };
+    }
     const v0 = toScreen(art.visible, at, s);
     const ib = { x: v0.x, y: v0.y, width: art.visible.w * s, height: art.visible.h * s };
     const lb = this.demoInset.getBounds();
@@ -1318,9 +1353,9 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.demoInfo = {
       set: `bmside:${sex}`, frame: fr.pose, flip: false, contact: fr.surface, scale: { x: s, y: s },
       player: { x: ib.x, y: ib.y, width: ib.width, height: ib.height }, ball: { x: bc.x, y: bc.y }, rect: { x: r.x, y: r.y, width: r.w, height: r.h },
-      inset: { foot: fr.working, contact: fr.surface, label: fr.inset, rect: { x, y, width: w, height: h }, ball: { x: zbc.x - art.ball.r * z, y: zbc.y - art.ball.r * z, width: ballD * z, height: ballD * z }, text: { x: lb.x, y: lb.y, width: lb.width, height: lb.height } },
+      inset: { foot: fr.working, contact: fr.surface, label: fr.inset, rect: { x, y, width: w, height: h }, ball: { x: zbc.x - zr, y: zbc.y - zr, width: zr * 2, height: zr * 2 }, text: { x: lb.x, y: lb.y, width: lb.width, height: lb.height } },
       teach: { pose: fr.pose, foot: this.teachFoot, phase: fr.beat, step: fr.step, contact: fr.surface, boot: contact ?? { x: bc.x, y: bc.y }, zoomBall: true, t: this.demoT, ground: footY },
-      side: { working: fr.working, support: fr.support, phase: fr.phase, action: fr.action, ballDx: fr.ball, poseDx: pose.dx, ballTexture: `${ballKey}:${ballFrame}`, ballRadius: art.ball.r * s, poseWorking: pose.working, poseSurface: pose.surface, contact },
+      side: { working: fr.working, support: fr.support, phase: fr.phase, action: fr.action, ballDx: fr.ball, poseDx: pose.dx, ballTexture: `${ballKey}:${ballFrame}`, ballRadius: art.ball.r * s, poseWorking: pose.working, poseSurface: pose.surface, contact, ...(topInfo ? { top: topInfo } : {}) },
       paused: this.demoPaused, speed: this.demoSpeed,
     };
     return true;

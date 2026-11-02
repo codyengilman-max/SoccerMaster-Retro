@@ -73,8 +73,8 @@ test('approved v1.1 options and Ball Mastery designs open as regular lessons, ne
   await until(page, (x) => x.screen === 'library', 'dribbling again');
 
   // A Ball Mastery v1.1 option with a top-down prototype opens the regular lesson page too: the prototype's foot and
-  // ball contact is not checked, so it stays in Review & Lab only.
-  await press(page, 'act-v11-BM01-L1', mode);
+  // ball contact is not checked, so it stays in Review & Lab only. (BM01-L1 now has a checked lesson of its own.)
+  await press(page, 'act-v11-DR01-L1', mode);
   c = await until(page, (x) => x.screen === 'activity' && x.demoGate === 'checking', 'prototype lesson gated');
   expect(c.text).toContain('COACH CODE');
   expect(c.text).not.toContain('DRAFT');

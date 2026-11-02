@@ -18,6 +18,12 @@ PRs #52–#56 (owner decisions, tactics comparison, All36 weekly Team Training, 
 
 Verification: Chromium phone emulation and desktop only. Not yet verified on a real iPhone (PR G).
 
+## Ball Mastery: inside-foot transfers with a foot detail from above (D69 option A, branch `devin/1793710000-inside-topdown`, stacked on the sole-rolls branch, not merged, not deployed)
+
+- Inside-foot shuffles (BM-056), Inside-touch rhythm L1–L3 and Choose your combination L1 now teach: side-view stance, plus a foot detail from above showing which boot's inside touches the ball.
+- Lesson playback runs on the wall clock, so slow frames no longer slow the demo.
+- Other inside/outside lessons stay hidden until each gets its own checked sequence. Phone emulation only, not a real iPhone.
+
 ## Ball Mastery side-view: sole rolls + unchecked demos hidden (D69 expansion, branch `devin/1793700000-side-sole-rolls`, stacked on the D69 branch, not merged, not deployed)
 
 - Five more lessons teach from side-view poses with the approved ball: Forward-back sole control L1–L4 and Pull-back turn L1. The ball rolls and turns under the sole, boy and girl, either foot first.

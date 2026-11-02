@@ -5,7 +5,7 @@ test.describe.configure({ timeout: 300_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 type Rect = { x: number; y: number; width: number; height: number };
 type Teach = { pose: string; foot: 'right' | 'left'; phase: number; step: number; contact: string; boot: { x: number; y: number }; zoomBall: boolean; t: number; ground: number };
-type Side = { working: string | null; support: string | null; phase: string; action: string; ballDx: number; poseDx: number; ballTexture: string; ballRadius: number; poseWorking: string | null; poseSurface: string; contact: { x: number; y: number } | null };
+type Side = { working: string | null; support: string | null; phase: string; action: string; ballDx: number; poseDx: number; ballTexture: string; ballRadius: number; poseWorking: string | null; poseSurface: string; contact: { x: number; y: number } | null; top?: { gap: Record<'right' | 'left', number>; ballY: number; boots: Record<'right' | 'left', Rect> } };
 type Demo = { side?: Side; teach?: Teach; set: string; flip?: boolean; fallback?: boolean; frame: string; contact: string; player: Rect; ball: { x: number; y: number }; rect: Rect; inset?: { foot: string; contact: string; label: string; rect: Rect; ball: Rect; text: Rect }; paused?: boolean; speed?: number };
 type Career = { screen: string; week: number; credit: number; journal: number; player: string | null; status: string; text: string; plan: string[]; attributes: Record<string, number> | null; demo: Demo | null };
 
@@ -198,8 +198,10 @@ for (const gender of ['boy', 'girl'] as const) {
       await until(page, (x) => x.screen === 'activity' && !!x.demo?.side && x.demo.fallback === false, `${id} side view`);
       for (const lead of ['right', 'left'] as const) {
         await press(page, `foot-${lead}`, mode);
+        // Sample at 0.5x so the short contact beats and the end of each roll are not missed between reads on a busy runner.
+        if ((await career(page)).demo?.speed !== 0.5) await press(page, 'demo-half', mode);
         await press(page, 'demo-replay', mode);
-        await until(page, (x) => x.demo?.teach?.foot === lead && x.demo.paused === false, `${id} ${lead} playing`);
+        await until(page, (x) => x.demo?.teach?.foot === lead && x.demo.paused === false && x.demo.speed === 0.5, `${id} ${lead} playing`);
         const seen: Demo[] = [];
         for (;;) {
           const c = await career(page);
@@ -236,6 +238,80 @@ for (const gender of ['boy', 'girl'] as const) {
         expect(new Set(seen.map((d) => d.side!.ballTexture)).size, 'ball turns as it rolls').toBeGreaterThan(1);
         for (const d of seen) expect(d.side!.ballTexture).toMatch(/jungle4-ball:ball-\d+$/);
         if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/roll-${id}-${gender}-${lead}-${info.project.name}.png` });
+      }
+      await press(page, 'career-back', mode);
+      await press(page, 'career-home', mode);
+      const c = await until(page, (x) => x.screen === 'home', 'home');
+      expect(c.credit).toBe(home.credit);
+      expect(c.journal).toBe(home.journal);
+    }
+    expect(errors).toEqual([]);
+  });
+}
+
+// Inside-foot transfers (owner option A): planted side stance, foot detail from above (BM-056, v1.1 BM01 L2).
+for (const gender of ['boy', 'girl'] as const) {
+  test(`inside-foot transfers (${gender}): foot detail from above shows the touching boot, ball and caption from one state`, async ({ page }, info) => {
+    const mode = modeFor(info);
+    const errors = trackConsoleErrors(page);
+    page.on('dialog', (d) => void d.accept('Robin'));
+    await openCareer(page, mode);
+    await press(page, 'pos-MID', mode);
+    await until(page, (x) => x.screen === 'setup', 'setup');
+    await press(page, 'career-home', mode);
+    const home = await until(page, (x) => x.screen === 'home', 'home');
+    if (gender === 'girl') {
+      await saveGender(page, 'girl');
+      await openCareer(page, mode);
+      await until(page, (x) => x.screen === 'home', 'home again');
+    }
+    for (const id of ['bmd-056', 'v11-BM01-L2']) {
+      await press(page, 'nav-ballmastery', mode);
+      await press(page, 'lib-dribbling', mode);
+      await press(page, `act-${id}`, mode);
+      await until(page, (x) => x.screen === 'activity' && !!x.demo?.side?.top && x.demo.fallback === false, `${id} inside lesson`);
+      for (const lead of ['right', 'left'] as const) {
+        await press(page, `foot-${lead}`, mode);
+        // Sample at 0.5x so the short contact beats and the end of each roll are not missed between reads on a busy runner.
+        if ((await career(page)).demo?.speed !== 0.5) await press(page, 'demo-half', mode);
+        await press(page, 'demo-replay', mode);
+        await until(page, (x) => x.demo?.teach?.foot === lead && x.demo.paused === false && x.demo.speed === 0.5, `${id} ${lead} playing`);
+        const seen: Demo[] = [];
+        for (;;) {
+          const d = (await career(page)).demo!;
+          seen.push(d);
+          const s = d.side!;
+          const top = s.top!;
+          expect(d.flip, 'never mirrored').toBe(false);
+          expect(d.frame).toBe('stand');
+          // Right boot below (near side), left above, whichever foot goes first.
+          expect(top.boots.right.y).toBeGreaterThan(top.boots.left.y);
+          for (const f of ['right', 'left'] as const) {
+            expect(top.gap[f], `${f} boot never overlaps the ball`).toBeGreaterThanOrEqual(-0.01);
+            expect(within(top.boots[f], d.inset!.rect), `${f} boot inside foot detail`).toBe(true);
+          }
+          expect(within(d.inset!.ball, d.inset!.rect), 'ball inside foot detail').toBe(true);
+          expect(d.inset!.contact).toBe(d.teach!.contact);
+          if (d.teach!.contact === 'inside') {
+            const f = s.working as 'right' | 'left';
+            expect(top.gap[f], 'inside edge on the ball').toBeLessThanOrEqual(0.01);
+            // On screen: the ball's edge meets the working boot's inside edge.
+            const b = d.inset!.ball;
+            const boot = top.boots[f];
+            const edgeGap = f === 'right' ? boot.y - (b.y + b.height) : b.y - (boot.y + boot.height);
+            expect(Math.abs(edgeGap), 'screen edge contact').toBeLessThan(1.5);
+            expect(d.inset!.label).toContain('inside on ball');
+          } else expect(d.inset!.label).not.toContain('on ball');
+          expect(d.inset!.label.startsWith('From above')).toBe(true);
+          if (d.paused) break;
+          await page.waitForTimeout(30);
+        }
+        const ys = seen.map((d) => d.side!.top!.ballY);
+        expect(Math.max(...ys) - Math.min(...ys), 'ball crosses between the feet').toBeGreaterThan(10);
+        expect(seen.some((d) => d.teach!.contact === 'inside' && d.side!.working === lead), 'lead foot touches').toBe(true);
+        expect(seen.some((d) => d.teach!.contact === 'inside' && d.side!.working !== lead), 'other foot touches').toBe(true);
+        expect(new Set(seen.map((d) => d.side!.ballTexture)).size, 'ball turns as it rolls').toBeGreaterThan(1);
+        if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/inside-${id}-${gender}-${lead}-${info.project.name}.png` });
       }
       await press(page, 'career-back', mode);
       await press(page, 'career-home', mode);
