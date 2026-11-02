@@ -100,12 +100,22 @@ test('draft library is review-only: cards and demo prototypes, never in the plan
   await press(page, 'nav-library', mode);
   await press(page, 'lib-drafts', mode);
   await until(page, (x) => x.screen === 'drafts', 'drafts again');
-  await press(page, 'draft-BM01', mode);
-  await press(page, 'draft-level-BM01-L1', mode);
-  c = await until(page, (x) => x.screen === 'draftLevel' && x.demoGate === 'checking', 'BM01-L1 gated');
-  expect(c.text).toContain('still being checked');
-  for (const n of ['demo-side', 'demo-pause', 'demo-step', 'demo-slow', 'demo-replay']) expect((await els(page))[n], `${n} hidden`).toBeUndefined();
-  expect((await els(page))['draft-log']).toBeDefined();
+  // TR01-L1 too: its activity has a checked side-view lesson, but that does not check the separate prototype.
+  for (const fam of ['BM01', 'TR01']) {
+    if (fam !== 'BM01') {
+      await press(page, 'career-home', mode);
+      await until(page, (x) => x.screen === 'home', 'home');
+      await press(page, 'nav-library', mode);
+      await press(page, 'lib-drafts', mode);
+      await until(page, (x) => x.screen === 'drafts', 'drafts');
+    }
+    await press(page, `draft-${fam}`, mode);
+    await press(page, `draft-level-${fam}-L1`, mode);
+    c = await until(page, (x) => x.screen === 'draftLevel' && x.demoGate === 'checking', `${fam}-L1 gated`);
+    expect(c.text).toContain('still being checked');
+    for (const n of ['demo-side', 'demo-pause', 'demo-step', 'demo-slow', 'demo-replay']) expect((await els(page))[n], `${fam} ${n} hidden`).toBeUndefined();
+    expect((await els(page))['draft-log']).toBeDefined();
+  }
   await press(page, 'career-home', mode);
   await until(page, (x) => x.screen === 'home', 'home');
   await press(page, 'nav-library', mode);

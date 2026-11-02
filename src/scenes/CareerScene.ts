@@ -287,10 +287,13 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     return sectionOf(a) !== 'ballMastery' || !!sideLessonFor(a.id);
   }
 
-  /** A v1.1 level's demo prototype is shown only outside Ball Mastery (juggling); Ball Mastery ones are unchecked. */
+  /**
+   * A v1.1 level's demo prototype is shown only outside Ball Mastery (juggling). Ball Mastery prototypes are separate
+   * top-down sketches whose contact is not checked, even when the same activity has a checked side-view lesson.
+   */
   private protoShown(levelId: string): boolean {
     const a = activityById(draftActivityId(levelId));
-    return !!prototypeFor(levelId) && !!a && this.demoChecked(a);
+    return !!prototypeFor(levelId) && !!a && sectionOf(a) !== 'ballMastery';
   }
 
   private isViewer(a: Activity): boolean {
