@@ -80,6 +80,11 @@ export function sheetBeats(a: Activity): readonly JuggleBeat[] | null {
 }
 const sexOf = (o?: DemoOptions): JuggleSex => (o?.sex === 'girl' ? 'girl' : 'boy');
 
+/** Step targets for a step demo: one per authored frame, even when adjacent frames share a pose. */
+export function stepBeats(a: Activity): number[] {
+  return a.demo.kind === 'steps' ? a.demo.frames.map((_, i) => Math.round(i * 1.4 * 100) / 100) : [0];
+}
+
 export function demoLength(a: Activity, opts?: DemoOptions): number {
   const sb = opts && sheetBeats(a);
   if (sb) return juggleTimeline(a.id, sb, sexOf(opts), !!opts.miss).length;

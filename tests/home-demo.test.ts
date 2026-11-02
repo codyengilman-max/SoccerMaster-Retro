@@ -83,3 +83,21 @@ describe('home training demos use the created player', () => {
     expect(demoPose(a, 2.3)).toEqual(demoPose(a, 2.3));
   });
 });
+
+describe('promoted step demos (D68)', () => {
+  it('Step visits every authored frame, even when adjacent frames share a pose', async () => {
+    const { activityById } = await import('../src/game/career/catalog');
+    const { stepBeats, demoLength, nextBeat } = await import('../src/render/art/homeDemo');
+    for (const id of ['v11-BM02-L1', 'bmd-071']) {
+      const a = activityById(id)!;
+      expect(a.demo.kind).toBe('steps');
+      const n = a.demo.kind === 'steps' ? a.demo.frames.length : 0;
+      const beats = stepBeats(a);
+      expect(beats).toHaveLength(n);
+      let t = 0;
+      const seen = [t];
+      for (let i = 1; i < n; i++) seen.push((t = nextBeat(beats, t, demoLength(a))));
+      expect(seen).toEqual(beats);
+    }
+  });
+});

@@ -23,7 +23,7 @@ import { weeklyProgress } from '../game/career/weeklyTraining';
 import { orientationOf } from '../render/layout';
 import { PlayerArt, atlasKey } from '../render/art/playerArt';
 import { SPRITE_CELL } from '../render/art/spriteSets';
-import { DEMO_BALL_PEAK, JUGGLE_PATTERNS, demoBeats, demoLength, demoPose, demoSet, isKeeperExercise, nextBeat, sheetBeats } from '../render/art/homeDemo';
+import { DEMO_BALL_PEAK, JUGGLE_PATTERNS, demoBeats, demoLength, demoPose, demoSet, isKeeperExercise, nextBeat, sheetBeats, stepBeats } from '../render/art/homeDemo';
 import { BALL_MASTERY_DESIGNS, DESIGN_PREFIX, DESIGN_MATCHES, DESIGN_SOURCES, HOME_SECTIONS, designById, designsFor, sectionOf } from '../game/career/ballMastery';
 import { ensureJuggleSheet, juggleKey } from '../render/art/juggleArt';
 import { JUGGLE_SHEET } from '../render/art/juggleSheet';
@@ -708,7 +708,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         if (this.hasPlayback(a))
           actions.push(
             { name: 'demo-pause', label: this.demoPaused ? 'Play' : 'Pause', onClick: () => ((this.demoPaused = !this.demoPaused), this.render()) },
-            { name: 'demo-step', label: 'Step', onClick: () => ((this.demoPaused = true), (this.demoT = nextBeat(demoBeats(a), this.demoT, demoLength(a))), this.render()) },
+            { name: 'demo-step', label: 'Step', onClick: () => ((this.demoPaused = true), (this.demoT = nextBeat(viewer ? demoBeats(a) : stepBeats(a), this.demoT, demoLength(a))), this.render()) },
             { name: 'demo-half', label: this.demoSpeed < 1 ? '0.5× (on)' : '0.5×', on: this.demoSpeed < 1, onClick: () => ((this.demoSpeed = this.demoSpeed < 1 ? 1 : 0.5), this.render()) },
             { name: 'demo-replay', label: 'Replay', onClick: () => ((this.demoT = 0), (this.demoPaused = false), this.render()) },
           );
