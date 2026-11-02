@@ -61,7 +61,7 @@ export type SideLesson = SoleLesson | InsideLesson;
 
 /** Top-down boot geometry (px): feet centres at y = +/-FEET_Y, boot length along x, width along y. */
 /** ballX: the ball sits beside the forefoot (inside of the foot), forward of the boot centre, so the side view shows it ahead of the planted boots. */
-export const TOP = Object.freeze({ feetY: 18, bootL: 22, bootW: 9, ballX: 7 });
+export const TOP = Object.freeze({ feetY: 18, bootL: 22, bootW: 9, ballX: 9 });
 /** Ball y (towards one foot) at which it touches that foot's inside edge with the foot at rest. */
 export const TOUCH_Y = TOP.feetY - TOP.bootW / 2 - 7;
 
