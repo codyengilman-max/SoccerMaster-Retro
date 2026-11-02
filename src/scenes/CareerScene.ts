@@ -1266,7 +1266,10 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.demoInset.setFontSize(Math.round(Math.min(Math.max(10, unit * 0.32), 13))).setWordWrapWidth(w - 8).setPosition(x + w / 2, y + h - 3).setText(fr.inset).setVisible(true).setDepth(3);
     const labelTop = y + h - 3 - this.demoInset.displayHeight;
     // Crop window in cell px: heel of the support foot to the toe of the working foot, knee height to the ground.
-    const win = { x: 62, y: 84, w: 46, h: 40 };
+    // Left edge sits 2 px behind the rearmost measured heel (its antialiased outline included) so no boot is clipped.
+    const heel = Math.min(...Object.values(art.poses).flatMap((p) => [p.boots.right.heel[0]!, p.boots.left.heel[0]!]));
+    const winX = Math.min(62, Math.floor(heel - 2));
+    const win = { x: winX, y: 84, w: 108 - winX, h: 40 };
     const z = Math.min((w - 8) / win.w, (labelTop - y - 6) / win.h);
     const zat = { x: x + w / 2 + (art.anchor.x - (win.x + win.w / 2)) * z, y: y + 3 + (art.anchor.y - win.y) * z };
     const zbc = place(zBack, zBall, zFront, zat, z);
