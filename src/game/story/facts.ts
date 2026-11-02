@@ -72,6 +72,8 @@ export interface WeekAssignments {
   readonly skillDone: boolean;
   /** Assigned home learning (weeks 6+): this week's planned home sessions all completed; null when not assigned. */
   readonly learning: boolean | null;
+  /** Practices logged as done this week (Juggling or Ball Mastery); from Week 6 three of them meet Home learning. */
+  readonly practices: number;
   readonly complete: boolean;
 }
 
@@ -82,8 +84,12 @@ export function weekAssignments(save: CareerSave, storyWeek: number): WeekAssign
   const skill: HomeSkill = storyWeek >= 7 ? 'passing' : 'firstTouch';
   const juggling = done('juggling');
   const skillDone = done(skill);
-  const learning = storyWeek >= 6 ? save.completedSessions.length >= CAREER_CONFIG.home.sessionsPerWeek : null;
-  return { juggling, skill, skillDone, learning, complete: juggling && skillDone && learning !== false };
+  const n = CAREER_CONFIG.home.sessionsPerWeek;
+  const practices = save.journal.filter((j) => j.week === save.week && j.completion === 'done').length;
+  // Home Training no longer offers a weekly focus plan, so logged practices also meet Home learning; a save that
+  // already finished its planned sessions keeps that. Nothing is ticked without a real log.
+  const learning = storyWeek >= 6 ? save.completedSessions.length >= n || practices >= n : null;
+  return { juggling, skill, skillDone, learning, practices, complete: juggling && skillDone && learning !== false };
 }
 
 export interface HomeTask {
@@ -101,7 +107,7 @@ export function homeTasks(a: WeekAssignments): readonly HomeTask[] {
     a.skill === 'passing'
       ? { key: 'passing', label: 'Control and passing work', short: 'Passing', done: a.skillDone }
       : { key: 'firstTouch', label: 'Control and first-touch work', short: 'First touch', done: a.skillDone },
-    ...(a.learning === null ? [] : [{ key: 'learning' as const, label: "Home learning (this week's planned home sessions)", short: 'Home sessions', done: a.learning }]),
+    ...(a.learning === null ? [] : [{ key: 'learning' as const, label: `Home learning (log ${CAREER_CONFIG.home.sessionsPerWeek} practices this week, ${Math.min(a.practices, CAREER_CONFIG.home.sessionsPerWeek)} of ${CAREER_CONFIG.home.sessionsPerWeek})`, short: 'Home learning', done: a.learning }]),
   ];
 }
 

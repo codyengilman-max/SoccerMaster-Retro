@@ -87,9 +87,14 @@ for (const gender of ['boy', 'girl'] as const) for (const [h, exercises] of HALV
     const before = { credit: c.credit, journal: c.journal };
     for (const [lib, act] of exercises) {
       if ((await career(page)).screen !== 'home') await openCareer(page, mode);
-      await press(page, 'nav-library', mode);
+      // Juggling is its own card; every other family is a category inside Ball Mastery.
+      if (lib === 'lib-juggling') await press(page, 'nav-juggling', mode);
+      else {
+        await press(page, 'nav-ballmastery', mode);
+        await until(page, (x) => x.screen === 'ballMastery', 'ball mastery');
+        await press(page, lib, mode);
+      }
       await until(page, (x) => x.screen === 'library', 'library');
-      await press(page, lib, mode);
       await page.waitForTimeout(80);
       await press(page, act, mode);
       const d = (await until(page, (x) => x.screen === 'activity' && !!x.demo, `${act} sprite demo`)).demo!;

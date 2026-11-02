@@ -18,6 +18,14 @@ PRs #52–#56 (owner decisions, tactics comparison, All36 weekly Team Training, 
 
 Verification: Chromium phone emulation and desktop only. Not yet verified on a real iPhone (PR G).
 
+## Home Training: exactly two sections (owner request, branch `devin/*-home-two-cards`, from `main` 8241d68, not merged, not deployed)
+
+- **Screen:** Home Training shows two cards, Juggling and Ball Mastery, plus Back/Home/Menu. Each card carries its mastery phase, practices logged this week and its required story tasks (to do/done). Progress, Team Training, Choose a focus, Home Practice and the Training Library index are no longer on it; their screens and saved data stay (Team Training from Story, My Player and after matches).
+- **Ball Mastery:** categories First touch, Passing, Dribbling, Finishing, Defending, Awareness; drafts listed inside their category with a DRAFT label; the 14 v1.0 designs only in Review & Lab.
+- **Lessons:** open straight to the demo with Coach Code, steps and one mistake + fix; reference details under More tips; Log practice inside the lesson.
+- **Weekly tasks:** Week 6+ Home learning is met by 3 practices logged as done this week (any Juggling or Ball Mastery lesson), or by a save that already finished its 3 planned sessions. No credit, attributes or tasks are granted by the change. See D67.
+- **Map:** `docs/training/home/HOME_TRAINING_MAP.md`. **Tests:** `tests/home-tasks.test.ts`, `e2e/career.spec.ts`, `e2e/ballmastery.spec.ts`. Phone emulation only.
+
 ## Ball Mastery art v1: Inside-Cut Escape teaching page (vertical slice, same branch, not merged, not deployed)
 
 - **Art:** owner drafts kept unchanged in `docs/art/ball-mastery-v1/source/`; `scripts/art/build-ball-mastery.py` writes cleaned derivatives, measured bounds and foot anchors (`derived/frames.json`) and the runtime sheets (`src/assets/art/ball-mastery-v1/`, `src/render/art/bmSheet.ts`). Used only on the teaching page; gameplay sprites are unchanged. Defects: `docs/art/ball-mastery-v1/INTAKE.md`.

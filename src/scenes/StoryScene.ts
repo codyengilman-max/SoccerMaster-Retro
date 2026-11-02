@@ -37,6 +37,7 @@ const CAREER_ID = STORY_CAREER_ID;
 const POSITION_LABEL: Record<Position, string> = { DEF: 'Defender', MID: 'Midfielder', FWD: 'Forward' };
 const SPEAKER_COLOR: Record<string, number> = { System: PALETTE.ink, Jordan: PALETTE.blue, Blake: PALETTE.tomato, Caregiver: PALETTE.purple, Coach: PALETTE.mustardDark };
 const CAREER_ADAPTERS = ['training_arrangement', 'weekly_focus', 'practice', 'match', 'team_training', 'league_match', 'tournament_match'] as const;
+const HANDOFF_SCREEN: Partial<Record<(typeof CAREER_ADAPTERS)[number], string>> = { team_training: 'team', training_arrangement: 'setup', weekly_focus: 'focus', practice: 'sessions' };
 const MATCH_ADAPTERS: readonly string[] = ['match', 'league_match', 'tournament_match'];
 type CareerAdapter = (typeof CAREER_ADAPTERS)[number];
 interface Snapshot { readonly revision: number; readonly sessions: number; readonly batches: number; readonly week: number }
@@ -425,7 +426,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     }
     this.navigating = true;
     if (MATCH_ADAPTERS.includes(kind)) this.scene.start(SceneKeys.Formation, { career: true, returnTo: 'story', resultKey: run, ...opp });
-    else this.scene.start(SceneKeys.Career, { returnTo: 'story', ...(kind === 'team_training' ? { open: 'team' } : {}) });
+    // Home Training no longer lists setup, focus or sessions, so those handoffs open their screen directly.
+    else this.scene.start(SceneKeys.Career, { returnTo: 'story', ...(HANDOFF_SCREEN[kind] ? { open: HANDOFF_SCREEN[kind] } : {}) });
   }
 
   /** Home hub: Training opens Home Training without launching a run; the hub completes only on Continue or Talk. */
@@ -1173,7 +1175,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         return;
       case 'home_hub': {
         const wk = this.seasonWeekNo() ?? 5;
-        const a = this.save ? weekAssignments(this.save, wk) : { juggling: false, skill: wk >= 7 ? ('passing' as const) : ('firstTouch' as const), skillDone: false, learning: wk >= 6 ? false : null, complete: false };
+        const a = this.save ? weekAssignments(this.save, wk) : { juggling: false, skill: wk >= 7 ? ('passing' as const) : ('firstTouch' as const), skillDone: false, learning: wk >= 6 ? false : null, practices: 0, complete: false };
         const trained = a.complete;
         const tasks = homeTasks(a).map((t) => `- ${t.label}: ${t.done ? 'done' : 'not done yet'}\n`).join('');
         setBody(

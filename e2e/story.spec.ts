@@ -129,7 +129,7 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
       await story(page, (x) => x.mode === 'crossbar' || x.scene !== s.scene, 'crossbar start');
     } else if (s.adapter === 'training_arrangement' || s.adapter === 'weekly_focus' || s.adapter === 'practice') {
       await pressStory(page, 'handoff-career', mode);
-      await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'home', 'career home');
+      await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === ({ training_arrangement: 'setup', weekly_focus: 'focus', practice: 'sessions' } as const)[s.adapter as 'practice'], 'career handoff screen');
       if (s.adapter === 'training_arrangement') {
         await press(page, 'nav-focus', mode);
         await scene(page, 'career', (g) => g.screen === 'focus', 'focus');

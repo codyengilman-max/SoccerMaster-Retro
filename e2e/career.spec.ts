@@ -13,7 +13,7 @@ async function pressElement(page: Page, name: string, mode: 'touch' | 'mouse'): 
   return pressAny(page, name, mode);
 }
 
-type Career = { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; text: string; textPage: string; overflow: string[] };
+type Career = { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; cards: string[]; text: string; textPage: string; overflow: string[] };
 
 // The main flow walks every career screen; CI runners are several times slower than local machines.
 test.describe.configure({ timeout: 240_000 });
@@ -75,7 +75,10 @@ test('home training: create player, plan a ball-only indoor week, log once, pers
   await pressElement(page, 'open-w1-s1-0', mode);
   await until(page, (x) => x.screen === 'activity', 'activity');
   await fits(page);
-  // Every guidance field must be reachable, paging the text if it doesn't fit.
+  // The lesson opens on Coach Code steps; the reference fields open with More tips, paging the text if it doesn't fit.
+  expect((await career(page)).text).toContain('COACH CODE');
+  await pressElement(page, 'teach-tips', mode);
+  await until(page, (x) => x.text.includes('Looks right when') || x.textPage !== '1/1', 'tips open');
   const seen: string[] = [(await career(page)).text];
   for (let i = 0; i < 10 && (await career(page)).textPage.split('/')[0] !== (await career(page)).textPage.split('/')[1]; i++) {
     const before = (await career(page)).textPage;
@@ -168,23 +171,29 @@ test('story Home Training lists the required tasks and logging them ticks them o
   await pressElement(page, 'pos-MID', mode);
   await until(page, (x) => x.screen === 'setup' && x.player === 'Zoë', 'player');
   await page.evaluate(() => (window as unknown as { __SMR__: { game: { scene: { start(k: string, d: object): void } } } }).__SMR__.game.scene.start('career', { returnTo: 'story', week: 5 }));
-  let c = await until(page, (x) => x.status === 'ok' && x.screen === 'home' && x.text.includes('REQUIRED THIS WEEK'), 'required list');
-  expect(c.text).toContain('Juggling task: not done yet');
-  expect(c.text).toContain('Control and first-touch work: not done yet');
+  let c = await until(page, (x) => x.status === 'ok' && x.screen === 'home' && x.cards.length === 2, 'two cards');
+  // Exactly two primary cards; each shows its own required task.
+  const home = Object.keys((await diagnostics(page)).layout!.elements).filter((k) => !k.startsWith('career-') && !['title', 'body'].includes(k));
+  expect(home.sort()).toEqual(['nav-ballmastery', 'nav-juggling']);
+  expect(c.cards[0]).toContain('Juggling: to do');
+  expect(c.cards[1]).toContain('First touch: to do');
   await fits(page);
-  for (const [task, label] of [['juggling', 'Juggling task'], ['firstTouch', 'Control and first-touch work']] as const) {
-    await pressElement(page, `req-${task}`, mode);
+  for (const [task, label, short, path] of [
+    ['juggling', 'Juggling task', 'Juggling', ['nav-juggling']],
+    ['firstTouch', 'Control and first-touch work', 'First touch', ['nav-ballmastery', 'lib-firstTouch']],
+  ] as const) {
+    for (const n of path) await pressElement(page, n, mode);
     await until(page, (x) => x.screen === 'library', `${task} library`);
     const first = Object.keys((await diagnostics(page)).layout!.elements).find((k) => k.startsWith('act-'))!;
     await pressElement(page, first, mode);
-    await until(page, (x) => x.screen === 'activity', 'activity');
+    await until(page, (x) => x.screen === 'activity' && x.text.includes('COACH CODE'), 'lesson');
     await pressElement(page, 'log-open', mode);
     await until(page, (x) => x.screen === 'log', 'log form');
     await pressElement(page, 'log-complete', mode);
-    c = await until(page, (x) => x.screen === 'home' && x.text.includes(`${label}: done`), `${task} ticked`);
+    c = await until(page, (x) => x.screen === 'home' && x.cards.join('\n').includes(`${short}: done`), `${task} ticked`);
     expect(c.toast).toContain(`${label}: done for this week`);
     await fits(page);
   }
-  expect(c.text).toContain('All done. Tap Back to story, then Continue Week.');
+  expect(c.text).toContain("This week's home training is done. Tap Back to story, then Continue Week.");
   expect(errors).toEqual([]);
 });

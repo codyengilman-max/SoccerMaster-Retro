@@ -77,8 +77,21 @@ export async function waitForScene(page: Page, key: string): Promise<Diagnostics
   return diagnostics(page);
 }
 
-/** My Training groups these under Home Practice and Progress; a test asking for one from the hub opens its group first. */
-const HUB_GROUP: Readonly<Record<string, string>> = { 'nav-practice': 'nav-progress', 'nav-focus': 'nav-progress', 'nav-team': 'nav-progress', 'nav-sessions': 'nav-practice', 'nav-library': 'nav-practice', 'nav-journal': 'nav-practice', 'nav-review': 'nav-progress', 'nav-player': 'nav-progress', 'nav-play': 'nav-progress', ...Object.fromEntries(['firstTouch', 'passing', 'dribbling', 'finishing', 'defending', 'awareness'].map((f) => [`lib-${f}`, 'lib-ballmastery'])) };
+/** Home Training shows only Juggling and Ball Mastery; a test asking for a button inside one opens that section first. */
+const HUB_GROUP: Readonly<Record<string, string>> = { 'nav-sessions': 'nav-practice', 'nav-journal': 'nav-practice', 'nav-play': 'nav-progress', ...Object.fromEntries(['firstTouch', 'passing', 'dribbling', 'finishing', 'defending', 'awareness'].map((f) => [`lib-${f}`, 'nav-ballmastery'])) };
+/**
+ * Career screens that left Home Training by owner request (Progress, Home Practice, focus plan, Team Training, review,
+ * Character Development, library index). They still exist for the story and other entries; tests open them directly.
+ */
+const CAREER_SCREEN: Readonly<Record<string, object>> = {
+  'nav-progress': { kind: 'progress' },
+  'nav-practice': { kind: 'practice' },
+  'nav-focus': { kind: 'focus' },
+  'nav-team': { kind: 'team' },
+  'nav-review': { kind: 'review' },
+  'nav-player': { kind: 'player' },
+  'nav-library': { kind: 'library', family: null },
+};
 
 /** Wheel a scrolling screen (My Player) until the named element is fully inside the viewport. */
 export async function revealElement(page: Page, name: string): Promise<void> {
@@ -94,9 +107,14 @@ export async function revealElement(page: Page, name: string): Promise<void> {
 
 export async function pressElement(page: Page, name: string, via: 'mouse' | 'touch'): Promise<void> {
   let d = await diagnostics(page);
+  const screen = CAREER_SCREEN[name];
+  if (screen && !d.layout?.elements[name] && d.activeScenes.includes('career')) {
+    await page.evaluate((s) => (window as unknown as { __SMR__: { game: { scene: { getScene(k: string): { go(s: object): void } } } } }).__SMR__.game.scene.getScene('career').go(s), screen);
+    return;
+  }
   const group = HUB_GROUP[name];
-  // Groups nest (nav-library > nav-practice > nav-progress): open the nearest visible ancestor first.
-  if (group && !d.layout?.elements[name] && (d.layout?.elements[group] || HUB_GROUP[group])) {
+  // Groups nest (nav-sessions > nav-practice): open the nearest visible ancestor first.
+  if (group && !d.layout?.elements[name] && (d.layout?.elements[group] || HUB_GROUP[group] || CAREER_SCREEN[group])) {
     await pressElement(page, group, via);
     // The grouped button may sit on a later page of the group screen's actions.
     await expect

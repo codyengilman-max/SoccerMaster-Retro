@@ -89,9 +89,9 @@ for (const gender of ['boy', 'girl'] as const) {
     await until(page, (x) => x.screen === 'setup', 'setup');
     await press(page, 'career-home', mode);
     c = await until(page, (x) => x.player === 'Robin' && x.screen === 'home', 'new player home');
-    // Weekly board: Juggling and Ball Mastery only (Progress stays as a secondary link); Team Training and the weekly focus moved off it.
-    for (const n of ['nav-juggling', 'nav-ballmastery', 'nav-progress']) expect((await els(page))[n], n).toBeDefined();
-    for (const n of ['nav-team', 'nav-focus', 'nav-practice']) expect((await els(page))[n], n).toBeUndefined();
+    // Home Training: exactly two cards, Juggling and Ball Mastery, plus the Back/Home/Menu bar. No Progress, Team Training, focus or Home Practice.
+    expect(Object.keys(await els(page)).filter((k) => !k.startsWith('career-') && !['title', 'body'].includes(k)).sort()).toEqual(['nav-ballmastery', 'nav-juggling']);
+    expect(c.text).not.toMatch(/focus|Team Training|Home Practice|Extra practice/i);
     await page.screenshot({ path: `test-results/bm-home-${gender}-${info.project.name}.png` });
     // Build some history the old way (Training Library > Juggling > jg-1 > Log extra practice), then reload it as an existing save.
     await press(page, 'nav-library', mode);
@@ -177,9 +177,15 @@ for (const gender of ['boy', 'girl'] as const) {
     expect(c.credit).toBe(before.credit);
     expect(c.attributes).toEqual(attrs);
     // Review-only designs are listed with status and sources, and never offered as assignments.
+    // They are listed only in Review & Lab, never inside Ball Mastery.
     await openCareer(page, mode);
     await press(page, 'nav-ballmastery', mode);
-    await press(page, 'bm-designs', mode);
+    await until(page, (x) => x.screen === 'ballMastery', 'ball mastery');
+    expect((await els(page))['bm-designs']).toBeUndefined();
+    await press(page, 'career-menu', mode);
+    await waitForScene(page, 'start');
+    await press(page, 'review-button', mode);
+    await press(page, 'hub-ballmastery', mode);
     await until(page, (x) => x.screen === 'bmDesigns' && x.text.includes('REVIEW ONLY'), 'designs');
     await press(page, 'bm-design-BM-055', mode);
     c = await until(page, (x) => x.screen === 'bmDesign', 'design');

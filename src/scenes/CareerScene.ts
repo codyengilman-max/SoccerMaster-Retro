@@ -30,6 +30,7 @@ import { JUGGLE_SHEET } from '../render/art/juggleSheet';
 import { BM_SHEET } from '../render/art/bmSheet';
 import { bmKey, ensureBmSheet } from '../render/art/bmArt';
 import { WORKING_BOOT, lessonLength, phaseStarts, teachingFor, teachingFrame, type Foot as TeachFoot, type TeachingLesson } from '../game/career/teaching';
+import { masteryLines } from '../game/career/homeEntry';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspectable';
 import { SceneKeys } from './keys';
@@ -105,6 +106,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private demoZoomBall!: Phaser.GameObjects.Graphics;
   private teachFoot: TeachFoot = 'right';
   private teachTips = false;
+  private cardLabels: string[] = [];
   /** Tallest step caption for the current stage width, so the ground line never moves when a caption wraps. */
   private teachCap = { key: '', h: 0 };
   private demoInfo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number }; inset?: { foot: string | null; contact: string; label: string; rect: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number; width: number; height: number }; text: { x: number; y: number; width: number; height: number } }; teach?: { pose: string; foot: TeachFoot; phase: number; step: number; contact: string; boot: { x: number; y: number }; zoomBall: boolean; t: number; ground: number }; paused?: boolean; speed?: number } | null = null;
@@ -143,7 +145,9 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     this.demoPaused = this.reducedMotion;
     this.demoSpeed = 1;
     this.demoMiss = false;
-    this.screen = data?.open === 'reviewHub' ? { kind: 'reviewHub' } : data?.open === 'review' ? { kind: 'review' } : data?.open === 'team' ? { kind: 'team' } : { kind: 'home' };
+    const direct = ['reviewHub', 'review', 'team', 'setup', 'focus', 'sessions'] as const;
+    const open = direct.find((k) => k === data?.open);
+    this.screen = open ? { kind: open } : { kind: 'home' };
     this.history = [];
     this.page = 0;
     this.textPage = 0;
@@ -223,7 +227,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   /** Debug snapshot for browser tests. */
-  describeGameplay(): { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; text: string; textPage: string; overflow: string[]; evidence: number; coachEvidence: number; demo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number } } | null } {
+  describeGameplay(): { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; text: string; cards: string[]; textPage: string; overflow: string[]; evidence: number; coachEvidence: number; demo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number } } | null } {
     return {
       screen: this.screen.kind,
       week: this.save.week,
@@ -235,6 +239,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       status: this.store?.status.kind ?? 'loading',
       toast: this.toast,
       text: this.body?.text ?? '',
+      cards: this.cardLabels,
       textPage: `${this.textPage + 1}/${this.textPages}`,
       overflow: this.buttons.filter((b) => b.active && !b.labelFits()).map((b) => b.name),
       demo: this.demoImg?.visible && this.demoRect ? this.demoInfo : null,
@@ -259,6 +264,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   private go(s: Screen): void {
+    if (s.kind === 'draftLevel') this.teachTips = false;
     if (s.kind === 'activity') {
       this.demoT = 0;
       this.teachTips = false;
@@ -332,31 +338,37 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     return r.ok;
   }
 
-  private content(): { title: string; body: string; actions: Action[]; demo?: Activity; twoCol?: boolean } {
+  private content(): { title: string; body: string; actions: Action[]; demo?: Activity; twoCol?: boolean; cards?: boolean } {
     const s = this.save;
     const sc = this.screen;
     const p = s.player;
     switch (sc.kind) {
       case 'home': {
-        const req = p ? this.requiredTasks() : [];
-        const reqBody = req.length
-          ? `REQUIRED THIS WEEK (story)\n${req.map((t) => `- ${t.label}: ${t.done ? 'done' : 'not done yet'}`).join('\n')}\n${
-              req.every((t) => t.done) ? 'All done. Tap Back to story, then Continue Week.' : 'Tap a task, pick any activity, then Log extra practice > Complete.'
-            }\n\n`
-          : '';
+        if (!p) return { title: 'Home Training', body: 'Create your player to start.', actions: [{ name: 'nav-create', label: 'Create Player', onClick: () => this.go({ kind: 'create' }) }] };
+        // Exactly two sections. Required story tasks and progress show inside the card they belong to.
+        const req = this.requiredTasks();
+        const tick = (keys: readonly string[]) => req.filter((t) => keys.includes(t.key)).map((t) => `${t.short}: ${t.done ? 'done' : 'to do'}`);
+        const logged = (sec: 'juggling' | 'ballMastery') =>
+          s.journal.filter((j) => {
+            const a = j.week === s.week && j.completion === 'done' ? activityById(j.activityId) : undefined;
+            return a !== undefined && sectionOf(a) === sec;
+          }).length;
+        const phase = (k: 'juggling' | 'firstTouch' | 'passing') => masteryLines(s.homeLogs, k).progress.phase;
+        const jl = [`Phase ${phase('juggling')} of 5 · ${logged('juggling')} logged this week`, ...tick(['juggling'])];
+        const bl = [`First touch phase ${phase('firstTouch')} · Passing phase ${phase('passing')}`, `${logged('ballMastery')} logged this week`, ...tick(['firstTouch', 'passing', 'learning'])];
+        const todo = (keys: readonly string[]) => req.some((t) => keys.includes(t.key) && !t.done);
         return {
-          title: p ? `${p.name} · Week ${s.week}` : 'Home Training',
-          body: p
-            ? `${reqBody}WEEKLY TRAINING: Juggling and Ball Mastery. Pick a section, watch the demo, then log your practice.`
-            : 'Create your player to start.',
-          actions: p
-            ? [
-                ...req.map((t) => ({ name: `req-${t.key}`, label: `${t.short}: ${t.done ? 'done' : 'to do'}`, on: t.done, onClick: () => this.go(this.taskScreen(t)) })),
-                { name: 'nav-juggling', label: 'Juggling · Start juggling', onClick: () => this.go({ kind: 'library', family: 'juggling' }) },
-                { name: 'nav-ballmastery', label: 'Ball Mastery · Watch & practise', onClick: () => this.go({ kind: 'ballMastery' }) },
-                { name: 'nav-progress', label: 'Progress', onClick: () => this.go({ kind: 'progress' }) },
-              ]
-            : [{ name: 'nav-create', label: 'Create Player', onClick: () => this.go({ kind: 'create' }) }],
+          title: `${p.name} · Week ${s.week}`,
+          body: req.length
+            ? req.every((t) => t.done)
+              ? 'This week\'s home training is done. Tap Back to story, then Continue Week.'
+              : 'Open a section, pick a lesson, watch it, then Log practice. Highlighted cards still have work this week.'
+            : 'Open a section, pick a lesson, watch it, then Log practice.',
+          cards: true,
+          actions: [
+            { name: 'nav-juggling', label: `JUGGLING\n${jl.join('\n')}`, on: todo(['juggling']), onClick: () => this.go({ kind: 'library', family: 'juggling' }) },
+            { name: 'nav-ballmastery', label: `BALL MASTERY\n${bl.join('\n')}`, on: todo(['firstTouch', 'passing', 'learning']), onClick: () => this.go({ kind: 'ballMastery' }) },
+          ],
         };
       }
       case 'practice':
@@ -454,19 +466,31 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           };
         return {
           title: sc.family === 'juggling' ? 'Juggling' : `Ball Mastery · ${SKILL_FAMILY_LABELS[sc.family as (typeof fams)[number]]}`,
-          body: sc.family === 'juggling' ? 'Your juggling ladder. Tap a step for the demonstration, then log your practice. Juggling grows no game attribute.' : 'Tap an activity to watch the demonstration and practise.',
-          actions: ALL_ACTIVITIES.filter((a) => a.skillFamilyId === sc.family).map((a) => ({ name: `act-${a.id}`, label: `${a.title} · ${LEVEL_NAMES[a.entryLevel]}`, onClick: () => this.go({ kind: 'activity', id: a.id, sessionId: null, index: 0 }) })),
+          body: [
+            sc.family === 'juggling' ? 'Your juggling ladder. Tap a step for the demonstration, then log your practice. Juggling grows no game attribute.' : 'Tap a lesson to watch the demonstration and practise.',
+            ...(sc.family === 'juggling' || sc.family === 'firstTouch' || sc.family === 'passing' ? [masteryLines(s.homeLogs, sc.family).lines[0]!, masteryLines(s.homeLogs, sc.family).lines[3]!] : []),
+            ...this.requiredTasks().filter((t) => t.key === sc.family).map((t) => `This week: ${t.label}: ${t.done ? 'done' : 'not done yet'}`),
+          ].join('\n'),
+          actions: [
+            ...ALL_ACTIVITIES.filter((a) => a.skillFamilyId === sc.family).map((a) => ({ name: `act-${a.id}`, label: `${a.title} · ${LEVEL_NAMES[a.entryLevel]}`, onClick: () => this.go({ kind: 'activity', id: a.id, sessionId: null, index: 0 }) })),
+            // The owner-enabled v1.1 drafts sit in the skill they count toward, labelled as drafts.
+            ...(CURRICULUM.ok ? CURRICULUM.manifest.families.filter((f) => CATEGORY_SKILL_AREA[f.category] === sc.family) : []).map((f) => ({ name: `draft-${f.id}`, label: `${f.title} · draft (${f.levels.length})`, onClick: () => this.go({ kind: 'draftFamily', id: f.id }) })),
+          ],
         };
       }
       case 'ballMastery': {
         const fams = HOME_SECTIONS.ballMastery;
+        const req = this.requiredTasks().filter((t) => t.key !== 'juggling');
+        const due = new Set(req.filter((t) => !t.done).map((t) => t.key as string));
+        const count = (fam: string) => ALL_ACTIVITIES.filter((a) => a.skillFamilyId === fam).length + (CURRICULUM.ok ? CURRICULUM.manifest.families.filter((f) => CATEGORY_SKILL_AREA[f.category] === fam).length : 0);
         return {
           title: 'Ball Mastery',
-          body: 'Watch & practise: pick a skill, watch your player demonstrate it, then log your practice. Logging is your own report, not proof of mastery.',
-          actions: [
-            ...fams.map((fam) => ({ name: `lib-${fam}`, label: `${SKILL_FAMILY_LABELS[fam]} (${ALL_ACTIVITIES.filter((a) => a.skillFamilyId === fam).length})`, onClick: () => this.go({ kind: 'library', family: fam }) })),
-            { name: 'bm-designs', label: `New designs (review only, ${BALL_MASTERY_DESIGNS.length})`, onClick: () => this.go({ kind: 'bmDesigns' }) },
-          ],
+          body: [
+            'Pick a skill, then a lesson. Each lesson shows the demonstration and Coach Code steps, and Log practice is inside it.',
+            `First touch ${masteryLines(s.homeLogs, 'firstTouch').lines[0]} · Passing ${masteryLines(s.homeLogs, 'passing').lines[0]}`,
+            ...req.map((t) => `This week: ${t.label}: ${t.done ? 'done' : 'not done yet'}`),
+          ].join('\n'),
+          actions: fams.map((fam) => ({ name: `lib-${fam}`, label: `${SKILL_FAMILY_LABELS[fam]} (${count(fam)})${due.has(fam) ? ' · this week' : ''}`, on: due.has(fam), onClick: () => this.go({ kind: 'library', family: fam }) })),
         };
       }
       case 'bmDesigns':
@@ -587,15 +611,20 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         if (!m || !f || !l) return { title: 'Draft library', body: 'Unknown option.', actions: [] };
         const proto = prototypeFor(l.id);
         const claims = m.claims.filter((c) => l.claimIds.includes(c.id));
+        // Lesson first; the evidence and prototype notes open with More tips.
         const body = [
-          `DRAFT · ${DRAFT_STATUS}. Counts toward ${SKILL_FAMILY_LABELS[CATEGORY_SKILL_AREA[f.category]]}; swap it into a scheduled session or log it as extra practice.`,
+          `DRAFT (${DRAFT_STATUS.toLowerCase()}). Counts toward ${SKILL_FAMILY_LABELS[CATEGORY_SKILL_AREA[f.category]]}.`,
           `Setup: ${l.setup}`,
           ...l.steps.map((x, i) => `${i + 1}. ${x}`),
           `Foot: ${l.footMode}`,
-          l.prerequisites.length ? `Comfortable first with: ${l.prerequisites.join(', ')}` : 'No prerequisite option.',
-          `Evidence: ${claims.map((c) => `${c.id} ${c.type.replace(/_/g, ' ')}`).join('; ')}`,
           `Stop: ${m.safety.stopRule}`,
-          proto ? `Demo prototype, not final. Open: ${proto.blockers.join(' ')}` : 'No demo yet (specification only).',
+          ...(this.teachTips
+            ? [
+                l.prerequisites.length ? `Comfortable first with: ${l.prerequisites.join(', ')}` : 'No prerequisite option.',
+                `Evidence: ${claims.map((c) => `${c.id} ${c.type.replace(/_/g, ' ')}`).join('; ')}`,
+                proto ? `Demo prototype, not final. Open: ${proto.blockers.join(' ')}` : 'No demo yet (specification only).',
+              ]
+            : []),
         ].join('\n');
         const actions: Action[] = proto
           ? [
@@ -606,7 +635,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
               { name: 'demo-replay', label: 'Replay', onClick: () => ((this.demoT = 0), this.render()) },
             ]
           : [];
-        actions.unshift({ name: 'draft-log', label: 'Log as extra practice', onClick: () => this.openLog(draftActivityId(l.id), null) });
+        actions.unshift({ name: 'draft-log', label: 'Log practice', onClick: () => this.openLog(draftActivityId(l.id), null) });
+        actions.push({ name: 'teach-tips', label: this.teachTips ? 'Hide tips' : 'More tips', on: this.teachTips, onClick: () => ((this.teachTips = !this.teachTips), this.render()) });
         return { title: `DRAFT · ${l.id} ${f.title}`, body, actions };
       }
       case 'activity': {
@@ -639,20 +669,23 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           ];
           return { title: a.title, body: tbody, actions: tactions, demo: a, twoCol: true };
         }
-        const body = [
-          viewer ? `COACH CODE: ${a.cue}` : '',
-          a.objective,
-          useBallOnly ? `Ball-only version: ${a.ballOnly!.objective} ${a.ballOnly!.steps}` : `1. ${a.steps[0]}\n2. ${a.steps[1]}\n3. ${a.steps[2]}`,
-          variant ? `This week's change: ${variant.change}` : '',
-          `Cue: ${a.cue}`,
+        // Lesson first (Coach Code, steps, one fix); the reference detail opens with More tips.
+        const lessonTips = [
           `Looks right when: ${a.success}`,
-          `Common mistake: ${a.mistake.mistake} Fix: ${a.mistake.correction}`,
           `Easier: ${a.easier}  Harder: ${a.harder}`,
           `Needs: ball${a.equipment.optional.length ? ` (optional: ${a.equipment.optional.join(', ')})` : ''}, ${a.space} space${a.strikingArea ? ', safe outdoor striking area' : ''}.`,
           `Limits: ${a.limitations.join(' ')}`,
           `Source: ${a.sources.map((r) => SOURCES[r.id].title).join('; ') || a.sourceNote}. ${a.sourceNote}`,
           `Review: coaching ${a.review.coaching}.`,
           ...links.map(({ design: d, match: m }) => `Ball Mastery design ${d.id} ${d.title}: review only, ${m.verdict === 'equivalent' ? 'same move' : 'possible match, needs review'}. Sources: ${d.sourceIds.map((id) => DESIGN_SOURCES[id]?.title ?? id).join('; ')}.`),
+        ];
+        const body = [
+          `COACH CODE: ${a.cue}`,
+          a.objective,
+          useBallOnly ? `Ball-only version: ${a.ballOnly!.objective} ${a.ballOnly!.steps}` : `1. ${a.steps[0]}\n2. ${a.steps[1]}\n3. ${a.steps[2]}`,
+          variant ? `This week's change: ${variant.change}` : '',
+          `Common mistake: ${a.mistake.mistake}\nFix: ${a.mistake.correction}`,
+          ...(this.teachTips ? lessonTips : []),
         ]
           .filter(Boolean)
           .join('\n');
@@ -663,7 +696,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             { name: 'demo-step', label: 'Step', onClick: () => ((this.demoPaused = true), (this.demoT = nextBeat(demoBeats(a), this.demoT, demoLength(a))), this.render()) },
             { name: 'demo-half', label: this.demoSpeed < 1 ? '0.5× (on)' : '0.5×', on: this.demoSpeed < 1, onClick: () => ((this.demoSpeed = this.demoSpeed < 1 ? 1 : 0.5), this.render()) },
           );
-        actions.push({ name: 'log-open', label: sc.sessionId ? 'Log this session' : 'Log extra practice', onClick: () => this.openLog(a.id, sc.sessionId) });
+        actions.push({ name: 'log-open', label: sc.sessionId ? 'Log this session' : 'Log practice', onClick: () => this.openLog(a.id, sc.sessionId) });
+        actions.push({ name: 'teach-tips', label: this.teachTips ? 'Hide tips' : 'More tips', on: this.teachTips, onClick: () => ((this.teachTips = !this.teachTips), this.render()) });
         if (sc.sessionId && s.plan && !s.completedSessions.includes(sc.sessionId))
           for (const alt of substitutes(s.plan, sc.sessionId, sc.index).slice(0, 3))
             actions.push({ name: `swap-${alt.id}`, label: `Swap for ${alt.title}`, onClick: () => void this.act({ type: 'substitute', sessionId: sc.sessionId!, index: sc.index, activityId: alt.id }, { kind: 'activity', id: alt.id, sessionId: sc.sessionId, index: sc.index }) });
@@ -836,7 +870,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   private taskScreen(t: HomeTask): Screen {
-    if (t.key === 'learning') return this.save.plan ? { kind: 'sessions' } : { kind: 'focus' };
+    if (t.key === 'learning') return { kind: 'ballMastery' };
     return { kind: 'library', family: t.key };
   }
 
@@ -957,11 +991,12 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
 
     for (const b of this.buttons) b.destroy();
     this.buttons = [];
-    const btnH = Math.max(44, Math.round(base * 2.4));
+    this.cardLabels = c.cards ? c.actions.map((a) => a.label) : [];
     const gap = 8;
     const areaH = height - navH - 24 - colY;
+    const btnH = c.cards ? Math.round(Math.max(base * 4.6, Math.min(base * 7.5, (areaH - gap) / 2))) : Math.max(44, Math.round(base * 2.4));
     const perCol = Math.max(1, Math.floor((areaH + gap) / (btnH + gap)));
-    const cols = portrait ? (contentW > 420 || (c.twoCol && contentW >= 300) ? 2 : 1) : actions.length > perCol && contentW >= 340 ? 2 : 1;
+    const cols = c.cards ? 1 : portrait ? (contentW > 420 || (c.twoCol && contentW >= 300) ? 2 : 1) : actions.length > perCol && contentW >= 340 ? 2 : 1;
     const perPage = Math.max(1, perCol * cols - (actions.length > perCol * cols ? 1 : 0));
     const pages = Math.max(1, Math.ceil(actions.length / perPage));
     this.page = Math.min(this.page, pages - 1);
@@ -972,7 +1007,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     shown.forEach((a, i) => {
       const col = i % cols;
       const row = Math.floor(i / cols);
-      const b = new Button(this, colX + col * (bw + gap) + bw / 2, colY + row * (btnH + gap) + btnH / 2, { name: a.name, label: a.label, width: bw, height: btnH, fontSize: font, onClick: a.onClick });
+      const b = new Button(this, colX + col * (bw + gap) + bw / 2, colY + row * (btnH + gap) + btnH / 2, { name: a.name, label: a.label, width: bw, height: btnH, fontSize: c.cards ? Math.round(font * 1.05) : font, onClick: a.onClick });
       if (a.on) b.setFill(PALETTE.mustard, PALETTE.mustardDark);
       this.buttons.push(b);
     });
