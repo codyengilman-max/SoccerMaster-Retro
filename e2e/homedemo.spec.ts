@@ -5,8 +5,9 @@ test.describe.configure({ timeout: 300_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 type Rect = { x: number; y: number; width: number; height: number };
 type Demo = { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: Rect; ball: { x: number; y: number }; rect: Rect };
-type Career = { screen: string; credit: number; journal: number; player: string | null; status: string; demo: Demo | null };
+type Career = { demoGate?: string | null; text: string; screen: string; credit: number; journal: number; player: string | null; status: string; demo: Demo | null };
 
+const els = async (page: Page) => (await diagnostics(page)).layout?.elements ?? {};
 async function career(page: Page): Promise<Career> {
   return (await diagnostics(page)).gameplay as Career;
 }
@@ -74,7 +75,7 @@ const EXERCISES: readonly [string, string][] = [
 const HALVES: readonly (readonly [string, string][])[] = [EXERCISES.slice(0, 4), EXERCISES.slice(4)];
 
 for (const gender of ['boy', 'girl'] as const) for (const [h, exercises] of HALVES.entries()) {
-  test(`home demos ${h + 1}/2: the saved ${gender} demonstrates in the training kit, after reload and rotation; watching awards nothing`, async ({ page }, info) => {
+  test(`home demos ${h + 1}/2: the saved ${gender} juggles in the training kit; unchecked Ball Mastery demos stay hidden; after reload and rotation; watching awards nothing`, async ({ page }, info) => {
     const mode = modeFor(info);
     const errors = trackConsoleErrors(page);
     page.on('dialog', (d) => void d.accept('Alex'));
@@ -97,6 +98,20 @@ for (const gender of ['boy', 'girl'] as const) for (const [h, exercises] of HALV
       await until(page, (x) => x.screen === 'library', 'library');
       await page.waitForTimeout(80);
       await press(page, act, mode);
+      if (lib !== 'lib-juggling') {
+        // Ball Mastery lessons without a contact-checked demo show their page with no animation (D69 gate).
+        for (const size of [info.project.use.viewport!, { width: info.project.use.viewport!.height, height: info.project.use.viewport!.width }]) {
+          await page.setViewportSize(size);
+          await page.waitForTimeout(300);
+          const g = await until(page, (x) => x.screen === 'activity' && x.demoGate === 'checking', `${act} gated`);
+          expect(g.demo, `${act} draws no demonstration`).toBeNull();
+          expect(g.text).toContain('still being checked');
+          const e = await els(page);
+          for (const n of ['demo-pause', 'demo-step', 'demo-half', 'demo-replay']) expect(e[n], `${act} ${n} hidden`).toBeUndefined();
+        }
+        await page.setViewportSize(info.project.use.viewport!);
+        continue;
+      }
       const d = (await until(page, (x) => x.screen === 'activity' && !!x.demo, `${act} sprite demo`)).demo!;
       expect(d.set).toBe(`${gender}-training`);
       for (const size of [info.project.use.viewport!, { width: info.project.use.viewport!.height, height: info.project.use.viewport!.width }]) {

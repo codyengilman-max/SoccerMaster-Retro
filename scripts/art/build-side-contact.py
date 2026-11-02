@@ -30,6 +30,12 @@ SEX = {
     'girl': {'leg': ('idle-e', (84, 93, 108, 121), (95, 112)), 'hip': (82.0, 80.0)},
 }
 FAR_TINT = (0.84, 0.85, 0.93)
+# Sole-on-ball rolls: the ball travels forward of the tap position, 1 px per frame, and the working sole stays on its
+# top (one pose per position, so ball and sole never part mid-roll). Lifted soles and rest stances at the far end.
+ROLL_DX = range(1, 9)
+LIFT_DX = (8,)
+REST_DX = (8,)
+COLS = 8
 
 
 def frame(sex, name):
@@ -209,36 +215,55 @@ def build(sex):
     while nearest(place(part, lm, 0.0, planted(lm, sup_knee_x))[0], ball) < BALL_R + 2.0:
         sup_knee_x -= 0.5
 
-    def leg(hip, mode):
+    def leg(hip, mode, dx):
         if mode in ('stand', 'support'):
             kx = sup_knee_x - (0.0 if hip is near_hip else 1.0)
             bof = planted(lm, kx)
             layer, geo = place(part, lm, 0.0, bof)
             return layer, geo, 0.0
         lift = LIFT if mode == 'lift' else 0.0
-        err, th, c = tap_leg(lm, hip, L, bx, lift)
+        at = (bx + dx, ball[1])
+        err, th, c = tap_leg(lm, hip, L, at[0], lift)
         layer, geo = place(part, lm, th, c)
         # Rasterising drops the boot's soft bottom edge; close the measured gap along the sole normal so the ball's
         # edge meets the drawn sole (pixel centre within half a pixel of the ball edge), never inside it.
         for _ in range(3):
-            gap = nearest(layer, ball) - (BALL_R + 0.5 + lift)
+            gap = nearest(layer, at) - (BALL_R + 0.5 + lift)
             if abs(gap) <= 0.25:
                 break
             d = rot((0.0, 1.0), th)
             c = (c[0] + d[0] * gap, c[1] + d[1] * gap)
             layer, geo = place(part, lm, th, c)
+        # Pixel snapping can leave the sole a fraction outside [r, r + 1] of the ball centre; nudge along the sole
+        # normal in 0.05 px steps to the closest offset that lands inside it with no boot pixel in the ball.
+        lo, hi = BALL_R + lift, BALL_R + 1.0 + lift
+        if not lo <= nearest(layer, at) <= hi:
+            d = rot((0.0, 1.0), th)
+            for k in sorted(range(-40, 41), key=abs):
+                cc = (c[0] + d[0] * k * 0.05, c[1] + d[1] * k * 0.05)
+                ly, gg = place(part, lm, th, cc)
+                if lo <= nearest(ly, at) <= hi:
+                    layer, geo, c = ly, gg, cc
+                    break
         geo['thighError'] = abs(math.hypot(geo['knee'][0] - hip[0], geo['knee'][1] - hip[1]) - L)
         return layer, geo, th
 
     poses = {
-        'stand': ('stand', 'stand'),
-        'right-lift': ('lift', 'support'), 'right-tap': ('tap', 'support'),
-        'left-lift': ('support', 'lift'), 'left-tap': ('support', 'tap'),
+        'stand': ('stand', 'stand', 0),
+        'right-lift': ('lift', 'support', 0), 'right-tap': ('tap', 'support', 0),
+        'left-lift': ('support', 'lift', 0), 'left-tap': ('support', 'tap', 0),
     }
+    for dx in ROLL_DX:
+        poses[f'right-on@{dx}'] = ('tap', 'support', dx)
+        poses[f'left-on@{dx}'] = ('support', 'tap', dx)
+    for dx in LIFT_DX:
+        poses[f'right-lift@{dx}'] = ('lift', 'support', dx)
+        poses[f'left-lift@{dx}'] = ('support', 'lift', dx)
     out, meta = {}, {}
-    for pid, (rmode, lmode) in poses.items():
-        rl, rg, rth = leg(near_hip, rmode)
-        ll, lg, lth = leg(far_hip, lmode)
+    for pid, (rmode, lmode, dx) in poses.items():
+        pball = (ball[0] + dx, ball[1])
+        rl, rg, rth = leg(near_hip, rmode, dx)
+        ll, lg, lth = leg(far_hip, lmode, dx)
         back = Image.new('RGBA', (W, H), (0, 0, 0, 0))
         back.alpha_composite(tint(thigh(far_hip, lg['knee'], lm['skin'], lm['width'] - 1), FAR_TINT))
         back.alpha_composite(tint(ll, FAR_TINT))
@@ -254,24 +279,29 @@ def build(sex):
         work = 'right' if rmode in ('lift', 'tap') else 'left' if lmode in ('lift', 'tap') else None
         g = rg if work == 'right' else lg if work == 'left' else None
         meta[pid] = {
+            'frame': pid, 'dx': dx, 'ball': [round(v, 2) for v in pball],
             'working': work, 'support': None if work is None else ('left' if work == 'right' else 'right'),
             'surface': 'sole' if (rmode == 'tap' or lmode == 'tap') else 'none',
-            'contact': [round(v, 2) for v in edge_contact(rl if work == 'right' else ll, ball)] if g and (rmode == 'tap' or lmode == 'tap') else None,
+            'contact': [round(v, 2) for v in edge_contact(rl if work == 'right' else ll, pball)] if g and (rmode == 'tap' or lmode == 'tap') else None,
             'boots': {'right': {k: [round(v, 2) for v in rg[k]] for k in ('heel', 'toe', 'bof')}, 'left': {k: [round(v, 2) for v in lg[k]] for k in ('heel', 'toe', 'bof')}},
             'rotation': {'right': round(math.degrees(rth), 2), 'left': round(math.degrees(lth), 2)},
             'thighError': round(max(rg.get('thighError', 0), lg.get('thighError', 0)), 2),
         }
+    # Both feet down with the ball rolled forward: the same stance frame, checked against the ball where it stopped.
+    for dx in REST_DX:
+        meta[f'stand@{dx}'] = {**meta['stand'], 'dx': dx, 'ball': [round(ball[0] + dx, 2), round(ball[1], 2)]}
     return out, meta, ball, lm
 
 
-def check(meta, layers, ball):
-    """Pixel check: distance from the ball centre to the nearest opaque pixel of the working boot."""
+def check(meta, layers):
+    """Pixel check: distance from the pose's ball centre to the nearest opaque pixel of the working boot."""
     res = {}
     for pid, m in meta.items():
         if not m['working']:
             res[pid] = None
             continue
-        img = layers[pid][2] if m['working'] == 'right' else layers[pid][3]
+        ball = m['ball']
+        img = layers[m['frame']][2] if m['working'] == 'right' else layers[m['frame']][3]
         p = img.load()
         dmin = min(math.hypot(x + 0.5 - ball[0], y + 0.5 - ball[1]) for y in range(H) for x in range(W) if p[x, y][3] >= 128)
         inside = sum(1 for y in range(H) for x in range(W) if p[x, y][3] >= 128 and math.hypot(x + 0.5 - ball[0], y + 0.5 - ball[1]) < BALL_R - 0.75)
@@ -279,15 +309,15 @@ def check(meta, layers, ball):
     return res
 
 
-def support_check(meta, layers, ball):
-    """Pixel check for every planted (non-working) boot: distance from the ball centre to its nearest opaque pixel."""
+def support_check(meta, layers):
+    """Pixel check for every planted (non-working) boot: distance from the pose's ball centre to its nearest opaque pixel."""
     res = {}
     for pid, m in meta.items():
         res[pid] = {}
         for foot, i in (('right', 2), ('left', 3)):
             if foot == m['working']:
                 continue
-            res[pid][foot] = round(nearest(layers[pid][i], ball), 2)
+            res[pid][foot] = round(nearest(layers[m['frame']][i], m['ball']), 2)
     return res
 
 
@@ -302,39 +332,43 @@ def main():
     for sex in SEX:
         layers, meta, ball, lm = build(sex)
         names = [f'{p}-{l}' for p in layers for l in ('back', 'front')]
-        sheet = Image.new('RGBA', (W * len(names), H), (0, 0, 0, 0))
+        rows = (len(names) + COLS - 1) // COLS
+        sheet = Image.new('RGBA', (W * COLS, H * rows), (0, 0, 0, 0))
         frames = {}
         for i, n in enumerate(names):
             pid, l = n.rsplit('-', 1)
-            sheet.alpha_composite(layers[pid][0 if l == 'back' else 1], (i * W, 0))
-            frames[n] = {'frame': {'x': i * W, 'y': 0, 'w': W, 'h': H}, 'rotated': False, 'trimmed': False, 'spriteSourceSize': {'x': 0, 'y': 0, 'w': W, 'h': H}, 'sourceSize': {'w': W, 'h': H}}
+            fx, fy = (i % COLS) * W, (i // COLS) * H
+            sheet.alpha_composite(layers[pid][0 if l == 'back' else 1], (fx, fy))
+            frames[n] = {'frame': {'x': fx, 'y': fy, 'w': W, 'h': H}, 'rotated': False, 'trimmed': False, 'spriteSourceSize': {'x': 0, 'y': 0, 'w': W, 'h': H}, 'sourceSize': {'w': W, 'h': H}}
         sheet.save(os.path.join(OUT, f'{sex}-side.webp'), lossless=True, quality=100, method=6)
-        json.dump({'frames': frames, 'meta': {'image': f'{sex}-side.webp', 'size': {'w': sheet.width, 'h': H}, 'scale': '1', 'source': f'sprites-v2/{sex}-training (idle-e torso, {SEX[sex]["leg"][0]} lower leg)'}}, open(os.path.join(OUT, f'{sex}-side.json'), 'w'), indent=1)
-        chk = check(meta, layers, ball)
-        sup = support_check(meta, layers, ball)
+        json.dump({'frames': frames, 'meta': {'image': f'{sex}-side.webp', 'size': {'w': sheet.width, 'h': sheet.height}, 'scale': '1', 'source': f'sprites-v2/{sex}-training (idle-e torso, {SEX[sex]["leg"][0]} lower leg)'}}, open(os.path.join(OUT, f'{sex}-side.json'), 'w'), indent=1)
+        chk = check(meta, layers)
+        sup = support_check(meta, layers)
         report[sex] = {'ball': [round(v, 2) for v in ball], 'ballRadius': BALL_R, 'poses': {p: {**meta[p], 'pixelCheck': chk[p], 'plantedBootNearestPixel': sup[p]} for p in meta}}
-        # Proof sheet: each pose composed with the approved ball, x4.
-        proof = Image.new('RGBA', (W * 4 * len(layers), H * 4), (196, 226, 196, 255))
-        for i, (pid, (back, front, _, _)) in enumerate(layers.items()):
+        # Proof sheets: every pose (and rest alias) composed with the approved ball at that pose's ball position.
+        def comp(pid):
+            back, front, _, _ = layers[meta[pid]['frame']]
+            pb = meta[pid]['ball']
             c = Image.new('RGBA', (W, H), (196, 226, 196, 255))
             c.alpha_composite(back)
-            c.alpha_composite(ball_img, (int(round(ball[0] - BALL_R)), int(round(ball[1] - BALL_R))))
+            c.alpha_composite(ball_img, (int(round(pb[0] - BALL_R)), int(round(pb[1] - BALL_R))))
             c.alpha_composite(front)
-            proof.alpha_composite(c.resize((W * 4, H * 4), Image.NEAREST), (i * W * 4, 0))
+            return c
+        pc = 6
+        pr = (len(meta) + pc - 1) // pc
+        proof = Image.new('RGBA', (W * 4 * pc, H * 4 * pr), (196, 226, 196, 255))
+        zoom = Image.new('RGBA', (70 * 8 * pc, 54 * 8 * pr), (196, 226, 196, 255))
+        for i, pid in enumerate(meta):
+            c = comp(pid)
+            proof.alpha_composite(c.resize((W * 4, H * 4), Image.NEAREST), ((i % pc) * W * 4, (i // pc) * H * 4))
+            zoom.alpha_composite(c.crop((60, 70, 130, 124)).resize((560, 432), Image.NEAREST), ((i % pc) * 560, (i // pc) * 432))
         proof.save(os.path.join(DOC, f'proof-{sex}.png'))
-        zoom = Image.new('RGBA', (60 * 8 * len(layers), 54 * 8), (196, 226, 196, 255))
-        for i, (pid, (back, front, _, _)) in enumerate(layers.items()):
-            c = Image.new('RGBA', (W, H), (196, 226, 196, 255))
-            c.alpha_composite(back)
-            c.alpha_composite(ball_img, (int(round(ball[0] - BALL_R)), int(round(ball[1] - BALL_R))))
-            c.alpha_composite(front)
-            zoom.alpha_composite(c.crop((62, 70, 122, 124)).resize((480, 432), Image.NEAREST), (i * 480, 0))
         zoom.save(os.path.join(DOC, f'zoom-{sex}.png'))
         boxes = [im.getbbox() for b, f, _, _ in layers.values() for im in (b, f)]
         vis = (min(b[0] for b in boxes), min(b[1] for b in boxes), max(b[2] for b in boxes), max(b[3] for b in boxes))
         ts.append(f'  {sex}: {{ cell: {{ w: {W}, h: {H} }}, anchor: {{ x: 80, y: {GROUND} }}, bodyHeight: 100, visible: {{ x: {vis[0]}, y: {vis[1]}, w: {vis[2] - vis[0]}, h: {vis[3] - vis[1]} }}, ball: {{ x: {ball[0]:.2f}, y: {ball[1]:.2f}, r: {BALL_R} }}, poses: {{')
         for p, m in meta.items():
-            ts.append(f"    '{p}': {json.dumps({k: m[k] for k in ('working', 'support', 'surface', 'contact', 'boots')}, separators=(', ', ': '))},")
+            ts.append(f"    '{p}': {json.dumps({k: m[k] for k in ('frame', 'dx', 'ball', 'working', 'support', 'surface', 'contact', 'boots')}, separators=(', ', ': '))},")
         ts.append('  } },')
     ts.append('});')
     ts.append('export type SideSex = keyof typeof SIDE_CONTACT;')

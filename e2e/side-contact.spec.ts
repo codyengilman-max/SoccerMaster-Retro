@@ -5,7 +5,7 @@ test.describe.configure({ timeout: 300_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 type Rect = { x: number; y: number; width: number; height: number };
 type Teach = { pose: string; foot: 'right' | 'left'; phase: number; step: number; contact: string; boot: { x: number; y: number }; zoomBall: boolean; t: number; ground: number };
-type Side = { working: string | null; support: string | null; phase: string; ballTexture: string; ballRadius: number; poseWorking: string | null; poseSurface: string; contact: { x: number; y: number } | null };
+type Side = { working: string | null; support: string | null; phase: string; action: string; ballDx: number; poseDx: number; ballTexture: string; ballRadius: number; poseWorking: string | null; poseSurface: string; contact: { x: number; y: number } | null };
 type Demo = { side?: Side; teach?: Teach; set: string; flip?: boolean; fallback?: boolean; frame: string; contact: string; player: Rect; ball: { x: number; y: number }; rect: Rect; inset?: { foot: string; contact: string; label: string; rect: Rect; ball: Rect; text: Rect }; paused?: boolean; speed?: number };
 type Career = { screen: string; week: number; credit: number; journal: number; player: string | null; status: string; text: string; plan: string[]; attributes: Record<string, number> | null; demo: Demo | null };
 
@@ -171,6 +171,78 @@ for (const gender of ['boy', 'girl'] as const) {
     c = await until(page, (x) => x.screen === 'home', 'home');
     expect(c.credit).toBe(home.credit);
     expect(c.journal).toBe(home.journal);
+    expect(errors).toEqual([]);
+  });
+}
+
+// Sole rolls (v1.1 BM03 L2, TR01 L1): the ball travels under the sole, each position drawn with its own pose.
+for (const gender of ['boy', 'girl'] as const) {
+  test(`side-view sole rolls (${gender}): ball and sole travel together, ball turns, inset follows`, async ({ page }, info) => {
+    const mode = modeFor(info);
+    const errors = trackConsoleErrors(page);
+    page.on('dialog', (d) => void d.accept('Robin'));
+    await openCareer(page, mode);
+    await press(page, 'pos-MID', mode);
+    await until(page, (x) => x.screen === 'setup', 'setup');
+    await press(page, 'career-home', mode);
+    const home = await until(page, (x) => x.screen === 'home', 'home');
+    if (gender === 'girl') {
+      await saveGender(page, 'girl');
+      await openCareer(page, mode);
+      await until(page, (x) => x.screen === 'home', 'home again');
+    }
+    for (const [id, path] of [['v11-BM03-L2', 'forward-back'], ['v11-TR01-L1', 'back']] as const) {
+      await press(page, 'nav-ballmastery', mode);
+      await press(page, 'lib-dribbling', mode);
+      await press(page, `act-${id}`, mode);
+      await until(page, (x) => x.screen === 'activity' && !!x.demo?.side && x.demo.fallback === false, `${id} side view`);
+      for (const lead of ['right', 'left'] as const) {
+        await press(page, `foot-${lead}`, mode);
+        await press(page, 'demo-replay', mode);
+        await until(page, (x) => x.demo?.teach?.foot === lead && x.demo.paused === false, `${id} ${lead} playing`);
+        const seen: Demo[] = [];
+        for (;;) {
+          const c = await career(page);
+          const d = c.demo!;
+          seen.push(d);
+          const s = d.side!;
+          expect(d.flip, 'never mirrored').toBe(false);
+          expect(s.poseDx, 'pose drawn for the ball where it is').toBe(s.ballDx);
+          expect(s.poseWorking).toBe(s.working);
+          expect(s.poseSurface).toBe(d.teach!.contact);
+          expect(d.inset!.contact).toBe(d.teach!.contact);
+          if (s.working) expect(d.inset!.label.startsWith(s.working === 'right' ? 'Right foot' : 'Left foot')).toBe(true);
+          expect(within(d.inset!.ball, d.inset!.rect), 'inset ball inside inset').toBe(true);
+          expect(within(d.player, d.rect), 'player inside stage').toBe(true);
+          if (d.teach!.contact === 'sole') {
+            const p = s.contact!;
+            const dist = Math.hypot(p.x - d.ball.x, p.y - d.ball.y);
+            expect(dist / s.ballRadius, 'contact on the ball edge').toBeGreaterThan(0.85);
+            expect(dist / s.ballRadius, 'contact on the ball edge').toBeLessThan(1.15);
+            expect(p.y, 'contact on top').toBeLessThan(d.ball.y);
+            expect(s.working, 'working foot on the ball').toBe(lead);
+          } else expect(s.contact).toBeNull();
+          if (d.paused) break;
+          await page.waitForTimeout(30);
+        }
+        // Ball moved only under the sole, forward then back (or back only), and the strip turned with it.
+        const xs = seen.map((d) => d.ball.x);
+        for (let i = 1; i < seen.length; i++) if (seen[i]!.side!.ballDx !== seen[i - 1]!.side!.ballDx) expect(seen[i]!.teach!.contact === 'sole' || seen[i - 1]!.teach!.contact === 'sole').toBe(true);
+        const max = Math.max(...seen.map((d) => d.side!.ballDx));
+        expect(max).toBe(8);
+        if (path === 'forward-back') expect(xs[0]!).toBeLessThan(Math.max(...xs) - 5);
+        else expect(xs[0]!).toBeGreaterThan(xs[xs.length - 1]! + 5);
+        expect(seen[seen.length - 1]!.side!.ballDx).toBe(0);
+        expect(new Set(seen.map((d) => d.side!.ballTexture)).size, 'ball turns as it rolls').toBeGreaterThan(1);
+        for (const d of seen) expect(d.side!.ballTexture).toMatch(/jungle4-ball:ball-\d+$/);
+        if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/roll-${id}-${gender}-${lead}-${info.project.name}.png` });
+      }
+      await press(page, 'career-back', mode);
+      await press(page, 'career-home', mode);
+      const c = await until(page, (x) => x.screen === 'home', 'home');
+      expect(c.credit).toBe(home.credit);
+      expect(c.journal).toBe(home.journal);
+    }
     expect(errors).toEqual([]);
   });
 }

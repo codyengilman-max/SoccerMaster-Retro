@@ -30,8 +30,10 @@ import { JUGGLE_SHEET } from '../render/art/juggleSheet';
 import { BM_SHEET } from '../render/art/bmSheet';
 import { bmKey, ensureBmSheet } from '../render/art/bmArt';
 import { SIDE_CONTACT, ensureSideArt, sideKey } from '../render/art/sideArt';
+const GATED_NOTE = 'Demonstration: still being checked for correct foot and ball contact, so it is not shown yet. Follow the steps below.';
+type SidePoseArt = { readonly frame: string; readonly dx: number; readonly ball: readonly number[]; readonly working: string | null; readonly surface: string; readonly contact: readonly number[] | null; readonly boots: Readonly<Record<'right' | 'left', Readonly<Record<'heel' | 'toe' | 'bof', readonly number[]>>>> };
 import { ensureJungle4, jungle4Key } from '../render/art/jungle4Art';
-import { sideFrame, sideLength, sideLessonFor, sideStarts, type SideLesson } from '../game/career/sideContact';
+import { sideFrame, sideLength, sideLessonFor, sidePoses, sideStarts, type SideLesson } from '../game/career/sideContact';
 import { WORKING_BOOT, lessonLength, phaseStarts, teachingFor, teachingFrame, type Foot as TeachFoot, type TeachingLesson } from '../game/career/teaching';
 import { masteryLines } from '../game/career/homeEntry';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
@@ -114,7 +116,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private cardLabels: string[] = [];
   /** Tallest step caption for the current stage width, so the ground line never moves when a caption wraps. */
   private teachCap = { key: '', h: 0 };
-  private demoInfo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number }; inset?: { foot: string | null; contact: string; label: string; rect: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number; width: number; height: number }; text: { x: number; y: number; width: number; height: number } }; teach?: { pose: string; foot: TeachFoot; phase: number; step: number; contact: string; boot: { x: number; y: number }; zoomBall: boolean; t: number; ground: number }; side?: { working: string | null; support: string | null; phase: string; ballTexture: string; ballRadius: number; poseWorking: string | null; poseSurface: string; contact: { x: number; y: number } | null }; paused?: boolean; speed?: number } | null = null;
+  private demoInfo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number }; inset?: { foot: string | null; contact: string; label: string; rect: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number; width: number; height: number }; text: { x: number; y: number; width: number; height: number } }; teach?: { pose: string; foot: TeachFoot; phase: number; step: number; contact: string; boot: { x: number; y: number }; zoomBall: boolean; t: number; ground: number }; side?: { working: string | null; support: string | null; phase: string; action: string; ballDx: number; poseDx: number; ballTexture: string; ballRadius: number; poseWorking: string | null; poseSurface: string; contact: { x: number; y: number } | null }; paused?: boolean; speed?: number } | null = null;
   private demoInset: Phaser.GameObjects.Text | null = null;
   private title!: Phaser.GameObjects.Text;
   private body!: Phaser.GameObjects.Text;
@@ -235,7 +237,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   /** Debug snapshot for browser tests. */
-  describeGameplay(): { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; text: string; cards: string[]; textPage: string; overflow: string[]; evidence: number; coachEvidence: number; demo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number }; fallback?: boolean } | null } {
+  describeGameplay(): { demoGate: string | null; screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; text: string; cards: string[]; textPage: string; overflow: string[]; evidence: number; coachEvidence: number; demo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number }; fallback?: boolean } | null } {
     return {
       screen: this.screen.kind,
       week: this.save.week,
@@ -251,6 +253,10 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       textPage: `${this.textPage + 1}/${this.textPages}`,
       overflow: this.buttons.filter((b) => b.active && !b.labelFits()).map((b) => b.name),
       demo: (this.demoImg?.visible || this.sideImgs[2]?.visible) && this.demoRect && this.demoInfo ? { ...this.demoInfo, fallback: !!this.demoImg?.visible } : null,
+      demoGate: (() => {
+        const a = this.screen.kind === 'activity' ? activityById(this.screen.id) : undefined;
+        return a && !this.demoChecked(a) ? 'checking' : null;
+      })(),
       evidence: this.save.evidence.length,
       coachEvidence: this.save.evidence.filter((e) => e.source === 'coach').length,
     };
@@ -270,6 +276,14 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   /** Activities whose demo honours Pause/Step/0.5x/Replay (and reduced motion): viewer lessons and the promoted v1.1/design step demos (D68). */
   private hasPlayback(a: Activity): boolean {
     return this.isViewer(a) || !!sideLessonFor(a.id) || ((a.id.startsWith(DRAFT_PREFIX) || a.id.startsWith(DESIGN_PREFIX)) && a.demo.kind === 'steps' && !sheetBeats(a));
+  }
+
+  /**
+   * Ball Mastery demos are shown to players only once their foot/ball contact is checked on drawn pixels (the side-view
+   * lessons, D69). Every other Ball Mastery lesson keeps its page, steps, logging and progress, without an animation.
+   */
+  private demoChecked(a: Activity): boolean {
+    return sectionOf(a) !== 'ballMastery' || !!sideLessonFor(a.id);
   }
 
   private isViewer(a: Activity): boolean {
@@ -493,7 +507,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
                 name: `act-${a.id}`,
                 label: `${a.title} · ${LEVEL_NAMES[a.entryLevel]}`,
                 onClick: () =>
-                  level && prototypeFor(level)
+                  level && prototypeFor(level) && sectionOf(a) !== 'ballMastery'
                     ? ((this.demoT = 0), (this.demoPaused = this.reducedMotion), this.go({ kind: 'draftLevel', id: level }))
                     : this.go({ kind: 'activity', id: a.id, sessionId: null, index: 0 }),
               };
@@ -669,7 +683,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         const useBallOnly = it?.ballOnly && a.ballOnly;
         const viewer = this.isViewer(a);
         const links = designsFor(a.id);
-        const lesson = viewer && !useBallOnly ? teachingFor(a.id) : undefined;
+        const gated = !this.demoChecked(a);
+        const lesson = viewer && !useBallOnly && !gated ? teachingFor(a.id) : undefined;
         const side = sideLessonFor(a.id);
         if (side) {
           const tips = [`Looks right when: ${a.success}`, `Easier: ${a.easier}  Harder: ${a.harder}`, `Needs: ball, ${a.space} space.`, `Source: ${a.sourceNote}`, 'Demo art: side-view poses derived from the approved training sprites (review build).'];
@@ -720,6 +735,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         ];
         const body = [
           `COACH CODE: ${a.cue}`,
+          ...(gated ? [GATED_NOTE] : []),
           a.objective,
           useBallOnly ? `Ball-only version: ${a.ballOnly!.objective} ${a.ballOnly!.steps}` : `1. ${a.steps[0]}\n2. ${a.steps[1]}\n3. ${a.steps[2]}`,
           variant ? `This week's change: ${variant.change}` : '',
@@ -729,7 +745,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           .filter(Boolean)
           .join('\n');
         const actions: Action[] = [];
-        if (this.hasPlayback(a))
+        if (!gated && this.hasPlayback(a))
           actions.push(
             { name: 'demo-pause', label: this.demoPaused ? 'Play' : 'Pause', onClick: () => ((this.demoPaused = !this.demoPaused), this.render()) },
             { name: 'demo-step', label: 'Step', onClick: () => ((this.demoPaused = true), (this.demoT = nextBeat(viewer ? demoBeats(a) : stepBeats(a), this.demoT, demoLength(a))), this.render()) },
@@ -741,13 +757,13 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         if (sc.sessionId && s.plan && !s.completedSessions.includes(sc.sessionId))
           for (const alt of substitutes(s.plan, sc.sessionId, sc.index).slice(0, 3))
             actions.push({ name: `swap-${alt.id}`, label: `Swap for ${alt.title}`, onClick: () => void this.act({ type: 'substitute', sessionId: sc.sessionId!, index: sc.index, activityId: alt.id }, { kind: 'activity', id: alt.id, sessionId: sc.sessionId, index: sc.index }) });
-        if (sheetBeats(a))
+        if (!gated && sheetBeats(a))
           actions.push(
             { name: 'demo-slow', label: this.demoSpeed < 1 ? 'Normal speed' : 'Slow', on: this.demoSpeed < 1, onClick: () => ((this.demoSpeed = this.demoSpeed < 1 ? 1 : 0.4), this.render()) },
             { name: 'demo-miss', label: this.demoMiss ? 'Show the catch' : 'Show a miss', on: this.demoMiss, onClick: () => ((this.demoMiss = !this.demoMiss), (this.demoT = 0), this.render()) },
             { name: 'demo-replay', label: 'Replay', onClick: () => ((this.demoT = 0), this.render()) },
           );
-        return { title: a.title, body, actions, demo: a };
+        return { title: a.title, body, actions, ...(gated ? {} : { demo: a }) };
       }
       case 'log': {
         const a = activityById(sc.id)!;
@@ -1223,9 +1239,12 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     if (!ensureSideArt(this, sex) || !this.textures.exists(ballKey)) return false;
     this.demoImg?.setVisible(false);
     const art = SIDE_CONTACT[sex];
+    const poses = art.poses as Readonly<Record<string, SidePoseArt>>;
     const r = this.demoRect!;
     const fr = sideFrame(lesson, this.demoT, this.teachFoot);
-    const pose = art.poses[fr.pose];
+    const pose = poses[fr.pose]!;
+    const ballFrame = `ball-${fr.ballTurn}`;
+    const ballAt = { x: pose.ball[0]!, y: pose.ball[1]! };
     if (!this.demoCaption?.active) this.demoCaption = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: CSS.ink, fontStyle: 'bold' }).setOrigin(0.5, 1).setResolution(textResolution());
     const capFs = Math.round(Math.max(12, Math.min(unit * 0.45, 16)));
     this.demoCaption.setFontSize(capFs).setWordWrapWidth(r.w - 16).setPosition(r.x + r.w / 2, r.y + r.h - 4);
@@ -1244,10 +1263,10 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     const ballD = art.ball.r * 2;
     const toScreen = (p: { x: number; y: number }, at: { x: number; y: number }, k: number) => ({ x: at.x + (p.x - art.anchor.x) * k, y: at.y + (p.y - art.anchor.y) * k });
     const place = (b: Phaser.GameObjects.Image, ba: Phaser.GameObjects.Image, f: Phaser.GameObjects.Image, at: { x: number; y: number }, k: number) => {
-      b.setTexture(key, `${fr.pose}-back`).setOrigin(ox, oy).setScale(k).setFlipX(false).setPosition(at.x, at.y).setVisible(true);
-      f.setTexture(key, `${fr.pose}-front`).setOrigin(ox, oy).setScale(k).setFlipX(false).setPosition(at.x, at.y).setVisible(true);
-      const bc = toScreen(art.ball, at, k);
-      ba.setTexture(ballKey, 'ball-0').setOrigin(0.5).setDisplaySize(ballD * k, ballD * k).setPosition(bc.x, bc.y).setVisible(true);
+      b.setTexture(key, `${pose.frame}-back`).setOrigin(ox, oy).setScale(k).setFlipX(false).setPosition(at.x, at.y).setVisible(true);
+      f.setTexture(key, `${pose.frame}-front`).setOrigin(ox, oy).setScale(k).setFlipX(false).setPosition(at.x, at.y).setVisible(true);
+      const bc = toScreen(ballAt, at, k);
+      ba.setTexture(ballKey, ballFrame).setOrigin(0.5).setDisplaySize(ballD * k, ballD * k).setPosition(bc.x, bc.y).setVisible(true);
       return bc;
     };
     const at = { x: cx, y: footY };
@@ -1265,16 +1284,20 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     if (!this.demoInset?.active) this.demoInset = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: CSS.ink, fontStyle: 'bold', align: 'center' }).setOrigin(0.5, 1).setResolution(textResolution());
     this.demoInset.setFontSize(Math.round(Math.min(Math.max(10, unit * 0.32), 13))).setWordWrapWidth(w - 8).setPosition(x + w / 2, y + h - 3).setText(fr.inset).setVisible(true).setDepth(3);
     const labelTop = y + h - 3 - this.demoInset.displayHeight;
-    // Crop window in cell px: heel of the support foot to the toe of the working foot, knee height to the ground.
-    // Left edge sits 2 px behind the rearmost measured heel (its antialiased outline included) so no boot is clipped.
-    const heel = Math.min(...Object.values(art.poses).flatMap((p) => [p.boots.right.heel[0]!, p.boots.left.heel[0]!]));
+    // Crop window in cell px, fixed for the lesson: heel of the support foot to the toe of the working foot (or the
+    // ball's far edge once it has rolled), knee height to the ground. Edges sit 2 px past the extreme measured heel,
+    // toe and ball so no boot or ball is clipped.
+    const used = sidePoses(lesson).map((id) => poses[id]!);
+    const heel = Math.min(...used.flatMap((p) => [p.boots.right.heel[0]!, p.boots.left.heel[0]!]));
+    const reach = Math.max(...used.flatMap((p) => [p.boots.right.toe[0]! + 2, p.boots.left.toe[0]! + 2, p.ball[0]! + art.ball.r + 2]));
     const winX = Math.min(62, Math.floor(heel - 2));
-    const win = { x: winX, y: 84, w: 108 - winX, h: 40 };
+    const winR = Math.max(108, Math.ceil(reach));
+    const win = { x: winX, y: 84, w: winR - winX, h: 40 };
     const z = Math.min((w - 8) / win.w, (labelTop - y - 6) / win.h);
     const zat = { x: x + w / 2 + (art.anchor.x - (win.x + win.w / 2)) * z, y: y + 3 + (art.anchor.y - win.y) * z };
     const zbc = place(zBack, zBall, zFront, zat, z);
     for (const i of [zBack, zFront]) i.setCrop(win.x, win.y, win.w, win.h);
-    const bf = this.textures.getFrame(ballKey, 'ball-0');
+    const bf = this.textures.getFrame(ballKey, ballFrame);
     zBall.setCrop(0, 0, bf.width, bf.height);
     const v0 = toScreen(art.visible, at, s);
     const ib = { x: v0.x, y: v0.y, width: art.visible.w * s, height: art.visible.h * s };
@@ -1285,7 +1308,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       player: { x: ib.x, y: ib.y, width: ib.width, height: ib.height }, ball: { x: bc.x, y: bc.y }, rect: { x: r.x, y: r.y, width: r.w, height: r.h },
       inset: { foot: fr.working, contact: fr.surface, label: fr.inset, rect: { x, y, width: w, height: h }, ball: { x: zbc.x - art.ball.r * z, y: zbc.y - art.ball.r * z, width: ballD * z, height: ballD * z }, text: { x: lb.x, y: lb.y, width: lb.width, height: lb.height } },
       teach: { pose: fr.pose, foot: this.teachFoot, phase: fr.beat, step: fr.step, contact: fr.surface, boot: contact ?? { x: bc.x, y: bc.y }, zoomBall: true, t: this.demoT, ground: footY },
-      side: { working: fr.working, support: fr.support, phase: fr.phase, ballTexture: `${ballKey}:ball-0`, ballRadius: art.ball.r * s, poseWorking: pose.working, poseSurface: pose.surface, contact },
+      side: { working: fr.working, support: fr.support, phase: fr.phase, action: fr.action, ballDx: fr.ball, poseDx: pose.dx, ballTexture: `${ballKey}:${ballFrame}`, ballRadius: art.ball.r * s, poseWorking: pose.working, poseSurface: pose.surface, contact },
       paused: this.demoPaused, speed: this.demoSpeed,
     };
     return true;

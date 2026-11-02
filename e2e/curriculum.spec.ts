@@ -1,7 +1,7 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { diagnostics, expectInside, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
 
-type Career = { screen: string; credit: number; journal: number; plan: string[]; status: string; toast: string; text: string; overflow: string[] };
+type Career = { demoGate?: string | null; screen: string; credit: number; journal: number; plan: string[]; status: string; toast: string; text: string; overflow: string[] };
 test.describe.configure({ timeout: 240_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 
@@ -100,7 +100,15 @@ test('draft library is review-only: cards and demo prototypes, never in the plan
   await press(page, 'nav-sessions', mode);
   await until(page, (x) => x.screen === 'sessions', 'sessions');
   await press(page, 'open-w1-s1-0', mode);
-  await until(page, (x) => x.screen === 'activity', 'activity');
+  // The planned first-touch lesson opens; its demo is not contact-checked yet, so it shows none (D69 gate).
+  await until(page, (x) => x.screen === 'activity' && x.demoGate === 'checking', 'gated activity');
+  // A regular demonstration that is shown (juggling) keeps playing after a prototype was paused.
+  await press(page, 'career-home', mode);
+  await until(page, (x) => x.screen === 'home', 'home');
+  await press(page, 'nav-library', mode);
+  await press(page, 'lib-juggling', mode);
+  await press(page, 'act-jg-1', mode);
+  await until(page, (x) => x.screen === 'activity' && !x.demoGate, 'juggling activity');
   const t0 = await demoTime(page);
   await page.waitForTimeout(800);
   expect(await demoTime(page)).toBeGreaterThan(t0);

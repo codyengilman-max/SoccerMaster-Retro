@@ -18,6 +18,13 @@ PRs #52–#56 (owner decisions, tactics comparison, All36 weekly Team Training, 
 
 Verification: Chromium phone emulation and desktop only. Not yet verified on a real iPhone (PR G).
 
+## Ball Mastery side-view: sole rolls + unchecked demos hidden (D69 expansion, branch `devin/1793700000-side-sole-rolls`, stacked on the D69 branch, not merged, not deployed)
+
+- Five more lessons teach from side-view poses with the approved ball: Forward-back sole control L1–L4 and Pull-back turn L1. The ball rolls and turns under the sole, boy and girl, either foot first.
+- Every other Ball Mastery lesson keeps its page and logging but shows no animation until its own contact checks pass. Juggling is unchanged.
+- Not covered by a side view: inside/outside-of-foot contacts (about 75 lessons) and lateral rolls; 71 lessons name no contact surface. Awaiting the owner's choice for inside/outside.
+- Tested in phone emulation only, not on a real iPhone.
+
 ## Ball Mastery side-view contact: Sole taps (D69, branch `devin/1793650000-side-contact-poses`, stacked on the D68 branch, not merged, not deployed)
 
 - `bmd-055` Sole taps teaches from derived side-view poses (boy and girl, right and left foot, never mirrored) with the approved patterned Jungle Ball in the demo and the foot inset; pre-contact, contact and post-contact beats are each reachable with Step.
