@@ -401,6 +401,10 @@ Moving Camera Venues v2: grass, props, signs and sideline people are separate as
 
 Choose a focus left Home Training, so the Week 6+ Home learning task can no longer depend on finishing a focus plan. It now completes when the player logs 3 practices as done in the current week (`CAREER_CONFIG.home.sessionsPerWeek`), or when the save already finished its 3 planned sessions (old saves keep their state). Skipped logs and earlier weeks do not count, nothing is ticked without a real log, and participation credit still comes only from scheduled sessions, once each. Saved `focusId`, `plan`, `completedSessions` and `credit` are kept untouched; no save migration is needed.
 
+## D70. Venue assignment rules, saved per fixture (owner, 2026-11-02)
+
+Supersedes D66's "only Batavia home league" assignment. Tournament matches (every round, home or away) are at Scott’s Complex, and this rule wins over a home designation. Batavia home league matches are at Pinnacle Park. Away league matches rotate Dell 94 -> Westside Grounds -> Scott’s Complex in fixture order (2 each over the 6 away games), with no seed, so they are deterministic and balanced. Venues are saved when fixtures are created: `SeasonLeagueState.venues` (Batavia fixture id -> venue id) and `TournamentState.venue`. Both are optional fields, so the save versions are unchanged. Older league saves get venues once, for fixtures without a result only, and that is persisted. Played fixtures stay exactly as recorded. A match being played keeps the venue it loaded with, because MatchScene resolves its venue once at create. Opening, replaying or resuming reads the saved id and never re-assigns. Internal ids are unchanged. Exhibition, training, minigames and story locations are unchanged.
+
 ## Owner decisions 2026-10-27 (H1–H8)
 
 From the owner's consolidated decisions after the read-only audit of `main` `04e947b` (second revision, same day: H3 now removes Coach Moments from story matches, and the coach-approved All36 package becomes the Team Training source). Plan: [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md).

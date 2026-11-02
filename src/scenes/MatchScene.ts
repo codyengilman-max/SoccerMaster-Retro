@@ -43,7 +43,7 @@ import { ContributionTracker } from '../game/report/assists';
 import { TOURNAMENTS } from '../game/season/tournament';
 import { SituationObserver, selectSituations, type SituationResult, type TeamTrainingSituation } from '../game/career/teamTraining';
 import type { Position } from '../game/career/types';
-import { isVenueId, resolveVenue, type MatchKind, type VenueResolution } from '../game/venue';
+import { isVenueId, resolveVenue, type MatchKind, type VenueId, type VenueResolution } from '../game/venue';
 import { VenueLayer } from '../render/venueLayer';
 import { MATCH_TUNING } from '../game/match/tuning';
 import { roleDef } from '../game/match/formations';
@@ -95,6 +95,8 @@ export interface MatchSceneData {
   readonly opponent?: string;
   /** Story fixture venue for Batavia and its competition, for the Match Report only. */
   readonly venue?: 'home' | 'away';
+  /** The story fixture's saved venue id (assigned when the fixture was created; never rerolled here). */
+  readonly venueId?: string;
   readonly competition?: 'League' | 'Tournament';
 }
 
@@ -227,6 +229,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private reportPending: SavedReport | null = null;
   private careerMatch = false;
   private venue: 'home' | 'away' = 'home';
+  private venueId: VenueId | null = null;
   private competition: 'League' | 'Tournament' = 'League';
   private careerItems: EvidenceItem[] = [];
   private careerSession = '';
@@ -247,6 +250,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.returnTo = data.returnTo === 'story' ? 'story' : null;
     this.resultKey = this.returnTo && typeof data.resultKey === 'string' ? data.resultKey : null;
     this.venue = data.venue === 'away' ? 'away' : 'home';
+    this.venueId = this.returnTo === 'story' && isVenueId(data.venueId) ? data.venueId : null;
     this.competition = data.competition === 'Tournament' ? 'Tournament' : 'League';
     this.opponent = isSpriteClub(data.opponent) && data.opponent !== 'batavia' ? data.opponent : 'royal_salt';
     this.navigating = false;
@@ -1478,7 +1482,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     if (!this.sideline()) return;
     const forced = shouldExposeDebug(window.location) ? params.get('venue') : null;
     const kind: MatchKind = this.returnTo === 'story' ? (this.competition === 'Tournament' ? 'tournament' : 'league') : 'exhibition';
-    this.venueResolution = isVenueId(forced) ? { id: forced, source: 'debug ?venue' } : resolveVenue({ kind, side: this.venue, opponent: this.opponent });
+    this.venueResolution = isVenueId(forced) ? { id: forced, source: 'debug ?venue' } : resolveVenue({ kind, side: this.venue, opponent: this.opponent, saved: this.venueId });
     if (this.venueResolution.id) this.venueLayer = new VenueLayer(this, this.venueResolution.id);
   }
 

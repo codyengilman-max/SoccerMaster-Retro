@@ -48,6 +48,15 @@ Verification: Chromium phone emulation and desktop only. Not yet verified on a r
 - **Weekly tasks:** Week 6+ Home learning is met by 3 practices logged as done this week (any Juggling or Ball Mastery lesson), or by a save that already finished its 3 planned sessions. No credit, attributes or tasks are granted by the change. See D67.
 - **Map:** `docs/training/home/HOME_TRAINING_MAP.md`. **Tests:** `tests/home-tasks.test.ts`, `e2e/career.spec.ts`, `e2e/ballmastery.spec.ts`. Phone emulation only.
 
+## Regular-match venue assignment (D70, branch `devin/1793644720-venue-assignment`, from `main` 8241d68, not merged, not deployed)
+
+- **Tournament matches:** at Scott’s Complex.
+- **Batavia home league matches:** at Pinnacle Park.
+- **Away league matches:** rotate Dell 94 / Westside Grounds / Scott’s Complex.
+- **Saved venues:** each fixture's venue is saved at creation. Older saves get it once, for unplayed fixtures only.
+- **Unchanged:** exhibition matches stay on the plain field.
+- Tested in phone emulation only, not on a real iPhone.
+
 ## Ball Mastery art v1: Inside-Cut Escape teaching page (vertical slice, same branch, not merged, not deployed)
 
 - **Art:** owner drafts kept unchanged in `docs/art/ball-mastery-v1/source/`; `scripts/art/build-ball-mastery.py` writes cleaned derivatives, measured bounds and foot anchors (`derived/frames.json`) and the runtime sheets (`src/assets/art/ball-mastery-v1/`, `src/render/art/bmSheet.ts`). Used only on the teaching page; gameplay sprites are unchanged. Defects: `docs/art/ball-mastery-v1/INTAKE.md`.
