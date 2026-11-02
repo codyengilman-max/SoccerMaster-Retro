@@ -36,6 +36,7 @@ async function caption(page: Page): Promise<string> {
   });
 }
 
+const els = async (page: Page) => (await diagnostics(page)).layout?.elements ?? {};
 async function demoTime(page: Page): Promise<number> {
   return page.evaluate(() => (window as unknown as { __SMR__: { game: { scene: { getScene(k: string): { demoT: number } } } } }).__SMR__.game.scene.getScene('career').demoT);
 }
@@ -93,6 +94,25 @@ test('draft library is review-only: cards and demo prototypes, never in the plan
   await press(page, 'demo-side', mode);
   await expect.poll(() => caption(page)).toContain('1/6 setup');
   await fits(page);
+  // A Ball Mastery prototype (top-down sketch, contact unchecked) is hidden here too, as on its lesson page (D69 gate).
+  await press(page, 'career-home', mode);
+  await until(page, (x) => x.screen === 'home', 'home');
+  await press(page, 'nav-library', mode);
+  await press(page, 'lib-drafts', mode);
+  await until(page, (x) => x.screen === 'drafts', 'drafts again');
+  await press(page, 'draft-BM01', mode);
+  await press(page, 'draft-level-BM01-L1', mode);
+  c = await until(page, (x) => x.screen === 'draftLevel' && x.demoGate === 'checking', 'BM01-L1 gated');
+  expect(c.text).toContain('still being checked');
+  for (const n of ['demo-side', 'demo-pause', 'demo-step', 'demo-slow', 'demo-replay']) expect((await els(page))[n], `${n} hidden`).toBeUndefined();
+  expect((await els(page))['draft-log']).toBeDefined();
+  await press(page, 'career-home', mode);
+  await until(page, (x) => x.screen === 'home', 'home');
+  await press(page, 'nav-library', mode);
+  await press(page, 'lib-drafts', mode);
+  await press(page, 'draft-JU01', mode);
+  await press(page, 'draft-level-JU01-L1', mode);
+  await until(page, (x) => x.screen === 'draftLevel' && !x.demoGate, 'JU01-L1 again');
   // Pausing a prototype must not freeze regular activity demonstrations.
   await press(page, 'demo-pause', mode);
   await press(page, 'career-home', mode);
@@ -136,9 +156,10 @@ test('reduced motion starts the demo paused', async ({ page }, info) => {
   await press(page, 'career-home', mode);
   await press(page, 'nav-library', mode);
   await press(page, 'lib-drafts', mode);
-  await press(page, 'draft-BM01', mode);
-  await press(page, 'draft-level-BM01-L1', mode);
+  await press(page, 'draft-JU01', mode);
+  await press(page, 'draft-level-JU01-L1', mode);
   await until(page, (x) => x.screen === 'draftLevel', 'level');
+  await press(page, 'demo-side', mode);
   await expect.poll(() => caption(page)).toContain('1/6 setup');
   await page.waitForTimeout(2000);
   expect(await caption(page)).toContain('1/6 setup');

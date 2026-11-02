@@ -255,6 +255,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       demo: (this.demoImg?.visible || this.sideImgs[2]?.visible) && this.demoRect && this.demoInfo ? { ...this.demoInfo, fallback: !!this.demoImg?.visible } : null,
       demoGate: (() => {
         const a = this.screen.kind === 'activity' ? activityById(this.screen.id) : undefined;
+        if (this.screen.kind === 'draftLevel') return prototypeFor(this.screen.id) && !this.protoShown(this.screen.id) ? 'checking' : null;
         return a && !this.demoChecked(a) ? 'checking' : null;
       })(),
       evidence: this.save.evidence.length,
@@ -284,6 +285,12 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
    */
   private demoChecked(a: Activity): boolean {
     return sectionOf(a) !== 'ballMastery' || !!sideLessonFor(a.id);
+  }
+
+  /** A v1.1 level's demo prototype is shown only outside Ball Mastery (juggling); Ball Mastery ones are unchecked. */
+  private protoShown(levelId: string): boolean {
+    const a = activityById(draftActivityId(levelId));
+    return !!prototypeFor(levelId) && !!a && this.demoChecked(a);
   }
 
   private isViewer(a: Activity): boolean {
@@ -638,7 +645,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             `Limit: ${f.limitation}`,
             'The five options are alternatives, not a difficulty ladder.',
           ].join('\n'),
-          actions: f.levels.map((l) => ({ name: `draft-level-${l.id}`, label: `${l.id}${prototypeFor(l.id) ? ' · demo prototype' : ''}`, onClick: () => ((this.demoT = 0), (this.demoPaused = this.reducedMotion), this.go({ kind: 'draftLevel', id: l.id })) })),
+          actions: f.levels.map((l) => ({ name: `draft-level-${l.id}`, label: `${l.id}${this.protoShown(l.id) ? ' · demo prototype' : ''}`, onClick: () => ((this.demoT = 0), (this.demoPaused = this.reducedMotion), this.go({ kind: 'draftLevel', id: l.id })) })),
         };
       }
       case 'draftLevel': {
@@ -646,12 +653,14 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         const f = m?.families.find((x) => x.levels.some((l) => l.id === sc.id));
         const l = f?.levels.find((x) => x.id === sc.id);
         if (!m || !f || !l) return { title: 'Draft library', body: 'Unknown option.', actions: [] };
-        const proto = prototypeFor(l.id);
+        // Ball Mastery prototypes are top-down sketches whose contact is not checked: hidden here too (D69 gate).
+        const proto = this.protoShown(l.id) ? prototypeFor(l.id) : undefined;
         const claims = m.claims.filter((c) => l.claimIds.includes(c.id));
         // Lesson first; the evidence and prototype notes open with More tips.
         const body = [
           `Counts toward ${SKILL_FAMILY_LABELS[CATEGORY_SKILL_AREA[f.category]]}.`,
           `Setup: ${l.setup}`,
+          ...(prototypeFor(l.id) && !proto ? [GATED_NOTE] : []),
           ...l.steps.map((x, i) => `${i + 1}. ${x}`),
           `Foot: ${l.footMode}`,
           `Stop: ${m.safety.stopRule}`,
@@ -998,7 +1007,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
 
     const navH = Math.max(48, Math.round(base * 2.8));
     const top = this.title.y + this.title.displayHeight + 10;
-    const demoOn = (!!c.demo && this.screen.kind === 'activity') || (this.screen.kind === 'draftLevel' && !!prototypeFor(this.screen.id));
+    const demoOn = (!!c.demo && this.screen.kind === 'activity') || (this.screen.kind === 'draftLevel' && this.protoShown(this.screen.id));
     const contentW = portrait ? width - 40 : (width - 48) / 2;
     let bodyX = 20;
     let bodyY = top;
@@ -1087,7 +1096,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private drawDemo(): void {
     const r = this.demoRect;
     const s = this.screen;
-    if (r && s.kind === 'draftLevel') return this.drawDraftDemo(s.id);
+    if (r && s.kind === 'draftLevel') return this.protoShown(s.id) ? this.drawDraftDemo(s.id) : undefined;
     if (!r || s.kind !== 'activity') return;
     const a = activityById(s.id);
     if (!a) return;
