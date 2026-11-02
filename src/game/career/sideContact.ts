@@ -60,7 +60,8 @@ export interface InsideLesson {
 export type SideLesson = SoleLesson | InsideLesson;
 
 /** Top-down boot geometry (px): feet centres at y = +/-FEET_Y, boot length along x, width along y. */
-export const TOP = Object.freeze({ feetY: 18, bootL: 22, bootW: 9 });
+/** ballX: the ball sits beside the forefoot (inside of the foot), forward of the boot centre, so the side view shows it ahead of the planted boots. */
+export const TOP = Object.freeze({ feetY: 18, bootL: 22, bootW: 9, ballX: 7 });
 /** Ball y (towards one foot) at which it touches that foot's inside edge with the foot at rest. */
 export const TOUCH_Y = TOP.feetY - TOP.bootW / 2 - 7;
 
@@ -82,7 +83,7 @@ const across = (from: 'lead' | 'other', step: number, roll: number, recvStep: nu
   const sgn = from === 'lead' ? 1 : -1;
   const push = (a: number, b: number): [readonly [number, number], readonly [number, number]] => (from === 'lead' ? [[a, b], [0, 0]] : [[0, 0], [a, b]]);
   const [pl, po] = push(0, 2);
-  const [rl, ro] = push(2, 0);
+  const [rl, ro] = push(1, 0);
   const to: 'lead' | 'other' = from === 'lead' ? 'other' : 'lead';
   return [
     I(step, 0.25, 'contact', from, 'push', [sgn * T, sgn * (T - 2)], pl, po),
@@ -168,10 +169,10 @@ export const SIDE_LESSONS: readonly SideLesson[] = [
       I(0, 0.8, 'rest', null, 'rest', [T - 2, T - 2], [0, 0], [0, 0]),
       I(1, 0.3, 'pre', 'lead', 'reach', [T - 2, T - 2], [0, 2], [0, 0]),
       I(1, 0.25, 'contact', 'lead', 'push', [T - 2, T - 4], [2, 4], [0, 0]),
-      I(1, 0.7, 'pre', 'other', 'travel', [T - 4, -T], [4, 0], [0, 0]),
+      I(1, 0.7, 'pre', 'other', 'travel', [T - 4, -T], [3, 0], [0, 0]),
       I(2, 0.3, 'contact', 'other', 'receive', [-T, -T], [0, 0], [0, 0]),
       ...across('other', 2, 0.7, 3),
-      I(3, 0.3, 'post', 'lead', 'withdraw', [T, T], [0, -2], [0, 0]),
+      I(3, 0.3, 'post', 'lead', 'withdraw', [T, T], [-1, -2], [0, 0]),
       I(3, 0.6, 'rest', null, 'rest', [T, T], [-2, -2], [0, 0]),
     ],
   },
@@ -184,9 +185,9 @@ export const SIDE_LESSONS: readonly SideLesson[] = [
       I(0, 0.8, 'rest', null, 'rest', [0, 0], [0, 0], [0, 0]),
       I(1, 0.6, 'pre', 'lead', 'reach', [0, 0], [0, T], [0, 0]),
       I(1, 0.25, 'contact', 'lead', 'push', [0, -2], [T, T + 2], [0, 0]),
-      I(1, 0.6, 'pre', 'other', 'travel', [-2, -T], [T + 2, 0], [0, 0]),
+      I(1, 0.6, 'pre', 'other', 'travel', [-2, -T], [T + 1, 0], [0, 0]),
       I(2, 0.3, 'contact', 'other', 'receive', [-T, -T], [0, 0], [0, 0]),
-      I(2, 0.3, 'post', 'other', 'withdraw', [-T, -T], [0, 0], [0, -2]),
+      I(2, 0.3, 'post', 'other', 'withdraw', [-T, -T], [0, 0], [-1, -2]),
       I(2, 0.6, 'rest', null, 'rest', [-T, -T], [0, 0], [-2, -2]),
     ],
   })),
@@ -199,12 +200,12 @@ export const SIDE_LESSONS: readonly SideLesson[] = [
       I(0, 0.8, 'rest', null, 'rest', [0, 0], [0, 0], [0, 0]),
       I(1, 0.6, 'pre', 'lead', 'reach', [0, 0], [0, T], [0, 0]),
       I(1, 0.25, 'contact', 'lead', 'push', [0, -2], [T, T + 2], [0, 0]),
-      I(1, 0.6, 'pre', 'other', 'travel', [-2, -T], [T + 2, 0], [0, 0]),
+      I(1, 0.6, 'pre', 'other', 'travel', [-2, -T], [T + 1, 0], [0, 0]),
       I(1, 0.3, 'contact', 'other', 'receive', [-T, -T], [0, 0], [0, 0]),
       ...across('other', 1, 0.6, 1),
       ...across('lead', 1, 0.6, 1),
       ...across('other', 1, 0.6, 2),
-      I(2, 0.3, 'post', 'lead', 'withdraw', [T, T], [0, -2], [0, 0]),
+      I(2, 0.3, 'post', 'lead', 'withdraw', [T, T], [-1, -2], [0, 0]),
       I(2, 0.6, 'rest', null, 'rest', [T, T], [-2, -2], [0, 0]),
     ],
   },
@@ -217,12 +218,12 @@ export const SIDE_LESSONS: readonly SideLesson[] = [
       I(0, 0.8, 'rest', null, 'rest', [0, 0], [0, 0], [0, 0]),
       I(1, 0.6, 'pre', 'lead', 'reach', [0, 0], [0, T], [0, 0]),
       I(1, 0.25, 'contact', 'lead', 'push', [0, -2], [T, T + 2], [0, 0]),
-      I(1, 1.0, 'pre', 'other', 'travel', [-2, -T], [T + 2, 0], [0, 0]),
+      I(1, 1.0, 'pre', 'other', 'travel', [-2, -T], [T + 1, 0], [0, 0]),
       I(1, 0.3, 'contact', 'other', 'receive', [-T, -T], [0, 0], [0, 0]),
       ...across('other', 1, 1.0, 1),
       ...across('lead', 1, 0.6, 1),
       ...across('other', 1, 0.6, 2),
-      I(2, 0.3, 'post', 'lead', 'withdraw', [T, T], [0, -2], [0, 0]),
+      I(2, 0.3, 'post', 'lead', 'withdraw', [T, T], [-1, -2], [0, 0]),
       I(2, 0.6, 'rest', null, 'rest', [T, T], [-2, -2], [0, 0]),
     ],
   },
@@ -347,7 +348,7 @@ function insideFrame(l: InsideLesson, t: number, lead: Foot): SideFrame {
     ball: 0, ballTurn: ((turn % BALL_TURNS) + BALL_TURNS) % BALL_TURNS,
     caption: `${b.step + 1}. ${l.titles[b.step]}: ${what.charAt(0).toUpperCase()}${what.slice(1)}.`,
     inset: `From above\n${working === null ? 'no contact' : surface === 'inside' ? `${Name(working)} foot: inside on ball` : `${Name(working)} foot: no contact`}`,
-    top: { ball: { x: 0, y: round(ballY) }, boots, gap: { right: round(gap.right), left: round(gap.left) } },
+    top: { ball: { x: TOP.ballX, y: round(ballY) }, boots, gap: { right: round(gap.right), left: round(gap.left) } },
   };
 }
 

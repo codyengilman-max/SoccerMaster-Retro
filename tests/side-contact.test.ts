@@ -170,6 +170,11 @@ describe('Inside-foot transfers: side stance + top-down foot detail (owner optio
           prevAction = f.action;
         }
         expect(pushes).toBeGreaterThan(0);
+        // Every beat start (where Step holds the demo): a non-contact state is visibly apart (>= 1 px) from both boots.
+        for (const t0 of sideStarts(lesson)) {
+          const f = sideFrame(lesson, t0, lead);
+          if (f.surface === 'none') for (const foot of ['right', 'left'] as const) expect(f.top!.gap[foot], `held ${f.action} at ${t0}: ${foot}`).toBeGreaterThanOrEqual(1 - 1e-6);
+        }
       });
     }
     it(`${id}: the lead foot sends first; the left-first version is the anatomical opposite, not a copy`, () => {

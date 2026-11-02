@@ -1266,7 +1266,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     const ballFrame = `ball-${fr.ballTurn}`;
     const top = fr.top;
     // Inside-foot lessons: the ball sits between the planted feet (drawn between the far and near leg layers).
-    const ballAt = top ? { x: (pose.boots.right.bof[0]! + pose.boots.left.bof[0]!) / 2, y: art.ball.y } : { x: pose.ball[0]!, y: pose.ball[1]! };
+    const ballAt = top ? { x: (pose.boots.right.heel[0]! + pose.boots.right.toe[0]! + pose.boots.left.heel[0]! + pose.boots.left.toe[0]!) / 4 + top.ball.x, y: art.ball.y } : { x: pose.ball[0]!, y: pose.ball[1]! };
     if (!this.demoCaption?.active) this.demoCaption = this.add.text(0, 0, '', { fontFamily: FONT_FAMILY, color: CSS.ink, fontStyle: 'bold' }).setOrigin(0.5, 1).setResolution(textResolution());
     const capFs = Math.round(Math.max(12, Math.min(unit * 0.45, 16)));
     this.demoCaption.setFontSize(capFs).setWordWrapWidth(r.w - 16).setPosition(r.x + r.w / 2, r.y + r.h - 4);
