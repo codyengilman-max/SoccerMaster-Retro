@@ -136,4 +136,12 @@ describe('M6 career store (IndexedDB)', () => {
     expect(b.status.kind).toBe('unavailable');
     expect((await b.load()).player).toEqual(made);
   });
+  it('without IndexedDB stores opened under different names keep separate careers', async () => {
+    const a = await CareerStore.open(undefined as never, 'career-a');
+    await a.dispatch({ type: 'createPlayer', id: 'pa', name: 'Ana', position: 'MID' });
+    const b = await CareerStore.open(undefined as never, 'career-b');
+    expect((await b.load()).player).toBeNull();
+    await b.startOver();
+    expect((await (await CareerStore.open(undefined as never, 'career-a')).load()).player?.name).toBe('Ana');
+  });
 });
