@@ -1,25 +1,29 @@
 /**
- * Season One league: the same five local clubs as the U11 league, met three times each (triple round
- * robin, 15 rounds, one bye per round), so FC Batavia plays exactly 12 league games. Batavia's games
- * are the story's league weeks; other clubs' fixtures are simulated from the seed and labelled.
- * Tournament fixtures never enter this table. Framework-free and deterministic.
+ * Season One league, two saved formats (Batavia plays exactly 12 league games in both; other clubs are
+ * simulated from the seed and labelled; tournament fixtures never enter this table):
+ * - s1-1 (careers whose league was created before D72): the five local clubs, triple round robin, 15 rounds.
+ * - s1-2 (new leagues, owner 2026-10-29): nine Arizona clubs, every pair once (9 rounds, one bye each),
+ *   then 4 rematch rounds (home and away flipped) from the second cycle where Batavia plays, 13 rounds.
+ * A saved league keeps its own format forever. Framework-free and deterministic.
  */
-import { HOME_CLUB, LEAGUE_CLUBS, POINTS, simulatedScore, type LeagueClubId } from '../league/league';
+import { HOME_CLUB, LEAGUE_CLUBS, POINTS, simulatedScore } from '../league/league';
 import { weekOfLeagueGame } from './calendar';
 import { assignLeagueVenues, isVenueId, type VenueId } from '../venue';
 
-export const SEASON_LEAGUE_VERSION = 's1-1';
-export const CYCLES = 3;
-export const BASE_ROUNDS = LEAGUE_CLUBS.length;
-export const SEASON_ROUNDS = BASE_ROUNDS * CYCLES;
+export const SEASON_LEAGUE_V1 = 's1-1';
+export const SEASON_LEAGUE_VERSION = 's1-2';
+export type SeasonLeagueVersion = typeof SEASON_LEAGUE_V1 | typeof SEASON_LEAGUE_VERSION;
 export const LEAGUE_GAMES = 12;
+/** Owner-named Arizona clubs added to the league (Anthem Shockers stays out, owner 2026-10-29). */
+export const LEAGUE_CLUBS_9 = Object.freeze([...LEAGUE_CLUBS, 'westside_united', 'no_soccer_tuesday', 'tumbleweed_fc', 'dynamics_fc'] as const);
+export const REMATCH_ROUNDS = 4;
 
 export interface SeasonFixture {
   readonly id: string;
   readonly round: number;
   readonly cycle: number;
-  readonly home: LeagueClubId;
-  readonly away: LeagueClubId;
+  readonly home: string;
+  readonly away: string;
 }
 export interface SeasonResult {
   readonly fixtureId: string;
@@ -28,7 +32,7 @@ export interface SeasonResult {
   readonly source: 'played' | 'simulated';
 }
 export interface SeasonLeagueState {
-  readonly version: typeof SEASON_LEAGUE_VERSION;
+  readonly version: SeasonLeagueVersion;
   readonly careerId: string;
   readonly seed: number;
   readonly results: Readonly<Record<string, SeasonResult>>;
@@ -36,11 +40,24 @@ export interface SeasonLeagueState {
   /** Batavia fixture id -> venue, set when the season's fixtures are created (older saves get it once, unplayed only). */
   readonly venues?: Readonly<Record<string, VenueId>>;
 }
+export interface LeagueFormat {
+  readonly version: SeasonLeagueVersion;
+  readonly clubs: readonly string[];
+  readonly rounds: number;
+  readonly fixtures: readonly SeasonFixture[];
+  /** Batavia's twelve league fixtures in round order. */
+  readonly batavia: readonly SeasonFixture[];
+  readonly venues: Readonly<Record<string, VenueId>>;
+  /** Week each round is played: a Batavia round in its game's week; a Batavia bye round with the next Batavia round. */
+  readonly roundWeek: ReadonlyMap<number, number>;
+  readonly byId: ReadonlyMap<string, SeasonFixture>;
+}
 
-function buildFixtures(): readonly SeasonFixture[] {
-  const teams: (LeagueClubId | null)[] = [...LEAGUE_CLUBS, null];
+/** Circle-method single round robin with a bye slot; home/away alternates so it is stable and fair. */
+function circle(clubs: readonly string[]): { round: number; a: string; b: string; homeFirst: boolean }[] {
+  const teams: (string | null)[] = [...clubs, ...(clubs.length % 2 ? [null] : [])];
   const n = teams.length;
-  const base: { round: number; a: LeagueClubId; b: LeagueClubId; homeFirst: boolean }[] = [];
+  const base: { round: number; a: string; b: string; homeFirst: boolean }[] = [];
   let order = teams.slice();
   for (let r = 0; r < n - 1; r++) {
     for (let i = 0; i < n / 2; i++) {
@@ -50,35 +67,68 @@ function buildFixtures(): readonly SeasonFixture[] {
     }
     order = [order[0]!, order[n - 1]!, ...order.slice(1, n - 1)];
   }
+  return base;
+}
+const has = (f: { a: string; b: string }, t: string): boolean => f.a === t || f.b === t;
+
+function v1Fixtures(): SeasonFixture[] {
+  const base = circle(LEAGUE_CLUBS);
   const out: SeasonFixture[] = [];
-  for (let c = 0; c < CYCLES; c++) {
+  for (let c = 0; c < 3; c++) {
     for (const f of base) {
       // Venues alternate by cycle so each pair meets home, away, home.
-      const flip = c % 2 === 1;
-      const [home, away] = f.homeFirst !== flip ? [f.a, f.b] : [f.b, f.a];
-      const round = c * BASE_ROUNDS + f.round;
+      const [home, away] = f.homeFirst !== (c % 2 === 1) ? [f.a, f.b] : [f.b, f.a];
+      const round = c * LEAGUE_CLUBS.length + f.round;
       out.push({ id: `s1-r${round}-${home}-${away}`, round, cycle: c + 1, home, away });
     }
   }
   return out;
 }
-export const SEASON_FIXTURES: readonly SeasonFixture[] = buildFixtures();
-const BY_ID = new Map(SEASON_FIXTURES.map((f) => [f.id, f]));
+function v2Fixtures(): SeasonFixture[] {
+  const base = circle(LEAGUE_CLUBS_9);
+  const first = Math.max(...base.map((f) => f.round));
+  const out: SeasonFixture[] = base.map((f) => {
+    const [home, away] = f.homeFirst ? [f.a, f.b] : [f.b, f.a];
+    return { id: `s1n-r${f.round}-${home}-${away}`, round: f.round, cycle: 1, home, away };
+  });
+  const rematch = [...new Set(base.filter((f) => has(f, HOME_CLUB)).map((f) => f.round))].sort((a, b) => a - b).slice(0, REMATCH_ROUNDS);
+  rematch.forEach((r, i) => {
+    for (const f of base.filter((x) => x.round === r)) {
+      const [home, away] = f.homeFirst ? [f.b, f.a] : [f.a, f.b];
+      const round = first + i + 1;
+      out.push({ id: `s1n-r${round}-${home}-${away}`, round, cycle: 2, home, away });
+    }
+  });
+  return out;
+}
+
 export const isBatavia = (f: SeasonFixture): boolean => f.home === HOME_CLUB || f.away === HOME_CLUB;
-/** Batavia's twelve league fixtures in round order. */
-export const BATAVIA_FIXTURES: readonly SeasonFixture[] = SEASON_FIXTURES.filter(isBatavia).sort((a, b) => a.round - b.round);
-export const fixtureForGame = (game: number): SeasonFixture | null => BATAVIA_FIXTURES[game - 1] ?? null;
-export function fixtureForSeasonWeek(week: number): SeasonFixture | null {
-  for (let g = 1; g <= LEAGUE_GAMES; g++) if (weekOfLeagueGame(g) === week) return fixtureForGame(g);
+function format(version: SeasonLeagueVersion, clubs: readonly string[], fixtures: readonly SeasonFixture[]): LeagueFormat {
+  const batavia = fixtures.filter(isBatavia).sort((a, b) => a.round - b.round);
+  if (batavia.length !== LEAGUE_GAMES) throw new Error(`${version}: Batavia must play ${LEAGUE_GAMES} league games`);
+  const games: [number, number][] = batavia.map((f, i) => [f.round, weekOfLeagueGame(i + 1)!]);
+  const roundWeek = new Map<number, number>();
+  for (const f of fixtures) roundWeek.set(f.round, (games.find(([r]) => r >= f.round) ?? games[games.length - 1]!)[1]);
+  const venues = Object.freeze(assignLeagueVenues(batavia.map((f) => ({ id: f.id, bataviaHome: f.home === HOME_CLUB }))));
+  return Object.freeze({ version, clubs, rounds: Math.max(...fixtures.map((f) => f.round)), fixtures, batavia, venues, roundWeek, byId: new Map(fixtures.map((f) => [f.id, f])) });
+}
+export const LEAGUE_FORMATS: Readonly<Record<SeasonLeagueVersion, LeagueFormat>> = Object.freeze({
+  [SEASON_LEAGUE_V1]: format(SEASON_LEAGUE_V1, LEAGUE_CLUBS, v1Fixtures()),
+  [SEASON_LEAGUE_VERSION]: format(SEASON_LEAGUE_VERSION, LEAGUE_CLUBS_9, v2Fixtures()),
+});
+/** The saved league's own format; with no league saved yet, the format a new league gets. */
+export const leagueFormat = (s: { readonly version: SeasonLeagueVersion } | null | undefined): LeagueFormat => LEAGUE_FORMATS[s?.version ?? SEASON_LEAGUE_VERSION];
+
+export const fixtureForGame = (game: number, s?: SeasonLeagueState | null): SeasonFixture | null => leagueFormat(s).batavia[game - 1] ?? null;
+export function fixtureForSeasonWeek(week: number, s?: SeasonLeagueState | null): SeasonFixture | null {
+  for (let g = 1; g <= LEAGUE_GAMES; g++) if (weekOfLeagueGame(g) === week) return fixtureForGame(g, s);
   return null;
 }
-export const opponentOf = (f: SeasonFixture): LeagueClubId => (f.home === HOME_CLUB ? f.away : f.home);
+export const opponentOf = (f: SeasonFixture): string => (f.home === HOME_CLUB ? f.away : f.home);
 
-/** Venue for every Batavia league fixture under the owner rules (home Pinnacle Park, away rotation). */
-export const LEAGUE_VENUES: Readonly<Record<string, VenueId>> = Object.freeze(assignLeagueVenues(BATAVIA_FIXTURES.map((f) => ({ id: f.id, bataviaHome: f.home === HOME_CLUB }))));
 
 export function newSeasonLeague(careerId: string, seed: number): SeasonLeagueState {
-  return { version: SEASON_LEAGUE_VERSION, careerId, seed: seed >>> 0, results: {}, simulatedThrough: 0, venues: { ...LEAGUE_VENUES } };
+  return { version: SEASON_LEAGUE_VERSION, careerId, seed: seed >>> 0, results: {}, simulatedThrough: 0, venues: { ...LEAGUE_FORMATS[SEASON_LEAGUE_VERSION].venues } };
 }
 
 /**
@@ -88,7 +138,7 @@ export function newSeasonLeague(careerId: string, seed: number): SeasonLeagueSta
 export function withLeagueVenues(s: SeasonLeagueState): { state: SeasonLeagueState; changed: boolean } {
   if (s.venues) return { state: s, changed: false };
   const venues: Record<string, VenueId> = {};
-  for (const [id, v] of Object.entries(LEAGUE_VENUES)) if (!s.results[id]) venues[id] = v;
+  for (const [id, v] of Object.entries(leagueFormat(s).venues)) if (!s.results[id]) venues[id] = v;
   return { state: { ...s, venues }, changed: true };
 }
 export const leagueVenue = (s: SeasonLeagueState, fixtureId: string): VenueId | null => s.venues?.[fixtureId] ?? null;
@@ -96,7 +146,7 @@ const goalsOk = (n: unknown): n is number => Number.isInteger(n) && (n as number
 
 /** Records Batavia's finished match once. Same score again is a no-op; a different score is refused. */
 export function recordSeasonPlayed(s: SeasonLeagueState, fixtureId: string, batavia: number, opponent: number): { ok: true; state: SeasonLeagueState; changed: boolean } | { ok: false; error: string } {
-  const f = BY_ID.get(fixtureId);
+  const f = leagueFormat(s).byId.get(fixtureId);
   if (!f || !isBatavia(f)) return { ok: false, error: 'not a Batavia league fixture' };
   if (!goalsOk(batavia) || !goalsOk(opponent)) return { ok: false, error: 'bad score' };
   const homeGoals = f.home === HOME_CLUB ? batavia : opponent;
@@ -110,10 +160,11 @@ export function recordSeasonPlayed(s: SeasonLeagueState, fixtureId: string, bata
 
 /** Simulates non-Batavia fixtures through `round`; Batavia fixtures are never simulated. */
 export function simulateSeasonThrough(s: SeasonLeagueState, round: number): SeasonLeagueState {
-  const upto = Math.max(0, Math.min(SEASON_ROUNDS, Math.floor(round)));
+  const fmt = leagueFormat(s);
+  const upto = Math.max(0, Math.min(fmt.rounds, Math.floor(round)));
   if (upto <= s.simulatedThrough) return s;
   const results = { ...s.results };
-  for (const f of SEASON_FIXTURES) {
+  for (const f of fmt.fixtures) {
     if (f.round > upto || results[f.id] || isBatavia(f)) continue;
     results[f.id] = { fixtureId: f.id, ...simulatedScore(s.seed, f.id), source: 'simulated' };
   }
@@ -121,7 +172,7 @@ export function simulateSeasonThrough(s: SeasonLeagueState, round: number): Seas
 }
 
 export interface SeasonRow {
-  readonly club: LeagueClubId;
+  readonly club: string;
   readonly played: number;
   readonly won: number;
   readonly drawn: number;
@@ -133,8 +184,9 @@ export interface SeasonRow {
 }
 /** Standings from recorded results only (pending is never a loss). Ties: points, GD, GF, name. */
 export function seasonTable(s: SeasonLeagueState, names: Readonly<Record<string, string>> = {}): readonly SeasonRow[] {
-  const rows = new Map(LEAGUE_CLUBS.map((c) => [c, { club: c, played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, points: 0 }]));
-  for (const f of SEASON_FIXTURES) {
+  const fmt = leagueFormat(s);
+  const rows = new Map(fmt.clubs.map((c) => [c, { club: c, played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, points: 0 }]));
+  for (const f of fmt.fixtures) {
     const r = s.results[f.id];
     if (!r) continue;
     const h = rows.get(f.home)!;
@@ -155,7 +207,7 @@ export function seasonTable(s: SeasonLeagueState, names: Readonly<Record<string,
 /** Batavia's record from its played fixtures; `pending` counts league games with no result. */
 export function bataviaRecord(s: SeasonLeagueState): { played: number; won: number; drawn: number; lost: number; pending: number } {
   let won = 0, drawn = 0, lost = 0;
-  for (const f of BATAVIA_FIXTURES) {
+  for (const f of leagueFormat(s).batavia) {
     const r = s.results[f.id];
     if (!r) continue;
     const us = f.home === HOME_CLUB ? r.homeGoals : r.awayGoals;
@@ -171,19 +223,20 @@ export function bataviaRecord(s: SeasonLeagueState): { played: number; won: numb
 export function parseSeasonLeague(raw: unknown): { ok: true; value: SeasonLeagueState } | { ok: false; error: string } {
   if (typeof raw !== 'object' || raw === null) return { ok: false, error: 'not an object' };
   const o = raw as Record<string, unknown>;
-  if (o.version !== SEASON_LEAGUE_VERSION) return { ok: false, error: `unknown season league version ${String(o.version)}` };
+  if (o.version !== SEASON_LEAGUE_VERSION && o.version !== SEASON_LEAGUE_V1) return { ok: false, error: `unknown season league version ${String(o.version)}` };
+  const byId = LEAGUE_FORMATS[o.version].byId;
   if (typeof o.careerId !== 'string' || !Number.isInteger(o.seed) || !Number.isInteger(o.simulatedThrough)) return { ok: false, error: 'bad fields' };
   if (typeof o.results !== 'object' || o.results === null || Array.isArray(o.results)) return { ok: false, error: 'bad results' };
   for (const [k, v] of Object.entries(o.results as Record<string, unknown>)) {
     const r = v as Record<string, unknown>;
-    const f = BY_ID.get(k);
+    const f = byId.get(k);
     if (!f || r?.fixtureId !== k || !goalsOk(r.homeGoals) || !goalsOk(r.awayGoals) || (r.source !== 'played' && r.source !== 'simulated')) return { ok: false, error: `bad result ${k}` };
     if ((r.source === 'simulated') === isBatavia(f)) return { ok: false, error: `bad source ${k}` };
   }
   if (o.venues !== undefined) {
     if (typeof o.venues !== 'object' || o.venues === null || Array.isArray(o.venues)) return { ok: false, error: 'bad venues' };
     for (const [k, v] of Object.entries(o.venues as Record<string, unknown>)) {
-      const f = BY_ID.get(k);
+      const f = byId.get(k);
       if (!f || !isBatavia(f) || !isVenueId(v)) return { ok: false, error: `bad venue ${k}` };
     }
   }

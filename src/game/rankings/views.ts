@@ -1,8 +1,8 @@
 /** Read-only view models for the rankings screens: derived from saved state, never stored. Framework-free. */
 import { HOME_CLUB } from '../league/league';
-import { SEASON_FIXTURES, opponentOf, seasonTable, type SeasonFixture, type SeasonLeagueState } from '../season/league';
+import { leagueFormat, opponentOf, seasonTable, type SeasonFixture, type SeasonLeagueState } from '../season/league';
 import { BG_FIXTURES } from './background';
-import { ROUND_WEEK, nationalTable, stateTable, worldResults, type RankRow, type RankingsState, type StoryResults, type WorldResult } from './ratings';
+import { nationalTable, stateTable, worldResults, type RankRow, type RankingsState, type StoryResults, type WorldResult } from './ratings';
 import { STATE_NAMES, TEAMS, teamById, teamName } from './teams';
 
 export interface StandingRow {
@@ -53,7 +53,8 @@ export function rankHistory(s: RankingsState, team: string, scope: 'national' | 
 
 /** Batavia's next league opponent: its earliest fixture from `fromWeek` on without a saved result (a skipped game in an earlier week is not "next"). */
 export function nextLeagueFixture(lg: SeasonLeagueState | null, fromWeek = 0): SeasonFixture | null {
-  return SEASON_FIXTURES.filter((f) => (f.home === HOME_CLUB || f.away === HOME_CLUB) && ROUND_WEEK.get(f.round)! >= fromWeek).find((f) => !lg?.results[f.id]) ?? null;
+  const fmt = leagueFormat(lg);
+  return fmt.batavia.filter((f) => fmt.roundWeek.get(f.round)! >= fromWeek).find((f) => !lg?.results[f.id]) ?? null;
 }
 export const nextOpponent = (lg: SeasonLeagueState | null, fromWeek = 0): string | null => {
   const f = nextLeagueFixture(lg, fromWeek);
@@ -76,7 +77,8 @@ export interface UpcomingLine { readonly week: number; readonly comp: string; re
 /** Scheduled fixtures from `fromWeek` on with no saved result yet. */
 export function upcoming(s: RankingsState, story: StoryResults, team: string, limit = 3, fromWeek = 0): readonly UpcomingLine[] {
   const out: UpcomingLine[] = [];
-  for (const f of SEASON_FIXTURES) if ((f.home === team || f.away === team) && !story.league?.results[f.id] && ROUND_WEEK.get(f.round)! >= fromWeek) out.push({ week: ROUND_WEEK.get(f.round)!, comp: 'League', opponent: f.home === team ? f.away : f.home, home: f.home === team });
+  const fmt = leagueFormat(story.league);
+  for (const f of fmt.fixtures) if ((f.home === team || f.away === team) && !story.league?.results[f.id] && fmt.roundWeek.get(f.round)! >= fromWeek) out.push({ week: fmt.roundWeek.get(f.round)!, comp: 'League', opponent: f.home === team ? f.away : f.home, home: f.home === team });
   for (const f of BG_FIXTURES) if ((f.home === team || f.away === team) && !s.background[f.id] && f.week >= Math.max(s.startWeek, fromWeek)) out.push({ week: f.week, comp: COMP_LABEL[f.competition], opponent: f.home === team ? f.away : f.home, home: f.home === team });
   return out.sort((a, b) => a.week - b.week).slice(0, limit);
 }
@@ -112,13 +114,14 @@ const ord = (n: number): string => `${n}${n % 10 === 1 && n % 100 !== 11 ? 'st' 
 export function teamImpact(k: Kickoff, s: RankingsState, story: StoryResults, fullTime: { readonly us: number; readonly them: number } | null = null): string[] {
   const out: string[] = [`At kickoff (${k.snapshot === 's1-pre' ? 'Preseason' : `after week ${k.snapshot.replace('s1-w', '')}`}): ${teamName(k.team)} #${k.rank}, ${teamName(k.opponent)} #${k.opponentRank} of ${TEAMS.length}`];
   if (k.competition === 'league') {
-    const f = SEASON_FIXTURES.find((x) => ROUND_WEEK.get(x.round) === k.week && (x.home === HOME_CLUB || x.away === HOME_CLUB));
+    const fmt = leagueFormat(story.league);
+    const f = fmt.batavia.find((x) => fmt.roundWeek.get(x.round) === k.week);
     const r = f ? story.league?.results[f.id] : undefined;
     if (f && r) {
       const us = f.home === HOME_CLUB ? r.homeGoals : r.awayGoals;
       const them = f.home === HOME_CLUB ? r.awayGoals : r.homeGoals;
       const me = leagueStandings(story.league).rows.find((x) => x.club === HOME_CLUB)!;
-      const done = SEASON_FIXTURES.filter((x) => x.round === f.round).every((x) => !!story.league?.results[x.id]);
+      const done = fmt.fixtures.filter((x) => x.round === f.round).every((x) => !!story.league?.results[x.id]);
       out.push(`League: +${us > them ? 3 : us === them ? 1 : 0} point${us === them ? '' : 's'} (${me.points} total)`);
       out.push(`League position: ${ord(me.rank)}${done ? '' : ' (provisional: other games this round are not finished)'}`);
     } else if (fullTime) {

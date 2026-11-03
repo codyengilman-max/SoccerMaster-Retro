@@ -8,7 +8,7 @@
  */
 import { createRng } from '../rng';
 import { simulatedScore } from '../league/league';
-import { SEASON_FIXTURES, seasonTable, type SeasonLeagueState } from './league';
+import { leagueFormat, seasonTable, type SeasonLeagueState } from './league';
 
 export const STATE_CUP_VERSION = 'sc1';
 export const STATE_CUP_INVITED = 'next_horizon';
@@ -35,7 +35,7 @@ const hash = (seed: number, s: string): number => {
 
 /** League top three once every league fixture has a result; null while the league is unfinished. */
 export function leagueQualifiers(league: SeasonLeagueState): readonly [string, string, string] | null {
-  if (!SEASON_FIXTURES.every((f) => league.results[f.id])) return null;
+  if (!leagueFormat(league).fixtures.every((f) => league.results[f.id])) return null;
   const [a, b, c] = seasonTable(league).map((r) => r.club);
   return [a!, b!, c!];
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AWAY_LEAGUE_ROTATION, VENUE_IDS, VENUE_NAMES, assignLeagueVenues, isVenueId, resolveVenue } from '../src/game/venue';
-import { BATAVIA_FIXTURES, LEAGUE_VENUES, leagueVenue, newSeasonLeague, parseSeasonLeague, recordSeasonPlayed, withLeagueVenues } from '../src/game/season/league';
+import { leagueFormat, leagueVenue, newSeasonLeague, parseSeasonLeague, recordSeasonPlayed, withLeagueVenues } from '../src/game/season/league';
+const { batavia: BATAVIA_FIXTURES, venues: LEAGUE_VENUES } = leagueFormat(null);
 import { newTournament, parseTournament } from '../src/game/season/tournament';
 import layouts from '../src/assets/art/venues/venue-layouts.json';
 

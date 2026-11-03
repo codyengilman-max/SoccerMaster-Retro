@@ -10,9 +10,8 @@
  * tournament keeps its shoot-out winner. Results are processed by week, kickoff slot, then fixture ID.
  * A result finalized after its week was published counts in the next published week.
  */
-import { SEASON_FIXTURES, type SeasonLeagueState } from '../season/league';
-import { LEAGUE_GAMES, fixtureForGame } from '../season/league';
-import { SEASON_WEEKS, weekOfLeagueGame, type TournamentId } from '../season/calendar';
+import { leagueFormat, type SeasonLeagueState } from '../season/league';
+import { SEASON_WEEKS, type TournamentId } from '../season/calendar';
 import { TOURNAMENTS, allFixtures, type TournamentState } from '../season/tournament';
 import { cupFinal, semis, type StateCupState } from '../season/stateCup';
 import { BG_FIXTURES, simulateBackground, type BgResult } from './background';
@@ -66,22 +65,16 @@ export interface StoryResults {
 }
 
 const STATE_CUP_WEEKS = SEASON_WEEKS.filter((w) => w.kind === 'state_cup').map((w) => w.week);
-/** Week each league round is played: a Batavia round in its game's week; a Batavia bye round with the next Batavia round (it is simulated then). */
-export const ROUND_WEEK: ReadonlyMap<number, number> = (() => {
-  const batavia: [number, number][] = [];
-  for (let g = 1; g <= LEAGUE_GAMES; g++) batavia.push([fixtureForGame(g)!.round, weekOfLeagueGame(g)!]);
-  batavia.sort((a, b) => a[0] - b[0]);
-  const m = new Map<number, number>();
-  for (const f of SEASON_FIXTURES) m.set(f.round, (batavia.find(([r]) => r >= f.round) ?? batavia[batavia.length - 1]!)[1]);
-  return m;
-})();
+/** Week each league round is played in this league's own format. */
+export const roundWeek = (lg: SeasonLeagueState | null, round: number): number => leagueFormat(lg).roundWeek.get(round)!;
 
 /** Every finalized result, canonical order. Unplayed fixtures are absent, never draws. */
 export function worldResults(story: StoryResults, background: Readonly<Record<string, BgResult>>): readonly WorldResult[] {
   const out: WorldResult[] = [];
-  if (story.league) for (const f of SEASON_FIXTURES) {
+  const fmt = leagueFormat(story.league);
+  if (story.league) for (const f of fmt.fixtures) {
     const r = story.league.results[f.id];
-    if (r) out.push({ id: `lg:${f.id}`, week: ROUND_WEEK.get(f.round)!, slot: f.round, competition: 'league', home: f.home, away: f.away, homeGoals: r.homeGoals, awayGoals: r.awayGoals, source: r.source });
+    if (r) out.push({ id: `lg:${f.id}`, week: fmt.roundWeek.get(f.round)!, slot: f.round, competition: 'league', home: f.home, away: f.away, homeGoals: r.homeGoals, awayGoals: r.awayGoals, source: r.source });
   }
   for (const id of Object.keys(TOURNAMENTS) as TournamentId[]) {
     const t = story.cups[id];

@@ -138,14 +138,14 @@ There is no Next Level club: Cody confirmed it is not in the game. Next Horizon 
 
 ## Owner Arizona clubs (version 2)
 
-Not in any current league, tournament or background fixture; available for future Arizona scheduling and local tournaments.
+No registry league. The first four play in Batavia's league in careers whose league is created after D72 (the 9-club format); none enter background fixtures, tournaments or saved 5-club leagues. Anthem Shockers stays directory-only, available for future Arizona scheduling and local tournaments.
 
 | ID | Name | Short | City, State | League | Tier | Start rating |
 |---|---|---|---|---|---|---|
-| `westside_united` | Westside United | Westside | Phoenix, AZ | — (future Arizona scheduling) | 2 | 1586 |
-| `no_soccer_tuesday` | No Soccer Tuesday | NST | Scottsdale, AZ | — (future Arizona scheduling) | 3 | 1510 |
-| `tumbleweed_fc` | Tumbleweed FC | Tumbleweed | Chandler, AZ | — (future Arizona scheduling) | 3 | 1513 |
-| `dynamics_fc` | Dynamics FC | Dynamics | Tempe, AZ | — (future Arizona scheduling) | 3 | 1491 |
+| `westside_united` | Westside United | Westside | Phoenix, AZ | Batavia's league (new careers, D72) | 2 | 1586 |
+| `no_soccer_tuesday` | No Soccer Tuesday | NST | Scottsdale, AZ | Batavia's league (new careers, D72) | 3 | 1510 |
+| `tumbleweed_fc` | Tumbleweed FC | Tumbleweed | Chandler, AZ | Batavia's league (new careers, D72) | 3 | 1513 |
+| `dynamics_fc` | Dynamics FC | Dynamics | Tempe, AZ | Batavia's league (new careers, D72) | 3 | 1495 |
 | `anthem_shockers` | Anthem Shockers | Anthem | Anthem, AZ | — (future Arizona scheduling) | 4 | 1428 |
 
 ## Aliases

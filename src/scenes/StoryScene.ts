@@ -4,7 +4,7 @@ import { homeLearningDetail, homeTasks, weekAssignments, jungleResult, schoolRew
 import type { CompetitorId } from '../game/jungle/sim';
 import { crossbarRules, decisionDetail, sceneById, trainingDetail } from '../game/story/content';
 import { seasonWeek, type TournamentId } from '../game/season/calendar';
-import { bataviaRecord, fixtureForSeasonWeek, leagueVenue, newSeasonLeague, opponentOf, withLeagueVenues, parseSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough } from '../game/season/league';
+import { bataviaRecord, fixtureForSeasonWeek, leagueVenue, newSeasonLeague, opponentOf, withLeagueVenues, parseSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough, type SeasonLeagueState } from '../game/season/league';
 import { TOURNAMENTS, allFixtures, bataviaFinish, groupTable, nextBataviaFixture, newTournament, parseTournament, finalFixture, recordTournamentPlayed, bataviaResult, type TournamentState } from '../game/season/tournament';
 import { TOURNAMENT_VENUE, type VenueId } from '../game/venue';
 import { CLUB_WORLD } from '../game/story/clubs';
@@ -53,7 +53,7 @@ interface Action { readonly name: string; readonly label: string; readonly onCli
 let instantText = false;
 
 const FINISH_LABEL: Record<string, string> = { champion: 'Champions', runner_up: 'Runners-up', group_2: 'Second in the group', group_3: 'Third in the group', group_4: 'Fourth in the group' };
-const clubName = (id: string): string => CLUB_WORLD.clubs.find((c) => c.id === id)?.displayName ?? id;
+const clubName = (id: string): string => CLUB_WORLD.clubs.find((c) => c.id === id)?.displayName ?? teamById(id)?.name ?? id;
 const resultOf = (s: { home: number; away: number }): 'WIN' | 'DRAW' | 'LOSS' => (s.home > s.away ? 'WIN' : s.home < s.away ? 'LOSS' : 'DRAW');
 
 function newRunId(): string {
@@ -77,6 +77,8 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private store: StoryStore | null = null;
   private session: StorySession | null = null;
   private state: StoryState | null = null;
+  /** Last loaded season league (its saved format picks this week's fixture). */
+  private leagueNow: SeasonLeagueState | null = null;
   private busy = false;
   private actionsTop = 0;
   private navigating = false;
@@ -194,6 +196,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     this.mode = 'story';
     await this.loadSummaries();
     await this.loadCrossbarScore();
+    await this.seasonLeague();
     await this.resumeHandoff();
     this.render();
   }
@@ -555,14 +558,14 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private async seasonLeague() {
     const id = this.state!.careerId;
     const saved = parseSeasonLeague(await this.store!.getRecord(`league-s1:${id}`));
-    return saved.ok ? saved.value : newSeasonLeague(id, this.seasonSeed());
+    return (this.leagueNow = saved.ok ? saved.value : newSeasonLeague(id, this.seasonSeed()));
   }
 
   /** Club the away side wears in this story match (art only; competitions are unchanged). */
   private async matchOpponent(kind: string, run: string): Promise<{ opponent?: string; venue?: 'home' | 'away'; venueId?: VenueId; competition?: 'League' | 'Tournament' }> {
     if (kind === 'league_match') {
       const week = this.seasonWeekNo();
-      const f = week === null ? null : fixtureForSeasonWeek(week);
+      const f = week === null ? null : fixtureForSeasonWeek(week, await this.seasonLeague());
       if (!f) return {};
       const venueId = await this.leagueVenueFor(f.id);
       return { opponent: opponentOf(f), venue: f.home === 'batavia' ? 'home' : 'away', ...(venueId ? { venueId } : {}), competition: 'League' };
@@ -593,13 +596,15 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   /** This week's Batavia league fixture counts once; other clubs are simulated through its round. */
   private async recordSeasonLeague(score: { home: number; away: number }): Promise<boolean> {
     const week = this.seasonWeekNo();
-    const f = week === null ? null : fixtureForSeasonWeek(week);
-    if (!f || !this.store || !this.state) return false;
+    if (week === null || !this.store || !this.state) return false;
     const id = this.state.careerId;
     const seed = this.seasonSeed();
     const out = await this.store.updateRecord(`league-s1:${id}`, (cur) => {
       const saved = parseSeasonLeague(cur);
-      const r = recordSeasonPlayed(saved.ok ? saved.value : newSeasonLeague(id, seed), f.id, score.home, score.away);
+      const base = saved.ok ? saved.value : newSeasonLeague(id, seed);
+      const f = fixtureForSeasonWeek(week, base);
+      if (!f) return null;
+      const r = recordSeasonPlayed(base, f.id, score.home, score.away);
       return r.ok ? { value: simulateSeasonThrough(r.state, f.round), out: true } : null;
     });
     return out === true;
@@ -608,13 +613,14 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   /** A skipped league game stays pending for Batavia; the other clubs still play their round. */
   private async skipSeasonLeague(): Promise<boolean> {
     const week = this.seasonWeekNo();
-    const f = week === null ? null : fixtureForSeasonWeek(week);
-    if (!f || !this.store || !this.state) return false;
+    if (week === null || !this.store || !this.state) return false;
     const id = this.state.careerId;
     const seed = this.seasonSeed();
     const out = await this.store.updateRecord(`league-s1:${id}`, (cur) => {
       const saved = parseSeasonLeague(cur);
-      return { value: simulateSeasonThrough(saved.ok ? saved.value : newSeasonLeague(id, seed), f.round), out: true };
+      const base = saved.ok ? saved.value : newSeasonLeague(id, seed);
+      const f = fixtureForSeasonWeek(week, base);
+      return f ? { value: simulateSeasonThrough(base, f.round), out: true } : null;
     });
     return out === true;
   }
@@ -1144,7 +1150,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       }
       case 'league_match': {
         const week = this.seasonWeekNo() ?? 0;
-        const f = fixtureForSeasonWeek(week);
+        const f = fixtureForSeasonWeek(week, this.leagueNow);
         const game = seasonWeek(week)?.leagueGame ?? 0;
         setBody(`${f ? `League game ${game} of 12: Batavia vs ${clubName(opponentOf(f))} (${f.home === 'batavia' ? 'home' : 'away'}).` : 'League match.'} A full 9v9 game with your usual controls. Skipping leaves the game unplayed, never a loss.`);
         acts.push({ name: 'handoff-match', label: 'Play the match', onClick: () => void this.openCareer('league_match') });

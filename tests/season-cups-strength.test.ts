@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { LEAGUE_CLUBS } from '../src/game/league/league';
-import { BATAVIA_FIXTURES, SEASON_ROUNDS, newSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough, type SeasonLeagueState } from '../src/game/season/league';
+import { leagueFormat, newSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough, type SeasonLeagueState } from '../src/game/season/league';
 import { STATE_CUP_INVITED, cupFinal, cupFinish, leagueQualifiers, newStateCup, nextCupFixture, parseStateCup, qualified, recordCupPlayed, semis, simulateWithoutBatavia } from '../src/game/season/stateCup';
+const { batavia: BATAVIA_FIXTURES, rounds: SEASON_ROUNDS } = leagueFormat(null);
 import { strengthTable } from '../src/game/season/strength';
 import { newTournament, nextBataviaFixture, recordTournamentPlayed, type TournamentState } from '../src/game/season/tournament';
 

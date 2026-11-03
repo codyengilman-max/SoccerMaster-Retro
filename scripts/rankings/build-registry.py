@@ -117,10 +117,13 @@ SHORT = {'batavia': 'Batavia', 'royal_salt': 'Royal Salt', 'valley_rising': 'Val
          'next_horizon': 'Next Horizon', 'silver_state': 'Silver State', 'pacific_crest': 'Pacific Crest', 'wasatch_peak': 'Wasatch Peak',
          'rio_grande': 'Rio Grande', 'front_range': 'Front Range', 'cascade_city': 'Cascade City', 'bayou_star': 'Bayou Star', 'high_plains': 'High Plains'}
 ALIASES = {'batavia': ['Batavia', 'FC Batavia', 'Batavia FC', 'F.C. Batavia', 'Batavia F.C.'], 'desert_tuzon': ['Desert Tucson'], 'next_horizon': ['Next Horizon FC']}
-# Owner-requested Arizona clubs: directory only (no league, no fixtures this season), available for future Arizona scheduling.
+# Owner-requested Arizona clubs. No registry league: the first four join Batavia's league in the 9-club season format
+# (src/game/season/league.ts, D72); Anthem Shockers stays directory-only, available for future Arizona scheduling.
 OWNER_AZ = [('westside_united', 'Westside United', 'Westside', 'Phoenix', 2), ('no_soccer_tuesday', 'No Soccer Tuesday', 'NST', 'Scottsdale', 3),
             ('tumbleweed_fc', 'Tumbleweed FC', 'Tumbleweed', 'Chandler', 3), ('dynamics_fc', 'Dynamics FC', 'Dynamics', 'Tempe', 3),
             ('anthem_shockers', 'Anthem Shockers', 'Anthem', 'Anthem', 4)]
+# Dynamics FC starts just above Batavia so Batavia stays in the bottom two of its 9-club league (D72).
+OWNER_RATING = {'dynamics_fc': 1495}
 AZ_TOTAL = 80          # >= 68 needed so 66 Arizona teams can rank above Batavia with at least one below
 AZ_ABOVE_BATAVIA = 66  # Batavia starts 67th in Arizona
 
@@ -200,7 +203,7 @@ def add2(tid, name, short, city, state, region, league, tier, origin, rating=Non
                   'added': 2, 'short': short, 'club': tid, 'aliases': []})
 
 for tid, name, short, city, tier in OWNER_AZ:
-    add2(tid, name, short, city, 'AZ', 'Southwest', None, tier, 'owner_az')
+    add2(tid, name, short, city, 'AZ', 'Southwest', None, tier, 'owner_az', OWNER_RATING.get(tid))
 
 # Teams per state: Arizona fixed, the rest by population (at least 4), never fewer than the state already has.
 have = {}

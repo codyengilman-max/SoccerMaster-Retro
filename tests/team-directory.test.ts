@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { LEAGUE_CLUBS } from '../src/game/league/league';
 import { TOURNAMENTS, bataviaFixture, newTournament, recordTournamentPlayed } from '../src/game/season/tournament';
-import { newSeasonLeague, seasonTable } from '../src/game/season/league';
+import { LEAGUE_FORMATS, SEASON_LEAGUE_V1, leagueFormat, newSeasonLeague, seasonTable } from '../src/game/season/league';
 import { STATE_CUP_INVITED } from '../src/game/season/stateCup';
 import { CATEGORY, STATES, TEAMS, V1_LEAGUES, teamById, teamIdForName } from '../src/game/rankings/teams';
 import { BG_FIXTURES } from '../src/game/rankings/background';
@@ -59,13 +59,16 @@ describe('directory', () => {
     expect(TEAMS.some((t) => /next.?level/i.test(t.id + t.name + t.aliases.join()))).toBe(false);
     expect(teamIdForName('Next Horizon')).toBe('next_horizon');
   });
-  it('adds the five owner Arizona clubs, outside every current competition', () => {
-    const scheduled = new Set([...BG_FIXTURES.flatMap((f) => [f.home, f.away]), ...LEAGUE_CLUBS, ...Object.values(TOURNAMENTS).flatMap((t) => t.groups.flat()), ...STATE_CUP_INVITED]);
+  it('adds the five owner Arizona clubs; four join new leagues, none enter background, tournament or older-league fixtures', () => {
+    const scheduled = new Set([...BG_FIXTURES.flatMap((f) => [f.home, f.away]), ...LEAGUE_FORMATS[SEASON_LEAGUE_V1].clubs, ...Object.values(TOURNAMENTS).flatMap((t) => t.groups.flat()), ...STATE_CUP_INVITED]);
+    const league9 = leagueFormat(newSeasonLeague(ID, SEED)).clubs;
     for (const [id, name, short] of OWNER_AZ) {
       const t = teamById(id)!;
       expect([t.name, t.short, t.state, t.league]).toEqual([name, short, 'AZ', null]);
       expect(scheduled.has(id), id).toBe(false);
+      expect(league9.includes(id), id).toBe(id !== 'anthem_shockers');
     }
+    expect(league9).toEqual([...LEAGUE_CLUBS, 'westside_united', 'no_soccer_tuesday', 'tumbleweed_fc', 'dynamics_fc']);
     expect(searchRows(nationalTable(latest(newRankings(ID, SEED))), 'NST').map((r) => r.team)).toContain('no_soccer_tuesday');
   });
 });
@@ -80,10 +83,12 @@ describe('new career start', () => {
     expect(az.filter((r) => r.rank > 67).length).toBeGreaterThanOrEqual(1);
     expect(az.filter((r) => r.rating === pre.ratings.batavia!)).toHaveLength(1);
   });
-  it('Batavia is in the bottom two of its starting league by strength', () => {
-    const below = LEAGUE_CLUBS.filter((c) => pre.ratings[c]! < pre.ratings.batavia!);
-    expect(below.length).toBeLessThanOrEqual(1);
-    expect(LEAGUE_CLUBS.filter((c) => pre.ratings[c]! > pre.ratings.batavia!).length).toBeGreaterThanOrEqual(LEAGUE_CLUBS.length - 2);
+  it('Batavia is in the bottom two of its starting league by strength, in the new 9-club and the saved 5-club format', () => {
+    for (const clubs of [leagueFormat(null).clubs, LEAGUE_FORMATS[SEASON_LEAGUE_V1].clubs]) {
+      expect(clubs.filter((c) => pre.ratings[c]! < pre.ratings.batavia!)).toEqual(['desert_tuzon']);
+      expect(clubs.filter((c) => pre.ratings[c]! > pre.ratings.batavia!)).toHaveLength(clubs.length - 2);
+    }
+    expect(leagueFormat(null).clubs).toHaveLength(9);
   });
   it('national rank comes from the same ratings and shares ranks on equal ratings', () => {
     const nat = nationalTable(pre);

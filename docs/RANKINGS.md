@@ -12,7 +12,7 @@ Simulated career-world rankings for the U11 9v9 category. Offline only: no onlin
 - Home menu (Story, from Week 5): THIS SEASON panel and a League & Rankings button. Match Report: TEAM IMPACT on the competition line.
 
 ## Fixture ownership
-- Batavia league games and Batavia tournament games are played by you. Other league and cup fixtures are simulated by the existing league/tournament code, exactly as before. Background fixtures involve only background-league teams (never Batavia's league, Next Horizon or the five owner Arizona clubs) and are simulated by `background.ts`. A fixture belongs to exactly one of these, so nothing is both played and simulated.
+- Batavia league games and Batavia tournament games are played by you. Other league and cup fixtures are simulated by the existing league/tournament code, exactly as before. Background fixtures involve only background-league teams (never Batavia's league, Next Horizon or the five owner Arizona clubs; four of those play in Batavia's 9-club league for new careers, D72) and are simulated by `background.ts`. A fixture belongs to exactly one of these, so nothing is both played and simulated.
 - All three feed one list of finalized results (`worldResults`), in order of week, kickoff slot and fixture ID.
 - A fixture with no saved result is Scheduled. It is never a draw and never counted.
 - States: Scheduled (no result), In Progress (a story match run that is launched but not finished; the existing story run record), Finalized (a saved result). Postponed and Cancelled are not used in Season One: no fixture is ever moved. A result saved late (for example after an interrupted match) is counted in the next weekly settlement, labelled "not yet in rankings" until then.

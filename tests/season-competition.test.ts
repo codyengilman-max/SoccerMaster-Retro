@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { HOME_CLUB, LEAGUE_CLUBS } from '../src/game/league/league';
 import { SEASON_WEEKS, slotIds, weekOfLeagueGame } from '../src/game/season/calendar';
-import { BATAVIA_FIXTURES, SEASON_FIXTURES, SEASON_ROUNDS, bataviaRecord, fixtureForSeasonWeek, newSeasonLeague, parseSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough } from '../src/game/season/league';
+import { LEAGUE_CLUBS_9, LEAGUE_FORMATS, SEASON_LEAGUE_V1, SEASON_LEAGUE_VERSION, bataviaRecord, leagueFormat, fixtureForSeasonWeek, newSeasonLeague, parseSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough } from '../src/game/season/league';
+const FMT = leagueFormat(null);
+const { fixtures: SEASON_FIXTURES, batavia: BATAVIA_FIXTURES, rounds: SEASON_ROUNDS } = FMT;
 import { TOURNAMENTS, bataviaFinish, bataviaResult, bataviaFixture, finalFixture, groupFixtures, groupTable, matchPoints, newTournament, nextBataviaFixture, parseTournament, recordTournamentPlayed, type TournamentState } from '../src/game/season/tournament';
 
 describe('Season One calendar', () => {
@@ -19,6 +21,7 @@ describe('Season One calendar', () => {
     // Week 14: league game 10 plus a non-league friendly against Next Horizon; no other week has one.
     expect(SEASON_WEEKS.filter((w) => w.friendly).map((w) => [w.week, w.friendly, w.leagueGame])).toEqual([[14, 'next_horizon', 10]]);
     expect(LEAGUE_CLUBS as readonly string[]).not.toContain('next_horizon');
+    expect(LEAGUE_CLUBS_9 as readonly string[]).not.toContain('next_horizon');
     // Three weeks apart, two league weekends between them.
     expect(TOURNAMENTS.holiday_classic.week - TOURNAMENTS.az_showcase.week).toBe(3);
     for (const w of [1, 2, 9, 12, 17, 18]) expect(fixtureForSeasonWeek(w)).toBeNull();
@@ -33,13 +36,39 @@ describe('Season One calendar', () => {
 });
 
 describe('Season One league', () => {
-  it('is a triple round robin: each pair meets three times, Batavia plays exactly 12 league games', () => {
-    expect(SEASON_FIXTURES).toHaveLength(30);
-    for (const a of LEAGUE_CLUBS) for (const b of LEAGUE_CLUBS) if (a < b) expect(SEASON_FIXTURES.filter((f) => [f.home, f.away].sort().join() === [a, b].sort().join())).toHaveLength(3);
+  it('saved s1-1 leagues keep the triple round robin: each pair meets three times, Batavia plays exactly 12 league games', () => {
+    const v1 = LEAGUE_FORMATS[SEASON_LEAGUE_V1];
+    expect(v1.clubs).toEqual([...LEAGUE_CLUBS]);
+    expect(v1.fixtures).toHaveLength(30);
+    for (const a of LEAGUE_CLUBS) for (const b of LEAGUE_CLUBS) if (a < b) expect(v1.fixtures.filter((f) => [f.home, f.away].sort().join() === [a, b].sort().join())).toHaveLength(3);
+    expect(v1.batavia).toHaveLength(12);
+    for (let r = 1; r <= v1.rounds; r++) expect(v1.fixtures.filter((f) => f.round === r)).toHaveLength(2);
+    const old = { ...newSeasonLeague('c', 7), version: SEASON_LEAGUE_V1 as typeof SEASON_LEAGUE_V1, venues: { ...v1.venues } };
+    const ids = SEASON_WEEKS.filter((w) => w.leagueGame).map((w) => fixtureForSeasonWeek(w.week, old)!.id);
+    expect(ids).toEqual(v1.batavia.map((f) => f.id));
+    expect(ids.slice(0, 4)).toEqual(['s1-r2-sol_vista-batavia', 's1-r3-batavia-desert_tuzon', 's1-r4-valley_rising-batavia', 's1-r5-batavia-royal_salt']);
+    expect(parseSeasonLeague(old).ok).toBe(true);
+  });
+  it('new leagues have nine clubs: every pair once plus four rematch rounds, Batavia plays exactly 12 league games', () => {
+    expect(newSeasonLeague('c', 7).version).toBe(SEASON_LEAGUE_VERSION);
+    expect(FMT.clubs).toEqual(['batavia', 'royal_salt', 'valley_rising', 'desert_tuzon', 'sol_vista', 'westside_united', 'no_soccer_tuesday', 'tumbleweed_fc', 'dynamics_fc']);
+    expect(FMT.clubs).not.toContain('anthem_shockers');
+    expect(SEASON_ROUNDS).toBe(13);
+    for (let r = 1; r <= SEASON_ROUNDS; r++) expect(SEASON_FIXTURES.filter((f) => f.round === r)).toHaveLength(4);
+    const pair = (f: { home: string; away: string }) => [f.home, f.away].sort().join();
+    for (const a of FMT.clubs) for (const b of FMT.clubs) if (a < b) expect(SEASON_FIXTURES.filter((f) => f.cycle === 1 && pair(f) === [a, b].sort().join())).toHaveLength(1);
     expect(BATAVIA_FIXTURES).toHaveLength(12);
+    const opp = BATAVIA_FIXTURES.map((f) => (f.home === HOME_CLUB ? f.away : f.home));
+    expect(new Set(opp.slice(0, 8)).size).toBe(8);
+    expect(opp.slice(8)).toEqual(opp.slice(0, 4));
+    // A rematch flips home and away.
+    for (let i = 0; i < 4; i++) expect(BATAVIA_FIXTURES[8 + i]!.home).toBe(BATAVIA_FIXTURES[i]!.away);
+    for (const c of FMT.clubs) expect(SEASON_FIXTURES.filter((f) => f.home === c || f.away === c).length).toBeGreaterThanOrEqual(11);
     const ids = SEASON_WEEKS.filter((w) => w.leagueGame).map((w) => fixtureForSeasonWeek(w.week)!.id);
-    expect(new Set(ids).size).toBe(12);
-    for (let r = 1; r <= SEASON_ROUNDS; r++) expect(SEASON_FIXTURES.filter((f) => f.round === r)).toHaveLength(2);
+    expect(ids).toEqual(BATAVIA_FIXTURES.map((f) => f.id));
+    expect(new Set(SEASON_FIXTURES.map((f) => f.id)).size).toBe(SEASON_FIXTURES.length);
+    // A saved league never changes format: an s1-1 result id is not a fixture of a new league.
+    expect(recordSeasonPlayed(newSeasonLeague('c', 7), LEAGUE_FORMATS[SEASON_LEAGUE_V1].batavia[0]!.id, 1, 0).ok).toBe(false);
   });
   it('records a played game once, never simulates Batavia and treats pending games as pending, not losses', () => {
     let s = newSeasonLeague('c', 7);
@@ -68,7 +97,7 @@ describe('Season One league', () => {
       }
       s = simulateSeasonThrough(s, SEASON_ROUNDS);
       expect(seasonTable(s).find((x) => x.club === HOME_CLUB)!.points).toBe(pts);
-      expect(Object.keys(s.results)).toHaveLength(30);
+      expect(Object.keys(s.results)).toHaveLength(SEASON_FIXTURES.length);
     }
   });
 });
@@ -93,6 +122,7 @@ describe('Season One tournaments', () => {
       expect(c.groups[1].filter((t) => c.teams[t]!.outOfState)).toHaveLength(2);
       expect(c.groups[1]).toContain('next_horizon');
       expect(LEAGUE_CLUBS as readonly string[]).not.toContain('next_horizon');
+    expect(LEAGUE_CLUBS_9 as readonly string[]).not.toContain('next_horizon');
       const fx = groupFixtures(id);
       expect(fx).toHaveLength(12);
       for (const t of all) expect(fx.filter((f) => f.home === t || f.away === t)).toHaveLength(3);

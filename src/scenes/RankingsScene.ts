@@ -4,7 +4,7 @@ import { latest, movement, nationalTable, newRankings, performance, publishedWee
 import { CATEGORY_LABEL, HOME_TEAM, STATES, TEAMS, teamById, teamName } from '../game/rankings/teams';
 import { aroundStart, leagueStandings, nextOpponent, rankHistory, scopeTable, searchRows, stateCount, stateLabel, teamResults, upcoming } from '../game/rankings/views';
 import { StoryStore } from '../game/story/store';
-import { fixtureForGame, newSeasonLeague, recordSeasonPlayed, simulateSeasonThrough } from '../game/season/league';
+import { fixtureForGame, leagueFormat, newSeasonLeague, recordSeasonPlayed, simulateSeasonThrough } from '../game/season/league';
 import { orientationOf } from '../render/layout';
 import { CSS, FONT_FAMILY, PALETTE } from '../render/theme';
 import type { InspectableScene, SceneLayoutReport } from './inspectable';
@@ -96,10 +96,10 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
       let lg = newSeasonLeague(id, 7);
       const scores: [number, number][] = [[2, 1], [1, 1], [0, 2], [3, 0], [2, 2]];
       for (let g = 1; g <= scores.length; g++) {
-        const r = recordSeasonPlayed(lg, fixtureForGame(g)!.id, scores[g - 1]![0], scores[g - 1]![1]);
+        const r = recordSeasonPlayed(lg, fixtureForGame(g, lg)!.id, scores[g - 1]![0], scores[g - 1]![1]);
         if (r.ok) lg = r.state;
       }
-      lg = simulateSeasonThrough(lg, fixtureForGame(scores.length)!.round);
+      lg = simulateSeasonThrough(lg, fixtureForGame(scores.length, lg)!.round);
       this.story = { league: lg, cups: {}, stateCup: null };
       this.rankings = settleThrough(newRankings(id, 7), this.story, this.week - 1).state;
       this.status = 'ready';
@@ -291,9 +291,9 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
   private drawTabs(y: number, w = this.scale.width): number {
     const h = Math.max(44, Math.round(this.base() * 2.5));
     const tabs: [string, string, () => void, boolean][] = [
-      ['tab-national', 'National', () => ((this.scope = 'national'), this.jumpToTeam(), this.closeStatePicker()), this.view === 'rankings' && this.scope === 'national'],
+      ['tab-national', 'National', () => ((this.view = 'rankings'), (this.scope = 'national'), this.jumpToTeam(), this.closeStatePicker()), this.view === 'rankings' && this.scope === 'national'],
       // First tap shows the state list; tapping it again opens the state picker.
-      ['tab-state', `${stateLabel(this.stateFilter)} ▾`, () => (this.view === 'rankings' && this.scope !== 'national' ? this.openStatePicker() : ((this.scope = this.stateFilter), this.jumpToTeam(), this.render())), this.view === 'rankings' && this.scope !== 'national'],
+      ['tab-state', `${stateLabel(this.stateFilter)} ▾`, () => (this.view === 'rankings' && this.scope !== 'national' ? this.openStatePicker() : ((this.view = 'rankings'), (this.scope = this.stateFilter), this.jumpToTeam(), this.render())), this.view === 'rankings' && this.scope !== 'national'],
       ['tab-league', 'League', () => ((this.view = 'standings'), this.closeStatePicker()), this.view === 'standings'],
     ];
     const tw = (w - 28 - 8 * (tabs.length - 1)) / tabs.length;
@@ -406,7 +406,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     const nat = rankIn(nationalTable(latest(s)), team);
     const st = rankIn(scopeTable(s, t.state), team);
     const p = performance(s, this.story!, team);
-    const league = t.league === 'az_local' ? 'Arizona local league (your league)' : t.league ? 'Background league (simulated)' : 'Not in a league (tournaments by invitation)';
+    const league = leagueFormat(this.story!.league).clubs.includes(team) ? 'Arizona local league (your league)' : t.league ? 'Background league (simulated)' : 'Not in a league (tournaments by invitation)';
     return [
       `${t.city}, ${stateLabel(t.state)} · ${CATEGORY_LABEL} · ${league}`,
       `National: #${nat} of ${TEAMS.length} (${move(movement(s, team))})  ·  ${stateLabel(t.state)}: #${st} of ${stateCount(t.state)} teams`,

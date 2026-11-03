@@ -15,7 +15,7 @@ Sections below are a history log, newest first; each header records where that w
 | **Merged whole** | PR #37 (Tournament Results Screen, Animated Rosters v2), merged as one change on the owner's instruction of 2026-10-28, superseding H4's extraction plan |
 
 ## 1,000-team directory (branch `devin/1793730000-team-directory`, PR open, not merged)
-- 1,000 U11 9v9 teams in 50 states (D71); five owner Arizona clubs; Batavia starts 67th in Arizona on seeded ratings; `r1` → `r2` rankings migration; state picker, Find My Team, alias search, seeded labels. Phone emulation only.
+- 1,000 U11 9v9 teams in 50 states (D71); five owner Arizona clubs; Batavia starts 67th in Arizona on seeded ratings; new careers play a 9-club league (D72: the 4 local rivals + Westside United, No Soccer Tuesday, Tumbleweed FC, Dynamics FC; 12 Batavia games = every club once + 4 rematches; saved 5-club leagues unchanged); National/State tabs leave League standings; `r1` → `r2` rankings migration; state picker, Find My Team, alias search, seeded labels. Phone emulation only.
 
 PRs #52–#56 (owner decisions, tactics comparison, All36 weekly Team Training, Home mastery / assists / Bonus Attribute Points, standing tackle and quick shot) were merged into `main` together on 2026-10-28; the rows above predate them, and their sections below give their current state.
 
