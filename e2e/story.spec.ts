@@ -258,7 +258,7 @@ test('Season One week one: identity, prologue, aquarium, recess, Team Training h
   await scene(page, 'myPlayer', (g) => g.status === 'ready', 'back from rankings');
   await revealElement(page, 'my-player-start-next');
   await pressAny(page, 'my-player-start-next', mode);
-  await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'library', 'career opened on the next task');
+  await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'activity', 'career opened on the next task (its assigned lesson, no chooser)');
   const c = (await diagnostics(page)).gameplay as { week: number; player: string };
   expect(c).toMatchObject({ week: 2, player: 'Zoë' });
   expect(errors).toEqual([]);
