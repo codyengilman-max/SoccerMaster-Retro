@@ -1096,7 +1096,9 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     if (portrait) colY = Math.min(this.body.y + this.body.displayHeight + 10, height * 0.62);
     // Shorten overly long text so buttons stay reachable. (setCrop on a high-resolution Text crops in
     // texture pixels and draws it magnified, so whole wrapped lines are dropped instead.)
-    const maxBodyBottom = portrait ? colY - 6 : height - navH - 20;
+    // Landscape body text stops above the toast, so a saved message never covers the lesson.
+    const toastH = this.toast ? this.note.setFontSize(Math.round(base * 0.85)).setWordWrapWidth(width - 40).setText(this.toast).height : 0;
+    const maxBodyBottom = portrait ? colY - 6 : height - navH - 20 - (toastH ? toastH + 4 : 0);
     const maxBodyH = Math.max(0, maxBodyBottom - this.body.y);
     this.textPages = 1;
     if (this.body.displayHeight > maxBodyH) {

@@ -475,8 +475,8 @@ export function reduce(save: CareerSave, action: Action): Outcome {
     case 'lessonViewed': {
       if (!save.player) return fail('Create your player first.');
       if (!curriculumLesson(action.activityId)) return fail('Unknown lesson.');
-      if (save.lessonsViewed.includes(action.activityId)) return same(save, 'Lesson opened.');
-      return ok({ ...save, lessonsViewed: [...save.lessonsViewed, action.activityId] }, 'Lesson opened.');
+      if (save.lessonsViewed.includes(action.activityId)) return same(save, '');
+      return ok({ ...save, lessonsViewed: [...save.lessonsViewed, action.activityId] }, '');
     }
     case 'checkpoint': {
       if (!save.player) return fail('Create your player first.');
