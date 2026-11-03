@@ -4,6 +4,7 @@ import { LOGIC_CATALOG } from '../src/game/logic/catalog';
 import { emptySave, reduce, type CareerSave } from '../src/game/career/state';
 import { exportSave, parseImport, parseSave } from '../src/game/career/saveio';
 import { POSITIONS } from '../src/game/career/types';
+import { dd } from './support/driveway';
 import {
   SituationObserver,
   TEAM_TRAINING_INACTIVE,
@@ -168,7 +169,7 @@ describe('weekly Team Training from the soccer-logic catalog', () => {
     // Progression v2: counting the week changes no attribute; the weekly review applies it once.
     expect(save.player!.attributes).toEqual(before);
     expect(save.teamTraining[0]!.changes).toEqual([]);
-    const reviewed = reduce(save, { type: 'endWeek' });
+    const reviewed = reduce(dd(save), { type: 'endWeek' });
     if (!reviewed.ok) throw new Error(reviewed.error);
     const dev = reviewed.save.history.at(-1)!.development!;
     expect(dev.sources.find((x) => x.source === 'team')!.status).toBe('done');

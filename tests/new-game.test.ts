@@ -2,13 +2,17 @@ import { IDBFactory } from 'fake-indexeddb';
 import { describe, expect, it } from 'vitest';
 import { CareerStore } from '../src/game/career/store';
 import { StoryStore } from '../src/game/story/store';
+import { plainRound } from './support/driveway';
 
 describe('New game', () => {
   it('archives the career and starts an empty save at week 1', async () => {
     const f = new IDBFactory();
     const s = await CareerStore.open(f, 'c');
     await s.dispatch({ type: 'createPlayer', id: 'p1', name: 'Ava', position: 'MID', gender: 'girl' });
-    for (let i = 0; i < 3; i++) await s.dispatch({ type: 'endWeek' });
+    for (let i = 0; i < 3; i++) {
+      await s.dispatch({ type: 'drivewayResult', result: plainRound((await s.load()).week) });
+      await s.dispatch({ type: 'endWeek' });
+    }
     const before = await s.load();
     expect(before.week).toBeGreaterThan(1);
     expect(await s.startOver()).toBe(true);

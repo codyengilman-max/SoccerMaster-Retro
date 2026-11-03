@@ -7,6 +7,7 @@ import { ATTRIBUTES } from '../src/game/career/types';
 import { DEV_WEIGHTS, weekBudget } from '../src/game/report/registry';
 import { CARRY_MAX, WEEK_CREDITS, settleWeek, zeroFractions, type MatchInput, type SettleInput } from '../src/game/report/settlement';
 import { ratio, type MatchStats } from '../src/game/report/stats';
+import { dd } from './support/driveway';
 
 const stats = (n: number): MatchStats => ({
   involvements: n, possessions: n, possessionLosses: 0, passes: ratio(n, n), groundPasses: ratio(n, n), chips: ratio(0, 0),
@@ -79,7 +80,7 @@ describe('weekly development settlement (35/30/30/5)', () => {
     const r = reduce(s, { type: 'createPlayer', id: 'p1', name: 'Pat', position: 'MID' });
     expect(r.ok).toBe(true);
     s = (r as { save: typeof s }).save;
-    const e = reduce(s, { type: 'endWeek' });
+    const e = reduce(dd(s), { type: 'endWeek' });
     expect(e.ok).toBe(true);
     const next = (e as { save: typeof s }).save;
     const h = next.history.at(-1)!;
@@ -100,7 +101,7 @@ describe('weekly development settlement (35/30/30/5)', () => {
     const ids = selectSituations('MID', 1).map((x) => x.id);
     const attrs = [...new Set(selectSituations('MID', 1).flatMap((x) => x.attributes))];
     const full = { ...s, teamTraining: [{ week: 1, situations: ids, scores: ids.map(() => 1), delta: 2, changes: [] }] };
-    const e = reduce(full, { type: 'endWeek' });
+    const e = reduce(dd(full), { type: 'endWeek' });
     expect(e.ok).toBe(true);
     const dev = (e as { save: typeof s }).save.history.at(-1)!.development!;
     const team = dev.sources.find((x) => x.source === 'team')!;

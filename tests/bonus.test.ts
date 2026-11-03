@@ -7,6 +7,7 @@ import { exportSave, parseImport } from '../src/game/career/saveio';
 import { balance, emptyBank, grant, matchAwardKeys, teamTrainingResult } from '../src/game/career/bonus';
 import { buildReport, matchContribution } from '../src/game/report/report';
 import type { Position } from '../src/game/career/types';
+import { dd } from './support/driveway';
 
 const act = (s: CareerSave, a: Action): CareerSave => {
   const r = reduce(s, a);
@@ -74,7 +75,7 @@ describe('Training Perfection', () => {
     let s = player();
     s = tt(s, 'r1', choice(s, 'preferred'));
     expect(s.bonus.perfectWeeks).toEqual([1]);
-    s = act(s, { type: 'endWeek' });
+    s = act(dd(s), { type: 'endWeek' });
     s = tt(s, 'r2', choice(s, 'misread'));
     s = tt(s, 'r3', choice(s, 'preferred'));
     expect(s.bonus.perfectWeeks).toEqual([1]);

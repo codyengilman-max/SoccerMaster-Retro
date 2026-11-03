@@ -120,6 +120,23 @@ export function applyProposal(attributes: Readonly<Record<AttributeId, number>>,
   return out;
 }
 
+/**
+ * Fits direct development gains (already final, no multiplier) under the same rules as the weekly review:
+ * attributes stay within 0–100 and positive gains scale down together so the overall never passes `cap`.
+ */
+export function fitToCap(attributes: Readonly<Record<AttributeId, number>>, gains: Readonly<Partial<Record<AttributeId, number>>>, cap: number | null): { readonly applied: Record<AttributeId, number>; readonly capped: boolean } {
+  const g = zero();
+  for (const a of ATTRIBUTES) g[a] = Math.max(0, Math.min(gains[a] ?? 0, DEV_CONFIG.attrMax - attributes[a]));
+  const before = overallOf(attributes);
+  const gain = ATTRIBUTES.reduce((s, a) => s + g[a], 0) / ATTRIBUTES.length;
+  let scale = 1;
+  if (cap !== null && gain > 0) scale = Math.max(0, Math.min(1, (cap - before) / gain));
+  const applied = zero();
+  for (const a of ATTRIBUTES) applied[a] = g[a] * scale;
+  const clipped = ATTRIBUTES.some((a) => (gains[a] ?? 0) - applied[a] > 1e-9);
+  return { applied, capped: clipped };
+}
+
 /** A whole bonus point (+1, no multiplier) fits only if the overall stays within the ceiling. */
 export function bonusFits(attributes: Readonly<Record<AttributeId, number>>, a: AttributeId, cap: number | null): { ok: true } | { ok: false; reason: string } {
   if (attributes[a] + 1 > DEV_CONFIG.attrMax) return { ok: false, reason: 'That attribute is already at 100.' };

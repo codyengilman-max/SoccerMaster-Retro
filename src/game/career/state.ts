@@ -1,4 +1,8 @@
 import { checkpointBlock, curriculumLesson } from './homeCurriculum';
+import { drivewayDue, emptyDriveway, recordRound, submissionError, isUnlocked, type DrivewaySave, type DrivewaySubmission } from '../driveway/save';
+import { DD_LABELS, MEDAL_LABELS, quartersToPoints } from '../driveway/config';
+import { allocateQuarters, attemptQuarters, weeklyPayout } from '../driveway/reward';
+import { medalFor } from '../driveway/sim';
 import { REPORTS_KEPT, type SavedReport } from '../report/report';
 import { zeroFractions, type Fractions, type WeekSettlement } from '../report/settlement';
 import { DIFFICULTIES, type Difficulty } from '../cloudy/sim';
@@ -7,7 +11,7 @@ import { FOCUSES, activityById, focusById } from './catalog';
 import { DEFAULT_INPUT, normalizeInput, planWeek, substitute, workableFocuses, type PlannerInput, type WeekPlan } from './planner';
 import { cleanName, cleanText, createPlayer, type CareerPlayer } from './player';
 import { computeGrowth, type AttributeOutcome, type EvidenceItem } from './progression';
-import { DEV_CONFIG, applyProposal, bonusFits, proposeWeek, type DevProposal, type SourceWeek } from './development';
+import { DEV_CONFIG, applyProposal, bonusFits, fitToCap, proposeWeek, type DevProposal, type SourceWeek } from './development';
 import { weekSources } from './weekSources';
 import type { ProgressionMigration } from './migrationV2';
 import { weeklyAssignment, gradeWeekly } from '../training12/all36/weekly';
@@ -118,6 +122,8 @@ export interface CareerSave {
   readonly lessonsViewed: readonly string[];
   /** Player-reported checkpoint completions, one per lesson (older saves: empty, nothing inferred). */
   readonly checkpoints: readonly CheckpointReport[];
+  /** Driveway Dribbling: unlocks, personal bests and the weekly reward ledger (older saves: due from their current week). */
+  readonly driveway: DrivewaySave;
   /** Progression v2 migration report, kept for saves migrated from schema 2 (new careers: absent). */
   readonly progression?: ProgressionMigration;
 }
@@ -185,6 +191,7 @@ export type Action =
   | { readonly type: 'matchReport'; readonly report: SavedReport }
   | { readonly type: 'lessonViewed'; readonly activityId: string }
   | { readonly type: 'checkpoint'; readonly id: string; readonly activityId: string }
+  | { readonly type: 'drivewayResult'; readonly result: DrivewaySubmission }
   | { readonly type: 'endWeek'; readonly recess?: { readonly played: boolean } | null };
 
 export type Outcome = { readonly ok: true; readonly save: CareerSave; readonly message: string; readonly changed: boolean } | { readonly ok: false; readonly error: string };
@@ -216,6 +223,7 @@ export function emptySave(): CareerSave {
     checkpoints: [],
     cloudy: [],
     cloudyRuns: [],
+    driveway: emptyDriveway(),
     reports: [],
     devCarry: zeroFractions(),
     bonus: emptyBank(),
@@ -485,9 +493,33 @@ export function reduce(save: CareerSave, action: Action): Outcome {
       if (why) return fail(why);
       return ok({ ...save, checkpoints: [...save.checkpoints, { id: action.id, activityId: action.activityId, week: save.week }] }, 'Saved as player-reported completion. A coach can verify it separately.');
     }
+    case 'drivewayResult': {
+      if (!save.player) return fail('No career player.');
+      const r = action.result;
+      const bad = submissionError(r);
+      if (bad) return fail(bad);
+      if (save.driveway.runs.includes(r.runId)) return same(save, 'This round is already saved.');
+      if (!isUnlocked(save.driveway, r.difficulty)) return fail(`${DD_LABELS[r.difficulty]} is still locked.`);
+      // Development is decided before recording, from the same ledger the record uses (one atomic save).
+      const accuracy = r.shots ? r.targets / r.shots : 0;
+      const medal = medalFor(r.difficulty, { score: r.score, survived: r.survived, accuracy, reason: r.reason });
+      const prevQ = save.driveway.weeks.find((w) => w.week === save.week)?.bestQuarters ?? 0;
+      const { pay } = weeklyPayout(prevQ, attemptQuarters(r.difficulty, medal));
+      const alloc = allocateQuarters(pay, r.difficulty, r);
+      const gains = Object.fromEntries(Object.entries(alloc).map(([k, q]) => [k, quartersToPoints(q ?? 0)])) as Partial<Record<AttributeId, number>>;
+      const fit = fitToCap(save.player.attributes, gains, DEV_CONFIG.seasonOneCap);
+      const applied = Object.fromEntries(ATTRIBUTES.filter((a) => fit.applied[a] > 0).map((a) => [a, fit.applied[a]])) as Partial<Record<AttributeId, number>>;
+      const out = recordRound(save.driveway, save.week, r, applied);
+      const attributes = { ...save.player.attributes } as Record<AttributeId, number>;
+      for (const a of ATTRIBUTES) attributes[a] += fit.applied[a];
+      const paidPts = quartersToPoints(out.paid).toFixed(2);
+      const msg = `${MEDAL_LABELS[out.medal]} on ${DD_LABELS[r.difficulty]}: ${r.score}. Earned ${quartersToPoints(out.earned).toFixed(2)}, awarded +${paidPts} development this week.${fit.capped ? ' Part of it was limited by the Season 1 maximum.' : ''}`;
+      return ok({ ...save, player: { ...save.player, attributes }, driveway: out.driveway }, msg);
+    }
     case 'endWeek': {
       if (!save.player) return fail('No career player.');
       if (save.week >= L.weekMax) return fail('Last week reached.');
+      if (drivewayDue(save.driveway, save.week)) return fail("Complete this week's Driveway Dribbling.");
       const evidenceOutcomes = computeGrowth(save.player, save.evidence);
       // Progression v2: one weekly review applies each source once; match evidence is shown, never a second reward.
       const sources = weekSources(save, save.week);

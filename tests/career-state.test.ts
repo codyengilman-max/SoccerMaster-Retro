@@ -5,6 +5,7 @@ import { cleanName } from '../src/game/career/player';
 import { substitutes } from '../src/game/career/planner';
 import { parseSave } from '../src/game/career/saveio';
 import { emptySave, levelSuggestion, reduce, type Action, type CareerSave, type JournalEntry } from '../src/game/career/state';
+import { dd } from './support/driveway';
 
 function run(save: CareerSave, ...actions: Action[]): CareerSave {
   for (const a of actions) {
@@ -81,7 +82,7 @@ describe('M6 journal, credit and weeks', () => {
   it('weeks advance only by action (never by device clock) and old-week sessions are rejected', () => {
     let s = start();
     const old = entry(s, 0);
-    s = run(s, { type: 'endWeek' });
+    s = run(dd(s), { type: 'endWeek' });
     expect(s.week).toBe(2);
     expect(s.plan!.week).toBe(2);
     expect(s.credit).toBe(0);
@@ -91,16 +92,16 @@ describe('M6 journal, credit and weeks', () => {
 
   it('home practice is a development source (v2); game evidence is shown, not applied twice; batches are idempotent and bounded', () => {
     let s = start();
-    const none = run(s, { type: 'endWeek' });
+    const none = run(dd(s), { type: 'endWeek' });
     expect(none.history.at(-1)!.development!.sources.find((x) => x.source === 'home')!.status).toBe('none');
     for (let i = 0; i < 3; i++) s = run(s, { type: 'log', entry: entry(s, i, { rating: 'comfortable' }) });
-    let grown = run(s, { type: 'endWeek' });
+    let grown = run(dd(s), { type: 'endWeek' });
     expect(grown.history.at(-1)!.development!.sources.find((x) => x.source === 'home')!.status).toBe('done');
     expect(Object.values(grown.history.at(-1)!.development!.proposal.applied).reduce((x, y) => x + y, 0)).toBeGreaterThan(0);
     const items = Array.from({ length: 8 }, (_, i) => ({ attribute: 'passing' as const, source: 'match' as const, situation: `z${i}`, success: 1 as const, note: '' }));
     s = run(s, { type: 'evidence', batchId: 'b1', items, missed: 0 }, { type: 'evidence', batchId: 'b1', items, missed: 0 });
     expect(s.evidence).toHaveLength(8);
-    grown = run(s, { type: 'endWeek' });
+    grown = run(dd(s), { type: 'endWeek' });
     const review = grown.history.at(-1)!;
     expect(review.outcomes.find((o) => o.attribute === 'passing')!.weightedSuccesses).toBeGreaterThan(0);
     // Sandbox evidence without an official match report is not a match source and adds no growth by itself.

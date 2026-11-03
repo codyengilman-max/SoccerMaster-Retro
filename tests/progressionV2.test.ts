@@ -7,6 +7,7 @@ import { emptySave, reduce, type CareerSave } from '../src/game/career/state';
 import { ATTRIBUTES, type AttributeId } from '../src/game/career/types';
 import { HOME_ALLOCATION, matchAllocation } from '../src/game/career/weekSources';
 import { SEASON_LENGTH } from '../src/game/season/calendar';
+import { dd } from './support/driveway';
 
 const created = (): CareerSave => {
   const r = reduce(emptySave(), { type: 'createPlayer', id: 'p1', name: 'Pat', position: 'MID' });
@@ -80,13 +81,13 @@ describe('progression v2: 18-week Season 1 simulations (main character)', () => 
 describe('progression v2: weekly review exactly once', () => {
   it('a reloaded save re-reviews nothing; a second endWeek reviews the next week only', () => {
     let s = created();
-    const r = reduce(s, { type: 'endWeek' });
+    const r = reduce(dd(s), { type: 'endWeek' });
     if (!r.ok) throw new Error(r.error);
     s = r.save;
     const back = parseSave(JSON.parse(JSON.stringify(s)));
     expect(back.ok && back.value.player!.attributes).toEqual(s.player!.attributes);
     expect(back.ok && back.value.history.map((h) => h.week)).toEqual([1]);
-    const again = reduce(s, { type: 'endWeek' });
+    const again = reduce(dd(s), { type: 'endWeek' });
     expect(again.ok && again.save.history.map((h) => h.week)).toEqual([1, 2]);
   });
   it('bonus points stay banked at the cap and add exactly +1 below it', () => {
@@ -108,7 +109,7 @@ describe('progression v2: weekly review exactly once', () => {
     expect(after.player!.attributes).toEqual(atCap.player!.attributes);
     for (const position of ['DEF', 'MID', 'FWD'] as const) expect(overallOf({ ...atCap.player!, position }.attributes)).toBeCloseTo(64, 9);
     expect(overallOf(after.player!.attributes)).toBeCloseTo(64, 9);
-    const w = reduce(after, { type: 'endWeek' });
+    const w = reduce(dd(after), { type: 'endWeek' });
     expect(w.ok && overallOf(w.save.player!.attributes)).toBeLessThanOrEqual(64 + 1e-9);
   });
 });
@@ -137,7 +138,7 @@ describe('progression v2: existing-save migration (schema 2 -> 3)', () => {
     if (!parsed.ok) throw new Error(parsed.error);
     expect(parsed.value.progression!.overCap).toBe(true);
     expect(parsed.value.player!.attributes.firstTouch).toBe(70);
-    const w = reduce(parsed.value, { type: 'endWeek' });
+    const w = reduce(dd(parsed.value), { type: 'endWeek' });
     expect(w.ok && sum(w.save.history.at(-1)!.development!.proposal.applied)).toBe(0);
   });
 });

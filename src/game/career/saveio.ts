@@ -12,6 +12,8 @@ import { CLOUDY_RUNS_KEPT, SAVE_SCHEMA, emptySave, type CareerSave, type CloudyB
 import { gradeWeekly, weeklyAssignment } from '../training12/all36/weekly';
 import { HOME_SKILLS, attemptsError, specFor, type HomeLog } from './homeMastery';
 import { DIFFICULTIES } from '../cloudy/sim';
+import { DD_RUNS_KEPT, DD_WEEKS_KEPT, emptyDriveway, ledgerConsistent, type DrivewaySave, type DrivewayWeek } from '../driveway/save';
+import { DD_ATTRIBUTES, DD_DIFFICULTIES, MEDALS, WEEKLY_CAP_QUARTERS } from '../driveway/config';
 import { TEAM_TRAINING_IDS, weekDelta } from './teamTraining';
 import { ATTRIBUTES, LEVELS, POSITIONS, RATINGS, SKILL_FAMILIES, type AttributeId, type Level, type SkillFamilyId } from './types';
 
@@ -283,6 +285,55 @@ function bonusBank(v: unknown, week: number): BonusBank {
   return { awards, spends, perfectWeeks, pairedThrough: int(o.pairedThrough, 'bonus paired', 0, week) };
 }
 
+function ddAlloc(v: unknown, what: string, real: boolean): Partial<Record<(typeof DD_ATTRIBUTES)[number], number>> {
+  const o = obj(v, what);
+  const out: Record<string, number> = {};
+  for (const [k, x] of Object.entries(o)) {
+    if (!DD_ATTRIBUTES.includes(k as (typeof DD_ATTRIBUTES)[number])) throw new Invalid(`${what}: unknown attribute`);
+    if (real) {
+      if (typeof x !== 'number' || !Number.isFinite(x) || x < 0 || x > WEEKLY_CAP_QUARTERS / 4) throw new Invalid(`${what}: out of range`);
+      out[k] = x;
+    } else out[k] = int(x, what, 0, WEEKLY_CAP_QUARTERS);
+  }
+  return out;
+}
+
+function drivewayWeekRow(v: unknown, current: number): DrivewayWeek {
+  const o = obj(v, 'driveway week');
+  const w: DrivewayWeek = {
+    week: int(o.week, 'driveway week', 1, current),
+    bestQuarters: int(o.bestQuarters, 'driveway reward', 0, WEEKLY_CAP_QUARTERS),
+    awarded: ddAlloc(o.awarded, 'driveway awarded', false),
+    applied: ddAlloc(o.applied, 'driveway applied', true),
+    bestScore: int(o.bestScore, 'driveway score', 0, 1_000_000),
+    bestMedal: oneOf(o.bestMedal, 'driveway medal', MEDALS),
+    bestDifficulty: oneOf(o.bestDifficulty, 'driveway difficulty', DD_DIFFICULTIES),
+    attempts: int(o.attempts, 'driveway attempts', 1, 1_000_000),
+  };
+  if (!ledgerConsistent(w)) throw new Invalid('driveway reward ledger does not add up');
+  return w;
+}
+
+/** Older saves have no record: the weekly requirement starts in the week they are loaded in, nothing is inferred. */
+function driveway(v: unknown, current: number): DrivewaySave {
+  if (v === undefined) return emptyDriveway(current);
+  const o = obj(v, 'driveway');
+  const d: DrivewaySave = {
+    unlocked: int(o.unlocked, 'driveway unlocked', 1, DD_DIFFICULTIES.length),
+    best: arr(o.best, 'driveway best', DD_DIFFICULTIES.length).map((b) => {
+      const x = obj(b, 'driveway best');
+      return { difficulty: oneOf(x.difficulty, 'driveway difficulty', DD_DIFFICULTIES), score: int(x.score, 'driveway score', 0, 1_000_000), medal: oneOf(x.medal, 'driveway medal', MEDALS) };
+    }),
+    weeks: arr(o.weeks, 'driveway weeks', DD_WEEKS_KEPT).map((w) => drivewayWeekRow(w, current)),
+    runs: arr(o.runs, 'driveway runs', DD_RUNS_KEPT).map((r) => str(r, 'driveway run', 64)),
+    activeFrom: int(o.activeFrom, 'driveway start week', 1, current),
+  };
+  if (new Set(d.weeks.map((w) => w.week)).size !== d.weeks.length) throw new Invalid('driveway week saved twice');
+  if (new Set(d.best.map((b) => b.difficulty)).size !== d.best.length) throw new Invalid('driveway best saved twice');
+  if (new Set(d.runs).size !== d.runs.length) throw new Invalid('driveway round saved twice');
+  return d;
+}
+
 function cloudyBest(v: unknown): CloudyBest {
   const o = obj(v, 'cloudy');
   const stars = int(o.bestStars, 'cloudy stars', 1, 3) as 1 | 2 | 3;
@@ -385,6 +436,7 @@ export function parseSave(raw: unknown): R<CareerSave> {
       checkpoints: arr(o.checkpoints ?? [], 'checkpoints', LESSONS_KEPT).map((x) => checkpointReport(x, week)),
       cloudy: arr(o.cloudy ?? [], 'cloudy', DIFFICULTIES.length).map(cloudyBest),
       cloudyRuns: arr(o.cloudyRuns ?? [], 'cloudyRuns', CLOUDY_RUNS_KEPT).map((r) => str(r, 'cloudy run', 64)),
+      driveway: driveway(o.driveway, week),
       reports: arr(o.reports ?? [], 'reports', REPORTS_KEPT).map(savedReport),
       devCarry: fractions(o.devCarry),
       ...(o.progression === undefined ? {} : { progression: progression(o.progression) }),

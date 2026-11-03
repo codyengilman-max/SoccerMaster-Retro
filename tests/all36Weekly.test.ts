@@ -11,6 +11,7 @@ import { ROLE_GROUP, WEEKLY_ASSIGNMENTS, WEEKLY_WEEKS, gradeWeekly, weeklyAssign
 import type { ChoiceId } from '../src/game/training12/all36/types';
 import { weeklyMarkdown } from '../src/game/training12/all36/report';
 import { readFileSync } from 'node:fs';
+import { dd } from './support/driveway';
 
 const act = (s: CareerSave, a: Action): CareerSave => {
   const r = reduce(s, a);
@@ -153,7 +154,7 @@ describe('weekly All36 credit and saves', () => {
       let s = player('MID');
       if (leftover) s = { ...s, tt12: [{ week: 1, slot: 'A', runId: 'old-a', score: 0, credited: true }] };
       s = act(s, run(s, 'weekly-best', choiceWith(1, 'MID', 'preferred')));
-      return act(s, { type: 'endWeek' }).history.at(-1)!.development;
+      return act(dd(s), { type: 'endWeek' }).history.at(-1)!.development;
     };
     expect(settle(false)).toBeDefined();
     expect(settle(true)).toEqual(settle(false));
