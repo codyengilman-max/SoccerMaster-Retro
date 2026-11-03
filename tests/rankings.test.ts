@@ -192,6 +192,21 @@ describe('review fixes', () => {
     const up = upcoming(s, story(), 'batavia', 3, weekOfLeagueGame(2)!);
     expect(up.every((u) => u.week >= weekOfLeagueGame(2)!)).toBe(true);
   });
+  it('a kickoff saved in the 120-team directory is recounted from its migrated snapshot, not compared raw', () => {
+    const pre = settleThrough(newRankings(ID, SEED), story(), 2).state;
+    const f1 = fixtureForGame(1)!;
+    const k = kickoffFor(pre, 3, 'league', f1.home === 'batavia' ? f1.away : f1.home);
+    expect(k.teams).toBe(TEAMS.length);
+    const { teams: _drop, ...rest } = k;
+    const legacy = { ...rest, rank: 70, opponentRank: 12 };
+    expect(parseKickoff(JSON.parse(JSON.stringify(legacy)))).toEqual(legacy);
+    const after = settleThrough(pre, story(), 3).state;
+    const fresh = teamImpact(k, after, story());
+    const old = teamImpact(legacy, after, story());
+    expect(old[0]).toBe(fresh[0]);
+    expect(old[old.length - 1]).toBe(fresh[fresh.length - 1]);
+    expect(legacy.rank, 'saved record unchanged').toBe(70);
+  });
   it('team impact uses the saved full-time score before the story writes the league result', () => {
     const pre = settleThrough(newRankings(ID, SEED), story(), 2).state;
     const f1 = fixtureForGame(1)!;
