@@ -57,6 +57,18 @@ test('rankings: national/state/search/profile/league on the review sample, uprig
   await pressElement(page, 'tab-state', mode);
   r = await rk(page, (x) => x.statePicker, 'state picker');
   expect(await page.locator('[data-testid="rank-state"] option').count()).toBe(50);
+  // Rotating with the picker open keeps it inside the screen.
+  const vp = page.viewportSize()!;
+  await page.setViewportSize({ width: vp.height, height: vp.width });
+  await expect.poll(async () => {
+    const b = (await page.locator('[data-testid="rank-state"]').boundingBox())!;
+    return b.x >= 0 && b.x + b.width <= vp.height && b.y + b.height <= vp.width;
+  }).toBe(true);
+  await page.setViewportSize(vp);
+  await expect.poll(async () => {
+    const b = (await page.locator('[data-testid="rank-state"]').boundingBox())!;
+    return b.x >= 0 && b.x + b.width <= vp.width;
+  }).toBe(true);
   await page.locator('[data-testid="rank-state"]').selectOption('CA');
   r = await rk(page, (x) => x.scope === 'CA' && !x.statePicker && x.visible.length > 0, 'California list');
   await fits(page);

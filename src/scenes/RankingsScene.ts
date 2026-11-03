@@ -154,15 +154,13 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     if (this.searchEl) return;
     this.stateEl?.remove();
     this.stateEl = null;
-    const canvas = this.game.canvas;
-    const r = canvas.getBoundingClientRect();
     const el = document.createElement('input');
     el.type = 'search';
     el.placeholder = 'Search team, city or state';
     el.value = this.query;
     el.setAttribute('aria-label', 'Search teams');
     el.dataset.testid = 'rank-search';
-    Object.assign(el.style, { position: 'fixed', left: `${r.left + 16}px`, top: `${r.top + 8}px`, width: `${Math.max(160, r.width - 32)}px`, height: '40px', fontSize: '16px', zIndex: '10', border: '3px solid #3b2314', borderRadius: '10px', padding: '0 10px', background: '#fff4dc', color: '#3b2314' });
+    Object.assign(el.style, { position: 'fixed', height: '40px', fontSize: '16px', zIndex: '10', border: '3px solid #3b2314', borderRadius: '10px', padding: '0 10px', background: '#fff4dc', color: '#3b2314' });
     el.oninput = () => {
       this.query = el.value;
       this.start = 0;
@@ -176,7 +174,6 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     this.searchEl = el;
     this.render();
   }
-  /** State filter: a native picker (all 50 states with their team counts), so long lists scroll natively on phones. */
   /** Clears the search and centres Batavia; from another state's list it returns to Batavia's own state. */
   private findMyTeam(): void {
     this.query = '';
@@ -186,10 +183,10 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     this.jumpToTeam();
   }
 
-    private openStatePicker(): void {
+  /** State filter: a native picker (all 50 states with their team counts), so long lists scroll natively on phones. */
+  private openStatePicker(): void {
     this.closeSearch();
     if (this.stateEl) return this.render();
-    const r = this.game.canvas.getBoundingClientRect();
     const el = document.createElement('select');
     el.setAttribute('aria-label', 'Choose a state');
     el.dataset.testid = 'rank-state';
@@ -200,7 +197,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
       el.appendChild(o);
     }
     el.value = this.stateFilter;
-    Object.assign(el.style, { position: 'fixed', left: `${r.left + 16}px`, top: `${r.top + 8}px`, width: `${Math.max(160, r.width - 32)}px`, height: '40px', fontSize: '16px', zIndex: '10', border: '3px solid #3b2314', borderRadius: '10px', padding: '0 10px', background: '#fff4dc', color: '#3b2314' });
+    Object.assign(el.style, { position: 'fixed', height: '40px', fontSize: '16px', zIndex: '10', border: '3px solid #3b2314', borderRadius: '10px', padding: '0 10px', background: '#fff4dc', color: '#3b2314' });
     el.onchange = () => {
       this.stateFilter = el.value;
       this.scope = el.value;
@@ -211,6 +208,12 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     document.body.appendChild(el);
     this.stateEl = el;
     this.render();
+  }
+  /** Keeps the search box and state picker inside the canvas after a resize or rotation. */
+  private placeDom(): void {
+    const r = this.game.canvas.getBoundingClientRect();
+    for (const el of [this.searchEl, this.stateEl])
+      if (el) Object.assign(el.style, { left: `${r.left + 16}px`, top: `${r.top + 8}px`, width: `${Math.max(120, r.width - 32)}px` });
   }
   private closeStatePicker(): void {
     this.stateEl?.remove();
@@ -251,6 +254,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
   }
 
   private render(): void {
+    this.placeDom();
     if (!this.layer?.active) return;
     this.layer.removeAll(true);
     this.elements = {};
