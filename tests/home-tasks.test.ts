@@ -87,3 +87,18 @@ describe('Home Training consolidation: two sections, migration and home learning
     expect(learning(s).done).toBe(true);
   });
 });
+
+describe('guided curricula: the old skill task cannot block the story', () => {
+  it('the assigned Ball Mastery lesson meets the week 5 first-touch and week 7 passing task', async () => {
+    const { trackStatus } = await import('../src/game/career/homeCurriculum');
+    const id = trackStatus('ballMastery', { journal: [], homeLogs: [] }).current!.lesson.id;
+    for (const wk of [5, 7]) expect(weekAssignments(save([entry(jug), entry(id)]), wk).skillDone).toBe(true);
+  });
+  it('a skipped, last-week or juggling log never meets it, and nothing is ticked without a log', () => {
+    const d = fam('dribbling');
+    expect(weekAssignments(save([]), 5).skillDone).toBe(false);
+    expect(weekAssignments(save([{ ...entry(d), completion: 'skipped' } as JournalEntry]), 5).skillDone).toBe(false);
+    expect(weekAssignments(save([{ ...entry(d), week: 4 } as JournalEntry]), 5).skillDone).toBe(false);
+    expect(weekAssignments(save([entry(jug)]), 5).skillDone).toBe(false);
+  });
+});
