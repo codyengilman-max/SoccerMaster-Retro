@@ -1,7 +1,7 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { diagnostics, expectInside, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
 
-type Career = { screen: string; credit: number; journal: number; plan: string[]; status: string; toast: string; text: string; overflow: string[] };
+type Career = { demoGate?: string | null; screen: string; credit: number; journal: number; plan: string[]; status: string; toast: string; text: string; overflow: string[] };
 test.describe.configure({ timeout: 240_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 
@@ -36,6 +36,7 @@ async function caption(page: Page): Promise<string> {
   });
 }
 
+const els = async (page: Page) => (await diagnostics(page)).layout?.elements ?? {};
 async function demoTime(page: Page): Promise<number> {
   return page.evaluate(() => (window as unknown as { __SMR__: { game: { scene: { getScene(k: string): { demoT: number } } } } }).__SMR__.game.scene.getScene('career').demoT);
 }
@@ -93,6 +94,35 @@ test('draft library is review-only: cards and demo prototypes, never in the plan
   await press(page, 'demo-side', mode);
   await expect.poll(() => caption(page)).toContain('1/6 setup');
   await fits(page);
+  // A Ball Mastery prototype (top-down sketch, contact unchecked) is hidden here too, as on its lesson page (D69 gate).
+  await press(page, 'career-home', mode);
+  await until(page, (x) => x.screen === 'home', 'home');
+  await press(page, 'nav-library', mode);
+  await press(page, 'lib-drafts', mode);
+  await until(page, (x) => x.screen === 'drafts', 'drafts again');
+  // TR01-L1 too: its activity has a checked side-view lesson, but that does not check the separate prototype.
+  for (const fam of ['BM01', 'TR01']) {
+    if (fam !== 'BM01') {
+      await press(page, 'career-home', mode);
+      await until(page, (x) => x.screen === 'home', 'home');
+      await press(page, 'nav-library', mode);
+      await press(page, 'lib-drafts', mode);
+      await until(page, (x) => x.screen === 'drafts', 'drafts');
+    }
+    await press(page, `draft-${fam}`, mode);
+    await press(page, `draft-level-${fam}-L1`, mode);
+    c = await until(page, (x) => x.screen === 'draftLevel' && x.demoGate === 'checking', `${fam}-L1 gated`);
+    expect(c.text).toContain('still being checked');
+    for (const n of ['demo-side', 'demo-pause', 'demo-step', 'demo-slow', 'demo-replay']) expect((await els(page))[n], `${fam} ${n} hidden`).toBeUndefined();
+    expect((await els(page))['draft-log']).toBeDefined();
+  }
+  await press(page, 'career-home', mode);
+  await until(page, (x) => x.screen === 'home', 'home');
+  await press(page, 'nav-library', mode);
+  await press(page, 'lib-drafts', mode);
+  await press(page, 'draft-JU01', mode);
+  await press(page, 'draft-level-JU01-L1', mode);
+  await until(page, (x) => x.screen === 'draftLevel' && !x.demoGate, 'JU01-L1 again');
   // Pausing a prototype must not freeze regular activity demonstrations.
   await press(page, 'demo-pause', mode);
   await press(page, 'career-home', mode);
@@ -100,7 +130,15 @@ test('draft library is review-only: cards and demo prototypes, never in the plan
   await press(page, 'nav-sessions', mode);
   await until(page, (x) => x.screen === 'sessions', 'sessions');
   await press(page, 'open-w1-s1-0', mode);
-  await until(page, (x) => x.screen === 'activity', 'activity');
+  // The planned first-touch lesson opens; its demo is not contact-checked yet, so it shows none (D69 gate).
+  await until(page, (x) => x.screen === 'activity' && x.demoGate === 'checking', 'gated activity');
+  // A regular demonstration that is shown (juggling) keeps playing after a prototype was paused.
+  await press(page, 'career-home', mode);
+  await until(page, (x) => x.screen === 'home', 'home');
+  await press(page, 'nav-library', mode);
+  await press(page, 'lib-juggling', mode);
+  await press(page, 'act-jg-1', mode);
+  await until(page, (x) => x.screen === 'activity' && !x.demoGate, 'juggling activity');
   const t0 = await demoTime(page);
   await page.waitForTimeout(800);
   expect(await demoTime(page)).toBeGreaterThan(t0);
@@ -128,9 +166,10 @@ test('reduced motion starts the demo paused', async ({ page }, info) => {
   await press(page, 'career-home', mode);
   await press(page, 'nav-library', mode);
   await press(page, 'lib-drafts', mode);
-  await press(page, 'draft-BM01', mode);
-  await press(page, 'draft-level-BM01-L1', mode);
+  await press(page, 'draft-JU01', mode);
+  await press(page, 'draft-level-JU01-L1', mode);
   await until(page, (x) => x.screen === 'draftLevel', 'level');
+  await press(page, 'demo-side', mode);
   await expect.poll(() => caption(page)).toContain('1/6 setup');
   await page.waitForTimeout(2000);
   expect(await caption(page)).toContain('1/6 setup');

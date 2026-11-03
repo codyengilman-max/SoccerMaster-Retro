@@ -4,7 +4,7 @@ import { diagnostics, pressElement as pressAny, trackConsoleErrors, waitForScene
 // D68: the v1.1 library and the Ball Mastery designs are regular lessons inside the two Home Training sections.
 test.describe.configure({ timeout: 300_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
-type Career = { screen: string; credit: number; journal: number; status: string; text: string; attributes: Record<string, number> | null };
+type Career = { demoGate?: string | null; screen: string; credit: number; journal: number; status: string; text: string; attributes: Record<string, number> | null };
 const career = async (page: Page) => (await diagnostics(page)).gameplay as Career;
 const els = async (page: Page) => (await diagnostics(page)).layout?.elements ?? {};
 async function press(page: Page, name: string, mode: 'touch' | 'mouse'): Promise<void> {
@@ -61,19 +61,22 @@ test('approved v1.1 options and Ball Mastery designs open as regular lessons, ne
   await press(page, 'career-back', mode);
   await until(page, (x) => x.screen === 'library', 'dribbling again');
 
-  // A v1.1 option without a prototype opens the regular lesson page.
+  // A v1.1 option opens the regular lesson page; its demo is not contact-checked yet, so none is shown (D69 gate).
   await press(page, 'act-v11-BM02-L1', mode);
-  c = await until(page, (x) => x.screen === 'activity', 'v1.1 lesson');
+  c = await until(page, (x) => x.screen === 'activity' && x.demoGate === 'checking', 'v1.1 lesson');
   expect(c.text).not.toMatch(/draft/i);
-  expect(Object.keys(await els(page))).toEqual(expect.arrayContaining(['demo-pause', 'demo-step', 'demo-half', 'demo-replay']));
+  expect(c.text).toContain('still being checked');
+  expect(Object.keys(await els(page))).toEqual(expect.arrayContaining(['log-open']));
+  expect(Object.keys(await els(page))).not.toContain('demo-pause');
   await shot(page, info, 'v11-lesson');
   await press(page, 'career-back', mode);
   await until(page, (x) => x.screen === 'library', 'dribbling again');
 
-  // A v1.1 option with a demo prototype opens on its player.
+  // A Ball Mastery v1.1 option with a top-down prototype opens the regular lesson page too: the prototype's foot and
+  // ball contact is not checked, so it stays in Review & Lab only.
   await press(page, 'act-v11-BM01-L1', mode);
-  c = await until(page, (x) => x.screen === 'draftLevel', 'prototype lesson');
-  expect(c.text).toContain('Counts toward');
+  c = await until(page, (x) => x.screen === 'activity' && x.demoGate === 'checking', 'prototype lesson gated');
+  expect(c.text).toContain('COACH CODE');
   expect(c.text).not.toContain('DRAFT');
   await shot(page, info, 'v11-prototype');
 

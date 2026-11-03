@@ -5,7 +5,7 @@ test.describe.configure({ timeout: 300_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 type Rect = { x: number; y: number; width: number; height: number };
 type Demo = { set: string; frame: string; contact: string; player: Rect; ball: { x: number; y: number }; rect: Rect; inset?: { foot: string; contact: string; label: string; rect: Rect; ball: Rect; text: Rect }; paused?: boolean; speed?: number };
-type Career = { screen: string; week: number; credit: number; journal: number; player: string | null; status: string; text: string; plan: string[]; attributes: Record<string, number> | null; demo: Demo | null };
+type Career = { demoGate?: string | null; screen: string; week: number; credit: number; journal: number; player: string | null; status: string; text: string; plan: string[]; attributes: Record<string, number> | null; demo: Demo | null };
 
 const career = async (page: Page) => (await diagnostics(page)).gameplay as Career;
 const els = async (page: Page) => (await diagnostics(page)).layout?.elements ?? {};
@@ -68,7 +68,6 @@ const rawSave = (page: Page) =>
         };
       })
   );
-const within = (a: Rect, b: Rect) => a.x >= b.x - 0.5 && a.y >= b.y - 0.5 && a.x + a.width <= b.x + b.width + 0.5 && a.y + a.height <= b.y + b.height + 0.5;
 
 async function logExtra(page: Page, mode: 'touch' | 'mouse'): Promise<void> {
   await press(page, 'log-open', mode);
@@ -120,55 +119,31 @@ for (const gender of ['boy', 'girl'] as const) {
     for (const f of ['firstTouch', 'passing', 'dribbling', 'finishing', 'defending', 'awareness']) expect((await els(page))[`lib-${f}`], f).toBeDefined();
     await page.screenshot({ path: `test-results/bm-section-${gender}-${info.project.name}.png` });
     await press(page, 'lib-dribbling', mode);
-    // dr-inside-cut now opens the teaching page (e2e/teaching.spec.ts); the shared viewer is checked on its partner move.
+    // A lesson whose demo is not contact-checked yet keeps its page, steps and logging, but shows no animation or
+    // playback controls (D69 gate), upright and sideways.
     await press(page, 'act-dr-outside-cut', mode);
-    c = await until(page, (x) => x.screen === 'activity' && !!x.demo?.inset, 'viewer');
+    c = await until(page, (x) => x.screen === 'activity' && x.demoGate === 'checking', 'gated lesson');
     expect(c.text).toContain('COACH CODE');
-    expect(c.demo!.set).toBe(`${gender}-training`);
-    expect(within(c.demo!.inset!.rect, c.demo!.rect), 'inset inside stage').toBe(true);
+    expect(c.text).toContain('still being checked');
+    expect(c.demo, 'no demonstration drawn').toBeNull();
     for (const size of [info.project.use.viewport!, { width: info.project.use.viewport!.height, height: info.project.use.viewport!.width }]) {
       await page.setViewportSize(size);
       await page.waitForTimeout(300);
-      const d = (await until(page, (x) => !!x.demo?.inset, 'viewer after resize')).demo!;
-      expect(within(d.inset!.rect, d.rect), 'inset inside stage').toBe(true);
-      // Every pose: the inset ball stays inside the inset and never overlaps its label.
-      const contacts = new Set<string>();
-      for (let i = 0; i < 12; i++) {
-        const x = (await career(page)).demo!.inset!;
-        contacts.add(x.contact);
-        expect(within(x.ball, x.rect), `inset ball inside inset (${x.contact})`).toBe(true);
-        expect(x.ball.y + x.ball.height <= x.text.y + 0.5 || x.ball.x >= x.text.x + x.text.width || x.ball.x + x.ball.width <= x.text.x, `inset ball clear of label (${x.contact})`).toBe(true);
-        await page.waitForTimeout(250);
-      }
-      expect(contacts.size, 'saw several contacts').toBeGreaterThan(1);
-      await page.screenshot({ path: `test-results/bm-viewer-${gender}-${size.width}x${size.height}.png` });
-      const seen: Record<string, Rect> = {};
+      const x = await career(page);
+      expect(x.demo, 'no demonstration after rotation').toBeNull();
+      const seen = new Set<string>();
       for (let i = 0; i < 4; i++) {
         const e = await els(page);
-        for (const n of ['demo-pause', 'demo-step', 'demo-half', 'log-open']) if (e[n]) seen[n] = e[n]!;
-        if (Object.keys(seen).length === 4 || !e.more) break;
+        for (const n of Object.keys(e)) seen.add(n);
+        if (!e.more) break;
         await pressAny(page, 'more', mode);
         await page.waitForTimeout(80);
       }
-      for (const n of ['demo-pause', 'demo-step', 'demo-half', 'log-open']) {
-        expect(seen[n], n).toBeDefined();
-        expect(within(seen[n]!, { x: 0, y: 0, ...size }), `${n} on screen`).toBe(true);
-      }
+      for (const n of ['demo-pause', 'demo-step', 'demo-half', 'demo-replay']) expect(seen.has(n), `${n} hidden`).toBe(false);
+      expect(seen.has('log-open'), 'log practice stays').toBe(true);
+      await page.screenshot({ path: `test-results/bm-gated-${gender}-${size.width}x${size.height}.png` });
     }
     await page.setViewportSize(info.project.use.viewport!);
-    // Pause freezes the pose; Step moves to the next contact while paused; 0.5x halves the speed.
-    await press(page, 'demo-pause', mode);
-    c = await until(page, (x) => x.demo?.paused === true, 'paused');
-    const frozen = c.demo!.frame + c.demo!.contact;
-    await page.waitForTimeout(700);
-    expect((await career(page)).demo!.frame + (await career(page)).demo!.contact).toBe(frozen);
-    await press(page, 'demo-step', mode);
-    c = await until(page, (x) => x.demo!.frame + x.demo!.contact !== frozen, 'stepped');
-    expect(c.demo!.paused).toBe(true);
-    await press(page, 'demo-half', mode);
-    await until(page, (x) => x.demo?.speed === 0.5, '0.5x');
-    await press(page, 'demo-pause', mode);
-    await until(page, (x) => x.demo?.paused === false, 'playing');
     // Watching changed nothing; logging adds one report (extra practice: no credit, no attributes).
     c = await career(page);
     expect({ journal: c.journal, credit: c.credit }).toEqual({ journal: 1, credit: before.credit });

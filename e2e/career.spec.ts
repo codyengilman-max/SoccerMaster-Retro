@@ -13,7 +13,7 @@ async function pressElement(page: Page, name: string, mode: 'touch' | 'mouse'): 
   return pressAny(page, name, mode);
 }
 
-type Career = { screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; cards: string[]; text: string; textPage: string; overflow: string[] };
+type Career = { demoGate?: string | null; screen: string; week: number; credit: number; journal: number; player: string | null; attributes: Record<string, number> | null; plan: string[]; status: string; toast: string; cards: string[]; text: string; textPage: string; overflow: string[] };
 
 // The main flow walks every career screen; CI runners are several times slower than local machines.
 test.describe.configure({ timeout: 240_000 });
@@ -88,7 +88,24 @@ test('home training: create player, plan a ball-only indoor week, log once, pers
   const all = seen.join('\n');
   for (const field of ['Easier:', 'Harder:', 'Limits', 'Source', 'Review: coaching pending']) expect(all, all).toContain(field);
   await page.waitForTimeout(400);
-  expect(Object.keys((await diagnostics(page)).layout!.elements)).toContain('demo-caption');
+  // This first-touch demo is not contact-checked yet, so it is hidden (D69 gate); use a checked side-view lesson for
+  // the caption check below.
+  expect((await career(page)).demoGate).toBe('checking');
+  expect(Object.keys((await diagnostics(page)).layout!.elements)).not.toContain('demo-caption');
+  await pressElement(page, 'career-home', mode);
+  await until(page, (x) => x.screen === 'home', 'home');
+  await pressElement(page, 'nav-ballmastery', mode);
+  await until(page, (x) => x.screen === 'ballMastery', 'ball mastery');
+  await pressElement(page, 'lib-dribbling', mode);
+  await until(page, (x) => x.screen === 'library', 'dribbling');
+  // The dribbling list spans many pages on a short landscape screen; page with More as a user would.
+  for (let i = 0; i < 30 && !(await diagnostics(page)).layout?.elements['act-bmd-055']; i++) {
+    await pressAny(page, 'more', mode);
+    await page.waitForTimeout(50);
+  }
+  await pressElement(page, 'act-bmd-055', mode);
+  await until(page, (x) => x.screen === 'activity' && !x.demoGate, 'checked lesson');
+  await expect.poll(async () => Object.keys((await diagnostics(page)).layout!.elements)).toContain('demo-caption');
   await pressElement(page, 'career-home', mode);
   await until(page, (x) => x.screen === 'home', 'home');
   await pressElement(page, 'nav-journal', mode);
