@@ -126,4 +126,14 @@ describe('M6 career store (IndexedDB)', () => {
     expect(s.status.kind).toBe('unavailable');
     expect((await s.dispatch({ type: 'createPlayer', id: 'p', name: 'Mo', position: 'FWD' })).ok).toBe(true);
   });
+
+  it('without IndexedDB a store opened later in the page (next scene) sees the same career', async () => {
+    const a = await CareerStore.open(undefined as never);
+    await a.dispatch({ type: 'createPlayer', id: 'p2', name: 'Ana', position: 'MID' });
+    const made = (await a.load()).player;
+    expect(made).toBeTruthy();
+    const b = await CareerStore.open(undefined as never);
+    expect(b.status.kind).toBe('unavailable');
+    expect((await b.load()).player).toEqual(made);
+  });
 });

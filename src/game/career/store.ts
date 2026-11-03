@@ -12,11 +12,12 @@ export type StoreStatus = { readonly kind: 'ok' } | { readonly kind: 'recovered'
  * other tabs on the same store are serialised by the browser. Nothing here uses localStorage.
  */
 export class CareerStore {
+  /** Without IndexedDB every store opened in this page shares one in-memory save, so a scene change keeps the career. */
+  private static pageMemory: CareerSave | null = null;
   private listeners = new Set<(s: CareerSave) => void>();
   private channel: BroadcastChannel | null = null;
   private constructor(
     private readonly db: IDBDatabase | null,
-    private memory: CareerSave,
     readonly status: StoreStatus,
   ) {
     const BC = (globalThis as { BroadcastChannel?: typeof BroadcastChannel }).BroadcastChannel;
@@ -26,8 +27,16 @@ export class CareerStore {
     }
   }
 
+  private get memory(): CareerSave {
+    return (CareerStore.pageMemory ??= emptySave());
+  }
+
+  private set memory(s: CareerSave) {
+    CareerStore.pageMemory = s;
+  }
+
   static async open(factory: IDBFactory | undefined = (globalThis as { indexedDB?: IDBFactory }).indexedDB, name = 'smr-career'): Promise<CareerStore> {
-    if (!factory) return new CareerStore(null, emptySave(), { kind: 'unavailable', reason: 'This browser cannot save. Progress lasts until you close the page.' });
+    if (!factory) return new CareerStore(null, { kind: 'unavailable', reason: 'This browser cannot save. Progress lasts until you close the page.' });
     let db: IDBDatabase;
     try {
       db = await new Promise<IDBDatabase>((resolve, reject) => {
@@ -38,9 +47,9 @@ export class CareerStore {
         req.onblocked = () => reject(new Error('blocked'));
       });
     } catch {
-      return new CareerStore(null, emptySave(), { kind: 'unavailable', reason: 'Saving is blocked (private mode or storage full). Progress lasts until you close the page.' });
+      return new CareerStore(null, { kind: 'unavailable', reason: 'Saving is blocked (private mode or storage full). Progress lasts until you close the page.' });
     }
-    const store = new CareerStore(db, emptySave(), { kind: 'ok' });
+    const store = new CareerStore(db, { kind: 'ok' });
     const raw = await store.raw();
     if (raw !== undefined) {
       const r = parseSave(raw);
@@ -50,7 +59,7 @@ export class CareerStore {
           st.put(raw, `broken-${Date.now()}`);
           st.delete(KEY);
         });
-        return new CareerStore(db, emptySave(), { kind: 'recovered', reason: `The saved career could not be read (${r.error}). A copy was kept; starting fresh.` });
+        return new CareerStore(db, { kind: 'recovered', reason: `The saved career could not be read (${r.error}). A copy was kept; starting fresh.` });
       }
     }
     return store;
