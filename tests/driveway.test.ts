@@ -117,7 +117,7 @@ describe('Driveway Dribbling simulation', () => {
   it('ends after the third collision, never earlier and never twice', () => {
     const sim = staged();
     for (let i = 0; i < 3; i++) {
-      place(sim, { kind: 'trashCan', cat: 'solid', x: sim.player.x, y: sim.player.y, r: 0.4 });
+      place(sim, { kind: 'can', cat: 'solid', x: sim.player.x, y: sim.player.y, r: 0.4 });
       play(sim, DRIVEWAY.hit.protectSeconds + 0.05);
     }
     expect(sim.phase).toBe('results');

@@ -41,6 +41,7 @@ import { masteryLines } from '../game/career/homeEntry';
 import { CSS, FONT_FAMILY, PALETTE, textResolution } from '../render/theme';
 import type { GameplayScene, InspectableScene, SceneLayoutReport } from './inspectable';
 import { SceneKeys } from './keys';
+import { drivewayDue } from '../game/driveway/save';
 import { Button } from './ui/Button';
 
 type Screen =
@@ -1144,7 +1145,14 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     // Home Training itself keeps one way out; other screens also get Back and Training Home.
     const nav: Action[] =
       this.screen.kind === 'home' && this.save.player
-        ? [menu]
+        ? [
+            {
+              name: 'play-driveway',
+              label: drivewayDue(this.save.driveway, this.save.week) ? 'Driveway Dribbling ▸' : 'Driveway Dribbling ✓',
+              onClick: () => this.scene.start(SceneKeys.Driveway, { returnTo: 'career', careerData: { ...(this.returnTo ? { returnTo: this.returnTo } : {}) } }),
+            },
+            menu,
+          ]
         : [
             { name: 'career-back', label: 'Back', onClick: () => this.back() },
             { name: 'career-home', label: 'Training Home', onClick: () => (this.history = [], (this.screen = this.save.player ? { kind: 'home' } : { kind: 'create' }), this.render()) },

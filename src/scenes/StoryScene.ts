@@ -16,6 +16,7 @@ import { kickoffKey, settleRankings } from './rankingsData';
 import type { Rect } from '../game';
 import { POSITION_SLOT } from '../game/career/player';
 import type { CareerSave } from '../game/career/state';
+import { drivewayDue } from '../game/driveway/save';
 import { CareerStore } from '../game/career/store';
 import { teamTrainingHandoff } from '../game/career/weeklyTraining';
 import type { Position } from '../game/career/types';
@@ -1257,6 +1258,11 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.finishFact('viewed') });
         return;
       case 'week_close':
+        if (this.save?.player && drivewayDue(this.save.driveway, this.save.week)) {
+          setBody("Complete this week's Driveway Dribbling\nOne finished round counts, whatever the score. Quitting a round does not.");
+          acts.push({ name: 'handoff-driveway', label: 'Play Now', onClick: () => this.scene.start(SceneKeys.Driveway, { returnTo: 'story' }) });
+          return;
+        }
         setBody((this.save?.week ?? 1) >= SEASON_RELEASED_WEEKS
           ? `Finish week ${this.save?.week ?? 1}: your week review is saved. More weeks are coming soon.`
           : `Finish week ${this.save?.week ?? 1}: your week review is saved and week ${(this.save?.week ?? 1) + 1} opens.`);

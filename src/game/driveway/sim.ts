@@ -7,7 +7,7 @@
 import { createRng } from '../rng';
 import { DIFFICULTY, DRIVEWAY, EASY_START, MEDAL_RULES, THRESHOLDS, type DdDifficulty, type Medal } from './config';
 
-export type SolidKind = 'cone' | 'bucket' | 'wateringCan' | 'trashCan';
+export type SolidKind = 'cone' | 'bucket' | 'wateringCan' | 'can';
 export type RollerKind = 'basketball' | 'skateboard' | 'scooter' | 'tricycle';
 export type BreakableKind = 'box' | 'boxStack' | 'target';
 export type ObjKind = SolidKind | RollerKind | BreakableKind;
@@ -15,16 +15,16 @@ export type Category = 'solid' | 'breakable';
 
 /** Collision radius (yd) per object; the renderer sizes art from the same table (src/render/drivewayArt.ts). */
 export const OBJECT_RADIUS: Readonly<Record<ObjKind, number>> = {
-  cone: 0.32, bucket: 0.34, wateringCan: 0.36, trashCan: 0.4,
+  cone: 0.32, bucket: 0.34, wateringCan: 0.36, can: 0.3,
   basketball: 0.3, skateboard: 0.42, scooter: 0.45, tricycle: 0.5,
   box: 0.42, boxStack: 0.48, target: 0.45,
 };
 export const CATEGORY: Readonly<Record<ObjKind, Category>> = {
-  cone: 'solid', bucket: 'solid', wateringCan: 'solid', trashCan: 'solid',
+  cone: 'solid', bucket: 'solid', wateringCan: 'solid', can: 'solid',
   basketball: 'solid', skateboard: 'solid', scooter: 'solid', tricycle: 'solid',
   box: 'breakable', boxStack: 'breakable', target: 'breakable',
 };
-const SOLIDS: readonly SolidKind[] = ['cone', 'bucket', 'wateringCan', 'trashCan'];
+const SOLIDS: readonly SolidKind[] = ['cone', 'bucket', 'wateringCan', 'can'];
 const ROLLERS: readonly RollerKind[] = ['basketball', 'skateboard', 'scooter', 'tricycle'];
 const BREAKABLES: readonly BreakableKind[] = ['box', 'boxStack', 'target'];
 
