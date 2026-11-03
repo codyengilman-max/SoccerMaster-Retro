@@ -25,7 +25,7 @@ import { PlayerArt, atlasKey } from '../render/art/playerArt';
 import { SPRITE_CELL } from '../render/art/spriteSets';
 import { DEMO_BALL_PEAK, JUGGLE_PATTERNS, demoBeats, demoLength, demoPose, demoSet, isKeeperExercise, nextBeat, sheetBeats, stepBeats } from '../render/art/homeDemo';
 import { BALL_MASTERY_DESIGNS, DESIGN_PREFIX, DESIGN_MATCHES, DESIGN_SOURCES, HOME_SECTIONS, HOME_SECTION_LABELS, designById, designsFor, sectionOf } from '../game/career/ballMastery';
-import { HOME_CURRICULUM, curriculumLesson, lessonStatus, trackStatus, type Track } from '../game/career/homeCurriculum';
+import { CORE_PATHWAY, curriculumLesson, lessonStatus, trackStatus, type Track } from '../game/career/homeCurriculum';
 import { specFor } from '../game/career/homeMastery';
 import { ensureJuggleSheet, juggleKey } from '../render/art/juggleArt';
 import { JUGGLE_SHEET } from '../render/art/juggleSheet';
@@ -402,11 +402,13 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         const card = (t: Track, keys: readonly string[]): string => {
           const st = trackStatus(t, s);
           const a = st.current ? activityById(st.current.lesson.id) : undefined;
+          const r = st.review ? activityById(st.review) : undefined;
           return [
             HOME_SECTION_LABELS[t].toUpperCase(),
             `Phase ${st.phase} of 5 · ${st.phaseName}`,
-            a ? `Next: ${a.title}` : 'Every lesson complete',
-            `Lesson ${st.inPhase.index} of ${st.inPhase.of} · ${st.completed} of ${st.total} done`,
+            a ? `This week: ${a.title}` : 'No lesson available for your setup',
+            st.core ? `Core lesson ${st.core.index} of ${st.core.of} · ${st.passed} passed` : `${st.passed} of ${st.total} passed`,
+            r ? `Review: ${r.title}` : '',
             ...tick(keys),
             a ? 'CONTINUE ▸' : '',
           ].filter(Boolean).join('\n');
@@ -971,11 +973,12 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     const l = curriculumLesson(a.id);
     if (!l) return '';
     const st = lessonStatus(l, this.save);
-    const ph = HOME_CURRICULUM.tracks[l.track].find((x) => x.phase === l.phase)!;
-    const spec = l.advance.kind === 'target' ? specFor(l.advance.skill, l.advance.phase) : null;
+    const spec = l.ladder ? specFor(l.ladder.skill, l.ladder.phase) : null;
     const task = spec ? `${spec.what} Log your scores: ${spec.record.toLowerCase()}.` : 'Practise it, then tap Log practice.';
-    const target = st.targetMet === null ? '' : st.targetMet ? ' · target met' : ' · target not met yet';
-    return `PHASE ${l.phase} · LESSON ${ph.lessons.indexOf(l.id) + 1} OF ${ph.lessons.length}\nPRACTICE TASK: ${task}\nPractices reported: ${Math.min(st.practices, l.advance.practices)} of ${l.advance.practices}${target}\n`;
+    const target = st.targetMet === null ? '' : st.targetMet ? ' · ladder target met' : ' · ladder target not met yet';
+    const where = l.coreWeek ? `CORE LESSON ${l.coreWeek} OF ${CORE_PATHWAY.length}` : `PHASE ${l.phase}`;
+    const check = l.checkpoint.status === 'approved' ? 'Checkpoint: pass it, then report it (player-reported completion).' : 'Checkpoint: awaiting coach approval, so this lesson cannot be passed yet.';
+    return `${where}\nPRACTICE TASK: ${task}\nPractices logged: ${st.practices}${target}\n${check}\n`;
   }
 
   private async complete(a: Activity, sessionId: string | null): Promise<void> {
