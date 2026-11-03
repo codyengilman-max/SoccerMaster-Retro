@@ -18,7 +18,9 @@ import { cupFinal, semis, type StateCupState } from '../season/stateCup';
 import { BG_FIXTURES, simulateBackground, type BgResult } from './background';
 import { TEAMS } from './teams';
 
-export const RANKINGS_VERSION = 'r1';
+export const RANKINGS_VERSION = 'r2';
+/** Saves from the 120-team directory (version 1); migrated to r2 by adding the new teams at their seeded start rating. */
+export const RANKINGS_VERSION_V1 = 'r1';
 export const ELO_K = 24;
 export const PRESEASON_ID = 's1-pre';
 export const snapshotId = (week: number): string => `s1-w${week}`;
@@ -201,15 +203,29 @@ export function performance(s: RankingsState, story: StoryResults, team: string)
   return { matches: n, goalsFor: gf, goalsAgainst: ga, attack: n ? gf / n : null, defense: n ? ga / n : null, schedule: n ? opp / n : null, limited: n < LIMITED_RESULTS };
 }
 
-export function parseRankings(raw: unknown, careerId: string): { ok: true; value: RankingsState } | { ok: false; error: string } {
-  const r = raw as Partial<RankingsState> | null;
+export type ParsedRankings = { ok: true; value: RankingsState; migrated: boolean } | { ok: false; error: string };
+/**
+ * Validates a saved rankings record. A version-1 record (120 teams) is migrated in memory: every
+ * published snapshot gains the teams added since, at their seeded start rating, and nothing else
+ * changes (earned ratings, results and applied lists are kept). Migrating an r2 record is a no-op.
+ */
+export function parseRankings(raw: unknown, careerId: string): ParsedRankings {
+  const r = raw as Partial<Omit<RankingsState, 'version'>> & { version?: string } | null;
   if (!r || typeof r !== 'object') return { ok: false, error: 'missing' };
-  if (r.version !== RANKINGS_VERSION) return { ok: false, error: 'version' };
+  if (r.version !== RANKINGS_VERSION && r.version !== RANKINGS_VERSION_V1) return { ok: false, error: 'version' };
   if (r.careerId !== careerId) return { ok: false, error: 'careerId' };
   if (typeof r.seed !== 'number' || typeof r.startWeek !== 'number' || !Array.isArray(r.snapshots) || !r.snapshots.length || !Array.isArray(r.applied) || !r.background || typeof r.background !== 'object') return { ok: false, error: 'shape' };
+  const v1 = r.version === RANKINGS_VERSION_V1;
+  const need = v1 ? TEAMS.filter((t) => t.added === 1) : TEAMS;
   for (let i = 0; i < r.snapshots.length; i++) {
     const sn = r.snapshots[i]!;
-    if (sn.week !== i || sn.id !== (i === 0 ? PRESEASON_ID : snapshotId(i)) || TEAMS.some((t) => !Number.isFinite(sn.ratings?.[t.id]))) return { ok: false, error: `snapshot ${i}` };
+    if (sn.week !== i || sn.id !== (i === 0 ? PRESEASON_ID : snapshotId(i)) || need.some((t) => !Number.isFinite(sn.ratings?.[t.id]))) return { ok: false, error: `snapshot ${i}` };
   }
-  return { ok: true, value: r as RankingsState };
+  if (!v1) return { ok: true, value: r as RankingsState, migrated: false };
+  const snapshots = r.snapshots.map((sn) => {
+    const ratings: Record<string, number> = { ...sn.ratings };
+    for (const t of TEAMS) if (!Number.isFinite(ratings[t.id])) ratings[t.id] = t.rating0;
+    return { ...sn, ratings };
+  });
+  return { ok: true, value: { ...(r as RankingsState), version: RANKINGS_VERSION, snapshots }, migrated: true };
 }

@@ -3,8 +3,8 @@
 Simulated career-world rankings for the U11 9v9 category. Offline only: no online leaderboard.
 
 ## Code
-- `src/game/rankings/teams.json` / `teams.ts` — the canonical 120-team registry (see `RANKINGS_REGISTRY.md`).
-- `src/game/rankings/background.ts` — fixtures between the 106 background teams and their seeded results.
+- `src/game/rankings/teams.json` / `teams.ts` — the canonical 1,000-team directory, version 2 (see `RANKINGS_REGISTRY.md`). Built once by `scripts/rankings/build-registry.py`; never regenerated at runtime.
+- `src/game/rankings/background.ts` — fixtures between the background-league teams (106 from version 1, 875 added in version 2) and their seeded results. Version-1 fixtures and showcase pairings are unchanged; version-2 leagues play their own showcase pool.
 - `src/game/rankings/ratings.ts` — Elo, weekly snapshots, settlement, performance stats, save parsing.
 - `src/game/rankings/views.ts` — read-only view models: league table, search, rank history, TEAM IMPACT.
 - `src/scenes/rankingsData.ts` — reads saved story results and settles inside one IndexedDB transaction.
@@ -12,7 +12,7 @@ Simulated career-world rankings for the U11 9v9 category. Offline only: no onlin
 - Home menu (Story, from Week 5): THIS SEASON panel and a League & Rankings button. Match Report: TEAM IMPACT on the competition line.
 
 ## Fixture ownership
-- Batavia league games and Batavia tournament games are played by you. Other league and cup fixtures are simulated by the existing league/tournament code, exactly as before. Background fixtures involve only the 106 background teams and are simulated by `background.ts`. A fixture belongs to exactly one of these, so nothing is both played and simulated.
+- Batavia league games and Batavia tournament games are played by you. Other league and cup fixtures are simulated by the existing league/tournament code, exactly as before. Background fixtures involve only background-league teams (never Batavia's league, Next Horizon or the five owner Arizona clubs) and are simulated by `background.ts`. A fixture belongs to exactly one of these, so nothing is both played and simulated.
 - All three feed one list of finalized results (`worldResults`), in order of week, kickoff slot and fixture ID.
 - A fixture with no saved result is Scheduled. It is never a draw and never counted.
 - States: Scheduled (no result), In Progress (a story match run that is launched but not finished; the existing story run record), Finalized (a saved result). Postponed and Cancelled are not used in Season One: no fixture is ever moved. A result saved late (for example after an interrupted match) is counted in the next weekly settlement, labelled "not yet in rankings" until then.
@@ -37,6 +37,8 @@ Simulated career-world rankings for the U11 9v9 category. Offline only: no onlin
 - 3/1/0 points, ordered by points, goal difference, goals scored. Teams level on all three share a position. The existing name order only fixes display order; the State Cup keeps its existing top-three rule. Tournament games give no league points. Before any result: "Season not started".
 
 ## Saves
+- Directory version 2 (rankings record `r2`). A version-1 record (`r1`, 120 teams) is migrated when it is next read: every published snapshot gains the new teams at their seeded start rating; earned ratings, applied results and background results are kept. Migration is repeatable (an `r2` record parses unchanged). A record that fails validation is left exactly as saved and the Rankings screen shows "Could not read the save. Nothing was changed."; only a missing record starts fresh.
+- New teams play no background games in weeks an existing career already published; their results start with the next settled week.
 - Rankings are stored as `rankings-s1:<careerId>`; kickoff ranks as `kickoff:<run>`. They are derived records: deleting them and settling again rebuilds the same snapshots from the same saved results (the background seed is the career seed).
 - Settlement runs inside one IndexedDB read-modify-write, so a second tab, a reload or a repeated Continue cannot publish a week twice.
 - Kickoff ranks are saved once when a league or tournament match launches; replays and resumes keep the first value.

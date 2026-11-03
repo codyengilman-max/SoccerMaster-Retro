@@ -1,7 +1,7 @@
 /**
  * Background schedule for the career-world teams the player never meets: one simulated fixture list,
  * built once from the registry and the season calendar (no randomness in the schedule itself).
- * - Each background league (12 regional of 9, one Arizona of 6) plays one round in each of the
+ * - Each background league (version 1: 12 regional of 9 and one Arizona of 6; version 2: 98 more) plays one round in each of the
  *   12 league weeks (circle method, cycled with venues flipped).
  * - In the two tournament weeks (9, 12) every background team not entered in that week's story
  *   tournament plays three cross-region showcase games, which links the regional populations.
@@ -12,7 +12,7 @@
 import { createRng } from '../rng';
 import { SEASON_WEEKS } from '../season/calendar';
 import { TOURNAMENTS } from '../season/tournament';
-import { BACKGROUND_LEAGUES, leagueTeams, teamById } from './teams';
+import { BACKGROUND_LEAGUES, V1_LEAGUES, leagueTeams, teamById } from './teams';
 
 export const BACKGROUND_VERSION = 'bg1';
 export type BgCompetition = 'bg_league' | 'bg_showcase';
@@ -60,11 +60,15 @@ function build(): readonly BgFixture[] {
     const cup = Object.values(TOURNAMENTS).find((t) => t.week === week);
     const entered = new Set(cup ? cup.groups.flat() : []);
     // Interleave leagues (1st of each league, then 2nd, ...) so circle rounds pair different regions.
-    const lists = leagues.map((lg) => leagueTeams(lg).filter((t) => !entered.has(t)));
-    const longest = Math.max(...lists.map((l) => l.length));
-    const pool: string[] = [];
-    for (let i = 0; i < longest; i++) for (const l of lists) if (l[i]) pool.push(l[i]!);
-    for (let r = 0; r < 3; r++) for (const [home, away] of circleRound(pool, r * 7 + 1)) out.push({ id: `bg-w${week}-sc${r + 1}-${home}-${away}`, week, slot: r, competition: 'bg_showcase', league: null, home, away });
+    // Version-1 leagues keep their own pool so their pairings never change; version-2 leagues form a second pool ('xs').
+    for (const [tag, group] of [['sc', leagues.filter((l) => V1_LEAGUES.has(l))], ['xs', leagues.filter((l) => !V1_LEAGUES.has(l))]] as const) {
+      const lists = group.map((lg) => leagueTeams(lg).filter((t) => !entered.has(t)));
+      const longest = Math.max(0, ...lists.map((l) => l.length));
+      const pool: string[] = [];
+      for (let i = 0; i < longest; i++) for (const l of lists) if (l[i]) pool.push(l[i]!);
+      if (pool.length < 2) continue;
+      for (let r = 0; r < 3; r++) for (const [home, away] of circleRound(pool, r * 7 + 1)) out.push({ id: `bg-w${week}-${tag}${r + 1}-${home}-${away}`, week, slot: r, competition: 'bg_showcase', league: null, home, away });
+    }
   }
   return out;
 }

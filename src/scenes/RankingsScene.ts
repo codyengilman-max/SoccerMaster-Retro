@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { Rect } from '../game';
 import { latest, movement, nationalTable, newRankings, performance, publishedWeek, rankIn, settleThrough, type RankRow, type RankingsState, type StoryResults } from '../game/rankings/ratings';
-import { CATEGORY_LABEL, HOME_TEAM, TEAMS, teamById, teamName } from '../game/rankings/teams';
+import { CATEGORY_LABEL, HOME_TEAM, STATES, TEAMS, teamById, teamName } from '../game/rankings/teams';
 import { aroundStart, leagueStandings, nextOpponent, rankHistory, scopeTable, searchRows, stateCount, stateLabel, teamResults, upcoming } from '../game/rankings/views';
 import { StoryStore } from '../game/story/store';
 import { fixtureForGame, newSeasonLeague, recordSeasonPlayed, simulateSeasonThrough } from '../game/season/league';
@@ -46,6 +46,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
   private elements: Record<string, Rect> = {};
   private visible: { team: string; rank: number }[] = [];
   private searchEl: HTMLInputElement | null = null;
+  private stateEl: HTMLSelectElement | null = null;
   private store: StoryStore | null = null;
   private leaving = false;
   private sample = false;
@@ -81,6 +82,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, onResize);
       this.closeSearch();
+      this.closeStatePicker();
       this.store?.close();
       this.store = null;
     });
@@ -137,6 +139,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
 
   private back(): void {
     if (this.leaving) return;
+    if (this.stateEl) return this.closeStatePicker();
     if (this.view === 'profile' || this.view === 'compare') {
       this.view = this.compareWith && this.view === 'compare' ? 'profile' : 'rankings';
       this.compareWith = null;
@@ -149,6 +152,8 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
 
   private openSearch(): void {
     if (this.searchEl) return;
+    this.stateEl?.remove();
+    this.stateEl = null;
     const canvas = this.game.canvas;
     const r = canvas.getBoundingClientRect();
     const el = document.createElement('input');
@@ -170,6 +175,38 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     el.focus();
     this.searchEl = el;
     this.render();
+  }
+  /** State filter: a native picker (all 50 states with their team counts), so long lists scroll natively on phones. */
+  private openStatePicker(): void {
+    this.closeSearch();
+    if (this.stateEl) return this.render();
+    const r = this.game.canvas.getBoundingClientRect();
+    const el = document.createElement('select');
+    el.setAttribute('aria-label', 'Choose a state');
+    el.dataset.testid = 'rank-state';
+    for (const st of STATES) {
+      const o = document.createElement('option');
+      o.value = st;
+      o.textContent = `${stateLabel(st)} (${stateCount(st)})`;
+      el.appendChild(o);
+    }
+    el.value = this.stateFilter;
+    Object.assign(el.style, { position: 'fixed', left: `${r.left + 16}px`, top: `${r.top + 8}px`, width: `${Math.max(160, r.width - 32)}px`, height: '40px', fontSize: '16px', zIndex: '10', border: '3px solid #3b2314', borderRadius: '10px', padding: '0 10px', background: '#fff4dc', color: '#3b2314' });
+    el.onchange = () => {
+      this.stateFilter = el.value;
+      this.scope = el.value;
+      this.query = '';
+      this.jumpToTeam();
+      this.closeStatePicker();
+    };
+    document.body.appendChild(el);
+    this.stateEl = el;
+    this.render();
+  }
+  private closeStatePicker(): void {
+    this.stateEl?.remove();
+    this.stateEl = null;
+    if (this.layer?.active) this.render();
   }
   private closeSearch(): void {
     this.searchEl?.remove();
@@ -217,7 +254,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     g.fillStyle(PALETTE.cream, 1).fillRoundedRect(6, 6, w - 12, h - 12, 14);
     g.lineStyle(4, PALETTE.ink, 1).strokeRoundedRect(6, 6, w - 12, h - 12, 14);
     const b = this.base();
-    const top = this.searchEl ? 56 : 14;
+    const top = this.searchEl || this.stateEl ? 56 : 14;
     const navH = Math.max(44, Math.round(b * 2.6));
     this.button('rank-back', 14, top, Math.min(110, w * 0.26), navH, this.view === 'rankings' || this.view === 'standings' ? 'Back' : 'Rankings', () => this.back());
     const titles: Record<View, string> = { rankings: 'Rankings', profile: 'Team Profile', standings: 'League Table', compare: 'Compare Teams' };
@@ -229,7 +266,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     }
     const s = this.rankings;
     const snap = latest(s);
-    const label = `${this.sample ? 'SAMPLE SEASON (review only) · ' : ''}Simulated career-world rankings · ${CATEGORY_LABEL} · ${snap.week === 0 ? 'Preseason (no results counted yet)' : `after week ${snap.week}`}${snap.provisional ? ' · Provisional: not every team is linked by results yet' : ''}`;
+    const label = `${this.sample ? 'SAMPLE SEASON (review only) · ' : ''}Simulated career-world rankings · ${CATEGORY_LABEL} · ${snap.week === 0 ? 'Preseason: seeded ratings, no results counted yet' : `after week ${snap.week}`}${snap.provisional ? ' · Provisional: not every team is linked by results yet' : ''}`;
     this.text('rank-label', 16, top + navH + 6, label, b * 0.8, { wordWrap: { width: w - 32 } });
     const y0 = top + navH + 6 + Math.ceil(this.elements['rank-label']!.height) + 8;
     if (this.view === 'rankings') this.drawRankings(y0);
@@ -241,9 +278,10 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
   private drawTabs(y: number, w = this.scale.width): number {
     const h = Math.max(44, Math.round(this.base() * 2.5));
     const tabs: [string, string, () => void, boolean][] = [
-      ['tab-national', 'National', () => ((this.scope = 'national'), this.jumpToTeam(), this.render()), this.view === 'rankings' && this.scope === 'national'],
-      ['tab-state', stateLabel(this.stateFilter), () => ((this.scope = this.stateFilter), this.jumpToTeam(), this.render()), this.view === 'rankings' && this.scope !== 'national'],
-      ['tab-league', 'League', () => ((this.view = 'standings'), this.render()), this.view === 'standings'],
+      ['tab-national', 'National', () => ((this.scope = 'national'), this.jumpToTeam(), this.closeStatePicker()), this.view === 'rankings' && this.scope === 'national'],
+      // First tap shows the state list; tapping it again opens the state picker.
+      ['tab-state', `${stateLabel(this.stateFilter)} ▾`, () => (this.view === 'rankings' && this.scope !== 'national' ? this.openStatePicker() : ((this.scope = this.stateFilter), this.jumpToTeam(), this.render())), this.view === 'rankings' && this.scope !== 'national'],
+      ['tab-league', 'League', () => ((this.view = 'standings'), this.closeStatePicker()), this.view === 'standings'],
     ];
     const tw = (w - 28 - 8 * (tabs.length - 1)) / tabs.length;
     // w is the right edge of the tab strip (sideways the shortcuts share the row).
@@ -262,7 +300,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     if (wide) y = y0;
     const sc: [string, string, () => void][] = [
       ['rank-my-team', 'My Team', () => ((this.query = ''), this.closeSearch(), this.openProfile(HOME_TEAM))],
-      ['rank-around', 'Around Me', () => ((this.query = ''), this.jumpToTeam(), this.render())],
+      ['rank-around', 'Find My Team', () => ((this.query = ''), this.jumpToTeam(), this.render())],
       ['rank-top25', 'Top 25', () => ((this.query = ''), (this.start = 0), this.render())],
       ['rank-search-btn', this.searchEl ? 'Done' : 'Search', () => (this.searchEl ? this.closeSearch() : this.openSearch())],
     ];
@@ -359,7 +397,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     return [
       `${t.city}, ${stateLabel(t.state)} · ${CATEGORY_LABEL} · ${league}`,
       `National: #${nat} of ${TEAMS.length} (${move(movement(s, team))})  ·  ${stateLabel(t.state)}: #${st} of ${stateCount(t.state)} teams`,
-      `Rating ${Math.round(latest(s).ratings[team]!)} · ${p.matches} counted match${p.matches === 1 ? '' : 'es'}${p.limited && p.matches > 0 ? ' · Limited results' : ''}`,
+      `Rating ${Math.round(latest(s).ratings[team]!)}${p.matches === 0 ? ' (seeded start rating)' : ''} · ${p.matches} counted match${p.matches === 1 ? '' : 'es'}${p.limited && p.matches > 0 ? ' · Limited results' : ''}`,
       `Attack ${fmt(p.attack)} goals/match · Defense ${fmt(p.defense)} conceded/match (lower is better) · Schedule ${p.schedule === null ? '—' : Math.round(p.schedule)} avg opponent rating`,
     ];
   }
@@ -440,6 +478,6 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     return { orientation: orientationOf({ width: this.scale.width, height: this.scale.height }), viewport: { width: this.scale.width, height: this.scale.height }, elements: this.elements };
   }
   describeGameplay(): unknown {
-    return { status: this.status, sample: this.sample, view: this.view, scope: this.scope, query: this.query, team: this.team, visible: this.visible, published: this.rankings ? publishedWeek(this.rankings) : null, provisional: this.rankings ? latest(this.rankings).provisional : null };
+    return { status: this.status, sample: this.sample, view: this.view, scope: this.scope, stateFilter: this.stateFilter, statePicker: !!this.stateEl, query: this.query, team: this.team, visible: this.visible, published: this.rankings ? publishedWeek(this.rankings) : null, provisional: this.rankings ? latest(this.rankings).provisional : null };
   }
 }

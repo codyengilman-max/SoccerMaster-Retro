@@ -5,6 +5,11 @@ import { TOURNAMENTS } from '../game/season/tournament';
 import { newRankings, parseRankings, settleThrough, type RankingsState, type StoryResults } from '../game/rankings/ratings';
 import type { StoryStore } from '../game/story/store';
 
+export class RankingsSaveError extends Error {
+  constructor(readonly reason: string) {
+    super(`saved rankings could not be read (${reason}); nothing was changed`);
+  }
+}
 export const rankingsKey = (careerId: string): string => `rankings-s1:${careerId}`;
 /** Keyed like the saved match report (MatchScene caps report IDs at 64 characters). */
 export const kickoffKey = (run: string): string => `kickoff:${run.slice(0, 64)}`;
@@ -35,12 +40,16 @@ export async function storyResults(store: StoryStore, careerId: string): Promise
 export async function settleRankings(store: StoryStore, careerId: string, throughWeek: number, currentWeek: number): Promise<{ state: RankingsState; story: StoryResults }> {
   const story = await storyResults(store, careerId);
   let out: RankingsState | null = null;
+  let bad: string | null = null;
   await store.updateRecord(rankingsKey(careerId), (cur) => {
     const parsed = parseRankings(cur, careerId);
+    // An unreadable record is left exactly as saved (recoverable): only a missing one starts fresh.
+    if (!parsed.ok && parsed.error !== 'missing') return ((bad = parsed.error), null);
     const base = parsed.ok ? parsed.value : newRankings(careerId, seasonSeed(careerId), currentWeek <= 1 ? 0 : currentWeek);
     const r = settleThrough(base, story, Math.max(0, throughWeek));
     out = r.state;
-    return parsed.ok && !r.changed ? null : { value: r.state, out: true };
+    return parsed.ok && !parsed.migrated && !r.changed ? null : { value: r.state, out: true };
   });
+  if (bad !== null) throw new RankingsSaveError(bad);
   return { state: out ?? newRankings(careerId, seasonSeed(careerId)), story };
 }

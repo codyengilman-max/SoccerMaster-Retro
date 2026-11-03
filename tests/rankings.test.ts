@@ -16,10 +16,10 @@ const story = (over: Partial<StoryResults> = {}): StoryResults => ({ league: new
 const stateOf = (id: string) => teamById(id)?.state;
 
 describe('registry', () => {
-  it('has exactly 120 unique eligible teams in one category', () => {
-    expect(TEAMS).toHaveLength(120);
-    expect(new Set(TEAMS.map((t) => t.id)).size).toBe(120);
-    expect(new Set(TEAMS.map((t) => t.name)).size).toBe(120);
+  it('has exactly 1,000 unique eligible teams in one category', () => {
+    expect(TEAMS).toHaveLength(1000);
+    expect(new Set(TEAMS.map((t) => t.id)).size).toBe(1000);
+    expect(new Set(TEAMS.map((t) => t.name)).size).toBe(1000);
     expect(new Set(TEAMS.map((t) => t.category))).toEqual(new Set([CATEGORY]));
   });
   it('contains every established opponent under its existing ID and name', () => {
@@ -115,7 +115,7 @@ describe('elo', () => {
   it('state order agrees with national ratings; ranks are out of the full population', () => {
     const s = settleThrough(newRankings(ID, SEED), story(), 12).state;
     const nat = nationalTable(latest(s));
-    expect(nat).toHaveLength(120);
+    expect(nat).toHaveLength(1000);
     const az = stateTable(latest(s), 'AZ', stateOf);
     expect(az.map((r) => r.team)).toEqual(nat.filter((r) => stateOf(r.team) === 'AZ').map((r) => r.team));
     expect(az).toHaveLength(TEAMS.filter((t) => t.state === 'AZ').length);

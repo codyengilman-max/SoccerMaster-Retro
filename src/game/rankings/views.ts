@@ -37,7 +37,7 @@ export function searchRows(rows: readonly RankRow[], query: string): readonly Ra
   if (!q) return rows;
   return rows.filter((r) => {
     const t = teamById(r.team);
-    return !!t && [t.name, t.city, t.state, stateLabel(t.state)].some((x) => x.toLowerCase().includes(q));
+    return !!t && [t.name, t.short, ...t.aliases, t.city, t.state, stateLabel(t.state)].some((x) => x.toLowerCase().includes(q));
   });
 }
 /** Index of the first row to show so that `team` sits in the middle of a page of `n`. */

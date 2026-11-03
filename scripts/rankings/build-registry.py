@@ -107,8 +107,175 @@ region, league, cities = AZ_BG
 for (city, state), tier in zip(sorted(cities, key=lambda c: h('tier:' + c[0])), [2, 3, 3, 4, 4, 5]):
     fictional(city, state, region, league, tier)
 
+
+assert len(teams) == 120 and len({t['id'] for t in teams}) == 120
+for t in teams: t['added'] = 1
+
+# ---- Version 2: 1,000 teams (owner brief, 2026-11). The 120 version-1 teams above are unchanged. ----
+TOTAL = 1000
+SHORT = {'batavia': 'Batavia', 'royal_salt': 'Royal Salt', 'valley_rising': 'Valley Rising', 'desert_tuzon': 'Desert Tuzon', 'sol_vista': 'Sol Vista',
+         'next_horizon': 'Next Horizon', 'silver_state': 'Silver State', 'pacific_crest': 'Pacific Crest', 'wasatch_peak': 'Wasatch Peak',
+         'rio_grande': 'Rio Grande', 'front_range': 'Front Range', 'cascade_city': 'Cascade City', 'bayou_star': 'Bayou Star', 'high_plains': 'High Plains'}
+ALIASES = {'batavia': ['Batavia', 'FC Batavia', 'Batavia FC', 'F.C. Batavia', 'Batavia F.C.'], 'desert_tuzon': ['Desert Tucson'], 'next_horizon': ['Next Horizon FC']}
+# Owner-requested Arizona clubs: directory only (no league, no fixtures this season), available for future Arizona scheduling.
+OWNER_AZ = [('westside_united', 'Westside United', 'Westside', 'Phoenix', 2), ('no_soccer_tuesday', 'No Soccer Tuesday', 'NST', 'Scottsdale', 3),
+            ('tumbleweed_fc', 'Tumbleweed FC', 'Tumbleweed', 'Chandler', 3), ('dynamics_fc', 'Dynamics FC', 'Dynamics', 'Tempe', 3),
+            ('anthem_shockers', 'Anthem Shockers', 'Anthem', 'Anthem', 4)]
+AZ_TOTAL = 80          # >= 68 needed so 66 Arizona teams can rank above Batavia with at least one below
+AZ_ABOVE_BATAVIA = 66  # Batavia starts 67th in Arizona
+
+NICK += ['Falcon', 'Aspen', 'Mesa Verde', 'Canyon', 'Saguaro', 'Ocotillo', 'Palo Verde', 'Coyote', 'Roadrunner', 'Javelina', 'Monsoon', 'Sunburst',
+         'Bobcat', 'Cardinal', 'Hawthorn', 'Summit', 'Prairie', 'Timber', 'Harbor', 'Lighthouse', 'Comet', 'Blue Heron', 'Sycamore', 'Magnolia',
+         'Cypress', 'Badger', 'Wolverine', 'Elk Ridge', 'Silver Birch', 'Red Rock', 'Bison', 'Glacier', 'Tidewater', 'Orchard', 'Maple Leaf',
+         'Spruce', 'Steelhead', 'Kingfisher', 'Firefly', 'Thunderbird']
+SUFFIX += ['Rovers', 'City SC', 'Futbol Club']
+STATES = {  # state: (division, population in millions, cities)
+ 'AL': ('East South Central', 5.1, ['Birmingham', 'Tuscaloosa', 'Auburn', 'Hoover', 'Dothan']),
+ 'AK': ('Pacific', 0.7, ['Anchorage', 'Fairbanks', 'Juneau', 'Wasilla']),
+ 'AZ': ('Arizona', 7.4, ['Phoenix', 'Tucson', 'Mesa', 'Chandler', 'Scottsdale', 'Gilbert', 'Glendale', 'Tempe', 'Peoria', 'Surprise', 'Goodyear', 'Queen Creek', 'Buckeye', 'Avondale', 'Maricopa', 'Casa Grande', 'Oro Valley', 'Marana', 'Fountain Hills', 'Cave Creek', 'Sahuarita', 'Lake Havasu City', 'Kingman', 'Bullhead City', 'Cottonwood', 'Sedona', 'Payson', 'Show Low', 'Florence', 'Apache Junction']),
+ 'AR': ('West South Central', 3.1, ['Little Rock', 'Fayetteville', 'Bentonville', 'Conway', 'Jonesboro']),
+ 'CA': ('Pacific', 39.0, ['Los Angeles', 'San Jose', 'San Francisco', 'Oakland', 'Irvine', 'Anaheim', 'Long Beach', 'Pasadena', 'Torrance', 'Fremont', 'Santa Clara', 'Huntington Beach', 'Ontario', 'Chula Vista', 'Carlsbad', 'Visalia', 'Salinas', 'Elk Grove', 'Roseville', 'Thousand Oaks', 'Mission Viejo', 'Walnut Creek', 'Santa Cruz', 'San Mateo', 'Corona']),
+ 'CO': ('Mountain', 5.9, ['Aurora', 'Lakewood', 'Littleton', 'Arvada', 'Grand Junction', 'Greeley', 'Castle Rock', 'Longmont']),
+ 'CT': ('New England', 3.6, ['Hartford', 'New Haven', 'Stamford', 'Bridgeport', 'Glastonbury']),
+ 'DE': ('South Atlantic', 1.0, ['Wilmington', 'Dover', 'Newark', 'Middletown']),
+ 'FL': ('South Atlantic', 22.6, ['Orlando', 'Tampa', 'Miami', 'Jacksonville', 'Fort Lauderdale', 'St. Petersburg', 'Naples', 'Boca Raton', 'Pensacola', 'Fort Myers', 'Clearwater', 'Melbourne', 'Ocala', 'Weston']),
+ 'GA': ('South Atlantic', 11.0, ['Atlanta', 'Alpharetta', 'Marietta', 'Augusta', 'Columbus', 'Peachtree City', 'Roswell', 'Valdosta']),
+ 'HI': ('Pacific', 1.4, ['Honolulu', 'Hilo', 'Kailua', 'Kapolei']),
+ 'ID': ('Mountain', 1.9, ['Meridian', 'Nampa', 'Coeur d\'Alene', 'Twin Falls', 'Pocatello']),
+ 'IL': ('East North Central', 12.5, ['Chicago', 'Aurora', 'Joliet', 'Schaumburg', 'Champaign', 'Springfield', 'Evanston', 'Wheaton', 'Elgin']),
+ 'IN': ('East North Central', 6.8, ['Indianapolis', 'Carmel', 'Fishers', 'South Bend', 'Lafayette', 'Noblesville']),
+ 'IA': ('West North Central', 3.2, ['Des Moines', 'Cedar Rapids', 'Iowa City', 'Davenport', 'Ames']),
+ 'KS': ('West North Central', 2.9, ['Wichita', 'Overland Park', 'Olathe', 'Lawrence', 'Topeka']),
+ 'KY': ('East South Central', 4.5, ['Louisville', 'Lexington', 'Bowling Green', 'Owensboro', 'Covington']),
+ 'LA': ('West South Central', 4.6, ['Metairie', 'Lake Charles', 'Monroe', 'Mandeville', 'Houma']),
+ 'ME': ('New England', 1.4, ['Portland', 'Bangor', 'Lewiston', 'Augusta']),
+ 'MD': ('South Atlantic', 6.2, ['Baltimore', 'Bethesda', 'Columbia', 'Annapolis', 'Frederick', 'Rockville']),
+ 'MA': ('New England', 7.0, ['Boston', 'Cambridge', 'Lowell', 'Newton', 'Plymouth', 'Framingham']),
+ 'MI': ('East North Central', 10.0, ['Detroit', 'Troy', 'Novi', 'Kalamazoo', 'Traverse City', 'Livonia', 'Saginaw']),
+ 'MN': ('West North Central', 5.7, ['Minneapolis', 'St. Paul', 'Bloomington', 'Eden Prairie', 'Mankato', 'Maple Grove']),
+ 'MS': ('East South Central', 2.9, ['Hattiesburg', 'Oxford', 'Tupelo', 'Gulfport', 'Starkville']),
+ 'MO': ('West North Central', 6.2, ['Kansas City', 'St. Louis', 'Springfield', 'Columbia', 'Chesterfield', 'Lee\'s Summit']),
+ 'MT': ('Mountain', 1.1, ['Bozeman', 'Helena', 'Great Falls', 'Kalispell']),
+ 'NE': ('West North Central', 2.0, ['Omaha', 'Lincoln', 'Kearney', 'Grand Island']),
+ 'NV': ('Mountain', 3.2, ['Summerlin', 'North Las Vegas', 'Sparks', 'Carson City', 'Elko']),
+ 'NH': ('New England', 1.4, ['Manchester', 'Nashua', 'Concord', 'Portsmouth']),
+ 'NJ': ('Mid-Atlantic', 9.3, ['Newark', 'Jersey City', 'Morristown', 'Cherry Hill', 'Edison', 'Hoboken', 'Toms River']),
+ 'NM': ('Mountain', 2.1, ['Rio Rancho', 'Los Alamos', 'Clovis', 'Gallup']),
+ 'NY': ('Mid-Atlantic', 19.6, ['New York', 'Brooklyn', 'Queens', 'Rochester', 'Long Island', 'Yonkers', 'White Plains', 'Ithaca', 'Saratoga Springs', 'Binghamton', 'Utica']),
+ 'NC': ('South Atlantic', 10.8, ['Charlotte', 'Raleigh', 'Durham', 'Wilmington', 'Cary', 'Chapel Hill', 'Winston-Salem', 'Fayetteville']),
+ 'ND': ('West North Central', 0.8, ['Fargo', 'Bismarck', 'Grand Forks', 'Minot']),
+ 'OH': ('East North Central', 11.8, ['Columbus', 'Cleveland', 'Cincinnati', 'Dublin', 'Mason', 'Youngstown', 'Canton', 'Westerville']),
+ 'OK': ('West South Central', 4.1, ['Oklahoma City', 'Edmond', 'Broken Arrow', 'Stillwater', 'Lawton']),
+ 'OR': ('Pacific', 4.2, ['Beaverton', 'Hillsboro', 'Medford', 'Corvallis', 'Lake Oswego']),
+ 'PA': ('Mid-Atlantic', 13.0, ['Philadelphia', 'Pittsburgh', 'Lancaster', 'State College', 'Erie', 'Scranton', 'Reading', 'West Chester']),
+ 'RI': ('New England', 1.1, ['Providence', 'Warwick', 'Newport', 'Cranston']),
+ 'SC': ('South Atlantic', 5.4, ['Charleston', 'Columbia', 'Greenville', 'Spartanburg', 'Myrtle Beach']),
+ 'SD': ('West North Central', 0.9, ['Sioux Falls', 'Rapid City', 'Brookings', 'Aberdeen']),
+ 'TN': ('East South Central', 7.1, ['Nashville', 'Memphis', 'Knoxville', 'Franklin', 'Murfreesboro', 'Clarksville']),
+ 'TX': ('West South Central', 30.5, ['Houston', 'Dallas', 'Plano', 'Frisco', 'Arlington', 'Katy', 'The Woodlands', 'Round Rock', 'McKinney', 'Sugar Land', 'Irving', 'Laredo', 'Beaumont', 'Brownsville', 'Abilene', 'College Station', 'Allen', 'Pearland']),
+ 'UT': ('Mountain', 3.4, ['Orem', 'Sandy', 'Logan', 'Lehi', 'West Jordan']),
+ 'VT': ('New England', 0.6, ['Burlington', 'Montpelier', 'Rutland', 'Stowe']),
+ 'VA': ('South Atlantic', 8.7, ['Richmond', 'Virginia Beach', 'Arlington', 'Fairfax', 'Norfolk', 'Charlottesville', 'Roanoke']),
+ 'WA': ('Pacific', 7.8, ['Seattle', 'Bellevue', 'Redmond', 'Everett', 'Kent', 'Yakima', 'Kirkland']),
+ 'WV': ('South Atlantic', 1.8, ['Charleston', 'Morgantown', 'Huntington', 'Wheeling']),
+ 'WI': ('East North Central', 5.9, ['Waukesha', 'Appleton', 'Eau Claire', 'Oshkosh', 'Kenosha']),
+ 'WY': ('Mountain', 0.6, ['Laramie', 'Sheridan', 'Gillette', 'Jackson']),
+}
+assert len(STATES) == 50
+for t in teams:
+    t['short'] = SHORT.get(t['id'], (t['name'].split()[-2] if len(t['name'].split()) > 2 else t['name']))
+    t['club'] = t['id']
+    t['aliases'] = ALIASES.get(t['id'], [])
+for t in teams:  # fictional v1 short names: the nickname (one or two words between city and suffix)
+    if t['origin'] == 'fictional':
+        rest = t['name'][len(t['city']) + 1:]
+        t['short'] = rest.rsplit(' ', 1)[0]
+BATAVIA = next(t for t in teams if t['id'] == 'batavia')['rating0']
+
+def add2(tid, name, short, city, state, region, league, tier, origin, rating=None):
+    colors = PALETTE[h('pal:' + tid) % len(PALETTE)]
+    teams.append({'id': tid, 'name': name, 'city': city, 'state': state, 'region': region, 'category': CAT, 'league': league,
+                  'colors': list(colors), 'badge': {'shape': SHAPES[h('shape:' + tid) % 3], 'initials': initials(name)},
+                  'tier': tier, 'rating0': rating if rating is not None else rating0(tid, tier), 'origin': origin,
+                  'added': 2, 'short': short, 'club': tid, 'aliases': []})
+
+for tid, name, short, city, tier in OWNER_AZ:
+    add2(tid, name, short, city, 'AZ', 'Southwest', None, tier, 'owner_az')
+
+# Teams per state: Arizona fixed, the rest by population (at least 4), never fewer than the state already has.
+have = {}
+for t in teams: have[t['state']] = have.get(t['state'], 0) + 1
+target = {'AZ': AZ_TOTAL}
+others = [s for s in STATES if s != 'AZ']
+left = TOTAL - AZ_TOTAL
+pop = sum(STATES[s][1] for s in others)
+raw = {s: max(4, have.get(s, 0), STATES[s][1] / pop * left) for s in others}
+base = {s: int(raw[s]) for s in others}
+rem = left - sum(base.values())
+for s in sorted(others, key=lambda s: -(raw[s] - base[s]))[:rem]: base[s] += 1
+target.update(base)
+assert sum(target.values()) == TOTAL, sum(target.values())
+
+used_short = set()
+def fictional2(city, state, region, tier, rating=None):
+    global k
+    while True:
+        nick = NICK[(h(city + state + 'v2') + k) % len(NICK)]
+        suffix = SUFFIX[(h(nick + city + 'v2') + k) % len(SUFFIX)]
+        name = f'{city} {nick} {suffix}'
+        k += 1
+        tid = 'x_' + ''.join(ch if ch.isalnum() else '_' for ch in f'{state}_{city}_{nick}'.lower()).strip('_')
+        if name not in used_names and all(t['id'] != tid for t in teams):
+            break
+    used_names.add(name)
+    add2(tid, name, nick, city, state, region, None, tier, 'fictional', rating)
+    return teams[-1]
+
+TIERS9 = [1, 2, 2, 3, 3, 3, 4, 4, 5]
+# Arizona: exactly AZ_ABOVE_BATAVIA teams rated above Batavia, the rest below (no Arizona team level with it).
+az = [t for t in teams if t['state'] == 'AZ' and t['id'] != 'batavia']
+above = sum(t['rating0'] > BATAVIA for t in az)
+need_above = AZ_ABOVE_BATAVIA - above
+need_below = AZ_TOTAL - 1 - len(az) - need_above
+assert need_above >= 0 and need_below >= 0, (need_above, need_below)
+az_cities = STATES['AZ'][2]
+az_new = []
+for i in range(need_above + need_below):
+    city = az_cities[i % len(az_cities)]
+    if i < need_above:
+        tier = [1, 2, 2, 3, 3][i % 5]
+        r = rating0('az' + str(i), tier) if tier < 3 else 1500 + (BATAVIA - 1500 + 1) + h('az-up:' + str(i)) % (20 - (BATAVIA - 1500))
+    else:
+        tier = [3, 4, 5][i % 3]
+        r = rating0('az' + str(i), tier) if tier > 3 else 1480 + h('az-down:' + str(i)) % (BATAVIA - 1480)
+    az_new.append(fictional2(city, 'AZ', 'Southwest', tier, r))
+# Everyone else: fill each state to its target.
+new_by_div = {}
+for s in sorted(others):
+    div, _, cities = STATES[s]
+    for i in range(target[s] - have.get(s, 0)):
+        tier = TIERS9[h(f'tier:{s}:{i}') % 9]
+        t = fictional2(cities[i % len(cities)], s, div, tier)
+        new_by_div.setdefault(div, []).append(t)
+new_by_div['Arizona'] = az_new
+
+# Background leagues for the new teams: per division, about 9 teams each (balanced sizes).
+def slug(x): return ''.join(ch if ch.isalnum() else '_' for ch in x.lower())
+for div in sorted(new_by_div):
+    ts = sorted(new_by_div[div], key=lambda t: (t['state'], h('lg:' + t['id'])))
+    n = max(1, round(len(ts) / 9))
+    for j, t in enumerate(ts): t['league'] = f'bg2_{slug(div)}_{j * n // len(ts) + 1}'
+
 ids = [t['id'] for t in teams]
-assert len(teams) == 120 and len(set(ids)) == 120, (len(teams), len(set(ids)))
-assert len({t['name'] for t in teams}) == 120
-OUT.write_text(json.dumps({'version': 1, 'category': CAT, 'nameStatus': 'working_fictional_names', 'teams': teams}, indent=1) + '\n')
+assert len(teams) == TOTAL and len(set(ids)) == TOTAL, (len(teams), len(set(ids)))
+assert len({t['name'] for t in teams}) == TOTAL
+assert len({t['state'] for t in teams}) == 50
+names = {}
+for t in teams:
+    for n in [t['name'], *t['aliases']]:
+        key = ''.join(ch for ch in n.lower() if ch.isalnum())
+        assert names.setdefault(key, t['id']) == t['id'], (n, t['id'], names[key])
+azr = sorted((t for t in teams if t['state'] == 'AZ'), key=lambda t: -t['rating0'])
+assert sum(t['rating0'] > BATAVIA for t in azr) == AZ_ABOVE_BATAVIA and not any(t['rating0'] == BATAVIA for t in azr if t['id'] != 'batavia')
+OUT.write_text(json.dumps({'version': 2, 'category': CAT, 'nameStatus': 'working_fictional_names', 'teams': teams}, indent=1) + '\n')
 print('wrote', OUT, len(teams))

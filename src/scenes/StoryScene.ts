@@ -10,7 +10,8 @@ import { TOURNAMENT_VENUE, type VenueId } from '../game/venue';
 import { CLUB_WORLD } from '../game/story/clubs';
 import { latest, movement, nationalTable, rankIn } from '../game/rankings/ratings';
 import { kickoffFor, stateCount, stateLabel, scopeTable, nextOpponent, leagueStandings } from '../game/rankings/views';
-import { teamById, teamName as worldTeamName } from '../game/rankings/teams';
+import { TEAMS as WORLD_TEAMS, teamById, teamName as worldTeamName } from '../game/rankings/teams';
+const worldTeamCount = WORLD_TEAMS.length;
 import { kickoffKey, settleRankings } from './rankingsData';
 import type { Rect } from '../game';
 import { POSITION_SLOT } from '../game/career/player';
@@ -460,7 +461,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     this.seasonPanel = [
       'THIS SEASON',
       lg.started && me ? `League: ${me.rank}${me.rank === 1 ? 'st' : me.rank === 2 ? 'nd' : me.rank === 3 ? 'rd' : 'th'} of ${lg.rows.length} · ${me.points} pts (W${me.won} D${me.drawn} L${me.lost})` : 'League: season not started',
-      `National #${nat} of 120${m === null ? '' : m > 0 ? ` (up ${m})` : m < 0 ? ` (down ${-m})` : ' (no change)'} · ${stateLabel(st)} #${sr} of ${stateCount(st)}${latest(rk).week === 0 ? ' · Preseason' : ''}`,
+      `National #${nat} of ${worldTeamCount}${m === null ? '' : m > 0 ? ` (up ${m})` : m < 0 ? ` (down ${-m})` : ' (no change)'} · ${stateLabel(st)} #${sr} of ${stateCount(st)}${latest(rk).week === 0 ? ' · Preseason' : ''}`,
       opp ? `Next league game: ${worldTeamName(opp)}` : 'No league games left',
     ].join('\n');
   }
