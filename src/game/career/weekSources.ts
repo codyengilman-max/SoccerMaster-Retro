@@ -57,13 +57,14 @@ function home(save: CareerSave, week: number): SourceWeek {
     if (l.week !== week) continue;
     const spec = specFor(l.skill, l.phase);
     if (!spec) continue;
-    offer(`home:${l.skill}:${l.activityId}`, l.attempts.filter((a) => meets(spec, a)).length / Math.max(1, l.attempts.length), HOME_ALLOCATION[l.skill]);
+    // Keyed by the canonical activity id: a logged and a scheduled completion of one activity count once.
+    offer(l.activityId, l.attempts.filter((a) => meets(spec, a)).length / Math.max(1, l.attempts.length), HOME_ALLOCATION[l.skill]);
   }
   for (const j of save.journal) {
     if (j.week !== week || !j.credited || j.completion === 'skipped') continue;
     const a = activityById(j.activityId);
     const alloc: Alloc = a?.relatedAttribute ? { [a.relatedAttribute]: 1 } : HOME_ALLOCATION.juggling;
-    offer(`journal:${j.activityId}`, j.completion === 'done' ? 1 : 0.5, alloc);
+    offer(j.activityId, j.completion === 'done' ? 1 : 0.5, alloc);
   }
   const top = [...best.entries()].sort((x, y) => y[1].score - x[1].score || (x[0] < y[0] ? -1 : 1)).slice(0, DEV_CONFIG.homeActivitiesMax);
   const allocation: Record<string, number> = {};
@@ -93,12 +94,15 @@ function match(save: CareerSave, week: number): SourceWeek {
   const played = save.reports.filter((r) => r.week === week && r.minutes > 0);
   if (!played.length) return { source: 'match', status: scheduled ? 'skipped' : 'none', score: 0, allocation: {}, activities: [] };
   const allocation: Record<string, number> = {};
+  // Each report is weighted by its involvement (1–40), so a brief cameo cannot outweigh a full match.
+  const weight = (r: (typeof played)[number]) => Math.min(40, Math.max(1, r.stats.involvements));
+  const total = played.reduce((a, r) => a + weight(r), 0);
   let score = 0;
   for (const r of played) {
-    score += (Math.max(0, Math.min(100, r.rating.overall ?? 0)) / 100) * CONFIDENCE[r.rating.confidence];
-    add(allocation, matchAllocation(r.stats), 1 / played.length);
+    score += (Math.max(0, Math.min(100, r.rating.overall ?? 0)) / 100) * CONFIDENCE[r.rating.confidence] * (weight(r) / total);
+    add(allocation, matchAllocation(r.stats), weight(r) / total);
   }
-  return { source: 'match', status: 'done', score: score / played.length, allocation, activities: played.map((r) => r.matchId) };
+  return { source: 'match', status: 'done', score, allocation, activities: played.map((r) => r.matchId) };
 }
 
 export function weekSources(save: CareerSave, week: number): SourceWeek[] {

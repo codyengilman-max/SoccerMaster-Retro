@@ -1631,8 +1631,9 @@ export class MatchSim {
         desired = this.userCarrierVelocity(p);
         accel = T.carrier.accel;
       } else {
-        seekInto(desired, p.pos, p.target, M.carrySpeed, 0.6);
-        accel = T.dribble.accel;
+        // AI carriers use the same bounded Pace/Dribbling/Agility multipliers as the user's carrier (1 = unchanged).
+        seekInto(desired, p.pos, p.target, M.carrySpeed * (0.85 + 0.15 * p.attrs.dribbling) * p.attrs.pace, 0.6);
+        accel = T.dribble.accel * p.attrs.agility;
       }
     } else if (p.isKeeper) {
       const k = this.keeperTarget(p);
@@ -1641,8 +1642,10 @@ export class MatchSim {
     } else {
       // Awareness only speeds AI repositioning to its shape target; chases, receptions and user input are untouched.
       const shape = p.id !== s.controlledId && p.intent !== 'chase' && p.intent !== 'receive' && p.intent !== 'press';
-      seekInto(desired, p.pos, p.target, shape ? p.speed * p.attrs.awareness : p.speed, p.intent === 'chase' || p.intent === 'receive' ? 0.4 : 1.5);
+      const run = p.speed * p.attrs.pace;
+      seekInto(desired, p.pos, p.target, shape ? run * p.attrs.awareness : run, p.intent === 'chase' || p.intent === 'receive' ? 0.4 : 1.5);
       if (p.intent === 'chase' || p.intent === 'press' || p.intent === 'run' || p.intent === 'recover') accel = M.sprintAccel;
+      accel *= p.attrs.agility;
     }
     approachInPlace(p.vel, desired.x, desired.y, accel * h);
     p.pos.x = clamp(p.pos.x + p.vel.x * h, 0.3, T.pitch.length - 0.3);

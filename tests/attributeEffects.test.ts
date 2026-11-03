@@ -112,4 +112,15 @@ describe('attribute effects (bounded 0.8–1.2x)', () => {
     };
     expect(spread(1.2)).toBeLessThan(spread(0.8));
   });
+  it('AI players: Pace and Agility move uncontrolled players faster toward their targets', () => {
+    const moved = (v: number) => {
+      const attrs = Object.fromEntries(TEAM_PLAYER_IDS.away.map((id) => [id, { pace: v, agility: v }]));
+      const s = sim(attrs, 11);
+      const ids = (TEAM_PLAYER_IDS.away as readonly Id[]).filter((id) => id !== 'A1');
+      const start = ids.map((id) => ({ ...s.state.players[id].pos }));
+      for (let i = 0; i < 90; i++) s.step(F);
+      return ids.reduce((a, id, k) => a + Math.hypot(s.state.players[id].pos.x - start[k]!.x, s.state.players[id].pos.y - start[k]!.y), 0);
+    };
+    expect(moved(1.2)).toBeGreaterThan(moved(0.8));
+  });
 });

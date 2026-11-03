@@ -40,7 +40,7 @@ export function migrationReport(o: Readonly<Record<string, unknown>>): Progressi
   const added = Object.fromEntries(NEW_ATTRIBUTES.map((a) => [a, num(attrs[a]) ?? mean])) as Record<(typeof NEW_ATTRIBUTES)[number], number>;
   const after = [...OLD_ATTRIBUTES.map((a, i) => vals[i]! + (pendingApplied[a] ?? 0)), ...NEW_ATTRIBUTES.map((a) => added[a])];
   const overallAfter = after.reduce((s, v) => s + v, 0) / after.length;
-  return { version: 2, fromSchema: 2, removed: [], added, overallBefore: mean, overallAfter, pendingApplied, overCap: mean > DEV_CONFIG.seasonOneCap };
+  return { version: 2, fromSchema: 2, removed: [], added, overallBefore: mean, overallAfter, pendingApplied, overCap: overallAfter > DEV_CONFIG.seasonOneCap };
 }
 
 /** Schema 2 -> 3. A save already at schema 3 is returned unchanged. */

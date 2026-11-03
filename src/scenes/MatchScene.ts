@@ -1389,7 +1389,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       }
       this.careerStore = store;
       // Everyone else develops through the shared engine, keyed by club, slot and reviews completed (never rerolled).
-      const reviews = save.history.length;
+      // Reviews completed = weeks ended (history is a bounded display list, so its length is not used).
+      const reviews = Math.max(0, save.week - 1);
       for (const id of HOME_IDS) if (id !== CAREER_SLOT[save.player.position]) this.sim.setPlayerAttrs(id, matchAttrsFromCareer(aiAttributes('batavia', id, 'teammate', reviews)));
       for (const id of match.AWAY_IDS) this.sim.setPlayerAttrs(id, matchAttrsFromCareer(aiAttributes(this.opponentId, id, 'opponent', reviews)));
       this.sim.setPlayerAttrs(CAREER_SLOT[save.player.position], matchAttrsFromCareer(save.player.attributes));

@@ -155,3 +155,20 @@ describe('progression v2: AI development', () => {
     expect(squadOverall(squad)).toBeCloseTo(squad.reduce((s, a) => s + overallOf(a), 0) / 3, 12);
   });
 });
+
+describe('progression v2: review fixes', () => {
+  it('a carry that pushes a legacy save over 64 is flagged over the cap', async () => {
+    const old = schema2([64, 64, 64, 64, 64, 64]);
+    old.devCarry = { passing: 0.9, finishing: 0.9 };
+    expect(migrationReport(old).overCap).toBe(true);
+  });
+  it('one activity logged and completed in a scheduled session counts once at home', async () => {
+    const { weekSources } = await import('../src/game/career/weekSources');
+    const s = created();
+    const wk = { ...s, week: 2 };
+    const log = { week: 2, skill: 'passing', phase: 1, activityId: 'ps-wide-gate', attempts: [] } as never;
+    const jr = { week: 2, credited: true, completion: 'done', activityId: 'ps-wide-gate' } as never;
+    const both = weekSources({ ...wk, homeLogs: [log], journal: [jr] } as CareerSave, 2).find((x) => x.source === 'home')!;
+    expect(both.activities).toEqual(['ps-wide-gate']);
+  });
+});
