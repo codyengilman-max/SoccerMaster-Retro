@@ -25,7 +25,7 @@ import { PlayerArt, atlasKey } from '../render/art/playerArt';
 import { SPRITE_CELL } from '../render/art/spriteSets';
 import { DEMO_BALL_PEAK, JUGGLE_PATTERNS, demoBeats, demoLength, demoPose, demoSet, isKeeperExercise, nextBeat, sheetBeats, stepBeats } from '../render/art/homeDemo';
 import { BALL_MASTERY_DESIGNS, DESIGN_PREFIX, DESIGN_MATCHES, DESIGN_SOURCES, HOME_SECTIONS, HOME_SECTION_LABELS, designById, designsFor, sectionOf } from '../game/career/ballMastery';
-import { CORE_PATHWAY, curriculumLesson, lessonStatus, trackStatus, type Track } from '../game/career/homeCurriculum';
+import { CORE_PATHWAY, checkpointBlock, curriculumLesson, lessonStatus, trackStatus, type Track } from '../game/career/homeCurriculum';
 import { specFor } from '../game/career/homeMastery';
 import { ensureJuggleSheet, juggleKey } from '../render/art/juggleArt';
 import { JUGGLE_SHEET } from '../render/art/juggleSheet';
@@ -724,6 +724,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             { name: 'foot-right', label: 'Right foot first', on: this.teachFoot === 'right', onClick: () => ((this.teachFoot = 'right'), (this.demoT = 0), this.render()) },
             { name: 'foot-left', label: 'Left foot first', on: this.teachFoot === 'left', onClick: () => ((this.teachFoot = 'left'), (this.demoT = 0), this.render()) },
             { name: 'log-open', label: sc.sessionId ? 'Log this session' : 'Log practice', onClick: () => this.openLog(a.id, sc.sessionId) },
+            ...this.lessonActions(a),
             { name: 'teach-tips', label: this.teachTips ? 'Hide tips' : 'More tips', on: this.teachTips, onClick: () => ((this.teachTips = !this.teachTips), this.render()) },
           ];
           return { title: a.title, body, actions, demo: a, twoCol: true };
@@ -746,6 +747,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             { name: 'foot-right', label: 'Right foot', on: this.teachFoot === 'right', onClick: () => ((this.teachFoot = 'right'), (this.demoT = 0), this.render()) },
             { name: 'foot-left', label: 'Left foot', on: this.teachFoot === 'left', onClick: () => ((this.teachFoot = 'left'), (this.demoT = 0), this.render()) },
             { name: 'log-open', label: sc.sessionId ? 'Log this session' : 'Log practice', onClick: () => this.openLog(a.id, sc.sessionId) },
+            ...this.lessonActions(a),
             { name: 'teach-tips', label: this.teachTips ? 'Hide tips' : 'More tips', on: this.teachTips, onClick: () => ((this.teachTips = !this.teachTips), this.render()) },
           ];
           return { title: a.title, body: tbody, actions: tactions, demo: a, twoCol: true };
@@ -780,6 +782,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             { name: 'demo-replay', label: 'Replay', onClick: () => ((this.demoT = 0), (this.demoPaused = false), this.render()) },
           );
         actions.push({ name: 'log-open', label: sc.sessionId ? 'Log this session' : 'Log practice', onClick: () => this.openLog(a.id, sc.sessionId) });
+        actions.push(...this.lessonActions(a));
         actions.push({ name: 'teach-tips', label: this.teachTips ? 'Hide tips' : 'More tips', on: this.teachTips, onClick: () => ((this.teachTips = !this.teachTips), this.render()) });
         if (sc.sessionId && s.plan && !s.completedSessions.includes(sc.sessionId))
           for (const alt of substitutes(s.plan, sc.sessionId, sc.index).slice(0, 3))
@@ -965,7 +968,9 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private continueTrack(t: Track): void {
     this.demoT = 0;
     this.demoPaused = this.reducedMotion;
-    this.go(this.lessonScreen(t));
+    const next = this.lessonScreen(t);
+    if (next.kind !== 'activity') return this.go(next);
+    void this.act({ type: 'lessonViewed', activityId: next.id }, next).then((ok) => ok || this.go(next));
   }
 
   /** Curriculum position and the assigned practice task, above the Coach Code. */
@@ -977,8 +982,22 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     const task = spec ? `${spec.what} Log your scores: ${spec.record.toLowerCase()}.` : 'Practise it, then tap Log practice.';
     const target = st.targetMet === null ? '' : st.targetMet ? ' · ladder target met' : ' · ladder target not met yet';
     const where = l.coreWeek ? `CORE LESSON ${l.coreWeek} OF ${CORE_PATHWAY.length}` : `PHASE ${l.phase}`;
-    const check = l.checkpoint.status === 'approved' ? 'Checkpoint: pass it, then report it (player-reported completion).' : 'Checkpoint: awaiting coach approval, so this lesson cannot be passed yet.';
+    const cp = l.checkpoint;
+    const check =
+      cp.status !== 'approved'
+        ? 'CHECKPOINT: waiting for a coach-approved target, so this lesson cannot be passed yet.'
+        : `CHECKPOINT: ${cp.target}. Both feet. Correct technique and control every time.${st.passed ? `\nPlayer-reported completion (week ${st.reportedWeek}). Coach verification: not yet.` : ''}`;
     return `${where}\nPRACTICE TASK: ${task}\nPractices logged: ${st.practices}${target}\n${check}\n`;
+  }
+
+  /** Curriculum lessons only: report the checkpoint (when allowed) and change the saved practice setup. */
+  private lessonActions(a: Activity): Action[] {
+    if (!curriculumLesson(a.id)) return [];
+    const out: Action[] = [];
+    if (!checkpointBlock(this.save, a.id))
+      out.push({ name: 'checkpoint-report', label: 'I met the checkpoint', onClick: () => void this.act({ type: 'checkpoint', id: `cp-${Date.now().toString(36)}`, activityId: a.id }) });
+    out.push({ name: 'nav-setup', label: 'Practice setup', onClick: () => this.go({ kind: 'setup' }) });
+    return out;
   }
 
   private async complete(a: Activity, sessionId: string | null): Promise<void> {

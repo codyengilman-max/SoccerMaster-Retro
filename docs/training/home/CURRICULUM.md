@@ -1,16 +1,16 @@
-# Home Training curriculum v2 — PROPOSED for owner review
+# Home Training curriculum v2 — agreed by the owner (2026-11)
 
-Source of truth: `src/game/career/homeCurriculum.ts` (`HOME_CURRICULUM_VERSION = 2`, status `proposed`). Generated from it. Checkpoints: [CHECKPOINTS.md](CHECKPOINTS.md).
+Source of truth: `src/game/career/homeCurriculum.ts` (`HOME_CURRICULUM_VERSION = 2`, status `agreed`). Generated from it. Checkpoints: [CHECKPOINTS.md](CHECKPOINTS.md).
 
 ## Rules now in the code
 
-- **No automatic pass.** A lesson passes only through an authored checkpoint a coach approved. None is approved, so every lesson records practice but nothing passes yet. Logged practice and watching the demo never pass.
+- **No automatic pass.** A lesson passes only when the player reports meeting its approved checkpoint ("Player-reported completion"), after at least one logged practice of it, and only one new lesson a week per track. 33 checkpoints are approved (those with an existing lesson-specific target and a both-feet rule); the rest wait for owner targets and cannot be passed. Logged practice and watching the demo never pass.
 - **Labels.** A checkpoint met at home will show as "Player-reported completion". Coach verification stays separate.
 - **Assignment.** Each track assigns its first lesson not yet passed. A new story week never moves it on, and home training never blocks the story.
 - **Duplicates.** Unresolved designs and proposed aliases stay out of the assigned sequence. Their IDs and records are kept, and no completion transfers between lessons.
 - **Setup.** The game uses the setup saved when the player was created (small/medium space, indoors/outdoors, ball only or extra items, safe striking area). A lesson the setup can't support is deferred, never passed, along with the later levels of the same ladder.
 
-## 18-week Ball Mastery core pathway (for approval)
+## 18-week Ball Mastery core pathway (approved)
 
 One assigned lesson per week, Phase 1 foundations first. All 18 fit a small indoor space with only a ball, so none is ever deferred. Juggling runs alongside as its own track (jg-1 first, then the ladder and the v1.1 aerial lessons by phase).
 
@@ -39,7 +39,7 @@ One assigned lesson per week, Phase 1 foundations first. All 18 fit a small indo
 
 **Pace (proposed, not built yet):** at most one new lesson a week. Passing early leaves the rest of the week for review.
 
-## Duplicate decisions (for approval)
+## Duplicate decisions (approved)
 
 The "14" I reported earlier counted lessons. They form **13 pairs across 7 designs**, each compared on contact surface, foot action, ball path, body movement and exit.
 
@@ -61,7 +61,7 @@ The "14" I reported earlier counted lessons. They form **13 pairs across 7 desig
 
 **Aliases:** no completion moves between alias and entry until you confirm each "same".
 
-## Space and equipment (for approval)
+## Space and equipment (approved)
 
 With the minimum setup, 55 Ball Mastery lessons are deferred. The full list of setup-restricted lessons:
 
@@ -123,8 +123,13 @@ With the minimum setup, 55 Ball Mastery lessons are deferred. The full list of s
 
 Until you approve an alternative, the lesson is deferred and the next suitable lesson is assigned. A deferred lesson is never passed, and missing equipment never costs anything.
 
-## Not built yet
+## Built after approval
 
-- Recording a met checkpoint ("Player-reported completion") needs a new save field. I'll add it once checkpoints are approved.
-- "Lesson viewed" is not saved yet; it needs the same save migration.
-- Changing the setup later: the setup screen exists at player creation, but Home has no link to it. Proposed: one "Practice setup" link in My Player.
+- `lessonsViewed` and `checkpoints` save fields (older saves load with both empty; nothing inferred).
+- "I met the checkpoint" on the assigned lesson once it has a logged practice; saved as player-reported completion. Coach verification stays separate.
+- One new lesson a week per track; the rest of the week is review.
+- "Practice setup" on every curriculum lesson opens the saved setup.
+
+## Blocked on owner targets
+
+The pathway is sequential, so a lesson without an approved checkpoint holds its track. Ball Mastery core weeks without one: 1–4, 8, 10–17 (approved: 5, 6, 7, 9, 18). Juggling: jg-1 and jg-2 are approved; v11-JU01-L1 (lesson 3) is not. See CHECKPOINTS.md.

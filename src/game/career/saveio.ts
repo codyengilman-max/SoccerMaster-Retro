@@ -8,7 +8,7 @@ import { FOCUSES, HOME_ACTIVITIES, activityById } from './catalog';
 import type { PlannedItem, PlannedSession, PlannerInput, WeekPlan } from './planner';
 import { cleanText, type CareerPlayer } from './player';
 import type { AttributeOutcome, EvidenceItem } from './progression';
-import { CLOUDY_RUNS_KEPT, SAVE_SCHEMA, emptySave, type CareerSave, type CloudyBest, type FamilyLevel, type JournalEntry, type TeamTrainingRecord, type Tt12Run, type WeekReview, TT12_SLOTS, CHOICE_IDS, HOME_LOGS_KEPT, type All36Run } from './state';
+import { CLOUDY_RUNS_KEPT, SAVE_SCHEMA, emptySave, type CareerSave, type CloudyBest, type FamilyLevel, type JournalEntry, type TeamTrainingRecord, type Tt12Run, type WeekReview, TT12_SLOTS, CHOICE_IDS, HOME_LOGS_KEPT, type All36Run, type CheckpointReport } from './state';
 import { gradeWeekly, weeklyAssignment } from '../training12/all36/weekly';
 import { HOME_SKILLS, attemptsError, specFor, type HomeLog } from './homeMastery';
 import { DIFFICULTIES } from '../cloudy/sim';
@@ -310,6 +310,12 @@ function all36Run(v: unknown, week: number): All36Run {
 }
 
 /** A stored practice entry must still be well formed for its phase (zero allowed, successes <= attempts). */
+const LESSONS_KEPT = 400;
+function checkpointReport(v: unknown, week: number): CheckpointReport {
+  const o = obj(v, 'checkpoint');
+  return { id: str(o.id, 'checkpoint id', 64), activityId: str(o.activityId, 'lesson', 64), week: int(o.week, 'checkpoint week', 1, week) };
+}
+
 function homeLog(v: unknown, week: number): HomeLog {
   const o = obj(v, 'homeLog');
   const skill = oneOf(o.skill, 'home skill', HOME_SKILLS);
@@ -375,6 +381,8 @@ export function parseSave(raw: unknown): R<CareerSave> {
       tt12: arr(o.tt12 ?? [], 'tt12', L.historyMax * 4).map((t) => tt12Run(t, week)),
       all36: arr(o.all36 ?? [], 'all36', L.historyMax * 4).map((t) => all36Run(t, week)),
       homeLogs: arr(o.homeLogs ?? [], 'homeLogs', HOME_LOGS_KEPT).map((t) => homeLog(t, week)),
+      lessonsViewed: arr(o.lessonsViewed ?? [], 'lessonsViewed', LESSONS_KEPT).map((x) => str(x, 'lesson', 64)),
+      checkpoints: arr(o.checkpoints ?? [], 'checkpoints', LESSONS_KEPT).map((x) => checkpointReport(x, week)),
       cloudy: arr(o.cloudy ?? [], 'cloudy', DIFFICULTIES.length).map(cloudyBest),
       cloudyRuns: arr(o.cloudyRuns ?? [], 'cloudyRuns', CLOUDY_RUNS_KEPT).map((r) => str(r, 'cloudy run', 64)),
       reports: arr(o.reports ?? [], 'reports', REPORTS_KEPT).map(savedReport),
@@ -386,6 +394,8 @@ export function parseSave(raw: unknown): R<CareerSave> {
     if (new Set(save.teamTraining.map((t) => t.week)).size !== save.teamTraining.length) throw new Invalid('team training counted twice for a week');
     if (new Set(save.cloudy.map((c) => c.difficulty)).size !== save.cloudy.length) throw new Invalid('cloudy best saved twice');
     if (new Set(save.tt12.map((t) => t.runId)).size !== save.tt12.length) throw new Invalid('team training run saved twice');
+    if (new Set(save.lessonsViewed).size !== save.lessonsViewed.length) throw new Invalid('lesson viewed saved twice');
+    if (new Set(save.checkpoints.map((c) => c.activityId)).size !== save.checkpoints.length) throw new Invalid('checkpoint reported twice');
     if (new Set(save.homeLogs.map((t) => t.id)).size !== save.homeLogs.length) throw new Invalid('practice entry saved twice');
     if (new Set(save.all36.map((t) => t.runId)).size !== save.all36.length) throw new Invalid('team training run saved twice');
     const weeks36 = save.all36.filter((t) => t.credited).map((t) => t.week);

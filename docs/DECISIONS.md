@@ -474,3 +474,7 @@ Owner instruction: "Make them not drafts add to game".
 - **Cap:** main character only; positive gains scaled proportionally to keep overall <= 64; bonus +1 whole or banked.
 - **Replaced:** v1 settlement/carry and immediate Team Training changes stop being applied (records and history still load). Tests that asserted the old rule were rewritten to assert the v2 rule; legacy pure-function tests use explicit start-40/potential-70 fixtures.
 - **Save:** schema 3; schema-2 saves migrate once with a stored report.
+
+## D73. Home curriculum v2 agreed (owner, 2026-11)
+
+The owner approved the v2 review package: the 18-week Ball Mastery core, the 13 duplicate-pair decisions (Hook/Cruyff unresolved), and the setup alternatives and deferrals (`docs/training/home/CURRICULUM.md`). `HOME_CURRICULUM_STATUS` is `agreed`. A checkpoint is approved only when the sheet (`CHECKPOINTS.md`) already has a lesson-specific target and a both-feet rule (33 of 205); the rest stay unpassable until the owner supplies them. A pass is a player-reported completion (`save.checkpoints`) of the assigned lesson after a logged practice, at most one new lesson a week per track; viewing (`save.lessonsViewed`) and practice never pass. Older saves load with both fields empty.

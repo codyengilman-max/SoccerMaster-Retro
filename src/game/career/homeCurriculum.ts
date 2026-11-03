@@ -15,7 +15,7 @@ import type { Activity, SkillFamilyId } from './types';
 import type { JournalEntry } from './state';
 export const HOME_CURRICULUM_VERSION = 2;
 /** 'proposed' until the owner agrees the sequence; then 'agreed'. */
-export const HOME_CURRICULUM_STATUS: 'proposed' | 'agreed' = 'proposed';
+export const HOME_CURRICULUM_STATUS: 'proposed' | 'agreed' = 'agreed';
 
 export type Track = HomeSection;
 export const TRACKS: readonly Track[] = ['juggling', 'ballMastery'];
@@ -132,8 +132,6 @@ export interface HomeCurriculum {
   readonly lessons: readonly CurriculumLesson[];
 }
 
-/** Coach-approved checkpoints by lesson ID. Empty until the owner approves the review sheet. */
-export const APPROVED_CHECKPOINTS: ReadonlySet<string> = new Set();
 
 const BM_FAMILIES: readonly SkillFamilyId[] = ['firstTouch', 'dribbling', 'passing', 'finishing', 'defending', 'awareness'];
 const source = (a: Activity): number => (a.id.startsWith('v11-') ? 1 : a.id.startsWith('bmd-') ? 2 : 0);
@@ -155,7 +153,8 @@ export function checkpointFor(a: Activity): Checkpoint {
   const missing = ['Coach review of the whole checkpoint'];
   if (!target) missing.push('Lesson-specific target');
   if (bothFeet === 'confirm') missing.push('Whether both feet are required');
-  return { status: APPROVED_CHECKPOINTS.has(a.id) ? 'approved' : 'awaiting-review', technique: a.cue, control: a.success, bothFeet, target, missing };
+  // Owner-approved sheet (2026-11): a checkpoint is approved when nothing is missing beyond the review itself.
+  return { status: missing.length === 1 ? 'approved' : 'awaiting-review', technique: a.cue, control: a.success, bothFeet, target, missing };
 }
 
 function flagsFor(a: Activity): string[] {
@@ -225,6 +224,8 @@ export interface LessonStatus {
   readonly targetMet: boolean | null;
   /** Player-reported completion of an approved checkpoint. Always false while no checkpoint is approved. */
   readonly passed: boolean;
+  /** Week of the player-reported completion, or null. */
+  readonly reportedWeek: number | null;
 }
 
 export interface TrackStatus {
@@ -248,13 +249,14 @@ interface Records {
   readonly homeLogs: readonly HomeLog[];
   readonly input?: PlannerInput;
   readonly week?: number;
+  readonly checkpoints?: readonly { readonly activityId: string; readonly week: number }[];
 }
 
 export function lessonStatus(l: CurriculumLesson, r: Records): LessonStatus {
   const practices = r.journal.filter((j) => j.activityId === l.id && j.completion === 'done').length + r.homeLogs.filter((h) => h.activityId === l.id).length;
   const targetMet = l.ladder ? skillProgress(r.homeLogs, l.ladder.skill).phase > l.ladder.phase : null;
-  // Passing needs an approved checkpoint and a recorded player-reported completion; the save has no such record yet.
-  return { lesson: l, practices, targetMet, passed: false };
+  const report = l.checkpoint.status === 'approved' ? r.checkpoints?.find((c) => c.activityId === l.id) : undefined;
+  return { lesson: l, practices, targetMet, passed: !!report, reportedWeek: report?.week ?? null };
 }
 
 /**
@@ -297,3 +299,19 @@ export function trackStatus(track: Track, r: Records, c: HomeCurriculum = HOME_C
 
 export const curriculumLesson = (id: string, c: HomeCurriculum = HOME_CURRICULUM): CurriculumLesson | undefined => c.lessons.find((l) => l.id === id);
 export const lessonActivity = (l: CurriculumLesson): Activity => activityById(l.id)!;
+
+/**
+ * Why the player can't report this lesson's checkpoint now, or null when they can. Reporting needs an approved
+ * checkpoint, the lesson to be the track's assigned lesson, at least one practice of it logged, and no other
+ * checkpoint in the same track this week (one new lesson a week). A lesson is reported once; nothing transfers.
+ */
+export function checkpointBlock(r: Records & { readonly week: number }, activityId: string, c: HomeCurriculum = HOME_CURRICULUM): string | null {
+  const l = curriculumLesson(activityId, c);
+  if (!l || l.heldOut) return 'That lesson is not in the curriculum.';
+  if (l.checkpoint.status !== 'approved') return 'This checkpoint is waiting for a coach-approved target.';
+  if (r.checkpoints?.some((x) => x.activityId === activityId)) return 'Already reported.';
+  if (trackStatus(l.track, r, c).current?.lesson.id !== activityId) return 'Only the assigned lesson can be reported.';
+  if (lessonStatus(l, r).practices < 1) return 'Log a practice of this lesson first.';
+  if (r.checkpoints?.some((x) => x.week === r.week && curriculumLesson(x.activityId, c)?.track === l.track)) return 'One new lesson a week: keep reviewing, and report this one next week.';
+  return null;
+}

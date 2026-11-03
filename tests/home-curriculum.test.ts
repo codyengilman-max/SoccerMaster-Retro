@@ -8,11 +8,11 @@ const none = { journal: [], homeLogs: [] as HomeLog[] };
 const done = (activityId: string) => ({ activityId, completion: 'done' as const });
 const big = { equipment: 'optional' as const, space: 'medium' as const, setting: 'outdoor' as const, striking: true, minutes: 10 };
 
-describe('home curriculum v2 (proposed)', () => {
+describe('home curriculum v2 (agreed)', () => {
   it('is versioned and still a proposal', () => {
     expect(HOME_CURRICULUM.version).toBe(HOME_CURRICULUM_VERSION);
     expect(HOME_CURRICULUM_VERSION).toBe(2);
-    expect(HOME_CURRICULUM_STATUS).toBe('proposed');
+    expect(HOME_CURRICULUM_STATUS).toBe('agreed');
   });
   it('keeps every home lesson exactly once, in its own section, with no invented IDs', () => {
     const ids = HOME_CURRICULUM.lessons.map((l) => l.id);
@@ -32,8 +32,8 @@ describe('home curriculum v2 (proposed)', () => {
       expect(HELD_OUT.has(c.lesson)).toBe(false);
     }
   });
-  it('no lesson can be passed until its checkpoint is coach-approved; practice and viewing never pass', () => {
-    for (const l of HOME_CURRICULUM.lessons) expect(l.checkpoint.status).toBe('awaiting-review');
+  it('only checkpoints with a target and a both-feet rule are approved; practice and viewing never pass', () => {
+    for (const l of HOME_CURRICULUM.lessons) expect(l.checkpoint.status === 'approved').toBe(l.checkpoint.target !== null && l.checkpoint.bothFeet === 'required');
     const first = CORE_PATHWAY[0]!.lesson;
     const s = trackStatus('ballMastery', { journal: [done(first), done(first), done(first)], homeLogs: [] });
     expect(s.current!.lesson.id).toBe(first);

@@ -1,3 +1,4 @@
+import { checkpointBlock, curriculumLesson } from './homeCurriculum';
 import { REPORTS_KEPT, type SavedReport } from '../report/report';
 import { zeroFractions, type Fractions, type WeekSettlement } from '../report/settlement';
 import { DIFFICULTIES, type Difficulty } from '../cloudy/sim';
@@ -36,6 +37,13 @@ export interface JournalEntry {
   readonly reflection: string;
   readonly easier: boolean;
   readonly credited: boolean;
+}
+
+/** A home checkpoint the player reported meeting: "Player-reported completion", never coach-verified mastery. */
+export interface CheckpointReport {
+  readonly id: string;
+  readonly activityId: string;
+  readonly week: number;
 }
 
 export interface FamilyLevel {
@@ -106,6 +114,10 @@ export interface CareerSave {
   readonly devCarry: Fractions;
   /** Bonus Attribute Points earned from achievements and spent on attributes (older saves: empty, nothing inferred). */
   readonly bonus: BonusBank;
+  /** Home curriculum lessons the player has opened (older saves: empty). Viewing never passes a lesson. */
+  readonly lessonsViewed: readonly string[];
+  /** Player-reported checkpoint completions, one per lesson (older saves: empty, nothing inferred). */
+  readonly checkpoints: readonly CheckpointReport[];
   /** Progression v2 migration report, kept for saves migrated from schema 2 (new careers: absent). */
   readonly progression?: ProgressionMigration;
 }
@@ -171,6 +183,8 @@ export type Action =
   | { readonly type: 'tt12Run'; readonly week: number; readonly slot: Tt12Slot; readonly runId: string; readonly score: number; readonly creditEligible: boolean; readonly decisions?: { readonly independent: number; readonly assisted: number }; readonly model?: 'ts-1' }
   | { readonly type: 'cloudyResult'; readonly runId: string; readonly difficulty: Difficulty; readonly score: number; readonly stars: 1 | 2 | 3 }
   | { readonly type: 'matchReport'; readonly report: SavedReport }
+  | { readonly type: 'lessonViewed'; readonly activityId: string }
+  | { readonly type: 'checkpoint'; readonly id: string; readonly activityId: string }
   | { readonly type: 'endWeek'; readonly recess?: { readonly played: boolean } | null };
 
 export type Outcome = { readonly ok: true; readonly save: CareerSave; readonly message: string; readonly changed: boolean } | { readonly ok: false; readonly error: string };
@@ -198,6 +212,8 @@ export function emptySave(): CareerSave {
     tt12: [],
     all36: [],
     homeLogs: [],
+    lessonsViewed: [],
+    checkpoints: [],
     cloudy: [],
     cloudyRuns: [],
     reports: [],
@@ -455,6 +471,19 @@ export function reduce(save: CareerSave, action: Action): Outcome {
       if ('error' in counted) return fail(counted.error);
       next = counted.save;
       return ok(next, `All three sessions counted. ${counted.message}`);
+    }
+    case 'lessonViewed': {
+      if (!save.player) return fail('Create your player first.');
+      if (!curriculumLesson(action.activityId)) return fail('Unknown lesson.');
+      if (save.lessonsViewed.includes(action.activityId)) return same(save, 'Lesson opened.');
+      return ok({ ...save, lessonsViewed: [...save.lessonsViewed, action.activityId] }, 'Lesson opened.');
+    }
+    case 'checkpoint': {
+      if (!save.player) return fail('Create your player first.');
+      if (save.checkpoints.some((c) => c.id === action.id)) return same(save, 'Already saved.');
+      const why = checkpointBlock(save, action.activityId);
+      if (why) return fail(why);
+      return ok({ ...save, checkpoints: [...save.checkpoints, { id: action.id, activityId: action.activityId, week: save.week }] }, 'Saved as player-reported completion. A coach can verify it separately.');
     }
     case 'endWeek': {
       if (!save.player) return fail('No career player.');

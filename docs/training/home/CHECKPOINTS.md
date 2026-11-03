@@ -1,6 +1,6 @@
 # Home Training checkpoints — missing-target review sheet
 
-Every lesson is **awaiting review**. Fill or approve: technique, control/repeatability, both feet, and a lesson-specific target. Until approved, a lesson records practice but cannot pass. "Existing target" is text already in the lesson; "MISSING" means none exists.
+Approved (2026-11): a checkpoint with an existing target and a both-feet rule is approved; every row marked MISSING or "confirm" still needs a target or rule from the owner. Fill or approve: technique, control/repeatability, both feet, and a lesson-specific target. Until approved, a lesson records practice but cannot pass. "Existing target" is text already in the lesson; "MISSING" means none exists.
 Totals: 205 lessons, 167 with no lesson-specific target, 16 where the both-feet rule needs confirming.
 
 
