@@ -1,6 +1,6 @@
 /** Read-only view models for the rankings screens: derived from saved state, never stored. Framework-free. */
 import { HOME_CLUB } from '../league/league';
-import { leagueFormat, opponentOf, seasonTable, type SeasonFixture, type SeasonLeagueState } from '../season/league';
+import { leagueFormat, newSeasonLeague, opponentOf, seasonTable, type SeasonFixture, type SeasonLeagueState } from '../season/league';
 import { BG_FIXTURES } from './background';
 import { nationalTable, stateTable, worldResults, type RankRow, type RankingsState, type StoryResults, type WorldResult } from './ratings';
 import { STATE_NAMES, TEAMS, teamById, teamName } from './teams';
@@ -13,7 +13,8 @@ export interface StandingRow {
 }
 /** League table, 3/1/0, ordered by points, goal difference, goals scored. Teams level on all three share a rank (the existing name order only fixes display). */
 export function leagueStandings(lg: SeasonLeagueState | null): { started: boolean; rows: readonly StandingRow[] } {
-  const base = lg ? seasonTable(lg) : [];
+  // No league saved yet (before the first league week): the clubs a new league will have, all on zero.
+  const base = seasonTable(lg ?? newSeasonLeague('', 0));
   const started = base.some((r) => r.played > 0);
   let rank = 0;
   const rows = base.map((r, i, all) => {

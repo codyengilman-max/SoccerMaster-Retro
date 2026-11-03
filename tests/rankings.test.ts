@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CLUB_WORLD } from '../src/game/story/clubs';
 import { LEAGUE_CLUBS } from '../src/game/league/league';
 import { TOURNAMENTS, bataviaFixture, newTournament, recordTournamentPlayed } from '../src/game/season/tournament';
-import { fixtureForGame, newSeasonLeague, recordSeasonPlayed, seasonTable, simulateSeasonThrough } from '../src/game/season/league';
+import { fixtureForGame, LEAGUE_FORMATS, newSeasonLeague, recordSeasonPlayed, SEASON_LEAGUE_VERSION, seasonTable, simulateSeasonThrough } from '../src/game/season/league';
 import { STATE_CUP_INVITED } from '../src/game/season/stateCup';
 import { CATEGORY, TEAMS, teamById } from '../src/game/rankings/teams';
 import { BG_FIXTURES, simulateBackground } from '../src/game/rankings/background';
@@ -149,6 +149,11 @@ describe('views', () => {
   });
   it('league table: season not started, then 3/1/0', () => {
     expect(leagueStandings(newSeasonLeague(ID, SEED)).started).toBe(false);
+    const pre = leagueStandings(null);
+    expect(pre.started).toBe(false);
+    expect(pre.rows.map((r) => r.club).sort()).toEqual([...LEAGUE_FORMATS[SEASON_LEAGUE_VERSION].clubs].sort());
+    expect(pre.rows).toHaveLength(9);
+    expect(pre.rows.every((r) => r.points === 0 && r.played === 0 && r.rank === 1)).toBe(true);
     const f1 = fixtureForGame(1)!;
     const lg = (recordSeasonPlayed(newSeasonLeague(ID, SEED), f1.id, 1, 1) as { ok: true; state: ReturnType<typeof newSeasonLeague> }).state;
     const t = leagueStandings(lg);
