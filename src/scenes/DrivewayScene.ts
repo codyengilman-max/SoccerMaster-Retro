@@ -24,6 +24,8 @@ export interface DrivewayInit {
 
 const ROLLERS: ReadonlySet<ObjKind> = new Set(['basketball', 'can', 'skateboard', 'scooter', 'tricycle']);
 const BREAK_FRAME_SECONDS = 0.12;
+/** Drawn object width relative to its collision diameter (art has a little transparent margin and a soft shadow). */
+const ART_WIDTH = 1.25;
 /** Far end of the driveway (garage base) as a fraction of the background art height, measured on the owner art. */
 const GARAGE_BASE = DD_BG.lane.top + 0.176;
 const FAR_D = 1 / (1 + DRIVEWAY.spawnY / 20);
@@ -49,6 +51,8 @@ export class DrivewayScene extends Phaser.Scene implements InspectableScene, Gam
   private g!: Phaser.GameObjects.Graphics;
   private fxG!: Phaser.GameObjects.Graphics;
   private objImgs = new Map<number, Phaser.GameObjects.Image>();
+  private shotImgs: Phaser.GameObjects.Image[] = [];
+  private rollImgs: Phaser.GameObjects.Image[] = [];
   private playerImg!: Phaser.GameObjects.Image;
   private ballImg!: Phaser.GameObjects.Image;
   private hud!: Phaser.GameObjects.Text;
@@ -86,6 +90,8 @@ export class DrivewayScene extends Phaser.Scene implements InspectableScene, Gam
     this.submitted = false;
     this.outcomeText = '';
     this.objImgs = new Map();
+    this.shotImgs = [];
+    this.rollImgs = [];
     this.fx = [];
     this.keys = new Set();
     this.phaseView = 'select';
@@ -280,6 +286,7 @@ export class DrivewayScene extends Phaser.Scene implements InspectableScene, Gam
     const now = performance.now();
     this.banner.setVisible(now < this.bannerUntil);
     this.fxG.clear();
+    if (this.phaseView === 'play') this.pad.draw();
     if (!sim) {
       this.playerImg.setVisible(false);
       this.ballImg.setVisible(false);
@@ -296,10 +303,11 @@ export class DrivewayScene extends Phaser.Scene implements InspectableScene, Gam
       if (img) seen.add(o.id);
     }
     for (const [id, img] of this.objImgs) if (!seen.has(id)) (img.destroy(), this.objImgs.delete(id));
-    for (const pr of sim.projectiles) {
+    sim.projectiles.forEach((pr, i) => {
       const p = v.proj(pr.x, pr.y);
-      this.drawBall(this.fxG, p.x, p.y, DRIVEWAY.shot.radius * p.s, true);
-    }
+      this.ballSprite(this.shotImgs, i, p.x, p.y, DRIVEWAY.shot.radius * p.s, pr.y * 4);
+    });
+    for (let i = sim.projectiles.length; i < this.shotImgs.length; i++) this.shotImgs[i]!.setVisible(false);
     // Player + ball at the feet; touch frames alternate with the sim's foot.
     const pp = v.proj(sim.player.x, sim.player.y);
     const moving = Math.hypot(sim.player.vx, sim.player.vy) > 0.4;
@@ -313,13 +321,13 @@ export class DrivewayScene extends Phaser.Scene implements InspectableScene, Gam
     const bp = v.proj(sim.ball.x, sim.ball.y);
     const br = DRIVEWAY.ball.radius * bp.s;
     if (sim.ball.state === 'held' && this.textures.exists(jungle4Key('jungle4-ball'))) {
-      this.ballImg.setTexture(jungle4Key('jungle4-ball'), ballFrame(sim.player.x * 3 + sim.player.y * 3)).setDisplaySize(br * 2, br * 2).setPosition(bp.x, bp.y - br).setVisible(true).setDepth(101 + bp.y);
+      this.ballImg.setTexture(jungle4Key('jungle4-ball'), ballFrame(sim.player.x * 3 + sim.player.y * 3)).setDisplaySize(br * 2, br * 2).setPosition(bp.x, bp.y - br).setVisible(true).setDepth(this.playerImg.depth + 1);
     } else this.ballImg.setVisible(false);
     if (sim.ball.state === 'recovering') {
       const k = Math.max(0, sim.ball.recoverAt - sim.t) / DRIVEWAY.shot.recoverySeconds;
       const rp = v.proj(sim.ball.x + DRIVEWAY.shot.rollInFrom * k, sim.ball.y);
-      this.drawBall(this.fxG, rp.x, rp.y - br, br, false);
-    }
+      this.ballSprite(this.rollImgs, 0, rp.x, rp.y, br, k * 12);
+    } else this.rollImgs[0]?.setVisible(false);
     for (const f of this.fx) {
       const age = sim.t - f.t0;
       if (age > 0.5) continue;
@@ -353,7 +361,8 @@ export class DrivewayScene extends Phaser.Scene implements InspectableScene, Gam
         if (age > 0.6) return null;
       }
     } else if (ROLLERS.has(o.kind)) frame = Math.floor(Math.abs(o.y * 2 + o.x * 2)) % 4;
-    const h = o.r * 2 * p.s * DD_ART_HEIGHT[o.kind];
+    const wPx = o.r * 2 * p.s * ART_WIDTH;
+    const h = wPx * DD_ART_HEIGHT[o.kind] * 0.5;
     if (!this.textures.exists(DD_OBJ_KEY)) {
       this.g.fillStyle(o.cat === 'breakable' ? 0xc58a4a : 0xff7a1a).fillCircle(p.x, p.y - h / 3, o.r * p.s);
       return null;
@@ -361,18 +370,17 @@ export class DrivewayScene extends Phaser.Scene implements InspectableScene, Gam
     let img = this.objImgs.get(o.id);
     if (!img) (img = this.add.image(0, 0, DD_OBJ_KEY, `${o.kind}-0`).setOrigin(0.5, 0.92)), this.objImgs.set(o.id, img);
     const tex = this.textures.get(DD_OBJ_KEY).get(`${o.kind}-${frame}`);
-    img.setFrame(`${o.kind}-${frame}`).setScale(h / tex.height).setPosition(p.x, p.y).setDepth(100 + p.y).setAlpha(o.state === 'live' ? 1 : 0.85);
+    img.setFrame(`${o.kind}-${frame}`).setScale(wPx / tex.width).setPosition(p.x, p.y).setDepth(100 + p.y).setAlpha(o.state === 'live' ? 1 : 0.85);
     return img;
   }
 
-  private drawBall(g: Phaser.GameObjects.Graphics, x: number, y: number, r: number, moving: boolean): void {
-    if (this.textures.exists(jungle4Key('jungle4-ball'))) {
-      // Projectiles use the approved ball too: a temporary image per frame would churn, so draw a matching disc + shadow.
-      g.fillStyle(0x000000, 0.25).fillEllipse(x, y + r * 0.9, r * 2, r * 0.7);
-    }
-    g.fillStyle(0xffffff, 1).fillCircle(x, y, r).lineStyle(1.5, 0x222222, 1).strokeCircle(x, y, r);
-    g.fillStyle(0x222222, 1).fillCircle(x, y, r * 0.38);
-    if (moving) g.lineStyle(2, 0xffffff, 0.5).lineBetween(x, y + r, x, y + r * 3);
+  /** Shots and the rolled-in replacement use the approved patterned ball (jungle4-ball), with a ground shadow. */
+  private ballSprite(pool: Phaser.GameObjects.Image[], i: number, x: number, y: number, r: number, roll: number): void {
+    const key = jungle4Key('jungle4-ball');
+    this.fxG.fillStyle(0x000000, 0.25).fillEllipse(x, y, r * 2, r * 0.7);
+    if (!this.textures.exists(key)) return void this.fxG.fillStyle(0xffffff, 1).fillCircle(x, y - r, r);
+    const img = pool[i] ?? (pool[i] = this.add.image(0, 0, key, ballFrame(0)));
+    img.setTexture(key, ballFrame(roll)).setDisplaySize(r * 2, r * 2).setPosition(x, y - r).setDepth(101 + y).setVisible(true);
   }
 
   private clearObjects(): void {
@@ -393,7 +401,7 @@ export class DrivewayScene extends Phaser.Scene implements InspectableScene, Gam
     this.pad.setVisible(play);
     this.hud.setPosition(12, 10).setVisible(play);
     this.hudRight.setPosition(w - 12, 10).setVisible(play);
-    this.pauseButton.setPosition(w / 2, 32).setVisible(play && !this.paused);
+    this.pauseButton.setPosition(w / 2, h > w ? 96 : 32).setVisible(play && !this.paused);
     this.banner.setPosition(w / 2, h * 0.32);
     const overlay = this.phaseView !== 'play';
     this.panelG.clear();
@@ -422,7 +430,7 @@ export class DrivewayScene extends Phaser.Scene implements InspectableScene, Gam
         const open = s ? isUnlocked(s.driveway, d) : d === 'beginner';
         const col = i % cols, row = Math.floor(i / cols);
         b.setLabel(`${d === this.difficulty ? '▸ ' : ''}${DD_LABELS[d]}${open ? '' : ' 🔒'}`);
-        b.setPosition(w / 2 + (col - (cols - 1) / 2) * 160, top + row * 54).setVisible(true).setEnabled(open);
+        b.setPosition(w / 2 + (col - (cols - 1) / 2) * 160, top + row * 54).setVisible(true).setAlpha(open ? 1 : 0.55);
       });
       const rows = Math.ceil(DD_DIFFICULTIES.length / cols);
       this.startButton.setPosition(w / 2, top + rows * 54 + 20).setVisible(true).setEnabled(!!s?.player);
@@ -527,6 +535,8 @@ export class DrivewayScene extends Phaser.Scene implements InspectableScene, Gam
     add('dd-replay', this.replayButton);
     add('dd-return', this.returnButton);
     add('dd-pause', this.pauseButton);
+    add('dd-resume', this.resumeButton);
+    add('dd-leave', this.leaveButton);
     this.diffButtons.forEach((b, i) => add(`dd-diff-${DD_DIFFICULTIES[i]}`, b));
     for (const [k, c] of Object.entries(this.pad.controls.currentLayout.buttons)) if (k === 'shoot') elements['pad-shoot'] = { x: c.x - c.r, y: c.y - c.r, width: c.r * 2, height: c.r * 2 };
     const st = this.pad.controls.currentLayout.stick;

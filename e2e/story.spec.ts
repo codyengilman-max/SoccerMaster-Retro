@@ -1,7 +1,7 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { idealPower } from '../src/game/story/crossbar';
 import { thresholdsFor } from '../src/input';
-import { Finger, diagnostics, pressElement as pressAny, revealElement, trackConsoleErrors, waitForScene } from './helpers';
+import { Finger, diagnostics, playDriveway, pressElement as pressAny, revealElement, trackConsoleErrors, waitForScene } from './helpers';
 
 // Season One on one isolated save: identity -> prologue -> week one (aquarium, recess, Coach Code with the
 // real Team Training handoff) -> week close -> week 2, then reload. Later weeks: tests/season-story.test.ts.
@@ -197,6 +197,15 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
       await pressStory(page, 'handoff-continue', mode);
       await story(page, resolved(s), 'assignment');
     } else if (s.adapter === 'week_close') {
+      const due = (await story(page, () => true, 'week close')) as unknown as { buttons: string[]; text: string };
+      if (due.buttons.includes('handoff-driveway')) {
+        // The week stays open until one Driveway Dribbling round finishes; Play Now opens it and Return comes back here.
+        expect(due.text).toContain("Complete this week's Driveway Dribbling");
+        expect(due.buttons).not.toContain('handoff-week');
+        await pressStory(page, 'handoff-driveway', mode);
+        await playDriveway(page, mode);
+        await story(page, () => true, 'back from driveway');
+      }
       await pressStory(page, 'handoff-week', mode);
       await story(page, resolved(s), 'week close');
     } else throw new Error(`unhandled ${JSON.stringify(s)}`);

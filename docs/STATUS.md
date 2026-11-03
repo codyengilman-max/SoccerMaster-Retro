@@ -14,6 +14,8 @@ Sections below are a history log, newest first; each header records where that w
 | **Not planned** | Match-long position lock (H1); story-match Coach Moments, in-match tactical questions, Decision Heat in matches, tactical-choice Match Report scoring (H3) |
 | **Merged whole** | PR #37 (Tournament Results Screen, Animated Rosters v2), merged as one change on the owner's instruction of 2026-10-28, superseding H4's extraction plan |
 
+**Driveway Dribbling** (branch `devin/1793800000-driveway-dribbling`, stacked on the Home curriculum branch, not merged): weekly home mini-game on the owner's driveway art, 2.00-point weekly cap (D74, `docs/training/DRIVEWAY.md`). Phone emulation only, not a real iPhone.
+
 **Progression v2** (branch `devin/1793740000-progression`, not merged): ten attributes, shared main/AI engine, Season 1 maximum 64, schema-3 migration (D72, `docs/PROGRESSION.md`).
 
 ## 1,000-team directory (branch `devin/1793730000-team-directory`, PR open, not merged)

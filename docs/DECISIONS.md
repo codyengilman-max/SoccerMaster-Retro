@@ -478,3 +478,8 @@ Owner instruction: "Make them not drafts add to game".
 ## D73. Home curriculum v2 agreed (owner, 2026-11)
 
 The owner approved the v2 review package: the 18-week Ball Mastery core, the 13 duplicate-pair decisions (Hook/Cruyff unresolved), and the setup alternatives and deferrals (`docs/training/home/CURRICULUM.md`). `HOME_CURRICULUM_STATUS` is `agreed`. A checkpoint is approved only when the sheet (`CHECKPOINTS.md`) already has a lesson-specific target and a both-feet rule (33 of 205); the rest stay unpassable until the owner supplies them. A pass is a player-reported completion (`save.checkpoints`) of the assigned lesson after a logged practice, at most one new lesson a week per track; viewing (`save.lessonsViewed`) and practice never pass. Older saves load with both fields empty.
+
+## D74. Driveway Dribbling: weekly home mini-game, 2-point weekly cap (owner, 2026-11)
+
+Driveway Dribbling is required once per playable season week (any finished round counts; quitting does not) and blocks `endWeek` until then. Older saves start the requirement at their current week. Rewards are stored as integer quarter points with a shared 8-quarter (2.00) weekly cap across difficulties, replays and attributes; replays pay only the improvement over the week's best, and points pass through the existing growth path (`fitToCap`), so the Season 1 maximum of 64 is unchanged. Rules are framework-free in `src/game/driveway/`; the scene reuses the league pad and its double-tap quick shot. Spec and asset map: `docs/training/DRIVEWAY.md`.
+

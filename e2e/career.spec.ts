@@ -1,5 +1,5 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
-import { diagnostics, expectInside, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
+import { diagnostics, expectInside, playDriveway, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
 
 /** Presses a career button, paging with "More" if the screen splits its buttons over pages (as a user would). */
 async function pressElement(page: Page, name: string, mode: 'touch' | 'mouse'): Promise<void> {
@@ -137,7 +137,17 @@ test('home training: create player, plan a ball-only indoor week, log once, pers
   await pressElement(page, 'nav-review', mode);
   await until(page, (x) => x.screen === 'review', 'review');
   await fits(page);
+  // D74: the week cannot finish until one Driveway Dribbling round is done; the review offers it instead.
+  let lay = (await diagnostics(page)).layout!.elements;
+  expect(lay['end-week']).toBeUndefined();
+  await pressElement(page, 'review-driveway', mode);
+  await playDriveway(page, mode);
+  await until(page, (x) => x.screen === 'home', 'home after driveway');
+  await pressElement(page, 'nav-review', mode);
+  c = await until(page, (x) => x.screen === 'review', 'review');
   const attrs = c.attributes;
+  lay = (await diagnostics(page)).layout!.elements;
+  expect(lay['review-driveway']).toBeUndefined();
   await pressElement(page, 'end-week', mode);
   c = await until(page, (x) => x.week === 2, 'week 2');
   // Progression v2 (D72): home practice is 35% of weekly growth, applied once at the review, never downward.
@@ -199,7 +209,8 @@ test('story Home Training lists the required tasks and logging them ticks them o
   let c = await until(page, (x) => x.status === 'ok' && x.screen === 'home' && x.cards.length === 2, 'two cards');
   // Exactly two primary cards; each shows its own required task.
   const home = Object.keys((await diagnostics(page)).layout!.elements).filter((k) => !k.startsWith('career-') && !['title', 'body'].includes(k));
-  expect(home.sort()).toEqual(['continue-ballmastery', 'continue-juggling']);
+  // Two curriculum cards plus the weekly Driveway Dribbling entry (D74); no catalog.
+  expect(home.sort()).toEqual(['continue-ballmastery', 'continue-juggling', 'play-driveway']);
   expect(c.cards[0]).toContain('Juggling: to do');
   expect(c.cards[1]).toContain('First touch: to do');
   await fits(page);

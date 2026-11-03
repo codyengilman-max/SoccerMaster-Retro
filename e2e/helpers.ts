@@ -373,3 +373,23 @@ export async function playTacticalSession(page: Page, slot: 'A' | 'B' | 'C', via
   await waitForScene(page, 'career');
   return done.saved;
 }
+
+/**
+ * Plays one Driveway Dribbling round to a valid finish (weekly requirement). The round runs on the real sim; the
+ * test only steps its clock faster with no input, so the player is hit out or the timer runs down, then Return.
+ */
+export async function playDriveway(page: Page, mode: 'mouse' | 'touch'): Promise<void> {
+  await waitForScene(page, 'driveway');
+  await page.waitForFunction(() => {
+    const g = window.__SMR__?.diagnostics().gameplay as { save?: unknown } | null;
+    return !!g?.save;
+  }, undefined, { timeout: 20_000 });
+  await pressElement(page, 'dd-start', mode);
+  await page.waitForFunction(() => (window.__SMR__?.diagnostics().gameplay as { sim?: { phase?: string } } | null)?.sim?.phase === 'countdown' || (window.__SMR__?.diagnostics().gameplay as { sim?: { phase?: string } } | null)?.sim?.phase === 'playing');
+  await page.evaluate(() => {
+    const s = window.__SMR__!.game.scene.getScene('driveway') as unknown as { sim: { phase: string; update(dt: number): unknown[] }; onEvent(e: unknown): void };
+    for (let i = 0; i < 4000 && s.sim.phase !== 'results'; i++) for (const e of s.sim.update(1 / 30)) s.onEvent(e);
+  });
+  await page.waitForFunction(() => /Weekly Driveway Dribbling: complete/.test((window.__SMR__?.diagnostics().gameplay as { outcome?: string } | null)?.outcome ?? ''), undefined, { timeout: 20_000 });
+  await pressElement(page, 'dd-return', mode);
+}

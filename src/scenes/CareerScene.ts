@@ -845,7 +845,12 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             .filter(Boolean)
             .join('\n'),
           // Opened from the story, the story closes the week (StoryScene.closeWeek), so it cannot be finished here.
-          actions: this.returnTo === 'story' ? [] : [{ name: 'end-week', label: `Finish Week ${s.week}`, onClick: () => void this.act({ type: 'endWeek' }) }],
+          actions:
+            this.returnTo === 'story'
+              ? []
+              : drivewayDue(s.driveway, s.week)
+                ? [{ name: 'review-driveway', label: "Complete this week's Driveway Dribbling", onClick: () => this.scene.start(SceneKeys.Driveway, { returnTo: 'career', careerData: {} }) }]
+                : [{ name: 'end-week', label: `Finish Week ${s.week}`, onClick: () => void this.act({ type: 'endWeek' }) }],
         };
       }
       case 'team': {
