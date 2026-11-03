@@ -114,6 +114,8 @@ for (const gender of ['boy', 'girl'] as const)
       await page.screenshot({ path: `test-results/juggle-${gender}-jg3-${size.width}x${size.height}.png` });
     }
     await page.setViewportSize(vp);
+    // A slow runner can still be laying out the previous size; tapping then hits the old button position.
+    await until(() => diagnostics(page), (d) => d.layout?.viewport.width === vp!.width && d.layout?.viewport.height === vp!.height, 'relayout');
     await press(page, 'demo-slow', mode);
     await until(() => career(page), (x) => x.demo?.sheet?.speed === 0.4, 'slow');
     // Sample every animation frame in the page and keep the first laces contact snapshot: a full
