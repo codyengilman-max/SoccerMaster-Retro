@@ -61,10 +61,8 @@ test('rankings: national/state/search/profile/league on the review sample, uprig
   r = await rk(page, (x) => x.scope === 'CA' && !x.statePicker && x.visible.length > 0, 'California list');
   await fits(page);
   // Find My Team from another state's list goes back to Batavia's own state, centred on Batavia.
-  await pressElement(page, 'tab-state', mode);
-  await rk(page, (x) => x.statePicker, 'state picker again');
-  await page.locator('[data-testid="rank-state"]').selectOption('AZ');
-  await rk(page, (x) => x.scope === 'AZ' && !x.statePicker, 'Arizona again');
+  await pressElement(page, 'rank-around', mode);
+  await rk(page, (x) => x.scope === 'AZ' && x.stateFilter === 'AZ' && x.visible.some((v) => v.team === 'batavia'), 'find my team from California');
 
   await pressElement(page, 'tab-national', mode);
   await pressElement(page, 'rank-top25', mode);

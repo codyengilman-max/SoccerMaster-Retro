@@ -177,7 +177,16 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     this.render();
   }
   /** State filter: a native picker (all 50 states with their team counts), so long lists scroll natively on phones. */
-  private openStatePicker(): void {
+  /** Clears the search and centres Batavia; from another state's list it returns to Batavia's own state. */
+  private findMyTeam(): void {
+    this.query = '';
+    this.closeSearch();
+    const home = teamById(HOME_TEAM)?.state;
+    if (home && this.scope !== 'national' && this.scope !== home) this.scope = this.stateFilter = home;
+    this.jumpToTeam();
+  }
+
+    private openStatePicker(): void {
     this.closeSearch();
     if (this.stateEl) return this.render();
     const r = this.game.canvas.getBoundingClientRect();
@@ -300,7 +309,7 @@ export class RankingsScene extends Phaser.Scene implements InspectableScene {
     if (wide) y = y0;
     const sc: [string, string, () => void][] = [
       ['rank-my-team', 'My Team', () => ((this.query = ''), this.closeSearch(), this.openProfile(HOME_TEAM))],
-      ['rank-around', 'Find My Team', () => ((this.query = ''), this.jumpToTeam(), this.render())],
+      ['rank-around', 'Find My Team', () => (this.findMyTeam(), this.render())],
       ['rank-top25', 'Top 25', () => ((this.query = ''), (this.start = 0), this.render())],
       ['rank-search-btn', this.searchEl ? 'Done' : 'Search', () => (this.searchEl ? this.closeSearch() : this.openSearch())],
     ];

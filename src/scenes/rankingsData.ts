@@ -43,8 +43,8 @@ export async function settleRankings(store: StoryStore, careerId: string, throug
   let bad: string | null = null;
   await store.updateRecord(rankingsKey(careerId), (cur) => {
     const parsed = parseRankings(cur, careerId);
-    // An unreadable record is left exactly as saved (recoverable): only a missing one starts fresh.
-    if (!parsed.ok && parsed.error !== 'missing') return ((bad = parsed.error), null);
+    // An unreadable record (including a stored null) is left exactly as saved: only an absent one starts fresh.
+    if (!parsed.ok && (cur !== undefined || parsed.error !== 'missing')) return ((bad = parsed.error), null);
     const base = parsed.ok ? parsed.value : newRankings(careerId, seasonSeed(careerId), currentWeek <= 1 ? 0 : currentWeek);
     const r = settleThrough(base, story, Math.max(0, throughWeek));
     out = r.state;

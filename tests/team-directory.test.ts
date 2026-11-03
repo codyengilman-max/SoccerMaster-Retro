@@ -159,6 +159,9 @@ describe('saved rankings record', () => {
     await st.putRecord(rankingsKey(cid), damaged);
     await expect(settleRankings(st, cid, 0, 1)).rejects.toBeInstanceOf(RankingsSaveError);
     expect(await st.getRecord(rankingsKey(cid))).toEqual(damaged);
+    await st.putRecord(rankingsKey(cid), null);
+    await expect(settleRankings(st, cid, 0, 1)).rejects.toBeInstanceOf(RankingsSaveError);
+    expect(await st.getRecord(rankingsKey(cid))).toBeNull();
     st.close();
   });
 });
