@@ -64,6 +64,7 @@ export class MatchReportScene extends Phaser.Scene implements InspectableScene {
   private matchId = '';
   private storyStore: StoryStore | null = null;
   private impact: string[] | null = null;
+  private competitionLabel: Phaser.GameObjects.Text | null = null;
   private report: SavedReport | null = null;
   private status = 'loading';
   private overall = 0;
@@ -79,6 +80,7 @@ export class MatchReportScene extends Phaser.Scene implements InspectableScene {
   }
 
   init(data: MatchReportData): void {
+    this.competitionLabel = null;
     this.impact = null;
     this.storyStore = null;
     this.next = data?.next === 'story' || data?.next === 'history' ? data.next : 'start';
@@ -120,7 +122,7 @@ export class MatchReportScene extends Phaser.Scene implements InspectableScene {
     c.label(M.homeTeam, r.home, 0.32, INK);
     c.label(M.score, `${r.score.home} - ${r.score.away}`, 0.5, NAVY);
     c.label(M.awayTeam, r.away, 0.32, INK);
-    c.label(M.competition, `${r.competition} - Week ${r.week}`, 0.5, NAVY);
+    this.competitionLabel = c.label(M.competition, `${r.competition} - Week ${r.week}`, 0.5, NAVY);
     const rating = r.rating.overall === null ? '-' : `${r.rating.overall}`;
     c.label(M.info, `${r.playerName}\n${r.position} - ${r.minutes} min\nRating ${rating}/100`, 0.22, INK, 'left');
     c.label(M.formBar, `Form: not tracked - Evidence: ${r.rating.confidence === 'none' ? 'not enough' : r.rating.confidence}`, 0.42, INK);
@@ -284,7 +286,9 @@ export class MatchReportScene extends Phaser.Scene implements InspectableScene {
     if (!this.sys.isActive()) return;
     const fullTime = ft && Number.isInteger(ft.home) && Number.isInteger(ft.away) ? { us: ft.home as number, them: ft.away as number } : null;
     this.impact = teamImpact(k, rk.value, results, fullTime);
-    this.card.label(M.competition, `${r.competition} - Week ${r.week} · TEAM IMPACT >`, 0.5, NAVY);
+    const label = `${r.competition} - Week ${r.week} · TEAM IMPACT >`;
+    if (this.competitionLabel?.active) this.card.setText(this.competitionLabel, label);
+    else this.card.label(M.competition, label, 0.5, NAVY);
     this.card.hit('report-team-impact', M.competition, () => this.openFull(`TEAM IMPACT\n${this.impact!.join('\n')}`));
   }
 

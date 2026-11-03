@@ -465,3 +465,4 @@ Owner instruction: "Make them not drafts add to game".
 - **Fix found in testing:** National and State tabs now leave League standings (they changed scope but kept the standings view).
 - **Preseason table:** before the first league week saves a league, League standings lists the nine clubs a new league will have, all on zero and sharing 1st (it showed only headers).
 - **Fix found in testing:** a match against a club with no match sprites wears the Royal Salt kit, but the Match Report now names the real opponent from the directory (it said Royal Salt Academy).
+- **Fix found in testing (pre-existing):** a story Match Report with TEAM IMPACT drew the competition line twice, one on top of the other; it now updates the one label.
