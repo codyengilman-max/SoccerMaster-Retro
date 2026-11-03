@@ -285,6 +285,8 @@ for (const gender of ['boy', 'girl'] as const) {
 // Inside-foot transfers (owner option A): planted side stance, foot detail from above (BM-056, v1.1 BM01 L2).
 for (const gender of ['boy', 'girl'] as const) {
   test(`inside-foot transfers (${gender}): foot detail from above shows the touching boot, ball and caption from one state`, async ({ page }, info) => {
+    // Two lessons x two feet, each played live and then walked beat by beat: ~1 fps runners need more than the default.
+    test.setTimeout(900_000);
     const mode = modeFor(info);
     const errors = trackConsoleErrors(page);
     page.on('dialog', (d) => void d.accept('Robin'));
