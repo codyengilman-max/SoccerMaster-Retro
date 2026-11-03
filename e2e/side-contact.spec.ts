@@ -310,9 +310,8 @@ for (const gender of ['boy', 'girl'] as const) {
         await press(page, 'demo-replay', mode);
         await until(page, (x) => x.demo?.teach?.foot === lead && x.demo.paused === false && x.demo.speed === 0.5, `${id} ${lead} playing`);
         const seen: Demo[] = [];
-        for (;;) {
-          const d = (await career(page)).demo!;
-          seen.push(d);
+        // Same checks for live samples and for the held beat starts walked with Step below.
+        const check = (d: Demo): void => {
           const s = d.side!;
           const top = s.top!;
           expect(d.flip, 'never mirrored').toBe(false);
@@ -336,11 +335,34 @@ for (const gender of ['boy', 'girl'] as const) {
             expect(d.inset!.label).toContain('inside on ball');
           } else expect(d.inset!.label).not.toContain('on ball');
           expect(d.inset!.label.startsWith('From above')).toBe(true);
+        };
+        for (;;) {
+          const d = (await career(page)).demo!;
+          seen.push(d);
+          check(d);
           if (d.paused) break;
           await page.waitForTimeout(30);
         }
         const ys = seen.map((d) => d.side!.top!.ballY);
         expect(Math.max(...ys) - Math.min(...ys), 'ball crosses between the feet').toBeGreaterThan(10);
+        // A contact beat can fall between two reads on a ~1 fps runner; also visit every held beat start (Step).
+        await press(page, 'demo-replay', mode);
+        await press(page, 'demo-pause', mode);
+        let h = await until(page, (x) => x.demo?.paused === true, 'paused');
+        for (let k = 0; k < 40 && h.demo!.teach!.phase !== 0; k++) {
+          const ph = h.demo!.teach!.phase;
+          await press(page, 'demo-step', mode);
+          h = await until(page, (x) => x.demo!.teach!.phase !== ph, `${id} ${lead} step to start`);
+        }
+        for (let k = 0; k < 40; k++) {
+          check(h.demo!);
+          seen.push(h.demo!);
+          const ph = h.demo!.teach!.phase;
+          await press(page, 'demo-step', mode);
+          // Step after the last beat wraps to the start.
+          h = await until(page, (x) => x.demo!.teach!.phase !== ph, `${id} ${lead} step after ${ph}`);
+          if (h.demo!.teach!.phase < ph) break;
+        }
         expect(seen.some((d) => d.teach!.contact === 'inside' && d.side!.working === lead), 'lead foot touches').toBe(true);
         expect(seen.some((d) => d.teach!.contact === 'inside' && d.side!.working !== lead), 'other foot touches').toBe(true);
         expect(new Set(seen.map((d) => d.side!.ballTexture)).size, 'ball turns as it rolls').toBeGreaterThan(1);
