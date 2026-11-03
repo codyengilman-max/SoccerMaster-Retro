@@ -91,6 +91,9 @@ const CAREER_SCREEN: Readonly<Record<string, object>> = {
   'nav-review': { kind: 'review' },
   'nav-player': { kind: 'player' },
   'nav-library': { kind: 'library', family: null },
+  // Juggling and Ball Mastery are guided curricula (Continue only); tests still open their lesson lists directly.
+  'nav-juggling': { kind: 'library', family: 'juggling' },
+  'nav-ballmastery': { kind: 'ballMastery' },
 };
 
 /** Wheel a scrolling screen (My Player) until the named element is fully inside the viewport. */

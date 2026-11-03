@@ -88,8 +88,9 @@ for (const gender of ['boy', 'girl'] as const) {
     await until(page, (x) => x.screen === 'setup', 'setup');
     await press(page, 'career-home', mode);
     c = await until(page, (x) => x.player === 'Robin' && x.screen === 'home', 'new player home');
-    // Home Training: exactly two cards, Juggling and Ball Mastery, plus the Back/Home/Menu bar. No Progress, Team Training, focus or Home Practice.
-    expect(Object.keys(await els(page)).filter((k) => !k.startsWith('career-') && !['title', 'body'].includes(k)).sort()).toEqual(['nav-ballmastery', 'nav-juggling']);
+    // Home Training: exactly two Continue cards, Juggling and Ball Mastery, and one way out. No Progress, Team Training, focus or Home Practice.
+    expect(Object.keys(await els(page)).filter((k) => !k.startsWith('career-') && !['title', 'body'].includes(k)).sort()).toEqual(['continue-ballmastery', 'continue-juggling']);
+    expect(Object.keys(await els(page)).filter((k) => k.startsWith('career-'))).toEqual(['career-menu']);
     expect(c.text).not.toMatch(/focus|Team Training|Home Practice|Extra practice/i);
     await page.screenshot({ path: `test-results/bm-home-${gender}-${info.project.name}.png` });
     // Build some history the old way (Training Library > Juggling > jg-1 > Log extra practice), then reload it as an existing save.

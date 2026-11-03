@@ -24,7 +24,9 @@ import { orientationOf } from '../render/layout';
 import { PlayerArt, atlasKey } from '../render/art/playerArt';
 import { SPRITE_CELL } from '../render/art/spriteSets';
 import { DEMO_BALL_PEAK, JUGGLE_PATTERNS, demoBeats, demoLength, demoPose, demoSet, isKeeperExercise, nextBeat, sheetBeats, stepBeats } from '../render/art/homeDemo';
-import { BALL_MASTERY_DESIGNS, DESIGN_PREFIX, DESIGN_MATCHES, DESIGN_SOURCES, HOME_SECTIONS, designById, designsFor, sectionOf } from '../game/career/ballMastery';
+import { BALL_MASTERY_DESIGNS, DESIGN_PREFIX, DESIGN_MATCHES, DESIGN_SOURCES, HOME_SECTIONS, HOME_SECTION_LABELS, designById, designsFor, sectionOf } from '../game/career/ballMastery';
+import { HOME_CURRICULUM, curriculumLesson, lessonStatus, trackStatus, type Track } from '../game/career/homeCurriculum';
+import { specFor } from '../game/career/homeMastery';
 import { ensureJuggleSheet, juggleKey } from '../render/art/juggleArt';
 import { JUGGLE_SHEET } from '../render/art/juggleSheet';
 import { BM_SHEET } from '../render/art/bmSheet';
@@ -395,26 +397,27 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         // Exactly two sections. Required story tasks and progress show inside the card they belong to.
         const req = this.requiredTasks();
         const tick = (keys: readonly string[]) => req.filter((t) => keys.includes(t.key)).map((t) => `${t.short}: ${t.done ? 'done' : 'to do'}`);
-        const logged = (sec: 'juggling' | 'ballMastery') =>
-          s.journal.filter((j) => {
-            const a = j.week === s.week && j.completion === 'done' ? activityById(j.activityId) : undefined;
-            return a !== undefined && sectionOf(a) === sec;
-          }).length;
-        const phase = (k: 'juggling' | 'firstTouch' | 'passing') => masteryLines(s.homeLogs, k).progress.phase;
-        const jl = [`Phase ${phase('juggling')} of 5 · ${logged('juggling')} logged this week`, ...tick(['juggling'])];
-        const bl = [`First touch phase ${phase('firstTouch')} · Passing phase ${phase('passing')}`, `${logged('ballMastery')} logged this week`, ...tick(['firstTouch', 'passing', 'learning'])];
         const todo = (keys: readonly string[]) => req.some((t) => keys.includes(t.key) && !t.done);
+        // One card per curriculum: phase, assigned lesson, compact progress and Continue (no chooser).
+        const card = (t: Track, keys: readonly string[]): string => {
+          const st = trackStatus(t, s);
+          const a = st.current ? activityById(st.current.lesson.id) : undefined;
+          return [
+            HOME_SECTION_LABELS[t].toUpperCase(),
+            `Phase ${st.phase} of 5 · ${st.phaseName}`,
+            a ? `Next: ${a.title}` : 'Every lesson complete',
+            `Lesson ${st.inPhase.index} of ${st.inPhase.of} · ${st.completed} of ${st.total} done`,
+            ...tick(keys),
+            a ? 'CONTINUE ▸' : '',
+          ].filter(Boolean).join('\n');
+        };
         return {
           title: `${p.name} · Week ${s.week}`,
-          body: req.length
-            ? req.every((t) => t.done)
-              ? 'This week\'s home training is done. Tap Back to story, then Continue Week.'
-              : 'Open a section, pick a lesson, watch it, then Log practice. Highlighted cards still have work this week.'
-            : 'Open a section, pick a lesson, watch it, then Log practice.',
+          body: req.length && req.every((t) => t.done) ? 'This week\'s home training is done. Tap Back to story, then Continue Week.' : 'Tap Continue for your next lesson. Watch it, practise, then Log practice.',
           cards: true,
           actions: [
-            { name: 'nav-juggling', label: `JUGGLING\n${jl.join('\n')}`, on: todo(['juggling']), onClick: () => this.go({ kind: 'library', family: 'juggling' }) },
-            { name: 'nav-ballmastery', label: `BALL MASTERY\n${bl.join('\n')}`, on: todo(['firstTouch', 'passing', 'learning']), onClick: () => this.go({ kind: 'ballMastery' }) },
+            { name: 'continue-juggling', label: card('juggling', ['juggling']), on: todo(['juggling']), onClick: () => this.continueTrack('juggling') },
+            { name: 'continue-ballmastery', label: card('ballMastery', ['firstTouch', 'passing', 'learning']), on: todo(['firstTouch', 'passing', 'learning']), onClick: () => this.continueTrack('ballMastery') },
           ],
         };
       }
@@ -710,7 +713,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         const side = sideLessonFor(a.id);
         if (side) {
           const tips = [`Looks right when: ${a.success}`, `Easier: ${a.easier}  Harder: ${a.harder}`, `Needs: ball, ${a.space} space.`, `Source: ${a.sourceNote}`, 'Demo art: side-view poses derived from the approved training sprites (review build).', ...(side.kind === 'inside' ? ['Foot detail: both boots and the ball seen from above, from the same moment.'] : [])];
-          const body = [`COACH CODE: ${a.cue}`, side.titles.map((t, i) => `${i + 1}. ${t}`).join('\n'), `Common mistake: ${a.mistake.mistake}\nFix: ${a.mistake.correction}`, ...(this.teachTips ? tips : [])].join('\n');
+          const body = [`${this.taskLine(a)}COACH CODE: ${a.cue}`, side.titles.map((t, i) => `${i + 1}. ${t}`).join('\n'), `Common mistake: ${a.mistake.mistake}\nFix: ${a.mistake.correction}`, ...(this.teachTips ? tips : [])].join('\n');
           const actions: Action[] = [
             { name: 'demo-pause', label: this.demoPaused ? 'Play' : 'Pause', onClick: () => (this.demoPaused && this.demoT >= sideLength(side) && (this.demoT = 0), (this.demoPaused = !this.demoPaused), this.render()) },
             { name: 'demo-step', label: 'Step', onClick: () => ((this.demoPaused = true), (this.demoT = nextBeat(sideStarts(side), this.demoT, sideLength(side))), this.render()) },
@@ -732,7 +735,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             `Source: ${a.sources.map((r) => SOURCES[r.id].title).join('; ') || a.sourceNote}.`,
             'Demo art: cleaned draft contact poses (review build), not a coach-approved animation.',
           ].filter(Boolean);
-          const tbody = [`COACH CODE: ${a.cue}`, `1. ${a.steps[0]}\n2. ${a.steps[1]}\n3. ${a.steps[2]}`, `Common mistake: ${a.mistake.mistake}\nFix: ${a.mistake.correction}`, ...(this.teachTips ? tips : [])].join('\n');
+          const tbody = [`${this.taskLine(a)}COACH CODE: ${a.cue}`, `1. ${a.steps[0]}\n2. ${a.steps[1]}\n3. ${a.steps[2]}`, `Common mistake: ${a.mistake.mistake}\nFix: ${a.mistake.correction}`, ...(this.teachTips ? tips : [])].join('\n');
           const tactions: Action[] = [
             { name: 'demo-pause', label: this.demoPaused ? 'Play' : 'Pause', onClick: () => (this.demoPaused && this.demoT >= lessonLength(lesson) && (this.demoT = 0), (this.demoPaused = !this.demoPaused), this.render()) },
             { name: 'demo-step', label: 'Step', onClick: () => ((this.demoPaused = true), (this.demoT = nextBeat(phaseStarts(lesson), this.demoT, lessonLength(lesson))), this.render()) },
@@ -756,7 +759,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           ...links.map(({ design: d, match: m }) => `Ball Mastery design ${d.id} ${d.title}: ${m.verdict === 'equivalent' ? 'same move as this lesson' : 'similar move, its own lesson in Dribbling'}. Sources: ${d.sourceIds.map((id) => DESIGN_SOURCES[id]?.title ?? id).join('; ')}.`),
         ];
         const body = [
-          `COACH CODE: ${a.cue}`,
+          `${this.taskLine(a)}COACH CODE: ${a.cue}`,
           ...(gated ? [GATED_NOTE] : []),
           a.objective,
           useBallOnly ? `Ball-only version: ${a.ballOnly!.objective} ${a.ballOnly!.steps}` : `1. ${a.steps[0]}\n2. ${a.steps[1]}\n3. ${a.steps[2]}`,
@@ -948,8 +951,31 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   }
 
   private taskScreen(t: HomeTask): Screen {
-    if (t.key === 'learning') return { kind: 'ballMastery' };
-    return { kind: 'library', family: t.key };
+    return this.lessonScreen(t.key === 'juggling' ? 'juggling' : 'ballMastery');
+  }
+
+  /** The track's assigned lesson, or Home when every lesson is complete. */
+  private lessonScreen(t: Track): Screen {
+    const id = trackStatus(t, this.save).current?.lesson.id;
+    return id ? { kind: 'activity', id, sessionId: null, index: 0 } : { kind: 'home' };
+  }
+
+  private continueTrack(t: Track): void {
+    this.demoT = 0;
+    this.demoPaused = this.reducedMotion;
+    this.go(this.lessonScreen(t));
+  }
+
+  /** Curriculum position and the assigned practice task, above the Coach Code. */
+  private taskLine(a: Activity): string {
+    const l = curriculumLesson(a.id);
+    if (!l) return '';
+    const st = lessonStatus(l, this.save);
+    const ph = HOME_CURRICULUM.tracks[l.track].find((x) => x.phase === l.phase)!;
+    const spec = l.advance.kind === 'target' ? specFor(l.advance.skill, l.advance.phase) : null;
+    const task = spec ? `${spec.what} Log your scores: ${spec.record.toLowerCase()}.` : 'Practise it, then tap Log practice.';
+    const target = st.targetMet === null ? '' : st.targetMet ? ' · target met' : ' · target not met yet';
+    return `PHASE ${l.phase} · LESSON ${ph.lessons.indexOf(l.id) + 1} OF ${ph.lessons.length}\nPRACTICE TASK: ${task}\nPractices reported: ${Math.min(st.practices, l.advance.practices)} of ${l.advance.practices}${target}\n`;
   }
 
   private async complete(a: Activity, sessionId: string | null): Promise<void> {
@@ -1090,12 +1116,17 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       if (a.on) b.setFill(PALETTE.mustard, PALETTE.mustardDark);
       this.buttons.push(b);
     });
-    const nav: Action[] = [
-      { name: 'career-back', label: 'Back', onClick: () => this.back() },
-      { name: 'career-home', label: 'Training Home', onClick: () => (this.history = [], (this.screen = this.save.player ? { kind: 'home' } : { kind: 'create' }), this.render()) },
-      { name: 'career-menu', label: this.returnTo === 'story' ? 'Back to story' : 'Menu', onClick: () => this.menu() },
-    ];
-    const nw = (width - 40 - gap * 2) / 3;
+    const menu: Action = { name: 'career-menu', label: this.returnTo === 'story' ? 'Back to story' : 'Menu', onClick: () => this.menu() };
+    // Home Training itself keeps one way out; other screens also get Back and Training Home.
+    const nav: Action[] =
+      this.screen.kind === 'home' && this.save.player
+        ? [menu]
+        : [
+            { name: 'career-back', label: 'Back', onClick: () => this.back() },
+            { name: 'career-home', label: 'Training Home', onClick: () => (this.history = [], (this.screen = this.save.player ? { kind: 'home' } : { kind: 'create' }), this.render()) },
+            menu,
+          ];
+    const nw = (width - 40 - gap * (nav.length - 1)) / nav.length;
     nav.forEach((a, i) => {
       const b = new Button(this, 20 + i * (nw + gap) + nw / 2, height - 16 - navH / 2, { name: a.name, label: a.label, width: nw, height: navH, fontSize: font, onClick: a.onClick, fill: PALETTE.blue, fillPressed: PALETTE.blueDark });
       this.buttons.push(b);

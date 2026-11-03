@@ -199,18 +199,16 @@ test('story Home Training lists the required tasks and logging them ticks them o
   let c = await until(page, (x) => x.status === 'ok' && x.screen === 'home' && x.cards.length === 2, 'two cards');
   // Exactly two primary cards; each shows its own required task.
   const home = Object.keys((await diagnostics(page)).layout!.elements).filter((k) => !k.startsWith('career-') && !['title', 'body'].includes(k));
-  expect(home.sort()).toEqual(['nav-ballmastery', 'nav-juggling']);
+  expect(home.sort()).toEqual(['continue-ballmastery', 'continue-juggling']);
   expect(c.cards[0]).toContain('Juggling: to do');
   expect(c.cards[1]).toContain('First touch: to do');
   await fits(page);
   for (const [task, label, short, path] of [
-    ['juggling', 'Juggling task', 'Juggling', ['nav-juggling']],
-    ['firstTouch', 'Control and first-touch work', 'First touch', ['nav-ballmastery', 'lib-firstTouch']],
+    ['juggling', 'Juggling task', 'Juggling', ['continue-juggling']],
+    ['firstTouch', 'Control and first-touch work', 'First touch', ['continue-ballmastery']],
   ] as const) {
+    // Continue opens the track's assigned lesson directly (no chooser).
     for (const n of path) await pressElement(page, n, mode);
-    await until(page, (x) => x.screen === 'library', `${task} library`);
-    const first = Object.keys((await diagnostics(page)).layout!.elements).find((k) => k.startsWith('act-'))!;
-    await pressElement(page, first, mode);
     await until(page, (x) => x.screen === 'activity' && x.text.includes('COACH CODE'), 'lesson');
     await pressElement(page, 'log-open', mode);
     await until(page, (x) => x.screen === 'log', 'log form');

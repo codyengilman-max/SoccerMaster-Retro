@@ -3,6 +3,7 @@
  * count as completed training, and missing records are never treated as proof of inactivity.
  */
 import { activityById } from '../career/catalog';
+import { sectionOf } from '../career/ballMastery';
 import { CAREER_CONFIG } from '../career/config';
 import type { CareerSave } from '../career/state';
 import type { CompetitorId } from '../jungle/sim';
@@ -81,9 +82,15 @@ export interface WeekAssignments {
 export function weekAssignments(save: CareerSave, storyWeek: number): WeekAssignments {
   const done = (family: string): boolean =>
     save.journal.some((j) => j.week === save.week && j.completion === 'done' && activityById(j.activityId)?.skillFamilyId === family);
+  const doneIn = (section: 'ballMastery'): boolean =>
+    save.journal.some((j) => {
+      const a = j.week === save.week && j.completion === 'done' ? activityById(j.activityId) : undefined;
+      return a !== undefined && sectionOf(a) === section;
+    });
   const skill: HomeSkill = storyWeek >= 7 ? 'passing' : 'firstTouch';
   const juggling = done('juggling');
-  const skillDone = done(skill);
+  // Ball Mastery is one guided curriculum with no skill chooser, so its assigned lesson also meets the skill task.
+  const skillDone = done(skill) || doneIn('ballMastery');
   const n = CAREER_CONFIG.home.sessionsPerWeek;
   const practices = save.journal.filter((j) => j.week === save.week && j.completion === 'done').length;
   // Home Training no longer offers a weekly focus plan, so logged practices also meet Home learning; a save that
