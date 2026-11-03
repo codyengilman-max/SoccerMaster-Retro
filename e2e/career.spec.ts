@@ -140,14 +140,22 @@ test('home training: create player, plan a ball-only indoor week, log once, pers
   const attrs = c.attributes;
   await pressElement(page, 'end-week', mode);
   c = await until(page, (x) => x.week === 2, 'week 2');
-  // Home practice alone never changes game attributes.
-  expect(c.attributes).toEqual(attrs);
+  // Progression v2 (D72): home practice is 35% of weekly growth, applied once at the review, never downward.
+  const before = attrs as Record<string, number>;
+  const after = c.attributes as Record<string, number>;
+  expect(Object.keys(after).length).toBe(10);
+  expect(Object.keys(after).some((k) => after[k] !== before[k])).toBe(true);
+  for (const k of Object.keys(before)) expect(after[k]).toBeGreaterThanOrEqual(before[k]!);
   expect(c.credit).toBe(0);
   await pressElement(page, 'career-home', mode);
   await until(page, (x) => x.screen === 'home', 'home');
   await pressElement(page, 'nav-player', mode);
   await until(page, (x) => x.screen === 'player', 'player');
   await fits(page);
+  // Reloading after the review never applies it again.
+  c = await openCareer(page, mode);
+  expect(c.week).toBe(2);
+  expect(c.attributes).toEqual(after);
   expect(errors).toEqual([]);
 });
 
