@@ -62,6 +62,7 @@ const rectOf = (r: Phaser.Geom.Rectangle) => ({ x: Math.round(r.x), y: Math.roun
 import { Button } from './ui/Button';
 import { COACH_OVERLAY_DEPTH, CoachOverlay } from './ui/CoachOverlay';
 import { PLAYER_ART, PlayerArt, atlasKey } from '../render/art/playerArt';
+import { teamById } from '../game/rankings/teams';
 import { COACH_POSE, SPRITE_CELL, isSpriteClub, type SpriteClub } from '../render/art/spriteSets';
 import { sideLooks, type ProtagonistLook, type RosterLook } from '../render/art/roster';
 import { SPRITE_FRAME, dirFromScreen, type PoseKind } from '../render/art/spriteFactory';
@@ -218,6 +219,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private resultKey: string | null = null;
   /** Away side's club sheet; matches outside the story show Royal Salt. Cosmetic only. */
   private opponent: SpriteClub = 'royal_salt';
+  /** The fixture's real opponent (directory id) for names in the report; may differ from the kit sheet. */
+  private opponentId = 'royal_salt';
   private collector: EvidenceCollector | null = null;
   /** Career player's own actions for the Match Report; read-only, beside the evidence collector. */
   private ledger: MatchLedger | null = null;
@@ -253,6 +256,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.venueId = this.returnTo === 'story' && isVenueId(data.venueId) ? data.venueId : null;
     this.competition = data.competition === 'Tournament' ? 'Tournament' : 'League';
     this.opponent = isSpriteClub(data.opponent) && data.opponent !== 'batavia' ? data.opponent : 'royal_salt';
+    this.opponentId = typeof data.opponent === 'string' && data.opponent !== 'batavia' && (isSpriteClub(data.opponent) || teamById(data.opponent)) ? data.opponent : this.opponent;
     this.navigating = false;
     this.overlayOn = false;
     this.fieldKey = '';
@@ -1149,6 +1153,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const s = this.sim.state;
     const names: Record<string, string> = {};
     for (const t of Object.values(TOURNAMENTS)) for (const [id, info] of Object.entries(t.teams)) names[id] = info.name;
+    names[this.opponentId] ??= teamById(this.opponentId)?.name ?? clubDisplayName(this.opponentId, names);
     const matchId = this.resultKey ?? this.careerSession;
     // The sim always plays Batavia on its home side; the report shows the fixture's real venue.
     const away = this.returnTo === 'story' && this.venue === 'away';
@@ -1157,8 +1162,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         matchId: matchId.slice(0, 64),
         week: meta.week,
         competition: this.returnTo === 'story' ? this.competition : 'Friendly',
-        home: clubDisplayName(away ? this.opponent : 'batavia', names),
-        away: clubDisplayName(away ? 'batavia' : this.opponent, names),
+        home: clubDisplayName(away ? this.opponentId : 'batavia', names),
+        away: clubDisplayName(away ? 'batavia' : this.opponentId, names),
         score: away ? { home: s.score.away, away: s.score.home } : { home: s.score.home, away: s.score.away },
         playerName: meta.name,
         position: meta.position,
