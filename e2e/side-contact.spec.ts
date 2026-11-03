@@ -68,6 +68,8 @@ const other = (f: 'right' | 'left') => (f === 'right' ? 'left' : 'right');
 
 for (const gender of ['boy', 'girl'] as const) {
   test(`side-view contact (${gender}): Sole taps uses derived poses, the approved ball and one state for body, ball, inset and caption`, async ({ page }, info) => {
+    // Slow CI runners draw about one frame a second; every check stays, only the time allowed grows.
+    test.setTimeout(600_000);
     // Hold the side-view atlas back so the ordinary training sprite draws first, as on a cold first visit.
     await page.route('**/*-side*.webp', async (r) => {
       await new Promise((res) => setTimeout(res, 2000));
@@ -155,9 +157,20 @@ for (const gender of ['boy', 'girl'] as const) {
     await until(page, (x) => x.demo?.speed === 0.5 && x.demo.paused === false, '0.5x');
     // Demo time over the wall time the demo actually played: a starved CI runner draws about one frame a second
     // (a long gap counts as at most 0.25 s), so real-time sampling can't measure the speed there.
-    const a = await career(page);
-    await page.waitForTimeout(800);
-    const b = await career(page);
+    // A window in which the demo reached its last frame (and stopped) says nothing about speed: replay and re-measure.
+    let a = await career(page);
+    let b = a;
+    for (let k = 0; k < 6; k++) {
+      if (k > 0) {
+        await press(page, 'demo-replay', mode);
+        await until(page, (x) => x.demo?.speed === 0.5 && x.demo.paused === false, '0.5x replay');
+      }
+      a = await career(page);
+      await page.waitForTimeout(800);
+      b = await career(page);
+      if (a.demo!.paused === false && b.demo!.paused === false && b.demo!.teach!.clock > a.demo!.teach!.clock) break;
+    }
+    expect(b.demo!.paused, 'demo still playing at the end of the window').toBe(false);
     const played = b.demo!.teach!.clock - a.demo!.teach!.clock;
     expect(played, 'demo kept playing').toBeGreaterThan(0);
     const rate = (b.demo!.teach!.t - a.demo!.teach!.t) / played;
@@ -176,6 +189,8 @@ for (const gender of ['boy', 'girl'] as const) {
 // Sole rolls (v1.1 BM03 L2, TR01 L1): the ball travels under the sole, each position drawn with its own pose.
 for (const gender of ['boy', 'girl'] as const) {
   test(`side-view sole rolls (${gender}): ball and sole travel together, ball turns, inset follows`, async ({ page }, info) => {
+    // Slow CI runners draw about one frame a second; every check stays, only the time allowed grows.
+    test.setTimeout(600_000);
     const mode = modeFor(info);
     const errors = trackConsoleErrors(page);
     page.on('dialog', (d) => void d.accept('Robin'));

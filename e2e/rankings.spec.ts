@@ -2,7 +2,8 @@ import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { diagnostics, expectInside, pressElement, trackConsoleErrors, waitForScene } from './helpers';
 
 type Rk = { status: string; sample: boolean; view: string; scope: string; stateFilter: string; statePicker: boolean; query: string; team: string; visible: { team: string; rank: number }[]; published: number | null; provisional: boolean | null };
-test.describe.configure({ timeout: 120_000 });
+// Slow CI runners draw ~1 fps; the paging walk alone can exceed two minutes there.
+test.describe.configure({ timeout: 300_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 
 async function rk(page: Page, pred: (r: Rk) => boolean, what: string): Promise<Rk> {
