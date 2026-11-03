@@ -1,19 +1,22 @@
 import { REPORTS_KEPT, type SavedReport } from '../report/report';
-import { settleWeek, zeroFractions, type Fractions, type WeekSettlement } from '../report/settlement';
+import { zeroFractions, type Fractions, type WeekSettlement } from '../report/settlement';
 import { DIFFICULTIES, type Difficulty } from '../cloudy/sim';
 import { CAREER_CONFIG } from './config';
 import { FOCUSES, activityById, focusById } from './catalog';
 import { DEFAULT_INPUT, normalizeInput, planWeek, substitute, workableFocuses, type PlannerInput, type WeekPlan } from './planner';
 import { cleanName, cleanText, createPlayer, type CareerPlayer } from './player';
-import { applyGrowth, computeGrowth, type AttributeOutcome, type EvidenceItem } from './progression';
+import { computeGrowth, type AttributeOutcome, type EvidenceItem } from './progression';
+import { DEV_CONFIG, applyProposal, bonusFits, proposeWeek, type DevProposal, type SourceWeek } from './development';
+import { weekSources } from './weekSources';
+import type { ProgressionMigration } from './migrationV2';
 import { weeklyAssignment, gradeWeekly } from '../training12/all36/weekly';
 import { BONUS_RULES, SPENDABLE, balance, emptyBank, grant, matchAwardKeys, teamTrainingResult, type BonusBank } from './bonus';
 import { HOME_SKILLS, attemptsError, skillProgress, specFor, type Attempt, type HomeLog } from './homeMastery';
 import type { ChoiceId, DisplayBand, NoDecision, PackageGrade } from '../training12/all36/types';
-import { selectSituations, situationById, teamTrainingChanges, describeChanges, weekDelta, type AttributeChange, type SituationResult } from './teamTraining';
-import { SKILL_FAMILIES, type AttributeId, type Foot, type Level, type Position, type Rating, type SkillFamilyId } from './types';
+import { selectSituations, weekDelta, type AttributeChange, type SituationResult } from './teamTraining';
+import { ATTRIBUTES, ATTRIBUTE_LABELS, SKILL_FAMILIES, type AttributeId, type Foot, type Level, type Position, type Rating, type SkillFamilyId } from './types';
 
-export const SAVE_SCHEMA = 2;
+export const SAVE_SCHEMA = 3;
 
 export type Completion = 'done' | 'partly' | 'skipped';
 
@@ -52,8 +55,10 @@ export interface WeekReview {
   readonly missedEvents: number;
   readonly outcomes: readonly AttributeOutcome[];
   readonly suggestedFocus: string | null;
-  /** The 35/30/30/5 weekly development settlement (weeks settled before it existed: absent). */
+  /** The 35/30/30/5 weekly development settlement (progression v1 weeks only). */
   readonly settlement?: WeekSettlement;
+  /** Progression v2 weekly review: the sources it read and the gains it proposed and applied (once). */
+  readonly development?: { readonly sources: readonly SourceWeek[]; readonly proposal: DevProposal };
 }
 
 /** One week's Team Training, counted once. */
@@ -101,6 +106,8 @@ export interface CareerSave {
   readonly devCarry: Fractions;
   /** Bonus Attribute Points earned from achievements and spent on attributes (older saves: empty, nothing inferred). */
   readonly bonus: BonusBank;
+  /** Progression v2 migration report, kept for saves migrated from schema 2 (new careers: absent). */
+  readonly progression?: ProgressionMigration;
 }
 
 export interface CloudyBest {
@@ -369,9 +376,9 @@ export function reduce(save: CareerSave, action: Action): Outcome {
       if (!SPENDABLE.includes(action.attribute)) return fail('Bonus points can only raise a player attribute.');
       if (balance(save.bonus) < 1) return fail('No bonus points to spend.');
       const cur = pl.attributes[action.attribute];
-      const cap = pl.potential[action.attribute];
-      // The whole +1 or nothing: a point is never used on a partial increase past the cap.
-      if (cur + 1 > cap) return fail(`That would go past this attribute's potential (${cap}). Your point is still saved.`);
+      // The whole +1 or nothing, no multiplier: a point that would pass the Season 1 maximum stays banked.
+      const fits = bonusFits(pl.attributes, action.attribute, DEV_CONFIG.seasonOneCap);
+      if (!fits.ok) return fail(fits.reason);
       const player: CareerPlayer = { ...pl, attributes: { ...pl.attributes, [action.attribute]: cur + 1 } };
       return ok({ ...save, player, bonus: { ...save.bonus, spends: [...save.bonus.spends, { id: action.id, attribute: action.attribute, week: save.week }] } }, `+1 applied. ${balance(save.bonus) - 1} bonus point${balance(save.bonus) - 1 === 1 ? '' : 's'} left.`);
     }
@@ -453,10 +460,13 @@ export function reduce(save: CareerSave, action: Action): Outcome {
       if (!save.player) return fail('No career player.');
       if (save.week >= L.weekMax) return fail('Last week reached.');
       const evidenceOutcomes = computeGrowth(save.player, save.evidence);
-      const settlement = settleSave(save, evidenceOutcomes, action.recess ?? null);
-      const outcomes = evidenceOutcomes.map((o) => {
-        const p = settlement.applied[o.attribute];
-        return p > 0 ? { ...o, to: o.to + p, reason: `${o.reason} +${p} from weekly development.` } : o;
+      // Progression v2: one weekly review applies each source once; match evidence is shown, never a second reward.
+      const sources = weekSources(save, save.week);
+      const proposal = proposeWeek(save.player.attributes, sources, 'protagonist', DEV_CONFIG.seasonOneCap);
+      const outcomes: AttributeOutcome[] = ATTRIBUTES.map((a) => {
+        const e = evidenceOutcomes.find((o) => o.attribute === a);
+        const from = save.player!.attributes[a];
+        return { attribute: a, opportunities: e?.opportunities ?? 0, weightedOpportunities: e?.weightedOpportunities ?? 0, weightedSuccesses: e?.weightedSuccesses ?? 0, from, to: from + proposal.applied[a], reason: growthReason(a, proposal) };
       });
       const thisWeek = save.journal.filter((j) => j.week === save.week);
       const ratings = { learning: 0, improving: 0, comfortable: 0 };
@@ -472,11 +482,11 @@ export function reduce(save: CareerSave, action: Action): Outcome {
         missedEvents: save.missedEvents,
         outcomes,
         suggestedFocus: suggestFocus(save, outcomes),
-        settlement,
+        development: { sources, proposal },
       };
       let next: CareerSave = {
         ...save,
-        player: applyGrowth(save.player, outcomes),
+        player: { ...save.player, attributes: applyProposal(save.player.attributes, proposal) },
         week: save.week + 1,
         credit: 0,
         completedSessions: [],
@@ -484,7 +494,7 @@ export function reduce(save: CareerSave, action: Action): Outcome {
         batches: [],
         missedEvents: 0,
         history: [...save.history, review].slice(-L.historyMax),
-        devCarry: settlement.carry,
+        devCarry: zeroFractions(),
       };
       if (save.focusId) {
         const r = replan(next, save.focusId);
@@ -495,46 +505,26 @@ export function reduce(save: CareerSave, action: Action): Outcome {
   }
 }
 
-/** This week's sources for the weekly settlement, read from the save only. */
-function settleSave(save: CareerSave, evidence: readonly AttributeOutcome[], recess: { readonly played: boolean } | null): WeekSettlement {
-  const w = save.week;
-  // A week credited by the weekly All36 scenario settles from its own record, never from leftover A/B/C runs.
-  const weekly = save.all36.some((r) => r.week === w && r.credited);
-  const runs = weekly ? [] : save.tt12.filter((r) => r.week === w && r.credited);
-  const tt = save.teamTraining.find((t) => t.week === w);
-  const teamScore = runs.length ? runs.reduce((a, r) => a + r.score, 0) / runs.length : tt && tt.scores.length ? tt.scores.reduce((a, b) => a + b, 0) / tt.scores.length : null;
-  // Points already given this week (evidence growth and graded Team Training) count against the weekly caps.
-  const granted = zeroFractions();
-  for (const o of evidence) granted[o.attribute] += o.to - o.from;
-  for (const c of tt?.changes ?? []) if (c.to > c.from) granted[c.attribute] += c.to - c.from;
-  // Team credits go to the attributes the week's situations practised, never to a stand-in.
-  const practised = tt ? tt.situations : runs.length ? selectSituations(save.player!.position, w).map((x) => x.id) : [];
-  const teamAttributes = [...new Set(practised.flatMap((id) => situationById(id)?.attributes ?? []))];
-  return settleWeek({
-    week: w,
-    player: save.player!,
-    homeSessions: save.journal.filter((j) => j.week === w && j.credited && j.completion !== 'skipped').map((j) => j.activityId),
-    teamScore,
-    teamAttributes,
-    matches: save.reports.filter((r) => r.week === w),
-    recess,
-    carry: save.devCarry,
-    granted,
-  });
-}
-
 /** Grade one week of Team Training through the shared weekly economy (one record per week). */
 function countTeamWeek(save: CareerSave, results: readonly SituationResult[]): { save: CareerSave; message: string } | { error: string } {
   const player = save.player!;
   const expected = selectSituations(player.position, save.week).map((x) => x.id);
   if (results.length !== expected.length || results.some((r, i) => r.id !== expected[i])) return { error: 'Team Training results do not match this week.' };
   if (results.some((r) => typeof r.score !== 'number' || !Number.isFinite(r.score) || r.score < 0 || r.score > 1)) return { error: 'Team Training score out of range.' };
-  const changes = teamTrainingChanges(player, results);
-  const attributes = { ...player.attributes };
-  for (const c of changes) attributes[c.attribute] = c.to;
+  // Progression v2: the week's score is recorded once; its growth is applied at the weekly review, never here.
+  const changes: AttributeChange[] = [];
   const record: TeamTrainingRecord = { week: save.week, situations: expected, scores: results.map((r) => r.score), delta: weekDelta(results.map((r) => r.score)), changes, choiceMissed: results.filter((r) => r.choiceMissed === true).length };
   return {
-    save: { ...save, player: { ...player, attributes }, teamTraining: [...save.teamTraining, record].slice(-CAREER_CONFIG.limits.historyMax) },
-    message: `Team Training week ${save.week}: ${describeChanges(changes)}`,
+    save: { ...save, teamTraining: [...save.teamTraining, record].slice(-CAREER_CONFIG.limits.historyMax) },
+    message: `Team Training week ${save.week} counted. Its growth is added at the weekly review.`,
   };
+}
+
+/** Plain-language reason for one attribute's weekly gain, including any ceiling that limited it. */
+export function growthReason(a: AttributeId, p: DevProposal): string {
+  const label = ATTRIBUTE_LABELS[a];
+  const gain = p.applied[a];
+  const base = gain > 0 ? `${label} +${gain.toFixed(2)} from this week's training and matches.` : `${label}: no growth this week.`;
+  if (!p.capped || p.proposed[a] <= 0) return base;
+  return `${base} Earned +${p.proposed[a].toFixed(2)}, limited by the Season 1 maximum overall of ${DEV_CONFIG.seasonOneCap}.`;
 }

@@ -134,7 +134,9 @@ describe('weekly Team Training from the soccer-logic catalog', () => {
 
   it('gains go to trained attributes up to potential; a loss never goes below the starting value', () => {
     const save = withPlayer('MID');
-    const p = save.player!;
+    // Legacy v1 rule (records made before progression v2): a start-40, potential-70 player.
+    const b = save.player!;
+    const p = { ...b, attributes: Object.fromEntries(Object.keys(b.attributes).map((k) => [k, 40])), potential: Object.fromEntries(Object.keys(b.potential).map((k) => [k, 70])) } as typeof b;
     const good = teamTrainingChanges(p, results(save, [1, 1, 1]));
     expect(good).toHaveLength(2);
     const trained = new Set(selectSituations('MID', 1).flatMap((s) => s.attributes));
@@ -145,10 +147,11 @@ describe('weekly Team Training from the soccer-logic catalog', () => {
     expect(teamTrainingChanges(p, results(save, [0, 0, 0]))).toEqual([]);
     const capped = { ...p, attributes: Object.fromEntries(Object.keys(p.attributes).map((k) => [k, p.potential[k as keyof typeof p.potential]])) as typeof p.attributes };
     expect(teamTrainingChanges(capped, results(save, [1, 1, 1]))).toEqual([]);
-    const raised = { ...p, attributes: { ...p.attributes, passing: 45, awareness: 45, firstTouch: 45 } };
+    // The floor is the current start value (50); the reducer no longer applies this legacy loss (v2 has no regression).
+    const raised = { ...p, attributes: { ...p.attributes, passing: 55, awareness: 55, firstTouch: 55 } };
     const bad = teamTrainingChanges(raised, results(save, [0, 0, 0]));
     expect(bad).toHaveLength(1);
-    expect(bad[0]!.to).toBe(44);
+    expect(bad[0]!.to).toBe(54);
   });
 
   it('counts once per week, rejects foreign or out-of-range results, and survives save/reload', () => {
@@ -160,9 +163,18 @@ describe('weekly Team Training from the soccer-logic catalog', () => {
     expect(reduce(save, { type: 'teamTraining', week: 1, results: swapped }).ok).toBe(false);
     const first = reduce(save, { type: 'teamTraining', week: 1, results: results(save, [1, 0.9, 0.8]) });
     if (!first.ok) throw new Error(first.error);
+    const before = save.player!.attributes;
     save = first.save;
-    const gained = Object.values(save.player!.attributes).reduce((a, b) => a + b, 0) - 40 * 6;
-    expect(gained).toBe(2);
+    // Progression v2: counting the week changes no attribute; the weekly review applies it once.
+    expect(save.player!.attributes).toEqual(before);
+    expect(save.teamTraining[0]!.changes).toEqual([]);
+    const reviewed = reduce(save, { type: 'endWeek' });
+    if (!reviewed.ok) throw new Error(reviewed.error);
+    const dev = reviewed.save.history.at(-1)!.development!;
+    expect(dev.sources.find((x) => x.source === 'team')!.status).toBe('done');
+    const trained = new Set(['awareness', ...selectSituations('FWD', 1).flatMap((x) => x.attributes)]);
+    for (const a of Object.keys(dev.proposal.applied) as (keyof typeof dev.proposal.applied)[]) if (!trained.has(a)) expect(dev.proposal.applied[a]).toBe(0);
+    expect(Object.values(dev.proposal.applied).reduce((x, y) => x + y, 0)).toBeGreaterThan(0);
     const again = reduce(save, { type: 'teamTraining', week: 1, results: results(save, [1, 1, 1]) });
     expect(again.ok && again.changed).toBe(false);
     const back = parseImport(exportSave(save));

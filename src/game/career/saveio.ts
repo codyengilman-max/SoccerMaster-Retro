@@ -1,3 +1,4 @@
+import { migrateToV2, type ProgressionMigration } from './migrationV2';
 import { DEFENSE_UNITS } from '../report/assists';
 import { BONUS_RULES, SPENDABLE, achievementOf, emptyBank, type BonusBank } from './bonus';
 import { REPORTS_KEPT, type SavedReport } from '../report/report';
@@ -31,6 +32,11 @@ const int = (v: unknown, what: string, min: number, max: number): number => {
   if (typeof v !== 'number' || !Number.isFinite(v) || !Number.isInteger(v) || v < min || v > max) throw new Invalid(`${what}: out of range`);
   return v;
 };
+/** A progression v2 attribute value: any finite number on the 0–100 scale (full precision). */
+const dec = (v: unknown, what: string): number => {
+  if (typeof v !== 'number' || !Number.isFinite(v) || v < CAREER_CONFIG.attributes.min || v > CAREER_CONFIG.attributes.max) throw new Invalid(`${what}: out of range`);
+  return v;
+};
 const oneOf = <T extends string>(v: unknown, what: string, list: readonly T[]): T => {
   if (typeof v !== 'string' || !list.includes(v as T)) throw new Invalid(`${what}: not allowed`);
   return v as T;
@@ -56,8 +62,8 @@ function player(v: unknown): CareerPlayer {
   const attributes = {} as Record<AttributeId, number>;
   const potential = {} as Record<AttributeId, number>;
   for (const a of ATTRIBUTES) {
-    potential[a] = int(pot[a], `potential.${a}`, A.min, A.max);
-    attributes[a] = int(attrs[a], `attributes.${a}`, A.min, potential[a]);
+    potential[a] = int(pot[a], `potential.${a}`, 1, A.max);
+    attributes[a] = dec(attrs[a], `attributes.${a}`);
   }
   const name = str(o.name, 'name', L.nameMax);
   if (!name) throw new Invalid('name: empty');
@@ -137,7 +143,7 @@ function outcome(v: unknown): AttributeOutcome {
     if (typeof x !== 'number' || !Number.isFinite(x) || x < 0 || x > 100000) throw new Invalid(`${w}: out of range`);
     return x;
   };
-  return { attribute: oneOf(o.attribute, 'attribute', ATTRIBUTES), opportunities: int(o.opportunities, 'opportunities', 0, L.evidencePerWeekMax), weightedOpportunities: num(o.weightedOpportunities, 'wOpp'), weightedSuccesses: num(o.weightedSuccesses, 'wSucc'), from: int(o.from, 'from', 1, 99), to: int(o.to, 'to', 1, 99), reason: str(o.reason, 'reason', 200) };
+  return { attribute: oneOf(o.attribute, 'attribute', ATTRIBUTES), opportunities: int(o.opportunities, 'opportunities', 0, L.evidencePerWeekMax), weightedOpportunities: num(o.weightedOpportunities, 'wOpp'), weightedSuccesses: num(o.weightedSuccesses, 'wSucc'), from: dec(o.from, 'from'), to: dec(o.to, 'to'), reason: str(o.reason, 'reason', 200) };
 }
 
 function review(v: unknown, week: number): WeekReview {
@@ -155,7 +161,29 @@ function review(v: unknown, week: number): WeekReview {
     outcomes: arr(o.outcomes, 'outcomes', ATTRIBUTES.length).map(outcome),
     suggestedFocus: nullable(o.suggestedFocus, (x) => oneOf(x, 'focus', FOCUS_IDS)),
     ...(o.settlement === undefined ? {} : { settlement: settlement(o.settlement) }),
+    ...(o.development === undefined ? {} : { development: development(o.development) }),
   };
+}
+
+function development(v: unknown): NonNullable<WeekReview['development']> {
+  const o = obj(v, 'development');
+  const sources = arr(o.sources, 'development sources', 3).map((x) => {
+    const w = obj(x, 'development source');
+    oneOf(w.source, 'development source', ['home', 'team', 'match'] as const);
+    oneOf(w.status, 'development status', ['none', 'skipped', 'done'] as const);
+    return w;
+  });
+  const p = obj(o.proposal, 'development proposal');
+  const applied = obj(p.applied, 'development applied');
+  for (const a of ATTRIBUTES) if (typeof applied[a] !== 'number' || !Number.isFinite(applied[a] as number) || (applied[a] as number) < 0 || (applied[a] as number) > 100) throw new Invalid('development applied: out of range');
+  return { sources, proposal: p } as unknown as NonNullable<WeekReview['development']>;
+}
+
+function progression(v: unknown): ProgressionMigration {
+  const o = obj(v, 'progression');
+  if (o.version !== 2 || o.fromSchema !== 2) throw new Invalid('progression migration: unknown version');
+  if (typeof o.overCap !== 'boolean') throw new Invalid('progression migration: bad flag');
+  return o as unknown as ProgressionMigration;
 }
 
 function fractions(v: unknown): Fractions {
@@ -300,12 +328,13 @@ function tt12Decisions(v: unknown): { independent: number; assisted: number } {
 
 /** Schema 1 (pre-release M6 draft) had no missed-event counter and stored levels as plain numbers. */
 function migrate(o: Record<string, unknown>): Record<string, unknown> {
+  // Each step runs once, keyed by schema: 1 -> 2 (levels), 2 -> 3 (progression v2).
   if (o.schema === 1) {
     const lv = obj(o.levels, 'levels');
     const levels = Object.fromEntries(SKILL_FAMILIES.map((f) => [f, { level: lv[f] ?? 1, comfortable: [] }]));
-    return { ...o, schema: 2, levels, missedEvents: 0, batches: o.batches ?? [] };
+    o = { ...o, schema: 2, levels, missedEvents: 0, batches: o.batches ?? [] };
   }
-  return o;
+  return migrateToV2(o);
 }
 
 /** Full validation of untrusted data (stored or imported). Builds a fresh object; never trusts the input's shape. */
@@ -350,6 +379,7 @@ export function parseSave(raw: unknown): R<CareerSave> {
       cloudyRuns: arr(o.cloudyRuns ?? [], 'cloudyRuns', CLOUDY_RUNS_KEPT).map((r) => str(r, 'cloudy run', 64)),
       reports: arr(o.reports ?? [], 'reports', REPORTS_KEPT).map(savedReport),
       devCarry: fractions(o.devCarry),
+      ...(o.progression === undefined ? {} : { progression: progression(o.progression) }),
       bonus: o.bonus === undefined ? emptyBank() : bonusBank(o.bonus, week),
     };
     if (new Set(save.reports.map((r) => r.matchId)).size !== save.reports.length) throw new Invalid('match report saved twice');

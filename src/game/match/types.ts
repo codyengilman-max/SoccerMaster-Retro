@@ -65,6 +65,16 @@ export interface PlayerAttrs {
   readonly passing: number;
   /** Shot execution precision (career finishing); 1 when unknown. */
   readonly finishing: number;
+  /** Carry quality between receptions (career dribbling): carry speed only, never the reception. */
+  readonly dribbling: number;
+  /** Standing-tackle execution (career defending); reach is geometric and never scales. */
+  readonly defending: number;
+  /** Scales how much nearby pressure adds to shot and reception error (career composure). */
+  readonly composure: number;
+  /** Holding the ball in a contested standing tackle (career strength/balance). */
+  readonly strength: number;
+  /** Off-ball repositioning speed toward the team-shape target when not user-controlled (career awareness). */
+  readonly awareness: number;
 }
 
 export type PadAction = 'pass' | 'shoot' | 'slide' | 'tackle';

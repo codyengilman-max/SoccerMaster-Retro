@@ -91,7 +91,8 @@ describe('M6 career store (IndexedDB)', () => {
     };
     expect(bad((o) => (o.player.attributes.passing = 1e309)).ok).toBe(false);
     expect(bad((o) => (o.player.attributes.passing = 120)).ok).toBe(false);
-    expect(bad((o) => (o.player.attributes.passing = 75)).ok).toBe(false);
+    expect(bad((o) => (o.player.attributes.passing = 100.5)).ok).toBe(false);
+    expect(bad((o) => (o.player.attributes.passing = -0.1)).ok).toBe(false);
     expect(bad((o) => (o.week = -1)).ok).toBe(false);
     expect(bad((o) => (o.credit = 3)).ok).toBe(false);
     expect(bad((o) => (o.journal = Array(10000).fill({}))).ok).toBe(false);
@@ -114,7 +115,7 @@ describe('M6 career store (IndexedDB)', () => {
     const r = parseSave(v1);
     expect(r.ok).toBe(true);
     if (r.ok) {
-      expect(r.value.schema).toBe(2);
+      expect(r.value.schema).toBe(3);
       expect(r.value.levels.firstTouch.level).toBe(2);
       expect(r.value.player!.name).toBe('Kai');
     }

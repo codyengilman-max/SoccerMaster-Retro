@@ -89,17 +89,23 @@ describe('M6 journal, credit and weeks', () => {
     expect(s.history[0]!.week).toBe(1);
   });
 
-  it('game evidence, not home credit, changes attributes; evidence batches are idempotent and bounded', () => {
+  it('home practice is a development source (v2); game evidence is shown, not applied twice; batches are idempotent and bounded', () => {
     let s = start();
+    const none = run(s, { type: 'endWeek' });
+    expect(none.history.at(-1)!.development!.sources.find((x) => x.source === 'home')!.status).toBe('none');
     for (let i = 0; i < 3; i++) s = run(s, { type: 'log', entry: entry(s, i, { rating: 'comfortable' }) });
     let grown = run(s, { type: 'endWeek' });
-    expect(grown.player!.attributes).toEqual(s.player!.attributes);
+    expect(grown.history.at(-1)!.development!.sources.find((x) => x.source === 'home')!.status).toBe('done');
+    expect(Object.values(grown.history.at(-1)!.development!.proposal.applied).reduce((x, y) => x + y, 0)).toBeGreaterThan(0);
     const items = Array.from({ length: 8 }, (_, i) => ({ attribute: 'passing' as const, source: 'match' as const, situation: `z${i}`, success: 1 as const, note: '' }));
     s = run(s, { type: 'evidence', batchId: 'b1', items, missed: 0 }, { type: 'evidence', batchId: 'b1', items, missed: 0 });
     expect(s.evidence).toHaveLength(8);
     grown = run(s, { type: 'endWeek' });
-    expect(grown.player!.attributes.passing).toBe(42);
-    expect(grown.history.at(-1)!.outcomes.find((o) => o.attribute === 'passing')!.reason).toMatch(/\+2/);
+    const review = grown.history.at(-1)!;
+    expect(review.outcomes.find((o) => o.attribute === 'passing')!.weightedSuccesses).toBeGreaterThan(0);
+    // Sandbox evidence without an official match report is not a match source and adds no growth by itself.
+    expect(review.development!.sources.find((x) => x.source === 'match')!.status).not.toBe('done');
+    expect(grown.player!.attributes.passing).toBeCloseTo(s.player!.attributes.passing + review.development!.proposal.applied.passing, 10);
     const many = Array.from({ length: 1000 }, (_, i) => ({ ...items[0]!, situation: `m${i}` }));
     s = run(s, { type: 'evidence', batchId: 'b2', items: many, missed: 0 });
     expect(s.evidence.length).toBe(CAREER_CONFIG.limits.evidencePerWeekMax);

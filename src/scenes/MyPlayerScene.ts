@@ -1,13 +1,14 @@
 import Phaser from 'phaser';
 import type { Rect } from '../game';
-import { ATTRIBUTE_EVIDENCE, CAREER_CONFIG } from '../game/career/config';
+import { ATTRIBUTE_EFFECT, ATTRIBUTE_EVIDENCE, CAREER_CONFIG } from '../game/career/config';
 import { CareerStore } from '../game/career/store';
 import { SPENDABLE, awardTitle, balance } from '../game/career/bonus';
 import { HOME_SKILLS, specFor, type HomeSkillId } from '../game/career/homeMastery';
 import { SKILL_LABEL, entryHint, feedbackLine, masteryLines, parseAttempts } from '../game/career/homeEntry';
 import type { CareerSave } from '../game/career/state';
 import { ATTRIBUTES, ATTRIBUTE_LABELS, type AttributeId } from '../game/career/types';
-import { NOT_TRACKED } from '../game/report/registry';
+import { DEV_CONFIG, bonusFits, overallOf, proposeWeek } from '../game/career/development';
+import { weekSources } from '../game/career/weekSources';
 import { homeTasks, weekAssignments, type HomeTask } from '../game/story/facts';
 import { StoryStore, STORY_CAREER_ID } from '../game/story/store';
 import type { SavedReport } from '../game/report/report';
@@ -39,18 +40,24 @@ const ROWS = 6;
 
 interface Row { readonly label: string; readonly value: number | null; readonly carry: number | null; readonly detail: string }
 
-/** All attribute rows: the six the game tracks, then the requested ones it does not (never invented). */
+/** The ten active attributes (progression v2). Values keep full precision; only display rounds. */
 export function attributeRows(save: CareerSave): Row[] {
   const p = save.player;
-  const tracked: Row[] = ATTRIBUTES.map((a) => {
-    const c = save.devCarry[a];
-    const toward = c > 0 ? ` Toward the next point: ${Math.round(c * 100)}% (applied at a weekly review).` : '';
-    return { label: ATTRIBUTE_LABELS[a], value: p ? p.attributes[a] : null, carry: p ? c : null, detail: `${ATTRIBUTE_LABELS[a]}: ${ATTRIBUTE_EVIDENCE[a]}${toward}` };
+  const projected = p ? proposeWeek(p.attributes, weekSources(save, save.week), 'protagonist', DEV_CONFIG.seasonOneCap) : null;
+  const last = save.history.at(-1)?.development?.proposal ?? null;
+  return ATTRIBUTES.map((a) => {
+    const gain = projected ? projected.applied[a] : 0;
+    const applied = last ? last.applied[a] : 0;
+    const proj = projected ? ` Projected this week: +${gain.toFixed(2)} (applied once at the weekly review).` : '';
+    const prev = last ? ` Last review added +${applied.toFixed(2)}.` : '';
+    const cap = projected?.capped ? ` Limited by the Season 1 maximum overall of ${DEV_CONFIG.seasonOneCap}.` : '';
+    const detail = `${ATTRIBUTE_LABELS[a]}: ${ATTRIBUTE_EFFECT[a]} Grows from home practice (35%), Team Training (35%) and matches (30%): ${ATTRIBUTE_EVIDENCE[a]} Each home activity counts once a week (best three).${proj}${prev}${cap}`;
+    return { label: ATTRIBUTE_LABELS[a], value: p ? p.attributes[a] : null, carry: p ? gain : null, detail };
   });
-  return [...tracked, ...NOT_TRACKED.map((n) => ({ label: n, value: null, carry: null, detail: `${n}: not tracked by this game yet. Nothing is counted or invented for it.` }))];
 }
 
-export const overall = (save: CareerSave): number | null => (save.player ? Math.round(ATTRIBUTES.reduce((a, k) => a + save.player!.attributes[k], 0) / ATTRIBUTES.length) : null);
+/** Overall: the fixed equal-weight mean of the ten attributes, rounded for display only. */
+export const overall = (save: CareerSave): number | null => (save.player ? Math.round(overallOf(save.player.attributes)) : null);
 
 /** THIS WEEK, from the save only. */
 export function weekLines(save: CareerSave): string[] {
@@ -174,7 +181,7 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
   private rowText(it: Row | SavedReport | undefined): [string, string] {
     if (!it) return ['', ''];
     if ('matchId' in it) return [`Wk ${it.week} v ${it.away}`, `${it.score.home}-${it.score.away} >`];
-    return [it.label, it.value === null ? '-' : it.carry ? `${it.value} +.${String(Math.round(it.carry * 100)).padStart(2, '0')}` : `${it.value}`];
+    return [it.label, it.value === null ? '-' : it.carry ? `${it.value.toFixed(1)} (+${it.carry.toFixed(2)})` : it.value.toFixed(1)];
   }
 
   // ---------- drawing ----------
@@ -279,7 +286,7 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
       if (p) {
         ty = this.text(tx, ty + 2, p.position, fs);
         ty = this.text(tx, ty, 'FC Batavia', fs);
-        ty = this.text(tx, ty, `Overall ${overall(this.save!)}/100`, fs * 0.85);
+        ty = this.text(tx, ty, `Overall ${overall(this.save!)} · Season 1 maximum: ${DEV_CONFIG.seasonOneCap}`, fs * 0.85);
       }
       return Math.max(cy + ph, ty);
     });
@@ -457,7 +464,7 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
   private bonusNote: string | null = null;
   private spending = false;
 
-  /** Bonus Attribute Points: earned from achievements, spent here on a permanent +1 (never past potential). */
+  /** Bonus Attribute Points: earned from achievements, spent here on a permanent +1 (whole points only, never past the Season 1 maximum). */
   private bonusCard(x: number, y: number, w: number, fs: number, pad: number): number {
     const s = this.save;
     if (!s?.player) return y - pad;
@@ -473,7 +480,7 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
       const bh = Math.max(44, fs * 2.3);
       SPENDABLE.forEach((a, i) => {
         const p = s.player!;
-        const full = p.attributes[a] + 1 > p.potential[a];
+        const full = !bonusFits(p.attributes, a, DEV_CONFIG.seasonOneCap).ok;
         const bx = x + pad + (i % 2) * (bw + pad * 0.5);
         const by = cy + Math.floor(i / 2) * (bh + 6);
         this.button(`my-player-spend-${a}`, bx, by, bw, bh, full ? `${ATTRIBUTE_LABELS[a]} (max)` : `+1 ${ATTRIBUTE_LABELS[a]}`, fs * 0.85, full ? CARD : BLUE, () => void this.spend(a), full ? INK : '#ffffff');
@@ -485,8 +492,9 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
   private async spend(attribute: AttributeId): Promise<void> {
     const p = this.save?.player;
     if (this.spending || !p) return;
-    if (p.attributes[attribute] + 1 > p.potential[attribute]) {
-      this.bonusNote = `${ATTRIBUTE_LABELS[attribute]} is at its potential (${p.potential[attribute]}). Your point is still saved.`;
+    const fits = bonusFits(p.attributes, attribute, DEV_CONFIG.seasonOneCap);
+    if (!fits.ok) {
+      this.bonusNote = fits.reason;
       this.build();
       return;
     }

@@ -146,10 +146,27 @@ describe('standing tackle (TACKLE button)', () => {
     }
   });
 
-  it('attributes matter: an agile, tidy tackler wins far more often against a weak carrier than the reverse', () => {
-    const strong = Object.fromEntries([['H7', { agility: 1.2, control: 1.2 }], ['A6', { agility: 0.8, control: 0.8 }]]);
-    const weak = Object.fromEntries([['H7', { agility: 0.8, control: 0.8 }], ['A6', { agility: 1.2, control: 1.2 }]]);
+  it('attributes matter: a strong defender wins far more often against a weak carrier than the reverse (v2: defending+agility vs strength+dribbling)', () => {
+    const strong = Object.fromEntries([['H7', { agility: 1.2, defending: 1.2 }], ['A6', { strength: 0.8, dribbling: 0.8 }]]);
+    const weak = Object.fromEntries([['H7', { agility: 0.8, defending: 0.8 }], ['A6', { strength: 1.2, dribbling: 1.2 }]]);
     expect(rates(FRONT, strong).won).toBeGreaterThan(rates(FRONT, weak).won + 0.25);
+  });
+
+  it('progression v2: Defending alone and the carrier\'s Strength/Balance alone each move the win rate, never to certainty', () => {
+    const base = rates(FRONT).won;
+    expect(rates(FRONT, { H7: { defending: 1.2 } }).won).toBeGreaterThan(base);
+    const strongCarrier = rates(FRONT, { A6: { strength: 1.2 } });
+    expect(strongCarrier.won).toBeLessThan(base);
+    expect(strongCarrier.won).toBeGreaterThan(0);
+    expect(rates(FRONT, { H7: { defending: 1.2, agility: 1.2 }, A6: { strength: 0.8, dribbling: 0.8 } }).won).toBeLessThan(ST.maxWin + 0.05);
+  });
+
+  it('progression v2: Defending never extends reach (out of reach whiffs at any rating)', () => {
+    for (const defending of [0.8, 1.2]) {
+      const sim = duel(3, AT_GAP(4), { H7: { defending, agility: 1.2 } });
+      expect(attempt(sim).outcome).toBe('missed');
+      expect(sim.state.ball.owner).toBe('A6');
+    }
   });
 
   it('timing: tackling as the carrier pushes the ball out wins clearly more than when it is at the feet', () => {

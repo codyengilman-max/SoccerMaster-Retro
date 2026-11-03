@@ -73,8 +73,8 @@ describe('Ball Mastery designs v1.0 (owner-approved lessons, D68)', () => {
     expect(ALL_ACTIVITIES).toHaveLength(92);
   });
 
-  it('save schema is unchanged, so existing saves load without migration', () => {
-    expect(SAVE_SCHEMA).toBe(2);
+  it('save schema is the progression v2 schema; older saves migrate (tests/progressionMigration.test.ts)', () => {
+    expect(SAVE_SCHEMA).toBe(3);
   });
 
   it('Step walks the demo pose/contact changes in order and wraps', () => {

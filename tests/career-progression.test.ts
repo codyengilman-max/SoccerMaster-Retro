@@ -3,7 +3,9 @@ import { CAREER_CONFIG } from '../src/game/career/config';
 import { createPlayer } from '../src/game/career/player';
 import { applyGrowth, computeGrowth, type EvidenceItem } from '../src/game/career/progression';
 
-const P = createPlayer('p1', 'Sam', 'MID');
+// Legacy v1 evidence model (still listed in the weekly review, no longer applied): a start-40, potential-70 player.
+const legacy = <T extends ReturnType<typeof createPlayer>>(b: T): T => ({ ...b, attributes: Object.fromEntries(Object.keys(b.attributes).map((k) => [k, 40])), potential: Object.fromEntries(Object.keys(b.potential).map((k) => [k, 70])) }) as T;
+const P = legacy(createPlayer('p1', 'Sam', 'MID'));
 const ev = (attribute: EvidenceItem['attribute'], n: number, success: 0 | 0.5 | 1, situation = (i: number) => `s${i}`, source: EvidenceItem['source'] = 'match'): EvidenceItem[] =>
   Array.from({ length: n }, (_, i) => ({ attribute, source, situation: situation(i), success, note: '' }));
 const get = (o: ReturnType<typeof computeGrowth>, a: string) => o.find((x) => x.attribute === a)!;

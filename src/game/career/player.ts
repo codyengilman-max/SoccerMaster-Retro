@@ -48,10 +48,18 @@ export function matchAttrsFromCareer(attributes: Readonly<Record<AttributeId, nu
     const x = typeof v === 'number' && Number.isFinite(v) ? Math.min(A.max, Math.max(A.min, v)) : A.start;
     return x >= A.start ? 1 + (0.2 * (x - A.start)) / (A.max - A.start) : 1 - (0.2 * (A.start - x)) / (A.start - A.min);
   };
+  // One attribute per gameplay parameter (docs/PROGRESSION.md); each stays inside the sim's 0.8–1.2 range.
   return {
-    control: m((attributes.firstTouch + attributes.dribbling) / 2),
-    agility: m(attributes.dribbling),
+    control: m(attributes.firstTouch),
+    dribbling: m(attributes.dribbling),
     passing: m(attributes.passing),
     finishing: m(attributes.finishing),
+    defending: m(attributes.defending),
+    awareness: m(attributes.awareness),
+    composure: m(attributes.composure),
+    strength: m(attributes.strength),
+    agility: m(attributes.agility),
+    accel: m(attributes.agility),
+    pace: m(attributes.pace),
   };
 }

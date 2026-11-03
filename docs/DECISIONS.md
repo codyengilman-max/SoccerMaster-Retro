@@ -466,3 +466,11 @@ Owner instruction: "Make them not drafts add to game".
 - **Preseason table:** before the first league week saves a league, League standings lists the nine clubs a new league will have, all on zero and sharing 1st (it showed only headers).
 - **Fix found in testing:** a match against a club with no match sprites wears the Royal Salt kit, but the Match Report now names the real opponent from the directory (it said Royal Salt Academy).
 - **Fix found in testing (pre-existing):** a story Match Report with TEAM IMPACT drew the competition line twice, one on top of the other; it now updates the one label.
+
+## D72. Progression v2: ten attributes, one engine, Season 1 maximum 64
+
+- **Model:** ten outfield attributes on 0–100 with full precision; overall is their equal-weight mean. New players start at 50. See `docs/PROGRESSION.md`.
+- **Engine:** one framework-free `proposeWeek` for the main character (x2.0), Batavia teammates (x2/1.7) and opponents (x1.0); home 35% / Team Training 35% / matches 30%; growth applied once at the weekly review.
+- **Cap:** main character only; positive gains scaled proportionally to keep overall <= 64; bonus +1 whole or banked.
+- **Replaced:** v1 settlement/carry and immediate Team Training changes stop being applied (records and history still load). Tests that asserted the old rule were rewritten to assert the v2 rule; legacy pure-function tests use explicit start-40/potential-70 fixtures.
+- **Save:** schema 3; schema-2 saves migrate once with a stored report.

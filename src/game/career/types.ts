@@ -1,6 +1,6 @@
 /** M6 career-player and home-training types. Framework-free. */
 
-export const ATTRIBUTES = ['firstTouch', 'passing', 'dribbling', 'finishing', 'defending', 'awareness'] as const;
+export const ATTRIBUTES = ['firstTouch', 'passing', 'dribbling', 'finishing', 'defending', 'awareness', 'composure', 'strength', 'agility', 'pace'] as const;
 export type AttributeId = (typeof ATTRIBUTES)[number];
 
 export const ATTRIBUTE_LABELS: Readonly<Record<AttributeId, string>> = {
@@ -10,9 +10,13 @@ export const ATTRIBUTE_LABELS: Readonly<Record<AttributeId, string>> = {
   finishing: 'Finishing',
   defending: 'Defending',
   awareness: 'Tactical awareness',
+  composure: 'Composure',
+  strength: 'Strength/Balance',
+  agility: 'Agility',
+  pace: 'Pace',
 };
 
-/** Practice areas. Levels are kept per area. Juggling is a ladder of its own and grows no attribute. */
+/** Practice areas. Levels are kept per area. Juggling has its own ladder and, in progression v2, grows First Touch and Dribbling (half each). */
 export const SKILL_FAMILIES = ['firstTouch', 'passing', 'dribbling', 'finishing', 'defending', 'awareness', 'juggling'] as const;
 export type SkillFamilyId = (typeof SKILL_FAMILIES)[number];
 

@@ -456,7 +456,7 @@ export class MatchSim {
     const R = this.tuning.pad.attrRange;
     const o = this.attrOverrides[id] ?? {};
     const f = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? clamp(v, R.min, R.max) : 1);
-    return { pace: f(o.pace), accel: f(o.accel), agility: f(o.agility), control: f(o.control), passing: f(o.passing), finishing: f(o.finishing) };
+    return { pace: f(o.pace), accel: f(o.accel), agility: f(o.agility), control: f(o.control), passing: f(o.passing), finishing: f(o.finishing), dribbling: f(o.dribbling), defending: f(o.defending), composure: f(o.composure), strength: f(o.strength), awareness: f(o.awareness) };
   }
 
   /** Late attribute source (e.g. a career save loaded after the sim was built); values are clamped like constructor ones. */
@@ -788,7 +788,7 @@ export class MatchSim {
       this.emit('pass', me.id, receiver ?? '');
     } else {
       const misalign = (1 - dot2(pad.facing, L.dir)) / 2;
-      const err = T.shotErrorMax * (0.25 + 0.75 * this.pressureOn(me)) * (1 + misalign) * (2 - me.attrs.control);
+      const err = T.shotErrorMax * (0.25 + 0.75 * this.pressureFor(me)) * (1 + misalign) * (2 - me.attrs.finishing);
       dir = rotate(L.dir, (this.rng() * 2 - 1) * err);
       this.kickBall(me, scale(dir, speed), 'shot', null, null);
       s.stats.shots.home += 1;
@@ -938,7 +938,7 @@ export class MatchSim {
       this.emit('pass', me.id, receiver ?? '');
     } else {
       const misalign = (1 - dot2(pad.facing, L.dir)) / 2;
-      const spread = K11.shotErrorSpread({ pressure: this.pressureOn(me), misalign, charge: L.charge, finishing: me.attrs.finishing }, T.kicking);
+      const spread = K11.shotErrorSpread({ pressure: this.pressureFor(me), misalign, charge: L.charge, finishing: me.attrs.finishing }, T.kicking);
       dir = rotate(L.dir, K11.shotError(spread, this.rng(), this.rng()));
       this.kickBall(me, scale(dir, L.speed), 'shot', null, null);
       s.stats.shots[me.team] += 1;
@@ -973,7 +973,7 @@ export class MatchSim {
     const vl = length(p.vel);
     const misalign = vl > 0.5 ? (1 - (p.vel.x * pv.dir.x + p.vel.y * pv.dir.y) / vl) / 2 : 0;
     const q = clamp(Number.isFinite(power) ? power : 0, 0, 1);
-    const spread = K11.shotErrorSpread({ pressure: this.pressureOn(p), misalign, charge: q, finishing: p.attrs.finishing }, T.kicking);
+    const spread = K11.shotErrorSpread({ pressure: this.pressureFor(p), misalign, charge: q, finishing: p.attrs.finishing }, T.kicking);
     const dir = rotate(pv.dir, K11.shotError(spread, this.rng(), this.rng()));
     const speed = lerp(T.shot.minSpeed, T.shot.maxSpeed, q);
     this.kickBall(p, scale(dir, speed), 'shot', null, null);
@@ -996,7 +996,7 @@ export class MatchSim {
     const T = this.tuning;
     const K = T.kicking;
     const ball = s.ball;
-    const r = K11.resolveReceivingContact(ball.vel, p.vel, this.facingOf(p), p.attrs.control, this.pressureOn(p), K);
+    const r = K11.resolveReceivingContact(ball.vel, p.vel, this.facingOf(p), p.attrs.control, this.pressureFor(p), K);
     this.lastTouch = { id: p.id, outcome: r.outcome, quality: r.quality, relativeSpeed: r.relativeSpeed };
     if (r.outcome === 'secure') {
       // Cushioning touch: the part of the run that was carrying the receiver into the ball is checked.
@@ -1046,6 +1046,11 @@ export class MatchSim {
       return { kind: 'shot', charge: q, origin: copy(s.ball.pos), speed: lerp(this.tuning.shot.minSpeed, this.tuning.shot.maxSpeed, q), shot };
     }
     return null;
+  }
+
+  /** Pressure as it affects this player's execution: composure scales it (0.8 -> 1.2x, 1.2 -> 0.8x), still 0–1. */
+  private pressureFor(p: MatchPlayer): number {
+    return clamp(this.pressureOn(p) * (2 - p.attrs.composure), 0, 1);
   }
 
   private pressureOn(p: MatchPlayer): number {
@@ -1181,7 +1186,7 @@ export class MatchSim {
       return this.padResult(pad.stick.x * k, pad.stick.y * k, 20);
     }
     const carrying = s.ball.owner === p.id;
-    let top = (carrying ? T.carrier.speed * (0.85 + 0.15 * A.control) : T.movement.chaseSpeed) * A.pace;
+    let top = (carrying ? T.carrier.speed * (0.85 + 0.15 * A.dribbling) : T.movement.chaseSpeed) * A.pace;
     if (p.id === s.controlledId && pad.phase !== 'jockey') pad.jockeying = false;
     if (mine && pad.phase === 'jockey') {
       const j = this.jockeyVelocity(p);
@@ -1320,7 +1325,8 @@ export class MatchSim {
     const front = -(bx * rx + by * ry) / (bl * rl);
     const behind = -front > ST.behindCos;
     const loose = clamp((bl - ST.touchYards) / ST.looseYards, 0, 1);
-    const edge = (me.attrs.agility + me.attrs.control) / 2 - (owner.attrs.control + owner.attrs.agility) / 2;
+    // Execution only: reach was checked geometrically above and no attribute changes it.
+    const edge = (me.attrs.defending + me.attrs.agility) / 2 - (owner.attrs.strength + owner.attrs.dribbling) / 2;
     const banned = (s.tackleBan[me.id] ?? 0) > s.simTime;
     const p = banned
       ? 0
@@ -1633,7 +1639,9 @@ export class MatchSim {
       seekInto(desired, p.pos, k.target, k.speed, 0.4);
       accel = T.keeper.accel;
     } else {
-      seekInto(desired, p.pos, p.target, p.speed, p.intent === 'chase' || p.intent === 'receive' ? 0.4 : 1.5);
+      // Awareness only speeds AI repositioning to its shape target; chases, receptions and user input are untouched.
+      const shape = p.id !== s.controlledId && p.intent !== 'chase' && p.intent !== 'receive' && p.intent !== 'press';
+      seekInto(desired, p.pos, p.target, shape ? p.speed * p.attrs.awareness : p.speed, p.intent === 'chase' || p.intent === 'receive' ? 0.4 : 1.5);
       if (p.intent === 'chase' || p.intent === 'press' || p.intent === 'run' || p.intent === 'recover') accel = M.sprintAccel;
     }
     approachInPlace(p.vel, desired.x, desired.y, accel * h);

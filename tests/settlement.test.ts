@@ -74,7 +74,7 @@ describe('weekly development settlement (35/30/30/5)', () => {
     expect(t.applied.awareness).toBe(0);
   });
 
-  it('endWeek stores the settlement once, carries fractions and the save round-trips; old saves load', () => {
+  it('endWeek stores the v2 development review once (no v1 settlement), clears carry and the save round-trips; old saves load', () => {
     let s = emptySave();
     const r = reduce(s, { type: 'createPlayer', id: 'p1', name: 'Pat', position: 'MID' });
     expect(r.ok).toBe(true);
@@ -83,27 +83,30 @@ describe('weekly development settlement (35/30/30/5)', () => {
     expect(e.ok).toBe(true);
     const next = (e as { save: typeof s }).save;
     const h = next.history.at(-1)!;
-    expect(h.settlement?.week).toBe(1);
-    expect(next.devCarry).toEqual(h.settlement!.carry);
+    expect(h.settlement).toBeUndefined();
+    expect(h.development!.proposal.version).toBe(2);
+    expect(next.devCarry).toEqual(zeroFractions());
     const back = parseSave(JSON.parse(JSON.stringify(next)));
-    expect(back.ok).toBe(true);
+    expect(back.ok && back.value.history.at(-1)!.development).toEqual(h.development);
     const old = JSON.parse(JSON.stringify(s)) as Record<string, unknown>;
     delete old.devCarry;
     const parsed = parseSave(old);
     expect(parsed.ok && parsed.value.devCarry).toEqual(zeroFractions());
   });
-  it('graded Team Training points count against the weekly caps before settlement adds more', async () => {
+  it('a graded Team Training week is one team source at the review, on its situations plus awareness', async () => {
     const { selectSituations } = await import('../src/game/career/teamTraining');
     let s = emptySave();
     s = (reduce(s, { type: 'createPlayer', id: 'p1', name: 'Pat', position: 'MID' }) as { save: typeof s }).save;
     const ids = selectSituations('MID', 1).map((x) => x.id);
     const attrs = [...new Set(selectSituations('MID', 1).flatMap((x) => x.attributes))];
-    const changes = attrs.map((a) => ({ attribute: a, from: s.player!.attributes[a], to: s.player!.attributes[a] + CAREER_CONFIG.growth.weeklyCapTotal }));
-    const full = { ...s, teamTraining: [{ week: 1, situations: ids, scores: ids.map(() => 1), delta: 2, changes }], devCarry: Object.fromEntries(ATTRIBUTES.map((a) => [a, 1])) as typeof s.devCarry };
+    const full = { ...s, teamTraining: [{ week: 1, situations: ids, scores: ids.map(() => 1), delta: 2, changes: [] }] };
     const e = reduce(full, { type: 'endWeek' });
     expect(e.ok).toBe(true);
-    const st = (e as { save: typeof s }).save.history.at(-1)!.settlement!;
-    expect(Object.values(st.applied).reduce((a, b) => a + b, 0)).toBe(0);
-    expect(Object.keys(st.sources.find((x) => x.source === 'team')!.attributes).sort()).toEqual([...attrs].sort());
+    const dev = (e as { save: typeof s }).save.history.at(-1)!.development!;
+    const team = dev.sources.find((x) => x.source === 'team')!;
+    expect(team).toMatchObject({ status: 'done', score: 1 });
+    expect(Object.keys(team.allocation).sort()).toEqual([...new Set(['awareness', ...attrs])].sort());
+    expect(Object.values(team.allocation).reduce((a, b) => a + (b ?? 0), 0)).toBeCloseTo(1, 10);
+    for (const a of ATTRIBUTES) if (!(a in team.allocation)) expect(dev.proposal.applied[a]).toBe(0);
   });
 });

@@ -28,7 +28,11 @@ describe('Team Training v1.2 progression adapter', () => {
     expect(s.teamTraining).toHaveLength(1);
     expect(s.teamTraining[0]!.scores).toEqual([0.9, 0.9, 0.6]);
     expect(s.teamTraining[0]!.delta).toBe(weekDelta([0.9, 0.9, 0.6]));
-    expect(total(s)).toBe(start + s.teamTraining[0]!.delta);
+    // Progression v2: the record is made once; its growth waits for the weekly review.
+    expect(total(s)).toBe(start);
+    const team = act(s, { type: 'endWeek' }).history.at(-1)!.development!.sources.find((x) => x.source === 'team')!;
+    expect(team.status).toBe('done');
+    expect(team.score).toBeCloseTo((0.9 + 0.9 + 0.6) / 3, 10);
   });
 
   it('replayed completions and repeat sessions change nothing (no duplicate rewards)', () => {
