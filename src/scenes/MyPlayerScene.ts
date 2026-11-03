@@ -50,7 +50,9 @@ export function attributeRows(save: CareerSave): Row[] {
     const applied = last ? last.applied[a] : 0;
     const proj = projected ? ` Projected this week: +${gain.toFixed(2)} (applied once at the weekly review).` : '';
     const prev = last ? ` Last review added +${applied.toFixed(2)}.` : '';
-    const cap = projected?.capped ? ` Limited by the Season 1 maximum overall of ${DEV_CONFIG.seasonOneCap}.` : '';
+    const cap = projected?.capped
+      ? ` Limited by the Season 1 maximum overall of ${DEV_CONFIG.seasonOneCap}.`
+      : p ? ` Season 1 maximum overall: ${DEV_CONFIG.seasonOneCap} (now ${overallOf(p.attributes).toFixed(1)}); weekly growth is scaled down so it is never passed.` : '';
     const detail = `${ATTRIBUTE_LABELS[a]}: ${ATTRIBUTE_EFFECT[a]} Grows from home practice (35%), Team Training (35%) and matches (30%): ${ATTRIBUTE_EVIDENCE[a]} Each home activity counts once a week (best three).${proj}${prev}${cap}`;
     return { label: ATTRIBUTE_LABELS[a], value: p ? p.attributes[a] : null, carry: p ? gain : null, detail };
   });
