@@ -4,7 +4,7 @@ import { diagnostics, pressElement as pressAny, trackConsoleErrors, waitForScene
 test.describe.configure({ timeout: 300_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 type Rect = { x: number; y: number; width: number; height: number };
-type Teach = { pose: string; foot: 'right' | 'left'; phase: number; step: number; contact: string; boot: { x: number; y: number }; zoomBall: boolean; t: number; ground: number };
+type Teach = { pose: string; foot: 'right' | 'left'; phase: number; step: number; contact: string; boot: { x: number; y: number }; zoomBall: boolean; t: number; clock: number; ground: number };
 type Side = { working: string | null; support: string | null; phase: string; action: string; ballDx: number; poseDx: number; ballTexture: string; ballRadius: number; poseWorking: string | null; poseSurface: string; contact: { x: number; y: number } | null; top?: { gap: Record<'right' | 'left', number>; ballY: number; boots: Record<'right' | 'left', Rect> } };
 type Demo = { side?: Side; teach?: Teach; set: string; flip?: boolean; fallback?: boolean; frame: string; contact: string; player: Rect; ball: { x: number; y: number }; rect: Rect; inset?: { foot: string; contact: string; label: string; rect: Rect; ball: Rect; text: Rect }; paused?: boolean; speed?: number };
 type Career = { screen: string; week: number; credit: number; journal: number; player: string | null; status: string; text: string; plan: string[]; attributes: Record<string, number> | null; demo: Demo | null };
@@ -153,18 +153,16 @@ for (const gender of ['boy', 'girl'] as const) {
     await press(page, 'demo-replay', mode);
     await press(page, 'demo-half', mode);
     await until(page, (x) => x.demo?.speed === 0.5 && x.demo.paused === false, '0.5x');
-    // Time each read at its midpoint so snapshot round trips don't count as demo time.
-    const read = async () => {
-      const t0 = Date.now();
-      const x = await career(page);
-      return { x, at: (t0 + Date.now()) / 2000 };
-    };
-    const a = await read();
+    // Demo time over the wall time the demo actually played: a starved CI runner draws about one frame a second
+    // (a long gap counts as at most 0.25 s), so real-time sampling can't measure the speed there.
+    const a = await career(page);
     await page.waitForTimeout(800);
-    const b = await read();
-    const rate = (b.x.demo!.teach!.t - a.x.demo!.teach!.t) / (b.at - a.at);
-    expect(rate).toBeGreaterThan(0.3);
-    expect(rate).toBeLessThan(0.7);
+    const b = await career(page);
+    const played = b.demo!.teach!.clock - a.demo!.teach!.clock;
+    expect(played, 'demo kept playing').toBeGreaterThan(0);
+    const rate = (b.demo!.teach!.t - a.demo!.teach!.t) / played;
+    expect(rate).toBeGreaterThan(0.49);
+    expect(rate).toBeLessThan(0.51);
     // Watching changes nothing; logging adds one entry.
     await press(page, 'career-back', mode);
     await press(page, 'career-home', mode);
@@ -230,8 +228,28 @@ for (const gender of ['boy', 'girl'] as const) {
         // Ball moved only under the sole, forward then back (or back only), and the strip turned with it.
         const xs = seen.map((d) => d.ball.x);
         for (let i = 1; i < seen.length; i++) if (seen[i]!.side!.ballDx !== seen[i - 1]!.side!.ballDx) expect(seen[i]!.teach!.contact === 'sole' || seen[i - 1]!.teach!.contact === 'sole').toBe(true);
-        const max = Math.max(...seen.map((d) => d.side!.ballDx));
-        expect(max).toBe(8);
+        // The far end of a roll lasts a few frames; check it on the held beat starts (Step), not by live sampling.
+        await press(page, 'demo-replay', mode);
+        await press(page, 'demo-pause', mode);
+        let h = await until(page, (x) => x.demo?.paused === true, 'paused');
+        for (let k = 0; k < 20 && h.demo!.teach!.phase !== 0; k++) {
+          const ph = h.demo!.teach!.phase;
+          await press(page, 'demo-step', mode);
+          h = await until(page, (x) => x.demo!.teach!.phase !== ph, 'step to start');
+        }
+        const held: number[] = [];
+        for (let k = 0; k < 20; k++) {
+          const s = h.demo!.side!;
+          expect(s.poseDx, 'held pose drawn for the ball where it is').toBe(s.ballDx);
+          held.push(s.ballDx);
+          const ph = h.demo!.teach!.phase;
+          await press(page, 'demo-step', mode);
+          // Step after the last beat wraps to the start.
+          h = await until(page, (x) => x.demo!.teach!.phase !== ph, `step after ${ph}`);
+          if (h.demo!.teach!.phase < ph) break;
+        }
+        expect(Math.max(...held), 'roll reaches its far end').toBe(8);
+        expect(Math.max(...seen.map((d) => d.side!.ballDx)), 'live play moves the ball most of the way').toBeGreaterThanOrEqual(6);
         if (path === 'forward-back') expect(xs[0]!).toBeLessThan(Math.max(...xs) - 5);
         else expect(xs[0]!).toBeGreaterThan(xs[xs.length - 1]! + 5);
         expect(seen[seen.length - 1]!.side!.ballDx).toBe(0);

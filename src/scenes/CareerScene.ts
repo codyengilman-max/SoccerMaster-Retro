@@ -118,7 +118,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private cardLabels: string[] = [];
   /** Tallest step caption for the current stage width, so the ground line never moves when a caption wraps. */
   private teachCap = { key: '', h: 0 };
-  private demoInfo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number }; inset?: { foot: string | null; contact: string; label: string; rect: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number; width: number; height: number }; text: { x: number; y: number; width: number; height: number } }; teach?: { pose: string; foot: TeachFoot; phase: number; step: number; contact: string; boot: { x: number; y: number }; zoomBall: boolean; t: number; ground: number }; side?: { working: string | null; support: string | null; phase: string; action: string; ballDx: number; poseDx: number; ballTexture: string; ballRadius: number; poseWorking: string | null; poseSurface: string; contact: { x: number; y: number } | null; top?: { gap: Record<'right' | 'left', number>; ballY: number; boots: Record<'right' | 'left', { x: number; y: number; width: number; height: number }> } }; paused?: boolean; speed?: number } | null = null;
+  private demoInfo: { set: string; frame: string; flip: boolean; contact: string; scale: { x: number; y: number }; player: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number }; rect: { x: number; y: number; width: number; height: number }; sheet?: { sex: string; index: number; dx: number; ballR: number; miss: boolean; speed: number }; inset?: { foot: string | null; contact: string; label: string; rect: { x: number; y: number; width: number; height: number }; ball: { x: number; y: number; width: number; height: number }; text: { x: number; y: number; width: number; height: number } }; teach?: { pose: string; foot: TeachFoot; phase: number; step: number; contact: string; boot: { x: number; y: number }; zoomBall: boolean; t: number; clock: number; ground: number }; side?: { working: string | null; support: string | null; phase: string; action: string; ballDx: number; poseDx: number; ballTexture: string; ballRadius: number; poseWorking: string | null; poseSurface: string; contact: { x: number; y: number } | null; top?: { gap: Record<'right' | 'left', number>; ballY: number; boots: Record<'right' | 'left', { x: number; y: number; width: number; height: number }> } }; paused?: boolean; speed?: number } | null = null;
   private demoInset: Phaser.GameObjects.Text | null = null;
   private title!: Phaser.GameObjects.Text;
   private body!: Phaser.GameObjects.Text;
@@ -126,6 +126,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
   private buttons: Button[] = [];
   private demoRect: { x: number; y: number; w: number; h: number } | null = null;
   private demoT = 0;
+  /** Wall seconds a lesson demo has played (before speed), so tests can check speed independent of frame rate. */
+  private demoClock = 0;
   private demoSide: 'left' | 'right' = 'right';
   private demoPaused = false;
   private demoSpeed = 1;
@@ -215,7 +217,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
     const s = this.screen;
     const a = s.kind === 'activity' ? activityById(s.id) : undefined;
     if (a && this.hasPlayback(a)) {
-      if (!this.demoPaused) this.demoT += wall * this.demoSpeed;
+      if (!this.demoPaused) ((this.demoClock += wall), (this.demoT += wall * this.demoSpeed));
       // Teaching demos play once and stop on the last frame; Play or Replay starts again.
       const lesson = teachingFor(a.id);
       const side = sideLessonFor(a.id);
@@ -1354,7 +1356,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       set: `bmside:${sex}`, frame: fr.pose, flip: false, contact: fr.surface, scale: { x: s, y: s },
       player: { x: ib.x, y: ib.y, width: ib.width, height: ib.height }, ball: { x: bc.x, y: bc.y }, rect: { x: r.x, y: r.y, width: r.w, height: r.h },
       inset: { foot: fr.working, contact: fr.surface, label: fr.inset, rect: { x, y, width: w, height: h }, ball: { x: zbc.x - zr, y: zbc.y - zr, width: zr * 2, height: zr * 2 }, text: { x: lb.x, y: lb.y, width: lb.width, height: lb.height } },
-      teach: { pose: fr.pose, foot: this.teachFoot, phase: fr.beat, step: fr.step, contact: fr.surface, boot: contact ?? { x: bc.x, y: bc.y }, zoomBall: true, t: this.demoT, ground: footY },
+      teach: { pose: fr.pose, foot: this.teachFoot, phase: fr.beat, step: fr.step, contact: fr.surface, boot: contact ?? { x: bc.x, y: bc.y }, zoomBall: true, t: this.demoT, clock: this.demoClock, ground: footY },
       side: { working: fr.working, support: fr.support, phase: fr.phase, action: fr.action, ballDx: fr.ball, poseDx: pose.dx, ballTexture: `${ballKey}:${ballFrame}`, ballRadius: art.ball.r * s, poseWorking: pose.working, poseSurface: pose.surface, contact, ...(topInfo ? { top: topInfo } : {}) },
       paused: this.demoPaused, speed: this.demoSpeed,
     };
@@ -1433,7 +1435,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       set: `bm1:${sex}`, frame: fr.pose, flip: false, contact: fr.contact, scale: { x: this.demoImg.scaleX, y: this.demoImg.scaleY },
       player: { x: ib.x, y: ib.y, width: ib.width, height: ib.height }, ball: { x: bx, y: by }, rect: { x: r.x, y: r.y, width: r.w, height: r.h },
       inset: { foot: fr.foot, contact: fr.contact, label, rect: { x, y, width: w, height: h }, ball: zoomBall ? { x: zbx - zbr, y: zby - zbr, width: zbr * 2, height: zbr * 2 } : { x: x + 4, y: y + 4, width: 0, height: 0 }, text: { x: lb.x, y: lb.y, width: lb.width, height: lb.height } },
-      teach: { pose: fr.pose, foot: fr.foot, phase: fr.phase, step: fr.step, contact: fr.contact, boot, zoomBall, t: this.demoT, ground: footY },
+      teach: { pose: fr.pose, foot: fr.foot, phase: fr.phase, step: fr.step, contact: fr.contact, boot, zoomBall, t: this.demoT, clock: this.demoClock, ground: footY },
       paused: this.demoPaused, speed: this.demoSpeed,
     };
     return true;
