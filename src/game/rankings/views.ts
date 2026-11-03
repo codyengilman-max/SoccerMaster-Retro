@@ -95,16 +95,18 @@ export interface Kickoff {
   readonly rank: number;
   readonly opponent: string;
   readonly opponentRank: number;
+  /** Directory size the ranks were counted in. Missing on records saved before the 1,000-team directory. */
+  readonly teams?: number;
 }
 export function kickoffFor(s: RankingsState, week: number, competition: Kickoff['competition'], opponent: string): Kickoff {
   const snap = s.snapshots[s.snapshots.length - 1]!;
   const t = nationalTable(snap);
   const rk = (id: string) => t.find((r) => r.team === id)?.rank ?? 0;
-  return { v: 1, careerId: s.careerId, snapshot: snap.id, week, competition, team: HOME_CLUB, rank: rk(HOME_CLUB), opponent, opponentRank: rk(opponent) };
+  return { v: 1, careerId: s.careerId, snapshot: snap.id, week, competition, team: HOME_CLUB, rank: rk(HOME_CLUB), opponent, opponentRank: rk(opponent), teams: TEAMS.length };
 }
 export function parseKickoff(raw: unknown): Kickoff | null {
   const k = raw as Partial<Kickoff> | null;
-  return k && k.v === 1 && typeof k.careerId === 'string' && typeof k.snapshot === 'string' && typeof k.week === 'number' && typeof k.rank === 'number' && typeof k.opponent === 'string' && typeof k.opponentRank === 'number' && (k.competition === 'league' || k.competition === 'tournament') ? (k as Kickoff) : null;
+  return k && k.v === 1 && typeof k.careerId === 'string' && typeof k.snapshot === 'string' && typeof k.week === 'number' && typeof k.rank === 'number' && typeof k.opponent === 'string' && typeof k.opponentRank === 'number' && (k.competition === 'league' || k.competition === 'tournament') && (k.teams === undefined || typeof k.teams === 'number') ? (k as Kickoff) : null;
 }
 const ord = (n: number): string => `${n}${n % 10 === 1 && n % 100 !== 11 ? 'st' : n % 10 === 2 && n % 100 !== 12 ? 'nd' : n % 10 === 3 && n % 100 !== 13 ? 'rd' : 'th'}`;
 
@@ -113,7 +115,14 @@ const ord = (n: number): string => `${n}${n % 10 === 1 && n % 100 !== 11 ? 'st' 
  * this match's saved full-time score (Batavia first), used before the story has written it to the league.
  */
 export function teamImpact(k: Kickoff, s: RankingsState, story: StoryResults, fullTime: { readonly us: number; readonly them: number } | null = null): string[] {
-  const out: string[] = [`At kickoff (${k.snapshot === 's1-pre' ? 'Preseason' : `after week ${k.snapshot.replace('s1-w', '')}`}): ${teamName(k.team)} #${k.rank}, ${teamName(k.opponent)} #${k.opponentRank} of ${TEAMS.length}`];
+  // Ranks saved in a smaller directory are recounted from the same (migrated) kickoff snapshot, so
+  // movement is measured on one population; the saved record itself is left unchanged.
+  const legacy = k.teams !== TEAMS.length ? s.snapshots.find((x) => x.id === k.snapshot) : undefined;
+  const legacyTable = legacy ? nationalTable(legacy) : null;
+  const at = (id: string, saved: number) => legacyTable?.find((r) => r.team === id)?.rank ?? saved;
+  const rank = at(k.team, k.rank);
+  const opponentRank = at(k.opponent, k.opponentRank);
+  const out: string[] = [`At kickoff (${k.snapshot === 's1-pre' ? 'Preseason' : `after week ${k.snapshot.replace('s1-w', '')}`}): ${teamName(k.team)} #${rank}, ${teamName(k.opponent)} #${opponentRank} of ${TEAMS.length}`];
   if (k.competition === 'league') {
     const fmt = leagueFormat(story.league);
     const f = fmt.batavia.find((x) => fmt.roundWeek.get(x.round) === k.week);
@@ -134,7 +143,7 @@ export function teamImpact(k: Kickoff, s: RankingsState, story: StoryResults, fu
   if (!snap) out.push('National rankings update after this matchweek.');
   else {
     const now = nationalTable(snap).find((r) => r.team === k.team)?.rank ?? 0;
-    const d = k.rank - now;
+    const d = rank - now;
     out.push(`National after week ${k.week}: #${now} (${d > 0 ? `up ${d}` : d < 0 ? `down ${-d}` : 'no change'})`);
   }
   return out;
