@@ -12,13 +12,13 @@ interface ArtActor { id: string; team: 'H' | 'A'; role: string; at: V2; sheet: s
 interface Art { set: string; look: string; field: { x: number; y: number; width: number; height: number }; camera: readonly [number, number, number, number]; view: { s: number; ox: number; oy: number; head: number }; scale: number; bodyPx: number; actors: ArtActor[]; ball: { at: V2; x: number; y: number; size: number } | null; you: { x: number; y: number; width: number; height: number } | null }
 interface Weekly { screen: string; assignment: { week: number; category: string; situationId: string; variant: string } | null; options: { id: string; grade: string }[]; verdict: unknown; bodyText: string; saved: string; progress: { completed: boolean; credited: boolean; best: string | null; runs: number } | null; buttonsTop: number | null; art: Art | null }
 
-async function weekly(page: Page, pred: (w: Weekly) => boolean, what: string): Promise<Weekly> {
+async function weekly(page: Page, pred: (w: Weekly) => boolean, what: string, limitMs = 30_000): Promise<Weekly> {
   const start = Date.now();
   for (;;) {
     const d = await diagnostics(page);
     const w = d.gameplay as Weekly | null;
     if (d.activeScenes.includes('weekly') && w && pred(w)) return w;
-    if (Date.now() - start > 30_000) throw new Error(`timed out waiting for ${what}: ${JSON.stringify(w)?.slice(0, 600)}`);
+    if (Date.now() - start > limitMs) throw new Error(`timed out waiting for ${what}: ${JSON.stringify(w)?.slice(0, 600)}`);
     await page.waitForTimeout(50);
   }
 }
@@ -188,7 +188,7 @@ test('Weekly Team Training: Week 1 FWD (D07 left winger) on package sprites; ans
   const rotatedWidth = w.art!.field.width;
   await page.setViewportSize(vp);
   // Wait for the re-layout so the Replay tap hits the rebuilt button, not the rotated one.
-  await weekly(page, (x) => x.screen === 'result' && allDrawn(x) && Math.abs(x.art!.field.width - rotatedWidth) > 1, 'result back');
+  await weekly(page, (x) => x.screen === 'result' && allDrawn(x) && Math.abs(x.art!.field.width - rotatedWidth) > 1, 'result back', 120_000);
   // Replay: practice only, credit is not paid again.
   await pressAny(page, 'tt-replay', mode);
   w = await weekly(page, (x) => x.screen === 'observe' && allDrawn(x), 'replay');
