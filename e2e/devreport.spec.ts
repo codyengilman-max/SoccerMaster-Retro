@@ -122,7 +122,7 @@ test('full-time Match Report, My Player, Match History reopen without changing t
   p = await gameplay<MyPlayer>(page, 'myPlayer', (g) => g.page === 1, 'page 2');
   // Progression v2: all ten attributes are tracked, so no row shows a dash.
   expect(p.values.length).toBeGreaterThan(0);
-  for (const v of p.values) expect(v).toMatch(/^\d+\.\d$/);
+  for (const v of p.values) expect(v).toMatch(/^\d+\.\d \(\+\d+\.\d\d\)$/);
   await pressElement(page, 'my-player-history', mode);
   p = await gameplay<MyPlayer>(page, 'myPlayer', (g) => g.view === 'history', 'history');
   expect(p.rows[0]).toMatch(/^Wk \d+ v /);

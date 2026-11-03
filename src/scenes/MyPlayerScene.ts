@@ -183,7 +183,7 @@ export class MyPlayerScene extends Phaser.Scene implements InspectableScene {
   private rowText(it: Row | SavedReport | undefined): [string, string] {
     if (!it) return ['', ''];
     if ('matchId' in it) return [`Wk ${it.week} v ${it.away}`, `${it.score.home}-${it.score.away} >`];
-    return [it.label, it.value === null ? '-' : it.carry ? `${it.value.toFixed(1)} (+${it.carry.toFixed(2)})` : it.value.toFixed(1)];
+    return [it.label, it.value === null ? '-' : it.carry !== null ? `${it.value.toFixed(1)} (+${it.carry.toFixed(2)})` : it.value.toFixed(1)];
   }
 
   // ---------- drawing ----------
