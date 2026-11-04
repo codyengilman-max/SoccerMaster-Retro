@@ -88,8 +88,8 @@ for (const gender of ['boy', 'girl'] as const) {
     await until(page, (x) => x.screen === 'setup', 'setup');
     await press(page, 'career-home', mode);
     c = await until(page, (x) => x.player === 'Robin' && x.screen === 'home', 'new player home');
-    // Home Training: exactly two Continue cards, Juggling and Ball Mastery, and one way out. No Progress, Team Training, focus or Home Practice.
-    expect(Object.keys(await els(page)).filter((k) => !k.startsWith('career-') && !['title', 'body'].includes(k)).sort()).toEqual(['continue-ballmastery', 'continue-juggling']);
+    // Home Training: exactly two Continue cards, Juggling and Ball Mastery, the weekly Driveway Dribbling round, and one way out. No Progress, Team Training, focus or Home Practice.
+    expect(Object.keys(await els(page)).filter((k) => !k.startsWith('career-') && !['title', 'body'].includes(k)).sort()).toEqual(['continue-ballmastery', 'continue-juggling', 'play-driveway']);
     expect(Object.keys(await els(page)).filter((k) => k.startsWith('career-'))).toEqual(['career-menu']);
     expect(c.text).not.toMatch(/focus|Team Training|Home Practice|Extra practice/i);
     await page.screenshot({ path: `test-results/bm-home-${gender}-${info.project.name}.png` });

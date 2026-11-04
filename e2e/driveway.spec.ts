@@ -44,9 +44,10 @@ test('Driveway Dribbling: select screen, league pad, quick shot, recovery, pause
   expect(g.art).toEqual({ background: true, objects: true, player: true, ball: true });
   expect(g.sim?.canShoot).toBe(true);
   // League quick shot: a double tap on SHOOT fires from the ball, then the ball recovers and shooting waits.
-  await pressElement(page, 'pad-shoot', 'touch');
-  await page.waitForTimeout(60);
-  await pressElement(page, 'pad-shoot', 'touch');
+  // Two real taps back to back on SHOOT: a diagnostics read between them could outlast the 0.25 s double-tap window on a busy runner.
+  const shoot = d.layout!.elements['pad-shoot']!;
+  await page.touchscreen.tap(shoot.x + shoot.width / 2, shoot.y + shoot.height / 2);
+  await page.touchscreen.tap(shoot.x + shoot.width / 2, shoot.y + shoot.height / 2);
   await expect.poll(async () => (await dd(page)).sim?.stats.shots ?? 0, { timeout: 3000 }).toBe(1);
   expect((await dd(page)).sim?.canShoot).toBe(false);
   await expect.poll(async () => (await dd(page)).sim?.canShoot, { timeout: 3000 }).toBe(true);

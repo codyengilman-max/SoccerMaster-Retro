@@ -1,5 +1,5 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
-import { diagnostics, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
+import { diagnostics, playDriveway, pressElement as pressAny, trackConsoleErrors, waitForScene } from './helpers';
 
 // Cross-feature flow on one isolated (per-test browser context) save:
 // create player -> home training credit -> career match with Coach Moments -> evidence -> reload -> week review -> reload.
@@ -110,6 +110,12 @@ test('connected flow: create player, training credit, career match with Coach Mo
   expect(c.evidence).toBeGreaterThan(answered);
 
   // Week review turns evidence into growth; home practice alone never raises attributes.
+  await pressElement(page, 'nav-review', mode);
+  await until<Career>(page, 'career', (x) => x.screen === 'review', 'review');
+  // The weekly Driveway Dribbling round must be finished before the week can end (D74).
+  await pressElement(page, 'review-driveway', mode);
+  await playDriveway(page, mode);
+  await until<Career>(page, 'career', (x) => x.screen === 'home', 'home after driveway');
   await pressElement(page, 'nav-review', mode);
   await until<Career>(page, 'career', (x) => x.screen === 'review', 'review');
   await pressElement(page, 'end-week', mode);
