@@ -222,18 +222,22 @@ test.describe('TACKLE and quick shot (PR D)', () => {
     const errors = trackConsoleErrors(page);
     const cdp = await page.context().newCDPSession(page);
     await open(page, modeFor(info), '&setup=tackle');
-    const before = await waitFor(page, (r) => r.control.switchAvailable && r.control.switchCandidate !== null);
+    await waitFor(page, (r) => r.control.switchAvailable && r.control.switchCandidate !== null);
     await slowSim(page, 0.2);
     const stick = await centre(page, 'pad-stick');
     const sw = await centre(page, 'pad-switch');
     await touch(page, cdp, 'touchStart', [{ id: 1, ...stick }]);
     await touch(page, cdp, 'touchMove', [{ id: 1, x: stick.x, y: stick.y - 40 }]);
     const held = await waitFor(page, (r) => Math.hypot(r.pad.stick.x, r.pad.stick.y) > 0.5);
-    const cand = held.control.switchCandidate ?? before.control.switchCandidate;
     await touch(page, cdp, 'touchStart', [{ id: 1, x: stick.x, y: stick.y - 40 }, { id: 2, ...sw }]);
-    await touch(page, cdp, 'touchEnd', [{ id: 1, x: stick.x, y: stick.y - 40 }]);
+    // Lift only the SWITCH finger (Chromium's CDP touchEnd ends the listed points).
+    await touch(page, cdp, 'touchEnd', [{ id: 2, ...sw }]);
     const after = await waitFor(page, (r) => r.control.lastSwitch?.why === 'manual');
-    expect([cand, held.control.switchCandidate]).toContain(after.controlledId);
+    // The pick is the candidate at the moment the press lands (A7 keeps dribbling, so the preview can move between reads).
+    expect(after.controlledId).toBe(after.control.lastSwitch?.id);
+    // (Automatic switching may move control between reads on a slow runner, so compare with the switch record, not `held`.)
+    expect(after.control.lastSwitch?.at ?? 0).toBeGreaterThanOrEqual(held.simTime);
+    expect(after.control.manualUntil).toBeGreaterThan(after.simTime);
     // The SWITCH finger never becomes an action press, and the stick finger is still steering.
     expect(Math.hypot(after.pad.stick.x, after.pad.stick.y)).toBeGreaterThan(0.5);
     expect(after.inputLog.join(',')).toContain('pad:switch:touch');
