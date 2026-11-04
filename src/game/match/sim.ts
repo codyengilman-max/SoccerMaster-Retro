@@ -450,6 +450,15 @@ export class MatchSim {
     this.setControl(best, owner ? 'defend' : 'loose ball');
   }
 
+  /** SWITCH is offered while defending or on a loose ball, when another home outfielder can take over. */
+  switchAvailable(): boolean {
+    const s = this.s;
+    if (s.paused || s.phase !== 'live') return false;
+    const owner = s.ball.owner ? s.players[s.ball.owner] : null;
+    if (owner && owner.team === 'home') return false;
+    return s.switchCandidate !== null;
+  }
+
   /** SWITCH: the previewed candidate (same rule as the preview marker), held against automation. */
   private manualSwitch(): boolean {
     const s = this.s;

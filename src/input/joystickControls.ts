@@ -52,6 +52,8 @@ export interface PadLayout {
   /** Touches starting inside this left-hand zone (and on no button) take the stick. */
   readonly stickZone: { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
   readonly buttons: Readonly<Record<ActionButton, Circle>>;
+  /** Compact SWITCH button above the cluster (drawn only by scenes that enable it). */
+  readonly switchButton: Circle;
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -94,6 +96,7 @@ function layoutAt(width: number, height: number, insets: Insets, size: number): 
       shoot: { x: px, y: ty, r },
       tackle: { x: sx, y: ty, r },
     },
+    switchButton: { x: (sx + px) / 2, y: ty - r - gap - r * 0.62, r: r * 0.62 },
   };
 }
 
@@ -206,6 +209,11 @@ export class JoystickControls {
       if (Math.hypot(x - c.x, y - c.y) <= c.r) return b;
     }
     return null;
+  }
+
+  /** A finger the scene consumed itself (e.g. SWITCH): never becomes the stick or an action until lifted. */
+  ignorePointer(id: number): void {
+    if (id !== this.stickId && id !== this.act?.id && id !== this.mod?.id) this.ignored.add(id);
   }
 
   private inStickZone(x: number, y: number): boolean {

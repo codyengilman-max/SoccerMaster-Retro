@@ -154,6 +154,10 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   private venueResolution: VenueResolution | null = null;
   private fps = 0;
   private toastMessage = '';
+  /** Dev overlay: sim time of the latest input and the latest frame's duration. */
+  private lastInputAt = 0;
+  private frameMs = 0;
+  private lastEventActor: string | null = null;
   /** Team Training feedback is not replaced by routine notices ("You control …") until it expires. */
   private toastPriorityUntil = 0;
   private toastUntil = 0;
@@ -308,8 +312,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.startVenue(params);
     this.camera = new CameraController(this.sim.state.ball.pos, cameraTuningFor(this.sideline(), orientationOf(this.scale) === 'portrait'));
     this.snapCamera();
-    this.pad = new PadHud(this, this.scale.width, this.scale.height);
+    // SWITCH is a league-match control: Team Training keeps its existing pad.
+    this.pad = new PadHud(this, this.scale.width, this.scale.height, { switchButton: !this.team });
     this.padIds = 0;
+    this.lastInputAt = 0;
+    this.lastEventActor = null;
     this.padKeys.clear();
     this.padSource = null;
     this.lastEpoch = this.sim.state.controlEpoch;
@@ -441,9 +448,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
   override update(_time: number, delta: number): void {
     const dt = delta / 1000;
     if (dt > 0) this.fps = this.fps ? this.fps * 0.95 + (1 / dt) * 0.05 : 1 / dt;
+    this.frameMs = delta;
     if (this.sim.state.controlEpoch !== this.lastEpoch) this.lastEpoch = this.sim.state.controlEpoch;
     // Availability comes from the authoritative sim; a held button that loses it goes inert.
     if (this.pad) this.handlePad(this.pad.controls.setAvailable(this.sim.padAvailability()));
+    this.pad?.setSwitchAvailable(!this.team && this.sim.switchAvailable());
     if (this.debugStage && this.sim.state.phase === 'live') this.stageOffside(this.debugStage);
     this.sim.step(dt * this.simRate);
     this.consumeEvents();
@@ -618,6 +627,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       const box = (c: { x: number; y: number; r: number }): Rect => ({ x: c.x - c.r, y: c.y - c.r, width: c.r * 2, height: c.r * 2 });
       elements['pad-stick'] = box(PL.stick);
       for (const a of ACTION_BUTTONS) elements[`pad-${a}`] = box(PL.buttons[a]);
+      if (this.pad.hasSwitch) elements['pad-switch'] = box(PL.switchButton);
     }
     if (this.sim.state.pauseReasons.user) {
       elements['pause-panel'] = this.panelRect;
@@ -679,6 +689,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       formations: { ...s.formations },
       possession: s.possession,
       controlledId: s.controlledId,
+      control: { careerId: this.collector?.careerId ?? null, switchCandidate: s.switchCandidate, switchAvailable: this.sim.switchAvailable(), lastSwitch: s.lastSwitch, manualUntil: s.manualUntil, receiveAssist: s.receiveAssist?.id ?? null, state: this.possessionState(), lastInputAt: this.lastInputAt, frameMs: this.frameMs },
       owner: s.ball.owner,
       userHasBall: this.sim.userHasBall(),
       dribbleDir: { x: s.dribbleDir.x, y: s.dribbleDir.y },
@@ -825,6 +836,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
       return;
     }
     if (!this.pad) return;
+    if (this.pad.switchHit(pointer.x, pointer.y)) {
+      this.pad.controls.ignorePointer(pointer.id);
+      this.requestSwitch('touch');
+      return;
+    }
     this.logInput(`down:pad:${pointer.id}`);
     this.handlePad(this.pad.controls.pointerDown(pointer.id, pointer.x, pointer.y));
   }
@@ -868,7 +884,15 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     if (!this.sim.state.pauseReasons.user) this.togglePause();
   }
 
+  /** SWITCH (button or E key): league matches only; the sim rejects it when no teammate can take over. */
+  private requestSwitch(source: string): void {
+    this.logInput(`pad:switch:${source}`);
+    if (this.team || !this.pad?.hasSwitch || this.sim.state.paused) return;
+    this.sim.command({ type: 'switchPlayer' });
+  }
+
   private logInput(entry: string): void {
+    this.lastInputAt = this.sim.state.simTime;
     this.inputLog.push(entry);
     if (this.inputLog.length > 12) this.inputLog.shift();
   }
@@ -967,6 +991,11 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     };
     const actions: Record<string, ActionButton> = { Space: 'pass', KeyJ: 'pass', KeyK: 'shoot', KeyL: 'slide', KeyI: 'tackle' };
     if (e.code === 'KeyF') return true;
+    if (e.code === 'KeyE') {
+      e.preventDefault();
+      if (down && !e.repeat) this.requestSwitch('key');
+      return true;
+    }
     const d = dirs[e.code];
     if (d) {
       e.preventDefault();
@@ -1644,10 +1673,21 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
 
   // ---- sim events ----------------------------------------------------------------------------
 
+  /** Explicit possession state for the overlay: controlled possession, pass in flight, loose, opposition, dead ball. */
+  private possessionState(): string {
+    const s = this.sim.state;
+    if (s.phase !== 'live') return 'dead ball';
+    const o = s.ball.owner ? s.players[s.ball.owner] : null;
+    if (o) return o.team === 'home' ? (o.id === s.controlledId ? 'controlled possession' : 'team possession') : 'opposition possession';
+    if (s.ball.kick && s.ball.kick.team === 'home' && s.ball.kick.kind === 'pass') return 'pass in flight';
+    return 'loose ball';
+  }
+
   private consumeEvents(): void {
     for (const e of this.sim.state.events) {
       if (e.seq <= this.lastSeq) continue;
       this.lastSeq = e.seq;
+      if (e.by && e.type !== 'control' && e.type !== 'rejected') this.lastEventActor = `${e.type} ${e.by}`;
       if (this.venueLayer) {
         if (e.type === 'goal') this.venueLayer.react({ id: `goal:${e.seq}`, type: 'goal', team: e.detail.startsWith('away') ? 'away' : 'home' });
         else if (e.type === 'saved' || e.type === 'parried') this.venueLayer.react({ id: `save:${e.seq}`, type: 'save', team: e.by?.startsWith('A') ? 'away' : 'home' });
@@ -1674,8 +1714,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
           this.toast(`Saved by ${e.by}`);
           break;
         case 'control':
-          // A stale switch (e.g. kickoff before Lab staging) must not name a player the user no longer controls.
-          if (e.by && e.by === this.sim.state.controlledId) this.toast(`You control ${e.by}`);
+          // League matches show control with the ring and marker only (no repeated notices); Team Training keeps its notice.
+          if (this.team && e.by && e.by === this.sim.state.controlledId) this.toast(`You control ${e.by}`);
           break;
         case 'formation':
           break;
@@ -2184,6 +2224,13 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     o.lineStyle(2, PALETTE.ink, 1);
     o.fillTriangle(head.x - tri, top - tri * 1.2, head.x + tri, top - tri * 1.2, head.x, top);
     o.strokeTriangle(head.x - tri, top - tri * 1.2, head.x + tri, top - tri * 1.2, head.x, top);
+    // SWITCH preview: a thin ring on the teammate a SWITCH press would select.
+    const cand = !this.team && this.sim.switchAvailable() ? s.switchCandidate : null;
+    if (cand) {
+      const cr = ellipse(s.players[cand].pos, 1.2);
+      u.lineStyle(2, PALETTE.cream, 0.75);
+      u.strokeEllipse(cr.x, cr.y, cr.w, cr.h);
+    }
 
     const bp = toScreen(L, s.ball.pos);
     const be = ellipse(s.ball.pos, 0.45);
@@ -2376,7 +2423,9 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     this.devText.setWordWrapWidth(Math.max(160, this.scale.width - 2 * EDGE - 12), true);
     this.devText
       .setText(
-        `phase ${s.phase}${s.paused ? ' (paused)' : ''} · owner ${owner ?? 'loose'} · possession ${s.possession}\n` +
+        `phase ${s.phase}${s.paused ? ' (paused)' : ''} · owner ${owner ?? 'loose'} · possession ${s.possession} · state ${this.possessionState()}\n` +
+          `career ${this.collector?.careerId ?? '-'} · control ${s.controlledId} · switch cand ${s.switchCandidate ?? '-'} · last ${s.lastSwitch ? `${s.lastSwitch.id} ${s.lastSwitch.why} @${s.lastSwitch.at.toFixed(2)}` : '-'}${s.simTime < s.manualUntil ? ' (manual hold)' : ''}\n` +
+          `input @${this.lastInputAt.toFixed(2)} · action ${s.pad.phase} by ${s.pad.actor ?? '-'} @${s.pad.since.toFixed(2)} · cam ${this.camX.toFixed(1)},${this.camY.toFixed(1)} · frame ${this.frameMs.toFixed(1)}ms · event by ${this.lastEventActor ?? '-'} → credit ${this.collector?.careerId ?? '-'}\n` +
           `home press ${s.defense.home.presserId ?? '-'} cover ${s.defense.home.coverId ?? '-'} · away press ${s.defense.away.presserId ?? '-'} cover ${s.defense.away.coverId ?? '-'}\n` +
           `t ${s.simTime.toFixed(1)}s · ${Math.round(this.fps)} fps · passes ${s.stats.passes.home}/${s.stats.passes.away} shots ${s.stats.shots.home}/${s.stats.shots.away}` +
           (['home', 'away'] as const)
@@ -2397,7 +2446,8 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
     const d = this.coachDirector;
     const left = d ? Math.ceil(d.timeLeft(s)) : 0;
     // Coach mode puts its counter on a second line so the HUD never runs into the buttons.
-    const careerTag = this.collector ? ` · YOU ${this.collector.careerId}` : '';
+    // The career player (whose progression the match feeds), not necessarily the one under control.
+    const careerTag = this.collector ? ` · MY PLAYER ${this.collector.careerId}` : '';
     const c = s.clock;
     const clockTag = !c ? '' : s.phase === 'halftime' ? 'HALF-TIME' : s.phase === 'fulltime' ? 'FULL-TIME' : match.clockLabel(c);
     const coachCount = d ? `COACH ${d.entries.length}/${d.target}` : '';

@@ -58,11 +58,13 @@ export class PadHud {
   private readonly labels: Record<ActionButton, Phaser.GameObjects.Text>;
 
   private readonly hidden: ReadonlySet<ActionButton>;
+  private readonly switchLabel: Phaser.GameObjects.Text | null;
+  private switchOn = false;
   /** Optional ring per button: fill 0..1 (cooldown left, shot charge, turbo meter) drawn around the button. */
   private meters: Partial<Record<ActionButton, { fill: number; color: number }>> = {};
 
   /** `labels` renames buttons and `hidden` leaves a button undrawn (e.g. Jungle Ball shows SHOOT / SLIDE / PUSH). */
-  constructor(scene: Phaser.Scene, width: number, height: number, opts: { labels?: Partial<Record<ActionButton, string>>; hidden?: readonly ActionButton[] } = {}) {
+  constructor(scene: Phaser.Scene, width: number, height: number, opts: { labels?: Partial<Record<ActionButton, string>>; hidden?: readonly ActionButton[]; switchButton?: boolean } = {}) {
     this.hidden = new Set(opts.hidden ?? []);
     this.prefs = loadPrefs();
     this.controls = new JoystickControls(padLayout(width, height, safeInsets(), this.prefs), this.prefs.deadZone);
@@ -78,6 +80,25 @@ export class PadHud {
           .setName(`pad-${a}`),
       ]),
     ) as Record<ActionButton, Phaser.GameObjects.Text>;
+    this.switchLabel = opts.switchButton
+      ? scene.add.text(0, 0, 'SWITCH', { fontFamily: 'system-ui, sans-serif', fontStyle: 'bold', fontSize: '11px', color: '#fff8e7', align: 'center' }).setOrigin(0.5).setDepth(5901).setScrollFactor(0).setName('pad-switch')
+      : null;
+  }
+
+  get hasSwitch(): boolean {
+    return this.switchLabel !== null;
+  }
+
+  /** SWITCH is live only while the sim says a teammate can take over (defending / loose ball). */
+  setSwitchAvailable(on: boolean): void {
+    this.switchOn = on;
+  }
+
+  /** True when (x, y) lands on an enabled SWITCH button (dimmed or not: the finger is consumed either way). */
+  switchHit(x: number, y: number): boolean {
+    if (!this.switchLabel || !this.switchLabel.visible) return false;
+    const c = this.controls.currentLayout.switchButton;
+    return Math.hypot(x - c.x, y - c.y) <= c.r;
   }
 
   get preferences(): ControlPrefs {
@@ -101,6 +122,7 @@ export class PadHud {
   setVisible(v: boolean): void {
     this.g.setVisible(v);
     for (const a of ACTION_BUTTONS) this.labels[a].setVisible(v && !this.hidden.has(a));
+    this.switchLabel?.setVisible(v);
   }
 
   draw(): void {
@@ -137,10 +159,18 @@ export class PadHud {
         .setFontSize(Math.max(11, Math.round(c.r * (a === 'slide' ? 0.3 : 0.36))))
         .setAlpha(on ? 1 : 0.45);
     }
+    if (this.switchLabel) {
+      const c = L.switchButton;
+      const on = this.switchOn;
+      g.fillStyle(0x2f7a4a, on ? op : op * 0.35).fillCircle(c.x, c.y, c.r);
+      g.lineStyle(2, 0xfff8e7, on ? Math.min(1, op + 0.25) : op * 0.4).strokeCircle(c.x, c.y, c.r);
+      this.switchLabel.setPosition(c.x, c.y).setFontSize(Math.max(10, Math.round(c.r * 0.42))).setAlpha(on ? 1 : 0.45);
+    }
   }
 
   destroy(): void {
     this.g.destroy();
     for (const a of ACTION_BUTTONS) this.labels[a].destroy();
+    this.switchLabel?.destroy();
   }
 }

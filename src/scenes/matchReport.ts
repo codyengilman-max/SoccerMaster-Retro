@@ -46,6 +46,18 @@ export interface MatchReport {
   readonly formations: Readonly<Record<match.TeamId, match.FormationId>>;
   readonly possession: match.TeamId;
   readonly controlledId: match.MatchPlayerId;
+  /** Control diagnostics: career player vs controlled player, SWITCH preview, latest switch, possession state. */
+  readonly control: {
+    readonly careerId: string | null;
+    readonly switchCandidate: match.MatchPlayerId | null;
+    readonly switchAvailable: boolean;
+    readonly lastSwitch: { readonly id: match.MatchPlayerId; readonly why: string; readonly at: number } | null;
+    readonly manualUntil: number;
+    readonly receiveAssist: match.MatchPlayerId | null;
+    readonly state: string;
+    readonly lastInputAt: number;
+    readonly frameMs: number;
+  };
   readonly owner: match.MatchPlayerId | null;
   readonly userHasBall: boolean;
   readonly dribbleDir: { readonly x: number; readonly y: number };
