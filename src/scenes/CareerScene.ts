@@ -1154,7 +1154,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             {
               name: 'play-driveway',
               label: drivewayDue(this.save.driveway, this.save.week) ? 'Driveway Dribbling ▸' : 'Driveway Dribbling ✓',
-              onClick: () => this.scene.start(SceneKeys.Driveway, { returnTo: 'career', careerData: { ...(this.returnTo ? { returnTo: this.returnTo } : {}) } }),
+              onClick: () => this.scene.start(SceneKeys.Driveway, { returnTo: 'career', careerData: { ...(this.returnTo ? { returnTo: this.returnTo } : {}), ...(this.storyWeek !== null ? { week: this.storyWeek } : {}) } }),
             },
             menu,
           ]

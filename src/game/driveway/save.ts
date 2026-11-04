@@ -37,6 +37,8 @@ export const emptyDriveway = (activeFrom = 1): DrivewaySave => ({ unlocked: 1, b
 
 export interface DrivewaySubmission {
   readonly runId: string;
+  /** Season week the round started in; a round that outlives its week is not credited to the next one. */
+  readonly week: number;
   readonly difficulty: DdDifficulty;
   readonly seed: number;
   readonly reason: 'time' | 'chances';
@@ -61,6 +63,7 @@ const intIn = (v: number, lo: number, hi: number) => Number.isSafeInteger(v) && 
 /** Rejects anything a real round could not produce; the medal is always recomputed, never trusted. */
 export function submissionError(s: DrivewaySubmission): string | null {
   if (typeof s.runId !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/.test(s.runId)) return 'Bad round id.';
+  if (!intIn(s.week, 1, 100000)) return 'Bad round week.';
   if (!DD_DIFFICULTIES.includes(s.difficulty)) return 'Unknown difficulty.';
   if (s.reason !== 'time' && s.reason !== 'chances') return 'A round only counts when the timer ends or all chances are used.';
   if (!intIn(s.seed, 0, 0xffffffff) || !intIn(s.dodges, 0, 2000) || !intIn(s.targets, 0, 2000) || !intIn(s.shots, 0, 2000) || !intIn(s.bestCombo, 0, 4000) || !intIn(s.collisions, 0, DRIVEWAY.chances)) return 'Round result out of range.';

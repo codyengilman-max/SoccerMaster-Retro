@@ -295,10 +295,10 @@ export class DrivewaySim {
   resume(): void {
     this.paused = false;
   }
-  /** Clears held stick and any half-made double tap (interruptions, blur, rotation). */
+  /** Clears held stick and any half-made or not-yet-fired double tap (interruptions, blur, rotation). */
   cancelInputs(): void {
     this.move = { x: 0, y: 0 };
-    if (this.gesture.phase !== 'prep') this.gesture = { phase: 'idle', since: this.t };
+    this.gesture = { phase: 'idle', since: this.t };
   }
   setMove(x: number, y: number): void {
     const m = Math.hypot(x, y);

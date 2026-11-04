@@ -499,6 +499,7 @@ export function reduce(save: CareerSave, action: Action): Outcome {
       const bad = submissionError(r);
       if (bad) return fail(bad);
       if (save.driveway.runs.includes(r.runId)) return same(save, 'This round is already saved.');
+      if (r.week !== save.week) return fail(`This round started in Week ${r.week}, which has closed. It was not counted.`);
       if (!isUnlocked(save.driveway, r.difficulty)) return fail(`${DD_LABELS[r.difficulty]} is still locked.`);
       // Development is decided before recording, from the same ledger the record uses (one atomic save).
       const accuracy = r.shots ? r.targets / r.shots : 0;

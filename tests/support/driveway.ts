@@ -3,7 +3,7 @@ import type { DrivewaySubmission } from '../../src/game/driveway/save';
 
 /** The weakest finished round a player can play: Beginner, all three chances lost, no score. */
 export const plainRound = (week: number, runId = `test-w${week}`): DrivewaySubmission => ({
-  runId, difficulty: 'beginner', seed: 1, reason: 'chances', score: 0, dodges: 0, targets: 0, shots: 0, bestCombo: 0, survived: 4, collisions: 3,
+  runId, week, difficulty: 'beginner', seed: 1, reason: 'chances', score: 0, dodges: 0, targets: 0, shots: 0, bestCombo: 0, survived: 4, collisions: 3,
 });
 
 /** Plays this week's required Driveway Dribbling round (tests about other systems that close weeks). */

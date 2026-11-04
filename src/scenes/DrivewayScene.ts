@@ -42,6 +42,7 @@ export class DrivewayScene extends Phaser.Scene implements InspectableScene, Gam
   private sim: DrivewaySim | null = null;
   private difficulty: DdDifficulty = 'beginner';
   private runId = '';
+  private runWeek = 0;
   private paused = false;
   private leaving = false;
   private submitted = false;
@@ -174,6 +175,7 @@ export class DrivewayScene extends Phaser.Scene implements InspectableScene, Gam
     if (!this.save?.player) return;
     if (!isUnlocked(this.save.driveway, this.difficulty)) return;
     const seed = (Date.now() ^ (Math.random() * 0x7fffffff)) >>> 0;
+    this.runWeek = this.save.week;
     this.runId = `dd-${this.save.week}-${this.difficulty}-${seed.toString(36)}-${Date.now().toString(36)}`;
     this.sim = new DrivewaySim(this.difficulty, seed);
     this.sim.start();
@@ -190,7 +192,7 @@ export class DrivewayScene extends Phaser.Scene implements InspectableScene, Gam
     if (!sim || !r || this.submitted) return;
     this.submitted = true;
     const sub: DrivewaySubmission = {
-      runId: this.runId, difficulty: r.difficulty, seed: r.seed, reason: r.reason, score: r.score, dodges: r.dodges,
+      runId: this.runId, week: this.runWeek, difficulty: r.difficulty, seed: r.seed, reason: r.reason, score: r.score, dodges: r.dodges,
       targets: r.targets, shots: r.shots, bestCombo: r.bestCombo, survived: r.survived, collisions: r.collisions,
     };
     const before = this.save;
@@ -405,8 +407,10 @@ export class DrivewayScene extends Phaser.Scene implements InspectableScene, Gam
     this.banner.setPosition(w / 2, h * 0.32);
     const overlay = this.phaseView !== 'play';
     this.panelG.clear();
-    if (overlay) this.panelG.fillStyle(0x1b0d04, 0.82).fillRoundedRect(w / 2 - Math.min(380, w - 16) / 2, 12, Math.min(380, w - 16), h - 24, 14);
-    this.panel.setWordWrapWidth(Math.min(350, w - 40)).setVisible(overlay);
+    const wide = w > h;
+    const panelW = Math.min(wide ? 600 : 380, w - 16);
+    if (overlay) this.panelG.fillStyle(0x1b0d04, 0.82).fillRoundedRect(w / 2 - panelW / 2, 12, panelW, h - 24, 14);
+    this.panel.setWordWrapWidth(panelW - 30).setVisible(overlay);
     for (const b of this.diffButtons) b.setVisible(false);
     this.startButton.setVisible(false);
     this.replayButton.setVisible(false);
@@ -422,19 +426,28 @@ export class DrivewayScene extends Phaser.Scene implements InspectableScene, Gam
         'Dodge solid objects. Double-tap SHOOT (the league quick shot) to break boxes and targets.',
         `Development this week: ${fmt(quartersToPoints(wk?.bestQuarters ?? 0))} of 2.00`,
         best ? `Best on ${DD_LABELS[this.difficulty]}: ${best.score} (${MEDAL_LABELS[best.medal]})` : `No score yet on ${DD_LABELS[this.difficulty]}`,
-      ].join('\n')).setPosition(w / 2, h > w ? h * 0.24 : h * 0.22);
-      const cols = w >= 640 ? 4 : 2;
-      const top = h > w ? h * 0.46 : h * 0.5;
+      ].join('\n'));
+      this.panel.setPosition(w / 2, wide ? Math.max(h * 0.22, 22 + this.panel.height / 2) : h * 0.24);
+      // Landscape: one row of difficulties, then Play and Return side by side, so short phones (568x320) fit.
+      const cols = wide || w >= 640 ? 4 : 2;
+      const step = Math.min(160, (w - 32) / cols);
+      const top = wide ? Math.max(h * 0.5, this.panel.y + this.panel.height / 2 + 34) : h * 0.46;
       DD_DIFFICULTIES.forEach((d, i) => {
         const b = this.diffButtons[i]!;
         const open = s ? isUnlocked(s.driveway, d) : d === 'beginner';
         const col = i % cols, row = Math.floor(i / cols);
         b.setLabel(`${d === this.difficulty ? '▸ ' : ''}${DD_LABELS[d]}${open ? '' : ' 🔒'}`);
-        b.setPosition(w / 2 + (col - (cols - 1) / 2) * 160, top + row * 54).setVisible(true).setAlpha(open ? 1 : 0.55);
+        if (b.width !== Math.min(150, step - 10)) b.resize(Math.min(150, step - 10), 44, step < 140 ? 14 : 16);
+        b.setPosition(w / 2 + (col - (cols - 1) / 2) * step, top + row * 54).setVisible(true).setAlpha(open ? 1 : 0.55);
       });
       const rows = Math.ceil(DD_DIFFICULTIES.length / cols);
-      this.startButton.setPosition(w / 2, top + rows * 54 + 20).setVisible(true).setEnabled(!!s?.player);
-      this.returnButton.setPosition(w / 2, top + rows * 54 + 84).setVisible(true);
+      if (wide) {
+        this.startButton.setPosition(w / 2 - 110, top + rows * 54 + 12).setVisible(true).setEnabled(!!s?.player);
+        this.returnButton.setPosition(w / 2 + 110, top + rows * 54 + 12).setVisible(true);
+      } else {
+        this.startButton.setPosition(w / 2, top + rows * 54 + 20).setVisible(true).setEnabled(!!s?.player);
+        this.returnButton.setPosition(w / 2, top + rows * 54 + 84).setVisible(true);
+      }
     } else if (this.phaseView === 'results') {
       this.panel.setText(this.outcomeText).setPosition(w / 2, h * (h > w ? 0.34 : 0.4));
       this.replayButton.setPosition(w / 2 - 82, h - 60).setVisible(true);

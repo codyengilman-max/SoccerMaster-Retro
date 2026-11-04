@@ -225,6 +225,19 @@ describe('Driveway Dribbling simulation', () => {
     expect(Math.abs(sim.player.x - x)).toBeLessThan(0.05);
   });
 
+  it('a finished double tap that has not fired yet is dropped by pause, so resume never shoots on its own', () => {
+    const sim = staged();
+    sim.press(); sim.release();
+    play(sim, 0.05);
+    sim.press();
+    sim.pause();
+    sim.release();
+    sim.resume();
+    play(sim, 1);
+    expect(sim.stats.shots).toBe(0);
+    expect(sim.canShoot).toBe(true);
+  });
+
   it('medals need sustained play: early failure or shot spam cannot reach Silver or Gold', () => {
     for (const d of DD_DIFFICULTIES) {
       const th = THRESHOLDS[d];
@@ -274,7 +287,7 @@ const submit = (s: CareerSave, sub: DrivewaySubmission) => {
 };
 const total = (s: CareerSave) => ATTRIBUTES.reduce((x, a) => x + s.player!.attributes[a], 0);
 const round = (o: Partial<DrivewaySubmission> & Pick<DrivewaySubmission, 'runId'>): DrivewaySubmission => ({
-  difficulty: 'beginner', seed: 3, reason: 'time', score: 0, dodges: 0, targets: 0, shots: 0, bestCombo: 0, survived: 60, collisions: 0, ...o,
+  week: 1, difficulty: 'beginner', seed: 3, reason: 'time', score: 0, dodges: 0, targets: 0, shots: 0, bestCombo: 0, survived: 60, collisions: 0, ...o,
 });
 const gold = (runId: string, difficulty: DrivewaySubmission['difficulty'] = 'beginner'): DrivewaySubmission =>
   round({ runId, difficulty, score: THRESHOLDS[difficulty].gold, dodges: Math.floor((THRESHOLDS[difficulty].gold - 400) / 20), targets: 20, shots: 30, bestCombo: 20 });
@@ -295,6 +308,19 @@ describe('Driveway Dribbling weekly requirement and ledger', () => {
       expect(drivewayDue(closed.save.driveway, 2)).toBe(true);
       expect(reduce(closed.save, { type: 'endWeek' }).ok).toBe(false);
     }
+  });
+
+  it('a round that started in a week that has since closed is not credited to the new week', () => {
+    let s = submit(fresh(), plainRound(1)).save;
+    const closed = reduce(s, { type: 'endWeek' });
+    if (!closed.ok) throw new Error(closed.error);
+    s = closed.save;
+    const late = reduce(s, { type: 'drivewayResult', result: gold('late-w1') });
+    expect(late.ok).toBe(false);
+    if (!late.ok) expect(late.error).toBe('This round started in Week 1, which has closed. It was not counted.');
+    expect(drivewayDue(s.driveway, 2)).toBe(true);
+    expect(s.driveway.weeks.find((w) => w.week === 2)).toBeUndefined();
+    expect(reduce(s, { type: 'drivewayResult', result: { ...gold('w2'), week: 2 } }).ok).toBe(true);
   });
 
   it('a quit, an unfinished timer or impossible stats never count', () => {
@@ -332,7 +358,7 @@ describe('Driveway Dribbling weekly requirement and ledger', () => {
     const e = reduce(s, { type: 'endWeek' });
     if (!e.ok) throw new Error(e.error);
     const before = total(e.save);
-    const w2 = submit(e.save, gold('w2'));
+    const w2 = submit(e.save, { ...gold('w2'), week: 2 });
     expect(total(w2.save) - before).toBeCloseTo(1, 10);
     expect(w2.save.driveway.weeks.map((w) => w.week)).toEqual([1, 2]);
     expect(w2.save.driveway.weeks[0]!.bestQuarters).toBe(4);
