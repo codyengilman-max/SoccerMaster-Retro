@@ -333,6 +333,14 @@ export interface MatchState {
   /** A swipe made just before our pass arrives, applied to that receiver's first controlled touch only. */
   /** The player control last moved away from, so it cannot bounce straight back (offBall.returnHoldSeconds). */
   prevControlledId: MatchPlayerId | null;
+  /** A SWITCH press keeps its pick until this sim time: automation cannot undo it. */
+  manualUntil: number;
+  /** Next-best home outfielder a SWITCH press would select (preview marker), or null. */
+  switchCandidate: MatchPlayerId | null;
+  /** Latest control change, for the dev overlay and tests. */
+  lastSwitch: { readonly id: MatchPlayerId; readonly why: string; readonly at: number } | null;
+  /** Pass receiver handed control at release keeps meeting the ball until the user gives fresh stick input. */
+  receiveAssist: { readonly id: MatchPlayerId; readonly stick: Vec2 } | null;
   /** Stable team-possession sequence: bumps only when a team establishes possession. */
   possessionSeq: number;
   /** Team whose current spell is established (see aimAllowance.establishSeconds), or null. */

@@ -29,7 +29,7 @@ function giveBall(sim: Sim, id: MatchPlayerId, pos: { x: number; y: number }): v
   });
 }
 describe('possession versus control', () => {
-  it('control is always one home outfielder, never flickers, and stays put while our pass is in flight', () => {
+  it('control is always one home outfielder, never flickers, and stays on the intended receiver while our pass is in flight', () => {
     for (const seed of [1, 2, 3]) {
       const sim = new MatchSim({ seed, halfSeconds: 120 });
       live(sim);
@@ -60,7 +60,9 @@ describe('possession versus control', () => {
         if (!ourPass) flightKick = null;
         if (s.controlledId !== lastId) {
           const viaPossession = owner === s.controlledId;
-          if (!viaPossession) expect(s.simTime - lastSwitch).toBeGreaterThanOrEqual(T.offBall.minHoldSeconds - 1e-6);
+          // A pass hands control to its intended receiver at release (offBall.passHandoff), not via the off-ball hold.
+          const viaPass = !!ourPass && ourPass.receiver === s.controlledId && s.lastSwitch?.why === 'pass receiver';
+          if (!viaPossession && !viaPass) expect(s.simTime - lastSwitch).toBeGreaterThanOrEqual(T.offBall.minHoldSeconds - 1e-6);
           lastSwitch = s.simTime;
           lastId = s.controlledId;
         }

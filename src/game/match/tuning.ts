@@ -55,6 +55,18 @@ export const MATCH_TUNING = {
     minHoldSeconds: 0.6,
     /** Switching back to the player control just left needs this long on the new one (no A-B-A flicker). */
     returnHoldSeconds: 1.5,
+    /** A challenger must reach the ball this much sooner than the current player before automation switches. */
+    advantageSeconds: 0.35,
+    /** Velocity look-ahead when estimating time to the ball (a player already running at it arrives sooner). */
+    velocityLookSeconds: 0.3,
+    /** Extra seconds for a player on the wrong (attacking) side of the ball, who must run around it. */
+    behindPenaltySeconds: 0.35,
+    /** After a SWITCH press, automation leaves the pick alone this long (unless the player becomes unavailable). */
+    manualHoldSeconds: 1.2,
+    /** A home ground pass hands control to its intended receiver at release, so the first touch can be steered. */
+    passHandoff: true,
+    /** Stick change (vector distance, 0..2) after a handoff that counts as fresh steering of the receiver. */
+    freshStickDelta: 0.35,
   },
   /** Temporary sandbox resets (not formal restarts). */
   stoppage: { goalSeconds: 1.6, outSeconds: 1.2 },

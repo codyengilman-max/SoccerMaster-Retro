@@ -24,7 +24,7 @@ import { Referee, type RestartKind } from './referee';
 import { U11_9V9_PITCH } from '../pitch';
 import { TacticalDirector, type TacticsMode } from './tacticalDirector';
 import { newTeamShape } from './shape';
-import { computeAnchor, decideCarrier, planTeams, toTeam, toWorld, velToTeam, type AiContext } from './ai';
+import { chasePoint, computeAnchor, decideCarrier, planTeams, toTeam, toWorld, velToTeam, type AiContext } from './ai';
 import {
   AWAY_IDS,
   HOME_IDS,
@@ -48,6 +48,8 @@ export type MatchCommand =
   | { readonly type: 'padPress'; readonly id: number; readonly action: PadAction }
   | { readonly type: 'padRelease'; readonly id: number; readonly action: PadAction }
   | { readonly type: 'padCancel'; readonly id: number; readonly reason: string }
+  /** SWITCH button: hand control to the previewed next-best home outfielder (defending / loose ball only). */
+  | { readonly type: 'switchPlayer' }
   | { readonly type: 'pause' }
   | { readonly type: 'resume' }
   | { readonly type: 'reset'; readonly seed?: number }
@@ -260,6 +262,8 @@ export class MatchSim {
         return this.padRelease(cmd.id, cmd.action);
       case 'padCancel':
         return this.padCancel(cmd.id, cmd.reason);
+      case 'switchPlayer':
+        return this.manualSwitch();
     }
   }
 
@@ -379,27 +383,122 @@ export class MatchSim {
 
 
   /**
-   * Off-ball control policy. Opponent ball: the home presser. Loose ball: the home chaser, except
-   * that a friendly pass in flight keeps the current player until someone receives it. Both picks
-   * come from the AI's committed assignments (with their own hysteresis); control additionally stays
-   * put for offBall.minHoldSeconds so it never flickers frame to frame.
+   * Off-ball control policy. A home ground pass hands control to its intended receiver as it is
+   * released. Otherwise (opponent ball, loose ball) the user keeps the current player while he is a
+   * reasonable challenger: another player must reach the ball offBall.advantageSeconds sooner
+   * (velocity- and side-aware estimate), never within minHoldSeconds of the last switch, never
+   * straight back within returnHoldSeconds, and never against a SWITCH press (manualHoldSeconds)
+   * or during the controlled player's own committed tackle. Ties break by player order.
    */
+  /** A released home ground pass hands control to its intended receiver at once, so the first touch can be steered. */
+  private handOffPass(): void {
+    const s = this.s;
+    const kick = s.ball.kick;
+    if (!this.tuning.offBall.passHandoff || s.phase !== 'live' || s.ball.owner || !kick) return;
+    if (kick.team !== 'home' || kick.kind !== 'pass' || !kick.receiver) return;
+    const r = s.players[kick.receiver];
+    if (r.team !== 'home' || r.isKeeper || r.id === s.controlledId || this.committedActor(r.id)) return;
+    this.setControl(r.id, 'pass receiver');
+    s.receiveAssist = { id: r.id, stick: { x: s.pad.stick.x, y: s.pad.stick.y } };
+  }
+
+  /** True while a handed-off receiver should keep the AI's meet-the-ball run (no fresh stick input yet). */
+  private assistingReceiver(p: MatchPlayer): boolean {
+    const s = this.s;
+    const a = s.receiveAssist;
+    if (!a || a.id !== p.id) return false;
+    const kick = s.ball.kick;
+    const live = !s.ball.owner && !!kick && kick.receiver === p.id;
+    const st = s.pad.stick;
+    const fresh = Math.hypot(st.x, st.y) > 0.2 && Math.hypot(st.x - a.stick.x, st.y - a.stick.y) > this.tuning.offBall.freshStickDelta;
+    if (!live || fresh) {
+      s.receiveAssist = null;
+      return false;
+    }
+    return true;
+  }
+
   private updateUserControl(): void {
     const T = this.tuning;
+    const O = T.offBall;
     const s = this.s;
+    s.switchCandidate = null;
+    if (s.phase !== 'live') return;
     const owner = s.ball.owner ? s.players[s.ball.owner] : null;
     if (owner && owner.team === 'home') return;
-    if (s.phase !== 'live') return;
     const kick = s.ball.kick;
-    if (!owner && kick && kick.team === 'home' && kick.kind !== 'touch') return;
-    const pick = owner ? s.defense.home.presserId : s.chaser.home.id;
-    if (!pick || pick === s.controlledId || s.players[pick].isKeeper) return;
-    if (s.simTime - s.controlSince < T.offBall.minHoldSeconds) return;
-    // A slide or block in progress is never handed to another player.
-    if (s.pad.phase !== 'ready') return;
-    // Never bounce straight back.
-    if (pick === s.prevControlledId && s.simTime - s.controlSince < T.offBall.returnHoldSeconds) return;
-    this.setControl(pick, owner ? 'defend' : 'loose ball');
+    if (!owner && kick && kick.team === 'home' && kick.kind !== 'touch') {
+      this.handOffPass();
+      // A friendly kick in flight (with or without a receiver) never hands control to a chaser.
+      return;
+    }
+    const best = this.bestChallenger(null);
+    s.switchCandidate = this.bestChallenger(s.controlledId);
+    const cur = s.players[s.controlledId];
+    if (!best || best === cur.id) return;
+    // The controlled player's own committed tackle plays out; only SWITCH moves control during it.
+    if (this.committedActor(cur.id)) return;
+    const gap = this.arrival(cur) - this.arrival(s.players[best]);
+    const unavailable = cur.isKeeper || cur.team !== 'home';
+    // Only an unavailable pick (keeper or not ours) switches at once; otherwise every hold applies, so control never ping-pongs.
+    if (!unavailable) {
+      if (s.simTime - s.controlSince < O.minHoldSeconds) return;
+      if (s.simTime < s.manualUntil) return;
+      if (best === s.prevControlledId && s.simTime - s.controlSince < O.returnHoldSeconds) return;
+      if (gap < O.advantageSeconds) return;
+    }
+    this.setControl(best, owner ? 'defend' : 'loose ball');
+  }
+
+  /** SWITCH: the previewed candidate (same rule as the preview marker), held against automation. */
+  private manualSwitch(): boolean {
+    const s = this.s;
+    if (s.phase !== 'live') return this.reject('switchPlayer', 'play not live');
+    if (this.userHasBall()) return this.reject('switchPlayer', 'you have the ball');
+    const pick = this.bestChallenger(s.controlledId);
+    if (!pick) return this.reject('switchPlayer', 'no eligible teammate');
+    this.setControl(pick, 'manual');
+    s.manualUntil = s.simTime + this.tuning.offBall.manualHoldSeconds;
+    s.switchCandidate = this.bestChallenger(s.controlledId);
+    return true;
+  }
+
+  /** True while this player's own standing or slide tackle (start, active or recovery) is committed. */
+  private committedActor(id: MatchPlayerId): boolean {
+    const pad = this.s.pad;
+    const ph = pad.phase;
+    return pad.actor === id && (ph === 'tackleStart' || ph === 'tackleActive' || ph === 'tackleRecovery' || ph === 'slideStart' || ph === 'slideActive' || ph === 'slideRecovery');
+  }
+
+  /** Estimated seconds for a home outfielder to reach the ball (or the loose ball's stopping point). */
+  private arrival(p: MatchPlayer): number {
+    const T = this.tuning;
+    const O = T.offBall;
+    const s = this.s;
+    const point = s.ball.owner ? s.ball.pos : chasePoint(s, T);
+    const ex = p.pos.x + p.vel.x * O.velocityLookSeconds;
+    const ey = p.pos.y + p.vel.y * O.velocityLookSeconds;
+    let t = Math.hypot(point.x - ex, point.y - ey) / T.movement.pressSpeed;
+    // Home defends x = 0: a player upfield of the ball must get round it to be goal-side.
+    if (p.pos.x > point.x + 2) t += O.behindPenaltySeconds;
+    return t;
+  }
+
+  /** Best available home outfielder by arrival estimate, excluding one id; ties keep player order. */
+  private bestChallenger(exclude: MatchPlayerId | null): MatchPlayerId | null {
+    const s = this.s;
+    let best: MatchPlayerId | null = null;
+    let bestT = Infinity;
+    for (const id of TEAM_PLAYER_IDS.home) {
+      const p = s.players[id];
+      if (id === exclude || p.isKeeper || this.committedActor(id)) continue;
+      const t = this.arrival(p);
+      if (t < bestT - 1e-9) {
+        best = id;
+        bestT = t;
+      }
+    }
+    return best;
   }
 
   private setControl(id: MatchPlayerId, why: string): void {
@@ -408,6 +507,8 @@ export class MatchSim {
     if (s.controlledId !== id) s.prevControlledId = s.controlledId;
     s.controlledId = id;
     s.controlSince = s.simTime;
+    s.lastSwitch = { id, why, at: s.simTime };
+    s.receiveAssist = null;
     this.emit('control', id, why);
   }
 
@@ -1418,6 +1519,7 @@ export class MatchSim {
     this.updateUserControl();
     this.tickPad(h);
     this.aiCarrier();
+    this.handOffPass();
     const me = s.players[s.controlledId];
     const mePrev = this.mePrev;
     mePrev.x = me.pos.x;
@@ -1605,7 +1707,7 @@ export class MatchSim {
     const M = T.movement;
     let desired: MutableVec2 = this.desired;
     let accel = M.accel;
-    if (p.id === s.controlledId && p.team === 'home' && !p.isKeeper) {
+    if (p.id === s.controlledId && p.team === 'home' && !p.isKeeper && !this.assistingReceiver(p)) {
       if (s.ball.owner === p.id) p.intent = 'carry';
       const v = this.padVelocity(p);
       approachInPlace(p.vel, v.desired.x, v.desired.y, v.accel * h);
@@ -1959,6 +2061,7 @@ export class MatchSim {
       if (s.controlledId !== p.id) s.prevControlledId = s.controlledId;
       s.controlledId = p.id;
       s.controlSince = s.simTime;
+      s.receiveAssist = null;
       // Keep the receiver's own momentum (any direction); only a standing receiver defaults to facing upfield.
       s.dribbleDir = length(p.vel) > 0.3 ? normalize(p.vel) : vec(1, 0);
       this.emit('control', p.id, '');
@@ -2204,6 +2307,10 @@ export class MatchSim {
       controlledId: 'H8',
       controlSince: 0,
       prevControlledId: null,
+      manualUntil: 0,
+      switchCandidate: null,
+      lastSwitch: null,
+      receiveAssist: null,
       possessionSeq: 0,
       establishedTeam: null,
       controlEpoch: 0,
