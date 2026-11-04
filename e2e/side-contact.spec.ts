@@ -152,8 +152,9 @@ for (const gender of ['boy', 'girl'] as const) {
       }
     }
     // 0.5x halves the clock; Play resumes from a paused hold.
+    // Halve first, then replay: a slow runner can finish the short demo at 1x before a later 0.5x press lands.
+    if ((await career(page)).demo?.speed !== 0.5) await press(page, 'demo-half', mode);
     await press(page, 'demo-replay', mode);
-    await press(page, 'demo-half', mode);
     await until(page, (x) => x.demo?.speed === 0.5 && x.demo.paused === false, '0.5x');
     // Demo time over the wall time the demo actually played: a starved CI runner draws about one frame a second
     // (a long gap counts as at most 0.25 s), so real-time sampling can't measure the speed there.
