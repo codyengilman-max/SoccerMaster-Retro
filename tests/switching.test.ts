@@ -114,6 +114,29 @@ describe('league-match player switching', () => {
     expect(sim.state.controlledId).toBe('H7');
   });
 
+  it('SWITCH is refused while a teammate has the ball, so control never leaves the home carrier', () => {
+    const sim = stage({ H7: { x: 43, y: 27 }, H8: { x: 46, y: 18 } }, { owner: 'H7', pos: { x: 43.6, y: 27 } }, 'H8');
+    expect(sim.command({ type: 'switchPlayer' })).toBe(false);
+    expect(sim.state.manualUntil).toBeLessThanOrEqual(sim.state.simTime);
+  });
+
+  it('SWITCH is refused while a friendly pass is in flight; the receiver keeps control', () => {
+    const sim = new MatchSim({ seed: 2 });
+    run(sim, T.kickoff.countdownSeconds + 2 * F);
+    sim.arrange((s) => stageLabScenario(s, 'pass-range', T.pitch));
+    sim.command({ type: 'padPress', id: ++cmd, action: 'pass' });
+    sim.step(F);
+    sim.command({ type: 'padMove', x: 0.894, y: -0.447 });
+    sim.command({ type: 'padRelease', id: ++cmd, action: 'pass' });
+    run(sim, 0.5, F, () => sim.state.ball.kick?.kind === 'pass' && !sim.state.ball.owner && sim.state.lastSwitch?.why === 'pass receiver');
+    const receiver = sim.state.controlledId;
+    expect(sim.state.ball.kick?.receiver).toBe(receiver);
+    expect(sim.switchAvailable()).toBe(false);
+    expect(sim.command({ type: 'switchPlayer' })).toBe(false);
+    sim.step(F);
+    expect(sim.state.controlledId).toBe(receiver);
+  });
+
   it('holding the joystick through a SWITCH steers the new player at once, no re-touch needed', () => {
     const sim = stage({ H7: { x: 43, y: 27 }, H8: { x: 46, y: 18 }, A6: { x: 40, y: 25 } }, { owner: 'A6', pos: { x: 39.4, y: 25 } }, 'H7');
     sim.command({ type: 'padMove', x: 0, y: 1 });

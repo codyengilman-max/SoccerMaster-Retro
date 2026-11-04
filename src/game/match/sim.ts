@@ -463,7 +463,11 @@ export class MatchSim {
   private manualSwitch(): boolean {
     const s = this.s;
     if (s.phase !== 'live') return this.reject('switchPlayer', 'play not live');
-    if (this.userHasBall()) return this.reject('switchPlayer', 'you have the ball');
+    const owner = s.ball.owner ? s.players[s.ball.owner] : null;
+    if (owner && owner.team === 'home') return this.reject('switchPlayer', 'your team has the ball');
+    const kick = s.ball.kick;
+    // Same rule as the preview: a friendly kick in flight keeps (or hands off to) its receiver.
+    if (!owner && kick && kick.team === 'home' && kick.kind !== 'touch') return this.reject('switchPlayer', 'pass in flight');
     const pick = this.bestChallenger(s.controlledId);
     if (!pick) return this.reject('switchPlayer', 'no eligible teammate');
     this.setControl(pick, 'manual');
