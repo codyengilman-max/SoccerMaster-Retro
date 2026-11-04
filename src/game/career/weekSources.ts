@@ -61,7 +61,8 @@ function home(save: CareerSave, week: number): SourceWeek {
     offer(l.activityId, l.attempts.filter((a) => meets(spec, a)).length / Math.max(1, l.attempts.length), HOME_ALLOCATION[l.skill]);
   }
   for (const j of save.journal) {
-    if (j.week !== week || !j.credited || j.completion === 'skipped') continue;
+    // Any practice actually done counts (a scheduled session, or a library lesson/extra practice that completes a story task).
+    if (j.week !== week || j.completion === 'skipped') continue;
     const a = activityById(j.activityId);
     const alloc: Alloc = a?.relatedAttribute ? { [a.relatedAttribute]: 1 } : HOME_ALLOCATION.juggling;
     offer(j.activityId, j.completion === 'done' ? 1 : 0.5, alloc);
@@ -70,8 +71,9 @@ function home(save: CareerSave, week: number): SourceWeek {
   const allocation: Record<string, number> = {};
   for (const [, v] of top) add(allocation, v.alloc, v.score);
   const score = top.reduce((s, [, v]) => s + v.score, 0) / DEV_CONFIG.homeActivitiesMax;
-  // Home Training opens from Week 2 in the story; a Week 1 with nothing logged had nothing scheduled.
-  const status = top.length ? 'done' : week >= 2 ? 'skipped' : 'none';
+  // Home Training opens from Week 2 in the story; a Week 1 with nothing logged had nothing scheduled unless a plan was made.
+  const planned = !!save.plan && save.plan.week === week && save.plan.sessions.length > 0;
+  const status = top.length ? 'done' : week >= 2 || planned ? 'skipped' : 'none';
   return { source: 'home', status, score, allocation, activities: top.map(([k]) => k) };
 }
 

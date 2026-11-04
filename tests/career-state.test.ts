@@ -93,7 +93,8 @@ describe('M6 journal, credit and weeks', () => {
   it('home practice is a development source (v2); game evidence is shown, not applied twice; batches are idempotent and bounded', () => {
     let s = start();
     const none = run(dd(s), { type: 'endWeek' });
-    expect(none.history.at(-1)!.development!.sources.find((x) => x.source === 'home')!.status).toBe('none');
+    // A Week 1 plan whose sessions were all skipped keeps the home share as skipped (no redistribution).
+    expect(none.history.at(-1)!.development!.sources.find((x) => x.source === 'home')!.status).toBe('skipped');
     for (let i = 0; i < 3; i++) s = run(s, { type: 'log', entry: entry(s, i, { rating: 'comfortable' }) });
     let grown = run(dd(s), { type: 'endWeek' });
     expect(grown.history.at(-1)!.development!.sources.find((x) => x.source === 'home')!.status).toBe('done');

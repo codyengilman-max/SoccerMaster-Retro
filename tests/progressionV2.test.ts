@@ -172,4 +172,25 @@ describe('progression v2: review fixes', () => {
     const both = weekSources({ ...wk, homeLogs: [log], journal: [jr] } as CareerSave, 2).find((x) => x.source === 'home')!;
     expect(both.activities).toEqual(['ps-wide-gate']);
   });
+  it('a required task logged from the library (no session, uncredited) still counts at home; skipped entries do not', async () => {
+    const { weekSources } = await import('../src/game/career/weekSources');
+    const wk = { ...created(), week: 5 };
+    const jr = (completion: string) => ({ week: 5, sessionId: null, credited: false, completion, activityId: 'ps-wide-gate' }) as never;
+    const done = weekSources({ ...wk, journal: [jr('done')] } as CareerSave, 5).find((x) => x.source === 'home')!;
+    expect(done.status).toBe('done');
+    expect(done.activities).toEqual(['ps-wide-gate']);
+    expect(done.score).toBeGreaterThan(0);
+    const skipped = weekSources({ ...wk, journal: [jr('skipped')] } as CareerSave, 5).find((x) => x.source === 'home')!;
+    expect(skipped.status).toBe('skipped');
+    expect(skipped.score).toBe(0);
+  });
+  it('a Week 1 plan whose sessions are all skipped keeps the home share as skipped, not redistributed', async () => {
+    const { weekSources } = await import('../src/game/career/weekSources');
+    const wk = { ...created(), week: 1 };
+    const none = weekSources({ ...wk, plan: null } as CareerSave, 1).find((x) => x.source === 'home')!;
+    expect(none.status).toBe('none');
+    const plan = { week: 1, level: 1, sessions: [{ id: 's1', items: [] }] } as never;
+    const planned = weekSources({ ...wk, plan } as CareerSave, 1).find((x) => x.source === 'home')!;
+    expect(planned.status).toBe('skipped');
+  });
 });
