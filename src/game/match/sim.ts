@@ -426,8 +426,7 @@ export class MatchSim {
     if (s.phase !== 'live') return;
     const owner = s.ball.owner ? s.players[s.ball.owner] : null;
     if (owner && owner.team === 'home') return;
-    const kick = s.ball.kick;
-    if (!owner && kick && kick.team === 'home' && kick.kind !== 'touch') {
+    if (this.friendlyKickInFlight()) {
       this.handOffPass();
       // A friendly kick in flight (with or without a receiver) never hands control to a chaser.
       return;
@@ -450,6 +449,17 @@ export class MatchSim {
     this.setControl(best, owner ? 'defend' : 'loose ball');
   }
 
+  /**
+   * A home kick still travelling: it has a receiver, or is still rolling. `ball.kick` keeps the last kick after the
+   * ball stops, so a stopped, unclaimed pass is a loose ball again (switching and SWITCH resume).
+   */
+  private friendlyKickInFlight(): boolean {
+    const s = this.s;
+    const kick = s.ball.kick;
+    if (s.ball.owner || !kick || kick.team !== 'home' || kick.kind === 'touch') return false;
+    return kick.receiver !== null || Math.hypot(s.ball.vel.x, s.ball.vel.y) > this.tuning.offBall.inFlightSpeed;
+  }
+
   /** SWITCH is offered while defending or on a loose ball, when another home outfielder can take over. */
   switchAvailable(): boolean {
     const s = this.s;
@@ -465,9 +475,8 @@ export class MatchSim {
     if (s.phase !== 'live') return this.reject('switchPlayer', 'play not live');
     const owner = s.ball.owner ? s.players[s.ball.owner] : null;
     if (owner && owner.team === 'home') return this.reject('switchPlayer', 'your team has the ball');
-    const kick = s.ball.kick;
     // Same rule as the preview: a friendly kick in flight keeps (or hands off to) its receiver.
-    if (!owner && kick && kick.team === 'home' && kick.kind !== 'touch') return this.reject('switchPlayer', 'pass in flight');
+    if (this.friendlyKickInFlight()) return this.reject('switchPlayer', 'pass in flight');
     const pick = this.bestChallenger(s.controlledId);
     if (!pick) return this.reject('switchPlayer', 'no eligible teammate');
     this.setControl(pick, 'manual');

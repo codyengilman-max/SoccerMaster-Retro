@@ -137,6 +137,29 @@ describe('league-match player switching', () => {
     expect(sim.state.controlledId).toBe(receiver);
   });
 
+  it('a home pass that stops unclaimed is a loose ball again: SWITCH works and the preview agrees', () => {
+    const sim = stage({ H7: { x: 43, y: 27 }, H8: { x: 46, y: 18 }, H6: { x: 30, y: 10 } }, { owner: null, pos: { x: 40, y: 22 } }, 'H6');
+    sim.arrange((s) => {
+      s.ball.kick = { by: 'H6', team: 'home', kind: 'pass', at: s.simTime, target: null, receiver: null };
+    });
+    sim.step(F);
+    expect(sim.state.ball.kick?.kind).toBe('pass');
+    expect(sim.switchAvailable()).toBe(true);
+    expect(sim.command({ type: 'switchPlayer' })).toBe(true);
+    expect(sim.state.lastSwitch?.why).toBe('manual');
+  });
+
+  it('a receiverless home pass still rolling keeps blocking SWITCH', () => {
+    const sim = stage({ H7: { x: 43, y: 27 }, H8: { x: 46, y: 18 }, H6: { x: 30, y: 10 } }, { owner: null, pos: { x: 40, y: 22 } }, 'H6');
+    sim.arrange((s) => {
+      s.ball.vel = { x: 12, y: 0 };
+      s.ball.kick = { by: 'H6', team: 'home', kind: 'pass', at: s.simTime, target: null, receiver: null };
+    });
+    sim.step(F);
+    expect(sim.switchAvailable()).toBe(false);
+    expect(sim.command({ type: 'switchPlayer' })).toBe(false);
+  });
+
   it('holding the joystick through a SWITCH steers the new player at once, no re-touch needed', () => {
     const sim = stage({ H7: { x: 43, y: 27 }, H8: { x: 46, y: 18 }, A6: { x: 40, y: 25 } }, { owner: 'A6', pos: { x: 39.4, y: 25 } }, 'H7');
     sim.command({ type: 'padMove', x: 0, y: 1 });

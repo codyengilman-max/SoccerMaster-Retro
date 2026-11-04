@@ -67,6 +67,8 @@ export const MATCH_TUNING = {
     passHandoff: true,
     /** Stick change (vector distance, 0..2) after a handoff that counts as fresh steering of the receiver. */
     freshStickDelta: 0.35,
+    /** A receiverless home kick slower than this (yd/s) is a loose ball for switching. */
+    inFlightSpeed: 1,
   },
   /** Temporary sandbox resets (not formal restarts). */
   stoppage: { goalSeconds: 1.6, outSeconds: 1.2 },
