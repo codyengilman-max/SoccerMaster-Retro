@@ -185,10 +185,18 @@ test('Weekly Team Training: Week 1 FWD (D07 left winger) on package sprites; ans
   checkArt(w, 'boy', (await diagnostics(page)).layout!.elements);
   expect(w.progress).toMatchObject({ completed: true, credited: true, runs: 1 });
   await page.screenshot({ path: info.outputPath(`weekly-sprites-D07-result-rotated-${info.project.name}.png`) });
-  const rotatedWidth = w.art!.field.width;
+  const rotatedReplay = (await diagnostics(page)).layout!.elements['tt-replay']!;
   await page.setViewportSize(vp);
-  // Wait for the re-layout so the Replay tap hits the rebuilt button, not the rotated one.
-  await weekly(page, (x) => x.screen === 'result' && allDrawn(x) && Math.abs(x.art!.field.width - rotatedWidth) > 1, 'result back', 120_000);
+  // Wait for the re-layout so the Replay tap hits the rebuilt button, not the rotated one. The field can be the same
+  // width in both orientations, so wait on the Replay button lying inside the restored viewport instead.
+  await expect
+    .poll(async () => {
+      const d = await diagnostics(page);
+      const r = d.layout?.elements['tt-replay'];
+      const x = d.gameplay as Weekly | null;
+      return !!r && !!x && x.screen === 'result' && allDrawn(x) && r.x + r.width <= vp.width + 1 && r.y + r.height <= vp.height + 1 && (Math.abs(r.x - rotatedReplay.x) > 1 || Math.abs(r.y - rotatedReplay.y) > 1 || Math.abs(r.width - rotatedReplay.width) > 1);
+    }, { timeout: 120_000 })
+    .toBe(true);
   // Replay: practice only, credit is not paid again.
   await pressAny(page, 'tt-replay', mode);
   w = await weekly(page, (x) => x.screen === 'observe' && allDrawn(x), 'replay');
