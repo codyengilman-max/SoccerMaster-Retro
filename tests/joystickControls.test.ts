@@ -113,7 +113,7 @@ describe('layout (A20)', () => {
       for (const size of [0.8, 1, 1.3])
         it(`${w}x${h} insets ${ins.left}/${ins.bottom} size ${size}: on screen, clear of insets, no overlaps`, () => {
           const l = padLayout(w, h, ins, { ...DEFAULT_PREFS, size });
-          const circles = [l.stick, ...ACTION_BUTTONS.map((b) => l.buttons[b])];
+          const circles = [l.stick, ...ACTION_BUTTONS.map((b) => l.buttons[b]), l.switchButton];
           for (const c of circles) {
             expect(c.x - c.r).toBeGreaterThanOrEqual(ins.left);
             expect(c.x + c.r).toBeLessThanOrEqual(w - ins.right);
@@ -129,6 +129,9 @@ describe('layout (A20)', () => {
           expect(l.buttons.tackle.x).toBeLessThan(l.buttons.shoot.x);
           expect(l.buttons.slide.x).toBeLessThan(l.buttons.pass.x);
           expect(l.buttons.shoot.y).toBeLessThan(l.buttons.pass.y);
+          // SWITCH is compact and sits above the action cluster, away from the stick.
+          expect(l.switchButton.r).toBeLessThan(l.buttons.pass.r);
+          expect(l.switchButton.y).toBeLessThan(l.buttons.shoot.y);
         });
 });
 

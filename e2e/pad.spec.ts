@@ -78,7 +78,7 @@ test('pad is the default: stick and four labelled buttons fit the viewport witho
   const d = await diagnostics(page);
   const viewport = page.viewportSize();
   if (!viewport) throw new Error('no viewport');
-  const names = ['pad-stick', 'pad-pass', 'pad-shoot', 'pad-slide', 'pad-tackle'];
+  const names = ['pad-stick', 'pad-pass', 'pad-shoot', 'pad-slide', 'pad-tackle', 'pad-switch'];
   for (const n of names) expectInside(n, d.layout?.elements[n], viewport);
   const rects = names.map((n) => d.layout!.elements[n]!);
   for (let i = 0; i < rects.length; i++)
@@ -217,6 +217,30 @@ test('?debug&passlog logs the assisted-pass target search while PASS is held', a
 
 test.describe('TACKLE and quick shot (PR D)', () => {
   const mine = (r: MatchReport, seq: number, type: string) => r.events.filter((e) => e.seq > seq && e.type === type && String(e.by ?? '').startsWith('H'));
+
+  test('SWITCH selects the previewed teammate while defending; the held stick keeps steering', async ({ page }, info) => {
+    const errors = trackConsoleErrors(page);
+    const cdp = await page.context().newCDPSession(page);
+    await open(page, modeFor(info), '&setup=tackle');
+    const before = await waitFor(page, (r) => r.control.switchAvailable && r.control.switchCandidate !== null);
+    await slowSim(page, 0.2);
+    const stick = await centre(page, 'pad-stick');
+    const sw = await centre(page, 'pad-switch');
+    await touch(page, cdp, 'touchStart', [{ id: 1, ...stick }]);
+    await touch(page, cdp, 'touchMove', [{ id: 1, x: stick.x, y: stick.y - 40 }]);
+    const held = await waitFor(page, (r) => Math.hypot(r.pad.stick.x, r.pad.stick.y) > 0.5);
+    const cand = held.control.switchCandidate ?? before.control.switchCandidate;
+    await touch(page, cdp, 'touchStart', [{ id: 1, x: stick.x, y: stick.y - 40 }, { id: 2, ...sw }]);
+    await touch(page, cdp, 'touchEnd', [{ id: 1, x: stick.x, y: stick.y - 40 }]);
+    const after = await waitFor(page, (r) => r.control.lastSwitch?.why === 'manual');
+    expect([cand, held.control.switchCandidate]).toContain(after.controlledId);
+    // The SWITCH finger never becomes an action press, and the stick finger is still steering.
+    expect(Math.hypot(after.pad.stick.x, after.pad.stick.y)).toBeGreaterThan(0.5);
+    expect(after.inputLog.join(',')).toContain('pad:switch:touch');
+    expect(after.pad.phase).not.toMatch(/tackle|slide|charging/);
+    await touch(page, cdp, 'touchEnd', []);
+    expect(errors).toEqual([]);
+  });
 
   test('TACKLE commits one standing tackle on the feet, then recovers to ready', async ({ page }, info) => {
     const errors = trackConsoleErrors(page);
