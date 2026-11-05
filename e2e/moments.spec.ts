@@ -5,7 +5,7 @@ test.describe.configure({ timeout: 300_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 
 interface Drawn { id: string; sheet: string; frame: number; action: string; since: number; me: boolean; sprite: boolean }
-interface Tm { mode: string; message: string; sceneId: string | null; status: string | null; look: string; stage: string | null; stageLabel: string; speedLabel: string; paused: boolean; t: number; choice: string | null; attempts: { kind: string; choice: string }[]; replays: { what: string }[]; choices: string[]; coach: string; actors: Drawn[]; ball: { texture: string; frame: string; state: string; size: number } | null; coachArt: boolean }
+interface Tm { mode: string; message: string; sceneId: string | null; status: string | null; look: string; stage: string | null; stageLabel: string; speedLabel: string; paused: boolean; t: number; choice: string | null; presentation: 'result' | 'explanation' | null; attempts: { kind: string; choice: string }[]; replays: { what: string }[]; choices: string[]; coach: string; actors: Drawn[]; ball: { texture: string; frame: string; state: string; size: number } | null; coachArt: boolean }
 
 async function tm(page: Page, pred: (g: Tm) => boolean, what: string, ms = 30_000): Promise<Tm> {
   const start = Date.now();
@@ -75,8 +75,9 @@ test('Tactical Moments review: every stage, pause/resume, every branch, replay a
     for (const k of g.choices) {
       await pressElement(page, `tm-choice-${k}`, mode);
       g = await tm(page, (x) => x.stage === 'result' && x.choice === k, `result ${k}`);
-      // The Result stage label says RESULT; the playback speed is shown separately.
-      expect(g.stageLabel).toBe('RESULT');
+      // A played-out consequence says RESULT; a deliberately frozen teaching frame says EXPLANATION. Speed is shown separately.
+      expect(g.stageLabel).toBe(g.presentation === 'explanation' ? 'EXPLANATION' : 'RESULT');
+      expect(['result', 'explanation']).toContain(g.presentation);
       expect(g.speedLabel).toBe('0.5×');
       g = await tm(page, (x) => x.stage === 'learn', `learn ${k}`, 30_000);
       expect(g.stageLabel).toBe('LEARN');
