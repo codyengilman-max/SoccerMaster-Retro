@@ -6,6 +6,7 @@
 import scenes from '../../../../docs/training/moments/scenes.v2.json';
 import approvals from '../../../../docs/training/moments/approvals.json';
 import outcomes from '../../../../docs/training/moments/outcomes.v1.json';
+import { mirrorTimeline } from './director';
 import { outcomeHash, type OutcomeDraft } from './outcomes';
 import type { ChoiceId } from '../all36/types';
 import type { VariantId } from '../all36/types';
@@ -40,7 +41,14 @@ export function outcomeApproved(o: OutcomeDraft, records: readonly ApprovalRecor
 /** Outcome drafts for a scene's frozen branches: every draft in review mode, approved ones only for players. */
 export function outcomesFor(s: MomentScene, review: boolean, records: readonly ApprovalRecord[] = MOMENT_APPROVALS): Partial<Record<ChoiceId, OutcomeDraft>> {
   const out: Partial<Record<ChoiceId, OutcomeDraft>> = {};
-  for (const o of MOMENT_OUTCOMES) if (o.sceneId === s.sceneId && o.sceneVersion === s.version && (review || outcomeApproved(o, records))) out[o.choice] = o;
+  const mirrored = s.sceneId.endsWith('-mirror');
+  const id = mirrored ? s.sceneId.slice(0, -'-mirror'.length) : s.sceneId;
+  for (const o of MOMENT_OUTCOMES) {
+    if (o.sceneId !== id || o.sceneVersion !== s.version) continue;
+    // Players: approved drafts only, and never one whose own animation gaps still block release.
+    if (!review && (!outcomeApproved(o, records) || o.gaps.some((g) => g.blocksRelease))) continue;
+    out[o.choice] = mirrored && o.timeline ? { ...o, timeline: mirrorTimeline(o.timeline, s.field.width) } : o;
+  }
   return out;
 }
 

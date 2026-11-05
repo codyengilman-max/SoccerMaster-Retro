@@ -45,7 +45,8 @@ export function evaluate(s: MomentScene, choice: ChoiceId): Evaluation {
   return { choice, grade: a.grade, band: GRADE_BAND[a.grade], valid: a.grade !== 'misread', best: s.actions.filter((x) => x.grade === 'preferred').map((x) => x.id), execution: s.branches[choice].kind };
 }
 
-export function explain(s: MomentScene, ev: Evaluation): Explanation {
+/** `outcome`: the outcome draft Result played for a frozen branch, whose description replaces the frozen one. */
+export function explain(s: MomentScene, ev: Evaluation, outcome?: OutcomeDraft): Explanation {
   const a = s.actions.find((x) => x.id === ev.choice)!;
   const br = s.branches[ev.choice];
   const best = s.actions.filter((x) => x.grade === 'preferred');
@@ -53,7 +54,7 @@ export function explain(s: MomentScene, ev: Evaluation): Explanation {
   return {
     mattered: s.cues[0] ?? s.objective,
     chose: `${a.label}: ${verdict}. ${br.feedback}`,
-    changed: br.whatChanged,
+    changed: outcome?.whatChanged ?? br.whatChanged,
     next: ev.grade === 'preferred' ? s.reason : `Next time: ${best.map((x) => x.label).join(' or ')}. ${s.reason}`,
   };
 }
@@ -216,10 +217,10 @@ export class MomentDirector {
 }
 
 /** Left-right mirror of a scene (x → width − x). Built for variation tests; not permitted for players until approved. */
-export function mirrorScene(s: MomentScene): MomentScene {
-  const W = s.field.width;
+/** True horizontal mirror of a timeline across a pitch `W` metres wide (positions, looks, ball events, anatomical feet). */
+export function mirrorTimeline(x: Timeline, W: number): Timeline {
   const m = (p: Metres): Metres => [Math.round((W - p[0]) * 100) / 100, p[1]];
-  const tl = (x: MomentScene['watch']): MomentScene['watch'] => ({
+  return {
     duration: x.duration,
     actors: x.actors.map((a) => ({ ...a, keys: a.keys.map((k) => ({ ...k, at: m(k.at), look: m(k.look) })) })),
     ball: x.ball.map((e) => {
@@ -232,7 +233,13 @@ export function mirrorScene(s: MomentScene): MomentScene {
       if (e.kind === 'loose') return { ...e, at: m(e.at) };
       return e;
     }),
-  });
+  };
+}
+
+export function mirrorScene(s: MomentScene): MomentScene {
+  const W = s.field.width;
+  const m = (p: Metres): Metres => [Math.round((W - p[0]) * 100) / 100, p[1]];
+  const tl = (x: Timeline): Timeline => mirrorTimeline(x, W);
   return {
     ...s,
     sceneId: `${s.sceneId}-mirror`,

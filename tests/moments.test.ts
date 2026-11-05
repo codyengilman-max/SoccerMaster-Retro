@@ -286,3 +286,23 @@ describe('outcome drafts for frozen branches', () => {
     }
   });
 });
+
+describe('outcome drafts: review fixes', () => {
+  it('mirrored review keeps (mirrored) outcome drafts; Learn describes the played outcome; blocked drafts never reach players', async () => {
+    const { MOMENT_OUTCOMES, outcomesFor } = await import('../src/game/training12/moments/index');
+    const { explain } = await import('../src/game/training12/moments/director');
+    const o = MOMENT_OUTCOMES.find((x) => x.timeline && x.gaps.some((g) => g.blocksRelease))!;
+    const s = MOMENT_SCENES.find((x) => x.sceneId === o.sceneId)!;
+    const mir = outcomesFor(mirrorScene(s), true)[o.choice]!;
+    const a = o.timeline!.actors[0]!.keys[0]!.at;
+    expect(mir.timeline!.actors[0]!.keys[0]!.at).toEqual([Math.round((s.field.width - a[0]) * 100) / 100, a[1]]);
+    const d = new MomentDirector(s, undefined, { [o.choice]: o });
+    d.start();
+    run(d, 0.1, 200);
+    d.choose(o.choice);
+    expect(explain(s, d.evaluation!, o).changed).toBe(o.whatChanged);
+    const { outcomeHash } = await import('../src/game/training12/moments/outcomes');
+    const rec = [{ sceneId: o.branchId, version: o.outcomeVersion, hash: outcomeHash(o), status: 'APPROVED' as const, reviewer: 't', date: '2026-01-01', note: '' }];
+    expect(outcomesFor(s, false, rec)[o.choice]).toBeUndefined();
+  });
+});

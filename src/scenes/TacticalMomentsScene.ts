@@ -442,7 +442,7 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
         return `You chose ${d.choice}: ${s.actions.find((a) => a.id === d.choice)?.label ?? ''}`;
       case 'learn':
       case 'done': {
-        const x = explain(s, d.evaluation!);
+        const x = explain(s, d.evaluation!, d.choice ? d.outcomes[d.choice] : undefined);
         return `${x.mattered}\nYou: ${x.chose}\n${x.changed}\n${x.next}${this.saved ? `\n${this.saved}` : ''}`;
       }
     }
