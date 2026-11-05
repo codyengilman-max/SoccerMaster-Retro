@@ -221,6 +221,15 @@ describe('approval gating', () => {
     expect(sceneHash({ ...s, review: { ...s.review, status: 'APPROVED' } })).toBe(sceneHash(s));
     expect(sceneHash({ ...s, objective: `${s.objective}!` })).not.toBe(sceneHash(s));
   });
+  it('an approval appended after an edit (same version, new hash) wins over the stale record', () => {
+    const edited: MomentScene = { ...s, assets: { ...s.assets, gaps: [] }, objective: `${s.objective} (edited)` };
+    const stale = rec();
+    const fresh = { ...rec(), hash: sceneHash(edited) };
+    expect(effectiveStatus(edited, [stale, fresh])).toBe('APPROVED');
+    expect(playerFacing(edited, [stale, fresh])).toBe(true);
+    expect(effectiveStatus(edited, [stale])).toBe('CHANGES_REQUESTED');
+    expect(effectiveStatus(edited, [stale, fresh, { ...fresh, status: 'CHANGES_REQUESTED' }])).toBe('CHANGES_REQUESTED');
+  });
   it('a scene with no blockers and a matching approval is player-facing', () => {
     const clean: MomentScene = { ...s, assets: { ...s.assets, gaps: [] } };
     expect(playerFacing(clean, [{ ...rec(), hash: sceneHash(clean) }])).toBe(true);

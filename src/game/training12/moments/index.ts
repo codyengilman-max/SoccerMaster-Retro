@@ -30,7 +30,10 @@ export function momentScene(situationId: string, variant: VariantId): MomentScen
 }
 
 export function approvalFor(s: MomentScene, records: readonly ApprovalRecord[] = MOMENT_APPROVALS): ApprovalRecord | null {
-  return records.find((r) => r.sceneId === s.sceneId && r.version === s.version) ?? null;
+  // The newest record for this exact content wins; a record for older content only reports that it is stale.
+  const mine = records.filter((r) => r.sceneId === s.sceneId && r.version === s.version);
+  const h = sceneHash(s);
+  return [...mine].reverse().find((r) => r.hash === h) ?? mine[mine.length - 1] ?? null;
 }
 
 /** The effective review status: the stored draft status, overridden only by an approval record for this exact hash. */

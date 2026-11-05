@@ -52,6 +52,8 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
   private save: CareerSave | null = null;
   private runId = '';
   private saved = '';
+  private creditChoice: ChoiceId | null = null;
+  private saveState: 'idle' | 'saving' | 'saved' | 'failed' = 'idle';
   private message = '';
   private entry = 0;
   private g!: Phaser.GameObjects.Graphics;
@@ -89,6 +91,8 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
     this.moment = null;
     this.save = null;
     this.saved = '';
+    this.creditChoice = null;
+    this.saveState = 'idle';
     this.message = '';
     this.sprites = new Map();
     this.tags = [];
@@ -159,7 +163,8 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
     const d = this.director;
     if (!d) return;
     const before = d.stage;
-    d.tick(Math.min(0.1, deltaMs / 1000));
+    // The director samples by scene time and crosses stage edges inside one tick, so no elapsed time is dropped.
+    d.tick(deltaMs / 1000);
     if (d.stage !== before) this.buttonKey = '';
     this.drawFrame();
     this.drawChrome();
@@ -180,21 +185,32 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
     this.buttonKey = '';
     // Credit: only the first unassisted answer of a player-facing session goes to the existing weekly reducer,
     // whose runId makes refreshes and repeated submissions idempotent. Retries, hints and replays never credit.
-    if (!this.review && first && !d.assisted && this.store && this.save && this.moment) void this.record(k);
+    if (!this.review && first && !d.assisted && this.store && this.save && this.moment) {
+      this.creditChoice = k;
+      void this.record();
+    }
   }
 
-  private async record(k: ChoiceId): Promise<void> {
-    if (!this.store || !this.save || !this.moment) return;
+  /** Saves the first eligible answer under its own runId; a failed write keeps that answer and can be retried as-is. */
+  private async record(): Promise<void> {
+    const k = this.creditChoice;
+    if (!k || !this.store || !this.save || !this.moment || this.saveState === 'saving') return;
+    this.saveState = 'saving';
+    this.buttonKey = '';
     try {
       const r = await this.store.dispatch({ type: 'all36Weekly', week: this.save.week, situationId: this.moment.library.situationId, runId: this.runId, at: Date.now(), choice: k });
       this.saved = r.ok ? r.message : r.error;
       if (r.ok) this.save = r.save;
+      this.saveState = r.ok ? 'saved' : 'failed';
     } catch (e) {
       this.saved = e instanceof Error ? e.message : 'The save could not be written.';
+      this.saveState = 'failed';
     }
+    this.buttonKey = '';
   }
 
   private leave(): void {
+    if (this.saveState === 'saving') return;
     if (this.review) return void this.scene.start(SceneKeys.MomentsReview, { situationId: this.moment?.library.situationId });
     this.scene.start(SceneKeys.Career, { open: 'team', ...(this.returnTo ? { returnTo: this.returnTo } : {}) });
   }
@@ -465,7 +481,7 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
   private layoutButtons(top: number): void {
     const d = this.director;
     const P = this.panel;
-    const key = `${d?.stage}|${d?.paused}|${d?.replaying}|${d?.assisted}|${P.width}|${P.height}|${top}|${this.review}|${this.look}|${this.mirrored}|${this.moment?.sceneId ?? this.message}`;
+    const key = `${this.saveState}|${d?.stage}|${d?.paused}|${d?.replaying}|${d?.assisted}|${P.width}|${P.height}|${top}|${this.review}|${this.look}|${this.mirrored}|${this.moment?.sceneId ?? this.message}`;
     if (key === this.buttonKey) return;
     this.buttonKey = key;
     for (const b of this.buttons) b.destroy();
@@ -493,7 +509,9 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
           break;
         case 'learn':
         case 'done':
-          defs.push({ name: 'tm-replay', label: 'Replay', on: () => (d.replay(), (this.buttonKey = '')) }, pr, { name: 'tm-retry', label: 'Retry', on: () => (d.retry(), (this.buttonKey = '')) }, { name: 'tm-continue', label: 'Continue', on: () => (d.finish(), this.leave()) });
+          if (this.saveState === 'failed') defs.push({ name: 'tm-retry-save', label: 'Retry save', on: () => void this.record(), wide: true });
+          defs.push({ name: 'tm-replay', label: 'Replay', on: () => (d.replay(), (this.buttonKey = '')) }, pr, { name: 'tm-retry', label: 'Retry', on: () => (d.retry(), (this.buttonKey = '')) });
+          if (this.saveState !== 'saving') defs.push({ name: 'tm-continue', label: 'Continue', on: () => (d.finish(), this.leave()) });
           break;
       }
     }
@@ -602,6 +620,7 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
       choices: s && d?.stage === 'decide' ? s.actions.map((a) => a.id) : [],
       coach: this.coachText?.text ?? '',
       saved: this.saved,
+      saveState: this.saveState,
       actors: this.drawn,
       ball: this.ballDrawn,
       coachArt: !!this.coach,
