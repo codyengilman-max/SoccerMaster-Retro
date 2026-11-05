@@ -9,6 +9,7 @@ import { contacts } from '../src/game/training12/moments/timeline';
 const E2E_SCENES = [...readFileSync(new URL('../e2e/moments.spec.ts', import.meta.url), 'utf8').matchAll(/'(D\\d{2})'/g)].map((m) => m[1]!);
 import { draftOutcomes, outcomeHash, type OutcomeDraft } from '../src/game/training12/moments/outcomes';
 import { draftOutcomesV2 } from '../src/game/training12/moments/outcomesV2';
+import { REVEALING, reviseChoices } from '../src/game/training12/moments/choices';
 import { stillCast } from '../src/render/art/teamTrainingFrames';
 import type { Timeline } from '../src/game/training12/moments/schema';
 import { releaseBlockers, validateScene } from '../src/game/training12/moments/validate';
@@ -22,6 +23,28 @@ export function exportDrafts(): MomentScene[] {
 }
 
 const esc = (t: string) => t.replace(/\|/g, '\\|').replace(/\n/g, ' ');
+
+function choicesMd(scenes: MomentScene[]): string {
+  const all = scenes.map(reviseChoices);
+  const rows = all.flatMap((c) => c.revisions.filter((r) => r.change !== 'unchanged').map((r) => `| ${c.sceneId}/${r.choice} | ${r.grade} | ${esc(r.original)} | ${r.proposed ? esc(r.proposed) : '(removed)'} | ${r.reason} |`));
+  const left = all.flatMap((c) => c.revisions.filter((r) => r.change === 'unchanged' && REVEALING.test(r.original)).map((r) => `${c.sceneId}/${r.choice}: ${r.original}`));
+  return [
+    '# Tactical Moments: neutral-choice revisions (generated)',
+    '',
+    'Generated from `scenes.v2.json` by `tests/momentsExport.test.ts`; records in `choices.v1.json`. Original wording and grades are unchanged; each revision needs owner approval. Grades are never edited here.',
+    '',
+    `Removed: ${all.flatMap((c) => c.revisions).filter((r) => r.change === 'removed').length}. Reworded: ${all.flatMap((c) => c.revisions).filter((r) => r.change === 'reworded').length}. Versions needing reauthoring (fewer than 2 choices left): ${all.filter((c) => c.needsReauthoring).length}. Choices left per version: ${[...new Set(all.map((c) => c.remaining))].join(', ')}.`,
+    '',
+    `Unchanged but matching a judgment word (owner to check): ${left.length ? left.join('; ') : 'none'}.`,
+    '',
+    'No other distractor was removed: none is plainly implausible without coaching judgment, so plausibility is left to the owner.',
+    '',
+    '| Branch | Package grade | Original | Proposed | Why |',
+    '|---|---|---|---|---|',
+    ...rows,
+    '',
+  ].join('\n');
+}
 
 function matrix(scenes: MomentScene[]): string {
   const rows = scenes.map((s) => {
@@ -186,6 +209,8 @@ describe('stored Tactical Moments drafts', () => {
     ['REVIEW_MATRIX.md', matrix(scenes)],
     ['GAPS_BY_SCENE.md', gaps(scenes)],
     ['outcomes.v1.json', '[\n' + outs.map((o) => JSON.stringify(o)).join(',\n') + '\n]\n'],
+    ['choices.v1.json', '[\n' + scenes.map((x) => JSON.stringify(reviseChoices(x))).join(',\n') + '\n]\n'],
+    ['CHOICE_REVISIONS.md', choicesMd(scenes)],
     ['outcomes.v2.json', '[\n' + draftOutcomesV2(scenes).map((o) => JSON.stringify(o)).join(',\n') + '\n]\n'],
     ['FROZEN_BRANCHES.md', frozen(scenes, outs)],
     ['ANIMATION_REQUIREMENTS.json', requirements(scenes, outs).json],
