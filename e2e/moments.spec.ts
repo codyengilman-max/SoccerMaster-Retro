@@ -101,17 +101,27 @@ test('Tactical Moments: a pass is struck on the contact frame and the ball is it
   await pressElement(page, 'tm-start', mode);
   await tm(page, (x) => x.stage === 'decide', 'decide', 30_000);
   await pressElement(page, 'tm-choice-A', mode);
-  const seen = new Set<string>();
-  for (let i = 0; i < 200; i++) {
-    const g = await tm(page, () => true, 'result frames');
-    const passer = g.actors.find((a) => a.action === 'pass');
-    if (passer) seen.add(`${passer.frame}:${g.ball?.state}`);
-    if (g.stage === 'learn') break;
-    await page.waitForTimeout(20);
-  }
-  // Plant (7/8) while the ball is still held, contact (9) as it leaves.
-  expect([...seen].some((s) => /^(7|8):held/.test(s))).toBe(true);
-  expect([...seen].some((s) => /^9:/.test(s))).toBe(true);
+  await tm(page, (x) => x.stage === 'result', 'result');
+  type W = { __SMR__: { game: { scene: { getScene(k: string): { director: { pause(): void; seek(t: number): void }; moment: { branches: { A: { timeline: { ball: { kind: string; t: number }[] } } } } } } } } };
+  const contact = await page.evaluate(() => (window as unknown as W).__SMR__.game.scene.getScene('moments').moment.branches.A.timeline.ball.find((e) => e.kind === 'pass')!.t);
+  const at = async (t: number) => {
+    await page.evaluate((tt) => {
+      const d = (window as unknown as W).__SMR__.game.scene.getScene('moments').director;
+      d.pause();
+      d.seek(tt);
+    }, t);
+    await page.waitForTimeout(150);
+    const g = await tm(page, () => true, `frame at ${t}`);
+    return { passer: g.actors.find((a) => a.action === 'pass') ?? null, ball: g.ball };
+  };
+  // Plant (7/8) while the ball is still held, contact frame 9 as it leaves, on the drawn frame (not wall-clock luck).
+  const plant = await at(contact - 0.1);
+  expect([7, 8]).toContain(plant.passer?.frame);
+  expect(plant.ball?.state).toMatch(/^held:/);
+  const hit = await at(contact + 0.02);
+  expect(hit.passer?.frame).toBe(9);
+  expect(hit.ball?.state).toBe('flight');
+  expect(hit.ball?.texture).toBe('jb4:jungle4-ball');
 });
 
 test('Tactical Moments are not player-facing until approved', async ({ page }) => {
