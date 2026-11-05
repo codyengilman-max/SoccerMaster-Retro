@@ -260,7 +260,13 @@ describe('outcome drafts for frozen branches', () => {
       expect(o.status).not.toBe('APPROVED');
       if (o.presentation === 'explanation') {
         expect(o.timeline).toBeNull();
-        expect(o.missingDecision).toBeTruthy();
+        expect(o.missingDecision || o.question || o.category === 'unavailable').toBeTruthy();
+      } else if (o.category === 'proposed') {
+        // v2 proposal: the protagonist's action plays up to its consequence; nothing is resolved for it.
+        const tl = o.timeline!;
+        for (const a of s.actors) expect(d2(tl.actors.find((x) => x.id === a.id)!.keys[0]!.at, a.decision)).toBeLessThan(0.05);
+        expect(tl.ball.every((e) => e.kind === 'held' || e.kind === 'carry' || (e.kind === 'pass' && e.receiver === null) || e.kind === 'loose')).toBe(true);
+        expect(o.assumptions.length).toBeGreaterThan(0);
       } else {
         // Played out from the snapshot; the ball keeps its holder; no new ball event is invented.
         const tl = o.timeline!;

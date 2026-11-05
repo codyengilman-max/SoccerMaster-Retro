@@ -8,6 +8,7 @@ import { contacts } from '../src/game/training12/moments/timeline';
 
 const E2E_SCENES = [...readFileSync(new URL('../e2e/moments.spec.ts', import.meta.url), 'utf8').matchAll(/'(D\\d{2})'/g)].map((m) => m[1]!);
 import { draftOutcomes, outcomeHash, type OutcomeDraft } from '../src/game/training12/moments/outcomes';
+import { draftOutcomesV2 } from '../src/game/training12/moments/outcomesV2';
 import { stillCast } from '../src/render/art/teamTrainingFrames';
 import type { Timeline } from '../src/game/training12/moments/schema';
 import { releaseBlockers, validateScene } from '../src/game/training12/moments/validate';
@@ -185,6 +186,7 @@ describe('stored Tactical Moments drafts', () => {
     ['REVIEW_MATRIX.md', matrix(scenes)],
     ['GAPS_BY_SCENE.md', gaps(scenes)],
     ['outcomes.v1.json', '[\n' + outs.map((o) => JSON.stringify(o)).join(',\n') + '\n]\n'],
+    ['outcomes.v2.json', '[\n' + draftOutcomesV2(scenes).map((o) => JSON.stringify(o)).join(',\n') + '\n]\n'],
     ['FROZEN_BRANCHES.md', frozen(scenes, outs)],
     ['ANIMATION_REQUIREMENTS.json', requirements(scenes, outs).json],
     ['ANIMATION_REQUIREMENTS.md', requirements(scenes, outs).md],

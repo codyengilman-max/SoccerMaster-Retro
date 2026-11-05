@@ -497,3 +497,9 @@ Tactical Moments replace the still Weekly Team Training picture with Brief → W
 - Contact foot is never inferred from facing. Every pass/receive/touch foot stays `unverified` until reviewed metadata exists (`docs/training/moments/contact-frames.json`, sheets in `contact/`). A true mirror swaps anatomical L/R but verifies nothing.
 - The 159 package-frozen branches keep their package label, consequence and feedback. Outcome drafts live separately in `outcomes.v1.json` (outcome version 1) and need their own approval. Result = played-out consequence; EXPLANATION = deliberately frozen teaching frame. No invented pass, turnover or goal: unsupported options name the missing decision.
 - Scenes v2 (`scenes.v2.json`); `scenes.v1.json` stays frozen as history. Release matrix has five separate axes: tactical approval, movement approval, asset readiness, contact verification, technical tests.
+
+### D76b (owner, 2026-11, round 3): frozen-option policy, recorded once
+- Outcome drafts v2 (`outcomes.v2.json`, outcome version 2) supersede v1's freeze rule for the new draft version only; `outcomes.v1.json` and the package text stay unchanged. Each draft still needs owner approval.
+- Executable-but-poor options are animated as a proposed Result (movement family from the label, run 5 m/s capped at 6 m; passes and shots end with the ball halfway in flight) with everyone else continuing established movement. No goal, turnover or failure is authored.
+- Options the package calls unavailable ("Freeze for explanation…") stay an Explanation. Hold, wait and scan options keep the ball still while play around it develops.
+- Only scene-specific coaching questions are returned (`question` on a draft).

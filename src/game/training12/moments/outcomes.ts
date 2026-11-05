@@ -11,7 +11,7 @@ import type { ActorTrack, Gap, MomentScene, Timeline } from './schema';
 import { actorAt } from './timeline';
 
 export const OUTCOME_SCHEMA = 'tactical-moments-outcome.v1';
-export type OutcomeCategory = 'scan' | 'hold-position' | 'needs-decision';
+export type OutcomeCategory = 'scan' | 'hold-position' | 'needs-decision' | 'unavailable' | 'proposed';
 export interface OutcomeDraft {
   readonly schema: typeof OUTCOME_SCHEMA;
   readonly branchId: string;
@@ -31,6 +31,8 @@ export interface OutcomeDraft {
   readonly assumptions: readonly string[];
   readonly gaps: readonly Gap[];
   readonly status: 'DRAFT' | 'READY_FOR_REVIEW';
+  /** v2: a genuinely open, scene-specific coaching question (policy questions are recorded once in DECISIONS). */
+  readonly question?: string;
 }
 
 export const CONTINUE_S = 1.2;
@@ -46,7 +48,7 @@ const dist = (a: Metres, b: Metres): number => Math.hypot(a[0] - b[0], a[1] - b[
 export const isFrozenBranch = (s: MomentScene, k: ChoiceId): boolean => s.branches[k].kind === 'hold' && /^(Review pause only|Freeze for explanation)/.test(s.branches[k].consequence);
 
 /** Players moving at the freeze keep their established direction and speed for CONTINUE_S (pressers stop short of the ball). */
-function continuation(s: MomentScene): { tl: Timeline; movers: string[] } {
+export function continuation(s: MomentScene): { tl: Timeline; movers: string[] } {
   const T = s.decision.t;
   const ball = s.ball.decision;
   const movers: string[] = [];

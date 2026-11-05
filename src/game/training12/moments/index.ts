@@ -5,7 +5,7 @@
  */
 import scenes from '../../../../docs/training/moments/scenes.v2.json';
 import approvals from '../../../../docs/training/moments/approvals.json';
-import outcomes from '../../../../docs/training/moments/outcomes.v1.json';
+import outcomes from '../../../../docs/training/moments/outcomes.v2.json';
 import { mirrorTimeline } from './director';
 import { outcomeHash, type OutcomeDraft } from './outcomes';
 import type { ChoiceId } from '../all36/types';
