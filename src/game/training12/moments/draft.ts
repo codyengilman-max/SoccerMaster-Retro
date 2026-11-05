@@ -37,8 +37,8 @@ const unit = (a: Metres, b: Metres): Metres => {
   return d < 1e-6 ? [0, 0] : [(b[0] - a[0]) / d, (b[1] - a[1]) / d];
 };
 const clampField = (p: Metres, w: number, l: number): Metres => pt(Math.min(w - 0.5, Math.max(0.5, p[0])), Math.min(l - 0.5, Math.max(0.5, p[1])));
-/** Sheets face right three-quarter and are mirrored for left; the striking/touching foot mirrors with them (foot audit: docs/training/moments/ANIMATION_GAPS.md). */
-export const footFacing = (from: Metres, to: Metres): Foot => (to[0] < from[0] - 0.25 ? 'left' : 'right');
+/** Owner decision (2026-11): facing never decides the contact foot. Every contact stays 'unverified' until the sheet's contact metadata (docs/training/moments/contact-frames.json) is reviewed. */
+export const contactFoot = (): Foot => 'unverified';
 /** A move the sheets cannot show honestly: mostly up or down the screen (needs front/back facings that do not exist). */
 export const vertical = (a: Metres, b: Metres): boolean => dist(a, b) > 0.75 && Math.abs(b[1] - a[1]) > Math.abs(b[0] - a[0]);
 
@@ -133,7 +133,7 @@ function draftWatch(c: Ctx): { tl: Timeline; starts: Record<string, Metres>; bal
       tracks.push(track(a.id, 'Ball carrier: settles the ball and carries it into the decision spot.', [{ t: 0, at: start, action: 'stand', look }, { t: r2(t0), at: start, action: 'stand', look }, { t: r2(t1), at: dec, action: 'run', look }, { t: T, at: dec, action: 'stand', look }]));
       starts[a.id] = start;
       const touches: { t: number; foot: Foot }[] = [];
-      for (let t = t0; t < t1 - 0.05; t += DRAFT.touchEvery) touches.push({ t: r2(t), foot: 'right' });
+      for (let t = t0; t < t1 - 0.05; t += DRAFT.touchEvery) touches.push({ t: r2(t), foot: contactFoot() });
       events.push({ kind: 'carry', t0: r2(t0), t1: r2(t1), by: a.id, touches }, { kind: 'held', t: r2(t1), by: a.id });
       c.assumptions.add('The ball carrier carries 2 m along their attacking direction before the decision (the package does not say how the ball arrived).');
       continue;
@@ -173,13 +173,13 @@ function branchKind(c: Ctx, k: ChoiceId): OutcomeBranch['kind'] {
   const b = c.v.branches[k];
   const owner = c.v.ball_owner;
   const ballMoves = !near(b.ball_target, c.v.ball_position_m);
-  if (b.owner_after === null) return ballMoves ? 'loose' : 'hold';
+  if (b.owner_after === null) return ballMoves ? 'loose' : Object.keys(b.actor_targets).length ? 'off-ball' : 'hold';
   if (!owner) return 'collect';
   const ownerTeam = owner ? c.actor(owner).team : c.actor(c.e.protagonist_id).team;
   if (c.actor(b.owner_after).team !== ownerTeam && b.owner_after !== owner) return 'turnover';
   if (b.owner_after !== owner && ballMoves) return 'pass';
-  if (ballMoves || Object.keys(b.actor_targets).length) return 'carry';
-  return 'hold';
+  if (ballMoves) return 'carry';
+  return Object.keys(b.actor_targets).length ? 'off-ball' : 'hold';
 }
 
 function draftBranch(c: Ctx, k: ChoiceId): OutcomeBranch {
@@ -213,7 +213,7 @@ function draftBranch(c: Ctx, k: ChoiceId): OutcomeBranch {
     const passer = owner ?? e.protagonist_id;
     receiver = b.owner_after;
     const arrive = r2(contact + dist(ball0, b.ball_target) / DRAFT.passSpeed);
-    const foot = footFacing(c.at(passer), b.ball_target);
+    const foot = contactFoot();
     keys.get(passer)!.push({ t: r2(contact), at: c.at(passer), action: 'pass', look: b.ball_target });
     events.push({ kind: 'pass', t: r2(contact), by: passer, foot, to: b.ball_target, arrive, receiver });
     if (receiver) {
@@ -225,7 +225,7 @@ function draftBranch(c: Ctx, k: ChoiceId): OutcomeBranch {
         purposes.set(receiver, kind === 'turnover' ? 'Intercepts the pass at the package endpoint.' : 'Receives at the package endpoint.');
       }
       keys.get(receiver)!.push({ t: arrive, at: rTo, action: 'receive', look: ball0 });
-      events.push({ kind: 'receive', t: arrive, by: receiver, foot: footFacing(rTo, ball0) });
+      events.push({ kind: 'receive', t: arrive, by: receiver, foot: contactFoot() });
     }
     end = arrive + DRAFT.hold;
     ballEnd = b.ball_target;
@@ -233,7 +233,7 @@ function draftBranch(c: Ctx, k: ChoiceId): OutcomeBranch {
   } else if (kind === 'turnover') {
     receiver = b.owner_after;
     const t1 = move(receiver!, b.actor_targets[receiver!] ?? b.ball_target, 0.2, DRAFT.runSpeed, 'run', ball0, 'Wins the ball (dispossession).');
-    events.push({ kind: 'receive', t: Math.max(t1, 0.4), by: receiver!, foot: footFacing(c.at(receiver!), ball0) });
+    events.push({ kind: 'receive', t: Math.max(t1, 0.4), by: receiver!, foot: contactFoot() });
     c.gaps.push({ actor: receiver, phase: 'branch', choice: k, need: 'tackle / dispossession: no tackle frames exist (must not be faked with pass frames)', blocksRelease: true });
     end = Math.max(t1, 0.4) + DRAFT.hold;
     ballEnd = b.ball_target;
@@ -241,7 +241,7 @@ function draftBranch(c: Ctx, k: ChoiceId): OutcomeBranch {
     receiver = b.owner_after!;
     const t1 = move(receiver, ball0, 0.2, DRAFT.runSpeed, 'run', ball0, 'Collects the loose ball.');
     const tr = r2(Math.max(t1, 0.4));
-    const foot = footFacing(c.at(receiver), ball0);
+    const foot = contactFoot();
     keys.get(receiver)!.push({ t: tr, at: ball0, action: 'receive', look: ball0 });
     events.push({ kind: 'receive', t: tr, by: receiver, foot });
     let tEnd = r2(tr + 0.35);
@@ -250,19 +250,19 @@ function draftBranch(c: Ctx, k: ChoiceId): OutcomeBranch {
     if (!near(to, ball0, 0.05)) {
       const t2 = move(receiver, to, tEnd, DRAFT.carrySpeed, 'run', pt(to[0] + (to[0] - ball0[0]), to[1] + (to[1] - ball0[1])), 'Collects the loose ball and carries it to the package endpoint.');
       const touches: { t: number; foot: Foot }[] = [];
-      for (let t = tEnd; t < t2 - 0.05; t += DRAFT.touchEvery) touches.push({ t: r2(t), foot: footFacing(ball0, to) });
+      for (let t = tEnd; t < t2 - 0.05; t += DRAFT.touchEvery) touches.push({ t: r2(t), foot: contactFoot() });
       events.push({ kind: 'carry', t0: tEnd, t1: t2, by: receiver, touches }, { kind: 'held', t: t2, by: receiver });
       tEnd = t2;
       ballEnd = to;
     }
     end = tEnd + DRAFT.hold;
     c.assumptions.add('Loose ball options: the package owner_after runs to the ball, controls it on the receive contact frame, then carries to the package endpoint.');
-  } else if (kind === 'carry' && owner) {
+  } else if (kind === 'carry' && owner && !near(b.ball_target, ball0)) {
     const to = b.actor_targets[owner] ?? b.ball_target;
     const off: Metres = [ball0[0] - c.at(owner)[0], ball0[1] - c.at(owner)[1]];
     const t1 = move(owner, to, 0.2, DRAFT.carrySpeed, 'run', pt(to[0] + (to[0] - c.at(owner)[0]), to[1] + (to[1] - c.at(owner)[1])), 'Carries the ball to the package endpoint.');
     const touches: { t: number; foot: Foot }[] = [];
-    for (let t = 0.2; t < t1 - 0.05; t += DRAFT.touchEvery) touches.push({ t: r2(t), foot: footFacing(c.at(owner), to) });
+    for (let t = 0.2; t < t1 - 0.05; t += DRAFT.touchEvery) touches.push({ t: r2(t), foot: contactFoot() });
     events.push({ kind: 'carry', t0: 0.2, t1, by: owner, touches }, { kind: 'held', t: t1, by: owner });
     end = t1 + DRAFT.hold;
     ballEnd = pt(to[0] + off[0], to[1] + off[1]);
@@ -308,7 +308,7 @@ function draftBranch(c: Ctx, k: ChoiceId): OutcomeBranch {
   const spaceCue = v.visible_cues.find((q) => /space|lane|clear|open/i.test(q));
   if (k === bestK && spaceCue && !near(ball0, b.ball_target)) annotations.push({ kind: 'space', at: b.ball_target, radius: 3, note: spaceCue, support: 'variant visible_cues' });
   const moved = actors.filter((t) => t.keys.length > 1 && !near(t.keys[0]!.at, t.keys[t.keys.length - 1]!.at, 0.05)).map((t) => t.id);
-  const whatChanged = kind === 'hold' ? (moved.length ? `The ball stays where it is; moving to package endpoints: ${moved.join(', ')}.` : 'Nothing moves: the package shows this option as a pause for explanation.') : `${kind === 'pass' ? `The ball travels to ${receiver}` : kind === 'carry' ? `${owner} carries the ball` : kind === 'turnover' ? `${receiver} wins the ball` : kind === 'collect' ? `${receiver} collects the loose ball` : 'The ball runs loose'} (ends at ${ballEnd.join(', ')}); moving: ${moved.join(', ') || 'nobody else'}.`;
+  const whatChanged = kind === 'hold' || kind === 'off-ball' ? (moved.length ? `The ball stays where it is; moving to package endpoints: ${moved.join(', ')}.` : 'Nothing moves: the package shows this option as a pause for explanation.') : `${kind === 'pass' ? `The ball travels to ${receiver}` : kind === 'carry' ? `${owner} carries the ball` : kind === 'turnover' ? `${receiver} wins the ball` : kind === 'collect' ? `${receiver} collects the loose ball` : 'The ball runs loose'} (ends at ${ballEnd.join(', ')}); moving: ${moved.join(', ') || 'nobody else'}.`;
   return { choice: k, kind, timeline: tl, packageTarget: { ball: b.ball_target, ownerAfter: b.owner_after, actors: b.actor_targets }, whatChanged, feedback: b.feedback, consequence: b.consequence, stop: kind === 'hold' ? 'Freeze: package review pause.' : 'Stops once the ball reaches the package endpoint and the response is visible.', annotations };
 }
 
@@ -337,7 +337,8 @@ export function draftScene(e: PackageEpisode, v: PackageVariant): MomentScene {
   return {
     schema: MOMENTS_SCHEMA,
     sceneId: `TM-${e.id}-${v.id}`,
-    version: 1,
+    version: 2,
+    history: ['v1: first draft.', 'v2 (owner 2026-11): contact foot no longer inferred from facing (all contacts unverified); ball-stays options whose package moves players are kind off-ball.'],
     library: { situationId: e.id, variant: v.id, libraryVersion: ALL36_VERSION, archiveSha256: ALL36_ARCHIVE_SHA256, familyId: e.family_id, title: e.title },
     sources: e.source_ids,
     objective,

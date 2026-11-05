@@ -6,78 +6,78 @@ Blockers = release blockers (validator errors + animation gaps that block releas
 
 | Scene | Library title | Sources | Role | Branch kinds | Assumptions | Conflicts | Release blockers | Status | Approval | Hash |
 |---|---|---|---|---|---|---|---|---|---|---|
-| TM-D01-base v1 | Own-half superiority — CB | MSA01 | CB | A:pass B:carry C:hold D:hold | 5 | 2 | 4 | READY_FOR_REVIEW | none | `9eb8d488bf101911` |
-| TM-D01-changed v1 | Own-half superiority — CB | MSA01 | CB | A:hold B:carry C:hold D:hold | 5 | 3 | 2 | READY_FOR_REVIEW | none | `ed3ea5bde54eb87f` |
-| TM-D02-base v1 | Own-half superiority — LB | MSA01 | LB | A:carry B:carry C:hold D:hold | 5 | 2 | 5 | READY_FOR_REVIEW | none | `91caabd9913a8c99` |
-| TM-D02-changed v1 | Own-half superiority — LB | MSA01 | LB | A:carry B:carry C:hold D:hold | 6 | 2 | 5 | READY_FOR_REVIEW | none | `d7f4793ca8199d35` |
-| TM-D03-base v1 | Own-half superiority — DM | MSA01 | DM | A:carry B:carry C:hold D:hold | 5 | 2 | 5 | READY_FOR_REVIEW | none | `ea0908b5e1712596` |
-| TM-D03-changed v1 | Own-half superiority — DM | MSA01 | DM | A:carry B:carry C:hold D:hold | 5 | 2 | 4 | READY_FOR_REVIEW | none | `4863ba3fc1126cfc` |
-| TM-D04-base v1 | Escape the first press — LB | MSA02 | LB | A:pass B:carry C:hold D:hold | 5 | 2 | 4 | READY_FOR_REVIEW | none | `123ba85ef567ec9e` |
-| TM-D04-changed v1 | Escape the first press — LB | MSA02 | LB | A:pass B:carry C:hold D:hold | 5 | 2 | 3 | READY_FOR_REVIEW | none | `82850d9b4de6e989` |
-| TM-D05-base v1 | Escape the first press — RB | MSA02 | RB | A:carry B:carry C:hold D:hold | 5 | 2 | 5 | READY_FOR_REVIEW | none | `772e5510054c55d2` |
-| TM-D05-changed v1 | Escape the first press — RB | MSA02 | RB | A:carry B:carry C:hold D:hold | 4 | 2 | 4 | READY_FOR_REVIEW | none | `b00ccc88d8e8d502` |
-| TM-D06-base v1 | Escape the first press — DM | MSA02 | DM | A:carry B:carry C:hold D:hold | 5 | 2 | 5 | READY_FOR_REVIEW | none | `889904391164764f` |
-| TM-D06-changed v1 | Escape the first press — DM | MSA02 | DM | A:carry B:carry C:hold D:hold | 5 | 2 | 2 | READY_FOR_REVIEW | none | `475c6a938db012d2` |
-| TM-D07-base v1 | Create a local overload — LW | MSA03 | LW | A:carry B:pass C:hold D:hold | 5 | 2 | 5 | READY_FOR_REVIEW | none | `c013eff98d2838b6` |
-| TM-D07-changed v1 | Create a local overload — LW | MSA03 | LW | A:hold B:pass C:hold D:hold | 5 | 3 | 3 | READY_FOR_REVIEW | none | `f973a8b512df5304` |
-| TM-D08-base v1 | Create a local overload — CM | MSA03 | CM | A:pass B:pass C:hold D:hold | 5 | 2 | 3 | READY_FOR_REVIEW | none | `4eb4b80e8149f0e6` |
-| TM-D08-changed v1 | Create a local overload — CM | MSA03 | CM | A:hold B:pass C:hold D:hold | 5 | 3 | 2 | READY_FOR_REVIEW | none | `60e5f500432b62e8` |
-| TM-D09-base v1 | Create a local overload — RW | MSA03 | RW | A:carry B:carry C:hold D:hold | 5 | 2 | 4 | READY_FOR_REVIEW | none | `5ff4a2b720d1850c` |
-| TM-D09-changed v1 | Create a local overload — RW | MSA03 | RW | A:carry B:carry C:hold D:hold | 4 | 2 | 2 | READY_FOR_REVIEW | none | `0052f6da6b6ec621` |
-| TM-D10-base v1 | Switch and exploit space — CM | MSA04 | CM | A:pass B:pass C:hold D:hold | 5 | 2 | 4 | READY_FOR_REVIEW | none | `db41e292f2125bf3` |
-| TM-D10-changed v1 | Switch and exploit space — CM | MSA04 | CM | A:hold B:pass C:hold D:hold | 6 | 3 | 4 | READY_FOR_REVIEW | none | `8f752c0facf342bd` |
-| TM-D11-base v1 | Switch and exploit space — RW | MSA04 | RW | A:carry B:pass C:hold D:hold | 4 | 2 | 3 | READY_FOR_REVIEW | none | `2e5e90524239e977` |
-| TM-D11-changed v1 | Switch and exploit space — RW | MSA04 | RW | A:hold B:pass C:hold D:hold | 5 | 3 | 2 | READY_FOR_REVIEW | none | `efd69740ac985f6d` |
-| TM-D12-base v1 | Switch and exploit space — LW | MSA04 | LW | A:carry B:carry C:hold D:hold | 5 | 2 | 4 | READY_FOR_REVIEW | none | `3ade0f44e0840989` |
-| TM-D12-changed v1 | Switch and exploit space — LW | MSA04 | LW | A:carry B:carry C:hold D:hold | 6 | 2 | 5 | READY_FOR_REVIEW | none | `fc6080718b3dba82` |
-| TM-D13-base v1 | Beat recovery pressure — ST | MSA05 | ST | A:carry B:carry C:hold D:hold | 5 | 2 | 6 | READY_FOR_REVIEW | none | `58bad7ba3a5e2f1a` |
-| TM-D13-changed v1 | Beat recovery pressure — ST | MSA05 | ST | A:carry B:carry C:hold D:hold | 6 | 2 | 5 | READY_FOR_REVIEW | none | `a125841e514a61ad` |
-| TM-D14-base v1 | Beat recovery pressure — CM | MSA05 | CM | A:carry B:pass C:hold D:hold | 5 | 2 | 3 | READY_FOR_REVIEW | none | `4c71cd34a9cb193d` |
-| TM-D14-changed v1 | Beat recovery pressure — CM | MSA05 | CM | A:hold B:pass C:hold D:hold | 6 | 3 | 2 | READY_FOR_REVIEW | none | `ff8b0b8b7e31cac0` |
-| TM-D15-base v1 | Beat recovery pressure — LW | MSA05 | LW | A:carry B:carry C:hold D:hold | 5 | 2 | 2 | READY_FOR_REVIEW | none | `9294dbb29425333f` |
-| TM-D15-changed v1 | Beat recovery pressure — LW | MSA05 | LW | A:carry B:carry C:hold D:hold | 6 | 2 | 1 | READY_FOR_REVIEW | none | `adf482242f0d490c` |
-| TM-D16-base v1 | Complement finishing runs — RW | MSA06 | RW | A:pass B:hold C:hold D:hold | 5 | 3 | 2 | READY_FOR_REVIEW | none | `130fd9c0b6f330c7` |
-| TM-D16-changed v1 | Complement finishing runs — RW | MSA06 | RW | A:pass B:loose C:hold D:hold | 5 | 2 | 3 | READY_FOR_REVIEW | none | `e5037577b5463ce1` |
-| TM-D17-base v1 | Complement finishing runs — ST | MSA06 | ST | A:carry B:carry C:hold D:hold | 5 | 2 | 3 | READY_FOR_REVIEW | none | `7ea3ddc3be0d7e78` |
-| TM-D17-changed v1 | Complement finishing runs — ST | MSA06 | ST | A:hold B:carry C:hold D:hold | 6 | 3 | 2 | READY_FOR_REVIEW | none | `d53d4b3f3c4229a8` |
-| TM-D18-base v1 | Complement finishing runs — CM | MSA06 | CM | A:carry B:carry C:hold D:hold | 5 | 2 | 3 | READY_FOR_REVIEW | none | `c194ea0b14c7ad54` |
-| TM-D18-changed v1 | Complement finishing runs — CM | MSA06 | CM | A:carry B:carry C:hold D:hold | 6 | 2 | 5 | READY_FOR_REVIEW | none | `d40e468430b392c6` |
-| TM-D19-base v1 | Coordinate central pressure — ST | MSA07 | ST | A:collect B:hold C:hold D:hold | 6 | 2 | 3 | READY_FOR_REVIEW | none | `10140d071824ffd3` |
-| TM-D19-changed v1 | Coordinate central pressure — ST | MSA07 | ST | A:hold B:carry C:hold D:hold | 5 | 3 | 2 | READY_FOR_REVIEW | none | `b6a66be222e4de78` |
-| TM-D20-base v1 | Coordinate central pressure — CM | MSA07 | CM | A:carry B:carry C:hold D:hold | 5 | 2 | 6 | READY_FOR_REVIEW | none | `f9a5a5a54d7f6f43` |
-| TM-D20-changed v1 | Coordinate central pressure — CM | MSA07 | CM | A:carry B:carry C:hold D:hold | 5 | 2 | 6 | READY_FOR_REVIEW | none | `08047c1f653d21dd` |
-| TM-D21-base v1 | Coordinate central pressure — DM | MSA07 | DM | A:carry B:hold C:hold D:hold | 5 | 3 | 3 | READY_FOR_REVIEW | none | `257a3db072c4944b` |
-| TM-D21-changed v1 | Coordinate central pressure — DM | MSA07 | DM | A:hold B:collect C:hold D:hold | 6 | 2 | 4 | READY_FOR_REVIEW | none | `4c1fe2c4832dbf58` |
-| TM-D22-base v1 | Press as a front unit — LW | MSA08 | LW | A:carry B:carry C:hold D:hold | 5 | 2 | 5 | READY_FOR_REVIEW | none | `e527bb846d051239` |
-| TM-D22-changed v1 | Press as a front unit — LW | MSA08 | LW | A:carry B:carry C:hold D:hold | 6 | 2 | 3 | READY_FOR_REVIEW | none | `c49defe65474e2b4` |
-| TM-D23-base v1 | Press as a front unit — RW | MSA08 | RW | A:carry B:carry C:hold D:hold | 5 | 2 | 5 | READY_FOR_REVIEW | none | `2c3063525e66584d` |
-| TM-D23-changed v1 | Press as a front unit — RW | MSA08 | RW | A:carry B:carry C:hold D:hold | 5 | 2 | 3 | READY_FOR_REVIEW | none | `26f24bb66b8323e5` |
-| TM-D24-base v1 | Press as a front unit — ST | MSA08 | ST | A:carry B:carry C:hold D:hold | 5 | 2 | 5 | READY_FOR_REVIEW | none | `c5b37e9a17eaf048` |
-| TM-D24-changed v1 | Press as a front unit — ST | MSA08 | ST | A:carry B:carry C:hold D:hold | 5 | 2 | 2 | READY_FOR_REVIEW | none | `83948a164edb4a97` |
-| TM-D25-base v1 | Pressure and cover — LB | MSA09 | LB | A:carry B:carry C:hold D:hold | 5 | 2 | 3 | READY_FOR_REVIEW | none | `4739e7de5106c54c` |
-| TM-D25-changed v1 | Pressure and cover — LB | MSA09 | LB | A:carry B:carry C:hold D:hold | 6 | 2 | 3 | READY_FOR_REVIEW | none | `5098caab1ee75c8c` |
-| TM-D26-base v1 | Pressure and cover — CB | MSA09 | CB | A:carry B:carry C:hold D:hold | 5 | 2 | 4 | READY_FOR_REVIEW | none | `7bd5507489d07460` |
-| TM-D26-changed v1 | Pressure and cover — CB | MSA09 | CB | A:hold B:carry C:hold D:hold | 5 | 3 | 2 | READY_FOR_REVIEW | none | `d578f4a41c116de5` |
-| TM-D27-base v1 | Pressure and cover — RB | MSA09 | RB | A:carry B:carry C:hold D:hold | 5 | 2 | 5 | READY_FOR_REVIEW | none | `024ec4c47a70627d` |
-| TM-D27-changed v1 | Pressure and cover — RB | MSA09 | RB | A:carry B:carry C:hold D:hold | 4 | 2 | 1 | READY_FOR_REVIEW | none | `cd423c91784ce3de` |
-| TM-D28-base v1 | Keep a connected block — DM | MSA10 | DM | A:carry B:hold C:hold D:hold | 5 | 3 | 3 | READY_FOR_REVIEW | none | `320182c8a23175dc` |
-| TM-D28-changed v1 | Keep a connected block — DM | MSA10 | DM | A:hold B:collect C:hold D:hold | 7 | 2 | 2 | READY_FOR_REVIEW | none | `cdbaa205c8ba1c06` |
-| TM-D29-base v1 | Keep a connected block — CB | MSA10 | CB | A:carry B:carry C:hold D:hold | 5 | 2 | 7 | READY_FOR_REVIEW | none | `5508dadf3248f5d2` |
-| TM-D29-changed v1 | Keep a connected block — CB | MSA10 | CB | A:carry B:carry C:hold D:hold | 4 | 2 | 5 | READY_FOR_REVIEW | none | `4f94ed46fc52c6c2` |
-| TM-D30-base v1 | Keep a connected block — CM | MSA10 | CM | A:carry B:carry C:hold D:hold | 5 | 2 | 4 | READY_FOR_REVIEW | none | `18051ac9340a5271` |
-| TM-D30-changed v1 | Keep a connected block — CM | MSA10 | CM | A:carry B:carry C:hold D:hold | 5 | 2 | 5 | READY_FOR_REVIEW | none | `43c4a201a4be30a1` |
-| TM-D31-base v1 | Defend the inside route — RB | MSA11 | RB | A:carry B:hold C:hold D:hold | 5 | 3 | 1 | READY_FOR_REVIEW | none | `efef5067a3ccc26b` |
-| TM-D31-changed v1 | Defend the inside route — RB | MSA11 | RB | A:hold B:collect C:hold D:hold | 6 | 2 | 2 | READY_FOR_REVIEW | none | `2ba18a0275eddb01` |
-| TM-D32-base v1 | Defend the inside route — LB | MSA11 | LB | A:carry B:hold C:hold D:hold | 5 | 3 | 2 | READY_FOR_REVIEW | none | `969cba168ed0399e` |
-| TM-D32-changed v1 | Defend the inside route — LB | MSA11 | LB | A:hold B:collect C:hold D:hold | 6 | 2 | 3 | READY_FOR_REVIEW | none | `c4f445b35997a6d8` |
-| TM-D33-base v1 | Defend the inside route — CB | MSA11 | CB | A:carry B:carry C:hold D:hold | 5 | 2 | 1 | READY_FOR_REVIEW | none | `025308d5437a1412` |
-| TM-D33-changed v1 | Defend the inside route — CB | MSA11 | CB | A:hold B:carry C:hold D:hold | 5 | 3 | 4 | READY_FOR_REVIEW | none | `f596dae51d40e896` |
-| TM-D34-base v1 | Defend a wide delivery — CB | MSA12 | CB | A:carry B:carry C:hold D:hold | 5 | 2 | 4 | READY_FOR_REVIEW | none | `84eb066eed182617` |
-| TM-D34-changed v1 | Defend a wide delivery — CB | MSA12 | CB | A:carry B:carry C:hold D:hold | 4 | 2 | 2 | READY_FOR_REVIEW | none | `5b0b49a7cd2e4c69` |
-| TM-D35-base v1 | Defend a wide delivery — DM | MSA12 | DM | A:carry B:carry C:hold D:hold | 5 | 2 | 3 | READY_FOR_REVIEW | none | `e7505b0a89f23a52` |
-| TM-D35-changed v1 | Defend a wide delivery — DM | MSA12 | DM | A:carry B:carry C:hold D:hold | 5 | 2 | 4 | READY_FOR_REVIEW | none | `59f6ba4544b7af12` |
-| TM-D36-base v1 | Defend a wide delivery — RB | MSA12 | RB | A:carry B:carry C:hold D:hold | 5 | 2 | 1 | READY_FOR_REVIEW | none | `ff83fd944cda8e5d` |
-| TM-D36-changed v1 | Defend a wide delivery — RB | MSA12 | RB | A:carry B:carry C:hold D:hold | 4 | 2 | 0 | READY_FOR_REVIEW | none | `d538841542152073` |
+| TM-D01-base v2 | Own-half superiority — CB | MSA01 | CB | A:pass B:carry C:hold D:hold | 5 | 2 | 4 | READY_FOR_REVIEW | none | `c19e36ba3e9693fc` |
+| TM-D01-changed v2 | Own-half superiority — CB | MSA01 | CB | A:hold B:carry C:hold D:hold | 5 | 3 | 2 | READY_FOR_REVIEW | none | `401a0bacb7dd36b8` |
+| TM-D02-base v2 | Own-half superiority — LB | MSA01 | LB | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 5 | READY_FOR_REVIEW | none | `ae123142fa07748f` |
+| TM-D02-changed v2 | Own-half superiority — LB | MSA01 | LB | A:off-ball B:off-ball C:hold D:hold | 6 | 2 | 5 | READY_FOR_REVIEW | none | `80b37665c84c7b2b` |
+| TM-D03-base v2 | Own-half superiority — DM | MSA01 | DM | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 5 | READY_FOR_REVIEW | none | `84685bcc098b3ec8` |
+| TM-D03-changed v2 | Own-half superiority — DM | MSA01 | DM | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 4 | READY_FOR_REVIEW | none | `32ab2caa17503d5a` |
+| TM-D04-base v2 | Escape the first press — LB | MSA02 | LB | A:pass B:carry C:hold D:hold | 5 | 2 | 4 | READY_FOR_REVIEW | none | `0fafb21295373bb5` |
+| TM-D04-changed v2 | Escape the first press — LB | MSA02 | LB | A:pass B:carry C:hold D:hold | 5 | 2 | 3 | READY_FOR_REVIEW | none | `c22cf1c5f38a61fe` |
+| TM-D05-base v2 | Escape the first press — RB | MSA02 | RB | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 5 | READY_FOR_REVIEW | none | `8759c85b6df99f52` |
+| TM-D05-changed v2 | Escape the first press — RB | MSA02 | RB | A:off-ball B:off-ball C:hold D:hold | 4 | 2 | 4 | READY_FOR_REVIEW | none | `699e065105ba5c24` |
+| TM-D06-base v2 | Escape the first press — DM | MSA02 | DM | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 5 | READY_FOR_REVIEW | none | `7f81fc7095d9e7ed` |
+| TM-D06-changed v2 | Escape the first press — DM | MSA02 | DM | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 2 | READY_FOR_REVIEW | none | `5e2e5100a8a48df8` |
+| TM-D07-base v2 | Create a local overload — LW | MSA03 | LW | A:carry B:pass C:hold D:hold | 5 | 2 | 5 | READY_FOR_REVIEW | none | `ae8728e6bcd9fe65` |
+| TM-D07-changed v2 | Create a local overload — LW | MSA03 | LW | A:hold B:pass C:hold D:hold | 5 | 3 | 3 | READY_FOR_REVIEW | none | `fffc2188433fac91` |
+| TM-D08-base v2 | Create a local overload — CM | MSA03 | CM | A:pass B:pass C:hold D:hold | 5 | 2 | 3 | READY_FOR_REVIEW | none | `5e3563e430e7cd87` |
+| TM-D08-changed v2 | Create a local overload — CM | MSA03 | CM | A:hold B:pass C:hold D:hold | 5 | 3 | 2 | READY_FOR_REVIEW | none | `3fc41f9113489b39` |
+| TM-D09-base v2 | Create a local overload — RW | MSA03 | RW | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 4 | READY_FOR_REVIEW | none | `69139296ef334ca8` |
+| TM-D09-changed v2 | Create a local overload — RW | MSA03 | RW | A:off-ball B:off-ball C:hold D:hold | 4 | 2 | 2 | READY_FOR_REVIEW | none | `c6a323b0ab80744b` |
+| TM-D10-base v2 | Switch and exploit space — CM | MSA04 | CM | A:pass B:pass C:hold D:hold | 5 | 2 | 4 | READY_FOR_REVIEW | none | `6920bb2b6589b7ac` |
+| TM-D10-changed v2 | Switch and exploit space — CM | MSA04 | CM | A:hold B:pass C:hold D:hold | 6 | 3 | 4 | READY_FOR_REVIEW | none | `a45d71133a8ff14c` |
+| TM-D11-base v2 | Switch and exploit space — RW | MSA04 | RW | A:carry B:pass C:hold D:hold | 4 | 2 | 3 | READY_FOR_REVIEW | none | `292b637ac9a3ff8a` |
+| TM-D11-changed v2 | Switch and exploit space — RW | MSA04 | RW | A:hold B:pass C:hold D:hold | 5 | 3 | 2 | READY_FOR_REVIEW | none | `e0152d1346afa900` |
+| TM-D12-base v2 | Switch and exploit space — LW | MSA04 | LW | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 4 | READY_FOR_REVIEW | none | `a598da77e2e6de85` |
+| TM-D12-changed v2 | Switch and exploit space — LW | MSA04 | LW | A:off-ball B:off-ball C:hold D:hold | 6 | 2 | 5 | READY_FOR_REVIEW | none | `1e78797e80784a4a` |
+| TM-D13-base v2 | Beat recovery pressure — ST | MSA05 | ST | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 6 | READY_FOR_REVIEW | none | `c3226f6161cdd024` |
+| TM-D13-changed v2 | Beat recovery pressure — ST | MSA05 | ST | A:off-ball B:off-ball C:hold D:hold | 6 | 2 | 5 | READY_FOR_REVIEW | none | `ddd41e83ac2e214f` |
+| TM-D14-base v2 | Beat recovery pressure — CM | MSA05 | CM | A:carry B:pass C:hold D:hold | 5 | 2 | 3 | READY_FOR_REVIEW | none | `6b0c86c691ec0cec` |
+| TM-D14-changed v2 | Beat recovery pressure — CM | MSA05 | CM | A:hold B:pass C:hold D:hold | 6 | 3 | 2 | READY_FOR_REVIEW | none | `81cddec2494848dd` |
+| TM-D15-base v2 | Beat recovery pressure — LW | MSA05 | LW | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 2 | READY_FOR_REVIEW | none | `c859696d0d1ef536` |
+| TM-D15-changed v2 | Beat recovery pressure — LW | MSA05 | LW | A:off-ball B:off-ball C:hold D:hold | 6 | 2 | 1 | READY_FOR_REVIEW | none | `66f8b2d302860f50` |
+| TM-D16-base v2 | Complement finishing runs — RW | MSA06 | RW | A:pass B:hold C:hold D:hold | 5 | 3 | 2 | READY_FOR_REVIEW | none | `14692485826bc546` |
+| TM-D16-changed v2 | Complement finishing runs — RW | MSA06 | RW | A:pass B:loose C:hold D:hold | 5 | 2 | 3 | READY_FOR_REVIEW | none | `b880215a0ad7b520` |
+| TM-D17-base v2 | Complement finishing runs — ST | MSA06 | ST | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 3 | READY_FOR_REVIEW | none | `c3c1f3083c81ca3a` |
+| TM-D17-changed v2 | Complement finishing runs — ST | MSA06 | ST | A:hold B:off-ball C:hold D:hold | 6 | 3 | 2 | READY_FOR_REVIEW | none | `62e4927687f19b8c` |
+| TM-D18-base v2 | Complement finishing runs — CM | MSA06 | CM | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 3 | READY_FOR_REVIEW | none | `49bdf6cc5d2862de` |
+| TM-D18-changed v2 | Complement finishing runs — CM | MSA06 | CM | A:off-ball B:off-ball C:hold D:hold | 6 | 2 | 5 | READY_FOR_REVIEW | none | `28e085b1ccc72526` |
+| TM-D19-base v2 | Coordinate central pressure — ST | MSA07 | ST | A:collect B:off-ball C:hold D:hold | 6 | 2 | 3 | READY_FOR_REVIEW | none | `47ace9d034b6a489` |
+| TM-D19-changed v2 | Coordinate central pressure — ST | MSA07 | ST | A:hold B:off-ball C:hold D:hold | 5 | 3 | 3 | READY_FOR_REVIEW | none | `93771a9a5c89abff` |
+| TM-D20-base v2 | Coordinate central pressure — CM | MSA07 | CM | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 6 | READY_FOR_REVIEW | none | `85a178fc6470214b` |
+| TM-D20-changed v2 | Coordinate central pressure — CM | MSA07 | CM | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 6 | READY_FOR_REVIEW | none | `31d9ac3516458d27` |
+| TM-D21-base v2 | Coordinate central pressure — DM | MSA07 | DM | A:off-ball B:hold C:hold D:hold | 5 | 3 | 3 | READY_FOR_REVIEW | none | `924a456bb1bb670e` |
+| TM-D21-changed v2 | Coordinate central pressure — DM | MSA07 | DM | A:off-ball B:collect C:hold D:hold | 6 | 2 | 4 | READY_FOR_REVIEW | none | `963df0b323d42272` |
+| TM-D22-base v2 | Press as a front unit — LW | MSA08 | LW | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 5 | READY_FOR_REVIEW | none | `0b83c9dad8cd48a2` |
+| TM-D22-changed v2 | Press as a front unit — LW | MSA08 | LW | A:off-ball B:off-ball C:hold D:hold | 6 | 2 | 3 | READY_FOR_REVIEW | none | `5600016d258a7d48` |
+| TM-D23-base v2 | Press as a front unit — RW | MSA08 | RW | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 5 | READY_FOR_REVIEW | none | `1b1a1bb10d7a9193` |
+| TM-D23-changed v2 | Press as a front unit — RW | MSA08 | RW | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 3 | READY_FOR_REVIEW | none | `019ea088a925a3df` |
+| TM-D24-base v2 | Press as a front unit — ST | MSA08 | ST | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 5 | READY_FOR_REVIEW | none | `cccc4eb361622042` |
+| TM-D24-changed v2 | Press as a front unit — ST | MSA08 | ST | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 2 | READY_FOR_REVIEW | none | `baa29c368b583be9` |
+| TM-D25-base v2 | Pressure and cover — LB | MSA09 | LB | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 3 | READY_FOR_REVIEW | none | `767d1609efee8dec` |
+| TM-D25-changed v2 | Pressure and cover — LB | MSA09 | LB | A:off-ball B:off-ball C:hold D:hold | 6 | 2 | 3 | READY_FOR_REVIEW | none | `2e15e6c0e0df342e` |
+| TM-D26-base v2 | Pressure and cover — CB | MSA09 | CB | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 4 | READY_FOR_REVIEW | none | `1a824391bc3b6ddc` |
+| TM-D26-changed v2 | Pressure and cover — CB | MSA09 | CB | A:hold B:off-ball C:hold D:hold | 5 | 3 | 2 | READY_FOR_REVIEW | none | `d0affeec5b967cfa` |
+| TM-D27-base v2 | Pressure and cover — RB | MSA09 | RB | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 5 | READY_FOR_REVIEW | none | `9ec687a58d856c79` |
+| TM-D27-changed v2 | Pressure and cover — RB | MSA09 | RB | A:off-ball B:off-ball C:hold D:hold | 4 | 2 | 1 | READY_FOR_REVIEW | none | `9e1b1ef5c736a130` |
+| TM-D28-base v2 | Keep a connected block — DM | MSA10 | DM | A:off-ball B:hold C:hold D:hold | 5 | 3 | 3 | READY_FOR_REVIEW | none | `ec98c7197feaa719` |
+| TM-D28-changed v2 | Keep a connected block — DM | MSA10 | DM | A:off-ball B:collect C:hold D:hold | 7 | 2 | 2 | READY_FOR_REVIEW | none | `f55d0657e981b136` |
+| TM-D29-base v2 | Keep a connected block — CB | MSA10 | CB | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 7 | READY_FOR_REVIEW | none | `b89e34fa31aa9784` |
+| TM-D29-changed v2 | Keep a connected block — CB | MSA10 | CB | A:off-ball B:off-ball C:hold D:hold | 4 | 2 | 5 | READY_FOR_REVIEW | none | `44bc69989880950e` |
+| TM-D30-base v2 | Keep a connected block — CM | MSA10 | CM | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 4 | READY_FOR_REVIEW | none | `87a998905dc069f3` |
+| TM-D30-changed v2 | Keep a connected block — CM | MSA10 | CM | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 5 | READY_FOR_REVIEW | none | `a2423f9b49ff2f1b` |
+| TM-D31-base v2 | Defend the inside route — RB | MSA11 | RB | A:off-ball B:hold C:hold D:hold | 5 | 3 | 1 | READY_FOR_REVIEW | none | `040f7d0e919beebe` |
+| TM-D31-changed v2 | Defend the inside route — RB | MSA11 | RB | A:off-ball B:collect C:hold D:hold | 6 | 2 | 2 | READY_FOR_REVIEW | none | `4eebd9269f54fed5` |
+| TM-D32-base v2 | Defend the inside route — LB | MSA11 | LB | A:off-ball B:hold C:hold D:hold | 5 | 3 | 2 | READY_FOR_REVIEW | none | `b150af4687a9d9e4` |
+| TM-D32-changed v2 | Defend the inside route — LB | MSA11 | LB | A:off-ball B:collect C:hold D:hold | 6 | 2 | 3 | READY_FOR_REVIEW | none | `8754d9f34c5c2894` |
+| TM-D33-base v2 | Defend the inside route — CB | MSA11 | CB | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 1 | READY_FOR_REVIEW | none | `a72dc81469137a60` |
+| TM-D33-changed v2 | Defend the inside route — CB | MSA11 | CB | A:hold B:off-ball C:hold D:hold | 5 | 3 | 4 | READY_FOR_REVIEW | none | `6ea1b9022956db79` |
+| TM-D34-base v2 | Defend a wide delivery — CB | MSA12 | CB | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 4 | READY_FOR_REVIEW | none | `a7f53b0027e3fc71` |
+| TM-D34-changed v2 | Defend a wide delivery — CB | MSA12 | CB | A:off-ball B:off-ball C:hold D:hold | 4 | 2 | 2 | READY_FOR_REVIEW | none | `9528af6bce979687` |
+| TM-D35-base v2 | Defend a wide delivery — DM | MSA12 | DM | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 3 | READY_FOR_REVIEW | none | `fff4cc0b0d9c360a` |
+| TM-D35-changed v2 | Defend a wide delivery — DM | MSA12 | DM | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 4 | READY_FOR_REVIEW | none | `c30c3f2adf673966` |
+| TM-D36-base v2 | Defend a wide delivery — RB | MSA12 | RB | A:off-ball B:off-ball C:hold D:hold | 5 | 2 | 1 | READY_FOR_REVIEW | none | `b876c0afc0d01929` |
+| TM-D36-changed v2 | Defend a wide delivery — RB | MSA12 | RB | A:off-ball B:off-ball C:hold D:hold | 4 | 2 | 0 | READY_FOR_REVIEW | none | `729fd703b98b4d10` |
 
 ## Conflicts for owner decision
 

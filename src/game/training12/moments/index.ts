@@ -3,7 +3,7 @@
  * with a matching owner approval record (same id, version and content hash), no validation errors and no release
  * blocker can reach player-facing training. Framework-free.
  */
-import scenes from '../../../../docs/training/moments/scenes.v1.json';
+import scenes from '../../../../docs/training/moments/scenes.v2.json';
 import approvals from '../../../../docs/training/moments/approvals.json';
 import type { VariantId } from '../all36/types';
 import type { ApprovalRecord, MomentScene, ReviewStatus } from './schema';

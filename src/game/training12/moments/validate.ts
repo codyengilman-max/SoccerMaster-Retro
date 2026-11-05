@@ -26,8 +26,7 @@ function timelineErrors(tl: Timeline, ball0: Metres, where: string): string[] {
       if (p.action !== 'pass' || Math.abs(p.since) > 1e-6) out.push(`${where}: pass by ${e.by} at ${e.t} is not on the pass contact frame`);
       const d = dist(ballAt(tl, ball0, e.t).at, e.to);
       if (d / Math.max(1e-6, e.arrive - e.t) > MAX_BALL_MS) out.push(`${where}: pass faster than ${MAX_BALL_MS} m/s`);
-      const want = e.to[0] < p.at[0] - 0.25 ? 'left' : 'right';
-      if (e.foot !== want) out.push(`${where}: pass by ${e.by} uses the ${e.foot} foot but faces ${want === 'right' ? 'right' : 'left'}`);
+      if (e.foot !== 'unverified') out.push(`${where}: pass by ${e.by} names the ${e.foot} foot without reviewed contact metadata`);
     }
     if (e.kind === 'receive') {
       const p = actorAt(tl, e.by, e.t);
@@ -83,7 +82,7 @@ export function validateScene(s: MomentScene): string[] {
     const end = ballAt(br.timeline, v.ball_position_m, br.timeline.duration);
     if (dist(end.at, pb.ball_target) > 0.6) out.push(`${k}: ball ends ${dist(end.at, pb.ball_target).toFixed(2)} m from the package target`);
     const holder = end.state.mode === 'held' ? end.state.by : null;
-    if (br.kind !== 'loose' && br.kind !== 'hold' && holder !== pb.owner_after) out.push(`${k}: ball ends with ${holder ?? 'nobody'}, package ${pb.owner_after ?? 'nobody'}`);
+    if (br.kind !== 'loose' && br.kind !== 'hold' && br.kind !== 'off-ball' && holder !== pb.owner_after) out.push(`${k}: ball ends with ${holder ?? 'nobody'}, package ${pb.owner_after ?? 'nobody'}`);
     for (const [id, to] of Object.entries(pb.actor_targets)) if (dist(actorAt(br.timeline, id, br.timeline.duration).at, to) > 0.05) out.push(`${k}: ${id} does not reach the package target`);
     out.push(...timelineErrors(br.timeline, v.ball_position_m, `branch ${k}`));
   }

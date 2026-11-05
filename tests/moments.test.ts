@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ALL36_EPISODES, episodeById } from '../src/game/training12/all36/package';
 import type { ChoiceId } from '../src/game/training12/all36/types';
 import { MomentDirector, evaluate, explain, mirrorScene } from '../src/game/training12/moments/director';
-import { draftScene, footFacing } from '../src/game/training12/moments/draft';
+import { draftScene } from '../src/game/training12/moments/draft';
 import { MOMENT_APPROVALS, MOMENT_SCENES, effectiveStatus, momentScene, playerFacing, playerMoment, sceneHash } from '../src/game/training12/moments/index';
 import type { ApprovalRecord, MomentScene } from '../src/game/training12/moments/schema';
 import { ballAt, contacts, frameAt } from '../src/game/training12/moments/timeline';
@@ -70,8 +70,8 @@ describe('timeline', () => {
           const a = f.actors.find((x) => x.id === c.by)!;
           expect(a.action, `${sc.sceneId} ${k} ${c.kind}`).toBe(c.kind);
           expect(a.since).toBeCloseTo(0, 6);
-          const ev = tl.ball.find((e) => e.kind === 'pass' && e.t === c.t);
-          if (ev && ev.kind === 'pass') expect(c.foot).toBe(footFacing(a.at, ev.to));
+          // Facing never decides the foot (owner, 2026-11): unverified until the contact metadata is reviewed.
+          expect(c.foot).toBe('unverified');
         }
       }
     }
@@ -178,7 +178,7 @@ describe('evaluation and feedback', () => {
         const br = s.branches[k];
         const end = ballAt(br.timeline, s.ball.decision, br.timeline.duration);
         if (br.kind === 'pass' || br.kind === 'collect' || br.kind === 'turnover') expect(end.state).toEqual({ mode: 'held', by: br.packageTarget.ownerAfter });
-        if (br.kind === 'hold') {
+        if (br.kind === 'hold' || br.kind === 'off-ball') {
           expect(d2(end.at, s.ball.decision)).toBeLessThan(0.05);
           const moved = br.timeline.actors.filter((a) => a.keys.some((q) => d2(q.at, a.keys[0]!.at) > 0.05)).map((a) => a.id);
           for (const id of moved) expect(br.whatChanged).toContain(id);
@@ -198,7 +198,10 @@ describe('mirrored variant', () => {
     f.actors.forEach((a, i) => expect(a.at[0]).toBeCloseTo(s.field.width - o.actors[i]!.at[0], 6));
     const p = m.branches.A.timeline.ball.find((e) => e.kind === 'pass')!;
     const q = s.branches.A.timeline.ball.find((e) => e.kind === 'pass')!;
-    expect(p.kind === 'pass' && q.kind === 'pass' && p.foot !== q.foot).toBe(true);
+    expect(p.kind === 'pass' && q.kind === 'pass' && p.foot === 'unverified' && q.foot === 'unverified').toBe(true);
+    const named: MomentScene = { ...s, branches: { ...s.branches, A: { ...s.branches.A, timeline: { ...s.branches.A.timeline, ball: s.branches.A.timeline.ball.map((e) => (e.kind === 'pass' ? { ...e, foot: 'right' as const } : e)) } } } };
+    const flipped = mirrorScene(named).branches.A.timeline.ball.find((e) => e.kind === 'pass')!;
+    expect(flipped.kind === 'pass' && flipped.foot).toBe('left');
     expect(evaluate(m, 'A').grade).toBe(evaluate(s, 'A').grade);
   });
 });

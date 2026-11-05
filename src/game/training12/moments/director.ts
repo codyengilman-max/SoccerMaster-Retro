@@ -205,7 +205,8 @@ export function mirrorScene(s: MomentScene): MomentScene {
     duration: x.duration,
     actors: x.actors.map((a) => ({ ...a, keys: a.keys.map((k) => ({ ...k, at: m(k.at), look: m(k.look) })) })),
     ball: x.ball.map((e) => {
-      const flip = (f: 'right' | 'left') => (f === 'right' ? 'left' : 'right') as 'right' | 'left';
+      // A true mirror swaps anatomical left/right; an unverified foot stays unverified.
+      const flip = (f: 'right' | 'left' | 'unverified') => (f === 'right' ? 'left' : f === 'left' ? 'right' : 'unverified') as 'right' | 'left' | 'unverified';
       if (e.kind === 'pass') return { ...e, to: m(e.to), foot: flip(e.foot) };
       if (e.kind === 'receive') return { ...e, foot: flip(e.foot) };
       if (e.kind === 'carry') return { ...e, touches: e.touches.map((x) => ({ ...x, foot: flip(x.foot) })) };

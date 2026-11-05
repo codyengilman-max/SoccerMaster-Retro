@@ -12,7 +12,8 @@ export type ReviewStatus = 'DRAFT' | 'READY_FOR_REVIEW' | 'CHANGES_REQUESTED' | 
 
 /** Supplied sheet actions only (team-training-v1): no tackle, dive, header or front/back facings exist. */
 export type MoveAction = 'stand' | 'run' | 'shuffle' | 'pass' | 'receive' | 'keeper-ready';
-export type Foot = 'right' | 'left';
+/** Anatomical contact foot. 'unverified' until the sheet's contact metadata is owner-reviewed (never inferred from facing). */
+export type Foot = 'right' | 'left' | 'unverified';
 
 /** One timed waypoint. Between keys the actor moves in a straight line at constant speed (no teleport: keys are continuous). */
 export interface ActorKey {
@@ -68,7 +69,7 @@ export interface MomentAction {
 export interface OutcomeBranch {
   readonly choice: ChoiceId;
   /** Kind of consequence the package endpoint describes. */
-  readonly kind: 'pass' | 'carry' | 'collect' | 'hold' | 'turnover' | 'loose';
+  readonly kind: 'pass' | 'carry' | 'collect' | 'hold' | 'off-ball' | 'turnover' | 'loose';
   readonly timeline: Timeline;
   /** The package branch this demonstrates (endpoints must equal it). */
   readonly packageTarget: { readonly ball: Metres; readonly ownerAfter: string | null; readonly actors: Readonly<Record<string, Metres>> };
@@ -111,6 +112,8 @@ export interface MomentScene {
   readonly reason: string;
   readonly variations: readonly string[];
   readonly assets: { readonly required: readonly string[]; readonly gaps: readonly Gap[] };
+  /** Version notes, newest last. */
+  readonly history: readonly string[];
   readonly review: { readonly status: ReviewStatus; readonly assumptions: readonly string[]; readonly conflicts: readonly string[]; readonly author: string };
 }
 

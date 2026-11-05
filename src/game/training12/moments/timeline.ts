@@ -121,8 +121,8 @@ export function frameAt(tl: Timeline, ball0: Metres, t: number): Frame {
 }
 
 /** Pass/receive/touch contact times on a timeline, for frame-sync checks and the review page. */
-export function contacts(tl: Timeline): { t: number; by: string; kind: 'pass' | 'receive' | 'touch'; foot: 'right' | 'left' }[] {
-  const out: { t: number; by: string; kind: 'pass' | 'receive' | 'touch'; foot: 'right' | 'left' }[] = [];
+export function contacts(tl: Timeline): { t: number; by: string; kind: 'pass' | 'receive' | 'touch'; foot: 'right' | 'left' | 'unverified' }[] {
+  const out: { t: number; by: string; kind: 'pass' | 'receive' | 'touch'; foot: 'right' | 'left' | 'unverified' }[] = [];
   for (const e of tl.ball) {
     if (e.kind === 'pass') out.push({ t: e.t, by: e.by, kind: 'pass', foot: e.foot });
     if (e.kind === 'receive') out.push({ t: e.t, by: e.by, kind: 'receive', foot: e.foot });

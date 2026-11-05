@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { episodeById } from '../src/game/training12/all36/package';
@@ -57,8 +58,11 @@ function gaps(scenes: MomentScene[]): string {
 
 describe('stored Tactical Moments drafts', () => {
   const scenes = exportDrafts();
+  it('scenes.v1.json stays frozen as history', () => {
+    expect(createHash('sha256').update(readFileSync(new URL('scenes.v1.json', DIR))).digest('hex')).toBe('3f8059a6bbbe0159802b9967cbf66a2ef1d61d98c1db2fdad0767a850c69894c');
+  });
   const files: [string, string][] = [
-    ['scenes.v1.json', JSON.stringify(scenes, null, 1) + '\n'],
+    ['scenes.v2.json', '[\n' + scenes.map((s) => JSON.stringify(s)).join(',\n') + '\n]\n'],
     ['REVIEW_MATRIX.md', matrix(scenes)],
     ['GAPS_BY_SCENE.md', gaps(scenes)],
   ];
