@@ -122,6 +122,8 @@ export interface ApprovalRecord {
   readonly sceneId: string;
   readonly version: number;
   readonly hash: string;
+  /** Scene approvals: bundleHash (outcomes, rubric, asset/contact mapping). Missing or different = stale. */
+  readonly bundle?: string;
   readonly status: 'APPROVED' | 'CHANGES_REQUESTED';
   readonly reviewer: string;
   readonly date: string;

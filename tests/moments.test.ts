@@ -3,7 +3,7 @@ import { ALL36_EPISODES, episodeById } from '../src/game/training12/all36/packag
 import type { ChoiceId } from '../src/game/training12/all36/types';
 import { MomentDirector, evaluate, explain, mirrorScene } from '../src/game/training12/moments/director';
 import { draftScene } from '../src/game/training12/moments/draft';
-import { MOMENT_APPROVALS, MOMENT_SCENES, effectiveStatus, momentScene, playerFacing, playerMoment, sceneHash } from '../src/game/training12/moments/index';
+import { MOMENT_APPROVALS, MOMENT_SCENES, effectiveStatus, momentScene, playerFacing, playerMoment, sceneHash, bundleHash } from '../src/game/training12/moments/index';
 import type { ApprovalRecord, MomentScene } from '../src/game/training12/moments/schema';
 import { ballAt, contacts, frameAt } from '../src/game/training12/moments/timeline';
 import { releaseBlockers, validateScene } from '../src/game/training12/moments/validate';
@@ -208,7 +208,7 @@ describe('mirrored variant', () => {
 
 describe('approval gating', () => {
   const s = MOMENT_SCENES[0]!;
-  const rec = (over: Partial<ApprovalRecord> = {}): ApprovalRecord => ({ sceneId: s.sceneId, version: s.version, hash: sceneHash(s), status: 'APPROVED', reviewer: 'test', date: '2026-11-05', note: '', ...over });
+  const rec = (over: Partial<ApprovalRecord> = {}): ApprovalRecord => ({ sceneId: s.sceneId, version: s.version, hash: sceneHash(s), bundle: bundleHash(s), status: 'APPROVED', reviewer: 'test', date: '2026-11-05', note: '', ...over });
   it('nothing reaches players without an approval record', () => {
     for (const x of MOMENT_SCENES) expect(playerMoment(x.library.situationId, x.library.variant)).toBeNull();
   });
@@ -220,6 +220,13 @@ describe('approval gating', () => {
     expect(effectiveStatus(s, [rec()])).toBe('APPROVED');
     expect(playerFacing(s, [rec()])).toBe(releaseBlockers(s).length === 0);
   });
+  it('a scene approval binds outcomes, rubric and asset/contact mapping: a missing or different bundle is stale', () => {
+    const { bundle: _b, ...noBundle } = rec();
+    expect(effectiveStatus(s, [noBundle])).toBe('CHANGES_REQUESTED');
+    expect(effectiveStatus(s, [rec({ bundle: '0000000000000000' })])).toBe('CHANGES_REQUESTED');
+    const regraded: MomentScene = { ...s, actions: s.actions.map((a, i) => (i ? a : { ...a, rubric: `${a.rubric} (edited)` })) as MomentScene['actions'] };
+    expect(bundleHash(regraded)).not.toBe(bundleHash(s));
+  });
   it('the hash ignores review status but changes with content', () => {
     expect(sceneHash({ ...s, review: { ...s.review, status: 'APPROVED' } })).toBe(sceneHash(s));
     expect(sceneHash({ ...s, objective: `${s.objective}!` })).not.toBe(sceneHash(s));
@@ -227,7 +234,7 @@ describe('approval gating', () => {
   it('an approval appended after an edit (same version, new hash) wins over the stale record', () => {
     const edited: MomentScene = { ...s, assets: { ...s.assets, gaps: [] }, objective: `${s.objective} (edited)` };
     const stale = rec();
-    const fresh = { ...rec(), hash: sceneHash(edited) };
+    const fresh = { ...rec(), hash: sceneHash(edited), bundle: bundleHash(edited) };
     expect(effectiveStatus(edited, [stale, fresh])).toBe('APPROVED');
     expect(playerFacing(edited, [stale, fresh])).toBe(true);
     expect(effectiveStatus(edited, [stale])).toBe('CHANGES_REQUESTED');
@@ -235,7 +242,7 @@ describe('approval gating', () => {
   });
   it('a scene with no blockers and a matching approval is player-facing', () => {
     const clean: MomentScene = { ...s, assets: { ...s.assets, gaps: [] } };
-    expect(playerFacing(clean, [{ ...rec(), hash: sceneHash(clean) }])).toBe(true);
+    expect(playerFacing(clean, [{ ...rec(), hash: sceneHash(clean), bundle: bundleHash(clean) }])).toBe(true);
   });
 });
 
@@ -277,6 +284,21 @@ describe('outcome drafts for frozen branches', () => {
         expect(tl.actors.some((a) => a.keys.some((q) => d2(q.at, a.keys[0]!.at) > 0.05))).toBe(true);
       }
     }
+  });
+  it('v2 proposals: passes stop mid-flight, named runs follow the named runner, unnamed switches ask', async () => {
+    const { MOMENT_OUTCOMES } = await import('../src/game/training12/moments/index');
+    const { ballAt } = await import('../src/game/training12/moments/timeline');
+    const passes = MOMENT_OUTCOMES.filter((o) => o.category === 'proposed' && o.timeline!.ball.some((e) => e.kind === 'pass'));
+    expect(passes.length).toBeGreaterThan(0);
+    for (const o of passes) {
+      const s = MOMENT_SCENES.find((x) => x.sceneId === o.sceneId)!;
+      expect(ballAt(o.timeline!, s.ball.decision, o.timeline!.duration).state.mode).toBe('flight');
+    }
+    const np = MOMENT_OUTCOMES.find((o) => o.branchId === 'TM-D18-base/C')!;
+    expect(np.whatChanged).toContain("H_ST's run");
+    const sw = MOMENT_OUTCOMES.find((o) => o.branchId === 'TM-D10-base/C')!;
+    expect(sw.timeline).toBeNull();
+    expect(sw.question).toBeTruthy();
   });
   it('the director labels a frozen frame EXPLANATION and an outcome draft RESULT; players get no unapproved drafts', async () => {
     const { MOMENT_OUTCOMES, outcomesFor } = await import('../src/game/training12/moments/index');

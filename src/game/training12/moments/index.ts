@@ -6,6 +6,8 @@
 import scenes from '../../../../docs/training/moments/scenes.v2.json';
 import approvals from '../../../../docs/training/moments/approvals.json';
 import outcomes from '../../../../docs/training/moments/outcomes.v2.json';
+import contactFrames from '../../../../docs/training/moments/contact-frames.json';
+import { reviseChoices } from './choices';
 import { mirrorTimeline } from './director';
 import { outcomeHash, type OutcomeDraft } from './outcomes';
 import type { ChoiceId } from '../all36/types';
@@ -15,10 +17,9 @@ import { releaseBlockers } from './validate';
 
 export const MOMENT_SCENES = scenes as unknown as readonly MomentScene[];
 export const MOMENT_APPROVALS = approvals as unknown as readonly ApprovalRecord[];
+export const MOMENT_OUTCOMES = outcomes as unknown as readonly OutcomeDraft[];
 
-/** FNV-1a over the scene with its review status removed: approving or flagging a version never changes its hash. */
-export function sceneHash(s: MomentScene): string {
-  const text = JSON.stringify({ ...s, review: { ...s.review, status: null } });
+function fnv(text: string): string {
   let h1 = 0x811c9dc5;
   let h2 = 0x01000193 ^ text.length;
   for (let i = 0; i < text.length; i++) {
@@ -29,7 +30,21 @@ export function sceneHash(s: MomentScene): string {
   return h1.toString(16).padStart(8, '0') + h2.toString(16).padStart(8, '0');
 }
 
-export const MOMENT_OUTCOMES = outcomes as unknown as readonly OutcomeDraft[];
+/** FNV-1a over the scene with its review status removed: approving or flagging a version never changes its hash. */
+export function sceneHash(s: MomentScene): string {
+  return fnv(JSON.stringify({ ...s, review: { ...s.review, status: null } }));
+}
+
+/**
+ * What a scene approval binds to: the effective scene version, its outcome drafts, its rubric/choice revisions and
+ * the asset/contact mapping. Any material change to one of them changes this hash and invalidates the approval.
+ */
+export function bundleHash(s: MomentScene): string {
+  const outs = MOMENT_OUTCOMES.filter((o) => o.sceneId === s.sceneId && o.sceneVersion === s.version).map((o) => `${o.branchId}@${o.outcomeVersion}:${outcomeHash(o)}`);
+  const rubric = s.actions.map((a) => `${a.id}|${a.label}|${a.grade}|${a.rubric}`);
+  return fnv(JSON.stringify({ scene: sceneHash(s), outs, rubric, choices: reviseChoices(s), assets: s.assets, contact: contactFrames }));
+}
+
 
 /** An outcome draft counts for players only with an approval record for its branch id, version and exact hash. */
 export function outcomeApproved(o: OutcomeDraft, records: readonly ApprovalRecord[] = MOMENT_APPROVALS): boolean {
@@ -68,6 +83,8 @@ export function effectiveStatus(s: MomentScene, records: readonly ApprovalRecord
   const r = approvalFor(s, records);
   if (!r) return s.review.status === 'APPROVED' ? 'DRAFT' : s.review.status;
   if (r.hash !== sceneHash(s)) return 'CHANGES_REQUESTED';
+  // An approval that does not name the current outcomes/rubric/asset/contact bundle is stale (fail closed).
+  if (r.status === 'APPROVED' && r.bundle !== bundleHash(s)) return 'CHANGES_REQUESTED';
   return r.status;
 }
 

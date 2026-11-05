@@ -45,7 +45,7 @@ export const FAMILIES: readonly [RegExp, Family][] = [
 
 interface Plan { readonly to: Metres; readonly why: string; readonly ball?: 'carry' | 'pass' | 'shot'; readonly ballTo?: Metres; readonly responder?: string | undefined; readonly also?: string | undefined }
 
-function plan(s: MomentScene, fam: Family, label: string): Plan | null {
+function plan(s: MomentScene, fam: Family, label: string, runEnd: ReadonlyMap<string, Metres>): Plan | null {
   const P = s.protagonist.actorId;
   const me = s.actors.find((a) => a.id === P)!;
   const at = me.decision;
@@ -66,13 +66,22 @@ function plan(s: MomentScene, fam: Family, label: string): Plan | null {
       let target: Metres; let screen: (typeof opps)[number] | undefined;
       if (fam === 'shot') target = [r2(s.field.width / 2), me.team === 'H' ? s.field.length : 0];
       else {
+        // The label names the pass: a switch goes to the far-side wide player, a forward pass through the middle to a
+        // central forward teammate, a screened pass to the teammate whose lane is screened. No credible target = null.
+        const W = s.field.width;
         const ahead = mates.filter((m) => (m.decision[1] - at[1]) * up > 0 && dist(m.decision, at) < 35);
-        const blocked = ahead.map((m) => ({ m, o: nearest(opps, segNear(m.decision, at, m.decision)) })).map((x) => ({ ...x, gap: Math.min(...opps.map((o) => dist(o.decision, segNear(o.decision, at, x.m.decision)))) })).sort((a, b) => a.gap - b.gap)[0];
-        if (!blocked) return null;
-        target = blocked.m.decision;
+        const lane = (m: (typeof mates)[number]) => Math.min(...opps.map((o) => dist(o.decision, segNear(o.decision, at, m.decision))));
+        let pool = ahead;
+        // A switch from a central position names no side: ask instead of choosing one.
+        if (/^Switch/.test(label) && Math.abs(at[0] - W / 2) < W / 6) return null;
+        if (/^Switch/.test(label)) pool = mates.filter((m) => /^(LW|RW|LB|RB|LM|RM)$/.test(m.role) && Math.abs(m.decision[0] - at[0]) > W / 3 && (m.decision[0] - W / 2) * (at[0] - W / 2) < 0);
+        else if (/crowded forward pass/.test(label)) pool = ahead.filter((m) => Math.abs(m.decision[0] - W / 2) < W / 4);
+        const pick = /^Switch/.test(label) ? [...pool].sort((x, y) => Math.abs(y.decision[0] - at[0]) - Math.abs(x.decision[0] - at[0]))[0] : [...pool].sort((x, y) => lane(x) - lane(y))[0];
+        if (!pick) return null;
+        target = pick.decision;
       }
       screen = [...opps].sort((a, b) => dist(a.decision, segNear(a.decision, at, target)) - dist(b.decision, segNear(b.decision, at, target)))[0];
-      return { to: at, why: `${fam === 'shot' ? 'shoots' : 'plays the pass'} toward [${target.join(', ')}]; Result ends with the ball halfway, in flight, as ${screen?.id ?? 'nobody'} steps toward the lane`, ball: fam, ballTo: toward(at, target, dist(at, target) * FLIGHT_SHARE), responder: screen?.id };
+      return { to: at, why: `${fam === 'shot' ? 'shoots' : 'plays the pass'} toward [${target.join(', ')}]; Result ends with the ball halfway, in flight, as ${screen?.id ?? 'nobody'} steps toward the lane`, ball: fam, ballTo: target, responder: screen?.id };
     }
     case 'close': {
       const tgt = holder && holder !== P ? s.actors.find((a) => a.id === holder)!.decision : ball;
@@ -86,8 +95,13 @@ function plan(s: MomentScene, fam: Family, label: string): Plan | null {
     case 'run-goal-line':
       return { to: toward(at, [at[0], me.team === 'H' ? s.field.length - 1 : 1], RUN_MAX_M), why: 'runs toward the goal line (capped at 6 m)' };
     case 'run-same': {
-      const m = nearest(mates.filter((x) => x.id !== holder), at);
-      return m ? { to: short(at, m.decision, 1.5), why: `runs into ${m.id}'s route, stopping 1.5 m from them` } : null;
+      // The runner the option names: striker for near-post / striker's route, a winger for the winger's approach,
+      // otherwise the teammate already making a run at the freeze. Nobody identifiable = null (question).
+      const named = /near-post|striker/.test(label) ? mates.filter((x) => x.role === 'ST') : /winger/.test(label) ? mates.filter((x) => /^(LW|RW)$/.test(x.role)) : mates.filter((x) => x.id !== holder && runEnd.has(x.id));
+      const m = nearest(named, at);
+      if (!m) return null;
+      const end = runEnd.get(m.id) ?? m.decision;
+      return { to: short(at, end, 1.5), why: `joins ${m.id}'s run, stopping 1.5 m from where it is heading` };
     }
     case 'run-to-mate': {
       const role = /CB/.test(label) ? 'CB' : 'GK';
@@ -112,15 +126,20 @@ export function draftOutcomeV2(s: MomentScene, k: ChoiceId): OutcomeDraft | null
     return { ...base, category: 'unavailable', missingDecision: null, whatChanged: 'Explanation frame: in this version the package treats this action as unavailable, so it is not shown being executed.', assumptions: ['Package: "do not illustrate a successful outcome for an unavailable action" read as genuinely unavailable (not executable-but-poor).'], question: `Is "${v1.packageLabel}" genuinely unavailable in ${s.sceneId}, or executable but poor (then it would be animated)?` };
   }
   const fam = FAMILIES.find(([re]) => re.test(v1.packageLabel))?.[1];
-  const p = fam ? plan(s, fam, v1.packageLabel) : null;
-  if (!fam || !p) return { ...base, question: `No continuation could be proposed for "${v1.packageLabel}" in ${s.sceneId}: ${fam ? 'the scene lacks the needed player' : 'no movement family fits this label'}. What does it look like?` };
+  const cont = continuation(s);
+  const runEnd = new Map(cont.movers.map((id) => { const k = cont.tl.actors.find((a) => a.id === id)!.keys; return [id, k[k.length - 1]!.at] as const; }));
+  const p = fam ? plan(s, fam, v1.packageLabel, runEnd) : null;
+  if (!fam || !p) return { ...base, question: `No continuation could be proposed for "${v1.packageLabel}" in ${s.sceneId}: ${fam ? 'no player in the scene matches the one this option names' : 'no movement family fits this label'}. What does it look like?` };
   const P = s.protagonist.actorId;
-  const { tl } = continuation(s);
+  const { tl } = cont;
   const at = s.actors.find((a) => a.id === P)!.decision;
   const runT = r2(dist(at, p.to) / RUN_MPS);
-  const flight = p.ball === 'pass' || p.ball === 'shot' ? r2(0.35 + dist(at, p.ballTo!) / (p.ball === 'shot' ? 14 : 10)) : 0;
-  const end = r2(Math.max(tl.duration, runT + 0.4, flight));
+  const inFlight = p.ball === 'pass' || p.ball === 'shot';
+  // A pass/shot travels its full path, but the Result clock stops when the ball is FLIGHT_SHARE of the way there.
+  const arrive = inFlight ? r2(0.35 + dist(at, p.ballTo!) / (p.ball === 'shot' ? 14 : 10)) : 0;
+  const end = inFlight ? r2(0.35 + (arrive - 0.35) * FLIGHT_SHARE) : r2(Math.max(tl.duration, runT + 0.4));
   const lookAt = p.ballTo ?? s.ball.decision;
+  const clip = (keys: ActorTrack['keys']): ActorTrack['keys'] => keys.filter((q) => q.t <= end + 1e-9);
   const actors: ActorTrack[] = tl.actors.map((tr) => {
     const ext = (keys: ActorTrack['keys']) => (keys[keys.length - 1]!.t < end ? [...keys, { ...keys[keys.length - 1]!, t: end }] : keys);
     if (tr.id === P || tr.id === p.also) {
@@ -133,14 +152,14 @@ export function draftOutcomeV2(s: MomentScene, k: ChoiceId): OutcomeDraft | null
     if (tr.id === p.responder) {
       const from = tr.keys[0]!.at;
       const to = p.ballTo ? toward(from, segNear(from, at, p.ballTo), 1) : from;
-      return { id: tr.id, purpose: 'Proposed response: steps toward the lane / faces the action.', keys: [{ t: 0, at: from, action: 'stand', look: at }, { t: 0.6, at: to, action: dist(from, to) > 0.05 ? 'shuffle' : 'stand', look: at }, { t: end, at: to, action: 'stand', look: at }] };
+      return { id: tr.id, purpose: 'Proposed response: steps toward the lane / faces the action.', keys: [{ t: 0, at: from, action: 'stand', look: at }, { t: Math.min(0.6, end), at: to, action: dist(from, to) > 0.05 ? 'shuffle' : 'stand', look: at }, { t: end, at: to, action: 'stand', look: at }] };
     }
-    return { ...tr, keys: ext(tr.keys) };
+    return { ...tr, keys: ext(clip(tr.keys).length ? clip(tr.keys) : tr.keys.slice(0, 1)) };
   });
   const holder = s.ball.ownerAtDecision;
   let ballEv: BallEvent[];
   if (p.ball === 'carry') ballEv = [{ kind: 'held', t: 0, by: P }, { kind: 'carry', t0: 0, t1: runT, by: P, touches: Array.from({ length: Math.max(1, Math.ceil(runT / 0.5)) }, (_, i) => ({ t: r2(i * 0.5), foot: 'unverified' as const })) }, { kind: 'held', t: runT, by: P }];
-  else if (p.ball === 'pass' || p.ball === 'shot') ballEv = [{ kind: 'held', t: 0, by: P }, { kind: 'pass', t: 0.35, by: P, foot: 'unverified', to: p.ballTo!, arrive: flight, receiver: null }];
+  else if (p.ball === 'pass' || p.ball === 'shot') ballEv = [{ kind: 'held', t: 0, by: P }, { kind: 'pass', t: 0.35, by: P, foot: 'unverified', to: p.ballTo!, arrive, receiver: null }];
   else ballEv = [...tl.ball];
   const timeline: Timeline = { duration: end, actors, ball: ballEv };
   const gaps: Gap[] = [];
