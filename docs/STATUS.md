@@ -18,6 +18,11 @@ Sections below are a history log, newest first; each header records where that w
 
 **Progression v2** (branch `devin/1793740000-progression`, not merged): ten attributes, shared main/AI engine, Season 1 maximum 64, schema-3 migration (D72, `docs/PROGRESSION.md`).
 
+
+## Tactical Moments framework + 72 drafts (owner brief 2026-11, branch `devin/1793906000-tactical-moments`, not merged)
+- Framework-free framework under `src/game/training12/moments/` (schema, validator, timeline runner, director, gate) and `TacticalMomentsScene` / `MomentsReviewScene`. See `docs/training/moments/README.md` and D76.
+- 72 scene versions drafted (36 situations × base/changed), all READY_FOR_REVIEW, none approved; 71 have release-blocking animation gaps (`ANIMATION_GAPS.md`). Review: `?dev` → Start → Tactical Moments.
+- Players: unchanged Weekly Team Training (no approved scene).
 ## 1,000-team directory (branch `devin/1793730000-team-directory`, PR open, not merged)
 - 1,000 U11 9v9 teams in 50 states (D71); five owner Arizona clubs; Batavia starts 67th in Arizona on seeded ratings; new careers play a 9-club league (D72: the 4 local rivals + Westside United, No Soccer Tuesday, Tumbleweed FC, Dynamics FC; 12 Batavia games = every club once + 4 rematches; saved 5-club leagues unchanged); National/State tabs leave League standings; `r1` → `r2` rankings migration; state picker, Find My Team, alias search, seeded labels. Phone emulation only.
 

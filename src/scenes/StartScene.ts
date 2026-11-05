@@ -27,6 +27,7 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
   private jungleButton: Button | null = null;
   private cloudyButton: Button | null = null;
   private myPlayerButton: Button | null = null;
+  private momentsButton: Button | null = null;
   private dev = false;
   private navigating = false;
 
@@ -92,7 +93,7 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
       this.newGameButton = new Button(this, 0, 0, { name: 'newgame-button', label: 'New game', width: 220, height: 44, fontSize: 16, onClick: () => this.pressNewGame() });
     }
     // Story mode is the only way to play; developer and owner-review entries need `?dev`.
-    this.careerButton = this.sandboxButton = this.reviewButton = this.jungleButton = this.cloudyButton = this.myPlayerButton = null;
+    this.careerButton = this.sandboxButton = this.reviewButton = this.jungleButton = this.cloudyButton = this.myPlayerButton = this.momentsButton = null;
     if (this.dev) {
       this.sandboxButton = new Button(this, 0, 0, {
         name: 'sandbox-button',
@@ -128,6 +129,7 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
       });
       this.cloudyButton = new Button(this, 0, 0, { name: 'cloudy-button', label: "Cloudy's Frenzy", width: 220, height: 48, fontSize: 18, onClick: () => this.openCloudy() });
       this.myPlayerButton = new Button(this, 0, 0, { name: 'my-player-button', label: 'My Player', width: 220, height: 48, fontSize: 18, onClick: () => this.openMyPlayer() });
+      this.momentsButton = new Button(this, 0, 0, { name: 'moments-button', label: 'Tactical Moments', width: 220, height: 48, fontSize: 18, onClick: () => this.openMoments() });
     }
 
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this);
@@ -154,6 +156,7 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
         ...(this.jungleButton ? { 'jungle-button': this.jungleButton.getButtonBounds() } : {}),
         ...(this.cloudyButton ? { 'cloudy-button': this.cloudyButton.getButtonBounds() } : {}),
         ...(this.myPlayerButton ? { 'my-player-button': this.myPlayerButton.getButtonBounds() } : {}),
+        ...(this.momentsButton ? { 'moments-button': this.momentsButton.getButtonBounds() } : {}),
       },
     };
   }
@@ -162,6 +165,12 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
     if (this.navigating || !this.dev) return;
     this.navigating = true;
     this.scene.start(SceneKeys.Jungle);
+  }
+
+  private openMoments(): void {
+    if (this.navigating || !this.dev) return;
+    this.navigating = true;
+    this.scene.start(SceneKeys.MomentsReview);
   }
 
   private openMyPlayer(): void {
@@ -260,7 +269,7 @@ export class StartScene extends Phaser.Scene implements InspectableScene {
       return;
     }
     // Portrait stacks the buttons; landscape puts them side by side.
-    const buttons = [this.sandboxButton, this.careerButton, this.jungleButton, ...(this.cloudyButton ? [this.cloudyButton] : []), ...(this.myPlayerButton ? [this.myPlayerButton] : [])];
+    const buttons = [this.sandboxButton, this.careerButton, this.jungleButton, ...(this.cloudyButton ? [this.cloudyButton] : []), ...(this.myPlayerButton ? [this.myPlayerButton] : []), ...(this.momentsButton ? [this.momentsButton] : [])];
     const n = buttons.length;
     const buttonWidth = Math.round(portrait ? Math.min(width * 0.84, 460) : Math.min((width - 24 - 12 * n) / n, 300));
     const buttonHeight = Math.round(Math.max(56, Math.min(height * (portrait ? 0.085 : 0.2), 88)));
