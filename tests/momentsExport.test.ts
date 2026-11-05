@@ -4,13 +4,12 @@ import { describe, expect, it } from 'vitest';
 import { episodeById } from '../src/game/training12/all36/package';
 import { draftAll } from '../src/game/training12/moments/draft';
 import { effectiveStatus, outcomeApproved, sceneHash } from '../src/game/training12/moments/index';
-import { contacts } from '../src/game/training12/moments/timeline';
 
 const E2E_SCENES = [...readFileSync(new URL('../e2e/moments.spec.ts', import.meta.url), 'utf8').matchAll(/'(D\\d{2})'/g)].map((m) => m[1]!);
 import { draftOutcomes, outcomeHash, type OutcomeDraft } from '../src/game/training12/moments/outcomes';
 import { draftOutcomesV2 } from '../src/game/training12/moments/outcomesV2';
 import { REVEALING, reviseChoices } from '../src/game/training12/moments/choices';
-import { stillCast } from '../src/render/art/teamTrainingFrames';
+import { stillCast, TT_OPPONENTS, TT_SHEETS, TT_TEAMMATES } from '../src/render/art/teamTrainingFrames';
 import type { Timeline } from '../src/game/training12/moments/schema';
 import { releaseBlockers, validateScene } from '../src/game/training12/moments/validate';
 import type { MomentScene } from '../src/game/training12/moments/schema';
@@ -46,26 +45,57 @@ function choicesMd(scenes: MomentScene[]): string {
   ].join('\n');
 }
 
+type ContactStatus = 'VERIFIED' | 'UNVERIFIED' | 'NOT_APPLICABLE' | 'INCOMPLETE';
+const CONTACT_TYPES = ['dribble', 'pass', 'receive', 'shot', 'tackle', 'interception', 'control'] as const;
+const CONTACT_RECORDS = JSON.parse(readFileSync(new URL('contact-frames.json', DIR), 'utf8')) as { action: string; status: string }[];
+function contactAudit(s: MomentScene, outs: OutcomeDraft[]) {
+  const n: Record<(typeof CONTACT_TYPES)[number], number> = { dribble: 0, pass: 0, receive: 0, shot: 0, tackle: 0, interception: 0, control: 0 };
+  const tls = [s.watch, ...(['A', 'B', 'C', 'D'] as const).map((k) => s.branches[k].timeline), ...outs.flatMap((o) => (o.timeline ? [o.timeline] : []))];
+  for (const tl of tls) {
+    for (const e of tl.ball) {
+      if (e.kind === 'pass') n[e.to[1]! <= 0.01 || e.to[1]! >= s.field.length - 0.01 ? 'shot' : 'pass']++;
+      if (e.kind === 'receive') n.receive++;
+      if (e.kind === 'carry') n.dribble += e.touches.length;
+      if (e.kind === 'held' && tl.ball.some((q) => (q.kind === 'loose' || q.kind === 'roll') && ('t' in q ? q.t : q.t1) <= e.t && e.t > 0)) n.control++;
+    }
+  }
+  const types = Object.fromEntries(CONTACT_TYPES.map((k) => {
+    if (!n[k]) return [k, { n: 0, status: 'NOT_APPLICABLE' as ContactStatus }];
+    const recs = CONTACT_RECORDS.filter((r) => r.action === k);
+    const status: ContactStatus = !recs.length ? 'INCOMPLETE' : recs.every((r) => r.status === 'VERIFIED') ? 'VERIFIED' : 'UNVERIFIED';
+    return [k, { n: n[k], status }];
+  })) as Record<(typeof CONTACT_TYPES)[number], { n: number; status: ContactStatus }>;
+  const st = Object.values(types).map((v) => v.status);
+  const overall: ContactStatus = st.includes('INCOMPLETE') ? 'INCOMPLETE' : st.includes('UNVERIFIED') ? 'UNVERIFIED' : st.includes('VERIFIED') ? 'VERIFIED' : 'NOT_APPLICABLE';
+  return { types, overall };
+}
+function contactMd(scenes: MomentScene[]): string {
+  const rows = scenes.map((s) => { const a = contactAudit(s, draftOutcomesV2([s])); return `| ${s.sceneId} | ${a.overall} | ${CONTACT_TYPES.map((k) => (a.types[k].n ? `${a.types[k].status} (${a.types[k].n})` : 'NOT_APPLICABLE')).join(' | ')} |`; });
+  return ['# Tactical Moments: contact audit (generated, review only)', '', 'Counts are contacts across the watch, the four branches and the v2 outcome drafts of each scene version. Status per type: VERIFIED = reviewed metadata for every sheet; UNVERIFIED = `contact-frames.json` records exist but anatomical foot, supporting foot and surface are unreviewed (the art does not show them clearly at this size; see `contact/*.png`); INCOMPLETE = no metadata record for that contact type exists yet; NOT_APPLICABLE = does not occur. Facing never decides the foot. Unresolved contact animations stay out of release.', '', `| Scene | Overall | ${CONTACT_TYPES.join(' | ')} |`, `|---|---|${CONTACT_TYPES.map(() => '---').join('|')}|`, ...rows, ''].join('\n');
+}
+
 function matrix(scenes: MomentScene[]): string {
   const rows = scenes.map((s) => {
     const e = episodeById(s.library.situationId)!;
     const kinds = (['A', 'B', 'C', 'D'] as const).map((k) => `${k}:${s.branches[k].kind}`).join(' ');
     const blockers = releaseBlockers(s).length;
     void kinds;
-    const outs = draftOutcomes([s]);
+    const outs = draftOutcomesV2([s]);
     const missing = outs.filter((o) => o.missingDecision).length;
     const movement = effectiveStatus(s) === 'APPROVED' ? 'approved' : 'not approved';
     const outApproved = outs.filter((o) => outcomeApproved(o)).length;
     const assetGaps = s.assets.gaps.filter((g) => g.blocksRelease).length + outs.reduce((n, o) => n + o.gaps.filter((g) => g.blocksRelease).length, 0);
-    const nContacts = [s.watch, ...(['A', 'B', 'C', 'D'] as const).map((k) => s.branches[k].timeline), ...outs.flatMap((o) => (o.timeline ? [o.timeline] : []))].reduce((n, tl) => n + contacts(tl).filter((c) => c.kind !== 'touch').length, 0);
+    const ca = contactAudit(s, outs);
+    const cv = ca.overall === 'NOT_APPLICABLE' ? 'NOT_APPLICABLE' : `${ca.overall}: ${Object.entries(ca.types).filter(([, v]) => v.status !== 'NOT_APPLICABLE').map(([k, v]) => `${k} ${v.status} (${v.n})`).join(', ')}`;
     const e2e = E2E_SCENES.includes(s.library.situationId) ? 'browser: situation covered' : 'browser: no';
     const tech = `validator ${validateScene(s).length ? 'FAIL' : 'pass'}; unit: yes; ${e2e}`;
-    return `| ${s.sceneId} v${s.version} | ${esc(e.title)} | ${s.protagonist.role} | decisions: coach-approved 2026-10-27; outcome drafts: ${outs.length} pending (${missing} missing decision) | scene: ${movement}; outcome drafts approved: ${outApproved}/${outs.length} | ${assetGaps ? `BLOCKED: ${assetGaps} directional gaps` : 'no directional gap'} | UNVERIFIED (${nContacts} pass/receive contacts) | ${tech} | ${movement === 'approved' && !blockers && !assetGaps && !nContacts ? 'eligible' : 'BLOCKED (review only)'} | \`${sceneHash(s)}\` |`;
+    return `| ${s.sceneId} v${s.version} | ${esc(e.title)} | ${s.protagonist.role} | decisions: coach-approved 2026-10-27; outcome drafts: ${outs.length} pending (${missing} missing decision) | scene: ${movement}; outcome drafts approved: ${outApproved}/${outs.length} | ${assetGaps ? `BLOCKED: ${assetGaps} directional gaps` : 'no directional gap'} | ${cv} | ${tech} | ${movement === 'approved' && !blockers && !assetGaps && ca.overall !== 'UNVERIFIED' && ca.overall !== 'INCOMPLETE' ? 'eligible' : 'BLOCKED (review only)'} | \`${sceneHash(s)}\` |`;
   });
   return [
     '# Tactical Moments: release matrix (generated)',
     '',
-    'Generated by `WRITE_MOMENTS=1 npx vitest run tests/momentsExport.test.ts` from `scenes.v2.json` and `outcomes.v1.json`; do not edit by hand.',
+    'Generated by `WRITE_MOMENTS=1 npx vitest run tests/momentsExport.test.ts` from `scenes.v2.json` and `outcomes.v2.json`; do not edit by hand.',
+    'Contact verification (per scene, over watch, branches and v2 outcome drafts): VERIFIED = every contact has reviewed metadata; UNVERIFIED = metadata exists but foot/surface are unreviewed (pass, receive); INCOMPLETE = no metadata record exists for that contact type (dribble, shot, control); NOT_APPLICABLE = the type does not occur. Tackles and interceptions are never authored (no invented turnovers), so they are NOT_APPLICABLE everywhere. Detail: [CONTACT_AUDIT.md](CONTACT_AUDIT.md).',
     'Status: READY_FOR_REVIEW = passes the validator; nothing is APPROVED until an owner record in `approvals.json` matches the hash.',
     'Blockers = release blockers (validator errors + animation gaps that block release). Full assumptions, conflicts and gaps are in each scene record and on the `?dev` review page.',
     '',
@@ -135,44 +165,78 @@ const sector = (a: readonly number[], b: readonly number[]): Facing | null => {
   if (Math.hypot(dx, dy) < 0.05) return null;
   return Math.abs(dy) > Math.abs(dx) ? (dy > 0 ? 'N' : 'S') : dx > 0 ? 'E' : 'W';
 };
-const REUSE: Record<Facing, string> = { E: 'yes: existing right three-quarter frames as drawn', W: 'yes: true horizontal mirror of the E frames (swaps anatomical left/right)', N: 'no: no frames face away from the camera', S: 'no: no frames face the camera' };
+type AssetStatus = 'VERIFIED_REUSABLE' | 'CANDIDATE_NEEDS_REVIEW' | 'MISSING';
+type ReqAction = 'stand' | 'run' | 'shuffle' | 'pass' | 'shot' | 'receive' | 'dribble touch' | 'keeper ready';
+const CONTACT_ACTIONS: readonly ReqAction[] = ['pass', 'shot', 'receive', 'dribble touch'];
+/** Art-brief priority (owner order): 1 front/back stand+run, 2 dribble touches, 3 pass/receive directions, 4 shuffles, 5 keeper. */
+const priority = (action: ReqAction): number => (action === 'stand' || action === 'run' ? 1 : action === 'dribble touch' ? 2 : action === 'pass' || action === 'shot' || action === 'receive' ? 3 : action === 'shuffle' ? 4 : 5);
+const FRAMES: Record<ReqAction, string> = {
+  stand: '1 frame: upright two-foot stance (existing atlas frame 6).',
+  run: '6-frame stride cycle, phase driven by distance travelled (existing run row 0-5).',
+  shuffle: '6-frame side-step cycle (existing shuffle row 18-23).',
+  pass: '4 frames: plant, plant, CONTACT, follow-through (existing 7-10); contact frame held 0.12 s from ball release, follow-through to 0.30 s.',
+  shot: 'As pass (no separate shot row exists): plant, plant, CONTACT, follow-through; contact held 0.12 s from release.',
+  receive: '3 frames: reach, CONTACT (first touch), settle (existing 13-15); contact held 0.15 s from arrival, settle to 0.35 s.',
+  'dribble touch': 'New: 6-frame carry cycle with a touch frame on each authored carry touch (none exist; currently drawn on the run cycle).',
+  'keeper ready': '1 frame: keeper ready stance (keeper strip pose 3).',
+};
+const ANCHORS = 'Cell 160x160 px; ground/feet anchor (80, 154). Feet must sit on the anchor in every frame; contact frames also need a contact anchor in cell px.';
+const MIRROR = 'E→W only by a true horizontal mirror that swaps anatomical L/R, anchors and motion (it does not verify the original foot). N and S cannot be made from E/W, nor from each other.';
+function assetStatus(action: ReqAction, body: Facing, travel: Facing | null, keeper: boolean): { status: AssetStatus; why: string } {
+  if (body === 'N' || body === 'S') return { status: 'MISSING', why: 'no frames face away from or toward the camera' };
+  if (action === 'dribble touch') return { status: 'MISSING', why: 'no dribble-touch frames exist in any direction' };
+  if (keeper && action !== 'keeper ready' && action !== 'stand' && action !== 'run') return { status: 'MISSING', why: 'keeper strip has stand/run/stride/ready only' };
+  if (CONTACT_ACTIONS.includes(action)) return { status: 'CANDIDATE_NEEDS_REVIEW', why: 'frames exist; contact foot, surface and anchor are UNVERIFIED' };
+  if (action === 'shuffle') return { status: 'CANDIDATE_NEEDS_REVIEW', why: 'side-step frames exist; step direction relative to the body is not audited' };
+  if (action === 'run' && travel !== body) return { status: 'CANDIDATE_NEEDS_REVIEW', why: `run cycle is drawn travelling the way it faces; travel ${travel} differs` };
+  if (body === 'W') return { status: 'CANDIDATE_NEEDS_REVIEW', why: 'true mirror of E frames; asymmetric kit/hair detail flips and needs an owner check' };
+  return { status: 'VERIFIED_REUSABLE', why: 'existing right three-quarter frames as drawn, same body facing and travel' };
+}
 
 function requirements(scenes: MomentScene[], outs: OutcomeDraft[]) {
-  const rows = new Map<string, { action: string; facing: Facing; sheets: Set<string>; ids: Set<string>; contact: boolean }>();
-  const add = (action: string, facing: Facing | null, sheets: string[], id: string, contact: boolean) => {
-    if (!facing) return;
-    const key = `${action}|${facing}`;
-    const r = rows.get(key) ?? { action, facing, sheets: new Set<string>(), ids: new Set<string>(), contact };
+  type Row = { action: ReqAction; bodyFacing: Facing; travelDirection: Facing | null; ballDirection: Facing | null; keeper: boolean; sheets: Set<string>; ids: Set<string>; events: number };
+  const rows = new Map<string, Row>();
+  const add = (action: ReqAction, body: Facing | null, travel: Facing | null, ball: Facing | null, keeper: boolean, sheets: string[], id: string) => {
+    if (!body) return;
+    const key = `${action}|${body}|${travel ?? '-'}|${ball ?? '-'}`;
+    const r = rows.get(key) ?? { action, bodyFacing: body, travelDirection: travel, ballDirection: ball, keeper, sheets: new Set<string>(), ids: new Set<string>(), events: 0 };
     for (const x of sheets) r.sheets.add(x);
     r.ids.add(id);
+    r.events++;
     rows.set(key, r);
   };
   const scan = (s: MomentScene, tl: Timeline, id: string) => {
     const actors = s.actors.map((a) => ({ id: a.id, team: a.team, role: a.role, at: a.decision }));
     const casts = (['boy', 'girl'] as const).map((l) => stillCast(l, actors, s.protagonist.actorId));
     const sheets = (aid: string) => [...new Set(casts.map((c) => c.get(aid)!))];
+    const gk = (aid: string) => s.actors.find((a) => a.id === aid)?.role === 'GK';
     for (const tr of tl.actors) {
       for (let i = 0; i < tr.keys.length; i++) {
         const k = tr.keys[i]!;
         const prev = tr.keys[i - 1];
-        if (prev && (k.action === 'run' || k.action === 'shuffle') && Math.hypot(k.at[0] - prev.at[0], k.at[1] - prev.at[1]) > 0.05) add(k.action, sector(prev.at, k.at), sheets(tr.id), id, false);
-        if (k.action === 'stand' || k.action === 'keeper-ready') add(k.action === 'stand' ? 'stand (looking)' : 'keeper ready', sector(k.at, k.look), sheets(tr.id), id, false);
+        const travel = prev ? sector(prev.at, k.at) : null;
+        if (prev && (k.action === 'run' || k.action === 'shuffle') && travel) add(k.action, sector(k.at, k.look) ?? travel, travel, null, gk(tr.id), sheets(tr.id), id);
+        if (k.action === 'stand' || k.action === 'keeper-ready') add(k.action === 'stand' ? 'stand' : 'keeper ready', sector(k.at, k.look), null, null, gk(tr.id), sheets(tr.id), id);
       }
     }
+    const goalLine = (to: readonly number[]) => to[1]! <= 0.01 || to[1]! >= s.field.length - 0.01;
     for (const e of tl.ball) {
       if (e.kind === 'pass') {
         const tr = tl.actors.find((a) => a.id === e.by)!;
-        const at = tr.keys.find((q) => q.action === 'pass')?.at ?? tr.keys[0]!.at;
-        add('pass (strike)', sector(at, e.to), sheets(e.by), id, true);
+        const k = tr.keys.find((q) => q.action === 'pass') ?? tr.keys[0]!;
+        add(goalLine(e.to) ? 'shot' : 'pass', sector(k.at, k.look) ?? sector(k.at, e.to), null, sector(k.at, e.to), gk(e.by), sheets(e.by), id);
       }
       if (e.kind === 'receive') {
         const tr = tl.actors.find((a) => a.id === e.by)!;
         const k = tr.keys.find((q) => q.action === 'receive')!;
-        add('receive (first touch)', sector(k.at, k.look), sheets(e.by), id, true);
+        const p = tl.ball.find((q) => q.kind === 'pass' && q.receiver === e.by && q.t < e.t);
+        const from = p && p.kind === 'pass' ? (tl.actors.find((a) => a.id === p.by)!.keys.find((q) => q.action === 'pass') ?? tl.actors.find((a) => a.id === p.by)!.keys[0]!).at : null;
+        add('receive', sector(k.at, k.look), null, from ? sector(from, k.at) : null, gk(e.by), sheets(e.by), id);
       }
       if (e.kind === 'carry') {
         const tr = tl.actors.find((a) => a.id === e.by)!;
-        add('dribble touch (no frames exist; drawn on run cycle)', sector(tr.keys[0]!.at, tr.keys[tr.keys.length - 1]!.at), sheets(e.by), id, true);
+        const d = sector(tr.keys[0]!.at, tr.keys[tr.keys.length - 1]!.at);
+        add('dribble touch', d, d, d, gk(e.by), sheets(e.by), id);
       }
     }
   };
@@ -180,22 +244,69 @@ function requirements(scenes: MomentScene[], outs: OutcomeDraft[]) {
     scan(s, s.watch, `${s.sceneId}/watch`);
     for (const k of ['A', 'B', 'C', 'D'] as const) scan(s, s.branches[k].timeline, `${s.sceneId}/${k}`);
   }
-  for (const o of outs) if (o.timeline) scan(scenes.find((x) => x.sceneId === o.sceneId)!, o.timeline, `${o.branchId}#outcome`);
-  const list = [...rows.values()].sort((a, b) => a.action.localeCompare(b.action) || a.facing.localeCompare(b.facing));
-  const json = list.map((r) => ({ action: r.action, facing: r.facing, facingText: FACING_TEXT[r.facing], existingFrameReusable: REUSE[r.facing], contact: r.contact ? { contactFoot: 'TBD (reviewed metadata required)', supportingFoot: 'TBD', surface: 'TBD' } : null, sheets: [...r.sheets].sort(), uses: r.ids.size, ids: [...r.ids].sort() }));
+  for (const o of outs) if (o.timeline) scan(scenes.find((x) => x.sceneId === o.sceneId)!, o.timeline, `${o.branchId}#outcome-v${o.outcomeVersion}`);
+  const list = [...rows.values()].sort((a, b) => priority(a.action) - priority(b.action) || a.action.localeCompare(b.action) || a.bodyFacing.localeCompare(b.bodyFacing) || (a.travelDirection ?? '').localeCompare(b.travelDirection ?? '') || (a.ballDirection ?? '').localeCompare(b.ballDirection ?? ''));
+  const json = list.map((r) => {
+    const st = assetStatus(r.action, r.bodyFacing, r.travelDirection, r.keeper);
+    return { priority: priority(r.action), action: r.action, bodyFacing: r.bodyFacing, travelDirection: r.travelDirection, ballDirection: r.ballDirection, status: st.status, statusReason: st.why, contact: CONTACT_ACTIONS.includes(r.action) ? { anatomicalContactFoot: 'UNVERIFIED', supportingFoot: 'UNVERIFIED', surface: 'UNVERIFIED', contactFrame: 'see contact-frames.json', status: 'UNVERIFIED' } : null, sheets: [...r.sheets].sort(), uses: r.ids.size, events: r.events, ids: [...r.ids].sort() };
+  });
+  // Why later identity sheets never appear: the cast assigns teammate_01.. and opponent_01.. in slot order to the players a scene shows.
+  const maxHome = Math.max(...scenes.map((s) => s.actors.filter((a) => a.team === 'H' && a.role !== 'GK' && a.id !== s.protagonist.actorId).length));
+  const maxAway = Math.max(...scenes.map((s) => s.actors.filter((a) => a.team === 'A' && a.role !== 'GK').length));
+  const used = new Set(json.flatMap((r) => r.sheets));
+  const unused = [...TT_TEAMMATES, ...TT_OPPONENTS].filter((x) => !used.has(x));
+  const count = (st: AssetStatus) => json.filter((r) => r.status === st).length;
   const md = [
-    '# Tactical Moments: directional animation requirements (generated)',
+    '# Tactical Moments: directional animation requirements v2 (generated, review only)',
     '',
-    'Grouped by action and facing so one directional sheet per character covers every scene. Facing is the screen direction on the true overhead pitch (home attacks up the screen). Every outfield sheet below is a distinct character: boy and girl are the two protagonist options; teammate_01-07 orange kits; opponent_01-08 green pinnies. Contact rows need reviewed contact metadata (foot, surface, supporting foot); facing never decides the foot.',
+    'Generated by `WRITE_MOMENTS=1 npx vitest run tests/momentsExport.test.ts` from `scenes.v2.json` and `outcomes.v2.json`. Nothing here is approved art; missing art blocks release, not framework work.',
     '',
-    '| Action | Facing | Existing frame reusable? | Contact metadata | Sheets needing it | Uses |',
-    '|---|---|---|---|---|---|',
-    ...json.map((r) => `| ${r.action} | ${r.facingText} | ${r.existingFrameReusable} | ${r.contact ? 'contact foot, supporting foot, surface: TBD' : '—'} | ${r.sheets.join(', ')} | ${r.uses} |`),
+    '- **bodyFacing**: where the body looks (from each key\'s `look`), the frame to draw. **travelDirection**: where the player moves (key to key). **ballDirection**: where the ball goes (pass/shot target, receive approach, carry). They are independent: a shuffle can face E while travelling N.',
+    '- Directions are screen directions on the true overhead pitch (home attacks up). ' + (['N', 'S', 'E', 'W'] as const).map((f) => FACING_TEXT[f]).join('; ') + '.',
+    `- **Status**: VERIFIED_REUSABLE = an existing frame is drawn for this body facing and travel, as-is (not an owner art approval); CANDIDATE_NEEDS_REVIEW = frames exist but a mirror, travel mismatch or unverified contact needs review; MISSING = no frame exists. Rows: ${count('VERIFIED_REUSABLE')} verified reusable, ${count('CANDIDATE_NEEDS_REVIEW')} candidate, ${count('MISSING')} missing.`,
+    '- **Uses** = distinct timeline IDs (`<scene>/watch`, `<scene>/<choice>`, `<branch>#outcome-v2`) needing the row. Boy and girl are alternatives for one protagonist slot, so a protagonist timeline counts once and both sheets are listed. **Events** = raw key/ball-event count.',
+    `- **Absent identity sheets**: the cast gives teammate_01, 02… and opponent_01, 02… in slot order to the players a scene shows, skipping the protagonist and keepers. No scene shows more than ${maxHome} non-protagonist home outfielders or ${maxAway} away outfielders, so ${unused.join(', ') || 'no sheet'} never appear. They are not excluded; scenes only show the participants the situation needs.`,
+    '- Art brief per character, with thumbnails, frame timing, anchors and mirror rules: [ART_BRIEF.md](ART_BRIEF.md).',
     '',
-    'Scene/branch IDs per row: `ANIMATION_REQUIREMENTS.json` (`<scene>/watch`, `<scene>/<choice>`, `<scene>/<choice>#outcome`).',
+    '| Priority | Action | Body facing | Travel | Ball | Status | Why | Contact | Sheets | Uses | Events |',
+    '|---|---|---|---|---|---|---|---|---|---|---|',
+    ...json.map((r) => `| ${r.priority} | ${r.action} | ${r.bodyFacing} | ${r.travelDirection ?? '—'} | ${r.ballDirection ?? '—'} | ${r.status} | ${r.statusReason} | ${r.contact ? 'UNVERIFIED' : 'NOT_APPLICABLE'} | ${r.sheets.join(', ')} | ${r.uses} | ${r.events} |`),
+    '',
+    'Scene/branch IDs per row: `ANIMATION_REQUIREMENTS.json`.',
     '',
   ].join('\n');
-  return { json: JSON.stringify(json, null, 1) + '\n', md };
+  return { json: JSON.stringify(json, null, 1) + '\n', md, rows: json };
+}
+
+const SOURCE: Record<string, string> = Object.fromEntries([...['boy', 'girl'].map((x) => [x, `docs/art/team-training-v1/source/${x}_highlight.png`]), ...[...TT_TEAMMATES, ...TT_OPPONENTS].map((x) => [x, `docs/art/team-training-v1/source/${x}.png`]), ['keeper_home', 'docs/art/team-training-v1/source/home_keeper_keyposes.png'], ['keeper_away', 'docs/art/team-training-v1/source/opposition_keeper_keyposes.png']]);
+function artBrief(rows: ReturnType<typeof requirements>['rows']): string {
+  const need = rows.filter((r) => r.status !== 'VERIFIED_REUSABLE');
+  const sheets = [...new Set(need.flatMap((r) => r.sheets))].sort((a, b) => TT_SHEETS.indexOf(a as never) - TT_SHEETS.indexOf(b as never));
+  const out = [
+    '# Tactical Moments: consolidated art brief (generated, review only)',
+    '',
+    'One section per existing character sheet, in the owner priority order (1 front/back stand and run, 2 dribble touches, 3 pass/receive directions, 4 shuffles, 5 keeper). Every item reuses the character as drawn in its exact source asset; no lookalikes. Rows already VERIFIED_REUSABLE are omitted. Affected IDs per item: `ANIMATION_REQUIREMENTS.json` (same action/bodyFacing/travel/ball key).',
+    '',
+    `- **Ground/foot anchors:** ${ANCHORS}`,
+    `- **Mirror restrictions:** ${MIRROR}`,
+    '- **Contact requirements (pass, shot, receive, dribble touch):** reviewed anatomical contact foot, supporting foot, surface (inside/outside/instep/sole), contact frame, contact anchor, ball approach and departure. The ball is drawn separately and never glued to the foot between contacts.',
+    '',
+  ];
+  for (const sh of sheets) {
+    out.push(`## ${sh}`, '', `Source: \`${SOURCE[sh]}\`; runtime: \`src/assets/art/team-training-v1/${sh}.webp\``, '', `![${sh}](art-brief/${sh}.png)`, '', '| Priority | Action | Body facing | Permitted travel | Ball | Status | Frames and timing | Contact | Uses |', '|---|---|---|---|---|---|---|---|---|');
+    const mine = need.filter((r) => r.sheets.includes(sh));
+    const groups = new Map<string, typeof mine>();
+    for (const r of mine) groups.set(`${r.action}|${r.bodyFacing}`, [...(groups.get(`${r.action}|${r.bodyFacing}`) ?? []), r]);
+    for (const g of groups.values()) {
+      const r = g[0]!;
+      const travel = [...new Set(g.map((x) => x.travelDirection).filter(Boolean))].sort().join(', ') || 'stationary';
+      const ball = [...new Set(g.map((x) => x.ballDirection).filter(Boolean))].sort().join(', ') || '—';
+      const st = g.some((x) => x.status === 'MISSING') ? 'MISSING' : 'CANDIDATE_NEEDS_REVIEW';
+      out.push(`| ${r.priority} | ${r.action} | ${r.bodyFacing} | ${travel} | ${ball} | ${st} | ${FRAMES[r.action as ReqAction]} | ${r.contact ? 'required' : 'NOT_APPLICABLE'} | ${new Set(g.flatMap((x) => x.ids)).size} |`);
+    }
+    out.push('');
+  }
+  return out.join('\n');
 }
 
 describe('stored Tactical Moments drafts', () => {
@@ -213,8 +324,10 @@ describe('stored Tactical Moments drafts', () => {
     ['CHOICE_REVISIONS.md', choicesMd(scenes)],
     ['outcomes.v2.json', '[\n' + draftOutcomesV2(scenes).map((o) => JSON.stringify(o)).join(',\n') + '\n]\n'],
     ['FROZEN_BRANCHES.md', frozen(scenes, outs)],
-    ['ANIMATION_REQUIREMENTS.json', requirements(scenes, outs).json],
-    ['ANIMATION_REQUIREMENTS.md', requirements(scenes, outs).md],
+    ['ANIMATION_REQUIREMENTS.json', requirements(scenes, draftOutcomesV2(scenes)).json],
+    ['ANIMATION_REQUIREMENTS.md', requirements(scenes, draftOutcomesV2(scenes)).md],
+    ['CONTACT_AUDIT.md', contactMd(scenes)],
+    ['ART_BRIEF.md', artBrief(requirements(scenes, draftOutcomesV2(scenes)).rows)],
   ];
   for (const [name, want] of files) {
     it(`${name} equals the generator output (regenerate with WRITE_MOMENTS=1)`, () => {
