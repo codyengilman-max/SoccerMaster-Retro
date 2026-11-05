@@ -27,7 +27,7 @@ const BREAK_FRAME_SECONDS = 0.12;
 /** Drawn object width relative to its collision diameter (art has a little transparent margin and a soft shadow). */
 const ART_WIDTH = 1.25;
 /** Far end of the driveway (garage base) as a fraction of the background art height, measured on the owner art. */
-const GARAGE_BASE = DD_BG.lane.top + 0.176;
+const GARAGE_BASE = DD_BG.garageBase;
 const FAR_D = 1 / (1 + DRIVEWAY.spawnY / 20);
 
 /**
