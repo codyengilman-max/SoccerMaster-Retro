@@ -245,3 +245,44 @@ describe('draft generator', () => {
     expect(draftScene(e, e.variants[1]!)).toEqual(draftScene(e, e.variants[1]!));
   });
 });
+
+describe('outcome drafts for frozen branches', () => {
+  it('cover exactly the 159 package-frozen branches, keeping the package text', async () => {
+    const { MOMENT_OUTCOMES } = await import('../src/game/training12/moments/index');
+    const { isFrozenBranch } = await import('../src/game/training12/moments/outcomes');
+    const frozen = MOMENT_SCENES.flatMap((s) => CHOICES.filter((k) => isFrozenBranch(s, k)).map((k) => `${s.sceneId}/${k}`));
+    expect(frozen).toHaveLength(159);
+    expect(MOMENT_OUTCOMES.map((o) => o.branchId)).toEqual(frozen);
+    for (const o of MOMENT_OUTCOMES) {
+      const s = MOMENT_SCENES.find((x) => x.sceneId === o.sceneId)!;
+      expect(o.packageConsequence).toBe(s.branches[o.choice].consequence);
+      expect(o.packageFeedback).toBe(s.branches[o.choice].feedback);
+      expect(o.status).not.toBe('APPROVED');
+      if (o.presentation === 'explanation') {
+        expect(o.timeline).toBeNull();
+        expect(o.missingDecision).toBeTruthy();
+      } else {
+        // Played out from the snapshot; the ball keeps its holder; no new ball event is invented.
+        const tl = o.timeline!;
+        for (const a of s.actors) expect(d2(tl.actors.find((x) => x.id === a.id)!.keys[0]!.at, a.decision)).toBeLessThan(0.05);
+        expect(tl.ball).toHaveLength(1);
+        const end = ballAt(tl, s.ball.decision, tl.duration);
+        expect(d2(end.at, s.ball.decision)).toBeLessThan(1.5);
+        expect(tl.actors.some((a) => a.keys.some((q) => d2(q.at, a.keys[0]!.at) > 0.05))).toBe(true);
+      }
+    }
+  });
+  it('the director labels a frozen frame EXPLANATION and an outcome draft RESULT; players get no unapproved drafts', async () => {
+    const { MOMENT_OUTCOMES, outcomesFor } = await import('../src/game/training12/moments/index');
+    const o = MOMENT_OUTCOMES.find((x) => x.presentation === 'result')!;
+    const s = MOMENT_SCENES.find((x) => x.sceneId === o.sceneId)!;
+    expect(outcomesFor(s, false)).toEqual({});
+    for (const [outs, want] of [[{}, 'explanation'], [outcomesFor(s, true), 'result']] as const) {
+      const d = new MomentDirector(s, undefined, outs);
+      d.start();
+      run(d, 0.1, 200);
+      d.choose(o.choice);
+      expect(d.presentation).toBe(want);
+    }
+  });
+});

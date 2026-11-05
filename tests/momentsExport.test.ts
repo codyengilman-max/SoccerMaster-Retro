@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { episodeById } from '../src/game/training12/all36/package';
 import { draftAll } from '../src/game/training12/moments/draft';
 import { sceneHash } from '../src/game/training12/moments/index';
+import { draftOutcomes, outcomeHash, type OutcomeDraft } from '../src/game/training12/moments/outcomes';
 import { releaseBlockers, validateScene } from '../src/game/training12/moments/validate';
 import type { MomentScene } from '../src/game/training12/moments/schema';
 
@@ -56,8 +57,38 @@ function gaps(scenes: MomentScene[]): string {
   ].join('\n');
 }
 
+function frozen(scenes: MomentScene[], outs: OutcomeDraft[]): string {
+  const stationary = scenes.flatMap((s) => (['A', 'B', 'C', 'D'] as const).filter((k) => ['hold', 'off-ball'].includes(s.branches[k].kind) && s.branches[k].packageTarget.ball.every((n, i) => Math.abs(n - s.ball.decision[i]!) < 0.5)).map((k) => `${s.sceneId}/${k}`));
+  const offBall = scenes.flatMap((s) => (['A', 'B', 'C', 'D'] as const).filter((k) => s.branches[k].kind === 'off-ball' && /^Illustrative/.test(s.branches[k].consequence) && s.ball.ownerAtDecision === null).map((k) => `${s.sceneId}/${k}`));
+  const by = (c: string) => outs.filter((o) => `${o.category}/${o.presentation}` === c).length;
+  return [
+    '# Tactical Moments: frozen-branch inventory (generated)',
+    '',
+    'Stable branch ID = `<scene id>/<choice>`; scene version shown. The package label, consequence and feedback are unchanged; outcome drafts are separate records in `outcomes.v1.json` (outcome version 1), each needing its own approval.',
+    '',
+    '## Reconciling 164 vs 159',
+    '',
+    `- 164 (first report) = branches whose ball does not move. Different counting unit from 159.`,
+    `- 159 = branches the package itself presents as a frozen teaching frame: consequence "Review pause only…" (${outs.filter((o) => /^Review pause only/.test(o.packageConsequence)).length}) or "Freeze for explanation…" (${outs.filter((o) => /^Freeze for explanation/.test(o.packageConsequence)).length}). These were the conflicts.`,
+    `- The other 5 are loose-ball defensive options with package player endpoints ("Illustrative endpoint…"); they already play out as player movement with the ball still, now kind \`off-ball\`: ${offBall.join(', ')}.`,
+    `- In scenes v2, ${stationary.length} branches keep the ball still overall (holding the ball or protecting space is a valid outcome); only the 159 are frozen frames.`,
+    '',
+    `## Outcome drafts: ${outs.length}`,
+    '',
+    `- scan → result: ${by('scan/result')} (the carrier keeps the ball; players already moving keep moving)`,
+    `- hold-position → result: ${by('hold-position/result')} (label is to stay or wait)`,
+    `- explanation (missing decision named): ${by('needs-decision/explanation') + by('scan/explanation') + by('hold-position/explanation')}`,
+    '',
+    '| Branch ID | Scene v | Package label | Package consequence | Category | Presentation | Missing decision | Release-blocking gaps | Outcome hash |',
+    '|---|---|---|---|---|---|---|---|---|',
+    ...outs.map((o) => `| ${o.branchId} | ${o.sceneVersion} | ${esc(o.packageLabel)} | ${esc(o.packageConsequence.split(';')[0]!)} | ${o.category} | ${o.presentation.toUpperCase()} | ${o.missingDecision ? esc(o.missingDecision) : '—'} | ${o.gaps.filter((g) => g.blocksRelease).length} | \`${outcomeHash(o)}\` |`),
+    '',
+  ].join('\n');
+}
+
 describe('stored Tactical Moments drafts', () => {
   const scenes = exportDrafts();
+  const outs = draftOutcomes(scenes);
   it('scenes.v1.json stays frozen as history', () => {
     expect(createHash('sha256').update(readFileSync(new URL('scenes.v1.json', DIR))).digest('hex')).toBe('3f8059a6bbbe0159802b9967cbf66a2ef1d61d98c1db2fdad0767a850c69894c');
   });
@@ -65,6 +96,8 @@ describe('stored Tactical Moments drafts', () => {
     ['scenes.v2.json', '[\n' + scenes.map((s) => JSON.stringify(s)).join(',\n') + '\n]\n'],
     ['REVIEW_MATRIX.md', matrix(scenes)],
     ['GAPS_BY_SCENE.md', gaps(scenes)],
+    ['outcomes.v1.json', '[\n' + outs.map((o) => JSON.stringify(o)).join(',\n') + '\n]\n'],
+    ['FROZEN_BRANCHES.md', frozen(scenes, outs)],
   ];
   for (const [name, want] of files) {
     it(`${name} equals the generator output (regenerate with WRITE_MOMENTS=1)`, () => {

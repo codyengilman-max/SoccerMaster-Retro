@@ -4,7 +4,7 @@ import { CareerStore } from '../game/career/store';
 import type { CareerSave } from '../game/career/state';
 import type { ChoiceId, Metres, VariantId } from '../game/training12/all36/types';
 import { MomentDirector, explain, mirrorScene, type Stage } from '../game/training12/moments/director';
-import { effectiveStatus, momentScene, playerMoment, sceneHash } from '../game/training12/moments/index';
+import { effectiveStatus, momentScene, outcomesFor, playerMoment, sceneHash } from '../game/training12/moments/index';
 import type { MomentScene } from '../game/training12/moments/schema';
 import { contacts, type ActorSample, type Frame } from '../game/training12/moments/timeline';
 import { releaseBlockers } from '../game/training12/moments/validate';
@@ -24,6 +24,7 @@ export interface TacticalMomentsData {
   /** Owner review mode (`?dev` only): drafts, scrubber, every branch, coordinates. Never credits. */
   readonly review?: boolean;
   readonly mirror?: boolean;
+  readonly originalOnly?: boolean;
   readonly look?: 'boy' | 'girl';
   readonly returnTo?: 'story';
 }
@@ -45,6 +46,8 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
   private moment: MomentScene | null = null;
   private review = false;
   private mirrored = false;
+  /** Review: show the package's original frozen explanations instead of the outcome drafts. */
+  private originalOnly = false;
   private returnTo: 'story' | null = null;
   private look: 'boy' | 'girl' = 'boy';
   private cast: ReadonlyMap<string, TtSheet> = new Map();
@@ -85,6 +88,7 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
   create(data: TacticalMomentsData = {}): void {
     this.review = !!data.review && new URLSearchParams(window.location.search).has('dev');
     this.mirrored = this.review && !!data.mirror;
+    this.originalOnly = this.review && !!data.originalOnly;
     this.returnTo = data.returnTo === 'story' ? 'story' : null;
     this.look = data.look === 'girl' ? 'girl' : 'boy';
     this.director = null;
@@ -152,7 +156,7 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
 
   private begin(s: MomentScene): void {
     this.moment = s;
-    this.director = new MomentDirector(s);
+    this.director = new MomentDirector(s, undefined, this.review && !this.originalOnly ? outcomesFor(s, true) : outcomesFor(s, false));
     const actors = s.actors.map((a) => ({ id: a.id, team: a.team, role: a.role, at: a.decision }));
     this.cast = stillCast(this.look, actors, s.protagonist.actorId);
     if (!ensureTtArt(this, [...new Set(this.cast.values())])) this.load.once(Phaser.Loader.Events.COMPLETE, () => this.sys.isActive() && this.layout());
@@ -217,7 +221,7 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
 
   private reopen(patch: Partial<TacticalMomentsData>): void {
     const s = this.moment;
-    this.scene.restart({ review: true, situationId: s?.library.situationId, variant: s?.library.variant, look: this.look, mirror: this.mirrored, ...patch });
+    this.scene.restart({ review: true, situationId: s?.library.situationId, variant: s?.library.variant, look: this.look, mirror: this.mirrored, originalOnly: this.originalOnly, ...patch });
   }
 
   private onPointer(p: Phaser.Input.Pointer): void {
@@ -234,7 +238,7 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
   private timelineDuration(): number {
     const d = this.director;
     if (!d || !this.moment) return 1;
-    return d.branch && (d.stage === 'result' || d.stage === 'learn') ? d.branch.timeline.duration : this.moment.decision.t;
+    return d.resultTimeline && (d.stage === 'result' || d.stage === 'learn') ? d.resultTimeline.duration : this.moment.decision.t;
   }
 
   // ---- layout -------------------------------------------------------------------------------------
@@ -452,7 +456,7 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
     const small = this.scale.width < 520 || this.scale.height < 500;
     this.header.setText(`TEAM TRAINING${small ? '' : ' · TACTICAL MOMENTS'}${s ? ` · ${s.library.situationId} ${s.library.variant}${this.mirrored ? ' mirror' : ''}` : ''}${this.review && s ? ` · ${effectiveStatus(s)}` : ''}`);
     // Stage label (navy chip) and playback speed, separate.
-    const stage = d ? STAGE_LABEL[d.stage] : '';
+    const stage = d ? (d.stage === 'result' && d.presentation === 'explanation' ? 'EXPLANATION' : STAGE_LABEL[d.stage]) : '';
     this.stageText.setText(stage);
     const chipW = this.stageText.width + 16;
     const chip = { x: this.pitch.x + 6, y: this.pitch.y + 2, width: chipW, height: 20 };
@@ -481,7 +485,7 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
   private layoutButtons(top: number): void {
     const d = this.director;
     const P = this.panel;
-    const key = `${this.saveState}|${d?.stage}|${d?.paused}|${d?.replaying}|${d?.assisted}|${P.width}|${P.height}|${top}|${this.review}|${this.look}|${this.mirrored}|${this.moment?.sceneId ?? this.message}`;
+    const key = `${this.saveState}|${d?.stage}|${d?.paused}|${d?.replaying}|${d?.assisted}|${P.width}|${P.height}|${top}|${this.review}|${this.look}|${this.mirrored}|${this.originalOnly}|${this.moment?.sceneId ?? this.message}`;
     if (key === this.buttonKey) return;
     this.buttonKey = key;
     for (const b of this.buttons) b.destroy();
@@ -519,6 +523,7 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
       defs.push({ name: 'tm-step-back', label: '◀ 0.05s', on: () => (d.pause(), d.seek(d.t - 0.05), (this.buttonKey = '')) }, { name: 'tm-step', label: '0.05s ▶', on: () => (d.pause(), d.seek(d.t + 0.05), (this.buttonKey = '')) });
       defs.push({ name: 'tm-variant', label: s.library.variant === 'base' ? 'Changed cue' : 'Base cue', on: () => this.reopen({ variant: s.library.variant === 'base' ? 'changed' : 'base' }) });
       defs.push({ name: 'tm-look', label: this.look === 'boy' ? 'Girl' : 'Boy', on: () => this.reopen({ look: this.look === 'boy' ? 'girl' : 'boy' }) });
+      defs.push({ name: 'tm-outcomes', label: this.originalOnly ? 'Drafts on' : 'Original only', on: () => this.reopen({ originalOnly: !this.originalOnly }) });
       defs.push({ name: 'tm-mirror', label: this.mirrored ? 'Unmirror' : 'Mirror', on: () => this.reopen({ mirror: !this.mirrored }) });
       defs.push({ name: 'tm-list', label: 'All scenes', on: () => this.leave() });
     }
@@ -564,12 +569,12 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
     ui.fillStyle(TM.navy, 0.85).fillRect(bar.x, bar.y, bar.width, bar.height);
     const onBranch = !!d.branch && (d.stage === 'result' || d.stage === 'learn');
     if (!onBranch) ui.fillStyle(0xf2c14e, 0.5).fillRect(bar.x + (s.slow.from / dur) * bar.width, bar.y, ((s.decision.t - s.slow.from) / dur) * bar.width, bar.height);
-    for (const c of contacts(onBranch ? d.branch!.timeline : s.watch)) ui.fillStyle(c.kind === 'touch' ? 0xffffff : 0xff5050, 1).fillRect(bar.x + (c.t / dur) * bar.width - 1, bar.y - 3, 2, bar.height + 6);
+    for (const c of contacts(onBranch ? d.resultTimeline! : s.watch)) ui.fillStyle(c.kind === 'touch' ? 0xffffff : 0xff5050, 1).fillRect(bar.x + (c.t / dur) * bar.width - 1, bar.y - 3, 2, bar.height + 6);
     ui.fillStyle(TM.cream, 1).fillCircle(bar.x + (Math.min(d.t, dur) / dur) * bar.width, bar.y + 3, 6);
     this.elements.scrub = bar;
     const f = d.frame();
     const ball = f.ball.state.mode === 'held' ? `held by ${f.ball.state.by}` : f.ball.state.mode;
-    const cue = !onBranch ? (d.t >= s.slow.from ? 'cue window (slow)' : 'lead-in') : `branch ${d.choice} (${d.branch!.kind})`;
+    const cue = !onBranch ? (d.t >= s.slow.from ? 'cue window (slow)' : 'lead-in') : `branch ${d.choice} (${d.branch!.kind}${d.outcomes[d.choice!] ? `; outcome draft: ${d.outcomes[d.choice!]!.category}` : ''})`;
     const gaps = releaseBlockers(s).length;
     this.info.setText(`t ${d.t.toFixed(2)}s · ${cue} · ball ${ball} @ ${f.ball.at.map((n) => n.toFixed(1)).join(',')} · release blockers ${gaps} · hash ${sceneHash(s)}`).setPosition(pe.x + 4, pe.y + pe.height + 1).setWordWrapWidth(pe.width).setDepth(12);
   }
@@ -609,6 +614,8 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
       mirrored: this.mirrored,
       stage: d?.stage ?? null,
       stageLabel: this.stageText?.text ?? '',
+      presentation: d?.presentation ?? null,
+      outcomeDraft: d?.choice ? (d.outcomes[d.choice]?.branchId ?? null) : null,
       speedLabel: this.speedText?.text ?? '',
       paused: d?.paused ?? false,
       rate: d?.rate ?? 0,

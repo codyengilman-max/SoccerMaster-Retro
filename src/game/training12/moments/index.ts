@@ -5,6 +5,9 @@
  */
 import scenes from '../../../../docs/training/moments/scenes.v2.json';
 import approvals from '../../../../docs/training/moments/approvals.json';
+import outcomes from '../../../../docs/training/moments/outcomes.v1.json';
+import { outcomeHash, type OutcomeDraft } from './outcomes';
+import type { ChoiceId } from '../all36/types';
 import type { VariantId } from '../all36/types';
 import type { ApprovalRecord, MomentScene, ReviewStatus } from './schema';
 import { releaseBlockers } from './validate';
@@ -23,6 +26,22 @@ export function sceneHash(s: MomentScene): string {
     h2 = Math.imul(h2 ^ c, 0x5bd1e995) >>> 0;
   }
   return h1.toString(16).padStart(8, '0') + h2.toString(16).padStart(8, '0');
+}
+
+export const MOMENT_OUTCOMES = outcomes as unknown as readonly OutcomeDraft[];
+
+/** An outcome draft counts for players only with an approval record for its branch id, version and exact hash. */
+export function outcomeApproved(o: OutcomeDraft, records: readonly ApprovalRecord[] = MOMENT_APPROVALS): boolean {
+  const h = outcomeHash(o);
+  const mine = records.filter((r) => r.sceneId === o.branchId && r.version === o.outcomeVersion);
+  return ([...mine].reverse().find((r) => r.hash === h) ?? null)?.status === 'APPROVED';
+}
+
+/** Outcome drafts for a scene's frozen branches: every draft in review mode, approved ones only for players. */
+export function outcomesFor(s: MomentScene, review: boolean, records: readonly ApprovalRecord[] = MOMENT_APPROVALS): Partial<Record<ChoiceId, OutcomeDraft>> {
+  const out: Partial<Record<ChoiceId, OutcomeDraft>> = {};
+  for (const o of MOMENT_OUTCOMES) if (o.sceneId === s.sceneId && o.sceneVersion === s.version && (review || outcomeApproved(o, records))) out[o.choice] = o;
+  return out;
 }
 
 export function momentScene(situationId: string, variant: VariantId): MomentScene | undefined {

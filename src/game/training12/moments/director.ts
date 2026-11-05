@@ -6,7 +6,8 @@
  */
 import { GRADE_BAND } from '../all36/package';
 import type { ChoiceId, DisplayBand, Metres, PackageGrade } from '../all36/types';
-import type { MomentScene, OutcomeBranch } from './schema';
+import type { OutcomeDraft } from './outcomes';
+import type { MomentScene, OutcomeBranch, Timeline } from './schema';
 import { frameAt, type Frame } from './timeline';
 
 export type Stage = 'brief' | 'watch' | 'slow' | 'decide' | 'result' | 'learn' | 'done';
@@ -71,7 +72,22 @@ export class MomentDirector {
   readonly replays: { readonly n: number; readonly what: 'watch' | 'result' }[] = [];
   private runs = 0;
 
-  constructor(readonly scene: MomentScene, readonly resultRate = RESULT_RATE) {}
+  /** `outcomes`: outcome drafts for frozen branches (review: all drafts; players: approved ones only). */
+  constructor(readonly scene: MomentScene, readonly resultRate = RESULT_RATE, readonly outcomes: Partial<Record<ChoiceId, OutcomeDraft>> = {}) {}
+
+  /** The timeline Result plays: an outcome draft for a frozen branch if one is supplied, else the branch itself. */
+  get resultTimeline(): Timeline | null {
+    if (!this.choice) return null;
+    return this.outcomes[this.choice]?.timeline ?? this.scene.branches[this.choice].timeline;
+  }
+
+  /** result = a played-out consequence; explanation = a deliberately frozen teaching frame (never shown as RESULT). */
+  get presentation(): 'result' | 'explanation' | null {
+    if (!this.choice) return null;
+    const o = this.outcomes[this.choice];
+    if (o) return o.presentation;
+    return this.scene.branches[this.choice].kind === 'hold' ? 'explanation' : 'result';
+  }
 
   /** Playback rate of the scene clock right now (shown separately from the stage label). */
   get rate(): number {
@@ -90,7 +106,8 @@ export class MomentDirector {
   frame(): Frame {
     const s = this.scene;
     const br = this.branch;
-    if (br && (this.stage === 'result' || this.stage === 'learn' || this.stage === 'done')) return frameAt(br.timeline, s.ball.decision, this.t);
+    const rt = this.resultTimeline;
+    if (br && rt && (this.stage === 'result' || this.stage === 'learn' || this.stage === 'done')) return frameAt(rt, s.ball.decision, this.t);
     return frameAt(s.watch, s.ball.start, this.stage === 'decide' ? s.decision.t : this.t);
   }
 
@@ -130,8 +147,9 @@ export class MomentDirector {
     }
     const br = this.branch;
     if (!br) return;
-    this.t = Math.min(br.timeline.duration, this.t + dt * r);
-    if (this.t >= br.timeline.duration) {
+    const dur = this.resultTimeline!.duration;
+    this.t = Math.min(dur, this.t + dt * r);
+    if (this.t >= dur) {
       if (this.stage === 'result') this.stage = 'learn';
       this.replaying = false;
     }
@@ -192,7 +210,7 @@ export class MomentDirector {
 
   /** Scrub (review only): set the clock on the current timeline. */
   seek(t: number): void {
-    const d = this.branch && this.stage !== 'watch' && this.stage !== 'slow' && this.stage !== 'decide' ? this.branch.timeline.duration : this.scene.decision.t;
+    const d = this.branch && this.stage !== 'watch' && this.stage !== 'slow' && this.stage !== 'decide' ? this.resultTimeline!.duration : this.scene.decision.t;
     this.t = Math.min(Math.max(0, t), d);
   }
 }
