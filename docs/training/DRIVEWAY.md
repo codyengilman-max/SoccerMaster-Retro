@@ -44,7 +44,8 @@ Waves are seeded; every row is checked at build time for a reachable gap given s
 
 | Source (unchanged, `src/assets/art/driveway-v1/source/`) | SHA-256 prefix | Runtime |
 |---|---|---|
-| `driveway-background.png` 1536×1024 | `fc01272c541d3e30` | `driveway-background.webp` |
+| `driveway-background-v2.png` 1536×1024, open cluttered garage (owner, replaces v1) | `8a3801b018e89530` | `driveway-background.webp` (garage threshold at row 429: objects enter there) |
+| `driveway-background.png` 1536×1024, closed garage door (v1, kept for rollback) | `fc01272c541d3e30` | not shipped |
 | `breakables-sheet.png` 4×3 (box, box stack, target; intact/cracked/breaking/debris) | `e4098f485add31d0` | `driveway-objects.webp` frames `box-0..3`, `boxStack-0..3`, `target-0..3` |
 | `solids-sheet-a.png` 4×4 (cone, watering can, bucket, scooter) | `0992a0343c985504` | `cone-*`, `wateringCan-*`, `bucket-*`, `scooter-*` |
 | `solids-sheet-b.png` 4×4 (crushed can, basketball, tricycle, skateboard) | `0e22e832106ed9cc` | `can-*`, `basketball-*`, `tricycle-*`, `skateboard-*` |

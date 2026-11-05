@@ -12,8 +12,8 @@ const pick = <T>(m: Record<string, T>, name: string): T | undefined => Object.en
 
 export const DD_BG_KEY = 'dd:background';
 export const DD_OBJ_KEY = 'dd:objects';
-/** Background art 1536x1024 (3:2); the playable concrete spans this share of the image (measured on the owner art). */
-export const DD_BG = { width: 1536, height: 1024, lane: { left: 0.27, right: 0.73, top: 0.18, bottom: 1 } } as const;
+/** Background art 1536x1024 (3:2). `garageBase`: the open garage's threshold, where the concrete starts, as a share of the art height (row 429, measured on the owner art). */
+export const DD_BG = { width: 1536, height: 1024, garageBase: 429 / 1024 } as const;
 /** Displayed object height = collision diameter x this (art includes a soft shadow and some height above the footprint). */
 export const DD_ART_HEIGHT: Readonly<Record<ObjKind, number>> = {
   cone: 2.6, bucket: 2.2, wateringCan: 2.1, can: 1.9, basketball: 2.1, skateboard: 1.6, scooter: 2.6, tricycle: 2.4, box: 2.4, boxStack: 2.9, target: 2.6,
