@@ -439,11 +439,11 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
       case 'decide':
         return d.assisted ? `What do you do? Look at this: ${s.cues[0] ?? s.objective}` : 'Frozen. What do you do?';
       case 'result':
-        return `You chose ${d.choice}: ${s.actions.find((a) => a.id === d.choice)?.label ?? ''}`;
+        return `You chose ${d.choice}: ${s.actions.find((a) => a.id === d.choice)?.label ?? ''}${this.reviewQuestion()}`;
       case 'learn':
       case 'done': {
         const x = explain(s, d.evaluation!, d.choice ? d.outcomes[d.choice] : undefined);
-        return `${x.mattered}\nYou: ${x.chose}\n${x.changed}\n${x.next}${this.saved ? `\n${this.saved}` : ''}`;
+        return `${x.mattered}\nYou: ${x.chose}\n${x.changed}\n${x.next}${this.reviewQuestion()}${this.saved ? `\n${this.saved}` : ''}`;
       }
     }
   }
@@ -551,6 +551,13 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
       row.forEach((def, j) => this.buttons.push(this.makeButton(def.name, def.label, P2.x + bw / 2 + j * (bw + gap), y + h / 2, bw, h, def.on)));
       y += h + gap;
     }
+  }
+
+  /** Review only: the open scene question an outcome draft returns for the owner. */
+  private reviewQuestion(): string {
+    const d = this.director;
+    const q = this.review && d?.choice ? d.outcomes[d.choice]?.question : undefined;
+    return q ? `\nReview question: ${q}` : '';
   }
 
   private makeButton(name: string, label: string, x: number, y: number, w: number, h: number, on: () => void): Button {
