@@ -2934,6 +2934,35 @@
   "action": "receive",
   "bodyFacing": "N",
   "travelDirection": null,
+  "ballDirection": "N",
+  "status": "MISSING",
+  "statusReason": "no frames face away from or toward the camera",
+  "contact": {
+   "anatomicalContactFoot": "UNVERIFIED",
+   "supportingFoot": "UNVERIFIED",
+   "surface": "UNVERIFIED",
+   "contactFrame": "see contact-frames.json",
+   "status": "UNVERIFIED"
+  },
+  "sheets": [
+   "boy",
+   "girl"
+  ],
+  "uses": 5,
+  "events": 5,
+  "ids": [
+   "TM-D19-base/A",
+   "TM-D21-changed/B",
+   "TM-D28-changed/B",
+   "TM-D31-changed/B",
+   "TM-D32-changed/B"
+  ]
+ },
+ {
+  "priority": 3,
+  "action": "receive",
+  "bodyFacing": "N",
+  "travelDirection": null,
   "ballDirection": "S",
   "status": "MISSING",
   "statusReason": "no frames face away from or toward the camera",

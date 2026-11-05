@@ -56,7 +56,12 @@ function contactAudit(s: MomentScene, outs: OutcomeDraft[]) {
       if (e.kind === 'pass') n[e.to[1]! <= 0.01 || e.to[1]! >= s.field.length - 0.01 ? 'shot' : 'pass']++;
       if (e.kind === 'receive') n.receive++;
       if (e.kind === 'carry') n.dribble += e.touches.length;
-      if (e.kind === 'held' && tl.ball.some((q) => (q.kind === 'loose' || q.kind === 'roll') && ('t' in q ? q.t : q.t1) <= e.t && e.t > 0)) n.control++;
+      // A held ball is a separate control only if nothing (receive, carry) already took possession since the last loose/rolling ball.
+      if (e.kind === 'held' && e.t > 0) {
+        const tOf = (q: (typeof tl.ball)[number]) => ('t' in q ? q.t : q.t0);
+        const lastLoose = Math.max(-1, ...tl.ball.filter((q) => (q.kind === 'loose' || q.kind === 'roll') && tOf(q) <= e.t).map(tOf));
+        if (lastLoose >= 0 && !tl.ball.some((q) => (q.kind === 'receive' || q.kind === 'carry') && tOf(q) >= lastLoose && tOf(q) <= e.t)) n.control++;
+      }
     }
   }
   const types = Object.fromEntries(CONTACT_TYPES.map((k) => {
@@ -231,7 +236,11 @@ function requirements(scenes: MomentScene[], outs: OutcomeDraft[]) {
         const k = tr.keys.find((q) => q.action === 'receive')!;
         const p = tl.ball.find((q) => q.kind === 'pass' && q.receiver === e.by && q.t < e.t);
         const from = p && p.kind === 'pass' ? (tl.actors.find((a) => a.id === p.by)!.keys.find((q) => q.action === 'pass') ?? tl.actors.find((a) => a.id === p.by)!.keys[0]!).at : null;
-        add('receive', sector(k.at, k.look), null, from ? sector(from, k.at) : null, gk(e.by), sheets(e.by), id);
+        // A loose-ball collection looks at its own key; face the way the collector arrived instead.
+        const ki = tr.keys.indexOf(k);
+        const before = tr.keys.slice(0, ki).reverse().find((q) => Math.hypot(q.at[0] - k.at[0], q.at[1] - k.at[1]) >= 0.05);
+        const arrived = before ? sector(before.at, k.at) : null;
+        add('receive', sector(k.at, k.look) ?? (from ? sector(k.at, from) : null) ?? arrived, null, from ? sector(from, k.at) : arrived, gk(e.by), sheets(e.by), id);
       }
       if (e.kind === 'carry') {
         const tr = tl.actors.find((a) => a.id === e.by)!;

@@ -503,3 +503,7 @@ Tactical Moments replace the still Weekly Team Training picture with Brief → W
 - Executable-but-poor options are animated as a proposed Result (movement family from the label, run 5 m/s capped at 6 m; passes and shots end with the ball halfway in flight) with everyone else continuing established movement. No goal, turnover or failure is authored.
 - Options the package calls unavailable ("Freeze for explanation…") stay an Explanation. Hold, wait and scan options keep the ball still while play around it develops.
 - Only scene-specific coaching questions are returned (`question` on a draft).
+- A joined run needs a runner with established movement; a pass is shown as screened only if an opponent stands inside the passer-to-target lane. Otherwise the draft says so or asks a scene question.
+- Neutral choices (`choices.v1.json`): the generic "Pause, scan and communicate" option is dropped, judgment words move to Coach Code feedback, grades are unchanged; scenes left with fewer than two meaningful choices are flagged for reauthoring.
+- Animation manifest v2: body facing comes from each key's `look`, independent of travel and ball direction. Facing never decides the contact foot.
+- Approval records carry `bundle` = `bundleHash(scene)`; a missing or different bundle is stale (fails closed).
