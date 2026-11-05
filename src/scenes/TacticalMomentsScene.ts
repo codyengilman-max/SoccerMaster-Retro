@@ -474,7 +474,13 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
       const cs = portraitW / 230;
       this.coach.setScale(cs).setPosition(P.x + 8 - 150 * cs, P.y + 8).setVisible(true);
     }
-    this.coachText.setPosition(P.x + 16 + portraitW, P.y + 8).setWordWrapWidth(P.width - portraitW - 26).setFontSize(P.width < 300 ? 12 : 13).setText(`Coach Code: ${this.coachLine()}`);
+    this.coachText.setPosition(P.x + 16 + portraitW, P.y + 8).setWordWrapWidth(P.width - portraitW - 26).setText(`Coach Code: ${this.coachLine()}`);
+    // Long Learn text shrinks (down to 9 px) so it never runs under the controls; the controls keep a reserved band.
+    const reserve = this.review ? 3 * (14 + 6) : 2 * (24 + 6);
+    for (let fs = P.width < 300 ? 12 : 13; fs >= 9; fs--) {
+      this.coachText.setFontSize(fs);
+      if (this.coachText.y + this.coachText.height + 8 + reserve <= P.y + P.height - 6) break;
+    }
     this.elements.panel = P;
     this.layoutButtons(Math.min(P.y + P.height - 8, Math.max(P.y + 8 + portraitW, this.coachText.y + this.coachText.height) + 8));
     if (this.review && d && s) this.drawReview(ui);
