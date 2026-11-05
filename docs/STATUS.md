@@ -576,4 +576,4 @@ Done: 40 authored prototype moments (cue + counter, reflected for the other side
 ## Standing Mom portrait
 - Owner's standing Mom (3 faces × casual/dressy, `mom3-*`) replaces the shorter v2 busts on every spoken Mom line in cutscenes. Outfit follows the scene; the line's beat picks the closest face. v2 busts remain in the gallery only. See D54 and `docs/art/season-one/MOM_V2.md`.
 
-- Tactical Moments round 2 (review only, nothing released): scenes v2, 159 outcome drafts (88 played out, 71 explanation with a named missing decision), `FROZEN_BRANCHES.md`, `ANIMATION_REQUIREMENTS.md/.json`, contact review sheets (all UNVERIFIED), five-axis `REVIEW_MATRIX.md`.
+- Tactical Moments round 2 (review only, nothing released): scenes v2, 159 outcome drafts (87 played out, 72 explanation with a named missing decision), `FROZEN_BRANCHES.md`, `ANIMATION_REQUIREMENTS.md/.json`, contact review sheets (all UNVERIFIED), five-axis `REVIEW_MATRIX.md`.
