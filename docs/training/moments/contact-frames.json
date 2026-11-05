@@ -1,0 +1,971 @@
+[
+ {
+  "sheet": "boy",
+  "action": "pass",
+  "contactFrame": 9,
+  "beforeFrames": [
+   7,
+   8
+  ],
+  "afterFrames": [
+   10
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 149,
+   "y": 130,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball at the foot, leaves along the facing direction at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/boy.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "boy",
+  "action": "receive",
+  "contactFrame": 14,
+  "beforeFrames": [
+   13
+  ],
+  "afterFrames": [
+   15
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 120,
+   "y": 133,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball arrives toward the body along the facing direction, stops at the foot at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/boy.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "girl",
+  "action": "pass",
+  "contactFrame": 9,
+  "beforeFrames": [
+   7,
+   8
+  ],
+  "afterFrames": [
+   10
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 147,
+   "y": 126,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball at the foot, leaves along the facing direction at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/girl.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "girl",
+  "action": "receive",
+  "contactFrame": 14,
+  "beforeFrames": [
+   13
+  ],
+  "afterFrames": [
+   15
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 118,
+   "y": 137,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball arrives toward the body along the facing direction, stops at the foot at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/girl.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "teammate_01",
+  "action": "pass",
+  "contactFrame": 9,
+  "beforeFrames": [
+   7,
+   8
+  ],
+  "afterFrames": [
+   10
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 136,
+   "y": 131,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball at the foot, leaves along the facing direction at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/teammate_01.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "teammate_01",
+  "action": "receive",
+  "contactFrame": 14,
+  "beforeFrames": [
+   13
+  ],
+  "afterFrames": [
+   15
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 118,
+   "y": 147,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball arrives toward the body along the facing direction, stops at the foot at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/teammate_01.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "teammate_02",
+  "action": "pass",
+  "contactFrame": 9,
+  "beforeFrames": [
+   7,
+   8
+  ],
+  "afterFrames": [
+   10
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 157,
+   "y": 117,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball at the foot, leaves along the facing direction at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/teammate_02.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "teammate_02",
+  "action": "receive",
+  "contactFrame": 14,
+  "beforeFrames": [
+   13
+  ],
+  "afterFrames": [
+   15
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 127,
+   "y": 134,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball arrives toward the body along the facing direction, stops at the foot at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/teammate_02.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "teammate_03",
+  "action": "pass",
+  "contactFrame": 9,
+  "beforeFrames": [
+   7,
+   8
+  ],
+  "afterFrames": [
+   10
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 146,
+   "y": 117,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball at the foot, leaves along the facing direction at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/teammate_03.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "teammate_03",
+  "action": "receive",
+  "contactFrame": 14,
+  "beforeFrames": [
+   13
+  ],
+  "afterFrames": [
+   15
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 128,
+   "y": 125,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball arrives toward the body along the facing direction, stops at the foot at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/teammate_03.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "teammate_04",
+  "action": "pass",
+  "contactFrame": 9,
+  "beforeFrames": [
+   7,
+   8
+  ],
+  "afterFrames": [
+   10
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 145,
+   "y": 135,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball at the foot, leaves along the facing direction at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/teammate_04.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "teammate_04",
+  "action": "receive",
+  "contactFrame": 14,
+  "beforeFrames": [
+   13
+  ],
+  "afterFrames": [
+   15
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 123,
+   "y": 121,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball arrives toward the body along the facing direction, stops at the foot at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/teammate_04.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "teammate_05",
+  "action": "pass",
+  "contactFrame": 9,
+  "beforeFrames": [
+   7,
+   8
+  ],
+  "afterFrames": [
+   10
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 129,
+   "y": 122,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball at the foot, leaves along the facing direction at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/teammate_05.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "teammate_05",
+  "action": "receive",
+  "contactFrame": 14,
+  "beforeFrames": [
+   13
+  ],
+  "afterFrames": [
+   15
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 129,
+   "y": 136,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball arrives toward the body along the facing direction, stops at the foot at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/teammate_05.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "teammate_06",
+  "action": "pass",
+  "contactFrame": 9,
+  "beforeFrames": [
+   7,
+   8
+  ],
+  "afterFrames": [
+   10
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 150,
+   "y": 128,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball at the foot, leaves along the facing direction at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/teammate_06.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "teammate_06",
+  "action": "receive",
+  "contactFrame": 14,
+  "beforeFrames": [
+   13
+  ],
+  "afterFrames": [
+   15
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 128,
+   "y": 132,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball arrives toward the body along the facing direction, stops at the foot at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/teammate_06.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "teammate_07",
+  "action": "pass",
+  "contactFrame": 9,
+  "beforeFrames": [
+   7,
+   8
+  ],
+  "afterFrames": [
+   10
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 152,
+   "y": 117,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball at the foot, leaves along the facing direction at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/teammate_07.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "teammate_07",
+  "action": "receive",
+  "contactFrame": 14,
+  "beforeFrames": [
+   13
+  ],
+  "afterFrames": [
+   15
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 134,
+   "y": 132,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball arrives toward the body along the facing direction, stops at the foot at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/teammate_07.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "opponent_01",
+  "action": "pass",
+  "contactFrame": 9,
+  "beforeFrames": [
+   7,
+   8
+  ],
+  "afterFrames": [
+   10
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 144,
+   "y": 127,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball at the foot, leaves along the facing direction at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/opponent_01.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "opponent_01",
+  "action": "receive",
+  "contactFrame": 14,
+  "beforeFrames": [
+   13
+  ],
+  "afterFrames": [
+   15
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 138,
+   "y": 130,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball arrives toward the body along the facing direction, stops at the foot at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/opponent_01.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "opponent_02",
+  "action": "pass",
+  "contactFrame": 9,
+  "beforeFrames": [
+   7,
+   8
+  ],
+  "afterFrames": [
+   10
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 146,
+   "y": 119,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball at the foot, leaves along the facing direction at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/opponent_02.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "opponent_02",
+  "action": "receive",
+  "contactFrame": 14,
+  "beforeFrames": [
+   13
+  ],
+  "afterFrames": [
+   15
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 113,
+   "y": 136,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball arrives toward the body along the facing direction, stops at the foot at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/opponent_02.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "opponent_03",
+  "action": "pass",
+  "contactFrame": 9,
+  "beforeFrames": [
+   7,
+   8
+  ],
+  "afterFrames": [
+   10
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 155,
+   "y": 120,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball at the foot, leaves along the facing direction at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/opponent_03.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "opponent_03",
+  "action": "receive",
+  "contactFrame": 14,
+  "beforeFrames": [
+   13
+  ],
+  "afterFrames": [
+   15
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 123,
+   "y": 139,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball arrives toward the body along the facing direction, stops at the foot at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/opponent_03.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "opponent_04",
+  "action": "pass",
+  "contactFrame": 9,
+  "beforeFrames": [
+   7,
+   8
+  ],
+  "afterFrames": [
+   10
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 148,
+   "y": 126,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball at the foot, leaves along the facing direction at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/opponent_04.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "opponent_04",
+  "action": "receive",
+  "contactFrame": 14,
+  "beforeFrames": [
+   13
+  ],
+  "afterFrames": [
+   15
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 137,
+   "y": 122,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball arrives toward the body along the facing direction, stops at the foot at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/opponent_04.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "opponent_05",
+  "action": "pass",
+  "contactFrame": 9,
+  "beforeFrames": [
+   7,
+   8
+  ],
+  "afterFrames": [
+   10
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 149,
+   "y": 117,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball at the foot, leaves along the facing direction at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/opponent_05.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "opponent_05",
+  "action": "receive",
+  "contactFrame": 14,
+  "beforeFrames": [
+   13
+  ],
+  "afterFrames": [
+   15
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 113,
+   "y": 144,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball arrives toward the body along the facing direction, stops at the foot at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/opponent_05.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "opponent_06",
+  "action": "pass",
+  "contactFrame": 9,
+  "beforeFrames": [
+   7,
+   8
+  ],
+  "afterFrames": [
+   10
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 155,
+   "y": 125,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball at the foot, leaves along the facing direction at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/opponent_06.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "opponent_06",
+  "action": "receive",
+  "contactFrame": 14,
+  "beforeFrames": [
+   13
+  ],
+  "afterFrames": [
+   15
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 129,
+   "y": 129,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball arrives toward the body along the facing direction, stops at the foot at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/opponent_06.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "opponent_07",
+  "action": "pass",
+  "contactFrame": 9,
+  "beforeFrames": [
+   7,
+   8
+  ],
+  "afterFrames": [
+   10
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 158,
+   "y": 123,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball at the foot, leaves along the facing direction at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/opponent_07.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "opponent_07",
+  "action": "receive",
+  "contactFrame": 14,
+  "beforeFrames": [
+   13
+  ],
+  "afterFrames": [
+   15
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 118,
+   "y": 146,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball arrives toward the body along the facing direction, stops at the foot at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/opponent_07.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "opponent_08",
+  "action": "pass",
+  "contactFrame": 9,
+  "beforeFrames": [
+   7,
+   8
+  ],
+  "afterFrames": [
+   10
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 158,
+   "y": 128,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball at the foot, leaves along the facing direction at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/opponent_08.png",
+  "status": "UNVERIFIED"
+ },
+ {
+  "sheet": "opponent_08",
+  "action": "receive",
+  "contactFrame": 14,
+  "beforeFrames": [
+   13
+  ],
+  "afterFrames": [
+   15
+  ],
+  "anatomicalContactFoot": "UNVERIFIED",
+  "supportingFoot": "UNVERIFIED",
+  "contactSurface": "UNVERIFIED",
+  "contactAnchorPx": {
+   "x": 100,
+   "y": 120,
+   "estimated": true
+  },
+  "cellPx": 160,
+  "feetAnchorPx": {
+   "x": 80,
+   "y": 154
+  },
+  "ballApproachDeparture": "ball arrives toward the body along the facing direction, stops at the foot at contact",
+  "mirrorRule": "a true horizontal mirror swaps the anatomical foot, anchors and motion; it does not verify the original identification",
+  "review": "contact/opponent_08.png",
+  "status": "UNVERIFIED"
+ }
+]
