@@ -5,6 +5,8 @@ import { episodeById } from '../src/game/training12/all36/package';
 import { draftAll } from '../src/game/training12/moments/draft';
 import { sceneHash } from '../src/game/training12/moments/index';
 import { draftOutcomes, outcomeHash, type OutcomeDraft } from '../src/game/training12/moments/outcomes';
+import { stillCast } from '../src/render/art/teamTrainingFrames';
+import type { Timeline } from '../src/game/training12/moments/schema';
 import { releaseBlockers, validateScene } from '../src/game/training12/moments/validate';
 import type { MomentScene } from '../src/game/training12/moments/schema';
 
@@ -86,6 +88,78 @@ function frozen(scenes: MomentScene[], outs: OutcomeDraft[]): string {
   ].join('\n');
 }
 
+
+type Facing = 'N' | 'S' | 'E' | 'W';
+const FACING_TEXT: Record<Facing, string> = { N: 'N: away from camera (up the screen)', S: 'S: toward camera (down the screen)', E: 'E: screen right', W: 'W: screen left' };
+const sector = (a: readonly number[], b: readonly number[]): Facing | null => {
+  const dx = b[0]! - a[0]!;
+  const dy = b[1]! - a[1]!;
+  if (Math.hypot(dx, dy) < 0.05) return null;
+  return Math.abs(dy) > Math.abs(dx) ? (dy > 0 ? 'N' : 'S') : dx > 0 ? 'E' : 'W';
+};
+const REUSE: Record<Facing, string> = { E: 'yes: existing right three-quarter frames as drawn', W: 'yes: true horizontal mirror of the E frames (swaps anatomical left/right)', N: 'no: no frames face away from the camera', S: 'no: no frames face the camera' };
+
+function requirements(scenes: MomentScene[], outs: OutcomeDraft[]) {
+  const rows = new Map<string, { action: string; facing: Facing; sheets: Set<string>; ids: Set<string>; contact: boolean }>();
+  const add = (action: string, facing: Facing | null, sheets: string[], id: string, contact: boolean) => {
+    if (!facing) return;
+    const key = `${action}|${facing}`;
+    const r = rows.get(key) ?? { action, facing, sheets: new Set<string>(), ids: new Set<string>(), contact };
+    for (const x of sheets) r.sheets.add(x);
+    r.ids.add(id);
+    rows.set(key, r);
+  };
+  const scan = (s: MomentScene, tl: Timeline, id: string) => {
+    const actors = s.actors.map((a) => ({ id: a.id, team: a.team, role: a.role, at: a.decision }));
+    const casts = (['boy', 'girl'] as const).map((l) => stillCast(l, actors, s.protagonist.actorId));
+    const sheets = (aid: string) => [...new Set(casts.map((c) => c.get(aid)!))];
+    for (const tr of tl.actors) {
+      for (let i = 0; i < tr.keys.length; i++) {
+        const k = tr.keys[i]!;
+        const prev = tr.keys[i - 1];
+        if (prev && (k.action === 'run' || k.action === 'shuffle') && Math.hypot(k.at[0] - prev.at[0], k.at[1] - prev.at[1]) > 0.05) add(k.action, sector(prev.at, k.at), sheets(tr.id), id, false);
+        if (k.action === 'stand' || k.action === 'keeper-ready') add(k.action === 'stand' ? 'stand (looking)' : 'keeper ready', sector(k.at, k.look), sheets(tr.id), id, false);
+      }
+    }
+    for (const e of tl.ball) {
+      if (e.kind === 'pass') {
+        const tr = tl.actors.find((a) => a.id === e.by)!;
+        const at = tr.keys.find((q) => q.action === 'pass')?.at ?? tr.keys[0]!.at;
+        add('pass (strike)', sector(at, e.to), sheets(e.by), id, true);
+      }
+      if (e.kind === 'receive') {
+        const tr = tl.actors.find((a) => a.id === e.by)!;
+        const k = tr.keys.find((q) => q.action === 'receive')!;
+        add('receive (first touch)', sector(k.at, k.look), sheets(e.by), id, true);
+      }
+      if (e.kind === 'carry') {
+        const tr = tl.actors.find((a) => a.id === e.by)!;
+        add('dribble touch (no frames exist; drawn on run cycle)', sector(tr.keys[0]!.at, tr.keys[tr.keys.length - 1]!.at), sheets(e.by), id, true);
+      }
+    }
+  };
+  for (const s of scenes) {
+    scan(s, s.watch, `${s.sceneId}/watch`);
+    for (const k of ['A', 'B', 'C', 'D'] as const) scan(s, s.branches[k].timeline, `${s.sceneId}/${k}`);
+  }
+  for (const o of outs) if (o.timeline) scan(scenes.find((x) => x.sceneId === o.sceneId)!, o.timeline, `${o.branchId}#outcome`);
+  const list = [...rows.values()].sort((a, b) => a.action.localeCompare(b.action) || a.facing.localeCompare(b.facing));
+  const json = list.map((r) => ({ action: r.action, facing: r.facing, facingText: FACING_TEXT[r.facing], existingFrameReusable: REUSE[r.facing], contact: r.contact ? { contactFoot: 'TBD (reviewed metadata required)', supportingFoot: 'TBD', surface: 'TBD' } : null, sheets: [...r.sheets].sort(), uses: r.ids.size, ids: [...r.ids].sort() }));
+  const md = [
+    '# Tactical Moments: directional animation requirements (generated)',
+    '',
+    'Grouped by action and facing so one directional sheet per character covers every scene. Facing is the screen direction on the true overhead pitch (home attacks up the screen). Every outfield sheet below is a distinct character: boy and girl are the two protagonist options; teammate_01-07 orange kits; opponent_01-08 green pinnies. Contact rows need reviewed contact metadata (foot, surface, supporting foot); facing never decides the foot.',
+    '',
+    '| Action | Facing | Existing frame reusable? | Contact metadata | Sheets needing it | Uses |',
+    '|---|---|---|---|---|---|',
+    ...json.map((r) => `| ${r.action} | ${r.facingText} | ${r.existingFrameReusable} | ${r.contact ? 'contact foot, supporting foot, surface: TBD' : '—'} | ${r.sheets.join(', ')} | ${r.uses} |`),
+    '',
+    'Scene/branch IDs per row: `ANIMATION_REQUIREMENTS.json` (`<scene>/watch`, `<scene>/<choice>`, `<scene>/<choice>#outcome`).',
+    '',
+  ].join('\n');
+  return { json: JSON.stringify(json, null, 1) + '\n', md };
+}
+
 describe('stored Tactical Moments drafts', () => {
   const scenes = exportDrafts();
   const outs = draftOutcomes(scenes);
@@ -98,6 +172,8 @@ describe('stored Tactical Moments drafts', () => {
     ['GAPS_BY_SCENE.md', gaps(scenes)],
     ['outcomes.v1.json', '[\n' + outs.map((o) => JSON.stringify(o)).join(',\n') + '\n]\n'],
     ['FROZEN_BRANCHES.md', frozen(scenes, outs)],
+    ['ANIMATION_REQUIREMENTS.json', requirements(scenes, outs).json],
+    ['ANIMATION_REQUIREMENTS.md', requirements(scenes, outs).md],
   ];
   for (const [name, want] of files) {
     it(`${name} equals the generator output (regenerate with WRITE_MOMENTS=1)`, () => {
