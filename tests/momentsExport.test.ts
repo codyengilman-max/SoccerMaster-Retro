@@ -240,7 +240,7 @@ function requirements(scenes: MomentScene[], outs: OutcomeDraft[]) {
         const ki = tr.keys.indexOf(k);
         const before = tr.keys.slice(0, ki).reverse().find((q) => Math.hypot(q.at[0] - k.at[0], q.at[1] - k.at[1]) >= 0.05);
         const arrived = before ? sector(before.at, k.at) : null;
-        add('receive', sector(k.at, k.look) ?? (from ? sector(k.at, from) : null) ?? arrived, null, from ? sector(from, k.at) : arrived, gk(e.by), sheets(e.by), id);
+        add('receive', sector(k.at, k.look) ?? (from ? sector(k.at, from) : null) ?? arrived, null, from ? sector(from, k.at) : null, gk(e.by), sheets(e.by), id);
       }
       if (e.kind === 'carry') {
         const tr = tl.actors.find((a) => a.id === e.by)!;

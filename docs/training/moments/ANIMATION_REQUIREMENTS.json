@@ -2909,32 +2909,7 @@
   "action": "receive",
   "bodyFacing": "N",
   "travelDirection": null,
-  "ballDirection": "E",
-  "status": "MISSING",
-  "statusReason": "no frames face away from or toward the camera",
-  "contact": {
-   "anatomicalContactFoot": "UNVERIFIED",
-   "supportingFoot": "UNVERIFIED",
-   "surface": "UNVERIFIED",
-   "contactFrame": "see contact-frames.json",
-   "status": "UNVERIFIED"
-  },
-  "sheets": [
-   "keeper_home"
-  ],
-  "uses": 2,
-  "events": 2,
-  "ids": [
-   "TM-D04-base/A",
-   "TM-D04-changed/A"
-  ]
- },
- {
-  "priority": 3,
-  "action": "receive",
-  "bodyFacing": "N",
-  "travelDirection": null,
-  "ballDirection": "N",
+  "ballDirection": null,
   "status": "MISSING",
   "statusReason": "no frames face away from or toward the camera",
   "contact": {
@@ -2956,6 +2931,31 @@
    "TM-D28-changed/B",
    "TM-D31-changed/B",
    "TM-D32-changed/B"
+  ]
+ },
+ {
+  "priority": 3,
+  "action": "receive",
+  "bodyFacing": "N",
+  "travelDirection": null,
+  "ballDirection": "E",
+  "status": "MISSING",
+  "statusReason": "no frames face away from or toward the camera",
+  "contact": {
+   "anatomicalContactFoot": "UNVERIFIED",
+   "supportingFoot": "UNVERIFIED",
+   "surface": "UNVERIFIED",
+   "contactFrame": "see contact-frames.json",
+   "status": "UNVERIFIED"
+  },
+  "sheets": [
+   "keeper_home"
+  ],
+  "uses": 2,
+  "events": 2,
+  "ids": [
+   "TM-D04-base/A",
+   "TM-D04-changed/A"
   ]
  },
  {

@@ -532,11 +532,14 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
     const wide = defs.filter((x) => x.wide);
     const small = defs.filter((x) => !x.wide);
     const rowsWide = wide.length;
-    const perRow = this.review ? (P2.w < 300 ? 4 : 5) : P2.w < 300 ? 3 : 4;
-    const rowsSmall = Math.ceil(small.length / perRow);
     const avail = P2.bottom - top;
-    // Review mode carries extra tools; on the smallest phones its rows shrink rather than leave the panel.
-    const h = Math.max(this.review ? 14 : 24, Math.min(40, (avail - gap * (rowsWide + rowsSmall - 1)) / Math.max(1, rowsWide + rowsSmall)));
+    const minH = this.review ? 14 : 24;
+    const fitH = (rows: number) => (avail - gap * (rows - 1)) / Math.max(1, rows);
+    // Review mode carries extra tools; on the smallest phones it packs more per row rather than leave the panel.
+    let perRow = this.review ? (P2.w < 300 ? 4 : 5) : P2.w < 300 ? 3 : 4;
+    while (this.review && perRow < small.length && fitH(rowsWide + Math.ceil(small.length / perRow)) < minH) perRow++;
+    const rowsSmall = Math.ceil(small.length / perRow);
+    const h = Math.max(minH, Math.min(40, fitH(rowsWide + rowsSmall)));
     let y = top;
     for (const def of wide) {
       this.buttons.push(this.makeButton(def.name, def.label, P2.x + P2.w / 2, y + h / 2, P2.w, h, def.on));

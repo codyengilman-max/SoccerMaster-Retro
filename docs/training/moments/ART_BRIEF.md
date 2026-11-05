@@ -28,7 +28,7 @@ Source: `docs/art/team-training-v1/source/boy_highlight.png`; runtime: `src/asse
 | 3 | pass | N | stationary | N | MISSING | 4 frames: plant, plant, CONTACT, follow-through (existing 7-10); contact frame held 0.12 s from ball release, follow-through to 0.30 s. | required | 2 |
 | 3 | pass | S | stationary | S | MISSING | 4 frames: plant, plant, CONTACT, follow-through (existing 7-10); contact frame held 0.12 s from ball release, follow-through to 0.30 s. | required | 2 |
 | 3 | pass | W | stationary | W | CANDIDATE_NEEDS_REVIEW | 4 frames: plant, plant, CONTACT, follow-through (existing 7-10); contact frame held 0.12 s from ball release, follow-through to 0.30 s. | required | 7 |
-| 3 | receive | N | stationary | N | MISSING | 3 frames: reach, CONTACT (first touch), settle (existing 13-15); contact held 0.15 s from arrival, settle to 0.35 s. | required | 5 |
+| 3 | receive | N | stationary | — | MISSING | 3 frames: reach, CONTACT (first touch), settle (existing 13-15); contact held 0.15 s from arrival, settle to 0.35 s. | required | 5 |
 | 3 | shot | W | stationary | W | CANDIDATE_NEEDS_REVIEW | As pass (no separate shot row exists): plant, plant, CONTACT, follow-through; contact held 0.12 s from release. | required | 2 |
 
 ## girl
@@ -53,7 +53,7 @@ Source: `docs/art/team-training-v1/source/girl_highlight.png`; runtime: `src/ass
 | 3 | pass | N | stationary | N | MISSING | 4 frames: plant, plant, CONTACT, follow-through (existing 7-10); contact frame held 0.12 s from ball release, follow-through to 0.30 s. | required | 2 |
 | 3 | pass | S | stationary | S | MISSING | 4 frames: plant, plant, CONTACT, follow-through (existing 7-10); contact frame held 0.12 s from ball release, follow-through to 0.30 s. | required | 2 |
 | 3 | pass | W | stationary | W | CANDIDATE_NEEDS_REVIEW | 4 frames: plant, plant, CONTACT, follow-through (existing 7-10); contact frame held 0.12 s from ball release, follow-through to 0.30 s. | required | 7 |
-| 3 | receive | N | stationary | N | MISSING | 3 frames: reach, CONTACT (first touch), settle (existing 13-15); contact held 0.15 s from arrival, settle to 0.35 s. | required | 5 |
+| 3 | receive | N | stationary | — | MISSING | 3 frames: reach, CONTACT (first touch), settle (existing 13-15); contact held 0.15 s from arrival, settle to 0.35 s. | required | 5 |
 | 3 | shot | W | stationary | W | CANDIDATE_NEEDS_REVIEW | As pass (no separate shot row exists): plant, plant, CONTACT, follow-through; contact held 0.12 s from release. | required | 2 |
 
 ## teammate_01
