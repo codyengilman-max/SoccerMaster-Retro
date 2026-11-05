@@ -80,8 +80,10 @@ function plan(s: MomentScene, fam: Family, label: string, runEnd: ReadonlyMap<st
         if (!pick) return null;
         target = pick.decision;
       }
-      screen = [...opps].sort((a, b) => dist(a.decision, segNear(a.decision, at, target)) - dist(b.decision, segNear(b.decision, at, target)))[0];
-      return { to: at, why: `${fam === 'shot' ? 'shoots' : 'plays the pass'} toward [${target.join(', ')}]; Result ends with the ball halfway, in flight, as ${screen?.id ?? 'nobody'} steps toward the lane`, ball: fam, ballTo: target, responder: screen?.id };
+      // A screen must stand between passer and target: projection strictly inside the lane, within 4 m of it.
+      const u = (o: Metres) => { const dx = target[0] - at[0], dy = target[1] - at[1]; return ((o[0] - at[0]) * dx + (o[1] - at[1]) * dy) / (dx * dx + dy * dy || 1); };
+      screen = [...opps].filter((o) => u(o.decision) > 0.05 && u(o.decision) < 0.95 && dist(o.decision, segNear(o.decision, at, target)) < 4).sort((a, b) => dist(a.decision, segNear(a.decision, at, target)) - dist(b.decision, segNear(b.decision, at, target)))[0];
+      return { to: at, why: `${fam === 'shot' ? 'shoots' : 'plays the pass'} toward [${target.join(', ')}]; Result ends with the ball halfway, in flight${screen ? `, as ${screen.id} steps toward the lane` : '; no opponent stands in the lane at the freeze'}`, ball: fam, ballTo: target, responder: screen?.id };
     }
     case 'close': {
       const tgt = holder && holder !== P ? s.actors.find((a) => a.id === holder)!.decision : ball;
@@ -97,10 +99,11 @@ function plan(s: MomentScene, fam: Family, label: string, runEnd: ReadonlyMap<st
     case 'run-same': {
       // The runner the option names: striker for near-post / striker's route, a winger for the winger's approach,
       // otherwise the teammate already making a run at the freeze. Nobody identifiable = null (question).
-      const named = /near-post|striker/.test(label) ? mates.filter((x) => x.role === 'ST') : /winger/.test(label) ? mates.filter((x) => /^(LW|RW)$/.test(x.role)) : mates.filter((x) => x.id !== holder && runEnd.has(x.id));
-      const m = nearest(named, at);
+      const named = /near-post|striker/.test(label) ? mates.filter((x) => x.role === 'ST') : /winger/.test(label) ? mates.filter((x) => /^(LW|RW)$/.test(x.role)) : mates.filter((x) => x.id !== holder);
+      // Joining a run needs a runner with established movement; a stationary named player is a question, not a route.
+      const m = nearest(named.filter((x) => runEnd.has(x.id)), at);
       if (!m) return null;
-      const end = runEnd.get(m.id) ?? m.decision;
+      const end = runEnd.get(m.id)!;
       return { to: short(at, end, 1.5), why: `joins ${m.id}'s run, stopping 1.5 m from where it is heading` };
     }
     case 'run-to-mate': {
@@ -139,7 +142,15 @@ export function draftOutcomeV2(s: MomentScene, k: ChoiceId): OutcomeDraft | null
   const arrive = inFlight ? r2(0.35 + dist(at, p.ballTo!) / (p.ball === 'shot' ? 14 : 10)) : 0;
   const end = inFlight ? r2(0.35 + (arrive - 0.35) * FLIGHT_SHARE) : r2(Math.max(tl.duration, runT + 0.4));
   const lookAt = p.ballTo ?? s.ball.decision;
-  const clip = (keys: ActorTrack['keys']): ActorTrack['keys'] => keys.filter((q) => q.t <= end + 1e-9);
+  // Trim a continuation at `end`, sampling the active segment so established movement is kept, not dropped.
+  const clip = (keys: ActorTrack['keys']): ActorTrack['keys'] => {
+    const kept = keys.filter((q) => q.t <= end + 1e-9);
+    const next = keys.find((q) => q.t > end + 1e-9);
+    const prev = kept[kept.length - 1];
+    if (!next || !prev) return kept;
+    const f = (end - prev.t) / (next.t - prev.t);
+    return [...kept, { ...next, t: end, at: [r2(prev.at[0] + (next.at[0] - prev.at[0]) * f), r2(prev.at[1] + (next.at[1] - prev.at[1]) * f)] as Metres }];
+  };
   const actors: ActorTrack[] = tl.actors.map((tr) => {
     const ext = (keys: ActorTrack['keys']) => (keys[keys.length - 1]!.t < end ? [...keys, { ...keys[keys.length - 1]!, t: end }] : keys);
     if (tr.id === P || tr.id === p.also) {
@@ -154,7 +165,7 @@ export function draftOutcomeV2(s: MomentScene, k: ChoiceId): OutcomeDraft | null
       const to = p.ballTo ? toward(from, segNear(from, at, p.ballTo), 1) : from;
       return { id: tr.id, purpose: 'Proposed response: steps toward the lane / faces the action.', keys: [{ t: 0, at: from, action: 'stand', look: at }, { t: Math.min(0.6, end), at: to, action: dist(from, to) > 0.05 ? 'shuffle' : 'stand', look: at }, { t: end, at: to, action: 'stand', look: at }] };
     }
-    return { ...tr, keys: ext(clip(tr.keys).length ? clip(tr.keys) : tr.keys.slice(0, 1)) };
+    return { ...tr, keys: ext(clip(tr.keys)) };
   });
   const holder = s.ball.ownerAtDecision;
   let ballEv: BallEvent[];

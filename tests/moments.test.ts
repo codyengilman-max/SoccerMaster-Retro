@@ -294,8 +294,16 @@ describe('outcome drafts for frozen branches', () => {
       const s = MOMENT_SCENES.find((x) => x.sceneId === o.sceneId)!;
       expect(ballAt(o.timeline!, s.ball.decision, o.timeline!.duration).state.mode).toBe('flight');
     }
-    const np = MOMENT_OUTCOMES.find((o) => o.branchId === 'TM-D18-base/C')!;
-    expect(np.whatChanged).toContain("H_ST's run");
+    // D18: the striker has no established run at the freeze, so "join the same near-post run" is a question.
+    for (const id of ['TM-D18-base/C', 'TM-D18-changed/C']) {
+      const np = MOMENT_OUTCOMES.find((o) => o.branchId === id)!;
+      expect(np.timeline).toBeNull();
+      expect(np.question).toBeTruthy();
+    }
+    const { actorAt } = await import('../src/game/training12/moments/timeline');
+    const d16 = MOMENT_OUTCOMES.find((o) => o.branchId === 'TM-D16-changed/C')!;
+    const cb = d16.timeline!.actors.find((a) => a.id === 'A_CB')!;
+    expect(actorAt(d16.timeline!, 'A_CB', d16.timeline!.duration).at).not.toEqual(cb.keys[0]!.at);
     const sw = MOMENT_OUTCOMES.find((o) => o.branchId === 'TM-D10-base/C')!;
     expect(sw.timeline).toBeNull();
     expect(sw.question).toBeTruthy();
