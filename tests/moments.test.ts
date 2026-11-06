@@ -339,7 +339,9 @@ describe('outcome drafts: review fixes', () => {
     expect(explain(s, d.evaluation!, o).changed).toBe(o.whatChanged);
     const { outcomeHash } = await import('../src/game/training12/moments/outcomes');
     const rec = [{ sceneId: o.branchId, version: o.outcomeVersion, hash: outcomeHash(o), status: 'APPROVED' as const, reviewer: 't', date: '2026-01-01', note: '' }];
-    expect(outcomesFor(s, false, rec)[o.choice]).toBeUndefined();
+    // Owner-authorized art fallbacks (D76d): directional gaps no longer hold back an approved draft; unapproved ones never reach players.
+    expect(outcomesFor(s, false, rec)[o.choice]).toBeDefined();
+    expect(outcomesFor(s, false, [])[o.choice]).toBeUndefined();
   });
 });
 
@@ -380,6 +382,30 @@ describe('neutral choices in the review build', () => {
         const s = momentScene(d, v)!;
         expect(movementCheck(s, 'tackle', MOMENT_OUTCOMES.find((o) => o.branchId === `${s.sceneId}/C`)).check).toBe('STOPS_BEFORE_CONTACT');
       }
+  });
+  it('owner-authorized art fallbacks: directional gaps use the closest supplied frames; a tackle still blocks', async () => {
+    const { fallbackFor, blocksAfterFallback } = await import('../src/game/training12/moments/artFallback');
+    expect(fallbackFor({ actor: 'H_ST', phase: 'branch', need: 'run up the screen: only right three-quarter frames exist', blocksRelease: true })).not.toBeNull();
+    expect(fallbackFor({ actor: 'H_ST', phase: 'branch', need: 'pass up the screen: the pass row only strikes sideways', blocksRelease: true })).not.toBeNull();
+    expect(blocksAfterFallback({ actor: 'H_ST', phase: 'branch', need: 'tackle / dispossession: no tackle frames exist (must not be faked with pass frames)', blocksRelease: true })).toBe(true);
+    for (const s of MOMENT_SCENES) for (const b of releaseBlockers(s)) expect(b).not.toMatch(/three-quarter frames exist|only strikes sideways/);
+  });
+  it('a dribbled ball is pushed ahead on each touch and caught up between touches, never glued to the foot', async () => {
+    const { ballAt, actorAt } = await import('../src/game/training12/moments/timeline');
+    const tl = MOMENT_SCENES.flatMap((x) => Object.values(x.branches).map((b) => b.timeline)).find((x) => x.ball.some((e) => e.kind === 'carry' && e.touches.length >= 2))!;
+    const c = tl.ball.find((e) => e.kind === 'carry' && e.touches.length >= 2)! as Extract<(typeof tl.ball)[number], { kind: 'carry' }>;
+    const s0 = MOMENT_SCENES.find((x) => Object.values(x.branches).some((b) => b.timeline === tl))!;
+    const start = ballAt(s0.watch, s0.ball.start, s0.watch.duration).at;
+    const lead = (t: number) => { const b = ballAt(tl, start, t).at; const a = actorAt(tl, c.by, t).at; return Math.hypot(b[0] - a[0], b[1] - a[1]); };
+    const t0 = c.touches[0]!.t, t1 = c.touches[1]!.t;
+    expect(lead((t0 + t1) / 2)).toBeGreaterThan(lead(t0) + 0.1);
+    expect(Math.abs(lead(t1) - lead(t0))).toBeLessThan(0.2);
+  });
+  it('body facing stays separate from travel: a vertical look keeps the closest supplied side view', async () => {
+    const { ttFacingFlip } = await import('../src/render/art/teamTrainingFrames');
+    expect(ttFacingFlip([10, 10], [10, 20], [5, 30], false)).toBe(true);
+    expect(ttFacingFlip([10, 10], [10, 20], [10, 30], true)).toBe(true);
+    expect(ttFacingFlip([10, 10], [15, 20], [0, 0], true)).toBe(false);
   });
   it('a run beyond the defensive line only matches when the draft crosses the deepest outfield defender', async () => {
     const { movementCheck, reviseChoices } = await import('../src/game/training12/moments/choices');

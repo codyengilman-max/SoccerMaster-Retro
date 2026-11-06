@@ -3,6 +3,7 @@
  * with a matching owner approval record (same id, version and content hash), no validation errors and no release
  * blocker can reach player-facing training. Framework-free.
  */
+import { blocksAfterFallback } from './artFallback';
 import scenes from '../../../../docs/training/moments/scenes.v2.json';
 import approvals from '../../../../docs/training/moments/approvals.json';
 import outcomes from '../../../../docs/training/moments/outcomes.v2.json';
@@ -61,7 +62,7 @@ export function outcomesFor(s: MomentScene, review: boolean, records: readonly A
   for (const o of MOMENT_OUTCOMES) {
     if (o.sceneId !== id || o.sceneVersion !== s.version) continue;
     // Players: approved drafts only, and never one whose own animation gaps still block release.
-    if (!review && (!outcomeApproved(o, records) || o.gaps.some((g) => g.blocksRelease))) continue;
+    if (!review && (!outcomeApproved(o, records) || o.gaps.some(blocksAfterFallback))) continue;
     out[o.choice] = mirrored && o.timeline ? { ...o, timeline: mirrorTimeline(o.timeline, s.field.width) } : o;
   }
   return out;

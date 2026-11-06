@@ -11,7 +11,7 @@ import { contacts, type ActorSample, type Frame } from '../game/training12/momen
 import { releaseBlockers } from '../game/training12/moments/validate';
 import { ballFrame, ensureJungle4, jungle4Key } from '../render/art/jungle4Art';
 import { ensureTtArt, ttKey } from '../render/art/teamTrainingArt';
-import { PASS_CONTACT_FRAME, stillCast, targetBody, TT_ART, ttFrame, ttScale, type TtSheet } from '../render/art/teamTrainingFrames';
+import { DEFEND_STANCE_FRAME, PASS_CONTACT_FRAME, STILL_PRESS_M, stillCast, targetBody, TT_ART, ttFacingFlip, ttFrame, ttScale, type TtSheet } from '../render/art/teamTrainingFrames';
 import { artTextureKey, artUrl } from '../render/art/urls';
 import { orientationOf } from '../render/layout';
 import { FONT_FAMILY, textResolution } from '../render/theme';
@@ -73,6 +73,7 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
   private info!: Phaser.GameObjects.Text;
   private coach: Phaser.GameObjects.Image | null = null;
   private sprites = new Map<string, Phaser.GameObjects.Image>();
+  private facing = new Map<string, boolean>();
   private ballImg!: Phaser.GameObjects.Image;
   private tags: Phaser.GameObjects.Text[] = [];
   private buttons: Button[] = [];
@@ -102,6 +103,7 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
     this.saveState = 'idle';
     this.message = '';
     this.sprites = new Map();
+    this.facing = new Map();
     this.tags = [];
     this.buttons = [];
     this.buttonKey = '';
@@ -395,8 +397,12 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
       g.fillStyle(0x000000, 0.28).fillEllipse(p.x, p.y, r * 2, r * 0.7);
       // Subtle protagonist identifier: a ground ring only; the sheet's own outline is the body highlight (no extra scale).
       if (me) g.lineStyle(2, 0xf2c14e, 0.9).strokeEllipse(p.x, p.y, r * 2.8, r * 1.05);
-      const frame = this.frameFor(a, keeper);
-      const flip = a.look[0] < a.at[0] - 0.25;
+      const holder = f.ball.state.mode === 'held' ? f.ball.state.by : null;
+      const defending = holder !== null && holder[0] !== a.id[0];
+      const nearBall = Math.hypot(a.at[0] - f.ball.at[0], a.at[1] - f.ball.at[1]) < STILL_PRESS_M;
+      const frame = !keeper && a.action === 'stand' && defending && nearBall ? DEFEND_STANCE_FRAME : this.frameFor(a, keeper);
+      const flip = ttFacingFlip(a.at, a.look, f.ball.at, this.facing.get(a.id) ?? a.id.startsWith('A'));
+      this.facing.set(a.id, flip);
       const ready = this.textures.exists(ttKey(sheet));
       let im = this.sprites.get(a.id);
       if (ready) {

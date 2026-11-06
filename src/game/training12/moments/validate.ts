@@ -1,4 +1,5 @@
 /** Scene validator (owner brief §4–§6): library traceability, decision picture, branch endpoints, speeds, possession and contact sync. */
+import { blocksAfterFallback } from './artFallback';
 import { ALL36_ARCHIVE_SHA256, ALL36_VERSION, episodeById } from '../all36/package';
 import type { ChoiceId, Metres } from '../all36/types';
 import { MOMENTS_SCHEMA, type MomentScene, type Timeline } from './schema';
@@ -89,4 +90,4 @@ export function validateScene(s: MomentScene): string[] {
   return out;
 }
 
-export const releaseBlockers = (s: MomentScene): string[] => [...validateScene(s), ...s.assets.gaps.filter((g) => g.blocksRelease).map((g) => `${g.phase}${g.choice ? ` ${g.choice}` : ''}: ${g.actor ?? ''} ${g.need}`)];
+export const releaseBlockers = (s: MomentScene): string[] => [...validateScene(s), ...s.assets.gaps.filter(blocksAfterFallback).map((g) => `${g.phase}${g.choice ? ` ${g.choice}` : ''}: ${g.actor ?? ''} ${g.need}`)];

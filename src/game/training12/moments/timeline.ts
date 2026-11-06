@@ -34,6 +34,8 @@ export const STRIDE_M = 1.6;
 export const PLANT_S = 0.35;
 export const FOLLOW_S = 0.3;
 export const SETTLE_S = 0.35;
+/** Dribble: the most a touch pushes the ball ahead of the carrier's held offset before the carrier catches up. */
+export const TOUCH_PUSH_M = 0.6;
 
 const lerp = (a: Metres, b: Metres, u: number): Metres => [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u];
 const dist = (a: Metres, b: Metres): number => Math.hypot(a[0] - b[0], a[1] - b[1]);
@@ -81,11 +83,23 @@ const startOf = (e: BallEvent): number => (e.kind === 'carry' || e.kind === 'rol
 
 /** Ball position and possession at `t`; `ball0` is the ball's position at the timeline's start. */
 export function ballAt(tl: Timeline, ball0: Metres, t: number): BallSample {
-  type S = { mode: 'held'; by: string; off: Metres } | { mode: 'flight'; kind: 'pass' | 'roll'; from: Metres; to: Metres; t0: number; t1: number } | { mode: 'loose'; at: Metres };
+  type S = { mode: 'held'; by: string; off: Metres; carry?: { t0: number; t1: number; touches: readonly number[] } } | { mode: 'flight'; kind: 'pass' | 'roll'; from: Metres; to: Metres; t0: number; t1: number } | { mode: 'loose'; at: Metres };
   const pos = (s: S, tt: number): Metres => {
     if (s.mode === 'held') {
-      const p = actorAt(tl, s.by, tt).at;
-      return [p[0] + s.off[0], p[1] + s.off[1]];
+      const a = actorAt(tl, s.by, tt);
+      const c = s.carry;
+      if (c && a.moving && tt >= c.t0 && tt <= c.t1) {
+        // Dribble: each touch pushes the ball up to TOUCH_PUSH_M further ahead; the runner catches up before the next touch.
+        const prev = [c.t0, ...c.touches].filter((x) => x <= tt).pop()!;
+        const next = [...c.touches, c.t1].find((x) => x > tt) ?? c.t1;
+        const u = Math.min(1, (tt - prev) / Math.max(1e-6, next - prev));
+        const push = Math.min(TOUCH_PUSH_M, (next - prev) * 0.6) * Math.sin(Math.PI * u);
+        const dx = a.look[0] - a.at[0];
+        const dy = a.look[1] - a.at[1];
+        const n = Math.hypot(dx, dy) || 1;
+        return [a.at[0] + s.off[0] + (dx / n) * push, a.at[1] + s.off[1] + (dy / n) * push];
+      }
+      return [a.at[0] + s.off[0], a.at[1] + s.off[1]];
     }
     if (s.mode === 'loose') return s.at;
     const u = Math.min(1, Math.max(0, (tt - s.t0) / Math.max(1e-6, s.t1 - s.t0)));
@@ -103,7 +117,7 @@ export function ballAt(tl: Timeline, ball0: Metres, t: number): BallSample {
     last = here;
     if (e.kind === 'held' || e.kind === 'carry' || e.kind === 'receive') {
       const p = actorAt(tl, e.by, te).at;
-      s = { mode: 'held', by: e.by, off: [here[0] - p[0], here[1] - p[1]] };
+      s = { mode: 'held', by: e.by, off: [here[0] - p[0], here[1] - p[1]], ...(e.kind === 'carry' && e.touches.length ? { carry: { t0: e.t0, t1: e.t1, touches: e.touches.map((x) => x.t) } } : {}) };
     } else if (e.kind === 'pass') s = { mode: 'flight', kind: 'pass', from: here, to: e.to, t0: e.t, t1: e.arrive };
     else if (e.kind === 'roll') s = { mode: 'flight', kind: 'roll', from: e.from, to: e.to, t0: e.t0, t1: e.t1 };
     else s = { mode: 'loose', at: e.at };

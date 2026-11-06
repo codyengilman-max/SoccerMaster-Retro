@@ -12,6 +12,7 @@ import { keptChoice, movementCheck, OWNER_R4, reviseChoices } from '../src/game/
 import { stillCast, TT_OPPONENTS, TT_SHEETS, TT_TEAMMATES } from '../src/render/art/teamTrainingFrames';
 import type { Timeline } from '../src/game/training12/moments/schema';
 import { releaseBlockers, validateScene } from '../src/game/training12/moments/validate';
+import { blocksAfterFallback } from '../src/game/training12/moments/artFallback';
 import type { MomentScene } from '../src/game/training12/moments/schema';
 
 const DIR = new URL('../docs/training/moments/', import.meta.url);
@@ -144,12 +145,14 @@ function matrix(scenes: MomentScene[]): string {
     const missing = outs.filter((o) => o.missingDecision).length;
     const movement = effectiveStatus(s) === 'APPROVED' ? 'approved' : 'not approved';
     const outApproved = outs.filter((o) => outcomeApproved(o)).length;
-    const assetGaps = s.assets.gaps.filter((g) => g.blocksRelease).length + outs.reduce((n, o) => n + o.gaps.filter((g) => g.blocksRelease).length, 0);
+    const allGaps = [...s.assets.gaps, ...outs.flatMap((o) => o.gaps)].filter((g) => g.blocksRelease);
+    const assetGaps = allGaps.filter(blocksAfterFallback).length;
+    const fallbacks = allGaps.length - assetGaps;
     const ca = contactAudit(s, outs);
     const cv = ca.overall === 'NOT_APPLICABLE' ? 'NOT_APPLICABLE' : `${ca.overall}: ${Object.entries(ca.types).filter(([, v]) => v.status !== 'NOT_APPLICABLE').map(([k, v]) => `${k} ${v.status} (${v.n})`).join(', ')}`;
     const e2e = E2E_SCENES.includes(s.library.situationId) ? 'browser: situation covered' : 'browser: no';
     const tech = `validator ${validateScene(s).length ? 'FAIL' : 'pass'}; unit: yes; ${e2e}`;
-    return `| ${s.sceneId} v${s.version} | ${esc(e.title)} | ${s.protagonist.role} | decisions: coach-approved 2026-10-27; outcome drafts: ${outs.length} pending (${missing} missing decision) | scene: ${movement}; outcome drafts approved: ${outApproved}/${outs.length} | ${assetGaps ? `BLOCKED: ${assetGaps} directional gaps` : 'no directional gap'} | ${cv} | ${tech} | ${movement === 'approved' && !blockers && !assetGaps && ca.overall !== 'UNVERIFIED' && ca.overall !== 'INCOMPLETE' ? 'eligible' : 'BLOCKED (review only)'} | \`${sceneHash(s)}\` |`;
+    return `| ${s.sceneId} v${s.version} | ${esc(e.title)} | ${s.protagonist.role} | decisions: coach-approved 2026-10-27; outcome drafts: ${outs.length} pending (${missing} missing decision) | scene: ${movement}; outcome drafts approved: ${outApproved}/${outs.length} | ${assetGaps ? `BLOCKED: ${assetGaps} gaps without a stand-in` : fallbacks ? `READY WITH FALLBACK: ${fallbacks} directional stand-ins (owner-authorized)` : 'ready'} | ${cv} | ${tech} | ${movement === 'approved' && !blockers && !assetGaps ? 'eligible' : 'BLOCKED (review only)'} | \`${sceneHash(s)}\` |`;
   });
   return [
     '# Tactical Moments: release matrix (generated)',
@@ -159,7 +162,7 @@ function matrix(scenes: MomentScene[]): string {
     'Status: READY_FOR_REVIEW = passes the validator; nothing is APPROVED until an owner record in `approvals.json` matches the hash.',
     'Blockers = release blockers (validator errors + animation gaps that block release). Full assumptions, conflicts and gaps are in each scene record and on the `?dev` review page.',
     '',
-    'Five separate axes; a scene version reaches players only when all five pass AND an owner approval record matches its hash. Tactical approval covers the All36 decisions, grades and feedback; it does not cover drafted movement. TM-D36-changed has no directional gap but is still blocked on movement approval and contact verification.',
+    'Five separate axes; a scene version reaches players only when all five pass AND an owner approval record matches its hash. Tactical approval covers the All36 decisions, grades and feedback; it does not cover drafted movement. Asset readiness uses the supplied sheets with owner-authorized directional fallbacks (D76d); contact metadata stays UNVERIFIED and is recorded, and every version is still blocked on owner scene approval.',
     '',
     '| Scene | Library title | Role | Tactical approval | Movement approval | Asset readiness | Contact verification | Technical tests | Release | Hash |',
     '|---|---|---|---|---|---|---|---|---|---|',
@@ -211,7 +214,7 @@ function frozen(scenes: MomentScene[], outs: OutcomeDraft[]): string {
     '',
     '| Branch ID | Scene v | Package label | Package consequence | Category | Presentation | Missing decision | Release-blocking gaps | Outcome hash |',
     '|---|---|---|---|---|---|---|---|---|',
-    ...outs.map((o) => `| ${o.branchId} | ${o.sceneVersion} | ${esc(o.packageLabel)} | ${esc(o.packageConsequence.split(';')[0]!)} | ${o.category} | ${o.presentation.toUpperCase()} | ${o.missingDecision ? esc(o.missingDecision) : '—'} | ${o.gaps.filter((g) => g.blocksRelease).length} | \`${outcomeHash(o)}\` |`),
+    ...outs.map((o) => `| ${o.branchId} | ${o.sceneVersion} | ${esc(o.packageLabel)} | ${esc(o.packageConsequence.split(';')[0]!)} | ${o.category} | ${o.presentation.toUpperCase()} | ${o.missingDecision ? esc(o.missingDecision) : '—'} | ${o.gaps.filter(blocksAfterFallback).length} | \`${outcomeHash(o)}\` |`),
     '',
   ].join('\n');
 }
