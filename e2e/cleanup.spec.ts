@@ -69,6 +69,8 @@ for (const gender of ['boy', 'girl'] as const) {
       expect(hub.buttons).not.toContain('hub-continue');
       const d = await diagnostics(page);
       for (const [name, rect] of Object.entries(d.layout!.elements)) if (name !== 'body' && name !== 'panel') expectInside(name, rect, d.layout!.viewport);
+      const txt = d.layout!.elements['story-text']!, first = d.layout!.elements['hub-next']!;
+      expect(txt.y + txt.height, 'board text clears the buttons').toBeLessThanOrEqual(first.y);
       if (sceneId === 'S1_W05_H') await page.screenshot({ path: info.outputPath(`home-board-${gender}-${info.project.name}.png`) });
     }
     // One tap from the weekly home screen to this week's assigned lesson (was: Training, then Continue).

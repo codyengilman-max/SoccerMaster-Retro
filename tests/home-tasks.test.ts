@@ -131,5 +131,6 @@ describe('weekly home screen: next step, competition, player and team in one pla
     expect(lines[1]).toContain('○ Home learning');
     expect(lines[2]).toBe('THIS WEEK: League game 4 of 12 this week · MY PLAYER: 50.5 of 64 max');
     expect(lines[3]).toContain('National #612');
+    expect(lines[3]).not.toContain('Scottsdale');
   });
 });

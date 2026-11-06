@@ -985,7 +985,9 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
   private setActions(list: readonly Action[]): void {
     this.clearActions();
     const portrait = orientationOf(this.scale) === 'portrait';
-    const cols = portrait ? (list.length < 3 ? 1 : 2) : Math.min(list.length >= 5 ? 3 : 2, list.length);
+    // Short landscape phones (568x320) keep up to five buttons on one row so the text keeps its room.
+    const oneRow = !portrait && this.scale.height < 360 && list.length <= 5;
+    const cols = portrait ? (list.length < 3 ? 1 : 2) : oneRow ? Math.max(1, list.length) : Math.min(list.length >= 5 ? 3 : 2, list.length);
     const pad = 12;
     const bw = Math.round(Math.min((this.panel.width - pad * (cols + 1)) / cols, 420));
     const bh = Math.round(Math.max(48, Math.min(this.scale.height * (portrait ? 0.065 : 0.12), 60)));

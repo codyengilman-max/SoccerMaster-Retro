@@ -161,7 +161,8 @@ export function homeBoard(b: HomeBoard): string {
       `WEEK ${b.week} · NEXT: ${next ? next.label : 'home training done. Tap Continue Week.'}`,
       `HOME TRAINING: ${b.tasks.map((t) => `${t.done ? '✓' : '○'} ${t.short}`).join(' · ')}`,
       `THIS WEEK: ${b.competition}${b.overall === null ? '' : ` · MY PLAYER: ${b.overall.toFixed(1)} of ${DEV_CONFIG.seasonOneCap} max`}`,
-      `TEAM: ${season.length ? season.join(' · ') : 'loading saved results...'}`,
+      // League and ranking only; the next opponent stays on League & Rankings so the text clears the buttons.
+      `TEAM: ${season.length ? season.slice(0, 2).join(' · ') : 'loading saved results...'}`,
     ].join('\n');
   }
   return [
