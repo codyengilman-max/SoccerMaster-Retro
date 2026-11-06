@@ -25,8 +25,8 @@ export default defineConfig({
   projects: [
     { name: 'phone-portrait', use: { ...phone, viewport: { width: 390, height: 844 } } },
     { name: 'phone-landscape', use: { ...phone, viewport: { width: 844, height: 390 } } },
-    { name: 'small-phone-landscape', testMatch: /(attack|match|coach|lab|tournament|driveway|moments)\.spec/, use: { ...phone, viewport: { width: 568, height: 320 } } },
-    { name: 'small-phone-portrait', testMatch: /(attack|match|coach|lab|tournament|driveway|moments)\.spec/, use: { ...phone, viewport: { width: 320, height: 568 } } },
+    { name: 'small-phone-landscape', testMatch: /(attack|match|coach|lab|tournament|driveway|moments|cleanup)\.spec/, use: { ...phone, viewport: { width: 568, height: 320 } } },
+    { name: 'small-phone-portrait', testMatch: /(attack|match|coach|lab|tournament|driveway|moments|cleanup)\.spec/, use: { ...phone, viewport: { width: 320, height: 568 } } },
     {
       name: 'desktop',
       testMatch: /(attack|match|coach|lab|tournament)\.spec/,

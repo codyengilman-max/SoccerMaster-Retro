@@ -157,10 +157,7 @@ export function homeBoard(b: HomeBoard): string {
   return [
     `WEEK ${b.week} · HOME`,
     next ? `NEXT: ${next.label}` : 'NEXT: home training done. Tap Continue Week.',
-    '',
-    'HOME TRAINING',
-    ...b.tasks.map((t) => `${t.done ? '✓' : '○'} ${t.label}`),
-    '',
+    `HOME TRAINING: ${b.tasks.map((t) => `${t.done ? '✓' : '○'} ${t.short}`).join(' · ')}`,
     `THIS WEEK: ${b.competition}`,
     ...(b.overall === null ? [] : [`MY PLAYER: overall ${b.overall.toFixed(1)} (Season 1 maximum ${DEV_CONFIG.seasonOneCap})`]),
     ...(season.length ? [`TEAM: ${season.join('\n')}`] : ['TEAM: loading saved results...']),

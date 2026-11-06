@@ -110,8 +110,7 @@ describe('weekly home screen: next step, competition, player and team in one pla
     const lines = text.split('\n');
     expect(lines[0]).toBe('WEEK 5 · HOME');
     expect(lines[1]).toBe('NEXT: Control and first-touch work');
-    expect(text).toContain('✓ Juggling task');
-    expect(text).toContain('○ Control and first-touch work');
+    expect(text).toContain('HOME TRAINING: ✓ Juggling · ○ First touch');
     expect(text).toContain('THIS WEEK: League game 3 of 12 this week');
     expect(text).toContain('MY PLAYER: overall 51.3 (Season 1 maximum 64)');
     expect(text).toContain('TEAM: League: 2nd of 10');
