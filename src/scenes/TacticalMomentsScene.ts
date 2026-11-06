@@ -603,7 +603,7 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
     const ball = f.ball.state.mode === 'held' ? `held by ${f.ball.state.by}` : f.ball.state.mode;
     const cue = !onBranch ? (d.t >= s.slow.from ? 'cue window (slow)' : 'lead-in') : `branch ${d.choice} (${d.branch!.kind}${d.outcomes[d.choice!] ? `; outcome draft: ${d.outcomes[d.choice!]!.category}` : ''})`;
     const gaps = releaseBlockers(s).length;
-    this.info.setText(`t ${d.t.toFixed(2)}s · ${cue} · ball ${ball} @ ${f.ball.at.map((n) => n.toFixed(1)).join(',')} · release blockers ${gaps} · hash ${sceneHash(s).slice(0, 12)}`).setWordWrapWidth(pe.width).setDepth(12);
+    this.info.setText(`t ${d.t.toFixed(2)}s · ${cue} · ball ${ball} @ ${f.ball.at.map((n) => n.toFixed(1)).join(',')} · release blockers ${gaps} · hash ${sceneHash(s)}`).setWordWrapWidth(pe.width).setDepth(12);
     // Review diagnostics sit under the pitch but never below the screen edge (568x320 wraps them to three lines).
     this.info.setPosition(pe.x + 4, Math.min(pe.y + pe.height + 1, this.scale.height - this.info.height - 1));
   }
