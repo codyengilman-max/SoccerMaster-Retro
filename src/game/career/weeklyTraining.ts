@@ -30,12 +30,11 @@ export function weeklyProgress(save: CareerSave): WeeklyProgress {
 
 /** The story's Team Training step: what it says and that it can always be skipped (training is optional). */
 export function teamTrainingHandoff(save: CareerSave | null): { readonly body: string; readonly playable: boolean; readonly skipLabel: string } {
-  const week = save?.week ?? 1;
   const p = save ? weeklyProgress(save) : null;
   const a = p?.assignment ?? null;
-  if (!a) return { body: `This week's Team Training (career week ${week}) has no approved scenario for your position, so nothing can be played or counted.`, playable: false, skipLabel: 'Continue story · not counted' };
+  if (!a) return { body: `There's no Team Training for your position this week, so nothing can be played or counted.`, playable: false, skipLabel: 'Continue story · not counted' };
   return {
-    body: `This week's Team Training (career week ${week}): one coach-approved scenario, ${a.topic}, as ${a.role}. Finishing it once counts the week, whatever your answer. It's optional: the story goes on either way.`,
+    body: `This week's Team Training: ${a.topic}, as ${a.role}. Finishing it once counts the week, whatever your answer. It's optional: the story goes on either way.`,
     playable: true,
     skipLabel: 'Not this week',
   };

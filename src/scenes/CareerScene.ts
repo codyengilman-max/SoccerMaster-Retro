@@ -1145,7 +1145,8 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
       if (a.on) b.setFill(PALETTE.mustard, PALETTE.mustardDark);
       this.buttons.push(b);
     });
-    const menu: Action = { name: 'career-menu', label: this.returnTo === 'story' ? 'Back to story' : 'Menu', onClick: () => this.menu() };
+    const doneForWeek = this.returnTo === 'story' && this.save.player !== null && this.requiredTasks().length > 0 && this.requiredTasks().every((t) => t.done);
+    const menu: Action = { name: 'career-menu', label: this.returnTo === 'story' ? (doneForWeek ? 'Back to story ✓' : 'Back to story') : 'Menu', on: doneForWeek, onClick: () => this.menu() };
     // Home Training itself keeps one way out; other screens also get Back and Training Home.
     const nav: Action[] =
       this.screen.kind === 'home' && this.save.player
@@ -1164,7 +1165,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           ];
     const nw = (width - 40 - gap * (nav.length - 1)) / nav.length;
     nav.forEach((a, i) => {
-      const b = new Button(this, 20 + i * (nw + gap) + nw / 2, height - 16 - navH / 2, { name: a.name, label: a.label, width: nw, height: navH, fontSize: font, onClick: a.onClick, fill: PALETTE.blue, fillPressed: PALETTE.blueDark });
+      const b = new Button(this, 20 + i * (nw + gap) + nw / 2, height - 16 - navH / 2, { name: a.name, label: a.label, width: nw, height: navH, fontSize: font, onClick: a.onClick, fill: a.on ? PALETTE.mustard : PALETTE.blue, fillPressed: a.on ? PALETTE.mustardDark : PALETTE.blueDark });
       this.buttons.push(b);
     });
     this.note.setFontSize(Math.round(base * 0.85)).setPosition(width / 2, height - navH - 22).setWordWrapWidth(width - 40).setText(this.toast).setDepth(5);

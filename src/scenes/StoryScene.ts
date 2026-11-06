@@ -1148,7 +1148,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         // Current release: one approved All36 scenario per week; Team Training never blocks the story.
         const h = teamTrainingHandoff(this.save);
         setBody(h.body);
-        if (h.playable) acts.push({ name: 'handoff-career', label: 'Open Team Training', onClick: () => void this.openCareer('team_training') });
+        if (h.playable) acts.push({ name: 'handoff-career', label: 'Start Team Training', onClick: () => void this.openCareer('team_training') });
         acts.push({ name: 'handoff-skip', label: h.skipLabel, onClick: () => void this.skipRun('declined') });
         return;
       }

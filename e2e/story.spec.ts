@@ -159,13 +159,11 @@ async function playWeek(page: Page, mode: 'touch' | 'mouse', finger: Finger): Pr
     } else if (s.adapter === 'team_training') {
       // One approved All36 scenario this week. Team Training is optional: the story offers a way on without it, and
       // skipping counts nothing.
+      // Start Team Training opens the session itself (no Team Training info card in between); leaving returns to the story.
       await pressStory(page, 'handoff-career', mode);
-      await scene(page, 'career', (g) => g.status !== 'loading' && g.screen === 'team', 'team screen');
-      const teamText = String(((await diagnostics(page)).gameplay as { text?: string } | null)?.text);
-      expect(teamText).toMatch(/Scenario: .+ \(D\d\d\)/);
-      expect(teamText).toContain('Status: Not started');
-      expect(teamText).not.toMatch(/Session [ABC]/);
-      await press(page, 'career-menu', mode);
+      await waitForScene(page, 'weekly');
+      await scene(page, 'weekly', (g) => (g as { screen?: string }).screen === 'observe', 'team training observe');
+      await pressAny(page, 'tt-leave', mode);
       const back = await story(page, (x) => x.mode === 'story' && x.buttons.includes('handoff-skip'), 'continue without training offered');
       expect(resolved(s)(back)).toBe(false);
       expect(back.text).toContain('optional');
