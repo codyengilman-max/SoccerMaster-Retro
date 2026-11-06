@@ -45,17 +45,21 @@ export function evaluate(s: MomentScene, choice: ChoiceId): Evaluation {
   return { choice, grade: a.grade, band: GRADE_BAND[a.grade], valid: a.grade !== 'misread', best: s.actions.filter((x) => x.grade === 'preferred').map((x) => x.id), execution: s.branches[choice].kind };
 }
 
-/** `outcome`: the outcome draft Result played for a frozen branch, whose description replaces the frozen one. */
-export function explain(s: MomentScene, ev: Evaluation, outcome?: OutcomeDraft): Explanation {
+/**
+ * `outcome`: the outcome draft Result played for a frozen branch, whose description replaces the frozen one.
+ * `label`: the wording the screen showed for each choice (neutral revisions); the package feedback keeps the judgment.
+ */
+export function explain(s: MomentScene, ev: Evaluation, outcome?: OutcomeDraft, label: (id: ChoiceId) => string | undefined = () => undefined): Explanation {
   const a = s.actions.find((x) => x.id === ev.choice)!;
+  const name = (x: { id: ChoiceId; label: string }) => label(x.id) ?? x.label;
   const br = s.branches[ev.choice];
   const best = s.actions.filter((x) => x.grade === 'preferred');
   const verdict = ev.grade === 'preferred' ? 'the best read' : ev.grade === 'acceptable' ? 'a valid option, not the best read' : 'a misread of the cue';
   return {
     mattered: s.cues[0] ?? s.objective,
-    chose: `${a.label}: ${verdict}. ${br.feedback}`,
+    chose: `${name(a)}: ${verdict}. ${br.feedback}`,
     changed: outcome?.whatChanged ?? br.whatChanged,
-    next: ev.grade === 'preferred' ? s.reason : `Next time: ${best.map((x) => x.label).join(' or ')}. ${s.reason}`,
+    next: ev.grade === 'preferred' ? s.reason : `Next time: ${best.map(name).join(' or ')}. ${s.reason}`,
   };
 }
 

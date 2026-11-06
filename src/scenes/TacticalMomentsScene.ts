@@ -4,6 +4,7 @@ import { CareerStore } from '../game/career/store';
 import type { CareerSave } from '../game/career/state';
 import type { ChoiceId, Metres, VariantId } from '../game/training12/all36/types';
 import { MomentDirector, explain, mirrorScene, type Stage } from '../game/training12/moments/director';
+import { shownChoices, type ShownChoice } from '../game/training12/moments/choices';
 import { effectiveStatus, momentScene, outcomesFor, playerMoment, sceneHash } from '../game/training12/moments/index';
 import type { MomentScene } from '../game/training12/moments/schema';
 import { contacts, type ActorSample, type Frame } from '../game/training12/moments/timeline';
@@ -46,8 +47,10 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
   private moment: MomentScene | null = null;
   private review = false;
   private mirrored = false;
-  /** Review: show the package's original frozen explanations instead of the outcome drafts. */
+  /** Review: show the package's original frozen explanations and choice wording instead of the drafts. */
   private originalOnly = false;
+  /** Choices on screen: neutral revisions (generic option removed), or the package originals with Original only. */
+  private shown: readonly ShownChoice[] = [];
   private returnTo: 'story' | null = null;
   private look: 'boy' | 'girl' = 'boy';
   private cast: ReadonlyMap<string, TtSheet> = new Map();
@@ -156,6 +159,7 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
 
   private begin(s: MomentScene): void {
     this.moment = s;
+    this.shown = shownChoices(s, this.originalOnly);
     this.director = new MomentDirector(s, undefined, this.review && !this.originalOnly ? outcomesFor(s, true) : outcomesFor(s, false));
     const actors = s.actors.map((a) => ({ id: a.id, team: a.team, role: a.role, at: a.decision }));
     this.cast = stillCast(this.look, actors, s.protagonist.actorId);
@@ -371,7 +375,7 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
     // Decide: neutral numbered markers on the options that move the ball (never coloured by grade).
     if (d.stage === 'decide' || (this.review && d.stage === 'brief')) {
       for (const a of s.actions) {
-        if (!a.marker) continue;
+        if (!a.marker || !this.shown.some((c) => c.id === a.id)) continue;
         const c = this.toScreen(a.marker);
         over.fillStyle(TM.navy, 0.9).fillCircle(c.x, c.y, 9).lineStyle(2, TM.cream, 1).strokeCircle(c.x, c.y, 9);
         this.tag(a.id, c.x, c.y - 7, TM.creamCss, 11, true);
@@ -439,10 +443,10 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
       case 'decide':
         return d.assisted ? `What do you do? Look at this: ${s.cues[0] ?? s.objective}` : 'Frozen. What do you do?';
       case 'result':
-        return `You chose ${d.choice}: ${s.actions.find((a) => a.id === d.choice)?.label ?? ''}${this.reviewQuestion()}`;
+        return `You chose ${d.choice}: ${this.shown.find((a) => a.id === d.choice)?.label ?? ''}${this.reviewQuestion()}`;
       case 'learn':
       case 'done': {
-        const x = explain(s, d.evaluation!, d.choice ? d.outcomes[d.choice] : undefined);
+        const x = explain(s, d.evaluation!, d.choice ? d.outcomes[d.choice] : undefined, (id) => this.shown.find((c) => c.id === id)?.label);
         return `${x.mattered}\nYou: ${x.chose}\n${x.changed}\n${x.next}${this.reviewQuestion()}${this.saved ? `\n${this.saved}` : ''}`;
       }
     }
@@ -510,7 +514,7 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
           defs.push(pr, { name: 'tm-replay', label: 'Replay', on: () => (d.replay(), (this.buttonKey = '')) });
           break;
         case 'decide':
-          for (const a of s.actions) defs.push({ name: `tm-choice-${a.id}`, label: `${a.id}  ${a.label}`, on: () => this.choose(a.id), wide: true });
+          for (const a of this.shown) defs.push({ name: `tm-choice-${a.id}`, label: `${a.id}  ${a.label}`, on: () => this.choose(a.id), wide: true });
           defs.push({ name: 'tm-replay', label: 'Replay', on: () => (d.replay(), (this.buttonKey = '')) });
           if (!d.assisted) defs.push({ name: 'tm-hint', label: 'Hint', on: () => (d.hint(), (this.buttonKey = '')) });
           break;
@@ -640,7 +644,8 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
       evaluation: d?.evaluation ?? null,
       attempts: d?.attempts ?? [],
       replays: d?.replays ?? [],
-      choices: s && d?.stage === 'decide' ? s.actions.map((a) => a.id) : [],
+      choices: s && d?.stage === 'decide' ? this.shown.map((a) => a.id) : [],
+      choiceLabels: s && d?.stage === 'decide' ? this.shown.map((a) => a.label) : [],
       coach: this.coachText?.text ?? '',
       saved: this.saved,
       saveState: this.saveState,

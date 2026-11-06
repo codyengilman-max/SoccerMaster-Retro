@@ -342,3 +342,30 @@ describe('outcome drafts: review fixes', () => {
     expect(outcomesFor(s, false, rec)[o.choice]).toBeUndefined();
   });
 });
+
+describe('neutral choices in the review build', () => {
+  it('drop the generic option and show neutral wording, keeping action IDs and the package originals', async () => {
+    const { shownChoices, reviseChoices, GENERIC, REVEALING } = await import('../src/game/training12/moments/choices');
+    for (const s of MOMENT_SCENES) {
+      const shown = shownChoices(s);
+      const orig = shownChoices(s, true);
+      expect(orig.map((c) => c.label)).toEqual(s.actions.map((a) => a.label));
+      expect(shown.length).toBeGreaterThanOrEqual(2);
+      for (const c of shown) {
+        expect(s.actions.find((a) => a.id === c.id)?.label).toBe(c.original);
+        expect(GENERIC.test(c.label)).toBe(false);
+        if (c.label !== c.original) expect(REVEALING.test(c.label)).toBe(false);
+      }
+      // A reworded choice keeps its package grade only as RECHECK: the owner confirms it.
+      for (const r of reviseChoices(s).revisions) expect(r.gradeStatus).toBe(r.change === 'reworded' ? 'RECHECK' : 'PACKAGE');
+    }
+  });
+  it('Learn names the choice as the screen showed it while the package feedback keeps the judgment', async () => {
+    const { shownChoices } = await import('../src/game/training12/moments/choices');
+    const s = momentScene('D10', 'base')!;
+    const shown = shownChoices(s);
+    const x = explain(s, evaluate(s, 'C'), undefined, (id) => shown.find((c) => c.id === id)?.label);
+    expect(x.chose.startsWith('Switch play through the pressure.: a misread')).toBe(true);
+    expect(x.chose).toContain(s.branches.C.feedback);
+  });
+});

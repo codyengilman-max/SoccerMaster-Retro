@@ -5,7 +5,7 @@ test.describe.configure({ timeout: 300_000 });
 const modeFor = (info: TestInfo) => (info.project.use.hasTouch ? 'touch' : 'mouse') as 'touch' | 'mouse';
 
 interface Drawn { id: string; sheet: string; frame: number; action: string; since: number; me: boolean; sprite: boolean }
-interface Tm { mode: string; message: string; sceneId: string | null; status: string | null; look: string; stage: string | null; stageLabel: string; speedLabel: string; paused: boolean; t: number; choice: string | null; presentation: 'result' | 'explanation' | null; attempts: { kind: string; choice: string }[]; replays: { what: string }[]; choices: string[]; coach: string; actors: Drawn[]; ball: { texture: string; frame: string; state: string; size: number } | null; coachArt: boolean }
+interface Tm { mode: string; message: string; sceneId: string | null; status: string | null; look: string; stage: string | null; stageLabel: string; speedLabel: string; paused: boolean; t: number; choice: string | null; presentation: 'result' | 'explanation' | null; attempts: { kind: string; choice: string }[]; replays: { what: string }[]; choices: string[]; choiceLabels: string[]; coach: string; actors: Drawn[]; ball: { texture: string; frame: string; state: string; size: number } | null; coachArt: boolean }
 
 async function tm(page: Page, pred: (g: Tm) => boolean, what: string, ms = 30_000): Promise<Tm> {
   const start = Date.now();
@@ -70,7 +70,9 @@ test('Tactical Moments review: every stage, pause/resume, every branch, replay a
     expect(g.speedLabel).toBe('0.35×');
     g = await tm(page, (x) => x.stage === 'decide', 'decide', 20_000);
     expect(g.stageLabel).toBe('DECIDE');
-    expect(g.choices).toEqual(['A', 'B', 'C', 'D']);
+    // Review build: neutral wording, the generic 'Pause, scan and communicate' option removed; action IDs unchanged.
+    expect(g.choices).toEqual(['A', 'B', 'C']);
+    expect(g.choiceLabels.some((l) => /Pause, scan and communicate/.test(l))).toBe(false);
     await inViewport(page);
     for (const k of g.choices) {
       await pressElement(page, `tm-choice-${k}`, mode);
@@ -90,7 +92,7 @@ test('Tactical Moments review: every stage, pause/resume, every branch, replay a
       await tm(page, (x) => x.stage === 'decide', `decide again after ${k}`, 20_000);
     }
     g = await tm(page, () => true, 'attempts');
-    expect(g.attempts.map((a) => a.kind)).toEqual(['first', 'retry', 'retry', 'retry']);
+    expect(g.attempts.map((a) => a.kind)).toEqual(['first', 'retry', 'retry']);
   }
   expect(errors).toEqual([]);
 });
