@@ -507,3 +507,10 @@ Tactical Moments replace the still Weekly Team Training picture with Brief → W
 - Neutral choices (`choices.v1.json`): the generic "Pause, scan and communicate" option is dropped, judgment words move to Coach Code feedback, grades are unchanged; scenes left with fewer than two meaningful choices are flagged for reauthoring.
 - Animation manifest v2: body facing comes from each key's `look`, independent of travel and ball direction. Facing never decides the contact foot.
 - Approval records carry `bundle` = `bundleHash(scene)`; a missing or different bundle is stale (fails closed).
+
+### D76c (owner, 2026-11, round 4): choice wording review
+- 72 generic choices: removal approved. 24 revised labels (branch C, both versions): approved as written. 32 revised labels: owner replacements. 2 goal-line choices (`TM-D17-*/C`): removed and archived (branch kept in `scenes.v2.json`, excluded from display, contact audit and animation requirements). D17 keeps two choices; no third is invented.
+- Movement, contact and grade approval are not established by the wording review. Package labels and grades stay as history; each reworded choice is RECHECK and its grade is set by the owner from the picture, separately for base and changed.
+- A label whose v2 draft does not animate it (MISMATCH, STOPS_BEFORE_CONTACT, NO_DRAFT_MOVEMENT) is flagged in `CHOICE_REVISIONS.md`, never re-animated to fit, and shows no destination marker. Other shown choices get a neutral numbered destination marker where they move something.
+- D19, D25 and D32 C: the drafts close to 0.8 m and stop before contact; no tackle is attempted. The labels name a tackle, so tackle contact is INCOMPLETE and tackle frames are listed as pending a movement decision.
+- `choices.v2.json` (schema `tactical-moments-choices.v2`) carries the decisions; `choices.v1.json` stays frozen as the round-3 proposals.

@@ -159,8 +159,9 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
 
   private begin(s: MomentScene): void {
     this.moment = s;
-    this.shown = shownChoices(s, this.originalOnly);
-    this.director = new MomentDirector(s, undefined, this.review && !this.originalOnly ? outcomesFor(s, true) : outcomesFor(s, false));
+    const outs = this.review && !this.originalOnly ? outcomesFor(s, true) : outcomesFor(s, false);
+    this.shown = shownChoices(s, this.originalOnly, outs);
+    this.director = new MomentDirector(s, undefined, outs);
     const actors = s.actors.map((a) => ({ id: a.id, team: a.team, role: a.role, at: a.decision }));
     this.cast = stillCast(this.look, actors, s.protagonist.actorId);
     if (!ensureTtArt(this, [...new Set(this.cast.values())])) this.load.once(Phaser.Loader.Events.COMPLETE, () => this.sys.isActive() && this.layout());
@@ -372,10 +373,10 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
         }
       }
     }
-    // Decide: neutral numbered markers on the options that move the ball (never coloured by grade).
+    // Decide: neutral numbered destination markers on the shown options that move something (never coloured by grade).
     if (d.stage === 'decide' || (this.review && d.stage === 'brief')) {
-      for (const a of s.actions) {
-        if (!a.marker || !this.shown.some((c) => c.id === a.id)) continue;
+      for (const a of this.shown) {
+        if (!a.marker) continue;
         const c = this.toScreen(a.marker);
         over.fillStyle(TM.navy, 0.9).fillCircle(c.x, c.y, 9).lineStyle(2, TM.cream, 1).strokeCircle(c.x, c.y, 9);
         this.tag(a.id, c.x, c.y - 7, TM.creamCss, 11, true);

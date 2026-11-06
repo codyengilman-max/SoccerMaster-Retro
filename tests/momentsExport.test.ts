@@ -8,7 +8,7 @@ import { effectiveStatus, outcomeApproved, sceneHash } from '../src/game/trainin
 const E2E_SCENES = [...readFileSync(new URL('../e2e/moments.spec.ts', import.meta.url), 'utf8').matchAll(/'(D\\d{2})'/g)].map((m) => m[1]!);
 import { draftOutcomes, outcomeHash, type OutcomeDraft } from '../src/game/training12/moments/outcomes';
 import { draftOutcomesV2 } from '../src/game/training12/moments/outcomesV2';
-import { REVEALING, reviseChoices } from '../src/game/training12/moments/choices';
+import { keptChoice, movementCheck, OWNER_R4, reviseChoices } from '../src/game/training12/moments/choices';
 import { stillCast, TT_OPPONENTS, TT_SHEETS, TT_TEAMMATES } from '../src/render/art/teamTrainingFrames';
 import type { Timeline } from '../src/game/training12/moments/schema';
 import { releaseBlockers, validateScene } from '../src/game/training12/moments/validate';
@@ -21,30 +21,76 @@ export function exportDrafts(): MomentScene[] {
   return draftAll().map((s) => ({ ...s, review: { ...s.review, status: validateScene(s).length ? 'DRAFT' : 'READY_FOR_REVIEW' } }));
 }
 
+const GENERIC_RE = /^Pause, scan and communicate before committing$/;
 const esc = (t: string) => t.replace(/\|/g, '\\|').replace(/\n/g, ' ');
 
 function choicesMd(scenes: MomentScene[]): string {
   const all = scenes.map(reviseChoices);
-  const rows = all.flatMap((c) => c.revisions.filter((r) => r.change !== 'unchanged').map((r) => `| ${c.sceneId}/${r.choice} | ${r.grade} | ${r.gradeStatus} | ${r.meaning ?? '—'} | ${esc(r.original)} | ${r.proposed ? esc(r.proposed) : '(removed)'} | ${r.reason} |`));
-  const left = all.flatMap((c) => c.revisions.filter((r) => r.change === 'unchanged' && REVEALING.test(r.original)).map((r) => `${c.sceneId}/${r.choice}: ${r.original}`));
+  const v2 = new Map(draftOutcomesV2(scenes).map((o) => [o.branchId, o]));
+  const revs = all.flatMap((c) => c.revisions.map((r) => ({ c, r })));
+  const n = (f: (r: (typeof revs)[number]['r']) => boolean) => revs.filter(({ r }) => f(r)).length;
+  const sit = (d: string) => Object.entries(OWNER_R4).filter(([, w]) => w.decision === d).length * 2;
+  const scene = (c: (typeof all)[number]) => scenes.find((s) => s.sceneId === c.sceneId)!;
+  // Picture facts the generator can read from the frozen frame; anything else is left to the owner.
+  const facts = (s: MomentScene, k: string, original: string): { facts: string; conflict: string | null } => {
+    const o = v2.get(`${s.sceneId}/${k}`);
+    const P = s.protagonist.actorId;
+    const holder = s.ball.ownerAtDecision;
+    const me = s.actors.find((a) => a.id === P)!.decision;
+    const tgt = holder && holder !== P ? s.actors.find((a) => a.id === holder)!.decision : s.ball.decision;
+    const ball = holder ? `ball held by ${holder === P ? 'you' : holder}` : 'ball loose';
+    const lane = o?.timeline?.actors.find((tr) => /^Proposed response/.test(tr.purpose ?? ''));
+    const out: string[] = [ball, `${Math.hypot(me[0] - tgt[0], me[1] - tgt[1]).toFixed(1)} m from ${holder && holder !== P ? holder : 'the ball'}`];
+    let conflict: string | null = null;
+    if (o?.timeline?.ball.some((e) => e.kind === 'pass')) {
+      out.push(lane ? `${lane.id} stands in the lane` : 'no opponent in the lane at the freeze');
+      if (!lane && /screen|crowded|blocker|through defender/i.test(original)) conflict = `the package wording names a screened/crowded/blocked lane, but no opponent stands within 4 m of the drafted lane in ${s.library.variant}`;
+    }
+    if (/protected ball/i.test(original) && !holder) conflict = `the package wording names a protected ball, but the ball is loose at the freeze in ${s.library.variant}`;
+    return { facts: out.join('; '), conflict };
+  };
+  const reviewed = revs.filter(({ c, r }) => r.change !== 'unchanged' && !GENERIC_RE.test(r.original) && OWNER_R4[scene(c).library.situationId]);
+  const rows = reviewed.map(({ c, r }) => {
+    const s = scene(c);
+    const o = v2.get(`${c.sceneId}/${r.choice}`);
+    const m = movementCheck(s, r.intent, o);
+    const f = facts(s, r.choice, r.original);
+    const check = r.change === 'removed' ? 'archived' : `${m.check}${m.note ? `: ${m.note}` : ''}`;
+    const grade = r.change === 'removed' ? 'archived' : f.conflict ? `CONFLICT: ${f.conflict}` : m.check !== 'MATCHES' ? 'CANNOT EVALUATE: the movement does not show this action yet' : 'OWNER TO SET from the picture';
+    return `| ${c.sceneId}/${r.choice} | ${esc(r.original)} | ${r.proposedR3 ? esc(r.proposedR3) : '—'} | ${r.proposed ? esc(r.proposed) : '(removed)'} | ${r.ownerDecision} | ${r.meaning ?? '—'}${r.meaningWhy ? `: ${esc(r.meaningWhy)}` : ''} | ${r.overlap ? `may read like ${esc(r.overlap)}` : '—'} | ${esc(check)} | ${r.grade} | ${esc(f.facts)} | ${esc(grade)} |`;
+  });
+  const mism = reviewed.filter(({ c, r }) => r.change === 'reworded' && movementCheck(scene(c), r.intent, v2.get(`${c.sceneId}/${r.choice}`)).check !== 'MATCHES');
+  const d17 = all.filter((c) => c.sceneId.startsWith('TM-D17-'));
   return [
-    '# Tactical Moments: neutral-choice revisions (generated)',
+    '# Tactical Moments: choice wording review (generated)',
     '',
-    'Generated from `scenes.v2.json` by `tests/momentsExport.test.ts`; records in `choices.v1.json`. Original wording, action IDs and grades are unchanged; each revision needs owner approval. Grades are never edited here. The review build shows the proposed wording (generic option removed); **Original only** on the review screen shows the package wording.',
+    'Generated from `scenes.v2.json` and `outcomes.v2.json` by `tests/momentsExport.test.ts`; records in `choices.v2.json` (`choices.v1.json` = round-3 proposals, frozen as history). Package wording, action IDs and grades are never edited: they stay as the historical record. The review build shows the owner wording; **Original only** shows the package wording.',
     '',
-    '- **Grade status:** PACKAGE = the package grade applies to unchanged wording. RECHECK = the wording changed, so the package grade is shown but not assumed correct until the owner confirms it.',
-    '- **Meaning:** same = the proposed text names the same action without the judgment word. may-change = the original also named a consequence or timing ("expose inside", "too late") that the neutral text drops; the owner should confirm it is still the same action before keeping its grade.',
+    '## Owner wording review (round 4), as recorded',
     '',
-    `Removed: ${all.flatMap((c) => c.revisions).filter((r) => r.change === 'removed').length}. Reworded: ${all.flatMap((c) => c.revisions).filter((r) => r.change === 'reworded').length}. Versions needing reauthoring (fewer than 2 choices left): ${all.filter((c) => c.needsReauthoring).length}. Choices left per version: ${[...new Set(all.map((c) => c.remaining))].join(', ')}.`,
+    `- ${n((r) => r.change === 'removed' && GENERIC_RE.test(r.original))} generic choices ("Pause, scan and communicate before committing"): removal approved.`,
+    `- ${sit('approved')} revised labels (branch C, base and changed): approved as written.`,
+    `- ${sit('replaced')} revised labels: owner replacements.`,
+    `- ${sit('removed')} goal-line choices (\`TM-D17-base/C\`, \`TM-D17-changed/C\`): removed; branches archived in \`scenes.v2.json\`, their exclusive animation requirements excluded.`,
+    '- Movement, contact and grade approval: not established by this wording review.',
     '',
-    `Unchanged but matching a judgment word (owner to check): ${left.length ? left.join('; ') : 'none'}.`,
+    `Choices left per version: ${[...new Set(all.map((c) => c.remaining))].sort().join(', ')}. Versions needing reauthoring (fewer than 2): ${all.filter((c) => c.needsReauthoring).length}. D17 keeps ${d17.map((c) => `${c.sceneId}: ${c.revisions.filter((r) => r.change !== 'removed').map((r) => `${r.choice} "${r.original}" (${r.grade})`).join(', ')}`).join('; ')}. These differ in route (near side vs central), so they still form a decision; no third choice was invented.`,
     '',
-    'No other distractor was removed: none is plainly implausible without coaching judgment, so plausibility is left to the owner.',
+    '## How to read the table',
     '',
-    `Meaning may change: ${all.flatMap((c) => c.revisions.filter((r) => r.meaning === 'may-change').map((r) => `${c.sceneId}/${r.choice}`)).join(', ') || 'none'}.`,
+    '- **Movement:** MATCHES = the v2 draft animates the action the wording names. MISMATCH / STOPS_BEFORE_CONTACT / NO_DRAFT_MOVEMENT = it does not; the animation was **not** changed to fit the wording, and the review build shows no destination marker for that option.',
+    '- **Grade:** the package grade is kept as history. "OWNER TO SET" = movement matches; the owner grades it from the picture, separately for base and changed. CONFLICT = a fact readable from the frozen frame contradicts the package wording. CANNOT EVALUATE = the movement does not show the action, so no outcome was forced to justify the package grade.',
+    '- **Meaning:** may-change = the owner wording may name a different action than the package label (reason given).',
+    '- **Overlap:** another retained choice in the same version that may read as the same action; the picture or route must separate them.',
     '',
-    '| Branch | Package grade | Grade status | Meaning | Original | Proposed | Why |',
-    '|---|---|---|---|---|---|---|',
+    `Wording/movement mismatches to resolve (${mism.length}): ${mism.map(({ c, r }) => `${c.sceneId}/${r.choice}`).join(', ') || 'none'}.`,
+    '',
+    '## Tackles (D19, D25, D32)',
+    '',
+    'The earlier report that no tackle occurs still holds: in all six branches the draft closes to 0.8 m and stops before contact (STOPS_BEFORE_CONTACT); no tackle is attempted or resolved. The approved labels now name a tackle, so the contact audit lists a tackle as INCOMPLETE for these versions, and the art brief lists tackle frames as pending a movement decision. Actual contact needs tackle animation and contact metadata.',
+    '',
+    '| Branch | Package | Round 3 | Shown now | Owner | Meaning | Overlap | Movement | Package grade (history) | Picture facts (freeze) | Grade review |',
+    '|---|---|---|---|---|---|---|---|---|---|---|',
     ...rows,
     '',
   ].join('\n');
@@ -55,7 +101,11 @@ const CONTACT_TYPES = ['dribble', 'pass', 'receive', 'shot', 'tackle', 'intercep
 const CONTACT_RECORDS = JSON.parse(readFileSync(new URL('contact-frames.json', DIR), 'utf8')) as { action: string; status: string }[];
 function contactAudit(s: MomentScene, outs: OutcomeDraft[]) {
   const n: Record<(typeof CONTACT_TYPES)[number], number> = { dribble: 0, pass: 0, receive: 0, shot: 0, tackle: 0, interception: 0, control: 0 };
-  const tls = [s.watch, ...(['A', 'B', 'C', 'D'] as const).map((k) => s.branches[k].timeline), ...outs.flatMap((o) => (o.timeline ? [o.timeline] : []))];
+  // Retained choices only: removed (archived) options need no contact.
+  const kept = (['A', 'B', 'C', 'D'] as const).filter((k) => keptChoice(s, k));
+  const tls = [s.watch, ...kept.map((k) => s.branches[k].timeline), ...outs.filter((o) => kept.includes(o.choice)).flatMap((o) => (o.timeline ? [o.timeline] : []))];
+  // A retained label that names a tackle needs a tackle contact even though no draft plays one yet.
+  n.tackle += reviseChoices(s).revisions.filter((r) => r.change !== 'removed' && r.intent === 'tackle').length;
   for (const tl of tls) {
     for (const e of tl.ball) {
       if (e.kind === 'pass') n[e.to[1]! <= 0.01 || e.to[1]! >= s.field.length - 0.01 ? 'shot' : 'pass']++;
@@ -81,7 +131,7 @@ function contactAudit(s: MomentScene, outs: OutcomeDraft[]) {
 }
 function contactMd(scenes: MomentScene[]): string {
   const rows = scenes.map((s) => { const a = contactAudit(s, draftOutcomesV2([s])); return `| ${s.sceneId} | ${a.overall} | ${CONTACT_TYPES.map((k) => (a.types[k].n ? `${a.types[k].status} (${a.types[k].n})` : 'NOT_APPLICABLE')).join(' | ')} |`; });
-  return ['# Tactical Moments: contact audit (generated, review only)', '', 'Counts are contacts across the watch, the four branches and the v2 outcome drafts of each scene version. Status per type: VERIFIED = reviewed metadata for every sheet; UNVERIFIED = `contact-frames.json` records exist but anatomical foot, supporting foot and surface are unreviewed (the art does not show them clearly at this size; see `contact/*.png`); INCOMPLETE = no metadata record for that contact type exists yet; NOT_APPLICABLE = does not occur. Facing never decides the foot. Unresolved contact animations stay out of release.', '', `| Scene | Overall | ${CONTACT_TYPES.join(' | ')} |`, `|---|---|${CONTACT_TYPES.map(() => '---').join('|')}|`, ...rows, ''].join('\n');
+  return ['# Tactical Moments: contact audit (generated, review only)', '', 'Counts are contacts across the watch, the retained branches and their v2 outcome drafts of each scene version (removed choices excluded); a tackle is counted where a retained label names one (D19, D25, D32 C), although no draft plays it yet. Status per type: VERIFIED = reviewed metadata for every sheet; UNVERIFIED = `contact-frames.json` records exist but anatomical foot, supporting foot and surface are unreviewed (the art does not show them clearly at this size; see `contact/*.png`); INCOMPLETE = no metadata record for that contact type exists yet; NOT_APPLICABLE = does not occur. Facing never decides the foot. Unresolved contact animations stay out of release.', '', `| Scene | Overall | ${CONTACT_TYPES.join(' | ')} |`, `|---|---|${CONTACT_TYPES.map(() => '---').join('|')}|`, ...rows, ''].join('\n');
 }
 
 function matrix(scenes: MomentScene[]): string {
@@ -275,7 +325,7 @@ function requirements(scenes: MomentScene[], outs: OutcomeDraft[]) {
   const md = [
     '# Tactical Moments: directional animation requirements v2 (generated, review only)',
     '',
-    'Generated by `WRITE_MOMENTS=1 npx vitest run tests/momentsExport.test.ts` from `scenes.v2.json` and `outcomes.v2.json`. Nothing here is approved art; missing art blocks release, not framework work. Choices removed in `choices.v1.json` (the generic "Pause, scan and communicate" option) are excluded: only the watch and retained choices count.',
+    'Generated by `WRITE_MOMENTS=1 npx vitest run tests/momentsExport.test.ts` from `scenes.v2.json` and `outcomes.v2.json`. Nothing here is approved art; missing art blocks release, not framework work. Choices removed in `choices.v2.json` (the generic "Pause, scan and communicate" option in all 72 versions and D17 C) are excluded: only the watch and retained choices count.',
     '',
     '- **bodyFacing**: where the body looks (from each key\'s `look`), the frame to draw. **travelDirection**: where the player moves (key to key). **ballDirection**: where the ball goes (pass/shot target, receive approach, carry). They are independent: a shuffle can face E while travelling N.',
     '- Directions are screen directions on the true overhead pitch (home attacks up). ' + (['N', 'S', 'E', 'W'] as const).map((f) => FACING_TEXT[f]).join('; ') + '.',
@@ -326,12 +376,27 @@ function artBrief(rows: ReturnType<typeof requirements>['rows']): string {
 }
 
 /** ChatGPT-ready production brief: only the MISSING groups (discarded choices already excluded), one numbered group each. */
-function production(rows: ReturnType<typeof requirements>['rows']): string {
+function pending(scenes: MomentScene[]): string[] {
+  const v2 = new Map(draftOutcomesV2(scenes).map((o) => [o.branchId, o]));
+  return scenes.flatMap((s) => reviseChoices(s).revisions.flatMap((r) => {
+    if (r.change !== 'reworded') return [];
+    const m = movementCheck(s, r.intent, v2.get(`${s.sceneId}/${r.choice}`));
+    if (m.check === 'MATCHES') return [];
+    const P = s.protagonist.actorId;
+    const holder = s.ball.ownerAtDecision;
+    const tgt = holder && holder !== P ? s.actors.find((a) => a.id === holder)!.decision : s.ball.decision;
+    const face = sector(s.actors.find((a) => a.id === P)!.decision, tgt);
+    const need = r.intent === 'tackle' ? `tackle (contact: anatomical foot, surface, support foot, contact frame) facing ${face} toward ${holder && holder !== P ? holder : 'the ball'}, boy and girl` : r.intent === 'pass' ? 'pass; target lane not identified yet' : r.intent === 'overrun' ? 'run through without braking (existing run frames may serve; direction from the decided route)' : r.intent === 'close-with-mate' ? 'teammate run toward the ball (route not decided)' : 'movement not decided';
+    return [`- ${s.sceneId}/${r.choice} "${r.proposed}": ${m.check}. Needs: ${need}.`];
+  }));
+}
+
+function production(rows: ReturnType<typeof requirements>['rows'], scenes: MomentScene[]): string {
   const miss = rows.filter((r) => r.status === 'MISSING');
   const out = [
     '# Tactical Moments: art production brief, missing groups (generated, production preparation only)',
     '',
-    `${miss.length} missing action/direction groups, in the owner priority order. Requirements used only by discarded choices (the removed generic option) are excluded. This brief prepares art production; it is not a commission and no finished frame is approved until the owner reviews it.`,
+    `${miss.length} missing action/direction groups, in the owner priority order. Requirements used only by discarded choices (the removed generic option and D17 C) are excluded. This brief prepares art production; it is not a commission and no finished frame is approved until the owner reviews it.`,
     '',
     '## Rules for every frame',
     '',
@@ -352,6 +417,12 @@ function production(rows: ReturnType<typeof requirements>['rows']): string {
     '',
     ...miss.map((r, i) => `${i + 1}. ${r.action} ${r.bodyFacing}${r.travelDirection ? ` travelling ${r.travelDirection}` : ''}${r.ballDirection ? `, ball ${r.ballDirection}` : ''}: ${r.ids.slice(0, 8).join(', ')}${r.ids.length > 8 ? ` … (+${r.ids.length - 8})` : ''}`),
     '',
+    '## Pending a movement decision (not in the groups above; do not produce yet)',
+    '',
+    'These approved or replacement labels name an action the current drafts do not animate. The animation is not changed to fit the wording; once the owner decides the movement, the matching group is added above.',
+    '',
+    ...pending(scenes),
+    '',
   ];
   return out.join('\n');
 }
@@ -359,6 +430,9 @@ function production(rows: ReturnType<typeof requirements>['rows']): string {
 describe('stored Tactical Moments drafts', () => {
   const scenes = exportDrafts();
   const outs = draftOutcomes(scenes);
+  it('choices.v1.json (round-3 proposals) stays frozen as history', () => {
+    expect(createHash('sha256').update(readFileSync(new URL('choices.v1.json', DIR))).digest('hex')).toBe('4f8164865ee5c0c76f9453622afc669645644e548808f6f595fb994f7a3453aa');
+  });
   it('scenes.v1.json stays frozen as history', () => {
     expect(createHash('sha256').update(readFileSync(new URL('scenes.v1.json', DIR))).digest('hex')).toBe('3f8059a6bbbe0159802b9967cbf66a2ef1d61d98c1db2fdad0767a850c69894c');
   });
@@ -367,7 +441,7 @@ describe('stored Tactical Moments drafts', () => {
     ['REVIEW_MATRIX.md', matrix(scenes)],
     ['GAPS_BY_SCENE.md', gaps(scenes)],
     ['outcomes.v1.json', '[\n' + outs.map((o) => JSON.stringify(o)).join(',\n') + '\n]\n'],
-    ['choices.v1.json', '[\n' + scenes.map((x) => JSON.stringify(reviseChoices(x))).join(',\n') + '\n]\n'],
+    ['choices.v2.json', '[\n' + scenes.map((x) => JSON.stringify(reviseChoices(x))).join(',\n') + '\n]\n'],
     ['CHOICE_REVISIONS.md', choicesMd(scenes)],
     ['outcomes.v2.json', '[\n' + draftOutcomesV2(scenes).map((o) => JSON.stringify(o)).join(',\n') + '\n]\n'],
     ['FROZEN_BRANCHES.md', frozen(scenes, outs)],
@@ -375,7 +449,7 @@ describe('stored Tactical Moments drafts', () => {
     ['ANIMATION_REQUIREMENTS.md', requirements(scenes, draftOutcomesV2(scenes)).md],
     ['CONTACT_AUDIT.md', contactMd(scenes)],
     ['ART_BRIEF.md', artBrief(requirements(scenes, draftOutcomesV2(scenes)).rows)],
-    ['ART_PRODUCTION_MISSING.md', production(requirements(scenes, draftOutcomesV2(scenes)).rows)],
+    ['ART_PRODUCTION_MISSING.md', production(requirements(scenes, draftOutcomesV2(scenes)).rows, scenes)],
   ];
   for (const [name, want] of files) {
     it(`${name} equals the generator output (regenerate with WRITE_MOMENTS=1)`, () => {

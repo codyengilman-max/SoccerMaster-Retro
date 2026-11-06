@@ -1,6 +1,6 @@
 # Tactical Moments: art production brief, missing groups (generated, production preparation only)
 
-23 missing action/direction groups, in the owner priority order. Requirements used only by discarded choices (the removed generic option) are excluded. This brief prepares art production; it is not a commission and no finished frame is approved until the owner reviews it.
+23 missing action/direction groups, in the owner priority order. Requirements used only by discarded choices (the removed generic option and D17 C) are excluded. This brief prepares art production; it is not a commission and no finished frame is approved until the owner reviews it.
 
 ## Rules for every frame
 
@@ -23,7 +23,7 @@
 | 6 | 1 | run | S | N | — | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | boy (`docs/art/team-training-v1/source/boy_highlight.png`), girl (`docs/art/team-training-v1/source/girl_highlight.png`), opponent_01 (`docs/art/team-training-v1/source/opponent_01.png`), opponent_04 (`docs/art/team-training-v1/source/opponent_04.png`), teammate_01 (`docs/art/team-training-v1/source/teammate_01.png`) | 12 |
 | 7 | 1 | run | S | S | — | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | boy (`docs/art/team-training-v1/source/boy_highlight.png`), girl (`docs/art/team-training-v1/source/girl_highlight.png`), opponent_01 (`docs/art/team-training-v1/source/opponent_01.png`), opponent_02 (`docs/art/team-training-v1/source/opponent_02.png`), opponent_03 (`docs/art/team-training-v1/source/opponent_03.png`), opponent_04 (`docs/art/team-training-v1/source/opponent_04.png`), teammate_01 (`docs/art/team-training-v1/source/teammate_01.png`), teammate_04 (`docs/art/team-training-v1/source/teammate_04.png`) | 94 |
 | 8 | 1 | run | S | W | — | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | boy (`docs/art/team-training-v1/source/boy_highlight.png`), girl (`docs/art/team-training-v1/source/girl_highlight.png`), opponent_01 (`docs/art/team-training-v1/source/opponent_01.png`), opponent_04 (`docs/art/team-training-v1/source/opponent_04.png`) | 10 |
-| 9 | 1 | stand | N | stationary | — | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | boy (`docs/art/team-training-v1/source/boy_highlight.png`), girl (`docs/art/team-training-v1/source/girl_highlight.png`), keeper_home (`docs/art/team-training-v1/source/home_keeper_keyposes.png`), opponent_01 (`docs/art/team-training-v1/source/opponent_01.png`), opponent_02 (`docs/art/team-training-v1/source/opponent_02.png`), opponent_03 (`docs/art/team-training-v1/source/opponent_03.png`), opponent_04 (`docs/art/team-training-v1/source/opponent_04.png`), teammate_01 (`docs/art/team-training-v1/source/teammate_01.png`), teammate_02 (`docs/art/team-training-v1/source/teammate_02.png`), teammate_03 (`docs/art/team-training-v1/source/teammate_03.png`), teammate_04 (`docs/art/team-training-v1/source/teammate_04.png`) | 316 |
+| 9 | 1 | stand | N | stationary | — | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | boy (`docs/art/team-training-v1/source/boy_highlight.png`), girl (`docs/art/team-training-v1/source/girl_highlight.png`), keeper_home (`docs/art/team-training-v1/source/home_keeper_keyposes.png`), opponent_01 (`docs/art/team-training-v1/source/opponent_01.png`), opponent_02 (`docs/art/team-training-v1/source/opponent_02.png`), opponent_03 (`docs/art/team-training-v1/source/opponent_03.png`), opponent_04 (`docs/art/team-training-v1/source/opponent_04.png`), teammate_01 (`docs/art/team-training-v1/source/teammate_01.png`), teammate_02 (`docs/art/team-training-v1/source/teammate_02.png`), teammate_03 (`docs/art/team-training-v1/source/teammate_03.png`), teammate_04 (`docs/art/team-training-v1/source/teammate_04.png`) | 312 |
 | 10 | 1 | stand | S | stationary | — | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | boy (`docs/art/team-training-v1/source/boy_highlight.png`), girl (`docs/art/team-training-v1/source/girl_highlight.png`), keeper_away (`docs/art/team-training-v1/source/opposition_keeper_keyposes.png`), opponent_01 (`docs/art/team-training-v1/source/opponent_01.png`), opponent_02 (`docs/art/team-training-v1/source/opponent_02.png`), opponent_03 (`docs/art/team-training-v1/source/opponent_03.png`), opponent_04 (`docs/art/team-training-v1/source/opponent_04.png`), teammate_01 (`docs/art/team-training-v1/source/teammate_01.png`), teammate_03 (`docs/art/team-training-v1/source/teammate_03.png`), teammate_04 (`docs/art/team-training-v1/source/teammate_04.png`) | 308 |
 | 11 | 2 | dribble touch | E | E | E | New: 6-frame carry cycle with a touch frame on each authored carry touch (none exist; currently drawn on the run cycle). | required | boy (`docs/art/team-training-v1/source/boy_highlight.png`), girl (`docs/art/team-training-v1/source/girl_highlight.png`) | 1 |
 | 12 | 2 | dribble touch | N | N | N | New: 6-frame carry cycle with a touch frame on each authored carry touch (none exist; currently drawn on the run cycle). | required | boy (`docs/art/team-training-v1/source/boy_highlight.png`), girl (`docs/art/team-training-v1/source/girl_highlight.png`), teammate_01 (`docs/art/team-training-v1/source/teammate_01.png`), teammate_02 (`docs/art/team-training-v1/source/teammate_02.png`), teammate_03 (`docs/art/team-training-v1/source/teammate_03.png`), teammate_04 (`docs/art/team-training-v1/source/teammate_04.png`) | 49 |
@@ -49,7 +49,7 @@
 6. run S travelling N: TM-D01-base/C#outcome-v2, TM-D07-base/C#outcome-v2, TM-D07-changed/C#outcome-v2, TM-D13-base/C#outcome-v2, TM-D13-changed/C#outcome-v2, TM-D21-changed/C#outcome-v2, TM-D21-changed/watch, TM-D26-changed/C#outcome-v2 … (+4)
 7. run S travelling S: TM-D01-base/A, TM-D01-base/watch, TM-D02-base/A, TM-D02-base/B, TM-D02-base/C#outcome-v2, TM-D02-base/watch, TM-D02-changed/A, TM-D02-changed/B … (+86)
 8. run S travelling W: TM-D03-base/A, TM-D03-changed/A, TM-D06-base/B, TM-D06-changed/B, TM-D09-base/B, TM-D14-changed/C#outcome-v2, TM-D14-changed/watch, TM-D28-changed/C#outcome-v2 … (+2)
-9. stand N: TM-D01-base/A, TM-D01-base/B, TM-D01-base/C, TM-D01-base/C#outcome-v2, TM-D01-base/watch, TM-D01-changed/A, TM-D01-changed/B, TM-D01-changed/C … (+308)
+9. stand N: TM-D01-base/A, TM-D01-base/B, TM-D01-base/C, TM-D01-base/C#outcome-v2, TM-D01-base/watch, TM-D01-changed/A, TM-D01-changed/B, TM-D01-changed/C … (+304)
 10. stand S: TM-D01-base/A, TM-D01-base/B, TM-D01-base/C, TM-D01-base/C#outcome-v2, TM-D01-base/watch, TM-D01-changed/A, TM-D01-changed/B, TM-D01-changed/C … (+300)
 11. dribble touch E travelling E, ball E: TM-D31-changed/B
 12. dribble touch N travelling N, ball N: TM-D01-base/B, TM-D01-base/C#outcome-v2, TM-D01-base/watch, TM-D01-changed/B, TM-D01-changed/watch, TM-D02-base/watch, TM-D02-changed/watch, TM-D03-base/watch … (+41)
@@ -64,3 +64,24 @@
 21. shuffle S travelling W: TM-D03-changed/watch
 22. keeper ready N: TM-D25-base/A, TM-D25-base/B, TM-D25-base/C, TM-D25-base/watch, TM-D25-changed/A, TM-D25-changed/B, TM-D25-changed/C, TM-D25-changed/watch … (+72)
 23. keeper ready S: TM-D07-base/A, TM-D07-base/B, TM-D07-base/C, TM-D07-base/watch, TM-D07-changed/A, TM-D07-changed/B, TM-D07-changed/C, TM-D07-changed/watch … (+56)
+
+## Pending a movement decision (not in the groups above; do not produce yet)
+
+These approved or replacement labels name an action the current drafts do not animate. The animation is not changed to fit the wording; once the owner decides the movement, the matching group is added above.
+
+- TM-D01-base/C "Pass forward through this lane.": MISMATCH. Needs: pass; target lane not identified yet.
+- TM-D01-changed/C "Pass forward through this lane.": MISMATCH. Needs: pass; target lane not identified yet.
+- TM-D09-base/C "Run into the same space as your teammate.": NO_DRAFT_MOVEMENT. Needs: movement not decided.
+- TM-D09-changed/C "Run into the same space as your teammate.": NO_DRAFT_MOVEMENT. Needs: movement not decided.
+- TM-D10-base/C "Pass across to the opposite side.": NO_DRAFT_MOVEMENT. Needs: pass; target lane not identified yet.
+- TM-D10-changed/C "Pass across to the opposite side.": NO_DRAFT_MOVEMENT. Needs: pass; target lane not identified yet.
+- TM-D15-base/C "Run into the striker’s lane.": NO_DRAFT_MOVEMENT. Needs: movement not decided.
+- TM-D19-base/C "Lunge for the ball from here.": STOPS_BEFORE_CONTACT. Needs: tackle (contact: anatomical foot, surface, support foot, contact frame) facing N toward the ball, boy and girl.
+- TM-D19-changed/C "Lunge for the ball from here.": STOPS_BEFORE_CONTACT. Needs: tackle (contact: anatomical foot, surface, support foot, contact frame) facing N toward A_CB, boy and girl.
+- TM-D20-changed/C "Move toward the ball with your teammate.": MISMATCH. Needs: teammate run toward the ball (route not decided).
+- TM-D25-base/C "Tackle at full speed.": STOPS_BEFORE_CONTACT. Needs: tackle (contact: anatomical foot, surface, support foot, contact frame) facing N toward A_RW, boy and girl.
+- TM-D25-changed/C "Tackle at full speed.": STOPS_BEFORE_CONTACT. Needs: tackle (contact: anatomical foot, surface, support foot, contact frame) facing N toward A_RW, boy and girl.
+- TM-D31-base/C "Keep sprinting as you reach the ball carrier.": MISMATCH. Needs: run through without braking (existing run frames may serve; direction from the decided route).
+- TM-D31-changed/C "Keep sprinting as you reach the ball carrier.": MISMATCH. Needs: run through without braking (existing run frames may serve; direction from the decided route).
+- TM-D32-base/C "Tackle the ball now.": STOPS_BEFORE_CONTACT. Needs: tackle (contact: anatomical foot, surface, support foot, contact frame) facing N toward A_RW, boy and girl.
+- TM-D32-changed/C "Tackle the ball now.": STOPS_BEFORE_CONTACT. Needs: tackle (contact: anatomical foot, surface, support foot, contact frame) facing N toward the ball, boy and girl.

@@ -14,11 +14,11 @@ Source: `docs/art/team-training-v1/source/boy_highlight.png`; runtime: `src/asse
 
 | Priority | Action | Body facing | Permitted travel | Ball | Status | Frames and timing | Contact | Uses |
 |---|---|---|---|---|---|---|---|---|
-| 1 | run | E | N, S, W | — | CANDIDATE_NEEDS_REVIEW | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 46 |
+| 1 | run | E | N, S, W | — | CANDIDATE_NEEDS_REVIEW | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 44 |
 | 1 | run | N | E, N, S, W | — | MISSING | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 145 |
 | 1 | run | S | E, N, S, W | — | MISSING | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 122 |
 | 1 | run | W | E, N, S, W | — | CANDIDATE_NEEDS_REVIEW | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 58 |
-| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 316 |
+| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 312 |
 | 1 | stand | S | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 308 |
 | 1 | stand | W | stationary | — | CANDIDATE_NEEDS_REVIEW | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 236 |
 | 2 | dribble touch | E | E | E | MISSING | New: 6-frame carry cycle with a touch frame on each authored carry touch (none exist; currently drawn on the run cycle). | required | 1 |
@@ -39,11 +39,11 @@ Source: `docs/art/team-training-v1/source/girl_highlight.png`; runtime: `src/ass
 
 | Priority | Action | Body facing | Permitted travel | Ball | Status | Frames and timing | Contact | Uses |
 |---|---|---|---|---|---|---|---|---|
-| 1 | run | E | N, S, W | — | CANDIDATE_NEEDS_REVIEW | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 46 |
+| 1 | run | E | N, S, W | — | CANDIDATE_NEEDS_REVIEW | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 44 |
 | 1 | run | N | E, N, S, W | — | MISSING | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 145 |
 | 1 | run | S | E, N, S, W | — | MISSING | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 122 |
 | 1 | run | W | E, N, S, W | — | CANDIDATE_NEEDS_REVIEW | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 58 |
-| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 316 |
+| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 312 |
 | 1 | stand | S | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 308 |
 | 1 | stand | W | stationary | — | CANDIDATE_NEEDS_REVIEW | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 236 |
 | 2 | dribble touch | E | E | E | MISSING | New: 6-frame carry cycle with a touch frame on each authored carry touch (none exist; currently drawn on the run cycle). | required | 1 |
@@ -64,11 +64,11 @@ Source: `docs/art/team-training-v1/source/teammate_01.png`; runtime: `src/assets
 
 | Priority | Action | Body facing | Permitted travel | Ball | Status | Frames and timing | Contact | Uses |
 |---|---|---|---|---|---|---|---|---|
-| 1 | run | E | N | — | CANDIDATE_NEEDS_REVIEW | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 18 |
+| 1 | run | E | N | — | CANDIDATE_NEEDS_REVIEW | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 16 |
 | 1 | run | N | E, N, S | — | MISSING | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 136 |
 | 1 | run | S | N, S | — | MISSING | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 105 |
 | 1 | run | W | E, W | — | CANDIDATE_NEEDS_REVIEW | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 40 |
-| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 316 |
+| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 312 |
 | 1 | stand | S | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 308 |
 | 1 | stand | W | stationary | — | CANDIDATE_NEEDS_REVIEW | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 236 |
 | 2 | dribble touch | N | N | N | MISSING | New: 6-frame carry cycle with a touch frame on each authored carry touch (none exist; currently drawn on the run cycle). | required | 49 |
@@ -85,10 +85,10 @@ Source: `docs/art/team-training-v1/source/teammate_02.png`; runtime: `src/assets
 
 | Priority | Action | Body facing | Permitted travel | Ball | Status | Frames and timing | Contact | Uses |
 |---|---|---|---|---|---|---|---|---|
-| 1 | run | E | N, W | — | CANDIDATE_NEEDS_REVIEW | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 34 |
+| 1 | run | E | N, W | — | CANDIDATE_NEEDS_REVIEW | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 32 |
 | 1 | run | N | E, N | — | MISSING | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 133 |
 | 1 | run | W | W | — | CANDIDATE_NEEDS_REVIEW | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 32 |
-| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 316 |
+| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 312 |
 | 1 | stand | W | stationary | — | CANDIDATE_NEEDS_REVIEW | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 236 |
 | 2 | dribble touch | N | N | N | MISSING | New: 6-frame carry cycle with a touch frame on each authored carry touch (none exist; currently drawn on the run cycle). | required | 49 |
 | 3 | receive | E | stationary | W | CANDIDATE_NEEDS_REVIEW | 3 frames: reach, CONTACT (first touch), settle (existing 13-15); contact held 0.15 s from arrival, settle to 0.35 s. | required | 7 |
@@ -105,7 +105,7 @@ Source: `docs/art/team-training-v1/source/teammate_03.png`; runtime: `src/assets
 | 1 | run | E | W | — | CANDIDATE_NEEDS_REVIEW | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 17 |
 | 1 | run | N | N | — | MISSING | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 123 |
 | 1 | run | W | E, W | — | CANDIDATE_NEEDS_REVIEW | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 40 |
-| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 316 |
+| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 312 |
 | 1 | stand | S | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 308 |
 | 1 | stand | W | stationary | — | CANDIDATE_NEEDS_REVIEW | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 236 |
 | 2 | dribble touch | N | N | N | MISSING | New: 6-frame carry cycle with a touch frame on each authored carry touch (none exist; currently drawn on the run cycle). | required | 49 |
@@ -123,7 +123,7 @@ Source: `docs/art/team-training-v1/source/teammate_04.png`; runtime: `src/assets
 | 1 | run | N | N, S | — | MISSING | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 126 |
 | 1 | run | S | S | — | MISSING | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 94 |
 | 1 | run | W | W | — | CANDIDATE_NEEDS_REVIEW | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 32 |
-| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 316 |
+| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 312 |
 | 1 | stand | S | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 308 |
 | 1 | stand | W | stationary | — | CANDIDATE_NEEDS_REVIEW | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 236 |
 | 2 | dribble touch | N | N | N | MISSING | New: 6-frame carry cycle with a touch frame on each authored carry touch (none exist; currently drawn on the run cycle). | required | 49 |
@@ -142,7 +142,7 @@ Source: `docs/art/team-training-v1/source/opponent_01.png`; runtime: `src/assets
 | 1 | run | N | N | — | MISSING | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 123 |
 | 1 | run | S | E, N, S, W | — | MISSING | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 122 |
 | 1 | run | W | N, S, W | — | CANDIDATE_NEEDS_REVIEW | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 50 |
-| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 316 |
+| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 312 |
 | 1 | stand | S | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 308 |
 | 1 | stand | W | stationary | — | CANDIDATE_NEEDS_REVIEW | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 236 |
 | 2 | dribble touch | S | S | S | MISSING | New: 6-frame carry cycle with a touch frame on each authored carry touch (none exist; currently drawn on the run cycle). | required | 20 |
@@ -159,7 +159,7 @@ Source: `docs/art/team-training-v1/source/opponent_02.png`; runtime: `src/assets
 | 1 | run | N | S | — | MISSING | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 8 |
 | 1 | run | S | E, S | — | MISSING | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 106 |
 | 1 | run | W | E, S, W | — | CANDIDATE_NEEDS_REVIEW | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 50 |
-| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 316 |
+| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 312 |
 | 1 | stand | S | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 308 |
 | 1 | stand | W | stationary | — | CANDIDATE_NEEDS_REVIEW | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 236 |
 | 2 | dribble touch | S | S | S | MISSING | New: 6-frame carry cycle with a touch frame on each authored carry touch (none exist; currently drawn on the run cycle). | required | 20 |
@@ -177,7 +177,7 @@ Source: `docs/art/team-training-v1/source/opponent_03.png`; runtime: `src/assets
 |---|---|---|---|---|---|---|---|---|
 | 1 | run | E | S | — | CANDIDATE_NEEDS_REVIEW | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 15 |
 | 1 | run | S | E, S | — | MISSING | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 106 |
-| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 316 |
+| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 312 |
 | 1 | stand | S | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 308 |
 | 1 | stand | W | stationary | — | CANDIDATE_NEEDS_REVIEW | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 236 |
 
@@ -192,7 +192,7 @@ Source: `docs/art/team-training-v1/source/opponent_04.png`; runtime: `src/assets
 | 1 | run | N | N, S, W | — | MISSING | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 135 |
 | 1 | run | S | E, N, S, W | — | MISSING | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 122 |
 | 1 | run | W | N, W | — | CANDIDATE_NEEDS_REVIEW | 6-frame stride cycle, phase driven by distance travelled (existing run row 0-5). | NOT_APPLICABLE | 40 |
-| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 316 |
+| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 312 |
 | 1 | stand | S | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 308 |
 | 1 | stand | W | stationary | — | CANDIDATE_NEEDS_REVIEW | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 236 |
 | 2 | dribble touch | S | S | S | MISSING | New: 6-frame carry cycle with a touch frame on each authored carry touch (none exist; currently drawn on the run cycle). | required | 20 |
@@ -206,7 +206,7 @@ Source: `docs/art/team-training-v1/source/home_keeper_keyposes.png`; runtime: `s
 
 | Priority | Action | Body facing | Permitted travel | Ball | Status | Frames and timing | Contact | Uses |
 |---|---|---|---|---|---|---|---|---|
-| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 316 |
+| 1 | stand | N | stationary | — | MISSING | 1 frame: upright two-foot stance (existing atlas frame 6). | NOT_APPLICABLE | 312 |
 | 3 | receive | N | stationary | E | MISSING | 3 frames: reach, CONTACT (first touch), settle (existing 13-15); contact held 0.15 s from arrival, settle to 0.35 s. | required | 2 |
 | 5 | keeper ready | N | stationary | — | MISSING | 1 frame: keeper ready stance (keeper strip pose 3). | NOT_APPLICABLE | 80 |
 

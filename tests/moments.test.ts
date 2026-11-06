@@ -360,12 +360,42 @@ describe('neutral choices in the review build', () => {
       for (const r of reviseChoices(s).revisions) expect(r.gradeStatus).toBe(r.change === 'reworded' ? 'RECHECK' : 'PACKAGE');
     }
   });
+  it('apply the owner wording review: branch C of both versions, D17 C archived, grades kept as history', async () => {
+    const { shownChoices, reviseChoices, movementCheck, OWNER_R4 } = await import('../src/game/training12/moments/choices');
+    const { MOMENT_OUTCOMES } = await import('../src/game/training12/moments/index');
+    for (const s of MOMENT_SCENES) {
+      const own = OWNER_R4[s.library.situationId];
+      const c = reviseChoices(s).revisions.find((r) => r.choice === 'C')!;
+      expect(c.grade).toBe(s.actions.find((a) => a.id === 'C')!.grade);
+      if (!own) continue;
+      expect(c.proposed).toBe(own.label);
+      if (own.decision === 'removed') expect(shownChoices(s).map((x) => x.id)).toEqual(['A', 'B']);
+      else expect(shownChoices(s).find((x) => x.id === 'C')!.label).toBe(own.label);
+    }
+    expect(Object.values(OWNER_R4).filter((w) => w.decision === 'approved').length * 2).toBe(24);
+    expect(Object.values(OWNER_R4).filter((w) => w.decision === 'replaced').length * 2).toBe(32);
+    // A tackle label is not shown as contact: the drafts stop before it.
+    for (const v of ['base', 'changed'] as const)
+      for (const d of ['D19', 'D25', 'D32']) {
+        const s = momentScene(d, v)!;
+        expect(movementCheck(s, 'tackle', MOMENT_OUTCOMES.find((o) => o.branchId === `${s.sceneId}/C`)).check).toBe('STOPS_BEFORE_CONTACT');
+      }
+  });
+  it('a reworded option whose draft does not animate its wording gets no destination marker', async () => {
+    const { shownChoices, reviseChoices, movementCheck } = await import('../src/game/training12/moments/choices');
+    const { outcomesFor } = await import('../src/game/training12/moments/index');
+    for (const s of MOMENT_SCENES) {
+      const outs = outcomesFor(s, true);
+      for (const r of reviseChoices(s).revisions)
+        if (r.change === 'reworded' && movementCheck(s, r.intent, outs[r.choice]).check !== 'MATCHES') expect(shownChoices(s, false, outs).find((x) => x.id === r.choice)!.marker).toBeNull();
+    }
+  });
   it('Learn names the choice as the screen showed it while the package feedback keeps the judgment', async () => {
     const { shownChoices } = await import('../src/game/training12/moments/choices');
     const s = momentScene('D10', 'base')!;
     const shown = shownChoices(s);
     const x = explain(s, evaluate(s, 'C'), undefined, (id) => shown.find((c) => c.id === id)?.label);
-    expect(x.chose.startsWith('Switch play through the pressure.: a misread')).toBe(true);
+    expect(x.chose.startsWith('Pass across to the opposite side.: a misread')).toBe(true);
     expect(x.chose).toContain(s.branches.C.feedback);
   });
 });
