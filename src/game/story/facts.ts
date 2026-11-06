@@ -5,7 +5,9 @@
 import { activityById } from '../career/catalog';
 import { sectionOf } from '../career/ballMastery';
 import { CAREER_CONFIG } from '../career/config';
+import { DEV_CONFIG } from '../career/development';
 import type { CareerSave } from '../career/state';
+import { seasonWeek } from '../season/calendar';
 import type { CompetitorId } from '../jungle/sim';
 
 export type HomeLearningDetail = 'completed' | 'partial' | 'none' | 'unknown';
@@ -126,4 +128,41 @@ export function rileyLine(storyWeek: number, choice: string | undefined): string
   if (storyWeek !== 7 || (choice !== 'check_training' && choice !== 'show_time')) return '';
   const asked = choice === 'check_training' ? 'help set up' : 'come to the show';
   return `\nRiley's showcase (Friday): you said you'd check whether you can ${asked}. Riley hasn't sent the time yet, so nothing is confirmed.`;
+}
+
+/** This week's competition from the Season One calendar, in the words the weekly home screen uses. */
+export function weekCompetition(storyWeek: number): string {
+  const w = seasonWeek(storyWeek);
+  if (!w) return 'No match this week';
+  if (w.tournament === 'az_showcase') return 'AZ Showcase tournament this week (league points unchanged)';
+  if (w.tournament === 'holiday_classic') return 'Holiday Classic tournament this week (league points unchanged)';
+  if (w.leagueGame !== null) return `League game ${w.leagueGame} of 12 this week`;
+  if (w.friendly) return 'Friendly this week (no league points)';
+  return 'No match this week';
+}
+
+export interface HomeBoard {
+  readonly week: number;
+  readonly tasks: readonly HomeTask[];
+  /** The THIS SEASON panel (league, rankings, next league opponent) or '' while it loads. */
+  readonly season: string;
+  readonly competition: string;
+  readonly overall: number | null;
+}
+
+/** The weekly home screen text: next step first, then competition, player development and team progress. */
+export function homeBoard(b: HomeBoard): string {
+  const next = b.tasks.find((t) => !t.done);
+  const season = b.season.split('\n').filter((l) => l && l !== 'THIS SEASON');
+  return [
+    `WEEK ${b.week} · HOME`,
+    next ? `NEXT: ${next.label}` : 'NEXT: home training done. Tap Continue Week.',
+    '',
+    'HOME TRAINING',
+    ...b.tasks.map((t) => `${t.done ? '✓' : '○'} ${t.label}`),
+    '',
+    `THIS WEEK: ${b.competition}`,
+    ...(b.overall === null ? [] : [`MY PLAYER: overall ${b.overall.toFixed(1)} (Season 1 maximum ${DEV_CONFIG.seasonOneCap})`]),
+    ...(season.length ? [`TEAM: ${season.join('\n')}`] : ['TEAM: loading saved results...']),
+  ].join('\n');
 }

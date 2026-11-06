@@ -5,7 +5,7 @@ import { CAREER_CONFIG } from '../src/game/career/config';
 import { DRAFT_ACTIVITIES } from '../src/game/career/curriculum/drafts';
 import { DESIGN_ACTIVITIES } from '../src/game/career/ballMastery';
 import { emptySave, reduce, type CareerSave, type JournalEntry } from '../src/game/career/state';
-import { homeTasks, weekAssignments } from '../src/game/story/facts';
+import { homeBoard, homeTasks, weekAssignments, weekCompetition } from '../src/game/story/facts';
 
 const jug = JUGGLING_LADDER[0]!.id;
 const fam = (f: string) => CORE_ACTIVITIES.find((a) => a.skillFamilyId === f)!.id;
@@ -100,5 +100,28 @@ describe('guided curricula: the old skill task cannot block the story', () => {
     expect(weekAssignments(save([{ ...entry(d), completion: 'skipped' } as JournalEntry]), 5).skillDone).toBe(false);
     expect(weekAssignments(save([{ ...entry(d), week: 4 } as JournalEntry]), 5).skillDone).toBe(false);
     expect(weekAssignments(save([entry(jug)]), 5).skillDone).toBe(false);
+  });
+});
+
+describe('weekly home screen: next step, competition, player and team in one place', () => {
+  it('names the next required task first and the week\'s competition from the calendar', () => {
+    const tasks = homeTasks(weekAssignments(save([entry(jug)]), 5));
+    const text = homeBoard({ week: 5, tasks, season: 'THIS SEASON\nLeague: 2nd of 10 · 6 pts (W2 D0 L0)\nNext league game: Dell', competition: weekCompetition(5), overall: 51.25 });
+    const lines = text.split('\n');
+    expect(lines[0]).toBe('WEEK 5 · HOME');
+    expect(lines[1]).toBe('NEXT: Control and first-touch work');
+    expect(text).toContain('✓ Juggling task');
+    expect(text).toContain('○ Control and first-touch work');
+    expect(text).toContain('THIS WEEK: League game 3 of 12 this week');
+    expect(text).toContain('MY PLAYER: overall 51.3 (Season 1 maximum 64)');
+    expect(text).toContain('TEAM: League: 2nd of 10');
+    expect(text).not.toContain('THIS SEASON');
+  });
+  it('tournament week says the tournament, never league points', () => {
+    expect(weekCompetition(9)).toMatch(/^AZ Showcase tournament this week \(league points unchanged\)$/);
+  });
+  it('a finished week points at Continue Week', () => {
+    const tasks = homeTasks({ juggling: true, skill: 'firstTouch', skillDone: true, learning: null, practices: 2, complete: true });
+    expect(homeBoard({ week: 5, tasks, season: '', competition: 'x', overall: null }).split('\n')[1]).toBe('NEXT: home training done. Tap Continue Week.');
   });
 });

@@ -59,7 +59,7 @@ test('team training: one approved All36 scenario a week counts once (any answer)
   expect(c.text).toMatch(/Tactical topic: .+/);
   expect(c.text).toMatch(/Your role: (Left winger|Right winger|Striker)/);
   expect(c.text).toContain('Status: Not started');
-  expect(c.text).toContain('Earned credit: none yet');
+  expect(c.text).toContain('Growth this week: none yet');
   expect(c.text).not.toMatch(/Session [ABC]|Not Applicable|normal controls|30 seconds|Play Team Training/i);
   let d = await diagnostics(page);
   const names = Object.keys(d.layout!.elements);

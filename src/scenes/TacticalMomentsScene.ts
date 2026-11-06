@@ -223,7 +223,8 @@ export class TacticalMomentsScene extends Phaser.Scene implements InspectableSce
   private leave(): void {
     if (this.saveState === 'saving') return;
     if (this.review) return void this.scene.start(SceneKeys.MomentsReview, { situationId: this.moment?.library.situationId });
-    this.scene.start(SceneKeys.Career, { open: 'team', ...(this.returnTo ? { returnTo: this.returnTo } : {}) });
+    if (this.returnTo === 'story') return void this.scene.start(SceneKeys.Story, { resume: true });
+    this.scene.start(SceneKeys.Career, { open: 'team' });
   }
 
   private reopen(patch: Partial<TacticalMomentsData>): void {

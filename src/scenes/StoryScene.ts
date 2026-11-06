@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { fixtureForWeek, newLeague, parseLeague, recordPlayed, simulateThrough } from '../game/league/league';
-import { homeLearningDetail, homeTasks, weekAssignments, jungleResult, schoolRewardDetail, trainingLogDetail } from '../game/story/facts';
+import { homeBoard, homeLearningDetail, homeTasks, weekAssignments, weekCompetition, jungleResult, schoolRewardDetail, trainingLogDetail } from '../game/story/facts';
 import type { CompetitorId } from '../game/jungle/sim';
 import { crossbarRules, decisionDetail, sceneById, trainingDetail } from '../game/story/content';
 import { seasonWeek, type TournamentId } from '../game/season/calendar';
@@ -19,6 +19,7 @@ import type { CareerSave } from '../game/career/state';
 import { drivewayDue } from '../game/driveway/save';
 import { CareerStore } from '../game/career/store';
 import { teamTrainingHandoff } from '../game/career/weeklyTraining';
+import { overallOf } from '../game/career/development';
 import type { Position } from '../game/career/types';
 import { type Background, type StoryNode } from '../game/story/content';
 import { attemptKey, commitLaunch, commitResolve, contestResult, CROSSBAR, describeShot, launchAttempt, newContest, nextSlot, opponentKick, points, resolveAttempt, restoreContest, simulateShot, type Contest, type KickInput, type Participant, type ShotOutcome } from '../game/story/crossbar';
@@ -432,15 +433,17 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
     }
     this.navigating = true;
     if (MATCH_ADAPTERS.includes(kind)) this.scene.start(SceneKeys.Formation, { career: true, returnTo: 'story', resultKey: run, ...opp });
+    // Team Training starts the week's session directly; it returns straight to the story.
+    else if (kind === 'team_training') this.scene.start(SceneKeys.Weekly, { returnTo: 'story' });
     // Home Training no longer lists setup, focus or sessions, so those handoffs open their screen directly.
     else this.scene.start(SceneKeys.Career, { returnTo: 'story', ...(HANDOFF_SCREEN[kind] ? { open: HANDOFF_SCREEN[kind] } : {}) });
   }
 
   /** Home hub: Training opens Home Training without launching a run; the hub completes only on Continue or Talk. */
-  private openHome(): void {
+  private openHome(task?: string): void {
     if (!this.fresh()) return;
     this.navigating = true;
-    this.scene.start(SceneKeys.Career, { returnTo: 'story', week: this.seasonWeekNo() ?? undefined });
+    this.scene.start(SceneKeys.Career, { returnTo: 'story', week: this.seasonWeekNo() ?? undefined, ...(task ? { task } : {}) });
   }
 
   /** Optional and never a story fact: the result is saved by Cloudy's own reducer action. */
@@ -1199,19 +1202,19 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.finishFact(schoolRewardDetail()) });
         return;
       case 'home_hub': {
+        // One weekly home screen: the next required step, this week's competition, the player and the team.
         const wk = this.seasonWeekNo() ?? 5;
         const a = this.save ? weekAssignments(this.save, wk) : { juggling: false, skill: wk >= 7 ? ('passing' as const) : ('firstTouch' as const), skillDone: false, learning: wk >= 6 ? false : null, practices: 0, complete: false };
         const trained = a.complete;
-        const tasks = homeTasks(a).map((t) => `- ${t.label}: ${t.done ? 'done' : 'not done yet'}\n`).join('');
-        setBody(
-          `${this.seasonPanel ? `${this.seasonPanel}\n\n` : ''}HOME MENU\nTraining (required) - tap Training, then each task, and log it:\n${tasks}` +
-            `${trained ? 'Weekly home training complete. Continue Week is unlocked.' : 'Continue Week unlocks after the required training.'}\nCloudy: Feed & Play is optional and never blocks the week.`,
-        );
-        acts.push({ name: 'hub-training', label: trained ? 'Training (done)' : 'Training (required)', onClick: () => this.openHome() });
+        const list = homeTasks(a);
+        const next = list.find((t) => !t.done);
+        setBody(homeBoard({ week: wk, tasks: list, season: this.seasonPanel, competition: weekCompetition(wk), overall: this.save?.player ? overallOf(this.save.player.attributes) : null }));
+        if (trained) acts.push({ name: 'hub-continue', label: 'Continue Week', onClick: () => void this.finishFact('trained') });
+        else acts.push({ name: 'hub-next', label: `Next: ${next?.short ?? 'Training'}`, onClick: () => this.openHome(next?.key) });
+        acts.push({ name: 'hub-training', label: trained ? 'Training (done)' : 'All training', onClick: () => this.openHome() });
         acts.push({ name: 'hub-my-player', label: 'My Player', onClick: () => this.openMyPlayer() });
         acts.push({ name: 'hub-rankings', label: 'League & Rankings', onClick: () => this.openRankings() });
-        acts.push({ name: 'hub-cloudy-play', label: 'Cloudy: Feed & Play', onClick: () => this.openCloudy() });
-        if (trained) acts.push({ name: 'hub-continue', label: 'Continue Week', onClick: () => void this.finishFact('trained') });
+        acts.push({ name: 'hub-cloudy-play', label: 'Cloudy (optional)', onClick: () => this.openCloudy() });
         return;
       }
       case 'rankings':
@@ -1227,7 +1230,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
       case 'home_preview': {
         const wk = this.seasonWeekNo() ?? 1;
         const tasks = this.save ? homeTasks(weekAssignments(this.save, wk)).map((t) => `- ${t.label}: ${t.done ? 'done' : 'not done yet'}`).join('\n') : '- Juggling (every week)';
-        setBody(`HOME > TRAINING (preview)\n${tasks}\nThis preview does not mark anything complete.`);
+        setBody(`THIS WEEK'S HOME TRAINING\n${tasks}\nYou'll do these from the home screen later this week.`);
         acts.push({ name: 'handoff-continue', label: 'Continue', onClick: () => void this.finishFact('previewed') });
         return;
       }

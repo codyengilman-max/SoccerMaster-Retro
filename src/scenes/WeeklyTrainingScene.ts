@@ -189,13 +189,14 @@ export class WeeklyTrainingScene extends Phaser.Scene implements InspectableScen
 
   private leave(): void {
     if (this.screen === 'saving') return;
-    this.scene.start(SceneKeys.Career, { open: 'team', ...(this.returnTo ? { returnTo: this.returnTo } : {}) });
+    if (this.returnTo === 'story') return void this.scene.start(SceneKeys.Story, { resume: true });
+    this.scene.start(SceneKeys.Career, { open: 'team' });
   }
 
   private statusLines(): string[] {
     if (!this.save) return [];
     const p = weeklyProgress(this.save);
-    const credit = p.credited && p.record ? `Earned credit: ${describeChanges(p.record.changes)}` : p.countedElsewhere ? 'Earned credit: this week was already counted; runs are practice.' : 'Earned credit: none yet';
+    const credit = p.credited && p.record ? `Growth this week: ${describeChanges(p.record.changes)}` : p.countedElsewhere ? 'Growth this week: already counted; this run is practice.' : 'Growth this week: none yet';
     return [`Status: ${p.completed ? 'complete' : 'not started'} · Best mastery: ${p.best ? p.best.band : '—'}`, credit];
   }
 
@@ -373,8 +374,8 @@ export class WeeklyTrainingScene extends Phaser.Scene implements InspectableScen
         lines = ['LEARN', ...(this.verdict ? verdictLines(this.verdict) : []), '', this.saved, ...this.statusLines()];
         acts =
           this.screen === 'saveFailed'
-            ? [{ name: 'tt-retry-save', label: 'Try saving again', onClick: () => void this.record() }, { name: 'tt-done', label: 'Back to Team Training', onClick: () => this.leave() }]
-            : [{ name: 'tt-replay', label: 'Play again (practice)', onClick: () => this.begin() }, { name: 'tt-done', label: 'Back to Team Training', onClick: () => this.leave() }];
+            ? [{ name: 'tt-retry-save', label: 'Try saving again', onClick: () => void this.record() }, { name: 'tt-done', label: this.returnTo === 'story' ? 'Back to week' : 'Back to Team Training', onClick: () => this.leave() }]
+            : [{ name: 'tt-replay', label: 'Play again (practice)', onClick: () => this.begin() }, { name: 'tt-done', label: this.returnTo === 'story' ? 'Back to week' : 'Back to Team Training', onClick: () => this.leave() }];
         break;
     }
     // Fit the text above the buttons: shrink the font first, then put the answers in two columns.

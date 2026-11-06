@@ -416,7 +416,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         };
         return {
           title: `${p.name} · Week ${s.week}`,
-          body: req.length && req.every((t) => t.done) ? 'This week\'s home training is done. Tap Back to story, then Continue Week.' : 'Tap Continue for your next lesson. Watch it, practise, then Log practice.',
+          body: req.length && req.every((t) => t.done) ? 'This week\'s home training is done. Tap Back to story to continue the week.' : 'Tap Continue for your next lesson. Watch it, practise, then Log practice.',
           cards: true,
           actions: [
             { name: 'continue-juggling', label: card('juggling', ['juggling']), on: todo(['juggling']), onClick: () => this.continueTrack('juggling') },
@@ -715,7 +715,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         const lesson = viewer && !useBallOnly && !gated ? teachingFor(a.id) : undefined;
         const side = sideLessonFor(a.id);
         if (side) {
-          const tips = [`Looks right when: ${a.success}`, `Easier: ${a.easier}  Harder: ${a.harder}`, `Needs: ball, ${a.space} space.`, `Source: ${a.sourceNote}`, 'Demo art: side-view poses derived from the approved training sprites (review build).', ...(side.kind === 'inside' ? ['Foot detail: both boots and the ball seen from above, from the same moment.'] : [])];
+          const tips = [`Looks right when: ${a.success}`, `Easier: ${a.easier}  Harder: ${a.harder}`, `Needs: ball, ${a.space} space.`, `Source: ${a.sourceNote}`, ...(side.kind === 'inside' ? ['Foot detail: both boots and the ball seen from above, from the same moment.'] : [])];
           const body = [`${this.taskLine(a)}COACH CODE: ${a.cue}`, side.titles.map((t, i) => `${i + 1}. ${t}`).join('\n'), `Common mistake: ${a.mistake.mistake}\nFix: ${a.mistake.correction}`, ...(this.teachTips ? tips : [])].join('\n');
           const actions: Action[] = [
             { name: 'demo-pause', label: this.demoPaused ? 'Play' : 'Pause', onClick: () => (this.demoPaused && this.demoT >= sideLength(side) && (this.demoT = 0), (this.demoPaused = !this.demoPaused), this.render()) },
@@ -737,7 +737,6 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
             variant ? `This week's change: ${variant.change}` : '',
             `Needs: ball, ${a.space} space.`,
             `Source: ${a.sources.map((r) => SOURCES[r.id].title).join('; ') || a.sourceNote}.`,
-            'Demo art: cleaned draft contact poses (review build), not a coach-approved animation.',
           ].filter(Boolean);
           const tbody = [`${this.taskLine(a)}COACH CODE: ${a.cue}`, `1. ${a.steps[0]}\n2. ${a.steps[1]}\n3. ${a.steps[2]}`, `Common mistake: ${a.mistake.mistake}\nFix: ${a.mistake.correction}`, ...(this.teachTips ? tips : [])].join('\n');
           const tactions: Action[] = [
@@ -805,7 +804,7 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
         };
         return {
           title: `Log: ${a.title}`,
-          body: `What you report is your own record. It earns participation credit for a scheduled session, never game attributes.\nPersonal best (${a.personalBestLabel ?? 'none'}): ${d.personalBest ?? '-'}\nReflection: ${d.reflection || '-'}`,
+          body: `Your own record of the practice. Logged practices count toward this week's home training and its growth.\nPersonal best (${a.personalBestLabel ?? 'none'}): ${d.personalBest ?? '-'}\nReflection: ${d.reflection || '-'}`,
           actions: [
             { name: 'log-complete', label: 'Complete', onClick: () => void this.complete(a, sc.sessionId) },
             ...(['done', 'partly', 'skipped'] as const).map((c) => ({ name: `c-${c}`, label: { done: 'Did it', partly: 'Did some', skipped: 'Skipped' }[c], on: d.completion === c, onClick: () => set({ completion: c }) })),
@@ -864,12 +863,12 @@ export class CareerScene extends Phaser.Scene implements InspectableScene, Gamep
           return {
             title: `Weekly Team Training · Week ${s.week}`,
             body: [
-              `Scenario: ${a.title} (${a.situationId})`,
+              `Scenario: ${a.title}${shouldExposeDebug(window.location) ? ` (${a.situationId})` : ''}`,
               `Tactical topic: ${a.topic}`,
               `Your role: ${ROLE_NAME[a.role] ?? a.role}${a.reinforces ? ` · reinforcement of week ${a.reinforces}` : ''}`,
               `Status: ${w.completed ? 'Complete' : 'Not started'}`,
               `Best mastery: ${w.best ? w.best.band : '—'}`,
-              `Earned credit: ${credit}`,
+              `Growth this week: ${credit}`,
               '',
               'One coach-approved scenario this week. Finishing it once counts the week, whatever your answer. Playing again can raise your best but never counts twice.',
             ].join('\n'),
