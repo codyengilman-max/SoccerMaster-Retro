@@ -94,8 +94,11 @@ export function ballAt(tl: Timeline, ball0: Metres, t: number): BallSample {
         const next = [...c.touches, c.t1].find((x) => x > tt) ?? c.t1;
         const u = Math.min(1, (tt - prev) / Math.max(1e-6, next - prev));
         const push = Math.min(TOUCH_PUSH_M, (next - prev) * 0.6) * Math.sin(Math.PI * u);
-        const dx = a.look[0] - a.at[0];
-        const dy = a.look[1] - a.at[1];
+        // Push along the carrier's travel, not their gaze (a carrier can look back while running on).
+        const ahead = actorAt(tl, s.by, Math.min(c.t1, tt + 0.02)).at;
+        const behind = actorAt(tl, s.by, Math.max(c.t0, tt - 0.02)).at;
+        const dx = ahead[0] - behind[0];
+        const dy = ahead[1] - behind[1];
         const n = Math.hypot(dx, dy) || 1;
         return [a.at[0] + s.off[0] + (dx / n) * push, a.at[1] + s.off[1] + (dy / n) * push];
       }

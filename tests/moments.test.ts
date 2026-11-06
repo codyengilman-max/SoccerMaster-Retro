@@ -401,6 +401,27 @@ describe('neutral choices in the review build', () => {
     expect(lead((t0 + t1) / 2)).toBeGreaterThan(lead(t0) + 0.1);
     expect(Math.abs(lead(t1) - lead(t0))).toBeLessThan(0.2);
   });
+  it('every drafted dribble touch pushes the ball forward along travel, never behind the carrier', async () => {
+    const { ballAt, actorAt } = await import('../src/game/training12/moments/timeline');
+    const { MOMENT_OUTCOMES } = await import('../src/game/training12/moments/index');
+    const tls = [...MOMENT_SCENES.flatMap((x) => [x.watch, ...Object.values(x.branches).map((b) => b.timeline)]), ...MOMENT_OUTCOMES.flatMap((o) => (o.timeline ? [o.timeline] : []))];
+    let checked = 0;
+    for (const tl of tls)
+      for (const c of tl.ball)
+        if (c.kind === 'carry')
+          for (let t = c.t0 + 0.05; t < c.t1 - 0.05; t += 0.1) {
+            const a0 = actorAt(tl, c.by, t - 0.02).at, a1 = actorAt(tl, c.by, t + 0.02).at;
+            const v = [a1[0] - a0[0], a1[1] - a0[1]] as const;
+            if (Math.hypot(v[0], v[1]) < 1e-6) continue;
+            const b0 = ballAt(tl, [0, 0], c.t0).at, p0 = actorAt(tl, c.by, c.t0).at;
+            const base = [b0[0] - p0[0], b0[1] - p0[1]] as const;
+            const b = ballAt(tl, [0, 0], t).at, p = actorAt(tl, c.by, t).at;
+            const extra = [b[0] - p[0] - base[0], b[1] - p[1] - base[1]] as const;
+            expect(extra[0] * v[0] + extra[1] * v[1]).toBeGreaterThanOrEqual(-1e-9);
+            checked++;
+          }
+    expect(checked).toBeGreaterThan(20);
+  });
   it('body facing stays separate from travel: a vertical look keeps the closest supplied side view', async () => {
     const { ttFacingFlip } = await import('../src/render/art/teamTrainingFrames');
     expect(ttFacingFlip([10, 10], [10, 20], [5, 30], false)).toBe(true);
