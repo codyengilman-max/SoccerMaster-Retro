@@ -120,6 +120,17 @@ export function movementCheck(s: MomentScene, intent: Intent | null, o: OutcomeD
     });
     return mate ? { check: 'MATCHES', note: `${mate.id} also moves toward the ball.` } : { check: 'MISMATCH', note: 'Only the protagonist moves toward the ball in the draft; no teammate goes with them.' };
   }
+  if (intent === 'run-beyond' && fam === 'run-beyond') {
+    const P = s.protagonist.actorId;
+    const me = s.actors.find((a) => a.id === P)!;
+    const tr = o!.timeline!.actors.find((x) => x.id === P)!;
+    const from = tr.keys[0]!.at[1];
+    const to = tr.keys[tr.keys.length - 1]!.at[1];
+    const dir = Math.sign(to - from);
+    const line = s.actors.filter((a) => a.team !== me.team && a.role !== 'GK' && (a.decision[1] - from) * dir > 0).map((a) => a.decision[1] * dir);
+    const last = line.length ? Math.max(...line) * dir : null;
+    if (last !== null && (to - last) * dir <= 0) return { check: 'MISMATCH', note: `The draft run stops at y=${to}, short of the defensive line (deepest outfield defender at y=${last}).` };
+  }
   return fam === intent ? { check: 'MATCHES', note: '' } : { check: 'MISMATCH', note: `The draft animates "${fam}" (from the package label), not "${intent}".` };
 }
 
@@ -186,7 +197,7 @@ function destination(s: MomentScene, k: ChoiceId, o: OutcomeDraft | undefined): 
   const me = tl.actors.find((tr) => tr.id === s.protagonist.actorId);
   if (!me) return null;
   const end = me.keys[me.keys.length - 1]!.at;
-  return d2(me.keys[0]!.at, end) > 1 ? end : null;
+  return d2(me.keys[0]!.at, end) > 0.25 ? end : null;
 }
 
 /**

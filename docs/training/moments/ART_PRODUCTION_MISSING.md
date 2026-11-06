@@ -75,6 +75,8 @@ These approved or replacement labels name an action the current drafts do not an
 - TM-D09-changed/C "Run into the same space as your teammate.": NO_DRAFT_MOVEMENT. Needs: movement not decided.
 - TM-D10-base/C "Pass across to the opposite side.": NO_DRAFT_MOVEMENT. Needs: pass; target lane not identified yet.
 - TM-D10-changed/C "Pass across to the opposite side.": NO_DRAFT_MOVEMENT. Needs: pass; target lane not identified yet.
+- TM-D12-base/C "Start your run beyond the defensive line now.": MISMATCH. Needs: movement not decided.
+- TM-D12-changed/C "Start your run beyond the defensive line now.": MISMATCH. Needs: movement not decided.
 - TM-D15-base/C "Run into the striker’s lane.": NO_DRAFT_MOVEMENT. Needs: movement not decided.
 - TM-D19-base/C "Lunge for the ball from here.": STOPS_BEFORE_CONTACT. Needs: tackle (contact: anatomical foot, surface, support foot, contact frame) facing N toward the ball, boy and girl.
 - TM-D19-changed/C "Lunge for the ball from here.": STOPS_BEFORE_CONTACT. Needs: tackle (contact: anatomical foot, surface, support foot, contact frame) facing N toward A_CB, boy and girl.

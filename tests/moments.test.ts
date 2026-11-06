@@ -381,6 +381,15 @@ describe('neutral choices in the review build', () => {
         expect(movementCheck(s, 'tackle', MOMENT_OUTCOMES.find((o) => o.branchId === `${s.sceneId}/C`)).check).toBe('STOPS_BEFORE_CONTACT');
       }
   });
+  it('a run beyond the defensive line only matches when the draft crosses the deepest outfield defender', async () => {
+    const { movementCheck, reviseChoices } = await import('../src/game/training12/moments/choices');
+    const { MOMENT_OUTCOMES } = await import('../src/game/training12/moments/index');
+    for (const v of ['base', 'changed'] as const) {
+      const s = momentScene('D12', v)!;
+      const r = reviseChoices(s).revisions.find((x) => x.choice === 'C')!;
+      expect(movementCheck(s, r.intent, MOMENT_OUTCOMES.find((o) => o.branchId === `${s.sceneId}/C`)).check).toBe('MISMATCH');
+    }
+  });
   it('a reworded option whose draft does not animate its wording gets no destination marker', async () => {
     const { shownChoices, reviseChoices, movementCheck } = await import('../src/game/training12/moments/choices');
     const { outcomesFor } = await import('../src/game/training12/moments/index');
