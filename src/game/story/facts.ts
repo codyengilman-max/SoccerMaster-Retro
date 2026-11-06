@@ -148,12 +148,22 @@ export interface HomeBoard {
   readonly season: string;
   readonly competition: string;
   readonly overall: number | null;
+  /** Short screens (phone landscape): fewer, longer lines so the board clears the buttons. */
+  readonly compact?: boolean;
 }
 
 /** The weekly home screen text: next step first, then competition, player development and team progress. */
 export function homeBoard(b: HomeBoard): string {
   const next = b.tasks.find((t) => !t.done);
   const season = b.season.split('\n').filter((l) => l && l !== 'THIS SEASON');
+  if (b.compact) {
+    return [
+      `WEEK ${b.week} · NEXT: ${next ? next.label : 'home training done. Tap Continue Week.'}`,
+      `HOME TRAINING: ${b.tasks.map((t) => `${t.done ? '✓' : '○'} ${t.short}`).join(' · ')}`,
+      `THIS WEEK: ${b.competition}${b.overall === null ? '' : ` · MY PLAYER: ${b.overall.toFixed(1)} of ${DEV_CONFIG.seasonOneCap} max`}`,
+      `TEAM: ${season.length ? season.join(' · ') : 'loading saved results...'}`,
+    ].join('\n');
+  }
   return [
     `WEEK ${b.week} · HOME`,
     next ? `NEXT: ${next.label}` : 'NEXT: home training done. Tap Continue Week.',

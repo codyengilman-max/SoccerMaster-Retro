@@ -60,10 +60,10 @@ for (const gender of ['boy', 'girl'] as const) {
     for (const [sceneId, competition] of [['S1_W09_H', 'THIS WEEK: AZ Showcase tournament this week'], ['S1_W05_H', 'THIS WEEK: League game 3 of 12 this week']] as const) {
       const hub = await stage(page, sceneId, 'v3a1');
       const text = (await story(page, (x) => x.scene === sceneId && x.text.includes('TEAM:') && !x.text.includes('loading saved results'), 'season panel loaded')).text;
-      expect(text.split('\n')[0]).toBe(`WEEK ${sceneId === 'S1_W09_H' ? 9 : 5} · HOME`);
+      expect(text.split('\n')[0]).toMatch(new RegExp(`^WEEK ${sceneId === 'S1_W09_H' ? 9 : 5} · `));
       expect(text).toContain('NEXT: Juggling task');
       expect(text).toContain(competition);
-      expect(text).toMatch(/MY PLAYER: overall \d+\.\d \(Season 1 maximum 64\)/);
+      expect(text).toMatch(/MY PLAYER: (overall \d+\.\d \(Season 1 maximum 64\)|\d+\.\d of 64 max)/);
       expect(text).not.toMatch(/HOME MENU|career week|review build|situation/i);
       expect(hub.buttons[0]).toBe('hub-next');
       expect(hub.buttons).not.toContain('hub-continue');

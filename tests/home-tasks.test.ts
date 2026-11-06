@@ -123,4 +123,13 @@ describe('weekly home screen: next step, competition, player and team in one pla
     const tasks = homeTasks({ juggling: true, skill: 'firstTouch', skillDone: true, learning: null, practices: 2, complete: true });
     expect(homeBoard({ week: 5, tasks, season: '', competition: 'x', overall: null }).split('\n')[1]).toBe('NEXT: home training done. Tap Continue Week.');
   });
+  it('compact board (short landscape) keeps every part in four lines', () => {
+    const text = homeBoard({ week: 6, tasks: homeTasks(weekAssignments(save([]), 6)), season: 'THIS SEASON\nLeague: 8th of 9 · 1 pts (W0 D1 L0)\nNational #612 of 1000 · Arizona #67 of 120\nNext: Batavia vs Scottsdale', competition: weekCompetition(6), overall: 50.5, compact: true });
+    const lines = text.split('\n');
+    expect(lines).toHaveLength(4);
+    expect(lines[0]).toBe('WEEK 6 · NEXT: Juggling task');
+    expect(lines[1]).toContain('○ Home learning');
+    expect(lines[2]).toBe('THIS WEEK: League game 4 of 12 this week · MY PLAYER: 50.5 of 64 max');
+    expect(lines[3]).toContain('National #612');
+  });
 });

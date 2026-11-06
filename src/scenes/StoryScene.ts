@@ -1208,7 +1208,7 @@ export class StoryScene extends Phaser.Scene implements InspectableScene, Gamepl
         const trained = a.complete;
         const list = homeTasks(a);
         const next = list.find((t) => !t.done);
-        setBody(homeBoard({ week: wk, tasks: list, season: this.seasonPanel, competition: weekCompetition(wk), overall: this.save?.player ? overallOf(this.save.player.attributes) : null }));
+        setBody(homeBoard({ week: wk, tasks: list, season: this.seasonPanel, competition: weekCompetition(wk), overall: this.save?.player ? overallOf(this.save.player.attributes) : null, compact: this.scale.height < 360 }));
         if (trained) acts.push({ name: 'hub-continue', label: 'Continue Week', onClick: () => void this.finishFact('trained') });
         else acts.push({ name: 'hub-next', label: `Next: ${next?.short ?? 'Training'}`, onClick: () => this.openHome(next?.key) });
         acts.push({ name: 'hub-training', label: trained ? 'Training (done)' : 'All training', onClick: () => this.openHome() });
