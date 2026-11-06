@@ -228,6 +228,6 @@ test('story Home Training lists the required tasks and logging them ticks them o
     expect(c.toast).toContain(`${label}: done for this week`);
     await fits(page);
   }
-  expect(c.text).toContain("This week's home training is done. Tap Back to story, then Continue Week.");
+  expect(c.text).toContain("This week's home training is done. Tap Back to story to continue the week.");
   expect(errors).toEqual([]);
 });

@@ -518,3 +518,10 @@ Tactical Moments replace the still Weekly Team Training picture with Brief → W
 ## D76d — Tactical Moments use the supplied package art with documented fallbacks (owner-authorized)
 
 The owner authorized the animations in `tactical-moments-art-package.zip` (the same sheets as `team-training-v1`). Directional gaps (up/down run, shuffle, stand, pass; dribble touches) now use the closest supplied frames as documented fallbacks (`src/game/training12/moments/artFallback.ts`) and no longer block release; a tackle has no stand-in and still blocks. Body facing is chosen separately from travel (`ttFacingFlip`), stationary defenders near the ball hold the shuffle ready stance, and a dribbled ball is pushed ahead on each touch instead of riding a fixed foot offset. Contact metadata stays UNVERIFIED and does not block using the art. Scene routes, decisions, wording, IDs, saves and reward rules are unchanged; player release still requires owner scene approval. See `docs/training/moments/ART_INTEGRATION.md`.
+
+## D77. Cleanup pass: one weekly home screen, direct Team Training, no development wording for players (owner brief, 2026-11)
+
+- The Season One home menu (`home_hub`) is the weekly home screen: NEXT step, home training ticks, this week's competition, the player's overall against the Season 1 cap, and the team's league and ranking lines. `Next: <task>` opens the assigned lesson through Career's existing `task` route; no new exercise picker.
+- The story's Team Training handoff starts `WeeklyTrainingScene` directly; leaving it (or an approved Tactical Moment) from the story returns to the story. Career's Team Training card stays for the non-story route.
+- Scenario IDs show only with `?debug`. Story fact cards and legacy Career screens are kept unchanged (see `docs/CLEANUP_AUDIT.md`).
+- No progression number, save field or approval gate changed.

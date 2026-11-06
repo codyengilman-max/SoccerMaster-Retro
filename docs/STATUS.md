@@ -10,6 +10,8 @@ Sections below are a history log, newest first; each header records where that w
 | **Dev-only** (URL flag) | Coach Moments `?coach` (deprecated, H3; never in story matches); tactics v0.5 `?tactics=v05` (candidate, H2); gesture controls and their double-tap quick shot `?controls=gesture`; Lab/Review `?dev`, `?lab`; Team Training proposals `?debug&ttProposals` |
 | **Blocked** (fail-closed by design) | Team Training scoring: `SESSION_CARDS` empty, all 972 routes "not counted"; the story continues without credit. Coach-approved All36 package (36 situations, outfield only) inventoried, not imported: `docs/training/all36/INVENTORY.md`, PR C. Audited v1.2 (48 cards, 0 approved) is superseded for scoring |
 | **Proposed** (owner-approved, not built) | All36 Team Training integration (PR C); standing tackle replacing BLOCK and pad double-tap quick shot (H6, PR D); rest defence and golden-moment highlights (H7, PR E) |
+
+**Cleanup pass (D77, branch `devin/1793988658-cleanup-pass` off `main` 23b3e00):** weekly home screen, one-tap lesson and Team Training starts, development wording removed for players. Audit: `docs/CLEANUP_AUDIT.md`.
 | **Deferred** | Chips, lofted shots, extra passing/defensive controls (H6); Weeks 11–18 content; school rewards (`SCHOOL_REWARD_RULE = null`) |
 | **Not planned** | Match-long position lock (H1); story-match Coach Moments, in-match tactical questions, Decision Heat in matches, tactical-choice Match Report scoring (H3) |
 | **Merged whole** | PR #37 (Tournament Results Screen, Animated Rosters v2), merged as one change on the owner's instruction of 2026-10-28, superseding H4's extraction plan |
