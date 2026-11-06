@@ -5,6 +5,7 @@ import type { CareerSave } from '../game/career/state';
 import { describeChanges } from '../game/career/teamTraining';
 import { weeklyProgress } from '../game/career/weeklyTraining';
 import { episodeById } from '../game/training12/all36/package';
+import { playerMoment } from '../game/training12/moments/index';
 import type { ChoiceId, PackageEpisode, PackageVariant } from '../game/training12/all36/types';
 import { gradeWeekly, weeklyAssignment, type WeeklyAssignment, type WeeklyVerdict } from '../game/training12/all36/weekly';
 import { ensureTtArt, ttKey } from '../render/art/teamTrainingArt';
@@ -132,6 +133,12 @@ export class WeeklyTrainingScene extends Phaser.Scene implements InspectableScen
         this.episode = e;
         this.variant = v;
         this.look = save.player.gender === 'girl' ? 'girl' : 'boy';
+        // An owner-approved Tactical Moments version of this assignment replaces the still picture; none is approved yet.
+        if (playerMoment(a.situationId, a.variant)) {
+          store.close();
+          this.store = null;
+          return void this.scene.start(SceneKeys.Moments, { situationId: a.situationId, variant: a.variant, ...(this.returnTo ? { returnTo: this.returnTo } : {}) });
+        }
         if (!ensureTtArt(this)) this.load.once(Phaser.Loader.Events.COMPLETE, () => this.sys.isActive() && this.layout());
         this.begin();
       })

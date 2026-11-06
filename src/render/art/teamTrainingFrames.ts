@@ -107,6 +107,21 @@ export function stillCast(look: 'boy' | 'girl', actors: readonly StillActor[], p
   return ttIdentities(look, home, away, protagonist, gk('H'), gk('A'));
 }
 
+/**
+ * Body facing for a moving-scene actor, kept separate from travel direction. The sheets only face three-quarter
+ * right (mirrored for left), so a nearly vertical look uses the closest supplied view: toward the ball's side, else
+ * the previous facing (owner-authorized fallback, D76d).
+ */
+export function ttFacingFlip(at: readonly [number, number], look: readonly [number, number], ball: readonly [number, number], prev: boolean): boolean {
+  const dx = look[0] - at[0];
+  if (Math.abs(dx) >= 0.25) return dx < 0;
+  const bx = ball[0] - at[0];
+  if (Math.abs(bx) >= 0.25) return bx < 0;
+  return prev;
+}
+/** First frame of the defensive shuffle row: the ready stance a stationary defender near the ball holds. */
+export const DEFEND_STANCE_FRAME = ROW.shuffle;
+
 /** Defenders within this many metres of the ball hold the defensive stance instead of standing. */
 export const STILL_PRESS_M = 8;
 

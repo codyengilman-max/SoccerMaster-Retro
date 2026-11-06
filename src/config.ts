@@ -15,6 +15,8 @@ import { MyPlayerScene } from './scenes/MyPlayerScene';
 import { RankingsScene } from './scenes/RankingsScene';
 import { StartScene } from './scenes/StartScene';
 import { DrivewayScene } from './scenes/DrivewayScene';
+import { TacticalMomentsScene } from './scenes/TacticalMomentsScene';
+import { MomentsReviewScene } from './scenes/MomentsReviewScene';
 
 export function createGameConfig(parent: HTMLElement): Phaser.Types.Core.GameConfig {
   return {
@@ -36,6 +38,6 @@ export function createGameConfig(parent: HTMLElement): Phaser.Types.Core.GameCon
       activePointers: 2,
     },
     // First scene auto-starts; the rest wait for scene.start().
-    scene: [StartScene, FormationScene, MatchScene, CareerScene, LabScene, StoryScene, ArtGalleryScene, JungleScene, TacticalTrainingScene, CloudyScene, MatchReportScene, MyPlayerScene, RankingsScene, WeeklyTrainingScene, TournamentScene, DrivewayScene],
+    scene: [StartScene, FormationScene, MatchScene, CareerScene, LabScene, StoryScene, ArtGalleryScene, JungleScene, TacticalTrainingScene, CloudyScene, MatchReportScene, MyPlayerScene, RankingsScene, WeeklyTrainingScene, TournamentScene, DrivewayScene, TacticalMomentsScene, MomentsReviewScene],
   };
 }

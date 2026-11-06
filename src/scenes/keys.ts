@@ -15,6 +15,8 @@ export const SceneKeys = {
   Weekly: 'weekly',
   Tournament: 'tournament',
   Driveway: 'driveway',
+  Moments: 'moments',
+  MomentsReview: 'momentsReview',
 } as const;
 
 export type SceneKey = (typeof SceneKeys)[keyof typeof SceneKeys];

@@ -18,6 +18,13 @@ Sections below are a history log, newest first; each header records where that w
 
 **Progression v2** (branch `devin/1793740000-progression`, not merged): ten attributes, shared main/AI engine, Season 1 maximum 64, schema-3 migration (D72, `docs/PROGRESSION.md`).
 
+
+## Tactical Moments framework + 72 drafts (owner brief 2026-11, branch `devin/1793906000-tactical-moments`, not merged)
+- Framework-free framework under `src/game/training12/moments/` (schema, validator, timeline runner, director, gate) and `TacticalMomentsScene` / `MomentsReviewScene`. See `docs/training/moments/README.md` and D76.
+- 72 scene versions drafted (36 situations × base/changed), all READY_FOR_REVIEW, none approved; 71 have release-blocking animation gaps (`ANIMATION_GAPS.md`). Review: `?dev` → Start → Tactical Moments.
+- Players: unchanged Weekly Team Training (no approved scene).
+- Round 3 (review only): `outcomes.v2.json` proposes movement for the 159 frozen options (v1 and package text unchanged); `choices.v1.json` / `CHOICE_REVISIONS.md` give neutral wordings without the generic pause option, grades unchanged; `ANIMATION_REQUIREMENTS` v2 separates body facing, travel and ball direction with VERIFIED_REUSABLE / CANDIDATE_NEEDS_REVIEW / MISSING; `ART_BRIEF.md` per character; `CONTACT_AUDIT.md` per scene (pass/receive UNVERIFIED, dribble/shot/control INCOMPLETE, tackle/interception not authored).
+- Approvals bind to `bundleHash` (scene, v2 outcomes, rubric, choice revisions, assets, contact metadata); any change makes an approval stale. No approvals exist.
 ## 1,000-team directory (branch `devin/1793730000-team-directory`, PR open, not merged)
 - 1,000 U11 9v9 teams in 50 states (D71); five owner Arizona clubs; Batavia starts 67th in Arizona on seeded ratings; new careers play a 9-club league (D72: the 4 local rivals + Westside United, No Soccer Tuesday, Tumbleweed FC, Dynamics FC; 12 Batavia games = every club once + 4 rematches; saved 5-club leagues unchanged); National/State tabs leave League standings; `r1` → `r2` rankings migration; state picker, Find My Team, alias search, seeded labels. Phone emulation only.
 
@@ -570,3 +577,5 @@ Done: 40 authored prototype moments (cue + counter, reflected for the other side
 
 ## Standing Mom portrait
 - Owner's standing Mom (3 faces × casual/dressy, `mom3-*`) replaces the shorter v2 busts on every spoken Mom line in cutscenes. Outfit follows the scene; the line's beat picks the closest face. v2 busts remain in the gallery only. See D54 and `docs/art/season-one/MOM_V2.md`.
+
+- Tactical Moments round 2 (review only, nothing released): scenes v2, 159 outcome drafts (87 played out, 72 explanation with a named missing decision), `FROZEN_BRANCHES.md`, `ANIMATION_REQUIREMENTS.md/.json`, contact review sheets (all UNVERIFIED), five-axis `REVIEW_MATRIX.md`.

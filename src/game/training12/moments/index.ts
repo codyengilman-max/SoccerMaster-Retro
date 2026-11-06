@@ -1,0 +1,100 @@
+/**
+ * Library adapter and approval gate for Tactical Moments. Scenes are read from the stored drafts; only a scene version
+ * with a matching owner approval record (same id, version and content hash), no validation errors and no release
+ * blocker can reach player-facing training. Framework-free.
+ */
+import { blocksAfterFallback } from './artFallback';
+import scenes from '../../../../docs/training/moments/scenes.v2.json';
+import approvals from '../../../../docs/training/moments/approvals.json';
+import outcomes from '../../../../docs/training/moments/outcomes.v2.json';
+import contactFrames from '../../../../docs/training/moments/contact-frames.json';
+import { reviseChoices } from './choices';
+import { mirrorTimeline } from './director';
+import { outcomeHash, type OutcomeDraft } from './outcomes';
+import type { ChoiceId } from '../all36/types';
+import type { VariantId } from '../all36/types';
+import type { ApprovalRecord, MomentScene, ReviewStatus } from './schema';
+import { releaseBlockers } from './validate';
+
+export const MOMENT_SCENES = scenes as unknown as readonly MomentScene[];
+export const MOMENT_APPROVALS = approvals as unknown as readonly ApprovalRecord[];
+export const MOMENT_OUTCOMES = outcomes as unknown as readonly OutcomeDraft[];
+
+function fnv(text: string): string {
+  let h1 = 0x811c9dc5;
+  let h2 = 0x01000193 ^ text.length;
+  for (let i = 0; i < text.length; i++) {
+    const c = text.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 0x01000193) >>> 0;
+    h2 = Math.imul(h2 ^ c, 0x5bd1e995) >>> 0;
+  }
+  return h1.toString(16).padStart(8, '0') + h2.toString(16).padStart(8, '0');
+}
+
+/** FNV-1a over the scene with its review status removed: approving or flagging a version never changes its hash. */
+export function sceneHash(s: MomentScene): string {
+  return fnv(JSON.stringify({ ...s, review: { ...s.review, status: null } }));
+}
+
+/**
+ * What a scene approval binds to: the effective scene version, its outcome drafts, its rubric/choice revisions and
+ * the asset/contact mapping. Any material change to one of them changes this hash and invalidates the approval.
+ */
+export function bundleHash(s: MomentScene): string {
+  const outs = MOMENT_OUTCOMES.filter((o) => o.sceneId === s.sceneId && o.sceneVersion === s.version).map((o) => `${o.branchId}@${o.outcomeVersion}:${outcomeHash(o)}`);
+  const rubric = s.actions.map((a) => `${a.id}|${a.label}|${a.grade}|${a.rubric}`);
+  return fnv(JSON.stringify({ scene: sceneHash(s), outs, rubric, choices: reviseChoices(s), assets: s.assets, contact: contactFrames }));
+}
+
+
+/** An outcome draft counts for players only with an approval record for its branch id, version and exact hash. */
+export function outcomeApproved(o: OutcomeDraft, records: readonly ApprovalRecord[] = MOMENT_APPROVALS): boolean {
+  const h = outcomeHash(o);
+  const mine = records.filter((r) => r.sceneId === o.branchId && r.version === o.outcomeVersion);
+  return ([...mine].reverse().find((r) => r.hash === h) ?? null)?.status === 'APPROVED';
+}
+
+/** Outcome drafts for a scene's frozen branches: every draft in review mode, approved ones only for players. */
+export function outcomesFor(s: MomentScene, review: boolean, records: readonly ApprovalRecord[] = MOMENT_APPROVALS): Partial<Record<ChoiceId, OutcomeDraft>> {
+  const out: Partial<Record<ChoiceId, OutcomeDraft>> = {};
+  const mirrored = s.sceneId.endsWith('-mirror');
+  const id = mirrored ? s.sceneId.slice(0, -'-mirror'.length) : s.sceneId;
+  for (const o of MOMENT_OUTCOMES) {
+    if (o.sceneId !== id || o.sceneVersion !== s.version) continue;
+    // Players: approved drafts only, and never one whose own animation gaps still block release.
+    if (!review && (!outcomeApproved(o, records) || o.gaps.some(blocksAfterFallback))) continue;
+    out[o.choice] = mirrored && o.timeline ? { ...o, timeline: mirrorTimeline(o.timeline, s.field.width) } : o;
+  }
+  return out;
+}
+
+export function momentScene(situationId: string, variant: VariantId): MomentScene | undefined {
+  return MOMENT_SCENES.find((s) => s.library.situationId === situationId && s.library.variant === variant);
+}
+
+export function approvalFor(s: MomentScene, records: readonly ApprovalRecord[] = MOMENT_APPROVALS): ApprovalRecord | null {
+  // The newest record for this exact content wins; a record for older content only reports that it is stale.
+  const mine = records.filter((r) => r.sceneId === s.sceneId && r.version === s.version);
+  const h = sceneHash(s);
+  return [...mine].reverse().find((r) => r.hash === h) ?? mine[mine.length - 1] ?? null;
+}
+
+/** The effective review status: the stored draft status, overridden only by an approval record for this exact hash. */
+export function effectiveStatus(s: MomentScene, records: readonly ApprovalRecord[] = MOMENT_APPROVALS): ReviewStatus {
+  const r = approvalFor(s, records);
+  if (!r) return s.review.status === 'APPROVED' ? 'DRAFT' : s.review.status;
+  if (r.hash !== sceneHash(s)) return 'CHANGES_REQUESTED';
+  // An approval that does not name the current outcomes/rubric/asset/contact bundle is stale (fail closed).
+  if (r.status === 'APPROVED' && r.bundle !== bundleHash(s)) return 'CHANGES_REQUESTED';
+  return r.status;
+}
+
+export function playerFacing(s: MomentScene, records: readonly ApprovalRecord[] = MOMENT_APPROVALS): boolean {
+  return effectiveStatus(s, records) === 'APPROVED' && releaseBlockers(s).length === 0;
+}
+
+/** The scene a player may see for a weekly assignment, or null (the existing static Weekly Team Training stays). */
+export function playerMoment(situationId: string, variant: VariantId, records: readonly ApprovalRecord[] = MOMENT_APPROVALS): MomentScene | null {
+  const s = momentScene(situationId, variant);
+  return s && playerFacing(s, records) ? s : null;
+}
