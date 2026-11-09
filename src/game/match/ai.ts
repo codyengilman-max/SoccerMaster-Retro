@@ -274,8 +274,18 @@ function planAttack(
   const W = T.pitch.width;
   const ownerId = s.ball.owner;
   const carrierT = ownerId ? tt(team, s.players[ownerId].pos, T) : B;
-  let deepestOpp = 0;
-  for (const o of oppOutfield) deepestOpp = Math.max(deepestOpp, o.x);
+  // Offside line from actual positions: the second-last opponent (keeper included, never assumed deepest), the ball or halfway.
+  let lastOpp = 0;
+  let secondLast = 0;
+  for (const o of oppPos) {
+    if (o.x > lastOpp) {
+      secondLast = lastOpp;
+      lastOpp = o.x;
+    } else if (o.x > secondLast) secondLast = o.x;
+  }
+  const deepestOpp = Math.max(secondLast, B.x, L / 2);
+  const tol = T.teamShape.levelTolerance;
+  const carrierFree = !!ownerId && nearestDistance(carrierT, oppOutfield) >= T.run.carrierRoom;
   const run = s.runs[team];
   if (run.runnerId && (s.simTime >= run.until || run.runnerId === ownerId)) {
     run.runnerId = null;
@@ -294,9 +304,15 @@ function planAttack(
     const own = role.base.y < W / 2 ? -1 : 1;
 
     if (run.runnerId === p.id) {
-      set(p, 'run', tt(team, p.target, T), M.runSpeed, T, team, 'run in behind');
-      taken[n++] = tt(team, p.target, T);
-      continue;
+      // Ball not released and the run has gone past the line: the pass never came, so check back onside rather than camp.
+      if (ownerId && !carrierFree && pT.x > deepestOpp + tol) {
+        run.runnerId = null;
+        run.cooldownUntil = s.simTime + T.run.cooldownSeconds;
+      } else {
+        set(p, 'run', tt(team, p.target, T), M.runSpeed, T, team, 'run in behind');
+        taken[n++] = tt(team, p.target, T);
+        continue;
+      }
     }
     if (p.intent === 'giveAndGo' && s.simTime < p.intentUntil) {
       p.speed = M.runSpeed;
@@ -368,18 +384,31 @@ function planAttack(
         break;
       case 'depth': {
         intent = 'depth';
-        const roomForCarrier = nearestDistance(carrierT, oppOutfield) >= T.run.carrierRoom;
         const spaceBehind = L - 3 - deepestOpp >= T.run.spaceBehind;
-        if (ownerId && !run.runnerId && s.simTime >= run.cooldownUntil && roomForCarrier && spaceBehind && pT.x < deepestOpp + 2) {
+        if (ownerId && !run.runnerId && s.simTime >= run.cooldownUntil && carrierFree && spaceBehind && pT.x <= deepestOpp + tol) {
           run.runnerId = p.id;
           run.until = s.simTime + T.run.seconds;
-          const t = tv(Math.min(deepestOpp + T.run.beyondLine, T.shape.maxAttackX), clamp(pT.y, 8, W - 8));
-          set(p, 'run', t, M.runSpeed, T, team, 'run in behind');
+          // Diagonal into the widest gap in their back line near this forward (not straight up the same lane every time).
+          const t = tv(Math.min(deepestOpp + T.run.beyondLine, T.shape.maxAttackX), clamp(lineGapY(oppPos, deepestOpp, pT.y, T), 8, W - 8));
+          set(p, 'run', t, M.runSpeed, T, team, 'run in behind: diagonal into the gap');
           taken[n++] = t;
           continue;
         }
-        target = tv(Math.min(anchor.x, deepestOpp - 0.5), anchor.y);
-        why = 'depth: pin their line, stay onside';
+        if (run.runnerId && run.runnerId !== p.id) {
+          // A partner is already running in behind: come short instead of making the same run.
+          target = tv(Math.min(anchor.x, deepestOpp - T.run.checkShort), anchor.y + (carrierT.y - anchor.y) * 0.4);
+          why = 'depth: partner runs, check short';
+        } else if (pT.x > deepestOpp + tol) {
+          // Offside position: walk back across the line toward the ball (never clamped or teleported).
+          target = tv(deepestOpp - T.run.checkBack, pT.y + (carrierT.y - pT.y) * 0.25);
+          why = 'depth: offside, check back onside';
+        } else if (!carrierFree && ownerId) {
+          target = tv(Math.min(anchor.x, deepestOpp - T.run.checkShort), pT.y + (carrierT.y - pT.y) * 0.3);
+          why = 'depth: carrier pressed, check to the ball';
+        } else {
+          target = tv(Math.min(anchor.x, deepestOpp - 0.5), anchor.y);
+          why = 'depth: pin their line, stay onside';
+        }
         break;
       }
     }
@@ -551,9 +580,11 @@ function planDefence(ctx: AiContext, team: TeamId, B: Vec2, oppOutfield: readonl
       delete marks[p.id];
       continue;
     }
-    if (held && d > D.markKeepRadius) {
+    // Zone handoff: once held, a free marking teammate whose zone the runner is now clearly in takes him over.
+    // Without a taker the marker keeps him, so the runner is never dropped by both.
+    if (held) {
       let taker: MatchPlayer | null = null;
-      let best = D.trackRadius;
+      let best = Math.min(D.trackRadius, d - D.markHandoffMargin);
       for (const q of players) {
         if (q.id === p.id || q.id === a.presserId || q.id === a.coverId || marks[q.id] || !marksRunners(roleOf(s, q))) continue;
         const dq = distance(o, tt(team, q.anchor, T));
@@ -654,6 +685,26 @@ function planDefence(ctx: AiContext, team: TeamId, B: Vec2, oppOutfield: readonl
         break;
     }
   }
+}
+
+/** Lateral spot of the widest gap between opponents standing on their line, nearest to fromY (team frame). */
+function lineGapY(oppPos: readonly Vec2[], lineX: number, fromY: number, T: MatchTuning): number {
+  const W = T.pitch.width;
+  const ys = [0, W];
+  for (const o of oppPos) if (Math.abs(o.x - lineX) < T.run.lineBand) ys.push(o.y);
+  ys.sort((a, b) => a - b);
+  let best = fromY;
+  let score = -Infinity;
+  for (let i = 1; i < ys.length; i++) {
+    const gap = ys[i]! - ys[i - 1]!;
+    const mid = (ys[i]! + ys[i - 1]!) / 2;
+    const v = gap - Math.abs(mid - fromY) * 0.5;
+    if (v > score) {
+      score = v;
+      best = mid;
+    }
+  }
+  return best;
 }
 
 /** Roles that man-mark runners through their zone (back line, or a holdLine/trackRunner duty); others screen space. */

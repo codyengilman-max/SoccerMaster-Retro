@@ -205,6 +205,12 @@ export const MATCH_TUNING = {
     carrierRoom: 3.5,
     /** ...and the gap behind the opposing back line is at least this deep. */
     spaceBehind: 8,
+    /** A second forward comes this far short of the line while a partner runs in behind (yd). */
+    checkShort: 5,
+    /** A forward in an offside position heads this far back onside (yd). */
+    checkBack: 1.5,
+    /** Opponents within this distance of the offside line count as on it when finding a gap to run into (yd). */
+    lineBand: 6,
   },
   giveAndGo: { seconds: 1.6, ahead: 6, lateral: 5, blockedRadius: 3 },
   weakSide: { finalThirdX: 50, narrowY: 7 },
@@ -229,8 +235,8 @@ export const MATCH_TUNING = {
     recoverBeyond: 3,
     /** A marking assignment holds at least this long (s) before it can be released or handed off. */
     markHoldSeconds: 0.8,
-    /** A marked runner further than this from the marker's zone anchor (yd) is handed to a free teammate whose zone he is in. */
-    markKeepRadius: 12,
+    /** A held runner is handed to a free marking teammate whose zone anchor is this much closer to him (yd). */
+    markHandoffMargin: 3,
     /** ...a runner this far upfield of the marker's anchor (yd) is no threat and is released. */
     markReleaseAhead: 6,
     /** ...and no defender follows a runner further than this from his own anchor (yd). */

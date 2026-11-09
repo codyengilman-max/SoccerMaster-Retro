@@ -342,3 +342,78 @@ describe('team shape out of possession', () => {
     });
   }
 });
+
+describe('offside-aware forward movement, every formation and both ends', () => {
+  const depthForwards = (s: Readonly<MatchState>, team: TeamId) => outfield(s, team).filter((p) => roleDef(s.formations[team], p.slot).inPossession === 'depth');
+  /** Opponents in `team`'s frame: a back line at lineX across the pitch, the keeper at keeperX, the rest deep behind the line. */
+  function oppLine(team: TeamId, lineX: number, keeperX: number, extra: Partial<Record<MatchPlayer['id'], [number, number]>> = {}) {
+    const opp = other(team);
+    const place: Partial<Record<MatchPlayer['id'], [number, number]>> = {};
+    TEAM_PLAYER_IDS[opp].forEach((id, i) => {
+      // Opponent positions are given in `team`'s frame, then converted into the opponent's frame for stage().
+      const [x, y] = i === 0 ? [keeperX, 25] : [lineX, 4 + i * 5.5];
+      place[id] = [L - x, W - y];
+    });
+    return { ...place, ...extra };
+  }
+  for (const f of FORMATION_IDS) {
+    for (const team of TEAMS) {
+      it(`${f} ${team}: a forward in an offside position walks back onside toward the ball (no wall, no teleport)`, () => {
+        const sim = newSim(f);
+        const fwd = depthForwards(sim.state, team);
+        expect(fwd.length).toBeGreaterThan(0);
+        const carrier = outfield(sim.state, team).find((p) => line(sim.state, team, p) === 'defence')!;
+        stage(sim, other(team), TEAM_PLAYER_IDS[other(team)][1]!, { x: L - 58, y: W - 9.5 }, oppLine(team, 58, 72));
+        const place: Partial<Record<MatchPlayer['id'], [number, number]>> = {};
+        fwd.forEach((p, i) => (place[p.id] = [63, 18 + i * 14]));
+        stage(sim, team, carrier.id, { x: 36, y: 25 }, place);
+        const before = fwd.map((p) => posT(team, p));
+        let maxStep = 0;
+        for (let i = 0; i < 36; i++) {
+          const prev = fwd.map((p) => ({ ...p.pos }));
+          hold(sim, F);
+          fwd.forEach((p, k) => (maxStep = Math.max(maxStep, Math.hypot(p.pos.x - prev[k]!.x, p.pos.y - prev[k]!.y))));
+        }
+        for (const [k, p] of fwd.entries()) {
+          expect(targetT(team, p).x, `${p.id} heads back onside`).toBeLessThan(58);
+          expect(posT(team, p).x).toBeLessThan(before[k]!.x);
+        }
+        // No teleport: no single step is faster than a sprinting player (runSpeed with attribute scaling stays under 10 yd/s).
+        expect(maxStep).toBeLessThan(10 * F);
+      });
+
+      it(`${f} ${team}: the keeper is not assumed deepest; the line is the second-last opponent`, () => {
+        const sim = newSim(f);
+        const fwd = depthForwards(sim.state, team)[0]!;
+        const carrier = outfield(sim.state, team).find((p) => line(sim.state, team, p) === 'defence')!;
+        // Keeper stepped up to 50; one defender left deep at 68; everyone else at 46. Second-last = keeper at 50.
+        const opp = other(team);
+        stage(sim, opp, TEAM_PLAYER_IDS[opp][2]!, { x: L - 46, y: W - 15 }, oppLine(team, 46, 50, { [TEAM_PLAYER_IDS[opp][1]!]: [L - 68, W - 30] }));
+        stage(sim, team, carrier.id, { x: 30, y: 25 }, { [fwd.id]: [56, 25] });
+        hold(sim, 0.6);
+        // Live line (the keeper drifts back to his goal): second-last opponent in this team's frame.
+        const xs = TEAM_PLAYER_IDS[opp].map((id) => tx(team, sim.state.players[id].pos.x)).sort((a, b) => b - a);
+        expect(xs[1]!).toBeLessThan(60);
+        expect(targetT(team, fwd).x).toBeLessThan(xs[1]!);
+      });
+    }
+  }
+
+  for (const f of FORMATION_IDS) {
+    it(`${f}: with two forwards, one runs in behind while the other comes short (not the same run)`, () => {
+      const sim = newSim(f);
+      const fwd = depthForwards(sim.state, 'home');
+      if (fwd.length < 2) return;
+      const carrier = outfield(sim.state, 'home').find((p) => line(sim.state, 'home', p) === 'defence')!;
+      stage(sim, 'away', TEAM_PLAYER_IDS.away[1]!, { x: L - 50, y: W - 9.5 }, oppLine('home', 50, 72));
+      stage(sim, 'home', carrier.id, { x: 30, y: 25 }, { [fwd[0]!.id]: [48, 18], [fwd[1]!.id]: [48, 32] });
+      sim.arrange((s) => {
+        s.runs.home = { runnerId: fwd[0]!.id, until: s.simTime + 2, cooldownUntil: 0 };
+        s.players[fwd[0]!.id].target = { x: 56, y: 18 };
+      });
+      hold(sim, 0.4);
+      expect(targetT('home', fwd[1]!).x).toBeLessThanOrEqual(50 - T.run.checkShort + 0.5);
+      expect(Math.abs(targetT('home', fwd[1]!).x - targetT('home', fwd[0]!).x)).toBeGreaterThan(4);
+    });
+  }
+});
