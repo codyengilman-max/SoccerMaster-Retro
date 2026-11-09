@@ -82,10 +82,17 @@ describe("possession versus control", () => {
           (s.ball.kick.receiver !== null || rolling)
             ? s.ball.kick
             : null;
+        // An AI kick (e.g. the keeper's) is handed to its receiver on the next control update, a substep after release.
+        const handedToReceiver =
+          !!ourPass &&
+          s.controlledId === ourPass.receiver &&
+          s.lastSwitch?.why === "pass receiver";
         if (ourPass && ourPass !== flightKick) {
           flightKick = ourPass;
           flightId = s.controlledId;
-        } else if (ourPass) expect(s.controlledId).toBe(flightId);
+        } else if (ourPass && handedToReceiver && flightId !== s.controlledId)
+          flightId = s.controlledId;
+        else if (ourPass) expect(s.controlledId).toBe(flightId);
         if (!ourPass) flightKick = null;
         if (s.controlledId !== lastId) {
           const viaPossession = owner === s.controlledId;
