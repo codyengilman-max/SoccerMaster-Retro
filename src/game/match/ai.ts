@@ -575,7 +575,10 @@ function planDefence(ctx: AiContext, team: TeamId, B: Vec2, oppOutfield: readonl
     const m = marks[p.id];
     if (!m) continue;
     const i = oppIndex(m.opp);
-    if (i < 0 || p.id === a.presserId || p.id === a.coverId) {
+    // Presser, cover, the lane filler and a recovering defender give the runner up now, so others may pick him this plan.
+    const pT0 = tt(team, p.pos, T);
+    const recovering = pT0.x > B.x + D.recoverBeyond && roleOf(s, p).line !== 'attack';
+    if (i < 0 || p.id === a.presserId || p.id === a.coverId || recovering || (p.id === filler && presser)) {
       delete marks[p.id];
       continue;
     }
