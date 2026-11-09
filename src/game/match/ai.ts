@@ -173,8 +173,11 @@ function planTeam(ctx: AiContext, team: TeamId): void {
   // Loose ball: each team sends the player who can reach it first (committed for a short spell).
   updateChaser(ctx, team, receiverId);
 
-  if (inPossession) planAttack(ctx, team, focusT, oppPos, oppOutfield, receiverId, shape);
-  else planDefence(ctx, team, focusT, oppOutfield, oppField, shape);
+  if (inPossession) {
+    const marks = s.defense[team].marks;
+    for (const k in marks) delete marks[k as MatchPlayerId];
+    planAttack(ctx, team, focusT, oppPos, oppOutfield, receiverId, shape);
+  } else planDefence(ctx, team, focusT, oppOutfield, oppField, shape);
 
   const chaser = s.chaser[team].id;
   if (!ball.owner && chaser && chaser !== receiverId) {
@@ -515,7 +518,7 @@ function planDefence(ctx: AiContext, team: TeamId, B: Vec2, oppOutfield: readonl
     const lane = tt(team, presser!.anchor, T);
     let bd = Infinity;
     for (const p of players) {
-      if (p.id === a.coverId || roleOf(s, p).line !== 'midfield') continue;
+      if (p.id === a.coverId || roleOf(s, p).line !== 'midfield' || a.marks[p.id]) continue;
       const d = distance(tt(team, p.pos, T), lane);
       if (d < bd) {
         bd = d;
@@ -525,10 +528,55 @@ function planDefence(ctx: AiContext, team: TeamId, B: Vec2, oppOutfield: readonl
   }
   const S = T.teamShape;
   let marked = 0; // bit i = opponent i already tracked
+  const marks = a.marks;
+  const oppIndex = (id: MatchPlayerId): number => {
+    for (let i = 0; i < oppField.length; i++) if (oppField[i]!.id === id) return i;
+    return -1;
+  };
+  // Marks persist: a runner stays with his marker until he leaves that zone and a free teammate whose zone he entered
+  // takes him (an explicit handoff), so a runner is never dropped by both. Released when he goes upfield or too far.
+  for (const p of players) {
+    const m = marks[p.id];
+    if (!m) continue;
+    const i = oppIndex(m.opp);
+    if (i < 0 || p.id === a.presserId || p.id === a.coverId) {
+      delete marks[p.id];
+      continue;
+    }
+    const o = oppOutfield[i]!;
+    const anchor = tt(team, p.anchor, T);
+    const d = distance(o, anchor);
+    const held = s.simTime - m.since >= D.markHoldSeconds;
+    if (held && (o.x > anchor.x + D.markReleaseAhead || d > D.markMaxDistance)) {
+      delete marks[p.id];
+      continue;
+    }
+    if (held && d > D.markKeepRadius) {
+      let taker: MatchPlayer | null = null;
+      let best = D.trackRadius;
+      for (const q of players) {
+        if (q.id === p.id || q.id === a.presserId || q.id === a.coverId || marks[q.id] || !marksRunners(roleOf(s, q))) continue;
+        const dq = distance(o, tt(team, q.anchor, T));
+        if (dq < best) {
+          best = dq;
+          taker = q;
+        }
+      }
+      if (taker) {
+        delete marks[p.id];
+        marks[taker.id] = { opp: m.opp, since: s.simTime };
+        a.handoffs += 1;
+      }
+    }
+    marked |= 1 << i;
+  }
   for (const p of players) {
     const role = roleOf(s, p);
     const pT = tt(team, p.pos, T);
     const anchor = tt(team, p.anchor, T);
+    const prevMark = marks[p.id];
+    const kept = prevMark ? oppIndex(prevMark.opp) : -1;
+    delete marks[p.id];
     if (p.id === a.presserId) {
       set(p, 'press', s.ball.owner ? pressSpot : B, M.pressSpeed, T, team, 'pressure the ball');
       continue;
@@ -548,9 +596,9 @@ function planDefence(ctx: AiContext, team: TeamId, B: Vec2, oppOutfield: readonl
     }
     if (role.line === 'defence') {
       // Track only a dangerous runner in this zone: at or behind the line, or running at it.
-      let ti = -1;
+      let ti = kept;
       let td = D.trackRadius;
-      for (let i = 0; i < oppOutfield.length; i++) {
+      for (let i = 0; kept < 0 && i < oppOutfield.length; i++) {
         if (marked & (1 << i)) continue;
         const o = oppOutfield[i]!;
         const q = oppField[i]!;
@@ -567,6 +615,7 @@ function planDefence(ctx: AiContext, team: TeamId, B: Vec2, oppOutfield: readonl
       const o = oppOutfield[ti];
       if (o) {
         marked |= 1 << ti;
+        marks[p.id] = kept === ti && prevMark ? prevMark : { opp: oppField[ti]!.id, since: s.simTime };
         const g = tNorm(goal.x - o.x, goal.y - o.y);
         set(p, 'track', tv(o.x + g.x * 1.5, o.y + g.y * 1.5), M.trackSpeed, T, team, o.x < shape.lineX + 1.5 ? 'track runner behind the line' : 'track a run at the line');
         continue;
@@ -583,10 +632,11 @@ function planDefence(ctx: AiContext, team: TeamId, B: Vec2, oppOutfield: readonl
     switch (role.outOfPossession) {
       case 'holdLine':
       case 'trackRunner': {
-        const i = markIndex(oppOutfield, marked, anchor, D.trackRadius);
+        const i = kept >= 0 ? kept : markIndex(oppOutfield, marked, anchor, D.trackRadius);
         const o = oppOutfield[i];
         if (o) {
           marked |= 1 << i;
+          marks[p.id] = kept === i && prevMark ? prevMark : { opp: oppField[i]!.id, since: s.simTime };
           const g = tNorm(goal.x - o.x, goal.y - o.y);
           const gs = tv(o.x + g.x * 1.5, o.y + g.y * 1.5);
           set(p, 'track', gs, M.trackSpeed, T, team, 'track the runner in our zone');
@@ -604,6 +654,11 @@ function planDefence(ctx: AiContext, team: TeamId, B: Vec2, oppOutfield: readonl
         break;
     }
   }
+}
+
+/** Roles that man-mark runners through their zone (back line, or a holdLine/trackRunner duty); others screen space. */
+function marksRunners(role: RoleDef): boolean {
+  return role.line === 'defence' || role.outOfPossession === 'holdLine' || role.outOfPossession === 'trackRunner';
 }
 
 /** Inputs for pickTime, set by planDefence before each pickCommitted call (no per-step closures). */

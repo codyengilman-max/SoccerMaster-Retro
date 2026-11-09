@@ -227,6 +227,14 @@ export const MATCH_TUNING = {
     protectFraction: 0.45,
     /** Players caught on the wrong side of the ball by this much sprint back. */
     recoverBeyond: 3,
+    /** A marking assignment holds at least this long (s) before it can be released or handed off. */
+    markHoldSeconds: 0.8,
+    /** A marked runner further than this from the marker's zone anchor (yd) is handed to a free teammate whose zone he is in. */
+    markKeepRadius: 12,
+    /** ...a runner this far upfield of the marker's anchor (yd) is no threat and is released. */
+    markReleaseAhead: 6,
+    /** ...and no defender follows a runner further than this from his own anchor (yd). */
+    markMaxDistance: 20,
   },
   /**
    * Passing and shooting accuracy (brief v1.1, `kicking.ts`). Yards, seconds, radians. Provisional playtest values

@@ -193,6 +193,10 @@ export interface DefenseAssignment {
   presserId: MatchPlayerId | null;
   coverId: MatchPlayerId | null;
   until: number;
+  /** Persistent man-marking: defender id -> the opponent he tracks and since when (sim seconds). */
+  marks: Partial<Record<MatchPlayerId, { opp: MatchPlayerId; since: number }>>;
+  /** Explicit marking handoffs so far (one defender passes a runner to a free teammate whose zone he entered). */
+  handoffs: number;
 }
 
 export type ShapePhase =
