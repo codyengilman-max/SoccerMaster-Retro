@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FORMATION_IDS, roleDef, type FormationId } from '../src/game/match/formations';
+import { FORMATION_IDS, responsibilities, roleDef, type FormationId } from '../src/game/match/formations';
 import { behindBallAt } from '../src/game/match/shape';
 import { MatchSim } from '../src/game/match/sim';
 import { MATCH_TUNING as T } from '../src/game/match/tuning';
@@ -402,7 +402,10 @@ describe('offside-aware forward movement, every formation and both ends', () => 
   for (const f of FORMATION_IDS) {
     it(`${f}: with two forwards, one runs in behind while the other comes short (not the same run)`, () => {
       const sim = newSim(f);
-      const fwd = depthForwards(sim.state, 'home');
+      // The formation's forwards (a depth striker and, in two-striker shapes, a support striker), not only depth duties.
+      const ids = responsibilities(f).forwards;
+      const fwd = outfield(sim.state, 'home').filter((p) => ids.includes(roleDef(sim.state.formations.home, p.slot).id));
+      expect(fwd.length).toBe(ids.length);
       if (fwd.length < 2) return;
       const carrier = outfield(sim.state, 'home').find((p) => line(sim.state, 'home', p) === 'defence')!;
       stage(sim, 'away', TEAM_PLAYER_IDS.away[1]!, { x: L - 50, y: W - 9.5 }, oppLine('home', 50, 72));

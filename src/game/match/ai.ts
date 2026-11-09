@@ -376,6 +376,13 @@ function planAttack(
         if (gkBuild) {
           target = openSpot(anchor, carrierT, oppPos, 8, T);
           why = 'build-up: out of the cover shadow';
+        } else if (role.line === 'attack' && run.runnerId && run.runnerId !== p.id) {
+          // Second forward while a partner runs in behind: come short, not the same run.
+          target = tv(Math.min(anchor.x, deepestOpp - T.run.checkShort), anchor.y + (carrierT.y - anchor.y) * 0.4);
+          why = 'support forward: partner runs, check short';
+        } else if (role.line === 'attack' && pT.x > deepestOpp + tol) {
+          target = tv(deepestOpp - T.run.checkBack, pT.y + (carrierT.y - pT.y) * 0.25);
+          why = 'support forward: offside, check back onside';
         } else {
           target = supportSpot(carrierT, pT, own, taken, n, oppPos, T);
           why = 'short angle for the carrier';
