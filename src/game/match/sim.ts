@@ -2272,7 +2272,11 @@ export class MatchSim {
     s.ball.owner = null;
     s.ball.kick = null;
     s.runs = { home: { runnerId: null, until: 0, cooldownUntil: 0 }, away: { runnerId: null, until: 0, cooldownUntil: 0 } };
-    s.defense = { home: { presserId: null, coverId: null, until: 0 }, away: { presserId: null, coverId: null, until: 0 } };
+    // Marks reset at every kickoff; the handoff tally is a match total, so it carries over.
+    s.defense = {
+      home: { presserId: null, coverId: null, until: 0, marks: {}, handoffs: s.defense.home.handoffs },
+      away: { presserId: null, coverId: null, until: 0, marks: {}, handoffs: s.defense.away.handoffs },
+    };
     this.take(kicker, 'kickoff', team);
   }
 
@@ -2345,7 +2349,7 @@ export class MatchSim {
       contact,
       tackleBan: {},
       beatenUntil: {},
-      defense: { home: { presserId: null, coverId: null, until: 0 }, away: { presserId: null, coverId: null, until: 0 } },
+      defense: { home: { presserId: null, coverId: null, until: 0, marks: {}, handoffs: 0 }, away: { presserId: null, coverId: null, until: 0, marks: {}, handoffs: 0 } },
       chaser: { home: { id: null, until: 0 }, away: { id: null, until: 0 } },
       pressRead: vec(Number.NaN, Number.NaN),
       runs: { home: { runnerId: null, until: 0, cooldownUntil: 0 }, away: { runnerId: null, until: 0, cooldownUntil: 0 } },

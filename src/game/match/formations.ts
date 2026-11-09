@@ -131,3 +131,121 @@ export function roleDef(formation: FormationId, slot: number): RoleDef {
   if (!def) throw new Error(`formation ${formation} has no slot ${slot}`);
   return def;
 }
+
+// ---- Formation responsibilities (shared tactical framework) -------------------------------------
+
+/** Players on the pitch for standard 9v9: one keeper and eight outfielders. */
+export const PLAYERS_PER_TEAM = 9;
+export const OUTFIELD_PER_TEAM = PLAYERS_PER_TEAM - 1;
+
+export type Channel = 'left' | 'central' | 'right';
+
+/** Lateral channel of a role from its start spot (team frame, y < 25 on the team's left). */
+export function channelOf(role: RoleDef, width = 50): Channel {
+  const third = width / 3;
+  if (role.base.y < third) return 'left';
+  if (role.base.y > width - third) return 'right';
+  return 'central';
+}
+
+/** Outfield line counts parsed from a formation id; a leading keeper digit ("1-") is ignored, so "1-3-2-3" and "3-2-3" agree. */
+export function lineCounts(id: string): number[] {
+  const parts = id.split('-').map((n) => Number(n));
+  if (parts.some((n) => !Number.isInteger(n) || n < 0)) throw new Error(`bad formation notation ${id}`);
+  const sum = parts.reduce((a, b) => a + b, 0);
+  if (sum === PLAYERS_PER_TEAM && parts[0] === 1) return parts.slice(1);
+  return parts;
+}
+
+/**
+ * Who carries each shared responsibility in a formation. Never invents a player: a missing specialist role
+ * (no holding midfielder, no full-backs, no wingers, one or two forwards) is given to the nearest suitable role.
+ */
+export interface FormationResponsibilities {
+  readonly id: FormationId;
+  /** Protects central space in front of the back line when the team loses the ball (a holding midfielder, else the deepest central midfielder). */
+  readonly centreScreen: RoleId;
+  /** Rest defence kept behind the ball in possession (every 'balance' role, at least one defender). */
+  readonly restDefence: readonly RoleId[];
+  /** Width on each side in possession: the most advanced 'width' role in that channel. */
+  readonly width: Readonly<Record<'left' | 'right', RoleId>>;
+  /** Forwards that pin the back line; with two, the first makes the run behind and the second checks short. */
+  readonly forwards: readonly RoleId[];
+  /** Each outfield role and the role that covers behind it when it steps out (same or deeper line, nearest). */
+  readonly coveredBy: Readonly<Partial<Record<RoleId, RoleId>>>;
+  /** Default defensive depth: start-spot x of the back line (team frame yards). */
+  readonly defensiveDepth: number;
+}
+
+const RESP = new Map<FormationId, FormationResponsibilities>();
+const LINE_ORDER: Record<Line, number> = { keeper: 0, defence: 1, midfield: 2, attack: 3 };
+
+export function responsibilities(id: FormationId): FormationResponsibilities {
+  const hit = RESP.get(id);
+  if (hit) return hit;
+  const roles = FORMATIONS[id].roles.filter((r0) => r0.line !== 'keeper');
+  const mids = roles.filter((r0) => r0.line === 'midfield');
+  const central = mids.filter((r0) => channelOf(r0) === 'central');
+  const pool = central.length ? central : mids.length ? mids : roles.filter((r0) => r0.line === 'defence');
+  const screen = [...pool].sort((a, b) => (a.inPossession === 'balance' ? 0 : 1) - (b.inPossession === 'balance' ? 0 : 1) || a.base.x - b.base.x || Math.abs(a.base.y - 25) - Math.abs(b.base.y - 25))[0]!;
+  const rest = roles.filter((r0) => r0.inPossession === 'balance').map((r0) => r0.id);
+  if (!roles.some((r0) => r0.inPossession === 'balance' && r0.line === 'defence')) {
+    const deepest = roles.filter((r0) => r0.line === 'defence').sort((a, b) => a.base.x - b.base.x)[0];
+    if (deepest && !rest.includes(deepest.id)) rest.push(deepest.id);
+  }
+  const widthOn = (side: 'left' | 'right'): RoleId => {
+    const onSide = roles.filter((r0) => channelOf(r0) === side);
+    const wide = onSide.filter((r0) => r0.inPossession === 'width');
+    const from = wide.length ? wide : onSide.length ? onSide : roles;
+    return [...from].sort((a, b) => b.base.x - a.base.x || (side === 'left' ? a.base.y - b.base.y : b.base.y - a.base.y))[0]!.id;
+  };
+  const attackers = roles.filter((r0) => r0.line === 'attack');
+  const fwd = attackers.filter((r0) => channelOf(r0) === 'central' || r0.inPossession === 'depth');
+  const forwards = (fwd.length ? fwd : attackers).sort((a, b) => (a.inPossession === 'depth' ? 0 : 1) - (b.inPossession === 'depth' ? 0 : 1) || a.base.y - b.base.y).map((r0) => r0.id);
+  const coveredBy: Partial<Record<RoleId, RoleId>> = {};
+  for (const r0 of roles) {
+    let best: RoleDef | undefined;
+    let bd = Infinity;
+    for (const c of roles) {
+      if (c.id === r0.id || LINE_ORDER[c.line] > LINE_ORDER[r0.line]) continue;
+      const d = Math.hypot(c.base.x - r0.base.x, c.base.y - r0.base.y) + (c.line === r0.line ? 0 : 4);
+      if (d < bd) {
+        bd = d;
+        best = c;
+      }
+    }
+    if (best) coveredBy[r0.id] = best.id;
+  }
+  const back = roles.filter((r0) => r0.line === 'defence');
+  const out: FormationResponsibilities = {
+    id,
+    centreScreen: screen.id,
+    restDefence: rest,
+    width: { left: widthOn('left'), right: widthOn('right') },
+    forwards,
+    coveredBy,
+    defensiveDepth: back.length ? back.reduce((a, r0) => a + r0.base.x, 0) / back.length : 14,
+  };
+  RESP.set(id, out);
+  return out;
+}
+
+/** Structural problems with a formation, empty when valid (one keeper, eight outfielders, unique roles, line counts match the id). */
+export function validateFormation(def: FormationDef): string[] {
+  const errs: string[] = [];
+  if (def.roles.length !== PLAYERS_PER_TEAM) errs.push(`${def.id}: ${def.roles.length} roles, expected ${PLAYERS_PER_TEAM}`);
+  const keepers = def.roles.filter((r0) => r0.line === 'keeper');
+  if (keepers.length !== 1) errs.push(`${def.id}: ${keepers.length} keepers, expected 1`);
+  if (def.roles[0]?.line !== 'keeper') errs.push(`${def.id}: slot 0 must be the keeper`);
+  const ids = new Set(def.roles.map((r0) => r0.id));
+  if (ids.size !== def.roles.length) errs.push(`${def.id}: duplicate role ids`);
+  const counts = lineCounts(def.id);
+  const actual = (['defence', 'midfield', 'attack'] as const).map((l) => def.roles.filter((r0) => r0.line === l).length).filter((n, i, a) => n > 0 || i < a.length - 1);
+  if (counts.join('-') !== actual.join('-')) errs.push(`${def.id}: lines ${actual.join('-')} do not match the notation`);
+  for (const r0 of def.roles) {
+    const b = r0.bounds;
+    if (r0.base.x < b.minX || r0.base.x > b.maxX || r0.base.y < b.minY || r0.base.y > b.maxY) errs.push(`${def.id} ${r0.id}: start spot outside its bounds`);
+    for (const a of r0.adjacent) if (r0.line !== 'keeper' && !ids.has(a)) errs.push(`${def.id} ${r0.id}: adjacent ${a} not in formation`);
+  }
+  return errs;
+}

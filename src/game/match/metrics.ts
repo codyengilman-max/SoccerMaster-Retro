@@ -5,7 +5,7 @@
  */
 import { MatchSim, checkInvariants } from './sim';
 import type { TacticsMode } from './tacticalDirector';
-import { FORMATIONS } from './formations';
+import { FORMATIONS, type FormationId } from './formations';
 import { MATCH_TUNING } from './tuning';
 import { HOME_IDS, AWAY_IDS, type MatchPlayerId, type MatchState, type TeamId } from './types';
 
@@ -50,6 +50,12 @@ export interface TeamMetrics {
   backLineFollowsBall: number;
   /** Total seconds defenders spent parked (defence line, ball live). */
   parkedDefenderSeconds: number;
+  /** Times a tracking defender's runner changed (nearest opponent to his track target, sampled), per minute of live play. */
+  markChangesPerMin: number;
+  /** Explicit marking handoffs (defense.marks). */
+  handoffs: number;
+  /** Home only: control switches per minute of live play. */
+  switchesPerMin: number;
   /** Defending: mean distance from the nearest outfielder to the opposing carrier (yd). */
   pressDistance: number;
   /** Mean seconds from losing the ball until an outfielder is within 3 yd of the new carrier (lost spells only). */
@@ -93,7 +99,7 @@ function blank(): TeamMetrics {
   return {
     goals: 0, shots: 0, shotsOnTarget: 0, shotDistance: 0, shotAngle: 0, bigChances: 0, passes: 0, passesReceived: 0,
     interceptionsWon: 0, tacklesWon: 0, possessionShare: 0, width: 0, depth: 0, defToMid: 0, midToAtt: 0,
-    backLineFollowsBall: 0, parkedDefenderSeconds: 0, pressDistance: 0, timeToPressure: 0, pressureNeverArrived: 0, underPressureShare: 0,
+    backLineFollowsBall: 0, parkedDefenderSeconds: 0, markChangesPerMin: 0, handoffs: 0, switchesPerMin: 0, pressDistance: 0, timeToPressure: 0, pressureNeverArrived: 0, underPressureShare: 0,
     goalSide: 0, recoverySeconds: 0, offsideAgainst: 0, foulsCommitted: 0, outOfPlay: 0,
   };
 }
@@ -130,6 +136,9 @@ export interface RunOptions {
   readonly halfSeconds?: number;
   /** Scripted home input: 'chaser' (HomeBot, default) or 'sweep' (SweepBot, the tacticalMatch.test.ts user). */
   readonly input?: InputProfile;
+  /** Formations for each team (default: the sim default for both). */
+  readonly homeFormation?: FormationId;
+  readonly awayFormation?: FormationId;
 }
 
 /**
@@ -203,7 +212,7 @@ export function finalFingerprint(s: Readonly<MatchState>): string {
 
 /** Plays one full timed match headless; the home controlled outfielder is driven by HomeBot in both modes. */
 export function measureMatch(o: RunOptions): MatchMetrics {
-  const sim = new MatchSim({ seed: o.seed, tactics: o.mode, halfSeconds: o.halfSeconds ?? MATCH_TUNING.match.halfSeconds });
+  const sim = new MatchSim({ seed: o.seed, tactics: o.mode, halfSeconds: o.halfSeconds ?? MATCH_TUNING.match.halfSeconds, ...(o.homeFormation ? { homeFormation: o.homeFormation } : {}), ...(o.awayFormation ? { awayFormation: o.awayFormation } : {}) });
   const L = sim.tuning.pitch.length;
   const W = sim.tuning.pitch.width;
   const goalY = sim.tuning.pitch.goalCenterY;
@@ -233,6 +242,9 @@ export function measureMatch(o: RunOptions): MatchMetrics {
   let lastOwnerTeam: TeamId | null = null;
   const bot = o.input === 'sweep' ? new SweepBot(sim) : new HomeBot(sim);
   let steps = 0;
+  let lastSwitchAt = -1;
+  let liveMarkSeconds = 0;
+  const markOf: Partial<Record<MatchPlayerId, MatchPlayerId | null>> = {};
   const t0 = performance.now();
 
   for (let guard = 0; guard < 400_000; guard++) {
@@ -321,7 +333,29 @@ export function measureMatch(o: RunOptions): MatchMetrics {
       }
     }
 
+    if (st.lastSwitch && st.lastSwitch.at !== lastSwitchAt) {
+      lastSwitchAt = st.lastSwitch.at;
+      m.home.switchesPerMin += 1;
+    }
     if (steps % SAMPLE_EVERY !== 0) continue;
+    if (st.phase === 'live') {
+      liveMarkSeconds += F * SAMPLE_EVERY;
+      for (const id of [...HOME_IDS, ...AWAY_IDS]) {
+        const p = st.players[id];
+        if (p.intent !== 'track') {
+          markOf[id] = null;
+          continue;
+        }
+        let near: MatchPlayerId | null = null;
+        let nd = Infinity;
+        for (const q of p.team === 'home' ? AWAY_IDS : HOME_IDS) {
+          const d = Math.hypot(st.players[q].pos.x - p.target.x, st.players[q].pos.y - p.target.y);
+          if (d < nd) { nd = d; near = q; }
+        }
+        if (markOf[id] && markOf[id] !== near) m[p.team].markChangesPerMin += 1;
+        markOf[id] = near;
+      }
+    }
     liveSamples += 1;
     const lines: Record<TeamId, number> = { home: 0, away: 0 };
     for (const team of ['home', 'away'] as const) {
@@ -373,6 +407,9 @@ export function measureMatch(o: RunOptions): MatchMetrics {
     t.goals = st.score[team];
     t.shotDistance = a.shotD.value; t.shotAngle = a.shotA.value;
     t.possessionShare = liveSamples ? a.poss / liveSamples : 0;
+    t.markChangesPerMin = liveMarkSeconds ? (t.markChangesPerMin * 60) / liveMarkSeconds : 0;
+    t.switchesPerMin = liveMarkSeconds ? (t.switchesPerMin * 60) / liveMarkSeconds : 0;
+    t.handoffs = (sim.state.defense[team] as { handoffs?: number }).handoffs ?? 0;
     t.width = a.width.value; t.depth = a.depth.value; t.defToMid = a.dm.value; t.midToAtt = a.ma.value;
     t.backLineFollowsBall = corr(a.bx, a.bl);
     t.pressDistance = a.press.value; t.underPressureShare = a.under.value; t.goalSide = a.side.value;

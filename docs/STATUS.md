@@ -11,6 +11,8 @@ Sections below are a history log, newest first; each header records where that w
 | **Blocked** (fail-closed by design) | Team Training scoring: `SESSION_CARDS` empty, all 972 routes "not counted"; the story continues without credit. Coach-approved All36 package (36 situations, outfield only) inventoried, not imported: `docs/training/all36/INVENTORY.md`, PR C. Audited v1.2 (48 cards, 0 approved) is superseded for scoring |
 | **Proposed** (owner-approved, not built) | All36 Team Training integration (PR C); standing tackle replacing BLOCK and pad double-tap quick shot (H6, PR D); rest defence and golden-moment highlights (H7, PR E) |
 
+**Connected team shape (D78, branch `devin/1794246529-connected-shape` off `main` 07f1479, not merged):** formation responsibilities and validation for all three formations, persistent marking with explicit handoffs, offside-aware forward movement; table in `docs/FORMATION_ROLES.md`. Phone emulation only, not a real iPhone.
+
 **Cleanup pass (D77, branch `devin/1793988658-cleanup-pass` off `main` 23b3e00):** weekly home screen, one-tap lesson and Team Training starts, development wording removed for players. Audit: `docs/CLEANUP_AUDIT.md`.
 | **Deferred** | Chips, lofted shots, extra passing/defensive controls (H6); Weeks 11–18 content; school rewards (`SCHOOL_REWARD_RULE = null`) |
 | **Not planned** | Match-long position lock (H1); story-match Coach Moments, in-match tactical questions, Decision Heat in matches, tactical-choice Match Report scoring (H3) |

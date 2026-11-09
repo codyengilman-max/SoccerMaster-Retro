@@ -2418,6 +2418,14 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         g.lineStyle(3, color, 1);
         g.strokeCircle(sp.x, sp.y - playerH / 2, playerH * 0.6);
       }
+      // Persistent marks: a thin line from each marker to the runner he tracks.
+      g.lineStyle(1.5, team === 'home' ? PALETTE.cream : PALETTE.sun, 0.8);
+      for (const [mid, m] of Object.entries(d.marks)) {
+        if (!m) continue;
+        const a = toScreen(L, s.players[mid as keyof typeof s.players].pos);
+        const b = toScreen(L, s.players[m.opp].pos);
+        g.lineBetween(a.x, a.y - playerH / 2, b.x, b.y - playerH / 2);
+      }
     }
     const owner = s.ball.owner;
     this.devText.setWordWrapWidth(Math.max(160, this.scale.width - 2 * EDGE - 12), true);
@@ -2426,7 +2434,7 @@ export class MatchScene extends Phaser.Scene implements InspectableScene {
         `phase ${s.phase}${s.paused ? ' (paused)' : ''} · owner ${owner ?? 'loose'} · possession ${s.possession} · state ${this.possessionState()}\n` +
           `career ${this.collector?.careerId ?? '-'} · control ${s.controlledId} · switch cand ${s.switchCandidate ?? '-'} · last ${s.lastSwitch ? `${s.lastSwitch.id} ${s.lastSwitch.why} @${s.lastSwitch.at.toFixed(2)}` : '-'}${s.simTime < s.manualUntil ? ' (manual hold)' : ''}\n` +
           `input @${this.lastInputAt.toFixed(2)} · action ${s.pad.phase} by ${s.pad.actor ?? '-'} @${s.pad.since.toFixed(2)} · cam ${this.camX.toFixed(1)},${this.camY.toFixed(1)} · frame ${this.frameMs.toFixed(1)}ms · event by ${this.lastEventActor ?? '-'} → credit ${this.collector?.careerId ?? '-'}\n` +
-          `home press ${s.defense.home.presserId ?? '-'} cover ${s.defense.home.coverId ?? '-'} · away press ${s.defense.away.presserId ?? '-'} cover ${s.defense.away.coverId ?? '-'}\n` +
+          `home press ${s.defense.home.presserId ?? '-'} cover ${s.defense.home.coverId ?? '-'} · away press ${s.defense.away.presserId ?? '-'} cover ${s.defense.away.coverId ?? '-'} · marks ${Object.keys(s.defense.home.marks).length}/${Object.keys(s.defense.away.marks).length} handoffs ${s.defense.home.handoffs}/${s.defense.away.handoffs}\n` +
           `t ${s.simTime.toFixed(1)}s · ${Math.round(this.fps)} fps · passes ${s.stats.passes.home}/${s.stats.passes.away} shots ${s.stats.shots.home}/${s.stats.shots.away}` +
           (['home', 'away'] as const)
             .map((t) => {
