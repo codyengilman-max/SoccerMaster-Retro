@@ -324,6 +324,8 @@ function planAttack(
     let target: MutableVec2 = anchor;
     let speed = M.shapeSpeed;
     let why = 'in the team shape';
+    // Onside cap for forwards checking short or back: spacing from teammates must not push the target past the line.
+    let onsideCap = Infinity;
     switch (role.inPossession) {
       case 'distribute':
         continue;
@@ -380,9 +382,11 @@ function planAttack(
           // Second forward while a partner runs in behind: come short, not the same run.
           target = tv(Math.min(anchor.x, deepestOpp - T.run.checkShort), anchor.y + (carrierT.y - anchor.y) * 0.4);
           why = 'support forward: partner runs, check short';
+          onsideCap = deepestOpp - 0.5;
         } else if (role.line === 'attack' && pT.x > deepestOpp + tol) {
           target = tv(deepestOpp - T.run.checkBack, pT.y + (carrierT.y - pT.y) * 0.25);
           why = 'support forward: offside, check back onside';
+          onsideCap = deepestOpp - 0.5;
         } else {
           target = supportSpot(carrierT, pT, own, taken, n, oppPos, T);
           why = 'short angle for the carrier';
@@ -405,21 +409,26 @@ function planAttack(
           // A partner is already running in behind: come short instead of making the same run.
           target = tv(Math.min(anchor.x, deepestOpp - T.run.checkShort), anchor.y + (carrierT.y - anchor.y) * 0.4);
           why = 'depth: partner runs, check short';
+          onsideCap = deepestOpp - 0.5;
         } else if (pT.x > deepestOpp + tol) {
           // Offside position: walk back across the line toward the ball (never clamped or teleported).
           target = tv(deepestOpp - T.run.checkBack, pT.y + (carrierT.y - pT.y) * 0.25);
           why = 'depth: offside, check back onside';
+          onsideCap = deepestOpp - 0.5;
         } else if (!carrierFree && ownerId) {
           target = tv(Math.min(anchor.x, deepestOpp - T.run.checkShort), pT.y + (carrierT.y - pT.y) * 0.3);
           why = 'depth: carrier pressed, check to the ball';
+          onsideCap = deepestOpp - 0.5;
         } else {
           target = tv(Math.min(anchor.x, deepestOpp - 0.5), anchor.y);
           why = 'depth: pin their line, stay onside';
+          onsideCap = deepestOpp - 0.5;
         }
         break;
       }
     }
-    const spaced = spread(target, taken, n, T.shape.minSpacing);
+    const spread0 = spread(target, taken, n, T.shape.minSpacing);
+    const spaced = spread0.x > onsideCap ? tv(onsideCap, spread0.y) : spread0;
     const B2 = role.bounds;
     const clamped = intent === 'weakSide' || intent === 'width' ? spaced : tv(clamp(spaced.x, B2.minX, B2.maxX), clamp(spaced.y, B2.minY, B2.maxY));
     taken[n++] = clamped;

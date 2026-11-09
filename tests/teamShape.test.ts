@@ -419,4 +419,24 @@ describe('offside-aware forward movement, every formation and both ends', () => 
       expect(Math.abs(targetT('home', fwd[1]!).x - targetT('home', fwd[0]!).x)).toBeGreaterThan(4);
     });
   }
+
+  for (const f of FORMATION_IDS) {
+    it(`${f}: a forward checking back onside in the carrier's lane is not spaced back past the line`, () => {
+      const sim = newSim(f);
+      const ids = responsibilities(f).forwards;
+      const carrier = outfield(sim.state, 'home').find((p) => line(sim.state, 'home', p) === 'midfield')!;
+      stage(sim, 'away', TEAM_PLAYER_IDS.away[1]!, { x: L - 50, y: W - 9.5 }, oppLine('home', 50, 72));
+      for (const fid of ids) {
+        const fwd = outfield(sim.state, 'home').find((p) => roleDef(sim.state.formations.home, p.slot).id === fid)!;
+        stage(sim, 'home', carrier.id, { x: 45, y: 31 }, { [fwd.id]: [53, 31] });
+        sim.arrange((s) => {
+          s.runs.home = { runnerId: null, until: 0, cooldownUntil: s.simTime + 5 };
+        });
+        hold(sim, 0.3);
+        // The live line: second-last opponent in home's frame (the keeper counts).
+        const oppX = outfield(sim.state, 'away').concat([sim.state.players[TEAM_PLAYER_IDS.away[0]!]]).map((o) => posT('home', o).x).sort((x, y) => y - x);
+        expect(targetT('home', fwd).x).toBeLessThan(oppX[1]!);
+      }
+    });
+  }
 });
